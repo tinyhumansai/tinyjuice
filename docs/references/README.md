@@ -12,3 +12,5 @@ benchmark claims.
 - [Subagent summaries](subagent-summary-spec.md)
 - [Savings accounting](savings-accounting-spec.md)
 - [TurboQuant-style vector compression](turboquant-vector-spec.md)
+- [TinyJuice integration](tinyjuice-integration-spec.md)
+- [TokenJuice improvement ingestion](tokenjuice-improvement-spec.md)
