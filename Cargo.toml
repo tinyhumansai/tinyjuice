@@ -1,0 +1,17 @@
+[package]
+name = "tinyjuice"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "Pluggable token compression for OpenHuman."
+repository = "https://github.com/tinyhumansai/tinyjuice"
+readme = "README.md"
+keywords = ["llm", "tokens", "compression", "openhuman", "context"]
+categories = ["text-processing"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+
+[dev-dependencies]
+serde_json = "1"

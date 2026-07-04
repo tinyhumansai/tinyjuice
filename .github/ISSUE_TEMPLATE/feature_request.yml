@@ -1,0 +1,35 @@
+name: Feature Request
+description: Propose a TinyJuice capability, API, module, or workflow.
+title: "Feature: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Compression workflow
+      description: What workflow should this unlock?
+      placeholder: "I want to compress retrieved context before sending it to a model..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed shape
+      description: Describe the API, module, strategy, or behavior you imagine.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workarounds or other designs have you considered?
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety, privacy, and quality
+      description: Any implications for instruction preservation, sensitive data, or retained facts?
+  - type: textarea
+    id: docs
+    attributes:
+      label: Related docs
+      description: Link relevant TinyJuice docs or external references.
