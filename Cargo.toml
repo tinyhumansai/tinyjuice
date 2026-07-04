@@ -11,7 +11,7 @@ categories = ["text-processing"]
 
 [dependencies]
 async-trait = "0.1"
-dirs = "5"
+dirs = "6"
 hex = "0.4"
 log = "0.4"
 once_cell = "1"
