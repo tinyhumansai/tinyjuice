@@ -56,6 +56,14 @@ Run the placeholder example:
 cargo run --example passthrough
 ```
 
+Run the local analytics interface:
+
+```sh
+cd interface
+npm install
+npm run dev
+```
+
 ## Crate Layout
 
 ```text
@@ -64,6 +72,7 @@ src/
   config/       Compression target and policy configuration
   openhuman/    Placeholder OpenHuman integration boundary
   error.rs      Shared error type
+interface/      Self-hostable analytics UI for compression run metadata
 ```
 
 ## Status

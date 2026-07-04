@@ -1,5 +1,7 @@
 /target/
 **/*.rs.bk
+interface/dist/
+interface/node_modules/
 
 # Local secrets — never commit; copy .env.example to .env
 .env
