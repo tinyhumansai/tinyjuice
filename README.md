@@ -1,6 +1,10 @@
 <h1 align="center">TinyJuice</h1>
 
 <p align="center">
+ <img src="https://github.com/tinyhumansai/tinyjuice/raw/main/docs/juice.png" />
+</p>
+
+<p align="center">
  <a href="https://crates.io/crates/tinyjuice"><img src="https://img.shields.io/crates/v/tinyjuice.svg" alt="crates.io" /></a>
  <a href="https://docs.rs/tinyjuice"><img src="https://docs.rs/tinyjuice/badge.svg" alt="docs.rs" /></a>
  <a href="https://github.com/tinyhumansai/tinyjuice/actions/workflows/ci.yml"><img src="https://github.com/tinyhumansai/tinyjuice/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
