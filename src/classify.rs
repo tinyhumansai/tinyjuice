@@ -31,10 +31,10 @@ pub fn matches_rule(rule: &JsonRule, input: &ToolExecutionInput) -> bool {
     let tool_name = &input.tool_name;
 
     // toolNames filter
-    if let Some(tool_names) = &rule.r#match.tool_names {
-        if !tool_names.contains(tool_name) {
-            return false;
-        }
+    if let Some(tool_names) = &rule.r#match.tool_names
+        && !tool_names.contains(tool_name)
+    {
+        return false;
     }
 
     // argv0 filter
@@ -46,31 +46,31 @@ pub fn matches_rule(rule: &JsonRule, input: &ToolExecutionInput) -> bool {
     }
 
     // argvIncludes — all groups must match
-    if let Some(groups) = &rule.r#match.argv_includes {
-        if !groups.iter().all(|group| includes_all(argv, group)) {
-            return false;
-        }
+    if let Some(groups) = &rule.r#match.argv_includes
+        && !groups.iter().all(|group| includes_all(argv, group))
+    {
+        return false;
     }
 
     // argvIncludesAny — at least one group must match
-    if let Some(groups) = &rule.r#match.argv_includes_any {
-        if !groups.iter().any(|group| includes_all(argv, group)) {
-            return false;
-        }
+    if let Some(groups) = &rule.r#match.argv_includes_any
+        && !groups.iter().any(|group| includes_all(argv, group))
+    {
+        return false;
     }
 
     // commandIncludes — all substrings must appear in command
-    if let Some(parts) = &rule.r#match.command_includes {
-        if !parts.iter().all(|part| command.contains(part.as_str())) {
-            return false;
-        }
+    if let Some(parts) = &rule.r#match.command_includes
+        && !parts.iter().all(|part| command.contains(part.as_str()))
+    {
+        return false;
     }
 
     // commandIncludesAny — at least one substring must appear
-    if let Some(parts) = &rule.r#match.command_includes_any {
-        if !parts.iter().any(|part| command.contains(part.as_str())) {
-            return false;
-        }
+    if let Some(parts) = &rule.r#match.command_includes_any
+        && !parts.iter().any(|part| command.contains(part.as_str()))
+    {
+        return false;
     }
 
     true
@@ -144,19 +144,19 @@ pub fn classify_execution(
     forced_rule_id: Option<&str>,
 ) -> ClassificationResult {
     // Forced classification
-    if let Some(id) = forced_rule_id {
-        if let Some(rule) = rules.iter().find(|r| r.rule.id == id) {
-            log::debug!(
-                "[tokenjuice] forced classification: rule='{}' family='{}'",
-                id,
-                rule.rule.family
-            );
-            return ClassificationResult {
-                family: rule.rule.family.clone(),
-                confidence: 1.0,
-                matched_reducer: Some(rule.rule.id.clone()),
-            };
-        }
+    if let Some(id) = forced_rule_id
+        && let Some(rule) = rules.iter().find(|r| r.rule.id == id)
+    {
+        log::debug!(
+            "[tokenjuice] forced classification: rule='{}' family='{}'",
+            id,
+            rule.rule.family
+        );
+        return ClassificationResult {
+            family: rule.rule.family.clone(),
+            confidence: 1.0,
+            matched_reducer: Some(rule.rule.id.clone()),
+        };
     }
 
     // Find all matching rules

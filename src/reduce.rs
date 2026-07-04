@@ -393,10 +393,10 @@ fn format_gh_json_record(record: serde_json::Value) -> Option<String> {
     if let Some(b) = branch {
         parts.push(format!("({})", b));
     }
-    if let Some(c) = comments {
-        if c > 0 {
-            parts.push(format!("{}c", c));
-        }
+    if let Some(c) = comments
+        && c > 0
+    {
+        parts.push(format!("{}c", c));
     }
     if !labels.is_empty() {
         parts.push(format!("{{{}}}", labels.join(", ")));
@@ -450,10 +450,10 @@ fn pretty_print_json_if_possible(text: &str) -> String {
     if !(trimmed.starts_with('{') || trimmed.starts_with('[')) {
         return text.to_owned();
     }
-    if let Ok(v) = serde_json::from_str::<serde_json::Value>(trimmed) {
-        if v.is_object() || v.is_array() {
-            return serde_json::to_string_pretty(&v).unwrap_or_else(|_| text.to_owned());
-        }
+    if let Ok(v) = serde_json::from_str::<serde_json::Value>(trimmed)
+        && (v.is_object() || v.is_array())
+    {
+        return serde_json::to_string_pretty(&v).unwrap_or_else(|_| text.to_owned());
     }
     text.to_owned()
 }
@@ -610,13 +610,13 @@ fn apply_rule(
     }
 
     // onEmpty
-    if lines.is_empty() {
-        if let Some(on_empty) = &rule.on_empty {
-            return ApplyResult {
-                summary: on_empty.clone(),
-                facts,
-            };
-        }
+    if lines.is_empty()
+        && let Some(on_empty) = &rule.on_empty
+    {
+        return ApplyResult {
+            summary: on_empty.clone(),
+            facts,
+        };
     }
 
     // Failure-preserving summarize

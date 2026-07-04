@@ -202,16 +202,13 @@ mod tests {
 
     #[test]
     fn trim_edges_removes_blanks() {
-        let lines: Vec<String> = vec!["", "a", "b", ""]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
+        let lines: Vec<String> = ["", "a", "b", ""].iter().map(|s| s.to_string()).collect();
         assert_eq!(trim_empty_edges(&lines), vec!["a", "b"]);
     }
 
     #[test]
     fn trim_edges_all_blank() {
-        let lines: Vec<String> = vec!["", ""].iter().map(|s| s.to_string()).collect();
+        let lines: Vec<String> = ["", ""].iter().map(|s| s.to_string()).collect();
         assert!(trim_empty_edges(&lines).is_empty());
     }
 
@@ -219,7 +216,7 @@ mod tests {
 
     #[test]
     fn dedupe_keeps_non_adjacent() {
-        let lines = vec!["a", "a", "b", "a"]
+        let lines = ["a", "a", "b", "a"]
             .iter()
             .map(|s| s.to_string())
             .collect::<Vec<_>>();

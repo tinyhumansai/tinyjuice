@@ -127,12 +127,12 @@ pub fn html_to_text(html: &str) -> String {
         }
 
         // Decode an entity or copy the char.
-        if bytes[i] == b'&' {
-            if let Some((decoded, consumed)) = decode_entity(&html[i..]) {
-                out.push_str(decoded);
-                i += consumed;
-                continue;
-            }
+        if bytes[i] == b'&'
+            && let Some((decoded, consumed)) = decode_entity(&html[i..])
+        {
+            out.push_str(decoded);
+            i += consumed;
+            continue;
         }
         let ch = html[i..].chars().next().unwrap();
         out.push(ch);

@@ -159,7 +159,7 @@ fn clamp_text_middle_does_not_split_emoji_grapheme() {
     // exactly one distinct grapheme). A partial split would leave a
     // replacement char or a stray surrogate-equivalent sequence.
     for g in graphemes(&clamped) {
-        let only_ascii = g.chars().all(|c| c.is_ascii());
+        let only_ascii = g.is_ascii();
         assert!(
             g == "😀" || only_ascii,
             "unexpected grapheme {g:?} — partial emoji split detected"

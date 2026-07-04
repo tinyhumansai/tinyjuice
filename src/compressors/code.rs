@@ -42,10 +42,10 @@ impl Compressor for CodeCompressor {
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
         #[cfg(feature = "tokenjuice-treesitter")]
-        if let Some(ext) = input.hint.extension.as_deref() {
-            if let Some(out) = treesitter::compress(input.content, ext) {
-                return Some(out);
-            }
+        if let Some(ext) = input.hint.extension.as_deref()
+            && let Some(out) = treesitter::compress(input.content, ext)
+        {
+            return Some(out);
         }
         compress_heuristic(input.content)
     }
@@ -196,10 +196,10 @@ mod treesitter {
         ranges.sort_by_key(|r| r.0);
         let mut merged: Vec<(usize, usize)> = Vec::new();
         for r in ranges {
-            if let Some(last) = merged.last() {
-                if r.0 < last.1 {
-                    continue; // nested inside a body we're already collapsing
-                }
+            if let Some(last) = merged.last()
+                && r.0 < last.1
+            {
+                continue; // nested inside a body we're already collapsing
             }
             merged.push(r);
         }
@@ -243,13 +243,13 @@ mod treesitter {
 
     /// Recursively collect the byte-ranges of function/method bodies.
     fn collect_bodies(node: Node, src: &[u8], out: &mut Vec<(usize, usize)>) {
-        if BODY_PARENTS.contains(&node.kind()) {
-            if let Some(body) = node.child_by_field_name("body") {
-                out.push((body.start_byte(), body.end_byte()));
-                // Don't descend into a collapsed body.
-                let _ = src;
-                return;
-            }
+        if BODY_PARENTS.contains(&node.kind())
+            && let Some(body) = node.child_by_field_name("body")
+        {
+            out.push((body.start_byte(), body.end_byte()));
+            // Don't descend into a collapsed body.
+            let _ = src;
+            return;
         }
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {

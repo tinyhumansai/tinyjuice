@@ -1532,14 +1532,14 @@ warning: `openhuman` (lib) generated 2 warnings
     assert_eq!(result.classification.family, "lint-results");
 
     // Counters should have counted warnings
-    if let Some(facts) = &result.facts {
-        if let Some(&warning_count) = facts.get("warning") {
-            assert!(
-                warning_count >= 2,
-                "expected at least 2 warnings counted, got {}",
-                warning_count
-            );
-        }
+    if let Some(facts) = &result.facts
+        && let Some(&warning_count) = facts.get("warning")
+    {
+        assert!(
+            warning_count >= 2,
+            "expected at least 2 warnings counted, got {}",
+            warning_count
+        );
     }
 }
 
@@ -1606,14 +1606,14 @@ error: could not compile `openhuman` (bin \"openhuman\") due to 2 previous error
     assert_eq!(result.classification.family, "build-rust");
 
     // Error counter
-    if let Some(facts) = &result.facts {
-        if let Some(&error_count) = facts.get("error") {
-            assert!(
-                error_count >= 2,
-                "expected at least 2 errors counted, got {}",
-                error_count
-            );
-        }
+    if let Some(facts) = &result.facts
+        && let Some(&error_count) = facts.get("error")
+    {
+        assert!(
+            error_count >= 2,
+            "expected at least 2 errors counted, got {}",
+            error_count
+        );
     }
 }
 
@@ -1703,14 +1703,14 @@ Diff in /home/user/project/src/lib.rs at line 10:
     );
 
     // Counter should count unformatted files
-    if let Some(facts) = &result.facts {
-        if let Some(&file_count) = facts.get("unformatted file") {
-            assert_eq!(
-                file_count, 2,
-                "expected 2 unformatted files counted, got {}",
-                file_count
-            );
-        }
+    if let Some(facts) = &result.facts
+        && let Some(&file_count) = facts.get("unformatted file")
+    {
+        assert_eq!(
+            file_count, 2,
+            "expected 2 unformatted files counted, got {}",
+            file_count
+        );
     }
 }
 
