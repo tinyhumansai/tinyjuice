@@ -17,3 +17,4 @@ benchmark claims.
 - [TokenJuice improvement ingestion](tokenjuice-improvement-spec.md)
 - [Headroom algorithms and strategies](headroom-algorithms-strategies-spec.md)
 - [Headroom improvement ingestion](headroom-improvement-ingestion-spec.md)
+- [Hermes compression algorithms and techniques](hermes-compression-algorithms-spec.md)
