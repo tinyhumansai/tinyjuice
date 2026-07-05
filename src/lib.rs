@@ -15,6 +15,7 @@ pub mod conversation;
 pub mod detect;
 mod error;
 pub mod ml;
+pub mod observability;
 pub mod openhuman;
 pub mod pipeline;
 pub mod policy;
@@ -65,6 +66,7 @@ pub use conversation::{
 };
 pub use detect::detect_content_kind;
 pub use error::{TinyJuiceError, TinyJuiceResult};
+pub use observability::{ContextBreakdown, ContextBucket, ContextBucketKind};
 pub use pipeline::{
     OffloadOutput, OffloadTransform, PipelineInput, PipelineReport, PipelineSkipReason,
     PipelineStep, ReformatTransform, TransformOutput,

@@ -205,6 +205,12 @@ that receives class-labeled `SavingsRecord` values (`counted`, `measured`, or
 and redacted rule or skip labels. The older four-argument
 `configure_recorder` callback remains as a compatibility wrapper.
 
+`ContextBreakdown` and `ContextBucket` provide host-facing context usage
+metadata for UI bars and compression diagnostics. Buckets separate static
+prefix costs such as system prompts and tool definitions from compressible
+conversation or memory history, and measured provider prompt usage can override
+rough local estimates without storing raw prompt text.
+
 Already-extracted web pages can be passed through `reduce_web_extract` or
 `reduce_web_extract_with_store`. The reducer removes inline base64 image blobs,
 preserves ordinary markdown image URLs, and stores omitted middle content in CCR
@@ -237,6 +243,7 @@ src/
   config/       Compression target and policy configuration
   conversation/ Provider-neutral conversation compaction helpers
   detect/       Content-kind hints and structural detection
+  observability.rs Non-sensitive context usage breakdowns
   pipeline/     Typed transform/report primitives
   policy/       Host compaction policy helpers
   reduce/       Rule-engine reducers and command normalization
