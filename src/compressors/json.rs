@@ -20,7 +20,7 @@ use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::has_error_indicators;
-use crate::relevance::Bm25Corpus;
+use crate::relevance::{Bm25Corpus, tokenize};
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 /// Minimum rows before tabular rendering is worth the header overhead.
@@ -44,6 +44,8 @@ pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
 pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
 /// Maximum evenly-spaced middle anchors to add for large generic arrays.
 pub const MAX_SPREAD_ANCHORS: usize = 8;
+/// Maximum information-dense middle rows to anchor.
+pub const MAX_INFORMATION_DENSE_ANCHORS: usize = 8;
 /// Do not spend unbounded parse effort on huge string cells.
 const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
@@ -208,8 +210,9 @@ pub fn analyze(content: &str) -> Option<JsonAnalysis> {
 
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
 /// rows flagged as anomalous, numeric change points, duplicate-cluster
-/// representatives, spread anchors, representative discriminator buckets, or
-/// query-relevant. Returns ascending, de-duplicated indices.
+/// representatives, spread anchors, information-dense rows, representative
+/// discriminator buckets, or query-relevant. Returns ascending, de-duplicated
+/// indices.
 fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
     let n = rows.len();
     let lossy = n > ROW_DROP_THRESHOLD;
@@ -231,6 +234,9 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
         keep.insert(i);
     }
     for i in duplicate_cluster_representatives(rows) {
+        keep.insert(i);
+    }
+    for i in information_dense_rows(rows, &keep) {
         keep.insert(i);
     }
 
@@ -442,6 +448,57 @@ fn numeric_change_point_rows(rows: &[FlatRow], key: &str) -> Vec<usize> {
 fn median_delta(mut deltas: Vec<f64>) -> f64 {
     deltas.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     deltas[deltas.len() / 2]
+}
+
+fn information_dense_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<usize> {
+    let n = rows.len();
+    let start = dynamic_head_rows(n).min(n);
+    let end = n.saturating_sub(dynamic_tail_rows(n));
+    if start >= end {
+        return Vec::new();
+    }
+
+    let seen = existing_keep
+        .iter()
+        .filter_map(|&i| rows.get(i).map(row_text))
+        .collect::<BTreeSet<_>>();
+    let mut scored = (start..end)
+        .filter(|index| !existing_keep.contains(index))
+        .filter_map(|index| {
+            let text = row_text(&rows[index]);
+            if seen.contains(&text) {
+                return None;
+            }
+            let unique_terms = tokenize(&text).into_iter().collect::<BTreeSet<_>>().len();
+            (unique_terms > 0).then_some((index, unique_terms, text.len()))
+        })
+        .collect::<Vec<_>>();
+    if scored.is_empty() {
+        return Vec::new();
+    }
+
+    let baseline = median_usize(scored.iter().map(|(_, terms, _)| *terms).collect());
+    let threshold = baseline + (baseline / 2).max(2);
+
+    scored.sort_by(|(a_index, a_terms, a_len), (b_index, b_terms, b_len)| {
+        b_terms
+            .cmp(a_terms)
+            .then_with(|| b_len.cmp(a_len))
+            .then_with(|| a_index.cmp(b_index))
+    });
+    let mut anchors = scored
+        .into_iter()
+        .filter(|(_, terms, _)| *terms > threshold)
+        .take(MAX_INFORMATION_DENSE_ANCHORS)
+        .map(|(index, _, _)| index)
+        .collect::<Vec<_>>();
+    anchors.sort_unstable();
+    anchors
+}
+
+fn median_usize(mut values: Vec<usize>) -> usize {
+    values.sort_unstable();
+    values[values.len() / 2]
 }
 
 #[derive(Debug, Clone)]
@@ -846,6 +903,27 @@ mod tests {
 
         assert!(c.lossy);
         assert!(c.text.contains("phase transition payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn information_dense_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if i == 72 {
+                "trace alpha beta gamma delta epsilon zeta eta theta iota kappa lambda".to_string()
+            } else {
+                format!("ordinary payload {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("trace alpha beta gamma"), "{}", c.text);
     }
 
     #[test]
