@@ -84,7 +84,7 @@ the original bytes unchanged.
   command-rule outputs, and reconstructible high-context template runs while
   dropping passing noise.
 - **Search compressor** - groups grep/ripgrep output by file, ranks matches,
-  and keeps top hits with per-file tallies.
+  and keeps top hits with per-file and global omitted-match tallies.
 - **Diff compressor** - keeps patch structure and changed lines, collapses long
   context, and marks omitted lockfile, generated-bundle, or configured noisy
   hunks with explicit reasons.

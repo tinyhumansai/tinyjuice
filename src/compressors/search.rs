@@ -115,6 +115,8 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
         TOP_K_PER_FILE
     );
 
+    let mut omitted_total = 0usize;
+    let mut files_with_omissions = 0usize;
     for (path, mut matches) in files {
         let total = matches.len();
         if total <= TOP_K_PER_FILE {
@@ -141,6 +143,14 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
             out,
             "[+{} more match(es) in {path}]",
             total - TOP_K_PER_FILE
+        );
+        omitted_total += total - TOP_K_PER_FILE;
+        files_with_omissions += 1;
+    }
+    if omitted_total > 0 {
+        let _ = writeln!(
+            out,
+            "[search omitted: {omitted_total} match(es) not shown across {files_with_omissions} file(s)]"
         );
     }
 
@@ -422,6 +432,10 @@ mod tests {
         let out = compress(&input, None).expect("compresses").text;
         assert!(out.contains("more match(es) in src/a.rs"), "{out}");
         assert!(out.contains("more match(es) in src/b.rs"));
+        assert!(
+            out.contains("[search omitted: 110 match(es) not shown across 2 file(s)]"),
+            "{out}"
+        );
         // Preamble survives.
         assert!(out.contains("120 match(es)"));
         assert!(out.len() < input.len());
