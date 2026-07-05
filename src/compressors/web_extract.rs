@@ -363,6 +363,44 @@ mod tests {
     }
 
     #[test]
+    fn one_mb_page_returns_recoverable_head_tail_footer() {
+        let mut content = String::new();
+        let mut line = 0usize;
+        while content.len() <= 1024 * 1024 {
+            content.push_str(&format!(
+                "megapage-line-{line:06}: extracted article text\n"
+            ));
+            line += 1;
+        }
+        content.push_str("megapage-final-sentinel\n");
+        let store = MemoryCcrStore::new(4, content.len() * 2);
+        let input = page(content);
+        let options = WebExtractOptions {
+            char_limit: 160,
+            head_ratio: 0.5,
+            ..options()
+        };
+
+        let out = reduce_web_extract_with_store(&input, &options, &store);
+
+        assert!(input.content.len() > 1024 * 1024);
+        assert!(out.truncated);
+        assert!(out.full_text_retained);
+        assert!(out.text.contains("megapage-line-000000"));
+        assert!(out.text.contains("megapage-final-sentinel"));
+        assert!(out.text.contains(FOOTER_RULE));
+        assert!(out.text.contains("tokenjuice_retrieve"));
+        assert_eq!(
+            parse_markers(&out.text),
+            vec![out.ccr_token.clone().unwrap()]
+        );
+        assert_eq!(
+            store.get(out.ccr_token.as_deref().unwrap()).as_deref(),
+            Some(input.content.as_str())
+        );
+    }
+
+    #[test]
     fn store_failure_returns_cleaned_whole_page_without_unrecoverable_footer() {
         let store = MemoryCcrStore::new(1, 16);
         let input = page("x".repeat(200));
