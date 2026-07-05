@@ -10,6 +10,7 @@
 //! carries a token that retrieves exactly that block — gated on
 //! `opts.ccr_enabled`.
 
+pub(crate) mod anchors;
 pub mod code;
 pub mod diff;
 pub mod generic;
