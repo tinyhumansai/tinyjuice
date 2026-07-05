@@ -1,4 +1,4 @@
-[search: 500 match(es) across 13 file(s) · top 5 per file · full set via retrieve footer]
+[search: 500 match(es) across 20 file(s) · top 5 per file · full set via retrieve footer]
 <OPENHUMAN_ROOT>/src/api/jwt.rs:7:pub use crate::openhuman::credentials::{APP_SESSION_PROVIDER, DEFAULT_AUTH_PROFILE_NAME};
 <OPENHUMAN_ROOT>/src/api/rest_tests.rs:330:        provider,
 <OPENHUMAN_ROOT>/src/api/rest_tests.rs:336:    assert_eq!(provider, "telegram");
@@ -46,23 +46,45 @@
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:679:fn is_session_expired_error_does_not_match_byo_key_provider_401() {
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:680:    // BYO-key provider 401 should not clear the user session.
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:712:    // it was too broad and caught Discord/OAuth provider token errors. It is
+<OPENHUMAN_ROOT>/src/core/runtime.rs:4://! hundreds of tool specs + the nested provider/tool loop), and delegating
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:134:                provider: "test-provider".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:418:                provider: "slack".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:426:                provider: "slack".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:500:            DomainEvent::ProviderApiKeyRejected {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:501:                provider: "openrouter".into(),
+<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:156:                // query params, or pasted-through provider error text that
+<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:159:                let redacted = crate::openhuman::inference::provider::ops::sanitize_api_error(
+<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:237:    // the UI. Generic downstream/provider 401s must stay recoverable errors;
+<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:240:        let sanitized_reason = crate::openhuman::inference::provider::ops::sanitize_api_error(msg);
+<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:247:            // pasted-through provider replies. `sanitize_api_error` runs
+[+22 more match(es) in <OPENHUMAN_ROOT>/src/core/jsonrpc.rs]
+<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:207:        "openhuman.providers_list_models",
+<OPENHUMAN_ROOT>/src/core/cli.rs:18:/// prompts, provider requests, and sub-agent tool loops.
+<OPENHUMAN_ROOT>/src/core/cli.rs:290:    // hundreds of tool specs + the nested provider/tool loop), and delegating
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:123:                eprintln!("[subconscious] session token found — provider available");
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:126:                eprintln!("[subconscious] WARNING: no session token — cloud provider will fail");
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:134:        // Check provider availability
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:136:            crate::openhuman::subconscious::provider::subconscious_provider_unavailable_reason(
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:140:            eprintln!("[subconscious] provider unavailable: {reason}");
 [+5 more match(es) in <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs]
-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:85:    /// A sub-agent failed (max iterations, provider error, missing
-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:216:    /// The configured embedding provider is unreachable or the requested model
-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:241:    /// Published by `inference::provider::ops::http_error::
-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:242:    /// log_byo_provider_auth_failure` (once per failure episode, via the
-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:248:    /// inline provider-error notice. The `message` field is a pre-formatted,
-[+23 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events.rs]
+<OPENHUMAN_ROOT>/plan.md:32:  frontend E2E (WDIO + Playwright), Rust unit (agent/memory; channels/providers/platform;
+<OPENHUMAN_ROOT>/plan.md:55:| ✅ | `src/openhuman/routing/factory.rs` | `factory_constructs_without_panic_when_runtime_enabled`, `factory_llamacpp_provider_constructs_without_panic`, `factory_custom_openai_provider_constructs_without_panic`, `factory_lm_studio_provider_constructs_without_panic` | Skeptic traced the whole construction path — provably infallible (pure struct init), so the tests cannot fail. One test's comment claims to verify probe-URL selection but the body asserts nothing; fields are private so strengthening is blocked. |
+<OPENHUMAN_ROOT>/plan.md:59:| ⚠️ | `src/openhuman/channels/providers/whatsapp_tests.rs` | 7 × `whatsapp_parse_<type>_message_skipped` | All hit the identical `type != "text" → continue` branch; collapse to one parameterized loop over the type strings. |
+<OPENHUMAN_ROOT>/plan.md:79:| `src/openhuman/channels/providers/qq_tests.rs` | `test_name` | Sole coverage of `QQChannel::name()`, which keys routing (`routes.rs:345`) and the channel map (`runtime/startup.rs:701`). A rename would ship uncaught. |
+<OPENHUMAN_ROOT>/plan.md:96:| ✅ | every `connector-*.spec.ts::composio_sync RPC routes to mock backend` | Name promises routing; body only asserts the session didn't crash (original assertion removed per inline comment). | Rename to what it checks, or move the real routing assertion to a native-provider connector where sync actually hits the mock. |
+[+8 more match(es) in <OPENHUMAN_ROOT>/plan.md]
+<OPENHUMAN_ROOT>/src/core/agent_cli.rs:4://! This is intentionally scoped to *debugging*: no execution, no provider
+<OPENHUMAN_ROOT>/src/core/socketio.rs:123:    /// `"provider"` | `"openhuman_budget"` | `"agent_loop"`
+<OPENHUMAN_ROOT>/src/core/socketio.rs:137:    /// Provider name extracted from `"<provider> API error (...)"`
+<OPENHUMAN_ROOT>/src/core/socketio.rs:138:    /// envelopes. `None` for non-provider errors (OpenHuman budget cap,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:139:    /// agent loop) and for transport failures without a provider prefix.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:141:    pub error_provider: Option<String>,
+[+8 more match(es) in <OPENHUMAN_ROOT>/src/core/socketio.rs]
 <OPENHUMAN_ROOT>/src/core/observability.rs:34:/// (`openhuman::inference::provider::ops::should_report_provider_http_failure`) and the
 <OPENHUMAN_ROOT>/src/core/observability.rs:35:/// `before_send` filter (`is_transient_provider_http_failure`). Update here
 <OPENHUMAN_ROOT>/src/core/observability.rs:99:    /// HTTP layer (`providers::ops::api_error`) already demotes its own
 <OPENHUMAN_ROOT>/src/core/observability.rs:196:    /// `AgentError::EmptyProviderResponse` + `AgentError::skips_sentry()`
 <OPENHUMAN_ROOT>/src/core/observability.rs:210:    /// any future channel provider) whose error chain contains `"model
-[+316 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs]
+[+281 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs]
 
-[compacted tool output — this is a PARTIAL view; the full original (58021 bytes) is available by calling tokenjuice_retrieve with token "206543dc099b9c76c0690190597440c4" (marker ⟦tj:206543dc099b9c76c0690190597440c4⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (59774 bytes) is available by calling tokenjuice_retrieve with token "d278da3c8adb93b65703c51109c54af5" (marker ⟦tj:d278da3c8adb93b65703c51109c54af5⟧)]

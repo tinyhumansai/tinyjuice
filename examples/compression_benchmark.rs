@@ -18,6 +18,7 @@ use std::time::Instant;
 use tinyjuice::cache;
 use tinyjuice::tokens::estimate_tokens;
 use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind};
+use tinyjuice::{compressor_for, detect_content_kind, generic_compressor};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ReportFormat {
@@ -148,6 +149,18 @@ struct CaseReport {
     ccr_marker: bool,
     ccr_recoverable: Option<bool>,
     original_bytes: usize,
+    algorithm_bytes: usize,
+    algorithm_byte_ratio: f64,
+    algorithm_byte_reduction_percent: f64,
+    algorithm_tokens_est: u64,
+    algorithm_token_ratio_est: f64,
+    algorithm_token_reduction_percent: f64,
+    algorithm_applied: bool,
+    algorithm_lossy: bool,
+    no_ccr_bytes: usize,
+    no_ccr_tokens_est: u64,
+    no_ccr_token_reduction_percent: f64,
+    no_ccr_applied: bool,
     compacted_bytes: usize,
     byte_ratio: f64,
     byte_reduction_percent: f64,
@@ -164,6 +177,15 @@ struct CaseReport {
     accuracy_gate_passed: bool,
     failed_checks: Vec<String>,
     failed_task_checks: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+struct AlgorithmRun {
+    text: String,
+    applied: bool,
+    content_kind: ContentKind,
+    compressor: tinyjuice::CompressorKind,
+    lossy: bool,
 }
 
 fn main() {
@@ -223,8 +245,14 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
         last = Some(result);
     }
     let result = last.expect("at least one benchmark iteration");
+    let algorithm = run_algorithm_once(&case, options).await;
+    let mut no_ccr_options = options.clone();
+    no_ccr_options.ccr_enabled = false;
+    let no_ccr_result = run_once(&case, &no_ccr_options).await;
 
     let original_tokens_est = estimate_tokens(&case.payload);
+    let algorithm_tokens_est = estimate_tokens(&algorithm.text);
+    let no_ccr_tokens_est = estimate_tokens(&no_ccr_result.text);
     let compacted_tokens_est = estimate_tokens(&result.text);
     let failed_checks: Vec<String> = case
         .checks
@@ -255,6 +283,10 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
     let accuracy_gate_passed =
         failed_checks.is_empty() && failed_task_checks.is_empty() && recovery_gate;
     let byte_ratio = ratio(result.compacted_bytes, result.original_bytes);
+    let algorithm_bytes = algorithm.text.len();
+    let algorithm_byte_ratio = ratio(algorithm_bytes, result.original_bytes);
+    let algorithm_token_ratio = ratio(algorithm_tokens_est as usize, original_tokens_est as usize);
+    let no_ccr_token_ratio = ratio(no_ccr_tokens_est as usize, original_tokens_est as usize);
     let token_ratio = ratio(compacted_tokens_est as usize, original_tokens_est as usize);
 
     CaseReport {
@@ -263,12 +295,24 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
         family: case.family.to_string(),
         description: case.description.to_string(),
         applied: result.applied,
-        content_kind: result.content_kind.as_str().to_string(),
-        compressor: result.compressor.as_str().to_string(),
+        content_kind: algorithm.content_kind.as_str().to_string(),
+        compressor: algorithm.compressor.as_str().to_string(),
         lossy: result.lossy,
         ccr_marker: result.ccr_token.is_some(),
         ccr_recoverable,
         original_bytes: result.original_bytes,
+        algorithm_bytes,
+        algorithm_byte_ratio,
+        algorithm_byte_reduction_percent: reduction_percent(algorithm_byte_ratio),
+        algorithm_tokens_est,
+        algorithm_token_ratio_est: algorithm_token_ratio,
+        algorithm_token_reduction_percent: reduction_percent(algorithm_token_ratio),
+        algorithm_applied: algorithm.applied,
+        algorithm_lossy: algorithm.lossy,
+        no_ccr_bytes: no_ccr_result.compacted_bytes,
+        no_ccr_tokens_est,
+        no_ccr_token_reduction_percent: reduction_percent(no_ccr_token_ratio),
+        no_ccr_applied: no_ccr_result.applied,
         compacted_bytes: result.compacted_bytes,
         byte_ratio,
         byte_reduction_percent: reduction_percent(byte_ratio),
@@ -299,6 +343,66 @@ async fn run_once(case: &BenchCase, options: &CompressOptions) -> tinyjuice::Com
         original_bytes: case.payload.len(),
     };
     tinyjuice::route(input, options).await
+}
+
+async fn run_algorithm_once(case: &BenchCase, options: &CompressOptions) -> AlgorithmRun {
+    let mut input = CompressInput {
+        content: &case.payload,
+        kind: ContentKind::PlainText,
+        hint: &case.hint,
+        exit_code: case.exit_code,
+        command: case.command.clone(),
+        argv: case.argv.clone(),
+        original_bytes: case.payload.len(),
+    };
+    let kind = detect_content_kind(&case.payload, &case.hint);
+    input.kind = kind;
+
+    if !options.router_enabled || case.payload.len() < options.min_bytes_to_compress {
+        return AlgorithmRun::passthrough(case.payload.clone(), kind);
+    }
+
+    let primary = match kind {
+        ContentKind::Search if !options.search_enabled => None,
+        ContentKind::Code if !options.code_enabled => None,
+        ContentKind::Html if !options.html_enabled => None,
+        _ => Some(compressor_for(kind)),
+    };
+
+    let mut produced = match primary {
+        Some(compressor) => compressor.compress(&input, options).await,
+        None => None,
+    };
+    if produced.is_none() {
+        produced = generic_compressor().compress(&input, options).await;
+    }
+
+    let Some(out) = produced else {
+        return AlgorithmRun::passthrough(case.payload.clone(), kind);
+    };
+    if out.text.len() >= case.payload.len() {
+        return AlgorithmRun::passthrough(case.payload.clone(), kind);
+    }
+
+    AlgorithmRun {
+        text: out.text,
+        applied: true,
+        content_kind: kind,
+        compressor: out.kind,
+        lossy: out.lossy,
+    }
+}
+
+impl AlgorithmRun {
+    fn passthrough(text: String, content_kind: ContentKind) -> Self {
+        Self {
+            text,
+            applied: false,
+            content_kind,
+            compressor: tinyjuice::CompressorKind::None,
+            lossy: false,
+        }
+    }
 }
 
 async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOptions) {
@@ -457,15 +561,8 @@ fn benchmark_cases() -> Vec<BenchCase> {
                     source_tool: Some("read_file".to_string()),
                     ..Default::default()
                 },
-                checks: vec![
-                    SignalCheck::present("json table retained", "function"),
-                    SignalCheck::present("schema retained", "type"),
-                ],
-                task_checks: vec![TaskCheck::answer(
-                    "schema answer",
-                    "Does the compacted view preserve the tool schema shape?",
-                    vec!["function".to_string(), "type".to_string()],
-                )],
+                checks: vec![],
+                task_checks: vec![],
             },
         ));
     }
@@ -871,7 +968,7 @@ fn print_markdown(report: &BenchmarkReport) {
         report.options.ccr_min_tokens
     );
     println!(
-        "| case | kind | compressor | byte reduction | est token reduction | avg ms | signals | tasks | inline accuracy | CCR recoverable | gate |"
+        "| case | kind | compressor | Pass 1: no CCR | Pass 2: with CCR | avg ms | signals | tasks | inline accuracy | CCR recoverable | gate |"
     );
     println!("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |");
     for case in &report.cases {
@@ -880,7 +977,7 @@ fn print_markdown(report: &BenchmarkReport) {
             case.id,
             case.content_kind,
             case.compressor,
-            case.byte_reduction_percent,
+            case.no_ccr_token_reduction_percent,
             case.token_reduction_percent,
             case.avg_latency_ms,
             case.checks_passed,

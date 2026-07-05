@@ -3,7 +3,7 @@
 TinyJuice has two benchmark surfaces:
 
 - `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
-- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
+- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports two reduction passes, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
 
 By default, the fixture suite emits metadata only. It does not print raw prompt,
 tool, or context payloads unless `--dump-samples` is explicitly requested.
@@ -48,6 +48,15 @@ Every case can carry two inline accuracy layers:
 - Task checks: small pinned questions that must be answerable from the compacted inline text, such as "Which test failed?" or "What config value changed?"
 
 Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
+
+Benchmark tables use two compression passes:
+
+- **Pass 1: no CCR** disables CCR and reports only reductions that the router can safely accept without a recovery store. Lossy compressors therefore show `0.0%` unless they can produce an accepted non-CCR result.
+- **Pass 2: with CCR** uses the normal model-facing output, including the CCR recovery footer when the compressor drops data.
+
+Use Pass 1 to judge whether a compression algorithm is intrinsically useful
+without recoverability. Use Pass 2 to judge final context savings when TinyJuice
+is allowed to make lossy output recoverable.
 
 Current categories cover:
 

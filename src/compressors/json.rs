@@ -137,9 +137,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
 
     let table = out.trim_end().to_string();
     let minified = serde_json::to_string(&value).ok()?;
-    let output = if table.len() < content.len() {
-        table
-    } else if minified.len() < content.len() {
+    let output = if minified.len() < content.len() && minified.len() < table.len() {
         log::debug!(
             "[tokenjuice][json] minified {} rows × {} cols ({} -> {} bytes); markdown table was {} bytes",
             rows.len(),
@@ -152,6 +150,8 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
             minified,
             CompressorKind::SmartCrusher,
         ));
+    } else if table.len() < content.len() {
+        table
     } else {
         return None;
     };
@@ -367,5 +367,21 @@ mod tests {
         ]"#;
         let out = compress(input).expect("minifies").text;
         assert_eq!(out, r#"[{"a":1,"b":2},{"a":3,"b":4},{"a":5,"b":6}]"#);
+    }
+
+    #[test]
+    fn minified_json_wins_when_table_is_smaller_than_original_but_larger_than_minified() {
+        let input = r#"[
+          {"enabled": true, "id": 1},
+          {"enabled": false, "id": 2},
+          {"enabled": true, "id": 3},
+          {"enabled": false, "id": 4},
+          {"enabled": true, "id": 5}
+        ]"#;
+        let out = compress(input).expect("minifies").text;
+        assert_eq!(
+            out,
+            r#"[{"enabled":true,"id":1},{"enabled":false,"id":2},{"enabled":true,"id":3},{"enabled":false,"id":4},{"enabled":true,"id":5}]"#
+        );
     }
 }

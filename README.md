@@ -76,19 +76,20 @@ attribution for agent-created commits.
 
 ## Benchmark Snapshot
 
-The checked-in benchmark corpus uses 10 real snapshots per category and verifies
-inline accuracy plus CCR recovery for lossy compactions.
+The checked-in benchmark corpus uses 10 real snapshots per category. `Pass 1`
+disables CCR and reports only reductions that are safe without recovery. `Pass
+2` is the final model-facing result with CCR enabled.
 
-| Category | Cases | Avg est. token reduction | Avg latency |
-| --- | ---: | ---: | ---: |
-| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 86.3% | 0.140 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 75.3% | 0.164 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 71.2% | 0.143 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 58.0% | 0.429 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 51.9% | 0.698 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 44.8% | 0.320 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 14.1% | 0.034 ms |
-| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0.0% | 0.000 ms |
+| Category | Cases | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | ---: | ---: | ---: | ---: |
+| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 0.0% | 86.3% | 0.144 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 0.0% | 75.3% | 0.167 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 0.0% | 70.0% | 0.150 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 0.0% | 51.9% | 0.710 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 0.0% | 48.0% | 0.311 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 0.0% | 19.4% | 0.363 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 0.0% | 14.1% | 0.034 ms |
+| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0.0% | 0.0% | 0.000 ms |
 
 These are local real-snapshot corpus measurements, not production-wide claims.
 See [docs/benchmark](docs/benchmark) and

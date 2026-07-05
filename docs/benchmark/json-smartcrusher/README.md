@@ -1,34 +1,34 @@
 # JSON SmartCrusher
 
-Real OpenHuman Composio tool-catalog slices. TinyJuice converts repeated JSON object arrays into compact tables and keeps the full original recoverable through CCR.
+Real OpenHuman JSON snapshots: tool catalogs, API responses, schemas, package metadata, Lottie payloads, and config files. TinyJuice now chooses the smallest useful JSON representation before CCR, using Markdown tables only when they beat minified JSON.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Pass 1` is the accepted result with CCR disabled. `Pass 2` is the final model-facing result with CCR enabled.
 
 ## Cases
 
-| Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
+| Case | Input | Output | Original | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `10-github-tools-10` | [input](cases/10-github-tools-10/input.json) | [output](cases/10-github-tools-10/output.md) | 98.3 KB | 36.2 KB | 63.1% | 0.352 ms | true |
-| `08-github-tools-8` | [input](cases/08-github-tools-8/input.json) | [output](cases/08-github-tools-8/output.md) | 61.1 KB | 24.6 KB | 59.7% | 0.233 ms | true |
-| `07-github-tools-7` | [input](cases/07-github-tools-7/input.json) | [output](cases/07-github-tools-7/output.md) | 70.5 KB | 28.9 KB | 59.1% | 0.264 ms | true |
-| `03-github-tools-3` | [input](cases/03-github-tools-3/input.json) | [output](cases/03-github-tools-3/output.md) | 170.1 KB | 69.7 KB | 59.0% | 0.793 ms | true |
-| `04-github-tools-4` | [input](cases/04-github-tools-4/input.json) | [output](cases/04-github-tools-4/output.md) | 71.6 KB | 29.9 KB | 58.2% | 0.303 ms | true |
-| `06-github-tools-6` | [input](cases/06-github-tools-6/input.json) | [output](cases/06-github-tools-6/output.md) | 72.8 KB | 30.6 KB | 58.0% | 0.305 ms | true |
-| `01-github-tools-1` | [input](cases/01-github-tools-1/input.json) | [output](cases/01-github-tools-1/output.md) | 84.4 KB | 36.1 KB | 57.2% | 0.587 ms | true |
-| `02-github-tools-2` | [input](cases/02-github-tools-2/input.json) | [output](cases/02-github-tools-2/output.md) | 144.5 KB | 62.2 KB | 57.0% | 0.772 ms | true |
-| `09-github-tools-9` | [input](cases/09-github-tools-9/input.json) | [output](cases/09-github-tools-9/output.md) | 78.9 KB | 34.9 KB | 55.8% | 0.287 ms | true |
-| `05-github-tools-5` | [input](cases/05-github-tools-5/input.json) | [output](cases/05-github-tools-5/output.md) | 91.5 KB | 43.1 KB | 52.8% | 0.397 ms | true |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | 890.8 KB | 0.0% | 70.6% | 2.441 ms | true |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | 106.7 KB | 0.0% | 63.9% | 0.389 ms | true |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | 110.9 KB | 0.0% | 59.5% | 0.533 ms | true |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | 62.0 KB | 0.0% | 0.0% | 0.144 ms | n/a |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | 9.4 KB | 0.0% | 0.0% | 0.016 ms | n/a |
+| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | 16.8 KB | 0.0% | 0.0% | 0.027 ms | n/a |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | 48.6 KB | 0.0% | 0.0% | 0.081 ms | n/a |
+| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | 2.4 KB | 0.0% | 0.0% | 0.003 ms | n/a |
+| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | 201 B | 0.0% | 0.0% | 0.000 ms | n/a |
+| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | 313 B | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 
-TinyJuice recognizes repeated JSON object arrays and tries a GitHub-renderable Markdown table first. If the table overhead does not save space, it falls back to minified JSON; if neither form is smaller, the router returns the original.
+TinyJuice parses JSON before choosing a representation. Homogeneous object arrays can become GitHub-renderable Markdown tables, but minified JSON wins when it is smaller or when the JSON shape is too nested for a readable table. If neither representation saves space, the router returns the original.
 
 ## Syntax-Aware Samples
 
-### `10-github-tools-10`
+### `02-notion-tools-array`
 
-- [Full input](cases/10-github-tools-10/input.json)
-- [Full output](cases/10-github-tools-10/output.md)
+- [Full input](cases/02-notion-tools-array/input.json)
+- [Full output](cases/02-notion-tools-array/output.md)
 
 Input excerpt:
 
@@ -36,88 +36,88 @@ Input excerpt:
 [
   {
     "function": {
-      "description": "Lists machine types available for GitHub Codespaces in a repository, optionally using a Git ref to check compatibility based on prebuild availability and devcontainer configurations.",
-      "name": "GITHUB_LIST_AVAILABLE_MACHINE_TYPES_FOR_A_REPOSITORY",
+      "description": "Bulk-add content blocks to Notion. Text >2000 chars auto-splits. Parses markdown formatting. ⚠️ PARENT BLOCK TYPES: Content is added AS CHILDREN of parent_block_id. - To add content AFTER a head...
+      "name": "NOTION_ADD_MULTIPLE_PAGE_CONTENT",
       "parameters": {
-        "description": "Request schema for listing available machine types for GitHub Codespaces in a repository.",
         "properties": {
-          "client_ip": {
-            "description": "An IP address used for auto-detecting the location if `location` is not specified. This is particularly useful when requests are proxied, to ensure location-based machine availability is accur...
-            "title": "Client Ip",
-            "type": "string"
-          },
-          "location": {
-            "description": "The geographic location to check for available machine types. If not provided, the location may be inferred. Specifying a location can help find machines in a preferred region.",
+          "after": {
+            "description": "Block ID to insert content AFTER (as siblings). Use this to add content after a heading: set parent_block_id to the PAGE ID and 'after' to the HEADING block ID. The new blocks appear immediate...
             "examples": [
-              "EastUs",
-              "WestUs",
-              "EuropeWest"
+              "4b5f6e87-123a-456b-789c-9de8f7a9e4c0"
             ],
-            "title": "Location",
+            "title": "After",
             "type": "string"
           },
-          "owner": {
-            "description": "The account owner of the repository. This is typically the username (for personal repositories) or the organization name (for organization-owned repositories). The name is not case sensitive."...
+          "content_blocks": {
+            "description": "⚠️ CRITICAL: Notion API enforces 2000 char limit per text.content field. Content >2000 chars auto-splits.\nList of blocks to add (max 100). Also accepts 'blocks' as alias. Each item can be...
             "examples": [
-              "octocat",
-              "github"
-            ],
-            "title": "Owner",
-            "type": "string"
-          },
-          "ref": {
-            "description": "The Git reference (branch name, tag name, or commit SHA) to check for prebuild availability and devcontainer configuration restrictions. This ensures listed machine types are compatible with t...
-            "examples": [
-              "main",
+              [
+                {
+                  "block_property": "heading_1",
+                  "content": "# Project Status Report"
+                },
+                {
+                  "block_property": "paragraph",
+                  "content": "System is **running smoothly** with *excellent* performance."
+                },
+                {
+                  "block_property": "divider"
+                },
+                {
+                  "block_property": "to_do",
+                  "content": "Task item"
+                }
+              ],
+              [
 
 ```
 
 Output excerpt:
 
 ```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
+[json table: 48 rows × 2 cols · blank=absent key · exact original via retrieve footer]
 | function | type |
 | --- | --- |
-| {"description":"Lists machine types available for GitHub Codespaces in a repository, optionally using a Git ref to check compatibility based on prebuild availability and devcontainer configurations.","name":"GITHUB_LIS...
-| {"description":"Lists branches for an existing GitHub repository, with an option to filter by protection status.","name":"GITHUB_LIST_BRANCHES","parameters":{"description":"Request schema for listing branches in a GitH...
-| {"description":"Lists branches in an accessible repository where the provided commit SHA is the head, useful for identifying development lines based on that commit.","name":"GITHUB_LIST_BRANCHES_FOR_HEAD_COMMIT","param...
-| {"description":"Lists annotations for a specific check run in a GitHub repository, detailing issues like errors or warnings on particular code lines.","name":"GITHUB_LIST_CHECK_RUN_ANNOTATIONS","parameters":{"descripti...
-| {"description":"List GitHub check runs for a commit SHA, branch, or tag to assess CI status and conclusions. Use when you need reliable CI pass/fail signals beyond commit metadata.","name":"GITHUB_LIST_CHECK_RUNS_FOR_A...
-| {"description":"Lists check runs for a specific check suite in a GitHub repository, optionally filtering by check name or status.","name":"GITHUB_LIST_CHECK_RUNS_IN_A_CHECK_SUITE","parameters":{"description":"Request s...
-| {"description":"Lists check suites for a Git reference (commit SHA, branch, or tag) in a repository, optionally filtering by GitHub App ID or check run name.","name":"GITHUB_LIST_CHECK_SUITES_FOR_A_GIT_REFERENCE","para...
-| {"description":"Lists the immediate child teams of a parent team within an organization.","name":"GITHUB_LIST_CHILD_TEAMS","parameters":{"description":"Request schema for listing immediate child teams of a parent team ...
-| {"description":"Lists GitHub Classrooms to which the authenticated user has administrative access.","name":"GITHUB_LIST_CLASSROOMS","parameters":{"description":"Pagination parameters for listing classrooms.","propertie...
-| {"description":"Lists syntax errors in a repository's CODEOWNERS file, which must be located at the root, `.github/`, or `docs/` directory for the specified ref.","name":"GITHUB_LIST_CODEOWNERS_ERRORS","parameters":{"d...
-| {"description":"Lists all CodeQL databases for a repository where CodeQL analysis has been previously run and completed.","name":"GITHUB_LIST_CODEQL_DATABASES_FOR_A_REPOSITORY","parameters":{"description":"Request mode...
-| {"description":"Lists code scanning alerts for a GitHub organization; use EITHER `tool_name` OR `tool_guid` if filtering by tool, not both.","name":"GITHUB_LIST_CODE_SCANNING_ALERTS_FOR_AN_ORGANIZATION","parameters":{"...
-| {"description":"Lists code scanning alerts for a repository, optionally filtering by tool (which must have produced scan results for the repository), Git reference, state, or severity.","name":"GITHUB_LIST_CODE_SCANNIN...
-| {"description":"Lists code scanning analyses for an existing repository, optionally filtering by tool (name or GUID), Git reference, or SARIF ID.","name":"GITHUB_LIST_CODE_SCANNING_ANALYSES_FOR_A_REPOSITORY","parameter...
-| {"description":"Retrieves all available codes of conduct from GitHub, often used to select one for a repository.","name":"GITHUB_LIST_CODES_OF_CONDUCT","parameters":{"description":"Request to retrieve all codes of cond...
-| {"description":"Tool to fetch all available codes of conduct using GitHub's GraphQL API. Use when you need to retrieve the complete list of codes of conduct that can be applied to repositories.","name":"GITHUB_LIST_COD...
-| {"description":"Lists all GitHub Codespaces owned by a specified member of a given organization.","name":"GITHUB_LIST_CODESPACES_FOR_A_USER_IN_ORGANIZATION","parameters":{"description":"Request schema for `ListCodespac...
-| {"description":"Lists GitHub Codespaces for the authenticated user, optionally filtering by repository ID and supporting pagination.","name":"GITHUB_LIST_CODESPACES_FOR_THE_AUTHENTICATED_USER","parameters":{"descriptio...
-| {"description":"Lists active/pending GitHub Codespaces for an existing organization; admins list all, members list their own.","name":"GITHUB_LIST_CODESPACES_FOR_THE_ORGANIZATION","parameters":{"description":"Request t...
-| {"description":"Tool to list issue and PR comment changes across an organization's repositories efficiently. Use when monitoring comment activity without per-PR/per-issue polling. Filters organization events to return ...
-[... 20 row(s) omitted ...]
-| {"description":"Lists the names and metadata (not values) of secrets for a specified, existing environment within an existing GitHub repository.","name":"GITHUB_LIST_ENVIRONMENT_SECRETS","parameters":{"description":"Re...
-| {"description":"Lists all environment variables, which are plaintext key-value pairs for GitHub Actions workflows, for a specified environment within a GitHub repository.","name":"GITHUB_LIST_ENVIRONMENT_VARIABLES","pa...
-| {"description":"Lists public events for the specified GitHub user, or private events if authenticated as that user, in reverse chronological order.","name":"GITHUB_LIST_EVENTS_FOR_THE_AUTHENTICATED_USER","parameters":{...
-| {"description":"Lists events a specific GitHub user received from followed users and watched repositories; returns private events if authenticated for `username`, otherwise public.","name":"GITHUB_LIST_EVENTS_RECEIVED_...
-| {"description":"Lists followers for a specified, existing GitHub user.","name":"GITHUB_LIST_FOLLOWERS_OF_A_USER","parameters":{"description":"Request schema for listing the followers of a specified GitHub user.","prope...
-| {"description":"Lists users following the authenticated GitHub user, returning an empty list if the user has no followers.","name":"GITHUB_LIST_FOLLOWERS_OF_THE_AUTHENTICATED_USER","parameters":{"description":"Request ...
-| {"description":"Lists forks for a specified repository, which must exist, with options for sorting and pagination.","name":"GITHUB_LIST_FORKS","parameters":{"description":"Parameters for listing repository forks.","pro...
-| {"description":"Lists comments for a specified GitHub Gist.","name":"GITHUB_LIST_GIST_COMMENTS","parameters":{"description":"Request parameters to list comments on a GitHub Gist.","properties":{"gist_id":{"description"...
-| {"description":"Lists all commits for a specified gist.","name":"GITHUB_LIST_GIST_COMMITS","parameters":{"description":"Request schema for `ListGistCommits`","properties":{"gist_id":{"description":"The unique identifie...
-| {"description":"Lists all forks for a given GitHub gist ID.","name":"GITHUB_LIST_GIST_FORKS","parameters":{"description":"Request schema for listing forks of a GitHub gist.","properties":{"gist_id":{"description":"The ...
-
-[compacted tool output — this is a PARTIAL view; the full original (98268 bytes) is available by calling tokenjuice_retrieve with token "8e9f3f51589297e85542be235d490652" (marker ⟦tj:8e9f3f51589297e85542be235d490652�...
+| {"description":"Bulk-add content blocks to Notion. Text >2000 chars auto-splits. Parses markdown formatting. ⚠️ PARENT BLOCK TYPES: Content is added AS CHILDREN of parent_block_id. - To add content AFTER a heading,...
+| {"description":"DEPRECATED: Use 'add_multiple_page_content' for better performance. Adds a single content block to a Notion page/block. CRITICAL: Notion API enforces a HARD LIMIT of 2000 characters per text.content fie...
+| {"description":"DEPRECATED: Use NOTION_APPEND_TEXT_BLOCKS, NOTION_APPEND_TASK_BLOCKS, NOTION_APPEND_CODE_BLOCKS, NOTION_APPEND_MEDIA_BLOCKS, NOTION_APPEND_LAYOUT_BLOCKS, or NOTION_APPEND_TABLE_BLOCKS instead. Appends r...
+| {"description":"Append code and technical blocks (code, quote, equation) to a Notion page. Use for: - Code snippets and programming examples (code) - Citations and highlighted quotes (quote) - Mathematical formulas and...
+| {"description":"Append layout blocks (divider, TOC, breadcrumb, columns) to a Notion page. Supported types: - divider: Horizontal line separator - table_of_contents: Auto-generated from headings - breadcrumb: Page hier...
+| {"description":"Append media blocks (image, video, audio, file, pdf, embed, bookmark) to a Notion page. Use for: - Images and screenshots (image) - YouTube/Vimeo videos or direct video URLs (video) - Audio files and po...
+| {"description":"Append table blocks to a Notion page. Use for structured tabular data like spreadsheets, comparison charts, and status trackers. Example: { \\"table_width\\": 3, \\"has_column_header\\": true, \\"rows\\...
+| {"description":"Append task blocks (to-do, toggle, callout) to a Notion page or block. Supported block types: - to_do: Checkbox items (checkable/uncheckable) - toggle: Collapsible sections - callout: Highlighted boxes ...
+| {"description":"Append text blocks (paragraphs, headings, lists) to a Notion page. This is the most commonly used action for adding content to Notion. Use for: documentation, notes, articles, outlines, lists. Supported...
+| {"description":"Archives (moves to trash) or unarchives (restores from trash) a specified Notion page. Limitation: Workspace-level pages (top-level pages with no parent page or database) cannot be archived via the API ...
+| {"description":"Adds a comment to a Notion page (via `parent_page_id`) OR to an existing discussion thread (via `discussion_id`); cannot create new discussion threads on specific blocks (inline comments).","name":"NOTI...
+| {"description":"Creates a new Notion database as a subpage under a specified parent page with a defined properties schema. IMPORTANT NOTES: - The parent page MUST be shared with your integration, otherwise you'll get a...
+| {"description":"Tool to create a Notion FileUpload object and retrieve an upload URL. Use when you need to automate attaching local or external files directly into Notion without external hosting.","name":"NOTION_CREAT...
+| {"description":"Creates a new page in a Notion workspace under a specified parent page or database. Supports creating pages with markdown content using the native markdown parameter, or as an empty page that can be pop...
+| {"description":"Archives a Notion block, page, or database using its ID, which sets its 'archived' property to true (like moving to \\"Trash\\" in the UI) and allows it to be restored later. Note: This operation will f...
+| {"description":"Duplicates a Notion page, including all its content, properties, and nested blocks, under a specified parent page or workspace.","name":"NOTION_DUPLICATE_PAGE","parameters":{"description":"Defines the p...
+| {"description":"Tool to fetch all child blocks for a given Notion block. Use when you need a complete listing of a block's children beyond a single page; supports optional recursive expansion of nested blocks.","name":...
+| {"description":"Retrieves a paginated list of direct, first-level child block objects along with contents for a given parent Notion block or page ID; use block IDs from the response for subsequent calls to access deepl...
+| {"description":"Fetches metadata for a Notion block (including pages, which are special blocks) using its UUID. Returns block type, properties, and basic info but not child content. Prerequisites: 1) Block/page must be...
+| {"description":"Fetches unresolved comments for a specified Notion block or page ID. The block/page must be shared with your Notion integration and the integration must have 'Read comments' capability enabled, otherwis...
+[... 7 row(s) omitted ...]
+| {"description":"Creates a new page (row) in a specified Notion database. Prerequisites: - Database must be shared with your integration - Property names AND types must match schema exactly (case-sensitive) - Use NOTION...
+[... 5 row(s) omitted ...]
+| {"description":"Queries a Notion database to retrieve pages (rows). In Notion, databases are collections where each row is a page and columns are properties. Returns paginated results with metadata. Important requireme...
+| {"description":"Tool to query a Notion database with server-side filtering, sorting, and pagination. Use when you need to retrieve a subset of rows by property, date, status, or other conditions.","name":"NOTION_QUERY_...
+[... 3 row(s) omitted ...]
+| {"description":"Tool to retrieve a specific property object of a Notion database. Use when you need to get details about a single database column/property.","name":"NOTION_RETRIEVE_DATABASE_PROPERTY","parameters":{"pro...
+| {"description":"Tool to retrieve details of a Notion File Upload object by its identifier. Use when you need to check the status or details of an existing file upload.","name":"NOTION_RETRIEVE_FILE_UPLOAD","parameters"...
+| {"description":"Retrieve a Notion page's properties/metadata (not block content) by page_id. Use when you have a page URL/ID and need to access its properties; for page content use block-children tools.","name":"NOTION...
+| {"description":"Searches Notion pages and databases by title. Use specific search terms to find items by title (primary approach). KNOWN LIMITATIONS: (1) Search indexing is not immediate - recently shared items may not...
+| {"description":"Tool to transmit file contents to Notion for a file upload object. Use after creating a file upload object to send the actual file data.","name":"NOTION_SEND_FILE_UPLOAD","parameters":{"properties":{"fi...
+| {"description":"Updates existing Notion block's text content. ⚠️ CRITICAL: Content limited to 2000 chars. Cannot change block type or archive blocks. Content exceeding 2000 chars will fail with validation error. Fo...
+| {"description":"Update page properties, icon, cover, or archive status. IMPORTANT: Property names are workspace-specific and case-sensitive. Use NOTION_FETCH_ROW or NOTION_FETCH_DATABASE first to discover exact propert...
 
 ```
 
-### `08-github-tools-8`
+### `03-slack-tools-array`
 
-- [Full input](cases/08-github-tools-8/input.json)
-- [Full output](cases/08-github-tools-8/output.md)
+- [Full input](cases/03-slack-tools-array/input.json)
+- [Full output](cases/03-slack-tools-array/output.md)
 
 Input excerpt:
 
@@ -125,444 +125,88 @@ Input excerpt:
 [
   {
     "function": {
-      "description": "Retrieves a specific deployment status by its ID for a given deployment within a GitHub repository.",
-      "name": "GITHUB_GET_DEPLOYMENT_STATUS",
+      "description": "Registers new participants added to a Slack call.",
+      "name": "SLACK_ADD_CALL_PARTICIPANTS",
       "parameters": {
-        "description": "Request schema for `GetDeploymentStatus`",
+        "description": "Request schema for `AddCallParticipants`",
         "properties": {
-          "deployment_id": {
-            "description": "The unique identifier of the deployment.",
+          "id": {
+            "description": "ID of the call returned by the add method.",
             "examples": [
-              "1",
-              "42"
+              "R0123456789"
             ],
-            "title": "Deployment Id",
-            "type": "integer"
-          },
-          "owner": {
-            "description": "The account owner of the repository. The name is not case sensitive.",
-            "examples": [
-              "octocat"
-            ],
-            "title": "Owner",
+            "title": "Id",
             "type": "string"
           },
-          "repo": {
-            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
+          "users": {
+            "description": "The list of users to add as participants in the call. users is a JSON array (formatted as a string) containing information for each user. Each element must include a `slack_id`. For example: `...
             "examples": [
-              "Spoon-Knife"
+              "[{\"slack_id\": \"U1H77\"}]",
+              "[{\"slack_id\": \"U2ABC123\"}]",
+              "[{\"slack_id\": \"U1H77\"}, {\"slack_id\": \"U2ABC123\"}]"
             ],
-            "title": "Repo",
-            "type": "string"
-          },
-          "status_id": {
-            "description": "The unique identifier of the deployment status.",
-            "examples": [
-
-```
-
-Output excerpt:
-
-```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
-| {"description":"Retrieves a specific deployment status by its ID for a given deployment within a GitHub repository.","name":"GITHUB_GET_DEPLOYMENT_STATUS","parameters":{"description":"Request schema for `GetDeploymentS...
-| {"description":"Retrieves detailed information about a specific export of a codespace.","name":"GITHUB_GET_DETAILS_ABOUT_A_CODESPACE_EXPORT","parameters":{"description":"Request schema for `GetDetailsAboutACodespaceExp...
-| {"description":"Fetches a specific discussion by its number from a team within an organization. This is a read-only action that retrieves discussion details including title, body, author information, comment count, and...
-| {"description":"Fetches a specific comment from a team discussion within a specific organization.","name":"GITHUB_GET_DISCUSSION_COMMENT","parameters":{"description":"Request schema for `GetDiscussionComment`","propert...
-| {"description":"Lists all emojis available for use on GitHub, including custom and Unicode emojis.","name":"GITHUB_GET_EMOJIS","parameters":{"description":"Request schema for the `GetEmojis` action. This action does no...
-| {"description":"Tool to look up a pending enterprise unaffiliated member invitation by invitee and enterprise. Use when you need to check the status of a specific invitation.","name":"GITHUB_GET_ENTERPRISE_MEMBER_INVIT...
-| {"description":"Fetches a list of available GitHub feed URLs for the authenticated user.","name":"GITHUB_GET_FEEDS","parameters":{"description":"Request schema for the `GetFeeds` action. This action does not require an...
-| {"description":"Fetches a specific GitHub gist by its `gist_id`, returning comprehensive details if the gist exists.","name":"GITHUB_GET_GIST","parameters":{"description":"Request schema for `GetGist`","properties":{"g...
-| {"description":"Retrieves a specific Gist comment by its ID and the Gist's ID.","name":"GITHUB_GET_GIST_COMMENT","parameters":{"description":"Request to retrieve a specific comment on a Gist.","properties":{"comment_id...
-| {"description":"Retrieves a specific revision of a gist.","name":"GITHUB_GET_GIST_REVISION","parameters":{"description":"Request schema for `GetGistRevision`","properties":{"gist_id":{"description":"The unique identifi...
-| {"description":"Retrieves total GitHub Actions cache usage statistics for an organization, including active cache count and size across all repositories.","name":"GITHUB_GET_GITHUB_ACTIONS_CACHE_USAGE_FOR_AN_ORGANIZATI...
-| {"description":"Retrieves the total count of active GitHub Actions caches and their combined size in bytes for a specified repository.","name":"GITHUB_GET_GITHUB_ACTIONS_CACHE_USAGE_FOR_A_REPOSITORY","parameters":{"des...
-| {"description":"Gets the GitHub Actions permissions for a specified organization, detailing repository enablement and allowed actions policies.","name":"GITHUB_GET_GITHUB_ACTIONS_PERMISSIONS_FOR_AN_ORGANIZATION","param...
-| {"description":"Gets the GitHub Actions permissions policy for a repository, including its enabled status and the scope of allowed actions.","name":"GITHUB_GET_GITHUB_ACTIONS_PERMISSIONS_FOR_A_REPOSITORY","parameters":...
-| {"description":"Tool to get billing premium request usage report for a GitHub user. Use when you need to retrieve usage data for premium features like Copilot or AI models.","name":"GITHUB_GET_GITHUB_BILLING_PREMIUM_RE...
-| {"description":"Tool to retrieve billing usage summary for a GitHub user account. Use when tracking usage costs, monitoring billing details, or generating usage reports for a specific user. Note: This endpoint only ret...
-| {"description":"Fetches GitHub's publicly available metadata, useful for configuring network security policies or IP allow-listing.","name":"GITHUB_GET_GITHUB_META_INFORMATION","parameters":{"description":"Request sche...
-| {"description":"Retrieves detailed information about a specific GitHub Pages build for a repository, which must have GitHub Pages enabled.","name":"GITHUB_GET_GITHUB_PAGES_BUILD","parameters":{"description":"Request sc...
-| {"description":"Retrieves a specific .gitignore template from GitHub by its name, which must be an existing template in GitHub's collection.","name":"GITHUB_GET_GITIGNORE_TEMPLATE","parameters":{"description":"Request ...
-| {"description":"Retrieve a global GitHub security advisory by its GHSA identifier. Use this to get detailed information about vulnerabilities including severity, affected packages, CVSS scores, and references.","name":...
-[... 20 row(s) omitted ...]
-| {"description":"Retrieves the OpenID Connect (OIDC) subject claim customization template for a GitHub organization, which defines how the `sub` claim in OIDC tokens for workflows is constructed.","name":"GITHUB_GET_ORG...
-| {"description":"Retrieves the DNS health check status (e.g., CNAME/A records, HTTPS) for a GitHub Pages site; the check may be pending (HTTP 202) on initial calls or after site changes.","name":"GITHUB_GET_PAGES_DNS_HE...
-| {"description":"Retrieves information for a GitHub Pages site, which must be enabled for the repository.","name":"GITHUB_GET_PAGES_SITE","parameters":{"description":"Request schema for retrieving information about a Gi...
-| {"description":"Retrieves page view statistics for a repository over the last 14 days, including total views, unique visitors, and a daily or weekly breakdown.","name":"GITHUB_GET_PAGE_VIEWS","parameters":{"description...
-| {"description":"Retrieves pending deployment environments for a specific workflow run that are awaiting approval due to protection rules.","name":"GITHUB_GET_PENDING_DEPLOYMENTS_FOR_A_WORKFLOW_RUN","parameters":{"descr...
-| {"description":"Retrieves permission information for a GitHub project (classic) collaborator. Returns the permission level and full user object for a collaborator on a GitHub project (classic). The permission returned ...
-| {"description":"Retrieves a repository's public key for encrypting GitHub Codespaces secrets; requires `repo` scope or equivalent read access to codespaces secrets for private repositories.","name":"GITHUB_GET_PUBLIC_K...
-| {"description":"Retrieves the authenticated user's public key for encrypting GitHub Codespaces secrets. The returned key must be used with libsodium sealed box encryption before creating or updating secrets via the API...
-| {"description":"Retrieves the pull request review protection settings for a specific branch in a GitHub repository, if such protection is configured.","name":"GITHUB_GET_PULL_REQUEST_REVIEW_PROTECTION","parameters":{"d...
-| {"description":"Retrieves the authenticated user's current GitHub API rate limit status, including usage and limits across different resource categories.","name":"GITHUB_GET_RATE_LIMIT_STATUS_FOR_THE_AUTHENTICATED_USER...
-
-[compacted tool output — this is a PARTIAL view; the full original (61140 bytes) is available by calling tokenjuice_retrieve with token "243354ec09ff38ff2a41676e26cde1b8" (marker ⟦tj:243354ec09ff38ff2a41676e26cde1b8�...
-
-```
-
-### `07-github-tools-7`
-
-- [Full input](cases/07-github-tools-7/input.json)
-- [Full output](cases/07-github-tools-7/output.md)
-
-Input excerpt:
-
-```json
-[
-  {
-    "function": {
-      "description": "Gets metadata (name, creation/update timestamps) for an existing repository secret, excluding its encrypted value.",
-      "name": "GITHUB_GET_A_REPOSITORY_SECRET",
-      "parameters": {
-        "description": "Request schema for `GetARepositorySecret`",
-        "properties": {
-          "owner": {
-            "description": "The username or organization name that owns the repository. This field is not case-sensitive.",
-            "examples": [
-              "octocat",
-              "github"
-            ],
-            "title": "Owner",
-            "type": "string"
-          },
-          "repo": {
-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive. ",
-            "examples": [
-              "Spoon-Knife",
-              "docs"
-            ],
-            "title": "Repo",
-            "type": "string"
-          },
-          "secret_name": {
-            "description": "The name of the secret to retrieve.",
-            "examples": [
-              "GH_TOKEN",
-              "API_KEY"
-            ],
-            "title": "Secret Name",
-            "type": "string"
-          }
-        },
-
-```
-
-Output excerpt:
-
-```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
-| {"description":"Gets metadata (name, creation/update timestamps) for an existing repository secret, excluding its encrypted value.","name":"GITHUB_GET_A_REPOSITORY_SECRET","parameters":{"description":"Request schema fo...
-| {"description":"Gets the authenticated user's subscription details for a repository, indicating if they receive notifications.","name":"GITHUB_GET_A_REPOSITORY_SUBSCRIPTION","parameters":{"description":"Request schema ...
-| {"description":"Gets a specific GitHub Actions variable by name from an accessible repository.","name":"GITHUB_GET_A_REPOSITORY_VARIABLE","parameters":{"description":"Request schema for `GetARepositoryVariable`.","prop...
-| {"description":"Returns the configuration of an existing webhook for a given repository.","name":"GITHUB_GET_A_REPOSITORY_WEBHOOK","parameters":{"description":"Request schema for `GetARepositoryWebhook`","properties":{...
-| {"description":"Retrieves a specific pull request review comment by its ID, provided the repository exists, is accessible, and the comment ID is valid.","name":"GITHUB_GET_A_REVIEW_COMMENT_FOR_A_PULL_REQUEST","paramete...
-| {"description":"Retrieves a specific review for a pull request using its owner, repository, pull request number, and review ID.","name":"GITHUB_GET_A_REVIEW_FOR_A_PULL_REQUEST","parameters":{"description":"Request sche...
-| {"description":"Retrieves metadata (name, timestamps, visibility; not the value) for a specific, existing development environment secret associated with the authenticated user's GitHub Codespaces.","name":"GITHUB_GET_A...
-| {"description":"Retrieves detailed information about a specific self-hosted runner registered within a GitHub organization.","name":"GITHUB_GET_A_SELF_HOSTED_RUNNER_FOR_AN_ORGANIZATION","parameters":{"description":"Spe...
-| {"description":"Gets a specific self-hosted runner for a repository by its unique ID.","name":"GITHUB_GET_A_SELF_HOSTED_RUNNER_FOR_A_REPOSITORY","parameters":{"description":"Request schema for retrieving details of a s...
-| {"description":"Retrieves all grades for an existing GitHub Classroom assignment.","name":"GITHUB_GET_ASSIGNMENT_GRADES","parameters":{"description":"Request schema for retrieving grades for a specific GitHub Classroom...
-| {"description":"Retrieves detailed information for a specific Git tag object from a GitHub repository, using the SHA of the tag object itself.","name":"GITHUB_GET_A_TAG","parameters":{"description":"Defines the reposit...
-| {"description":"Retrieves a GitHub team by its slug from a specific organization.","name":"GITHUB_GET_A_TEAM_BY_NAME","parameters":{"description":"Request schema to get a GitHub team using its slug and organization nam...
-| {"description":"Retrieves a specific GitHub notification thread using its unique `thread_id`.","name":"GITHUB_GET_A_THREAD","parameters":{"description":"Request schema for `GetAThread`","properties":{"thread_id":{"desc...
-| {"description":"Retrieves the authenticated user's subscription details for a specific notification thread, identified by `thread_id`.","name":"GITHUB_GET_A_THREAD_SUBSCRIPTION_FOR_THE_AUTHENTICATED_USER","parameters":...
-| {"description":"Browse and list all files/directories in a GitHub repository. Efficiently retrieves the complete repository structure in a single API call when used with recursive mode. Perfect for analyzing codebase s...
-| {"description":"Retrieves the public profile information for an existing GitHub user, specified by their username.","name":"GITHUB_GET_A_USER","parameters":{"description":"Request to retrieve a GitHub user's public pro...
-| {"description":"Retrieves the configuration for a specific webhook associated with a GitHub organization.","name":"GITHUB_GET_A_WEBHOOK_CONFIGURATION_FOR_AN_ORGANIZATION","parameters":{"description":"Request schema for...
-| {"description":"Returns the configuration for an existing webhook on the specified repository.","name":"GITHUB_GET_A_WEBHOOK_CONFIGURATION_FOR_A_REPOSITORY","parameters":{"description":"Request schema for `GetAWebhookC...
-| {"description":"Returns detailed information for a specific delivery attempt of a webhook configured for the specified GitHub organization.","name":"GITHUB_GET_A_WEBHOOK_DELIVERY_FOR_AN_ORGANIZATION_WEBHOOK","parameter...
-| {"description":"Retrieves detailed information for a specific GitHub Actions workflow in a repository, identified by either its numeric ID or its filename.","name":"GITHUB_GET_A_WORKFLOW","parameters":{"description":"D...
-[... 11 row(s) omitted ...]
-| {"description":"Retrieves a specific code scanning alert, which identifies potential code vulnerabilities or errors, by its number from the specified GitHub repository.","name":"GITHUB_GET_CODE_SCANNING_ALERT","paramet...
-[... 8 row(s) omitted ...]
-| {"description":"Retrieves a repository's community profile metrics, including health percentage and the presence of key community files (e.g., README, LICENSE).","name":"GITHUB_GET_COMMUNITY_PROFILE_METRICS","parameter...
-| {"description":"Gets contextual hovercard information for a GitHub user; `subject_type` and `subject_id` can be jointly provided for more specific details.","name":"GITHUB_GET_CONTEXTUAL_INFORMATION_FOR_A_USER","parame...
-| {"description":"Retrieves a specific custom deployment protection rule (used by GitHub Apps for external validation or manual approval of deployments) for a given environment in a repository.","name":"GITHUB_GET_CUSTOM...
-| {"description":"Get pre-flight data (e.g., default location, devcontainer path) for creating a Codespace in a given repository (must exist and be accessible), optionally for a specific Git ref.","name":"GITHUB_GET_DEFA...
-| {"description":"Gets the default GITHUB_TOKEN workflow permissions and settings for a GitHub organization.","name":"GITHUB_GET_DEFAULT_WORKFLOW_PERMISSIONS_FOR_AN_ORGANIZATION","parameters":{"description":"Request sche...
-| {"description":"Gets the default workflow permissions (`read` or `write`) for the GITHUB_TOKEN and whether it can approve pull request reviews in an existing and accessible repository.","name":"GITHUB_GET_DEFAULT_WORKF...
-| {"description":"Gets the dependency diff between two Git revisions in a repository, where 'basehead' specifies the revisions and 'name' can optionally scope to a specific manifest file.","name":"GITHUB_GET_DEPENDENCY_D...
-| {"description":"Gets a specific deploy key, identified by its `key_id`, for the GitHub repository specified by `owner` and `repo`.","name":"GITHUB_GET_DEPLOY_KEY","parameters":{"description":"Request schema to get a sp...
-| {"description":"Gets a specific deployment by ID from a repository, provided the repository and deployment ID exist.","name":"GITHUB_GET_DEPLOYMENT","parameters":{"description":"Request schema for retrieving a specific...
-| {"description":"Retrieves a specific deployment branch policy for an environment in a repository, identified by its unique ID.","name":"GITHUB_GET_DEPLOYMENT_BRANCH_POLICY","parameters":{"description":"Request schema f...
-
-```
-
-### `03-github-tools-3`
-
-- [Full input](cases/03-github-tools-3/input.json)
-- [Full output](cases/03-github-tools-3/output.md)
-
-Input excerpt:
-
-```json
-[
-  {
-    "function": {
-      "description": "Posts a reply to a specific review comment on a GitHub pull request, requiring the repository, pull request, and original comment to exist, and a non-empty reply body.",
-      "name": "GITHUB_CREATE_A_REPLY_FOR_A_REVIEW_COMMENT",
-      "parameters": {
-        "additionalProperties": false,
-        "description": "Request schema for `CreateAReplyForAReviewComment`",
-        "properties": {
-          "body": {
-            "description": "The text of the reply to the review comment.",
-            "examples": [
-              "Thanks for the clarification!"
-            ],
-            "title": "Body",
-            "type": "string"
-          },
-          "comment_id": {
-            "description": "The unique identifier of the top-level review comment to which the reply is being made. This must be the ID of a top-level review comment, not a reply to that comment. Replies to replies are n...
-            "examples": [
-              "10233"
-            ],
-            "title": "Comment Id",
-            "type": "integer"
-          },
-          "owner": {
-            "description": "The account owner of the repository. The name is not case sensitive.",
-            "examples": [
-              "octocat"
-            ],
-            "title": "Owner",
-            "type": "string"
-          },
-          "pull_number": {
-            "description": "The number that identifies the pull request.",
-            "examples": [
-
-```
-
-Output excerpt:
-
-```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
-| {"description":"Posts a reply to a specific review comment on a GitHub pull request, requiring the repository, pull request, and original comment to exist, and a non-empty reply body.","name":"GITHUB_CREATE_A_REPLY_FOR...
-| {"description":"Triggers a GitHub Actions workflow or a webhook on a repository by creating a repository dispatch event, allowing programmatic triggering of workflows based on events outside of GitHub.","name":"GITHUB_...
-| {"description":"Creates a new repository for the authenticated user, optionally within an organization if `team_id` is specified.","name":"GITHUB_CREATE_A_REPOSITORY_FOR_THE_AUTHENTICATED_USER","parameters":{"descripti...
-| {"description":"Publishes the specified codespace to a new repository, using the codespace's current state as the initial commit.","name":"GITHUB_CREATE_A_REPOSITORY_FROM_AN_UNPUBLISHED_CODESPACE","parameters":{"descri...
-| {"description":"Creates a new GitHub Projects V2 project board linked to a specified repository. Note: This action uses GitHub's Projects V2 GraphQL API. The legacy Projects V1 REST API has been sunset by GitHub. The p...
-| {"description":"Creates a uniquely named ruleset for a repository, defining rules for branches or tags with specified enforcement, conditions, and bypass actors.","name":"GITHUB_CREATE_A_REPOSITORY_RULESET","parameters...
-| {"description":"Creates a new repository from an existing template repository; the authenticated user must have access to the template and, if creating in an organization, repository creation permissions within it.","n...
-| {"description":"Creates a new, unencrypted variable in a repository for GitHub Actions workflows; fails if a variable with the same name already exists.","name":"GITHUB_CREATE_A_REPOSITORY_VARIABLE","parameters":{"desc...
-| {"description":"Creates a webhook for a specified repository; requires admin permissions on the repository.","name":"GITHUB_CREATE_A_REPOSITORY_WEBHOOK","parameters":{"description":"Request schema for creating a reposi...
-| {"description":"Creates a review comment on a pull request's diff, targeting a specific line, range of lines, an entire file, or replying to an existing comment.","name":"GITHUB_CREATE_A_REVIEW_COMMENT_FOR_A_PULL_REQUE...
-| {"description":"Creates a pull request review, allowing approval, change requests, or comments; `body` is required if `event` is `REQUEST_CHANGES` or `COMMENT`, and omitting `event` makes the review `PENDING`.","name":...
-| {"description":"Exchanges a user-to-server token for a new, fine-grained scoped access token for a GitHub App, requiring `client_id`, `access_token`, either `target` or `target_id`, and at least one permission; for rep...
-| {"description":"Creates a snapshot of a repository's dependencies to populate the GitHub dependency graph and enable security alerts; `sha` must be a 40-character commit ID, `ref` a fully qualified Git reference (e.g.,...
-| {"description":"Creates an annotated Git tag object in a repository, pointing to an existing Git object (commit, tree, or blob) defined by its SHA and ensuring the `type` field correctly specifies the object's type.","...
-| {"description":"DEPRECATED: This API was sunset on August 30, 2024. Use GITHUB_CREATE_A_REPOSITORY_RULESET instead to create tag protection rules via repository rulesets.","name":"GITHUB_CREATE_A_TAG_PROTECTION_STATE_F...
-| {"description":"Creates a new team in an organization, optionally with maintainers, repositories, specific privacy, notification settings, or a parent team; if `parent_team_id` is given, `privacy` must be 'closed'.","n...
-| {"description":"Creates a temporary private fork of the specified repository to address a security vulnerability, linking the fork to a GHSA ID that must be specifically associated with this repository; the fork may ta...
-| {"description":"Creates a new Git tree object in a repository, defining file/directory structure by specifying tree entries, optionally building on a `base_tree` SHA; all provided SHAs must be valid.","name":"GITHUB_CR...
-| {"description":"Creates a new GitHub Projects V2 project board for the authenticated user to organize and track issues, pull requests, and notes. Note: This action uses GitHub's Projects V2 GraphQL API. The legacy Proj...
-| {"description":"Manually triggers a GitHub Actions workflow identified by `workflow_id` at a given `ref`, if the workflow is configured to accept `workflow_dispatch` events.","name":"GITHUB_CREATE_A_WORKFLOW_DISPATCH_E...
-[... 20 row(s) omitted ...]
-| {"description":"Adds a specified reaction to a pull request review comment within a GitHub repository.","name":"GITHUB_CREATE_REACTION_FOR_A_PULL_REQUEST_REVIEW_COMMENT","parameters":{"description":"Request schema for ...
-| {"description":"Creates an emoji reaction for a specific, existing release in a GitHub repository.","name":"GITHUB_CREATE_REACTION_FOR_A_RELEASE","parameters":{"description":"Request schema for creating a reaction to a...
-| {"description":"Creates a reaction for a team discussion within a GitHub organization.","name":"GITHUB_CREATE_REACTION_FOR_A_TEAM_DISCUSSION","parameters":{"description":"Request schema for `CreateReactionForATeamDiscu...
-| {"description":"Adds a reaction to a team discussion comment, requiring the specified organization, team, discussion, and comment to exist.","name":"GITHUB_CREATE_REACTION_FOR_A_TEAM_DISCUSSION_COMMENT","parameters":{"...
-| {"description":"Tool to start a new GitHub sponsorship or reactivate a past sponsorship using GraphQL. Use when you need to sponsor a maintainer through GitHub Sponsors with a specified amount and privacy level.","name...
-| {"description":"Tool to create a new payment tier for your GitHub Sponsors profile using GraphQL. Use when you need to add a new sponsorship tier with a specific monthly price and description. The amount is specified i...
-| {"description":"Creates or updates a Dependabot organization secret, requiring the secret value to be pre-encrypted with LibSodium using the organization's public key obtained from the 'Get an organization public key' ...
-| {"description":"Tool to create a new user list on GitHub. Use when you need to organize and group GitHub users for easier tracking and management.","name":"GITHUB_CREATE_USER_LIST","parameters":{"description":"Request ...
-| {"description":"Tool to create a new view in a user-owned GitHub project (Projects V2). Use when you need to add a customized view with specific layout, filters, and visible fields to organize project items. Note: This...
-| {"description":"Declines a specific, pending repository invitation for the authenticated user, identified by its `invitation_id`.","name":"GITHUB_DECLINE_A_REPOSITORY_INVITATION","parameters":{"description":"Input para...
-
-[compacted tool output — this is a PARTIAL view; the full original (170096 bytes) is available by calling tokenjuice_retrieve with token "5f687f40da14827e5bce58ecdae713d3" (marker ⟦tj:5f687f40da14827e5bce58ecdae713d3...
-
-```
-
-### `04-github-tools-4`
-
-- [Full input](cases/04-github-tools-4/input.json)
-- [Full output](cases/04-github-tools-4/output.md)
-
-Input excerpt:
-
-```json
-[
-  {
-    "function": {
-      "description": "Removes all user, team, and app-based access restrictions from a protected branch.",
-      "name": "GITHUB_DELETE_ACCESS_RESTRICTIONS",
-      "parameters": {
-        "description": "Request schema for `DeleteAccessRestrictions`",
-        "properties": {
-          "branch": {
-            "description": "The name of the branch from which to remove access restrictions. Wildcard characters are not supported; for wildcard usage, refer to the GitHub GraphQL API.",
-            "examples": [
-              "main",
-              "develop"
-            ],
-            "title": "Branch",
-            "type": "string"
-          },
-          "owner": {
-            "description": "The account owner of the repository (username or organization name). This field is not case-sensitive.",
-            "examples": [
-              "octocat",
-              "github"
-            ],
-            "title": "Owner",
-            "type": "string"
-          },
-          "repo": {
-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
-            "examples": [
-              "Spoon-Knife",
-              "docs"
-            ],
-            "title": "Repo",
-            "type": "string"
-          }
-        },
-
-```
-
-Output excerpt:
-
-```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
-| {"description":"Removes all user, team, and app-based access restrictions from a protected branch.","name":"GITHUB_DELETE_ACCESS_RESTRICTIONS","parameters":{"description":"Request schema for `DeleteAccessRestrictions`"...
-| {"description":"Removes admin enforcement from a protected branch (branch name cannot contain wildcard characters) in a repository.","name":"GITHUB_DELETE_ADMIN_BRANCH_PROTECTION","parameters":{"description":"Request s...
-| {"description":"Deletes a file by path from a GitHub repository. The file's blob SHA is automatically fetched if not provided.","name":"GITHUB_DELETE_A_FILE","parameters":{"description":"Request schema for deleting a f...
-| {"description":"Deletes an existing package version associated with the authenticated user.","name":"GITHUB_DELETE_A_PACKAGE_VERSION_FOR_THE_AUTHENTICATED_USER","parameters":{"description":"Request schema for `DeleteAP...
-| {"description":"Deletes an OAuth application grant for a user, which revokes ALL OAuth tokens and their associated authorizations for the application. This endpoint is only accessible to OAuth App owners and requires B...
-| {"description":"Revokes a single OAuth access token for an OAuth App or GitHub App with OAuth authorization. IMPORTANT: This endpoint requires Basic Authentication using the OAuth App's client_id as username and client...
-| {"description":"Deletes a Git reference from a repository; 'ref' must be fully qualified (e.g., 'refs/heads/branch' or 'refs/tags/tag').","name":"GITHUB_DELETE_A_REFERENCE","parameters":{"description":"Request schema f...
-| {"description":"Permanently deletes a specific release, its assets, and potentially its associated Git tag from a repository.","name":"GITHUB_DELETE_A_RELEASE","parameters":{"description":"Request schema for `DeleteARe...
-| {"description":"Deletes a specific release asset from a GitHub repository; this action is idempotent.","name":"GITHUB_DELETE_A_RELEASE_ASSET","parameters":{"description":"Request schema for `DeleteAReleaseAsset`","prop...
-| {"description":"Deletes a reaction from a GitHub release, provided the repository, release, and reaction exist.","name":"GITHUB_DELETE_A_RELEASE_REACTION","parameters":{"description":"Request schema for deleting a reac...
-| {"description":"Permanently deletes the specified repository; this is a destructive, irreversible action that requires admin privileges for the repository.","name":"GITHUB_DELETE_A_REPOSITORY","parameters":{"descriptio...
-| {"description":"Deletes an active repository invitation, permanently revoking a user's access to collaborate on the specified repository.","name":"GITHUB_DELETE_A_REPOSITORY_INVITATION","parameters":{"description":"Req...
-| {"description":"Permanently deletes a repository ruleset.","name":"GITHUB_DELETE_A_REPOSITORY_RULESET","parameters":{"description":"Request schema for `DeleteARepositoryRuleset`","properties":{"owner":{"description":"T...
-| {"description":"Deletes a named GitHub Actions secret from a specified repository; this operation is destructive and idempotent, and requires the repository to exist.","name":"GITHUB_DELETE_A_REPOSITORY_SECRET","parame...
-| {"description":"Deletes the authenticated user's subscription to a specified repository if it exists, effectively 'unwatching' it.","name":"GITHUB_DELETE_A_REPOSITORY_SUBSCRIPTION","parameters":{"description":"Request ...
-| {"description":"Deletes a named variable (e.g., for GitHub Actions workflows) from a repository; the repository and the variable must already exist.","name":"GITHUB_DELETE_A_REPOSITORY_VARIABLE","parameters":{"descript...
-| {"description":"Deletes a specific webhook from a repository.","name":"GITHUB_DELETE_A_REPOSITORY_WEBHOOK","parameters":{"description":"Specifies the repository and webhook to be deleted.","properties":{"hook_id":{"des...
-| {"description":"Deletes a specific pull request review comment.","name":"GITHUB_DELETE_A_REVIEW_COMMENT_FOR_A_PULL_REQUEST","parameters":{"description":"Request schema for `DeleteAReviewCommentForAPullRequest`","proper...
-| {"description":"Deletes a GitHub artifact by its ID within a repository, typically resulting in an empty response (HTTP 204 No Content) on success.","name":"GITHUB_DELETE_ARTIFACT","parameters":{"description":"Request ...
-| {"description":"Deletes an existing Codespaces secret for the authenticated user by `secret_name`. This is a destructive and irreversible operation. Returns 404 if the secret does not exist.","name":"GITHUB_DELETE_A_SE...
-[... 8 row(s) omitted ...]
-| {"description":"Deletes a specific code scanning analysis by its ID from a repository; `confirm_delete` must be `true` if it's the last analysis of its type for a given tool and reference to prevent data loss.","name":...
-[... 11 row(s) omitted ...]
-| {"description":"Sends an empty request body to `DELETE /user/emails` to attempt deletion of user email addresses; the API typically requires specific emails, so outcome may vary.","name":"GITHUB_DELETE_EMAIL_ADDRESS","...
-| {"description":"Deletes an existing deployment environment from an existing repository.","name":"GITHUB_DELETE_ENVIRONMENT","parameters":{"description":"Request schema for deleting a specific deployment environment fro...
-| {"description":"Deletes an existing and accessible secret from a specified environment within a GitHub repository, returning an empty dictionary on success or error details otherwise.","name":"GITHUB_DELETE_ENVIRONMENT...
-| {"description":"Deletes a named environment variable from a specified, existing environment within a GitHub repository.","name":"GITHUB_DELETE_ENVIRONMENT_VARIABLE","parameters":{"description":"Request schema for `Dele...
-| {"description":"Permanently deletes an existing GitHub gist, specified by its `gist_id`; this action is destructive and cannot be undone.","name":"GITHUB_DELETE_GIST","parameters":{"description":"Request schema for the...
-| {"description":"Deletes a specific comment from a GitHub Gist using its `gist_id` and `comment_id`.","name":"GITHUB_DELETE_GIST_COMMENT","parameters":{"description":"Request model for deleting a comment from a specific...
-| {"description":"Deletes a specific GitHub Actions cache from a repository using its unique `cache_id`.","name":"GITHUB_DELETE_GITHUB_ACTIONS_CACHE_BY_ID","parameters":{"description":"Request schema for `DeleteGithubAct...
-| {"description":"Deletes the GitHub Pages site for the specified repository; completes without error if no site is currently enabled.","name":"GITHUB_DELETE_GITHUB_PAGES_SITE","parameters":{"description":"Request to del...
-| {"description":"Permanently deletes a specific comment by its ID from an issue or pull request, if the repository exists and the comment ID is valid.","name":"GITHUB_DELETE_ISSUE_COMMENT","parameters":{"description":"I...
-| {"description":"Deletes a reaction from an issue comment in a repository; the repository, comment, and reaction must exist.","name":"GITHUB_DELETE_ISSUE_COMMENT_REACTION","parameters":{"description":"Defines the reques...
-
-```
-
-### `06-github-tools-6`
-
-- [Full input](cases/06-github-tools-6/input.json)
-- [Full output](cases/06-github-tools-6/output.md)
-
-Input excerpt:
-
-```json
-[
-  {
-    "function": {
-      "description": "Tool to follow a GitHub user using GraphQL. Use when you need to make the authenticated user follow another user.",
-      "name": "GITHUB_FOLLOW_USER_GRAPHQL",
-      "parameters": {
-        "description": "Request parameters for following a GitHub user via GraphQL.\n\nUse the user's Node ID to follow them. The authenticated user will follow the specified user.",
-        "properties": {
-          "clientMutationId": {
-            "description": "A unique identifier for the client performing the mutation. Used to track requests.",
-            "examples": [
-              "abc123"
-            ],
-            "title": "Client Mutation Id",
-            "type": "string"
-          },
-          "userId": {
-            "description": "The global Node ID of the user to follow. Must be a valid GitHub user ID in the format 'MDQ6VXNlcjU4MzIzMQ=='.",
-            "examples": [
-              "MDQ6VXNlcjU4MzIzMQ=="
-            ],
-            "title": "User Id",
+            "title": "Users",
             "type": "string"
           }
         },
         "required": [
-          "userId"
+          "id",
+          "users"
         ],
-        "title": "FollowUserGraphqlRequest",
+        "title": "AddCallParticipantsRequest",
         "type": "object"
       }
     },
     "type": "function"
-  },
-  {
-    "function": {
 
 ```
 
 Output excerpt:
 
 ```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
+[json table: 60 rows × 2 cols · blank=absent key · exact original via retrieve footer]
 | function | type |
 | --- | --- |
-| {"description":"Tool to follow a GitHub user using GraphQL. Use when you need to make the authenticated user follow another user.","name":"GITHUB_FOLLOW_USER_GRAPHQL","parameters":{"description":"Request parameters for...
-| {"description":"Forcefully cancels a queued or in-progress GitHub Actions workflow run, bypassing conditions like always() that would otherwise continue execution. Only use when the standard cancel endpoint fails. Cann...
-| {"description":"Forks a specified public gist, creating a copy under the authenticated user's account.","name":"GITHUB_FORK_GIST","parameters":{"description":"Request schema for forking a public gist.","properties":{"g...
-| {"description":"Generates Markdown release notes content (listing changes, pull requests, and contributors) for a GitHub repository release, customizable via tags and a configuration file.","name":"GITHUB_GENERATE_RELE...
-| {"description":"Retrieves the raw, typically Base64-encoded, content of a file (blob) from a GitHub repository using its SHA hash, if the repository and blob SHA exist.","name":"GITHUB_GET_A_BLOB","parameters":{"descri...
-| {"description":"Retrieves detailed information for a specified branch within a GitHub repository.","name":"GITHUB_GET_A_BRANCH","parameters":{"description":"Request schema for `GetABranch`","properties":{"branch":{"des...
-| {"description":"Lists users, teams, and GitHub Apps with push access to a branch; this branch must be protected in repository settings for detailed restrictions, otherwise expect a 404 or empty response.","name":"GITHU...
-| {"description":"Retrieves a specific commit from a repository by its owner, name, and a valid commit reference (SHA, branch, or tag), supporting pagination for large diffs.","name":"GITHUB_GET_A_COMMIT","parameters":{"...
-| {"description":"Checks if repository administrators are subject to the branch protection rules on a specific branch.","name":"GITHUB_GET_ADMIN_BRANCH_PROTECTION","parameters":{"description":"Input parameters for checki...
-| {"description":"Retrieves all officially supported, date-based (e.g., \\"2022-11-28\\") versions of the GitHub REST API from the /versions endpoint.","name":"GITHUB_GET_ALL_API_VERSIONS","parameters":{"description":"Re...
-| {"description":"Retrieves commit activity (total commits, weekly additions/deletions/commits) for all contributors to a repository; may require a retry if GitHub returns 202 while preparing data.","name":"GITHUB_GET_AL...
-| {"description":"Lists all enabled custom deployment protection rules for a specific environment in a repository; the environment must exist and be configured for deployments.","name":"GITHUB_GET_ALL_DEPLOYMENT_PROTECTI...
-| {"description":"Retrieves detailed information for a specific milestone within a GitHub repository by its number.","name":"GITHUB_GET_A_MILESTONE","parameters":{"description":"Request schema for `GetAMilestone`","prope...
-| {"description":"Retrieves publicly available information for an existing GitHub App, identified by its unique URL-friendly `app_slug`.","name":"GITHUB_GET_AN_APP","parameters":{"description":"Request schema for retriev...
-| {"description":"Gets a specific artifact for a repository by `artifact_id`. This action retrieves the details of a specific artifact from a GitHub repository using the artifact's unique identifier. It allows users to a...
-| {"description":"Retrieves detailed information for a specific GitHub Classroom assignment if the authenticated user is an administrator of the classroom.","name":"GITHUB_GET_AN_ASSIGNMENT","parameters":{"description":"...
-| {"description":"Retrieves a specific autolink reference (which automatically hyperlinks text like 'JIRA-123' to an external system) for a repository using its unique ID; requires administrator access to the repository....
-| {"description":"Retrieves the details of a specific deployment environment for a given repository, including its name, configurations, and current status.","name":"GITHUB_GET_AN_ENVIRONMENT","parameters":{"description"...
-| {"description":"Retrieves the public key for a specified GitHub repository environment, used to encrypt secrets for GitHub Actions.","name":"GITHUB_GET_AN_ENVIRONMENT_PUBLIC_KEY","parameters":{"description":"Request sc...
-| {"description":"Retrieves metadata (name and timestamps) for a single secret in a GitHub Actions environment. Note: The actual secret value is never returned by this API for security reasons.","name":"GITHUB_GET_AN_ENV...
-[... 20 row(s) omitted ...]
-| {"description":"Retrieves a specific Git reference (e.g., a branch, tag, or fully qualified like 'heads/main') from a GitHub repository. The reference must exist in the repository; use 'list_matching_references' first ...
-| {"description":"Gets a specific release from a GitHub repository, provided the repository is accessible and the release exists.","name":"GITHUB_GET_A_RELEASE","parameters":{"description":"Request schema for retrieving ...
-| {"description":"Gets metadata for a specific release asset in a GitHub repository, including a `browser_download_url` for downloading the asset.","name":"GITHUB_GET_A_RELEASE_ASSET","parameters":{"description":"Request...
-| {"description":"Gets a release from a GitHub repository by its tag name; the repository and a release with this tag must already exist.","name":"GITHUB_GET_A_RELEASE_BY_TAG_NAME","parameters":{"description":"Request sc...
-| {"description":"Retrieves detailed information about an existing and accessible GitHub repository.","name":"GITHUB_GET_A_REPOSITORY","parameters":{"description":"Request schema for retrieving detailed information about...
-| {"description":"Gets a repository's public key for encrypting secrets to be used in GitHub Actions, if the repository exists and is accessible.","name":"GITHUB_GET_A_REPOSITORY_PUBLIC_KEY","parameters":{"description":"...
-| {"description":"Fetches the README file (if it exists and is accessible) from a specified GitHub repository, returning its Base64-encoded content and metadata.","name":"GITHUB_GET_A_REPOSITORY_README","parameters":{"de...
-| {"description":"Retrieves the README file from a specified directory within a GitHub repository, optionally at a given commit, branch, or tag.","name":"GITHUB_GET_A_REPOSITORY_README_FOR_A_DIRECTORY","parameters":{"des...
-| {"description":"Retrieves a specific repository ruleset by its ID; if `includes_parents` is true, the search for this `ruleset_id` also extends to rulesets from parent organizations.","name":"GITHUB_GET_A_REPOSITORY_RU...
-| {"description":"Gets detailed information for a specific repository rule suite by its ID, including its evaluation status and the results of its individual rules.","name":"GITHUB_GET_A_REPOSITORY_RULE_SUITE","parameter...
-
-[compacted tool output — this is a PARTIAL view; the full original (72845 bytes) is available by calling tokenjuice_retrieve with token "458acfb0a64c770ab30a586896ef5064" (marker ⟦tj:458acfb0a64c770ab30a586896ef5064�...
+| {"description":"Registers new participants added to a Slack call.","name":"SLACK_ADD_CALL_PARTICIPANTS","parameters":{"description":"Request schema for `AddCallParticipants`","properties":{"id":{"description":"ID of th...
+| {"description":"Adds a custom emoji to a Slack workspace given a unique name and an image URL; subject to workspace emoji limits.","name":"SLACK_ADD_EMOJI","parameters":{"description":"Request schema for `AddEmoji`","p...
+| {"description":"Adds an alias for an existing custom emoji in a Slack Enterprise Grid organization.","name":"SLACK_ADD_EMOJI_ALIAS","parameters":{"description":"Request schema for `AddEmojiAlias`","properties":{"alias_...
+| {"description":"Adds an Enterprise user to a workspace. Use when you need to assign an existing Enterprise Grid user to a specific workspace with optional guest restrictions.","name":"SLACK_ADD_ENTERPRISE_USER_TO_WORKS...
+| {"description":"Adds a specified emoji reaction to an existing message in a Slack channel, identified by its timestamp; does not remove or retrieve reactions.","name":"SLACK_ADD_REACTION_TO_AN_ITEM","parameters":{"desc...
+| {"description":"Adds a reference to an external file (e.g., Google Drive, Dropbox) to Slack for discovery and sharing, requiring a unique `external_id` and an `external_url` accessible by Slack.","name":"SLACK_ADD_REMO...
+| {"description":"Stars a channel, file, file comment, or a specific message in Slack.","name":"SLACK_ADD_STAR","parameters":{"description":"Request schema for the `stars.add` API method. Used to add a star to a channel,...
+| {"description":"Tool to search for public or private channels in an Enterprise organization. Use when you need to find channels by name, type, or other criteria within an Enterprise Grid workspace.","name":"SLACK_ADMIN...
+| {"description":"Tool to check API calling code by testing connectivity and authentication to the Slack API. Use when you need to verify that API credentials are valid and the connection is working properly.","name":"SL...
+| {"description":"Archives a Slack conversation by its ID, rendering it read-only and hidden while retaining history, ideal for cleaning up inactive channels; be aware that some channels (like #general or certain DMs) ca...
+| {"description":"Search across Slack messages, files, channels, and users using Real-time Search API. BEFORE USING: Call SLACK_ASSISTANT_SEARCH_INFO to check workspace capabilities. - If is_ai_search_enabled=true → Us...
+| {"description":"Check if semantic (AI-powered) search is available on the Slack workspace. Returns whether natural language queries will trigger semantic search in assistant.search.context calls.","name":"SLACK_ASSISTA...
+| {"description":"Closes a Slack direct message (DM) or multi-person direct message (MPDM) channel, removing it from the user's sidebar without deleting history; this action affects only the calling user's view.","name":...
+| {"description":"Convert a public Slack channel to private using the Admin API. This is an Enterprise Grid only feature and requires an org-installed user token with admin.conversations:write scope.","name":"SLACK_CONVE...
+| {"description":"Creates a Slack reminder with specified text and time; time accepts Unix timestamps, seconds from now, or natural language (e.g., 'in 15 minutes', 'every Thursday at 2pm').","name":"SLACK_CREATE_A_REMIN...
+| {"description":"Creates a new Slack Canvas with the specified title and optional content.","name":"SLACK_CREATE_CANVAS","parameters":{"properties":{"channel_id":{"description":"Optional channel ID (e.g., 'C1234567890')...
+| {"description":"Initiates a public or private channel-based conversation in a Slack workspace. Immediately creates the channel; invoke only after explicit user confirmation.","name":"SLACK_CREATE_CHANNEL","parameters":...
+| {"description":"Creates a new public or private Slack channel with a unique name; the channel can be org-wide, or team-specific if `team_id` is given (required if `org_wide` is false or not provided).","name":"SLACK_CR...
+| {"description":"Tool to create an Enterprise team in Slack. Use when you need to create a new team (workspace) within an Enterprise Grid organization. Requires admin.teams:write scope.","name":"SLACK_CREATE_ENTERPRISE_...
+| {"description":"Creates a new User Group (often referred to as a subteam) in a Slack workspace.","name":"SLACK_CREATE_USER_GROUP","parameters":{"description":"Request schema for `CreateUserGroup`","properties":{"additi...
+[... 18 row(s) omitted ...]
+| {"description":"Fetches reactions for a Slack message, file, or file comment. Exactly one identifier path must be provided: `channel`+`timestamp`, `file`, or `file_comment`. Mixing identifiers (e.g., providing both `ch...
+[... 11 row(s) omitted ...]
+| {"description":"Retrieves conversation preferences (e.g., who can post, who can thread) for a specified channel, primarily for use within Slack Enterprise Grid environments.","name":"SLACK_GET_CHANNEL_CONVERSATION_PREF...
+| {"description":"Retrieves detailed information for an existing Slack reminder specified by its ID; this is a read-only operation.","name":"SLACK_GET_REMINDER","parameters":{"description":"Request schema for `GetReminde...
+| {"description":"Retrieve information about a remote file added to Slack via the files.remote API. Does not work for standard Slack-hosted file uploads.","name":"SLACK_GET_REMOTE_FILE","parameters":{"description":"Reque...
+| {"description":"Retrieves all profile field definitions for a Slack team, optionally filtered by visibility, to understand the team's profile structure.","name":"SLACK_GET_TEAM_PROFILE","parameters":{"description":"Req...
+| {"description":"Retrieves a user's current Do Not Disturb status.","name":"SLACK_GET_USER_DND_STATUS","parameters":{"description":"Request schema for `GetUserDndStatus`","properties":{"team_id":{"description":"The work...
+| {"description":"Retrieves a Slack user's current real-time presence (e.g., 'active', 'away') to determine their availability, noting this action does not provide historical data or status reasons.","name":"SLACK_GET_US...
+| {"description":"Tool to get all workspaces a channel is connected to within an Enterprise org. Use when you need to determine which workspaces have access to a specific public or private channel in an Enterprise Grid o...
+| {"description":"Retrieves detailed settings for a specific Slack workspace, primarily for administrators in an Enterprise Grid organization to view or audit workspace configurations.","name":"SLACK_GET_WORKSPACE_SETTIN...
+| {"description":"Invites users to an existing Slack channel using their valid Slack User IDs. Response is always HTTP 200; inspect `ok`, `error`, and `errors` fields to confirm users were added.","name":"SLACK_INVITE_US...
+| {"description":"Invites users to a specified Slack channel; this action is restricted to Enterprise Grid workspaces and requires the authenticated user to be a member of the target channel.","name":"SLACK_INVITE_USER_T...
 
 ```
 
-### `01-github-tools-1`
+### `01-github-tools-array`
 
-- [Full input](cases/01-github-tools-1/input.json)
-- [Full output](cases/01-github-tools-1/output.md)
+- [Full input](cases/01-github-tools-array/input.json)
+- [Full output](cases/01-github-tools-array/output.md)
 
 Input excerpt:
 
@@ -609,7 +253,7 @@ Input excerpt:
 Output excerpt:
 
 ```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
+[json table: 60 rows × 2 cols · blank=absent key · exact original via retrieve footer]
 | function | type |
 | --- | --- |
 | {"description":"Tool to abort a repository migration that is queued or in progress. Use when you need to cancel an ongoing migration operation.","name":"GITHUB_ABORT_REPOSITORY_MIGRATION","parameters":{"description":"R...
@@ -634,73 +278,7 @@ Output excerpt:
 | {"description":"Grants a repository access to an organization-level GitHub Actions variable, if that variable's visibility is set to 'selected_repositories'.","name":"GITHUB_ADD_SELECTED_REPOSITORY_TO_ORGANIZATION_VARI...
 [... 11 row(s) omitted ...]
 | {"description":"List Docker packages with migration conflicts for the authenticated user. This endpoint lists all Docker packages owned by the authenticated user that encountered namespace conflicts during the Docker-t...
-[... 8 row(s) omitted ...]
-| {"description":"Checks if a specified GitHub user can be assigned to a given issue within a repository.","name":"GITHUB_CHECK_IF_USER_CAN_BE_ASSIGNED_TO_ISSUE","parameters":{"description":"Request schema for `CheckIfUs...
-| {"description":"Checks if a GitHub user `username` follows `target_user`; returns a 204 HTTP status if true, 404 if not or if users are invalid.","name":"GITHUB_CHECK_IF_USER_FOLLOWS_ANOTHER_USER","parameters":{"descri...
-| {"description":"Checks if the specified GitHub user is blocked by the authenticated user; a 204 No Content response indicates the user is blocked, while a 404 Not Found indicates they are not.","name":"GITHUB_CHECK_IF_...
-| {"description":"Checks if a GitHub user is blocked by an organization. Returns is_blocked=True if the user is blocked (HTTP 204), or is_blocked=False if not blocked (HTTP 404). Requires 'Blocking users' organization pe...
-| {"description":"Checks if a user is a collaborator on a specified GitHub repository, returning a 204 status if they are, or a 404 status if they are not or if the repository/user does not exist.","name":"GITHUB_CHECK_I...
-| {"description":"Checks if the authenticated GitHub user follows a target GitHub user. Returns a structured response with is_following=True when following (HTTP 204), or is_following=False when not following (HTTP 404)....
-| {"description":"Checks if private vulnerability reporting is enabled for the specified repository.","name":"GITHUB_CHECK_PRIVATE_VULNERABILITY_REPORTING_STATUS","parameters":{"description":"Request schema for `CheckPri...
-| {"description":"Tool to check if a user is a public member of an organization. Use when you need to verify public organization membership status.","name":"GITHUB_CHECK_PUBLIC_ORGANIZATION_MEMBERSHIP_FOR_USER","paramete...
-| {"description":"Checks if a team has 'read', 'write', or 'admin' permissions for an organization's specific classic project, returning the project's details if access is confirmed.","name":"GITHUB_CHECK_TEAM_PERMISSION...
-| {"description":"Checks a team's permissions for a specific repository within an organization, including permissions inherited from parent teams.","name":"GITHUB_CHECK_TEAM_PERMISSIONS_FOR_A_REPOSITORY","parameters":{"d...
-
-```
-
-### `02-github-tools-2`
-
-- [Full input](cases/02-github-tools-2/input.json)
-- [Full output](cases/02-github-tools-2/output.md)
-
-Input excerpt:
-
-```json
-[
-  {
-    "function": {
-      "description": "Checks if a GitHub App or OAuth access_token is valid for the specified client_id and retrieves its details, typically to verify its active status and grants. NOTE: This endpoint requires Basic Auth...
-      "name": "GITHUB_CHECK_TOKEN",
-      "parameters": {
-        "description": "Request schema for validating a GitHub App or OAuth token.",
-        "properties": {
-          "access_token": {
-            "description": "The OAuth access token issued by your OAuth App that you want to validate. Returns 404 if the token is invalid or not issued by this client_id.",
-            "examples": [
-              "gho_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0"
-            ],
-            "title": "Access Token",
-            "type": "string"
-          },
-          "client_id": {
-            "description": "The unique client ID of your GitHub OAuth App (must match the app that issued the token being checked).",
-            "examples": [
-              "Iv1.1234567890abcdef"
-            ],
-            "title": "Client Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "client_id",
-          "access_token"
-        ],
-        "title": "CheckTokenRequest",
-        "type": "object"
-      }
-    },
-    "type": "function"
-  },
-  {
-
-```
-
-Output excerpt:
-
-```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
+[... 18 row(s) omitted ...]
 | {"description":"Checks if a GitHub App or OAuth access_token is valid for the specified client_id and retrieves its details, typically to verify its active status and grants. NOTE: This endpoint requires Basic Authenti...
 | {"description":"Tool to clear the value of a field for an item in a GitHub Project V2. Use when you need to remove or reset a field value (text, number, date, assignees, labels, single-select, iteration, or milestone f...
 | {"description":"Deletes GitHub Actions caches from a repository matching a specific `key` and an optional Git `ref`, used to manage storage or clear outdated/corrupted caches; the action succeeds even if no matching ca...
@@ -711,207 +289,471 @@ Output excerpt:
 | {"description":"Sets or updates the OIDC subject claim customization template for an existing GitHub organization by specifying which claims (e.g., 'repo', 'actor') form the OIDC token's subject (`sub`). This action cu...
 | {"description":"Converts an existing organization member, who is not an owner, to an outside collaborator, restricting their access to explicitly granted repositories.","name":"GITHUB_CONVERT_ORG_MEMBER_TO_OUTSIDE_COLL...
 | {"description":"Creates a Git blob in a repository, requiring content and encoding ('utf-8' or 'base64'). Requires write access to the repository.","name":"GITHUB_CREATE_A_BLOB","parameters":{"description":"Defines the...
-| {"description":"Creates a new check run for a specific commit in a repository, used by external services to report status, detailed feedback, annotations, and images directly within the GitHub UI. NOTE: This endpoint r...
-| {"description":"Creates a new check suite for a specific commit (`head_sha`) in an original repository (not a fork). IMPORTANT: This endpoint requires a GitHub App installation access token - OAuth tokens and classic p...
-| {"description":"Creates a GitHub Codespace for the authenticated user, requiring a JSON request body with either `repository_id` (integer) or a `pull_request` object (containing `pull_request_number` (integer) and `rep...
-| {"description":"Creates a GitHub Codespace for an open pull request in a Codespaces-enabled repository, with options to customize its configuration.","name":"GITHUB_CREATE_A_CODESPACE_FROM_A_PULL_REQUEST","parameters":...
-| {"description":"Creates a GitHub Codespace for the authenticated user in a specified repository, which must be accessible and use a valid `devcontainer.json` if `devcontainer_path` is specified.","name":"GITHUB_CREATE_...
-| {"description":"Creates a new commit in a GitHub repository; the `tree` SHA and any `parents` SHAs must already exist in the repository.","name":"GITHUB_CREATE_A_COMMIT","parameters":{"description":"Defines the paramet...
-| {"description":"Creates a comment on a specific commit, or on a specific line if `path` and `position` are provided.","name":"GITHUB_CREATE_A_COMMIT_COMMENT","parameters":{"description":"Request to create a comment on ...
-| {"description":"Sets a commit's status (e.g., error, failure, pending, success from CI/CD) for a given SHA; max 1000 statuses per SHA/context.","name":"GITHUB_CREATE_A_COMMIT_STATUS","parameters":{"description":"Reques...
-| {"description":"Creates a custom role with defined permissions within a GitHub organization.","name":"GITHUB_CREATE_A_CUSTOM_ORGANIZATION_ROLE","parameters":{"description":"Request to create a custom organization role....
-| {"description":"Creates a deploy key for a repository; the repository must exist and be accessible, and the provided key must be a valid public SSH key.","name":"GITHUB_CREATE_A_DEPLOY_KEY","parameters":{"description":...
-[... 2 row(s) omitted ...]
-| {"description":"Creates a status for an existing deployment, updating its operational state, associated URLs, and description.","name":"GITHUB_CREATE_A_DEPLOYMENT_STATUS","parameters":{"description":"Request schema for...
-[... 17 row(s) omitted ...]
-| {"description":"Creates a webhook for a GitHub organization to deliver event notifications to a configured URL.","name":"GITHUB_CREATE_AN_ORGANIZATION_WEBHOOK","parameters":{"description":"Request schema for `CreateAnO...
-| {"description":"Creates a project card in a GitHub project column (classic projects only). DEPRECATION NOTICE: GitHub Projects (classic) was sunset on August 23, 2024. This API only works with existing classic project ...
-| {"description":"Creates a new column in a GitHub project (classic). DEPRECATION NOTICE: GitHub Classic Projects (V1) and its REST API were sunset on April 1, 2025. This action will return a 404 error on GitHub.com. For...
-| {"description":"Creates a pull request in a GitHub repository, requiring existing `base` and `head` branches; `title` or `issue` must be provided.","name":"GITHUB_CREATE_A_PULL_REQUEST","parameters":{"description":"Req...
-| {"description":"Creates a NEW Git reference (branch or tag) in a repository. IMPORTANT: This action ONLY creates NEW references - if the reference already exists, it will fail with a 422 'Reference already exists' erro...
-| {"description":"Generates a temporary (one-hour) registration token to add a new self-hosted runner to an organization for GitHub Actions.","name":"GITHUB_CREATE_A_REGISTRATION_TOKEN_FOR_AN_ORGANIZATION","parameters":{...
-| {"description":"Generates a time-limited token required to register a new self-hosted runner with a specific repository.","name":"GITHUB_CREATE_A_REGISTRATION_TOKEN_FOR_A_REPOSITORY","parameters":{"description":"Reques...
-| {"description":"Creates a release in a GitHub repository for a specified tag; the tag must be unique for published releases, and if a `discussion_category_name` is given, it must already exist.","name":"GITHUB_CREATE_A...
-| {"description":"Generates a token, valid for one hour, to authenticate removing a self-hosted runner from an organization.","name":"GITHUB_CREATE_A_REMOVE_TOKEN_FOR_AN_ORGANIZATION","parameters":{"description":"Request...
-| {"description":"Generates a temporary (one-hour validity) token required to unregister and remove a self-hosted runner from a repository.","name":"GITHUB_CREATE_A_REMOVE_TOKEN_FOR_A_REPOSITORY","parameters":{"descripti...
 
 ```
 
-### `09-github-tools-9`
+### `10-cargo-metadata`
 
-- [Full input](cases/09-github-tools-9/input.json)
-- [Full output](cases/09-github-tools-9/output.md)
+- [Full input](cases/10-cargo-metadata/input.json)
+- [Full output](cases/10-cargo-metadata/output.md)
 
 Input excerpt:
 
 ```json
-[
-  {
-    "function": {
-      "description": "Tool to fetch raw file content from a GitHub repository. Returns raw bytes in whatever format the file uses (JSON, CSV, binary, etc.) — parsing and validation are the caller's responsibility. Ensu...
-      "name": "GITHUB_GET_RAW_REPOSITORY_CONTENT",
-      "parameters": {
-        "description": "Request model for fetching raw repository file content.",
-        "properties": {
-          "owner": {
-            "description": "The GitHub username or organization name that owns the repository. This is the account name shown in the repository URL (e.g., for github.com/torvalds/linux, the owner is 'torvalds'). Case-ins...
-            "examples": [
-              "octocat",
-              "torvalds",
-              "facebook"
-            ],
-            "title": "Owner",
-            "type": "string"
-          },
-          "path": {
-            "description": "The file path within the repository, relative to the repository root. Use forward slashes for directory separators (e.g., 'src/utils/helper.js'). Do not include leading slash. Do NOT pass a fu...
-            "examples": [
-              "README.md",
-              "docs/index.html",
-              "src/main.py"
-            ],
-            "title": "Path",
-            "type": "string"
-          },
-          "ref": {
-            "description": "The branch name, tag name, or commit SHA to fetch the file from. Defaults to the repository's default branch (usually 'main' or 'master'). Recommended to pass explicitly — omitting it fetche...
-            "examples": [
-              "main",
-              "master",
-              "v1.0.0",
-              "develop"
-            ],
+{"packages":[{"name":"openhuman","version":"0.58.11","id":"path+file://<OPENHUMAN_ROOT>#openhuman@0.58.11","license":null,"license_file":null,"description":"OpenHuman core business logic and RPC server","source":null,"de...
 
 ```
 
 Output excerpt:
 
 ```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
-| {"description":"Tool to fetch raw file content from a GitHub repository. Returns raw bytes in whatever format the file uses (JSON, CSV, binary, etc.) — parsing and validation are the caller's responsibility. Ensure o...
-| {"description":"Gets the settings for allowed actions and reusable workflows in a repository. Requires the repository's `allowed_actions` policy to be set to `selected` (returns 409 if set to `all` or `local_only`).","...
-| {"description":"Gets metadata (name, creation/update timestamps) for a specific, existing development environment secret (Codespaces secret) in a repository, without exposing its value.","name":"GITHUB_GET_REPO_DEV_ENV...
-| {"description":"Tool to retrieve attestations by subject digest from a GitHub repository. Use when you need to verify or check attestations for a specific artifact identified by its SHA256 digest.","name":"GITHUB_GET_R...
-| {"description":"Retrieves the total number of clones and a breakdown of clone activity (daily or weekly) for a specified repository over the preceding 14 days.","name":"GITHUB_GET_REPOSITORY_CLONES","parameters":{"desc...
-| {"description":"Retrieves a file's Base64 encoded content or lists a directory's contents from a GitHub repository.","name":"GITHUB_GET_REPOSITORY_CONTENT","parameters":{"description":"Request schema for retrieving con...
-| {"description":"Tool to lookup a repository by owner and name using GitHub's GraphQL API. Use when you need comprehensive repository information.","name":"GITHUB_GET_REPOSITORY_GRAPH_QL","parameters":{"description":"Re...
-| {"description":"Tool to lookup a repository owner (User or Organization) by login using GitHub's GraphQL API. Use when you need to determine whether a login is a user or organization and retrieve basic profile informat...
-| {"description":"Retrieves a specific user's permission level ('admin', 'write', 'read', or 'none') for a given repository, where 'maintain' role is reported as 'write' and 'triage' as 'read'.","name":"GITHUB_GET_REPOSI...
-| {"description":"Gets a repository's public key, used to encrypt secrets for Dependabot.","name":"GITHUB_GET_REPOSITORY_PUBLIC_KEY_FOR_ENCRYPTION","parameters":{"description":"Request schema for `GetRepositoryPublicKeyF...
-| {"description":"Retrieves metadata for an existing Dependabot secret in a repository, without exposing its encrypted value.","name":"GITHUB_GET_REPOSITORY_SECRET_SECURELY","parameters":{"description":"Request schema fo...
-| {"description":"Tool to retrieve a repository security advisory using its GHSA identifier. Use when you need detailed information about a specific security vulnerability.","name":"GITHUB_GET_REPOSITORY_SECURITY_ADVISOR...
-| {"description":"Retrieves a specific delivery for a repository webhook, identified by its `hook_id` and `delivery_id`.","name":"GITHUB_GET_REPOSITORY_WEBHOOK_DELIVERY","parameters":{"description":"Request schema for `G...
-| {"description":"Retrieves all active rules for a specific branch in a GitHub repository, excluding rules in 'evaluate' or 'disabled' status.","name":"GITHUB_GET_RULES_FOR_A_BRANCH","parameters":{"description":"Request ...
-| {"description":"Gets a single organization Dependabot secret's metadata (name, timestamps, visibility) without revealing its encrypted value. Requires admin:org scope.","name":"GITHUB_GET_SINGLE_ORG_SECRET_WITHOUT_DECR...
-| {"description":"Retrieves the status check protection settings for a specific branch in a GitHub repository, if status check protection is enabled for it.","name":"GITHUB_GET_STATUS_CHECKS_PROTECTION","parameters":{"de...
-| {"description":"Retrieves a user's role and membership status within a specific team in an organization. Returns membership details including role ('member' or 'maintainer') and state ('active' or 'pending'). If the us...
-| {"description":"Lists teams with explicit push access to a protected branch, provided team restrictions are configured in the branch's protection settings; returns an empty list otherwise.","name":"GITHUB_GET_TEAMS_WIT...
-| {"description":"Gets the profile information for the currently authenticated GitHub user, including potentially private details based on user settings.","name":"GITHUB_GET_THE_AUTHENTICATED_USER","parameters":{"descrip...
-| {"description":"Retrieves the aggregated commit status (e.g., success, failure, pending) from all checks for a specific reference (SHA, branch, or tag) in a GitHub repository.","name":"GITHUB_GET_THE_COMBINED_STATUS_FO...
-[... 20 row(s) omitted ...]
-| {"description":"Gets the billable time (in milliseconds, broken down by runner OS) for a specific workflow within a repository for the current billing cycle.","name":"GITHUB_GET_WORKFLOW_USAGE","parameters":{"descripti...
-| {"description":"Use to determine if the authenticated user has starred a specific GitHub repository, which is confirmed by an HTTP 204 status (resulting in an empty dictionary in the response data); the action fails (e...
-| {"description":"Lists accepted assignments (student repositories created after acceptance) for an existing GitHub Classroom assignment, identified by its unique `assignment_id`.","name":"GITHUB_LIST_ACCEPTED_ASSIGNMENT...
-| {"description":"Lists repositories that the authenticated user can access through a specific GitHub App installation. Returns repositories where the user has explicit :read, :write, or :admin permission through the ins...
-| {"description":"Lists GitHub App installations accessible to the authenticated user via their access token, including installation details, permissions, and repository access.","name":"GITHUB_LIST_APP_INSTALLATIONS","p...
-| {"description":"Lists GitHub Apps with push access to a repository's protected branch.","name":"GITHUB_LIST_APPS_WITH_ACCESS_TO_THE_PROTECTED_BRANCH","parameters":{"description":"Request schema for retrieving GitHub Ap...
-| {"description":"Lists GitHub Actions workflow artifacts for a specified repository, which must exist.","name":"GITHUB_LIST_ARTIFACTS_FOR_A_REPOSITORY","parameters":{"description":"Request schema for the `ListArtifactsF...
-| {"description":"Lists users who can be assigned to issues in a repository, typically those with push access.","name":"GITHUB_LIST_ASSIGNEES","parameters":{"description":"Request schema to list assignees for a repositor...
-| {"description":"Lists all assignments for a given GitHub Classroom `classroom_id`; the classroom must exist and be accessible.","name":"GITHUB_LIST_ASSIGNMENTS_FOR_A_CLASSROOM","parameters":{"description":"Request sche...
-| {"description":"Tool to list attestation repositories for an organization. Use when you need to discover which repositories in an organization have attestations. Attestations provide verifiable metadata about software ...
-
-[compacted tool output — this is a PARTIAL view; the full original (78918 bytes) is available by calling tokenjuice_retrieve with token "efdccc24cde2d08a1be843371f3769db" (marker ⟦tj:efdccc24cde2d08a1be843371f3769db�...
+{"packages":[{"name":"openhuman","version":"0.58.11","id":"path+file://<OPENHUMAN_ROOT>#openhuman@0.58.11","license":null,"license_file":null,"description":"OpenHuman core business logic and RPC server","source":null,"de...
 
 ```
 
-### `05-github-tools-5`
+### `09-package-manifest`
 
-- [Full input](cases/05-github-tools-5/input.json)
-- [Full output](cases/05-github-tools-5/output.md)
+- [Full input](cases/09-package-manifest/input.json)
+- [Full output](cases/09-package-manifest/output.md)
 
 Input excerpt:
 
 ```json
-[
-  {
-    "function": {
-      "description": "Permanently removes a specific reaction from an issue in a GitHub repository.",
-      "name": "GITHUB_DELETE_ISSUE_REACTION",
-      "parameters": {
-        "description": "Request schema for deleting a reaction from an issue in a GitHub repository.",
-        "properties": {
-          "issue_number": {
-            "description": "The unique number identifying the issue from which the reaction will be deleted.",
-            "examples": [
-              "1347"
-            ],
-            "title": "Issue Number",
-            "type": "integer"
-          },
-          "owner": {
-            "description": "The account owner of the repository. The name is not case sensitive.",
-            "examples": [
-              "octocat"
-            ],
-            "title": "Owner",
-            "type": "string"
-          },
-          "reaction_id": {
-            "description": "The unique identifier of the reaction to be deleted.",
-            "examples": [
-              "1"
-            ],
-            "title": "Reaction Id",
-            "type": "integer"
-          },
-          "repo": {
-            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
-            "examples": [
-              "Spoon-Knife"
+{
+  "name": "openhuman-app",
+  "version": "0.58.11",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:web": "vite",
+    "dev:app": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && bash ../scripts/setup-chromium-safe-storage.sh && source ../scripts/load-dotenv.sh && APPLE_SIGNING_IDENTITY='OpenHuman Dev Signe...
+    "dev:app:win": "\"C:/Program Files/Git/bin/bash.exe\" ../scripts/run-dev-win.sh",
+    "dev:cef": "pnpm dev:app",
+    "dev:wry": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri dev --no-default-features --features wry",
+    "core:stage": "echo '[core:stage] no-op — core is linked in-process; sidecar removed (PR #1061)'",
+    "tauri:ensure": "bash ../scripts/ensure-tauri-cli.sh",
+    "tauri:ios:init": "bash ../scripts/ios-init.sh",
+    "tauri:ios:dev": "cd src-tauri-mobile && IPHONEOS_DEPLOYMENT_TARGET=${IPHONEOS_DEPLOYMENT_TARGET:-16.0} npx --package=@tauri-apps/cli@^2 tauri ios dev",
+    "tauri:ios:build": "cd src-tauri-mobile && IPHONEOS_DEPLOYMENT_TARGET=${IPHONEOS_DEPLOYMENT_TARGET:-16.0} npx --package=@tauri-apps/cli@^2 tauri ios build",
+    "tauri:android:init": "bash ../scripts/android-init.sh",
+    "tauri:android:dev": "cd src-tauri-mobile && ../node_modules/.bin/tauri android dev",
+    "tauri:android:build": "cd src-tauri-mobile && ../node_modules/.bin/tauri android build",
+    "release:android:play": "bash ../scripts/release/upload-android-to-play.sh",
+    "build": "tsc && vite build",
+    "build:app": "tsc && vite build",
+    "build:app:e2e": "tsc && vite build --mode development",
+    "build:web:e2e": "bash ./scripts/e2e-web-build.sh",
+    "build:web": "cross-env VITE_OPENHUMAN_TARGET=web tsc && cross-env VITE_OPENHUMAN_TARGET=web vite build",
+    "compile": "tsc --noEmit",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:build:ui": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && cargo tauri build -- --bin OpenHuman",
+    "macos:build:intel": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --bundles app dmg --target x86_64-apple-darwin -- --bin OpenHuman...
+    "macos:build:intel:debug": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --debug --bundles app dmg --target x86_64-apple-darwin -- -...
+    "macos:build:debug": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --debug --bundles app dmg -- --bin OpenHuman",
+    "macos:build:release": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --bundles app dmg -- --bin OpenHuman",
 
 ```
 
 Output excerpt:
 
 ```markdown
-[json table: 50 rows × 2 cols · blank=absent key · exact original via retrieve footer]
-| function | type |
-| --- | --- |
-| {"description":"Permanently removes a specific reaction from an issue in a GitHub repository.","name":"GITHUB_DELETE_ISSUE_REACTION","parameters":{"description":"Request schema for deleting a reaction from an issue in ...
-| {"description":"Permanently removes an existing label from a repository.","name":"GITHUB_DELETE_LABEL","parameters":{"description":"Request schema for `DeleteLabel`","properties":{"name":{"description":"The name of the...
-| {"description":"Deletes the specified milestone if it exists; this operation is idempotent, typically returning a 404 if the milestone is not found or already deleted.","name":"GITHUB_DELETE_MILESTONE","parameters":{"d...
-| {"description":"Deletes a GitHub organization and its repositories; this is a destructive action and the organization name will be unavailable for reuse for approximately 90 days.","name":"GITHUB_DELETE_ORGANIZATION","...
-| {"description":"Permanently deletes a secret from a GitHub organization, making it inaccessible to GitHub Actions workflows or other tools.","name":"GITHUB_DELETE_ORGANIZATION_SECRET","parameters":{"description":"Reque...
-| {"description":"Deletes a named GitHub Actions variable from a specified organization.","name":"GITHUB_DELETE_ORGANIZATION_VARIABLE","parameters":{"description":"Request schema for `DeleteOrganizationVariable`","proper...
-| {"description":"Deletes a specific webhook, identified by `hook_id`, from an existing organization.","name":"GITHUB_DELETE_ORGANIZATION_WEBHOOK","parameters":{"description":"Request schema for `DeleteOrganizationWebhoo...
-| {"description":"Permanently deletes a specific codespace belonging to a member of the specified organization.","name":"GITHUB_DELETE_ORG_CODESPACE","parameters":{"description":"Request schema.","properties":{"codespace...
-| {"description":"Deletes a specific package in an organization; cannot delete public packages with over 5,000 downloads.","name":"GITHUB_DELETE_ORG_PACKAGE","parameters":{"description":"Parameters for deleting a specifi...
-| {"description":"Permanently deletes a specific package owned by the authenticated user; public packages downloaded over 5,000 times cannot be deleted via this API.","name":"GITHUB_DELETE_PACKAGE","parameters":{"descrip...
-| {"description":"Tool to delete a package version using GitHub GraphQL API. Use when you need to remove a specific version of a package by its global node ID.","name":"GITHUB_DELETE_PACKAGE_VERSION","parameters":{"descr...
-| {"description":"Deletes a specific package version within an organization; requires admin permissions for packages with over 5,000 downloads.","name":"GITHUB_DELETE_PACKAGE_VERSION_FOR_AN_ORGANIZATION","parameters":{"d...
-| {"description":"Permanently and irreversibly deletes a specific version of a package owned by the specified user.","name":"GITHUB_DELETE_PACKAGE_VERSION_FOR_A_USER","parameters":{"description":"Request schema for delet...
-| {"description":"Deletes a pending (unsubmitted) review from a pull request; this is only possible if the review has not yet been submitted.","name":"GITHUB_DELETE_PENDING_REVIEW","parameters":{"description":"Request sc...
-| {"description":"Deletes the specified GitHub project (Projects V2) using the GraphQL API. Note: This action uses GitHub's Projects V2 GraphQL API. The legacy Projects (classic) REST API was sunset on April 1, 2025 and ...
-| {"description":"Deletes a project card from a GitHub 'Project (classic)'; this operation is idempotent. DEPRECATION NOTICE: GitHub Classic Projects (V1) and its REST API were sunset on April 1, 2025. This action may re...
-| {"description":"Deletes a project field (column) from a GitHub Projects V2 project using the GraphQL API. IMPORTANT: GitHub Classic Projects REST API was sunset on April 1, 2025. This action now uses the GitHub Project...
-| {"description":"Tool to delete a project item for a user in GitHub Projects V2. Use when you need to remove an item from a user's project. Requires the project item's GraphQL node ID (starts with 'PVTI_'). Uses the Git...
-| {"description":"Deletes a specific reaction from a pull request review comment, provided the comment and reaction exist on that comment within the specified repository.","name":"GITHUB_DELETE_PULL_REQUEST_COMMENT_REACT...
-| {"description":"Disables the requirement for pull request reviews before merging for a specific, existing branch in an existing repository; this action is idempotent and will succeed even if the protection is not curre...
-[... 11 row(s) omitted ...]
-| {"description":"Dismisses an APPROVED or CHANGES_REQUESTED review on a pull request with a mandatory explanatory message. IMPORTANT: Only reviews in APPROVED or CHANGES_REQUESTED state can be dismissed. Reviews in COMM...
-[... 2 row(s) omitted ...]
-| {"description":"Downloads a repository's source code as a ZIP archive for a specific Git reference (branch, tag, or commit SHA). IMPORTANT SIZE LIMITATION: This action may fail with 'payload too large' errors for large...
-[... 5 row(s) omitted ...]
-| {"description":"Enables private vulnerability reporting for a repository, allowing security researchers to privately submit vulnerability reports to maintainers.","name":"GITHUB_ENABLE_PRIVATE_VULN_REPORTING_FOR_REPO",...
-| {"description":"Adds a repository to the list of selected repositories enabled for GitHub Actions in an organization. Requires the organization's 'enabled_repositories' policy to be set to 'selected'.","name":"GITHUB_E...
-| {"description":"Creates or updates a repository's development environment secret using an `encrypted_value` and its corresponding `key_id`; the secret must be pre-encrypted with the repository's Codespaces public key."...
-| {"description":"Creates or updates an organization's GitHub Codespaces secret using an encrypted value and its corresponding public key ID.","name":"GITHUB_ENCRYPT_ORG_DEV_ENV_SECRET","parameters":{"description":"Reque...
-| {"description":"Triggers an export of a user's specified codespace, automatically stopping it if active, and returns its export status and download URL.","name":"GITHUB_EXPORT_A_CODESPACE_FOR_THE_AUTHENTICATED_USER","p...
-| {"description":"Exports the software bill of materials (SBOM) in SPDX JSON format for a repository, if its dependency graph is enabled and it has at least one commit.","name":"GITHUB_EXPORT_SBOM_FOR_REPO","parameters":...
-| {"description":"Primary tool to find and search pull requests. Supports filtering by repository, author, state, labels, and merge status, and returns structured PR data for reliable use in workflows. GitHub search resu...
-| {"description":"AI-optimized repository search with smart filtering by language, stars, topics, and ownership. Builds intelligent search queries and returns clean, actionable repository data. Check `incomplete_results`...
+{
+  "name": "openhuman-app",
+  "version": "0.58.11",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:web": "vite",
+    "dev:app": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && bash ../scripts/setup-chromium-safe-storage.sh && source ../scripts/load-dotenv.sh && APPLE_SIGNING_IDENTITY='OpenHuman Dev Signe...
+    "dev:app:win": "\"C:/Program Files/Git/bin/bash.exe\" ../scripts/run-dev-win.sh",
+    "dev:cef": "pnpm dev:app",
+    "dev:wry": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri dev --no-default-features --features wry",
+    "core:stage": "echo '[core:stage] no-op — core is linked in-process; sidecar removed (PR #1061)'",
+    "tauri:ensure": "bash ../scripts/ensure-tauri-cli.sh",
+    "tauri:ios:init": "bash ../scripts/ios-init.sh",
+    "tauri:ios:dev": "cd src-tauri-mobile && IPHONEOS_DEPLOYMENT_TARGET=${IPHONEOS_DEPLOYMENT_TARGET:-16.0} npx --package=@tauri-apps/cli@^2 tauri ios dev",
+    "tauri:ios:build": "cd src-tauri-mobile && IPHONEOS_DEPLOYMENT_TARGET=${IPHONEOS_DEPLOYMENT_TARGET:-16.0} npx --package=@tauri-apps/cli@^2 tauri ios build",
+    "tauri:android:init": "bash ../scripts/android-init.sh",
+    "tauri:android:dev": "cd src-tauri-mobile && ../node_modules/.bin/tauri android dev",
+    "tauri:android:build": "cd src-tauri-mobile && ../node_modules/.bin/tauri android build",
+    "release:android:play": "bash ../scripts/release/upload-android-to-play.sh",
+    "build": "tsc && vite build",
+    "build:app": "tsc && vite build",
+    "build:app:e2e": "tsc && vite build --mode development",
+    "build:web:e2e": "bash ./scripts/e2e-web-build.sh",
+    "build:web": "cross-env VITE_OPENHUMAN_TARGET=web tsc && cross-env VITE_OPENHUMAN_TARGET=web vite build",
+    "compile": "tsc --noEmit",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:build:ui": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && cargo tauri build -- --bin OpenHuman",
+    "macos:build:intel": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --bundles app dmg --target x86_64-apple-darwin -- --bin OpenHuman...
+    "macos:build:intel:debug": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --debug --bundles app dmg --target x86_64-apple-darwin -- -...
+    "macos:build:debug": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --debug --bundles app dmg -- --bin OpenHuman",
+    "macos:build:release": "pnpm tauri:ensure && export CEF_PATH=\"$HOME/Library/Caches/tauri-cef\" && source ../scripts/load-dotenv.sh && cargo tauri build --bundles app dmg -- --bin OpenHuman",
+
+```
+
+### `08-lottie-animation`
+
+- [Full input](cases/08-lottie-animation/input.json)
+- [Full output](cases/08-lottie-animation/output.md)
+
+Input excerpt:
+
+```json
+{
+  "v": "4.8.0",
+  "meta": {
+    "g": "LottieFiles AE 3.0.2",
+    "a": "",
+    "k": "",
+    "d": "",
+    "tc": ""
+  },
+  "fr": 60,
+  "ip": 0,
+  "op": 77,
+  "w": 500,
+  "h": 500,
+  "nm": "security tick",
+  "ddd": 0,
+  "assets": [],
+  "layers": [
+    {
+      "ddd": 0,
+      "ind": 1,
+      "ty": 4,
+      "nm": "tick",
+      "sr": 1,
+      "ks": {
+        "o": {
+          "a": 0,
+          "k": 100,
+          "ix": 11
+        },
+        "r": {
+          "a": 0,
+          "k": 0,
+          "ix": 10
+        },
+        "p": {
+
+```
+
+Output excerpt:
+
+```markdown
+{
+  "v": "4.8.0",
+  "meta": {
+    "g": "LottieFiles AE 3.0.2",
+    "a": "",
+    "k": "",
+    "d": "",
+    "tc": ""
+  },
+  "fr": 60,
+  "ip": 0,
+  "op": 77,
+  "w": 500,
+  "h": 500,
+  "nm": "security tick",
+  "ddd": 0,
+  "assets": [],
+  "layers": [
+    {
+      "ddd": 0,
+      "ind": 1,
+      "ty": 4,
+      "nm": "tick",
+      "sr": 1,
+      "ks": {
+        "o": {
+          "a": 0,
+          "k": 100,
+          "ix": 11
+        },
+        "r": {
+          "a": 0,
+          "k": 0,
+          "ix": 10
+        },
+        "p": {
+
+```
+
+### `07-app-schema-object`
+
+- [Full input](cases/07-app-schema-object/input.json)
+- [Full output](cases/07-app-schema-object/output.md)
+
+Input excerpt:
+
+```json
+{
+  "methods": [
+    {
+      "description": "Liveness probe for the core JSON-RPC server.",
+      "function": "ping",
+      "inputs": [],
+      "method": "core.ping",
+      "namespace": "core",
+      "outputs": [
+        {
+          "comment": "Always true when the server is reachable.",
+          "name": "ok",
+          "required": true,
+          "ty": "Bool"
+        }
+      ]
+    },
+    {
+      "description": "Lists all JSON-RPC methods and their input/output schemas.",
+      "function": "rpc_schema_dump",
+      "inputs": [],
+      "method": "core.rpc_schema_dump",
+      "namespace": "core",
+      "outputs": [
+        {
+          "comment": "All JSON-RPC method schemas available to clients.",
+          "name": "methods",
+          "required": true,
+          "ty": {
+            "Array": {
+              "Object": {
+                "fields": [
+                  {
+                    "comment": "Fully-qualified JSON-RPC method name.",
+                    "name": "method",
+                    "required": true,
+
+```
+
+Output excerpt:
+
+```markdown
+{
+  "methods": [
+    {
+      "description": "Liveness probe for the core JSON-RPC server.",
+      "function": "ping",
+      "inputs": [],
+      "method": "core.ping",
+      "namespace": "core",
+      "outputs": [
+        {
+          "comment": "Always true when the server is reachable.",
+          "name": "ok",
+          "required": true,
+          "ty": "Bool"
+        }
+      ]
+    },
+    {
+      "description": "Lists all JSON-RPC methods and their input/output schemas.",
+      "function": "rpc_schema_dump",
+      "inputs": [],
+      "method": "core.rpc_schema_dump",
+      "namespace": "core",
+      "outputs": [
+        {
+          "comment": "All JSON-RPC method schemas available to clients.",
+          "name": "methods",
+          "required": true,
+          "ty": {
+            "Array": {
+              "Object": {
+                "fields": [
+                  {
+                    "comment": "Fully-qualified JSON-RPC method name.",
+                    "name": "method",
+                    "required": true,
+
+```
+
+### `06-tauri-capabilities-schema`
+
+- [Full input](cases/06-tauri-capabilities-schema/input.json)
+- [Full output](cases/06-tauri-capabilities-schema/output.md)
+
+Input excerpt:
+
+```json
+{
+  "default": {
+    "identifier": "default",
+    "description": "Capability for the main and overlay windows (desktop only)",
+    "local": true,
+    "windows": [
+      "main",
+      "overlay"
+    ],
+    "permissions": [
+      "core:default",
+      "core:window:default",
+      "core:window:allow-hide",
+      "core:window:allow-show",
+      "core:window:allow-set-focus",
+      "core:window:allow-unminimize",
+      "core:window:allow-start-dragging",
+      "core:window:allow-set-always-on-top",
+      "core:event:default",
+      "deep-link:default",
+      "notification:default",
+      "notification:allow-is-permission-granted",
+      "notification:allow-request-permission",
+      "notification:allow-notify",
+      "opener:default",
+      "opener:allow-reveal-item-in-dir",
+      {
+        "identifier": "opener:allow-open-url",
+        "allow": [
+          {
+            "url": "obsidian://open*"
+          },
+          {
+            "url": "https://ollama.com/*"
+          }
+        ]
+
+```
+
+Output excerpt:
+
+```markdown
+{
+  "default": {
+    "identifier": "default",
+    "description": "Capability for the main and overlay windows (desktop only)",
+    "local": true,
+    "windows": [
+      "main",
+      "overlay"
+    ],
+    "permissions": [
+      "core:default",
+      "core:window:default",
+      "core:window:allow-hide",
+      "core:window:allow-show",
+      "core:window:allow-set-focus",
+      "core:window:allow-unminimize",
+      "core:window:allow-start-dragging",
+      "core:window:allow-set-always-on-top",
+      "core:event:default",
+      "deep-link:default",
+      "notification:default",
+      "notification:allow-is-permission-granted",
+      "notification:allow-request-permission",
+      "notification:allow-notify",
+      "opener:default",
+      "opener:allow-reveal-item-in-dir",
+      {
+        "identifier": "opener:allow-open-url",
+        "allow": [
+          {
+            "url": "obsidian://open*"
+          },
+          {
+            "url": "https://ollama.com/*"
+          }
+        ]
+
+```
+
+### `05-polymarket-events-list`
+
+- [Full input](cases/05-polymarket-events-list/input.json)
+- [Full output](cases/05-polymarket-events-list/output.md)
+
+Input excerpt:
+
+```json
+[
+  {
+    "id": "event-1",
+    "title": "Ethereum milestones",
+    "slug": "ethereum-milestones"
+  },
+  {
+    "id": "event-2",
+    "title": "Bitcoin milestones",
+    "slug": "bitcoin-milestones"
+  }
+]
+
+```
+
+Output excerpt:
+
+```markdown
+[
+  {
+    "id": "event-1",
+    "title": "Ethereum milestones",
+    "slug": "ethereum-milestones"
+  },
+  {
+    "id": "event-2",
+    "title": "Bitcoin milestones",
+    "slug": "bitcoin-milestones"
+  }
+]
+
+```
+
+### `04-polymarket-markets-list`
+
+- [Full input](cases/04-polymarket-markets-list/input.json)
+- [Full output](cases/04-polymarket-markets-list/output.md)
+
+Input excerpt:
+
+```json
+[
+  {
+    "id": "12345",
+    "slug": "will-eth-hit-10k",
+    "question": "Will ETH hit $10k by Dec 31, 2026?",
+    "active": true,
+    "closed": false
+  },
+  {
+    "id": "67890",
+    "slug": "will-btc-hit-200k",
+    "question": "Will BTC hit $200k by Dec 31, 2026?",
+    "active": true,
+    "closed": false
+  }
+]
+
+```
+
+Output excerpt:
+
+```markdown
+[
+  {
+    "id": "12345",
+    "slug": "will-eth-hit-10k",
+    "question": "Will ETH hit $10k by Dec 31, 2026?",
+    "active": true,
+    "closed": false
+  },
+  {
+    "id": "67890",
+    "slug": "will-btc-hit-200k",
+    "question": "Will BTC hit $200k by Dec 31, 2026?",
+    "active": true,
+    "closed": false
+  }
+]
 
 ```
 

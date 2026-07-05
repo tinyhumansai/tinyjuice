@@ -41,6 +41,16 @@ fn main() …
 
 May 7, 2020
 
+Learning how to navigate/ modify tree-like structure with parsed AST SQL
+
+help
+
+1
+
+50
+
+July 5, 2026
+
 Per-read file integrity in a no_std kernel: block-level BLAKE3 instead of re-hashing the whole file
 
 community
@@ -61,23 +71,13 @@ help
 
 July 5, 2026
 
-Learning how to navigate/ modify tree-like structure with parsed AST SQL
-
-help
-
-0
-
-50
-
-July 5, 2026
-
 How smart is the compiler about avoiding monomorphization?
 
 help
 
 1
 
-140
+142
 
 July 4, 2026
 
@@ -95,7 +95,7 @@ announcements
 
 2
 
-177
+178
 
 July 4, 2026
 
@@ -125,7 +125,7 @@ community
 
 1586
 
-276729
+276732
 
 July 4, 2026
 
@@ -201,7 +201,7 @@ help
 
 7
 
-544
+545
 
 July 3, 2026
 
@@ -289,7 +289,7 @@ help
 
 4
 
-187
+188
 
 July 1, 2026
 
@@ -325,4 +325,4 @@ Terms of Service
 
 Powered by Discourse, best viewed with JavaScript enabled
 
-[compacted tool output — this is a PARTIAL view; the full original (83646 bytes) is available by calling tokenjuice_retrieve with token "b00db9a2b9453a096f737fa9451e767a" (marker ⟦tj:b00db9a2b9453a096f737fa9451e767a⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (83922 bytes) is available by calling tokenjuice_retrieve with token "3ef374c298be77e40221b21f750f635c" (marker ⟦tj:3ef374c298be77e40221b21f750f635c⟧)]

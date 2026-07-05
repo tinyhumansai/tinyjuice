@@ -2335,5 +2335,693 @@
       }
     },
     "type": "function"
+  },
+  {
+    "function": {
+      "description": "Checks if a GitHub App or OAuth access_token is valid for the specified client_id and retrieves its details, typically to verify its active status and grants. NOTE: This endpoint requires Basic Authentication using the OAuth App's client_id as username and client_secret as password. The access_token parameter must be an OAuth token issued by the specified OAuth App.",
+      "name": "GITHUB_CHECK_TOKEN",
+      "parameters": {
+        "description": "Request schema for validating a GitHub App or OAuth token.",
+        "properties": {
+          "access_token": {
+            "description": "The OAuth access token issued by your OAuth App that you want to validate. Returns 404 if the token is invalid or not issued by this client_id.",
+            "examples": [
+              "gho_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0"
+            ],
+            "title": "Access Token",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "The unique client ID of your GitHub OAuth App (must match the app that issued the token being checked).",
+            "examples": [
+              "Iv1.1234567890abcdef"
+            ],
+            "title": "Client Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id",
+          "access_token"
+        ],
+        "title": "CheckTokenRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to clear the value of a field for an item in a GitHub Project V2. Use when you need to remove or reset a field value (text, number, date, assignees, labels, single-select, iteration, or milestone fields).",
+      "name": "GITHUB_CLEAR_PROJECT_V2_ITEM_FIELD_VALUE",
+      "parameters": {
+        "description": "Request parameters for clearing a field value in a GitHub Project V2 item.\n\nprojectId: The ID of the Project.\nitemId: The ID of the item to update.\nfieldId: The ID of the field to clear.",
+        "properties": {
+          "fieldId": {
+            "description": "The global node ID of the field to clear (e.g., 'PVTSSF_lAHOCNqc1s4BN3oqzg8vTnA'). Currently supports text, number, date, assignees, labels, single-select, iteration and milestone fields.",
+            "examples": [
+              "PVTSSF_lAHOCNqc1s4BN3oqzg8vTnA"
+            ],
+            "title": "Field Id",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "The global node ID of the project item to update (e.g., 'PVTI_lAHOCNqc1s4BN3oqzgldG_w'). This identifies the specific item within the project whose field value will be cleared.",
+            "examples": [
+              "PVTI_lAHOCNqc1s4BN3oqzgldG_w"
+            ],
+            "title": "Item Id",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "The global node ID of the Project (e.g., 'PVT_kwHOCNqc1s4BN3oq'). This identifies the project containing the item.",
+            "examples": [
+              "PVT_kwHOCNqc1s4BN3oq"
+            ],
+            "title": "Project Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "itemId",
+          "fieldId"
+        ],
+        "title": "ClearProjectV2ItemFieldValueRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Deletes GitHub Actions caches from a repository matching a specific `key` and an optional Git `ref`, used to manage storage or clear outdated/corrupted caches; the action succeeds even if no matching caches are found to delete.",
+      "name": "GITHUB_CLEAR_REPOSITORY_CACHE_BY_KEY",
+      "parameters": {
+        "description": "Request schema for the `ClearRepositoryCacheByKey` action, defining parameters to identify and delete GitHub Actions caches.",
+        "properties": {
+          "key": {
+            "description": "The exact cache key used to identify specific caches for deletion. This key is often dynamically generated in workflows using expressions (e.g., `${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}`).",
+            "examples": [
+              "Linux-npm-6a99d79959699e7aa7597179767626e089597a38",
+              "Windows-pip-cache-mybranch-py39",
+              "macOS-gems-custom-key-v1"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. The name is not case sensitive.",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "ref": {
+            "description": "The full Git reference for narrowing down the cache deletion. For example, to target caches for a specific branch, use `refs/heads/<branch_name>`. To target caches for a pull request, use `refs/pull/<pull_number>/merge`. If omitted, caches matching the key across all refs are considered.",
+            "examples": [
+              "refs/heads/main",
+              "refs/pull/123/merge",
+              "refs/tags/v1.0.0"
+            ],
+            "title": "Ref",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
+            "examples": [
+              "hello-world",
+              "my-awesome-project"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "key"
+        ],
+        "title": "ClearRepositoryCacheByKeyRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Removes all custom labels from a self-hosted runner for an organization; default labels (e.g., 'self-hosted', 'linux', 'x64') will remain.",
+      "name": "GITHUB_CLEAR_SELF_HOSTED_RUNNER_ORG_LABELS",
+      "parameters": {
+        "description": "Request schema for `ClearSelfHostedRunnerOrgLabels`",
+        "properties": {
+          "org": {
+            "description": "The name of the GitHub organization that owns the self-hosted runner (case-insensitive).",
+            "examples": [
+              "octo-org",
+              "my-company"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "runner_id": {
+            "description": "Unique numeric identifier of the self-hosted runner. Can be obtained from listing runners for the organization.",
+            "examples": [
+              123,
+              456
+            ],
+            "title": "Runner Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "org",
+          "runner_id"
+        ],
+        "title": "ClearSelfHostedRunnerOrgLabelsRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to atomically create, update, or delete multiple files in a GitHub repository as a single commit. Uses Git Data APIs to avoid SHA mismatch conflicts that occur with the Contents API when multiple files are modified in parallel. Use when you need to make multi-file changes reliably. BRANCH CREATION: When committing to a new branch (e.g., 'fix/my-fix' or 'feature/new-feature'), you MUST provide 'base_branch' (typically 'main' or 'master') to create the branch from. If the branch already exists, base_branch is not needed. This action handles race conditions automatically: if the branch is updated by another commit between fetching the HEAD and updating the reference (resulting in a 422 'not a fast forward' error), the action will retry by refetching the HEAD and rebasing changes. Use max_retries to control this behavior.",
+      "name": "GITHUB_COMMIT_MULTIPLE_FILES",
+      "parameters": {
+        "properties": {
+          "author": {
+            "additionalProperties": false,
+            "description": "Git author or committer information.",
+            "properties": {
+              "date": {
+                "description": "ISO 8601 timestamp for the commit (optional, defaults to current time)",
+                "examples": [
+                  "2024-01-15T10:30:00Z"
+                ],
+                "title": "Date",
+                "type": "string"
+              },
+              "email": {
+                "description": "Email address of the author or committer",
+                "examples": [
+                  "john@example.com",
+                  "jane@example.com"
+                ],
+                "title": "Email",
+                "type": "string"
+              },
+              "name": {
+                "description": "Name of the author or committer",
+                "examples": [
+                  "John Doe",
+                  "Jane Smith"
+                ],
+                "title": "Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "email"
+            ],
+            "title": "AuthorCommitter",
+            "type": "object"
+          },
+          "base_branch": {
+            "description": "REQUIRED when committing to a new branch that doesn't exist yet. Specifies the existing branch to create the new branch from (e.g., 'main' or 'master'). Not needed if 'branch' already exists in the repository.",
+            "examples": [
+              "main",
+              "master",
+              "develop"
+            ],
+            "title": "Base Branch",
+            "type": "string"
+          },
+          "branch": {
+            "description": "Target branch name to commit to. If this branch doesn't exist, you MUST provide 'base_branch' to create it. For new feature branches (e.g., 'fix/my-fix', 'feature/new-feature'), always set base_branch='main' (or your default branch).",
+            "examples": [
+              "main",
+              "develop",
+              "feature/new-feature"
+            ],
+            "title": "Branch",
+            "type": "string"
+          },
+          "committer": {
+            "additionalProperties": false,
+            "description": "Git author or committer information.",
+            "properties": {
+              "date": {
+                "description": "ISO 8601 timestamp for the commit (optional, defaults to current time)",
+                "examples": [
+                  "2024-01-15T10:30:00Z"
+                ],
+                "title": "Date",
+                "type": "string"
+              },
+              "email": {
+                "description": "Email address of the author or committer",
+                "examples": [
+                  "john@example.com",
+                  "jane@example.com"
+                ],
+                "title": "Email",
+                "type": "string"
+              },
+              "name": {
+                "description": "Name of the author or committer",
+                "examples": [
+                  "John Doe",
+                  "Jane Smith"
+                ],
+                "title": "Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "email"
+            ],
+            "title": "AuthorCommitter",
+            "type": "object"
+          },
+          "deletes": {
+            "description": "List of file paths to delete from the repository. Files must exist in the repository; attempting to delete non-existent files will result in an error. Ensure paths are exact with no leading/trailing whitespace.",
+            "examples": [
+              [
+                "old-file.txt",
+                "deprecated/module.py"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Deletes",
+            "type": "array"
+          },
+          "force": {
+            "default": false,
+            "description": "Force update the branch reference. WARNING: Use with caution as this can overwrite commits. Only use this when you intentionally want to overwrite the branch history.",
+            "title": "Force",
+            "type": "boolean"
+          },
+          "max_retries": {
+            "default": 3,
+            "description": "Maximum number of retries when encountering race conditions (422 'not a fast forward' errors). The action will refetch the HEAD and rebase changes on each retry. Set to 0 to disable retries.",
+            "maximum": 10,
+            "minimum": 0,
+            "title": "Max Retries",
+            "type": "integer"
+          },
+          "message": {
+            "description": "Commit message describing the changes",
+            "examples": [
+              "Add new features",
+              "Update documentation",
+              "Fix bugs in authentication"
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Repository owner (username or organization name)",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository name (without .git extension)",
+            "examples": [
+              "hello-world",
+              "my-project"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "upserts": {
+            "description": "List of files to create or update. Each entry requires path, content, and optional encoding (utf-8 or base64)",
+            "examples": [
+              [
+                {
+                  "content": "# Hello",
+                  "encoding": "utf-8",
+                  "path": "README.md"
+                }
+              ]
+            ],
+            "items": {
+              "description": "Represents a file to create or update.",
+              "properties": {
+                "content": {
+                  "description": "File content as a string",
+                  "examples": [
+                    "print('Hello, World!')",
+                    "# My Project\n\nWelcome!"
+                  ],
+                  "title": "Content",
+                  "type": "string"
+                },
+                "encoding": {
+                  "default": "utf-8",
+                  "description": "Content encoding: 'utf-8' for text files or 'base64' for binary files",
+                  "enum": [
+                    "utf-8",
+                    "base64"
+                  ],
+                  "examples": [
+                    "utf-8",
+                    "base64"
+                  ],
+                  "title": "Encoding",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "File path in the repository (e.g., 'src/main.py' or 'docs/readme.md')",
+                  "examples": [
+                    "src/main.py",
+                    "README.md",
+                    "docs/guide.md"
+                  ],
+                  "title": "Path",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "content"
+              ],
+              "title": "FileUpsert",
+              "type": "object"
+            },
+            "title": "Upserts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "branch",
+          "message"
+        ],
+        "title": "CommitMultipleFilesRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Compares two commit points (commits, branches, tags, or SHAs) within a repository or across forks, using `BASE...HEAD` or `OWNER:REF...OWNER:REF` format for the `basehead` parameter.",
+      "name": "GITHUB_COMPARE_TWO_COMMITS",
+      "parameters": {
+        "description": "Request schema for `CompareTwoCommits` action. Specifies the repository and the two commit points (base and head) to compare.",
+        "properties": {
+          "basehead": {
+            "description": "A string specifying the base and head references to compare, in the format `BASE...HEAD`. `BASE` and `HEAD` can be branch names (e.g., `main...develop`), tag names (e.g., `v1.0.0...v1.1.0`), or commit SHAs (abbreviated or full 40-character format). Both abbreviated and full SHAs are accepted; full 40-character SHAs are recommended for reliability in large repositories. Both references must exist in the specified repository. To compare branches across forks in the same network, use the format `OWNER:REF...OWNER:REF` (e.g., `octocat:main...another-user:main`). Do NOT pass GitHub URLs - only plain reference strings like 'main...develop' are accepted.",
+            "examples": [
+              "main...develop",
+              "v1.0.0...v1.1.0",
+              "0e9c6b6...5f8d3a0",
+              "553c2077f0edc3d5dc5d17262f6aa498e69d6f8e...7fd1a60b01f91b314f59955a4e4d4e80d8edf11d",
+              "octocat:main...my-fork-user:main"
+            ],
+            "title": "Basehead",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name that owns the repository. This field is not case-sensitive.",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "description": "Page number of the results to fetch, for pagination when the number of differences (commits or files) is large.",
+            "examples": [
+              "1",
+              "2"
+            ],
+            "title": "Page",
+            "type": "integer"
+          },
+          "per_page": {
+            "default": 30,
+            "description": "Number of results (e.g., files or commits) to return per page, with a maximum of 100, for pagination.",
+            "examples": [
+              "30",
+              "100"
+            ],
+            "title": "Per Page",
+            "type": "integer"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+            "examples": [
+              "Spoon-Knife",
+              "my-project"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "basehead"
+        ],
+        "title": "CompareTwoCommitsRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Generates a JIT configuration for a GitHub organization's new self-hosted runner to run a single job then unregister; requires admin:org scope and the runner_group_id must exist in the organization.",
+      "name": "GITHUB_CONFIGURE_JIT_RUNNER_FOR_ORG",
+      "parameters": {
+        "description": "Parameters to generate a just-in-time (JIT) runner configuration for a GitHub organization.",
+        "properties": {
+          "labels": {
+            "description": "Custom labels to assign to the new self-hosted runner, used by GitHub Actions to route jobs. **Minimum items**: 1. **Maximum items**: 100.",
+            "examples": [
+              [
+                "linux",
+                "x64",
+                "gpu"
+              ],
+              [
+                "windows-latest",
+                "my-custom-label"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Labels",
+            "type": "array"
+          },
+          "name": {
+            "description": "Desired name for the new self-hosted runner, visible in the GitHub UI.",
+            "examples": [
+              "my-jit-runner-linux",
+              "temp-builder-1"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "org": {
+            "description": "Name of the GitHub organization (case-insensitive).",
+            "examples": [
+              "my-organization",
+              "github"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "runner_group_id": {
+            "description": "ID of the runner group to assign the new self-hosted runner. Must exist in the organization. You can get runner group IDs by calling the 'List self-hosted runner groups for an organization' endpoint (GET /orgs/{org}/actions/runner-groups).",
+            "examples": [
+              1,
+              42
+            ],
+            "title": "Runner Group Id",
+            "type": "integer"
+          },
+          "work_folder": {
+            "default": "_work",
+            "description": "Path to the working directory on the runner machine where jobs will execute, relative to the runner's installation directory.",
+            "examples": [
+              "_work",
+              "custom_work_dir"
+            ],
+            "title": "Work Folder",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "name",
+          "runner_group_id",
+          "labels"
+        ],
+        "title": "ConfigureJitRunnerForOrgRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Sets or updates the OIDC subject claim customization template for an existing GitHub organization by specifying which claims (e.g., 'repo', 'actor') form the OIDC token's subject (`sub`). This action customizes which claim keys are included in the OIDC subject claim for the specified organization. It allows for fine-tuning the content of the subject claim based on organizational needs.",
+      "name": "GITHUB_CONFIGURE_OIDC_SUBJECT_CLAIM_TEMPLATE",
+      "parameters": {
+        "description": "Request schema for `ConfigureOidcSubjectClaimTemplate`.",
+        "properties": {
+          "include_claim_keys": {
+            "description": "Array of unique strings, each a valid claim key (e.g., 'repo', 'actor'; alphanumeric/underscores only), to include in the OIDC subject claim (`sub`).",
+            "examples": [
+              [
+                "repo",
+                "context",
+                "actor"
+              ],
+              [
+                "workflow",
+                "ref",
+                "repository_owner"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Include Claim Keys",
+            "type": "array"
+          },
+          "org": {
+            "description": "The GitHub organization name (case-insensitive).",
+            "examples": [
+              "my-github-org"
+            ],
+            "title": "Org",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "include_claim_keys"
+        ],
+        "title": "ConfigureOidcSubjectClaimTemplateRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Converts an existing organization member, who is not an owner, to an outside collaborator, restricting their access to explicitly granted repositories.",
+      "name": "GITHUB_CONVERT_ORG_MEMBER_TO_OUTSIDE_COLLABORATOR",
+      "parameters": {
+        "description": "Request schema for `ConvertOrgMemberToOutsideCollaborator`",
+        "properties": {
+          "async": {
+            "default": false,
+            "description": "If true, performs the conversion asynchronously (API returns a 202 status when the job is successfully queued).",
+            "title": "Async",
+            "type": "boolean"
+          },
+          "org": {
+            "description": "The organization name (case-insensitive).",
+            "examples": [
+              "octo-org",
+              "my-company-gh"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "username": {
+            "description": "The GitHub username of the member to convert.",
+            "examples": [
+              "octocat",
+              "user-to-convert"
+            ],
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "username"
+        ],
+        "title": "ConvertOrgMemberToOutsideCollaboratorRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a Git blob in a repository, requiring content and encoding ('utf-8' or 'base64'). Requires write access to the repository.",
+      "name": "GITHUB_CREATE_A_BLOB",
+      "parameters": {
+        "description": "Defines the request parameters for creating a new Git blob.",
+        "properties": {
+          "content": {
+            "description": "The content to be stored in the new blob.",
+            "examples": [
+              "This is the raw content of the file.",
+              "SGVsbG8gV29ybGQ=\\n"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "encoding": {
+            "default": "utf-8",
+            "description": "The encoding for the 'content'; \"utf-8\" or \"base64\".",
+            "examples": [
+              "utf-8",
+              "base64"
+            ],
+            "title": "Encoding",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name that owns the repository. This field is not case-sensitive. You must have write access to the repository.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the '.git' extension. This field is not case-sensitive. The repository must exist and you must have write access to it.",
+            "examples": [
+              "Hello-World"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "content"
+        ],
+        "title": "CreateABlobRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
   }
 ]

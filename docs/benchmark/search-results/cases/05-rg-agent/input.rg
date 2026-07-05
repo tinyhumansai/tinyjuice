@@ -205,39 +205,113 @@
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:93:/// semaphore, `GLOBAL_REGISTRY` agent.run_turn handler, `STARTED`
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:697:    let msg = r#"[composio] list_connections failed: Backend returned 500 Internal Server Error for GET https://api.tinyhumans.ai/agent-integrations/composio/connections: 401 {"error":{"message":"Invalid API key: ak_o1Og5*****","code":10401,"slug":"HTTP_Unauthorized","status":401}}"#;
 <OPENHUMAN_ROOT>/src/core/event_bus/bus.rs:59:/// (e.g., an agent turn completed, a memory was stored).
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:20://! [`crate::openhuman::agent::bus::mock_agent_run_turn`]) compose on top of
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:61:/// [`crate::openhuman::agent::bus::use_real_agent_handler`] that need the
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:62:/// real agent handler installed without racing against a stub-installing
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:110:/// [`crate::openhuman::agent::bus::mock_agent_run_turn`]) should compose
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:7:For deeper architecture and subsystem references, use the GitBook under [`gitbooks/developing/`](gitbooks/developing/). For coding-agent and repository-specific implementation rules, see [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md).
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:201:If you only changed docs in a normal local workflow, `pnpm format:check` is usually the only validation you need. AI-authored or remote-agent PRs must still fill in the AI Authored PR Metadata section of the PR template and report any blocked commands with the exact command and error.
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:220:- For AI-authored or remote-agent PRs, also fill in the AI Authored PR Metadata section of the PR template.
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:249:├── AGENTS.md               # Coding-agent repo rules
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:303:If you are contributing through a coding agent or remote environment, include the metadata required by the PR template and the Codex PR checklist.
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:309:- Use the controller registry and domain module structure described in [`AGENTS.md`](AGENTS.md) for new Rust functionality.
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:6:        // Agent
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:8:            DomainEvent::AgentTurnStarted {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:12:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:15:            DomainEvent::AgentTurnCompleted {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:20:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:23:            DomainEvent::AgentError {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:28:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:31:            DomainEvent::SubagentSpawned {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:33:                agent_id: "researcher".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:38:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:41:            DomainEvent::SubagentCompleted {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:44:                agent_id: "researcher".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:49:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:52:            DomainEvent::SubagentFailed {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:55:                agent_id: "researcher".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:58:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:67:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:74:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:81:            "agent",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:377:                target_agent: "orchestrator".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:506:        // Agent meetings (issue #3507 contract events)
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:514:            "agent_meetings",
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:523:            "agent_meetings",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:48:    // ── Agent ───────────────────────────────────────────────────────────
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:49:    /// An agent turn has started processing.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:50:    AgentTurnStarted { session_id: String, channel: String },
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:51:    /// An agent turn completed with a final response.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:52:    AgentTurnCompleted {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:57:    /// An error occurred during agent processing.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:58:    AgentError {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:63:    /// A sub-agent was dispatched via `spawn_subagent`.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:64:    SubagentSpawned {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:65:        /// Parent agent's session id.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:67:        /// Sub-agent definition id (e.g. `researcher`, `notion_specialist`, `fork`).
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:68:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:76:    /// A sub-agent finished successfully.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:77:    SubagentCompleted {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:80:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:85:    /// A sub-agent failed (max iterations, provider error, missing
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:88:    SubagentFailed {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:91:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:94:    /// A sub-agent called `ask_user_clarification` and paused, waiting
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:96:    /// `continue_subagent`.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:97:    SubagentAwaitingUser {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:100:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:103:    /// High-level orchestration accepted a child agent for execution.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:104:    AgentOrchestrationSpawned {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:107:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:108:        parent_agent_id: Option<String>,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:110:    /// High-level orchestration observed a child agent completion.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:111:    AgentOrchestrationCompleted {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:114:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:119:    /// High-level orchestration observed a child agent failure.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:120:    AgentOrchestrationFailed {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:123:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:126:    /// High-level orchestration closed or cancelled a child agent.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:127:    AgentOrchestrationClosed {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:136:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:145:        agent_id: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:186:    /// `RunQueueMessageDelivered` event provided before the TinyAgents migration
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:343:    /// `channel` so the agent loop can derive per-sender conversation keys
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:492:    /// create). Lets a live agent session refresh its `## Installed Skills`
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:512:    /// A TinyAgents workspace descriptor was prepared for an isolated run.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:519:    /// A TinyAgents workspace descriptor blocked an out-of-root path.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:524:    /// A TinyAgents workspace descriptor was cleaned up.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:533:    /// Agent attempted a tool call that produces an external side
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:629:        /// cron / sub-agent paths — no client to fan out to.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:680:        /// sub-agent paths — no client to fan out to.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:776:    // Published by `crate::openhuman::agent::triage` when an external
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:778:    // later) has been classified by the trigger-triage agent. The
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:781:    // `agent::triage::run_triage` will publish these.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:782:    /// A trigger event was evaluated by the triage agent and assigned
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:800:    /// Triage decided to hand the trigger off to another agent
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:808:        /// Agent definition id the trigger was handed off to.
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:809:        target_agent: String,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:901:        /// `"conversations:agent"`).
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:976:    /// The MCP setup agent asked the user for a secret value. The UI
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:979:    /// returned to the agent; the raw secret value never traverses this
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:988:    /// the registry before reaching the agent LLM context. Surfaced for
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1036:    /// The `[autonomy]` block (agent access mode / filesystem permissions) was
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1040:    /// The agent's filesystem roots (currently the `action_dir` sandbox) were
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1041:    /// changed at runtime via `config.update_agent_paths`. The live
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1044:    AgentPathsChanged,
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1285:            Self::AgentTurnStarted { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1286:            | Self::AgentTurnCompleted { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1287:            | Self::AgentError { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1288:            | Self::SubagentSpawned { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1289:            | Self::SubagentCompleted { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1290:            | Self::SubagentFailed { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1291:            | Self::SubagentAwaitingUser { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1292:            | Self::AgentOrchestrationSpawned { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1293:            | Self::AgentOrchestrationCompleted { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1294:            | Self::AgentOrchestrationFailed { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1295:            | Self::AgentOrchestrationClosed { .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1302:            | Self::RunQueueSteerRequeued { .. } => "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1386:            | Self::AgentPathsChanged
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1400:            Self::TaskPlanAwaitingApproval { .. } | Self::TaskRunReclaimed { .. } => "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1402:            Self::ThreadGoalUpdated { .. } | Self::ThreadGoalCleared { .. } => "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1439:            | Self::MeetingSummaryGenerated { .. } => "agent_meetings",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1450:            Self::AgentTurnStarted { .. } => "AgentTurnStarted",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1451:            Self::AgentTurnCompleted { .. } => "AgentTurnCompleted",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1452:            Self::AgentError { .. } => "AgentError",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1453:            Self::SubagentSpawned { .. } => "SubagentSpawned",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1454:            Self::SubagentCompleted { .. } => "SubagentCompleted",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1455:            Self::SubagentFailed { .. } => "SubagentFailed",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1456:            Self::SubagentAwaitingUser { .. } => "SubagentAwaitingUser",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1457:            Self::AgentOrchestrationSpawned { .. } => "AgentOrchestrationSpawned",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1458:            Self::AgentOrchestrationCompleted { .. } => "AgentOrchestrationCompleted",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1459:            Self::AgentOrchestrationFailed { .. } => "AgentOrchestrationFailed",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1460:            Self::AgentOrchestrationClosed { .. } => "AgentOrchestrationClosed",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1538:            Self::AgentPathsChanged => "AgentPathsChanged",
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1590:    /// Best-effort agent/session hint for display (not all events carry one).
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1591:    pub fn agent_hint(&self) -> Option<&str> {
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1593:            Self::AgentTurnStarted { session_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1594:            | Self::AgentTurnCompleted { session_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1595:            | Self::AgentError { session_id, .. } => Some(session_id.as_str()),
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1596:            Self::SubagentSpawned { agent_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1597:            | Self::SubagentCompleted { agent_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1598:            | Self::SubagentFailed { agent_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1599:            | Self::SubagentAwaitingUser { agent_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1600:            | Self::AgentOrchestrationSpawned { agent_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1601:            | Self::AgentOrchestrationCompleted { agent_id, .. }
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1602:            | Self::AgentOrchestrationFailed { agent_id, .. } => Some(agent_id.as_str()),
+<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1603:            Self::AgentOrchestrationClosed {
 <OPENHUMAN_ROOT>/src/core/observability.rs:12://! being logged at error level never reach Sentry. The agent-turn path is the
 <OPENHUMAN_ROOT>/src/core/observability.rs:13://! canonical example — `run_single` used to publish a `DomainEvent::AgentError`
 <OPENHUMAN_ROOT>/src/core/observability.rs:101:    /// error is raised again by `agent.run_single` /
@@ -353,8 +427,7 @@
 <OPENHUMAN_ROOT>/src/core/observability.rs:7188:                   (https://api.tinyhumans.ai/agent-integrations/composio/connections) \
 <OPENHUMAN_ROOT>/src/core/observability.rs:7197:    /// agent job hits a local LM Studio server (`localhost:1234`) that isn't
 <OPENHUMAN_ROOT>/src/core/observability.rs:7285:                ("path", "/agent-integrations/composio/connections"),
-<OPENHUMAN_ROOT>/package.json:51:    "agent-batch": "node scripts/agent-batch/cli.mjs",
-<OPENHUMAN_ROOT>/package.json:52:    "agent-batch:test": "node --test scripts/agent-batch/__tests__/lib.test.mjs scripts/agent-batch/__tests__/cli.test.mjs",
+<OPENHUMAN_ROOT>/src/core/event_bus/mod.rs:5://! modules (like memory, skills, and agents) to communicate without
 <OPENHUMAN_ROOT>/src/core/event_bus/README.md:13:- `pub enum DomainEvent` — `events.rs` — `#[non_exhaustive]` catalog of events; current variants cover Agent (`AgentTurnStarted/Completed`, `AgentError`), Memory (`MemoryStored`, `MemoryRecalled`), Channels (`ChannelInboundMessage`, `ChannelMessageReceived/Processed`, `ChannelReactionReceived/Sent`, `ChannelConnected/Disconnected`), Cron (`CronJobTriggered/Completed`, `CronDeliveryRequested`), Skills, Tools, Webhooks, and System.
 <OPENHUMAN_ROOT>/src/core/event_bus/README.md:31:- `src/openhuman/agent/bus.rs`, `agent/triage/{events,evaluator,escalation}.rs`, `agent_registry/tools/{dispatch,spawn_subagent}.rs` — agent + sub-agent events.
 <OPENHUMAN_ROOT>/src/core/event_bus/README.md:41:## Emission policy (tinyagents migration, 05.3)
@@ -366,104 +439,51 @@
 <OPENHUMAN_ROOT>/src/core/event_bus/README.md:55:  module boundary the crate stream does not serve. Subagent lifecycle
 <OPENHUMAN_ROOT>/src/core/event_bus/README.md:57:  `agent_orchestration::subagent_events` (05.2), never hand-rolled
 <OPENHUMAN_ROOT>/src/core/event_bus/README.md:58:  `publish_global(DomainEvent::Subagent*)`.
-<OPENHUMAN_ROOT>/src/core/event_bus/mod.rs:5://! modules (like memory, skills, and agents) to communicate without
-<OPENHUMAN_ROOT>/src/core/socketio.rs:123:    /// `"provider"` | `"openhuman_budget"` | `"agent_loop"`
-<OPENHUMAN_ROOT>/src/core/socketio.rs:139:    /// agent loop) and for transport failures without a provider prefix.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:197:    /// Sub-agent specific progress detail. Populated on
-<OPENHUMAN_ROOT>/src/core/socketio.rs:198:    /// `subagent_spawned`, `subagent_completed`, `subagent_iteration_start`,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:199:    /// `subagent_tool_call`, and `subagent_tool_result` events so the UI
-<OPENHUMAN_ROOT>/src/core/socketio.rs:200:    /// can attribute child activity to the parent's live subagent row
-<OPENHUMAN_ROOT>/src/core/socketio.rs:202:    /// non-subagent event.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:204:    pub subagent: Option<SubagentProgressDetail>,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:209:    /// `subagent_tool_call`), e.g. "Reading messages". The frontend renders
-<OPENHUMAN_ROOT>/src/core/socketio.rs:215:    /// `subagent_tool_call`), e.g. "steven@gmail.com" — the bracketed target
-<OPENHUMAN_ROOT>/src/core/socketio.rs:220:    /// sub-agents), carried on `chat_done`. Lets the UI footer show session
-<OPENHUMAN_ROOT>/src/core/socketio.rs:222:    /// per-sub-agent hover breakdown. `None` for every non-`chat_done` event and
-<OPENHUMAN_ROOT>/src/core/socketio.rs:230:/// Every numeric is a turn total (parent agent **plus** any sub-agents spawned
-<OPENHUMAN_ROOT>/src/core/socketio.rs:231:/// during the turn); the `subagents` list breaks the same spend down per child
-<OPENHUMAN_ROOT>/src/core/socketio.rs:243:    /// Per-sub-agent spend, omitted from the wire when no sub-agents ran.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:245:    pub subagents: Vec<SubagentUsagePayload>,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:248:/// One sub-agent's token/cost contribution within a turn (hover breakdown).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:251:pub struct SubagentUsagePayload {
-<OPENHUMAN_ROOT>/src/core/socketio.rs:253:    pub agent_id: String,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:259:/// Per-event subagent progress detail attached to `WebChannelEvent`.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:262:/// subagent block — child iteration counters, mode, child task/agent
-<OPENHUMAN_ROOT>/src/core/socketio.rs:264:/// the agent id on top-level subagent events but not on nested
-<OPENHUMAN_ROOT>/src/core/socketio.rs:265:/// `subagent_tool_*` events where `tool_name` is the *child's* tool),
-<OPENHUMAN_ROOT>/src/core/socketio.rs:266:/// and final-run statistics on `subagent_completed`.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:269:/// absent — this keeps the wire format compact for non-subagent events
-<OPENHUMAN_ROOT>/src/core/socketio.rs:274:pub struct SubagentProgressDetail {
-<OPENHUMAN_ROOT>/src/core/socketio.rs:281:    /// Character length of the delegation prompt (on `subagent_spawned`).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:284:    /// Sub-agent's child iteration counter (on `subagent_iteration_start`,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:285:    /// `subagent_tool_call`, `subagent_tool_result`). 1-based.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:288:    /// Sub-agent's configured iteration cap.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:291:    /// Child agent id (on nested `subagent_tool_*` events where the flat
-<OPENHUMAN_ROOT>/src/core/socketio.rs:292:    /// `tool_name` is the child's tool, not the agent).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:294:    pub agent_id: Option<String>,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:295:    /// Spawn task id (on nested `subagent_tool_*` events).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:301:    /// Total iterations the sub-agent used (on `subagent_completed`).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:304:    /// Character length of the sub-agent's final assistant text
-<OPENHUMAN_ROOT>/src/core/socketio.rs:305:    /// (on `subagent_completed`) or the tool result
-<OPENHUMAN_ROOT>/src/core/socketio.rs:306:    /// (on `subagent_tool_result`).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:310:    /// `subagent_spawned`). The frontend stores it on the subagent row and
-<OPENHUMAN_ROOT>/src/core/socketio.rs:311:    /// uses it to reopen the full parent↔subagent conversation from memory.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:314:    /// Human-readable display name from the agent registry (e.g.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:315:    /// "Researcher", "Coding Agent"). The frontend uses this for
-<OPENHUMAN_ROOT>/src/core/socketio.rs:316:    /// consistent agent labels across timeline, sub-mascots, and drawer.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:320:    /// (on `subagent_completed`, when the worker ran with
-<OPENHUMAN_ROOT>/src/core/socketio.rs:326:    /// after the run (on `subagent_completed`). Absent for non-isolated
-<OPENHUMAN_ROOT>/src/core/socketio.rs:331:    /// (on `subagent_completed`). A dirty worktree must not be auto-removed —
-<OPENHUMAN_ROOT>/src/core/socketio.rs:433:            // (welcome agent, morning briefing, cron-driven announcements)
-<OPENHUMAN_ROOT>/src/core/socketio.rs:630:    let io_agent_meetings = io.clone();
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1095:                        "[socketio] event_bus not initialised after {}s — agent_meetings bridge giving up",
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1109:                        "[socketio] dropped {} event_bus events due to lag (agent_meetings bridge)",
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1122:                    log::debug!("[socketio] broadcast agent_meetings:joined");
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1123:                    let _ = io_agent_meetings.emit("agent_meetings:joined", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1131:                    log::debug!("[socketio] broadcast agent_meetings:left reason={}", reason);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1132:                    let _ = io_agent_meetings.emit("agent_meetings:left", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1147:                        "[socketio] broadcast agent_meetings:reply reply_len={}",
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1150:                    let _ = io_agent_meetings.emit("agent_meetings:reply", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1165:                        "[socketio] broadcast agent_meetings:harness instruction_len={}",
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1168:                    let _ = io_agent_meetings.emit("agent_meetings:harness", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1181:                        "[socketio] broadcast agent_meetings:transcript turns={} duration_ms={}",
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1185:                    let _ = io_agent_meetings.emit("agent_meetings:transcript", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1200:                        "[socketio] broadcast agent_meetings:transcript_delta index={} is_partial={}",
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1204:                    let _ = io_agent_meetings.emit("agent_meetings:transcript_delta", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1212:                    log::debug!("[socketio] broadcast agent_meetings:error");
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1213:                    let _ = io_agent_meetings.emit("agent_meetings:error", &payload);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1218:        log::debug!("[socketio] agent_meetings bridge stopped");
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1474:    // Match against the canonical underscore form after stripping a `subagent_`
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1475:    // prefix (subagent streaming mirrors the parent's deltas), so `text_delta`,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1476:    // `text:delta`, and `subagent_text_delta` all resolve to a listed event.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1479:    let base = normalized.strip_prefix("subagent_").unwrap_or(&normalized);
-<OPENHUMAN_ROOT>/src/core/socketio.rs:1540:        assert_eq!(event_alias("subagent_tool_args_delta"), None);
+<OPENHUMAN_ROOT>/package.json:51:    "agent-batch": "node scripts/agent-batch/cli.mjs",
+<OPENHUMAN_ROOT>/package.json:52:    "agent-batch:test": "node --test scripts/agent-batch/__tests__/lib.test.mjs scripts/agent-batch/__tests__/cli.test.mjs",
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:20://! [`crate::openhuman::agent::bus::mock_agent_run_turn`]) compose on top of
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:61:/// [`crate::openhuman::agent::bus::use_real_agent_handler`] that need the
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:62:/// real agent handler installed without racing against a stub-installing
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:110:/// [`crate::openhuman::agent::bus::mock_agent_run_turn`]) should compose
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:6:        // Agent
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:8:            DomainEvent::AgentTurnStarted {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:12:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:15:            DomainEvent::AgentTurnCompleted {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:20:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:23:            DomainEvent::AgentError {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:28:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:31:            DomainEvent::SubagentSpawned {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:33:                agent_id: "researcher".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:38:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:41:            DomainEvent::SubagentCompleted {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:44:                agent_id: "researcher".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:49:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:52:            DomainEvent::SubagentFailed {
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:55:                agent_id: "researcher".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:58:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:67:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:74:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:81:            "agent",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:377:                target_agent: "orchestrator".into(),
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:506:        // Agent meetings (issue #3507 contract events)
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:514:            "agent_meetings",
+<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:523:            "agent_meetings",
 <OPENHUMAN_ROOT>/src/core/mod.rs:9:pub mod agent_cli;
-<OPENHUMAN_ROOT>/src/core/cli.rs:17:/// Debug/e2e agent paths can build deep async poll stacks while assembling
-<OPENHUMAN_ROOT>/src/core/cli.rs:18:/// prompts, provider requests, and sub-agent tool loops.
-<OPENHUMAN_ROOT>/src/core/cli.rs:83:        "agent" => {
-<OPENHUMAN_ROOT>/src/core/cli.rs:85:                "[cli] dispatching to agent subcommand, args={:?}",
-<OPENHUMAN_ROOT>/src/core/cli.rs:88:            crate::core::agent_cli::run_agent_command(&args[1..])
-<OPENHUMAN_ROOT>/src/core/cli.rs:289:    // A single agent turn is a very large async state machine (system prompt +
-<OPENHUMAN_ROOT>/src/core/cli.rs:291:    // to a sub-agent runs another full turn one level down. Even with the inner
-<OPENHUMAN_ROOT>/src/core/cli.rs:292:    // sub-agent future boxed (`subagent_runner::ops`), that nesting overflows
-<OPENHUMAN_ROOT>/src/core/cli.rs:298:        .thread_stack_size(crate::core::runtime::AGENT_WORKER_STACK_BYTES)
-<OPENHUMAN_ROOT>/src/core/cli.rs:348:    // (e.g. `agent.chat`), so it needs the same roomy stack as the server.
-<OPENHUMAN_ROOT>/src/core/cli.rs:351:        .thread_stack_size(crate::core::runtime::AGENT_WORKER_STACK_BYTES)
-<OPENHUMAN_ROOT>/src/core/cli.rs:432:        .thread_stack_size(crate::core::runtime::AGENT_WORKER_STACK_BYTES)
-<OPENHUMAN_ROOT>/src/core/cli.rs:566:    println!("  openhuman agent <subcommand> [options]    (inspect agent definitions & prompts)");
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:19:- [Optional — Let an AI coding agent guide you](#optional--let-an-ai-coding-agent-guide-you)
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:402:## Optional — Let an AI coding agent guide you
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:404:If you use Claude Code, Cursor, AmpCode, Codex, or another coding agent, you can paste this prompt after cloning the repo:
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:410:AGENTS.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/AGENTS.md
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:416:The agent should still ask before destructive actions like deleting files, resetting branches, or force-pushing. You are responsible for reviewing the final diff before opening a PR.
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:31://! register_native_global::<AgentTurnRequest, AgentTurnResponse, _, _>(
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:32://!     "agent.run_turn",
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:34://!         let text = run_agent_turn(/* ... */).await
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:36://!         Ok(AgentTurnResponse::new(text))
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:41://! let resp: AgentTurnResponse = request_native_global(
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:42://!     "agent.run_turn",
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:43://!     AgentTurnRequest { /* owned + Arc fields */ },
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:120:/// Handlers are keyed by a method name (e.g., `"agent.run_turn"`) and store the
+<OPENHUMAN_ROOT>/plan.md:3:Multi-agent audit of the OpenHuman test surface (2,367 files / ~25,900 test declarations per
+<OPENHUMAN_ROOT>/plan.md:32:  frontend E2E (WDIO + Playwright), Rust unit (agent/memory; channels/providers/platform;
+<OPENHUMAN_ROOT>/plan.md:52:| ✅ | `src/openhuman/agent/harness/harness_gap_tests.rs` | `datetime_section_is_static_grounding_rule_not_a_volatile_timestamp` | Strict subset of `agent/prompts/mod_tests.rs::datetime_section_is_static_grounding_rule_without_volatile_timestamp`; the file's own header lists item 6 as covered elsewhere. |
+<OPENHUMAN_ROOT>/plan.md:91:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::grounding_contract_requires_exact_numeric_evidence` | Pins 5 verbatim prose substrings of the grounding contract — breaks on any copywriting pass. | Behavioral guarantee ("contract appended on every build path") already covered by the marker-based test; convert this to a single explicitly-labeled wording-lock, or assert stable structural markers. |
+<OPENHUMAN_ROOT>/plan.md:92:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::identity_section_creates_missing_workspace_files` | Also string-matches SOUL.md brand-voice prose (`"Don't validate FUD"`). | Split: (a) files created + seeded from the checked-in template (compare against template file content); (b) a narrow, labeled brand-voice lock if the phrase must stay pinned. |
+<OPENHUMAN_ROOT>/plan.md:141:- **Approval gate × agent turn**: harness-level test that a Write/Destructive-class turn parks
+<OPENHUMAN_ROOT>/plan.md:164:- **Approval-gate Playwright mirror**: `agent-harness-behaviors.spec.ts` exists only in the slower
+<OPENHUMAN_ROOT>/plan.md:166:- **AgentAccessPanel tier cross-check**: which sub-controls are enabled/hidden per autonomy tier.
+<OPENHUMAN_ROOT>/plan.md:427:  onboarding pages, AgentAccessPanel (23 tests), and every P2 slice reducer
+<OPENHUMAN_ROOT>/plan.md:499:  `council_registry`, `audio_toolkit`, `agent_experience`, `http_host`, `skill_runtime`,
 <OPENHUMAN_ROOT>/README.md:64:OpenHuman is three things most assistants aren't: **a brain** that builds a persistent, local memory of your world; **a fantastic orchestrator** that runs fleets of agents on durable graphs; and **a deep researcher** that sweeps your data and the web before you finish asking. Every bullet links to the deeper writeup in the [docs](https://tinyhumans.gitbook.io/openhuman/).
 <OPENHUMAN_ROOT>/README.md:76:- **[Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows)**: the agent proposes the automation; you review it on a canvas and save. Durable, trigger-driven, approval-gated runs on open-source [tinyflows](https://github.com/tinyhumansai/tinyflows).
 <OPENHUMAN_ROOT>/README.md:77:- **[A harness that finishes the job](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: checkpointed graph runs on open-source [tinyagents](https://github.com/tinyhumansai/tinyagents). Stuck agents get steered, halted ones return a root cause, and every run replays with real per-call costs.
@@ -478,23 +498,3 @@
 <OPENHUMAN_ROOT>/README.md:109:Already self-host [agentmemory](https://github.com/rohitg00/agentmemory) across other coding agents? OpenHuman ships an optional `Memory` backend that proxies to it. Set `memory.backend = "agentmemory"` in `config.toml` and the same durable store powers OpenHuman alongside Claude Code, Cursor, Codex, and OpenCode. See the [agentmemory backend](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend) page for setup.
 <OPENHUMAN_ROOT>/README.md:113:Most agent harnesses run one agent in one loop. OpenHuman is an **[orchestrator](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**:
 <OPENHUMAN_ROOT>/README.md:119:> Agent-to-agent messaging runs over Signal-protocol end-to-end encryption, so you can connect anything (Claude Code, Codex, OpenClaw, Hermes) and use OpenHuman to orchestrate all of your agents and tools.
-<OPENHUMAN_ROOT>/README.md:121:- **Graphs, not loops**: turns run as checkpointed graphs on [tinyagents](https://github.com/tinyhumansai/tinyagents). They pause for a human, survive a restart, and resume mid-run.
-<OPENHUMAN_ROOT>/README.md:122:- **Sub-agent fleets**: specialists spawn three levels deep; stuck agents become root-cause reports.
-<OPENHUMAN_ROOT>/README.md:123:- **Agent-to-agent, encrypted**: instances orchestrate each other over Signal-protocol E2E sessions with x402 payments. No server ever sees plaintext.
-<OPENHUMAN_ROOT>/README.md:127:Heavily inspired by n8n and Zapier, [workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows) bring the same visual, trigger-driven automation to your agent, except the agent builds them for you. Ask for an automation and it proposes one: a [tinyflows](https://github.com/tinyhumansai/tinyflows) graph you review on a visual canvas before saving.
-<OPENHUMAN_ROOT>/README.md:133:> The agent proposes the workflow; you review it on a canvas and save it.
-<OPENHUMAN_ROOT>/README.md:137:## OpenHuman vs Other Agent Harnesses
-<OPENHUMAN_ROOT>/README.md:139:High-level comparison (products evolve, so verify against each vendor). OpenHuman is built to **minimize vendor sprawl**, keep **workflow knowledge on-device**, and give the agent a **persistent memory** of your data, not only chat.
-<OPENHUMAN_ROOT>/README.md:141:|                        | Claude Cowork     | OpenClaw          | Hermes Agent      | OpenHuman                                                                                                |
-<OPENHUMAN_ROOT>/README.md:146:| **Memory**             | ✅ Chat-scoped    | ⚠️ Plugin-reliant | ✅ Self-learning  | 🚀 Memory Tree + Obsidian vault, optional [agentmemory](https://github.com/rohitg00/agentmemory) backend |
-<OPENHUMAN_ROOT>/README.md:149:| **Orchestration**      | ⚠️ Sub-tasks      | ⚠️ Single loop    | ⚠️ Single loop    | 🚀 Agent graphs + checkpoints + E2E-encrypted A2A                                                        |
-<OPENHUMAN_ROOT>/README.md:150:| **Workflows**          | 🚫 None           | ⚠️ Scripts        | ⚠️ Scripts        | 🚀 Visual, durable, agent-proposed, approval-gated                                                       |
-<OPENHUMAN_ROOT>/README.md:161:New contributor? Start with [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the fork/PR workflow and local validation commands, or use the copy-paste AI-agent prompt in [`CONTRIBUTING-BEGINNERS.md`](./CONTRIBUTING-BEGINNERS.md#optional--let-an-ai-coding-agent-guide-you). The short path is:
-<OPENHUMAN_ROOT>/src/core/auth.rs:99:    // AgentBox marketplace surface — see `openhuman::agentbox::http`.
-<OPENHUMAN_ROOT>/src/core/auth.rs:100:    // Mounted only when `OPENHUMAN_AGENTBOX_MODE=1`; the public-path entry is
-<OPENHUMAN_ROOT>/src/core/auth.rs:110:    // AgentBox `GET /jobs/{job_id}` — `{job_id}` is a UUID per submission.
-<OPENHUMAN_ROOT>/src/core/auth.rs:603:    fn agentbox_run_and_jobs_paths_are_public() {
-<OPENHUMAN_ROOT>/src/core/auth.rs:604:        // AgentBox marketplace surface bypasses bearer auth (gated externally
-<OPENHUMAN_ROOT>/src/core/auth.rs:605:        // by `OPENHUMAN_AGENTBOX_MODE` at router-build time).
-<OPENHUMAN_ROOT>/src/core/event_bus/subscriber.rs:17:    /// or `Some(&["agent", "cron"])` to receive only matching domains.
-<OPENHUMAN_ROOT>/src/core/logging.rs:96:                Level::TRACE => Style::new().fg(Color::Magenta).dimmed().paint(tag),

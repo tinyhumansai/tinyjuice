@@ -2,24 +2,24 @@
 
 Real TinyJuice and OpenHuman patches. The diff compressor keeps file headers, hunk headers, and changed lines while collapsing long unchanged context.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Pass 1` is the accepted result with CCR disabled. `Pass 2` is the final model-facing result with CCR enabled.
 
 Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.
 
 ## Cases
 
-| Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
+| Case | Input | Output | Original | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | 63.9 KB | 4.2 KB | 93.4% | 0.119 ms | true |
-| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | 87.2 KB | 7.1 KB | 91.8% | 0.152 ms | true |
-| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | 39.4 KB | 7.6 KB | 80.7% | 0.046 ms | true |
-| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | 65.9 KB | 13.5 KB | 79.5% | 0.092 ms | true |
-| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | 7.8 KB | 1.7 KB | 78.8% | 0.011 ms | true |
-| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | 25.1 KB | 6.1 KB | 76.6% | 0.038 ms | true |
-| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | 177.3 KB | 61.3 KB | 65.4% | 0.251 ms | true |
-| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | 192.1 KB | 90.0 KB | 53.2% | 0.360 ms | true |
-| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | 29.3 KB | 14.6 KB | 50.2% | 0.040 ms | true |
-| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | 186.4 KB | 106.7 KB | 42.7% | 0.316 ms | true |
+| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | 63.9 KB | 0.0% | 93.4% | 0.126 ms | true |
+| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | 87.2 KB | 0.0% | 91.8% | 0.155 ms | true |
+| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | 39.4 KB | 0.0% | 80.7% | 0.048 ms | true |
+| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | 65.9 KB | 0.0% | 79.5% | 0.098 ms | true |
+| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | 25.1 KB | 0.0% | 76.6% | 0.037 ms | true |
+| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | 39.9 KB | 0.0% | 66.4% | 0.051 ms | true |
+| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | 177.3 KB | 0.0% | 65.4% | 0.255 ms | true |
+| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | 192.1 KB | 0.0% | 53.2% | 0.366 ms | true |
+| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | 29.3 KB | 0.0% | 50.2% | 0.040 ms | true |
+| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | 186.4 KB | 0.0% | 42.7% | 0.321 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -383,95 +383,6 @@ index 928fc0968..d649681fb 100644
 
 ```
 
-### `01-tinyjuice-worktree`
-
-- [Full input](cases/01-tinyjuice-worktree/input.diff)
-- [Full output](cases/01-tinyjuice-worktree/output.diff)
-
-Input excerpt:
-
-```diff
-diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
-index 52199c7..b50c26d 100644
---- a/examples/compression_benchmark.rs
-+++ b/examples/compression_benchmark.rs
-@@ -21,160 +21,161 @@ use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind}
- 
- #[derive(Debug, Clone, Copy, PartialEq, Eq)]
- enum ReportFormat {
-     Markdown,
-     Json,
- }
- 
- #[derive(Debug, Clone)]
- struct Args {
-     iterations: usize,
-     format: ReportFormat,
-     dump_samples: Option<PathBuf>,
- }
- 
- #[derive(Debug, Clone)]
- struct SignalCheck {
-     label: String,
-     needle: String,
-     expectation: CheckExpectation,
- }
- 
- #[derive(Debug, Clone, Copy)]
- enum CheckExpectation {
-     Present,
-     Absent,
- }
- 
- #[derive(Debug, Clone)]
- struct BenchCase {
-     id: String,
-     doc_dir: String,
-
-```
-
-Output excerpt:
-
-```diff
-diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
-index 52199c7..b50c26d 100644
---- a/examples/compression_benchmark.rs
-+++ b/examples/compression_benchmark.rs
-@@ -21,160 +21,161 @@ use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind}
- 
- #[derive(Debug, Clone, Copy, PartialEq, Eq)]
- enum ReportFormat {
-[... 74 context line(s) omitted ...]
- 
- fn output_artifact_name(doc_dir: &str) -> &'static str {
-     match category_name(doc_dir) {
-+        "json-smartcrusher" => "output.md",
-         "test-failure-log" => "output.log",
-         "service-log" => "output.log",
-         "search-results" => "output.rg",
-[... 74 context line(s) omitted ...]
-         rt.block_on(dump_samples(root, &cases, &options));
-         return;
-     }
-diff --git a/scripts/benchmark/update-real-samples.sh b/scripts/benchmark/update-real-samples.sh
-index ab4bab8..798d2b0 100755
---- a/scripts/benchmark/update-real-samples.sh
-+++ b/scripts/benchmark/update-real-samples.sh
-@@ -1,126 +1,127 @@
- #!/usr/bin/env bash
- set -euo pipefail
- 
-[... 40 context line(s) omitted ...]
- output_name() {
-   local category="$1"
-   case "$category" in
-+    json-smartcrusher) echo "output.md" ;;
-     test-failure-log|service-log) echo "output.log" ;;
-     search-results) echo "output.rg" ;;
-     unified-diff) echo "output.diff" ;;
-
-```
-
 ### `07-openhuman-commit-7`
 
 - [Full input](cases/07-openhuman-commit-7/input.diff)
@@ -558,6 +469,95 @@ index e24e569ce..8167f088c 100644
    },
  }));
 @@ -190,180 +194,200 @@ vi.mock('../../lib/coreState/store', () => ({
+
+```
+
+### `01-tinyjuice-worktree`
+
+- [Full input](cases/01-tinyjuice-worktree/input.diff)
+- [Full output](cases/01-tinyjuice-worktree/output.diff)
+
+Input excerpt:
+
+```diff
+diff --git a/docs/benchmarking.md b/docs/benchmarking.md
+index e0d98a7..c685ec6 100644
+--- a/docs/benchmarking.md
++++ b/docs/benchmarking.md
+@@ -1,74 +1,83 @@
+ # TinyJuice Benchmarking
+ 
+ TinyJuice has two benchmark surfaces:
+ 
+ - `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
+-- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and name...
++- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports two reduction passes, latency, compressor choice, inline accuracy, CCR recovery, and named gate failur...
+ 
+ By default, the fixture suite emits metadata only. It does not print raw prompt,
+ tool, or context payloads unless `--dump-samples` is explicitly requested.
+ Human-readable before/after samples live under [`docs/benchmark`](benchmark/README.md).
+ 
+ ## Corpus Benchmark
+ 
+ Refresh the real sample corpus and Markdown reports:
+ 
+ ` ` `sh
+ scripts/benchmark/update-real-samples.sh
+ cargo run --release --example compression_benchmark -- --iterations 20 --format json > /tmp/tinyjuice-corpus-benchmark.json
+ scripts/benchmark/render-reports.sh /tmp/tinyjuice-corpus-benchmark.json
+ ` ` `
+ 
+ The updater writes 10 cases per category under `docs/benchmark/<category>/cases/`.
+ It uses the adjacent OpenHuman checkout, live OpenHuman Docker logs when
+ available, public RSS/page snapshots when reachable, and checked-in OpenHuman
+ artifacts as fallbacks.
+ 
+ Default Markdown report:
+ 
+ ` ` `sh
+ cargo run --release --example compression_benchmark -- --iterations 20
+
+```
+
+Output excerpt:
+
+```diff
+diff --git a/docs/benchmarking.md b/docs/benchmarking.md
+index e0d98a7..c685ec6 100644
+--- a/docs/benchmarking.md
++++ b/docs/benchmarking.md
+@@ -1,74 +1,83 @@
+ # TinyJuice Benchmarking
+ 
+ TinyJuice has two benchmark surfaces:
+ 
+ - `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
+-- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and name...
++- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports two reduction passes, latency, compressor choice, inline accuracy, CCR recovery, and named gate failur...
+ 
+ By default, the fixture suite emits metadata only. It does not print raw prompt,
+ tool, or context payloads unless `--dump-samples` is explicitly requested.
+[... 39 context line(s) omitted ...]
+ 
+ Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
+ 
++Benchmark tables use two compression passes:
++
++- **Pass 1: no CCR** disables CCR and reports only reductions that the router can safely accept without a recovery store. Lossy compressors therefore show `0.0%` unless they can produce an accepted non-CCR result.
++- **Pass 2: with CCR** uses the normal model-facing output, including the CCR recovery footer when the compressor drops data.
++
++Use Pass 1 to judge whether a compression algorithm is intrinsically useful
++without recoverability. Use Pass 2 to judge final context savings when TinyJuice
++is allowed to make lossy output recoverable.
++
+ Current categories cover:
+ 
+ - JSON tool-catalog slices.
+[... 17 context line(s) omitted ...]
+ - [LongBench](https://arxiv.org/abs/2308.14508) is a broader long-context benchmark that can be useful once TinyJuice adds task-level answer-quality evaluation.
+ 
+ For TinyJuice, the closest future cross-reference is not a single paper score. It is a paired report: compression metadata from this fixture runner plus downstream task accuracy on pinned tool-output corpora.
+diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
 
 ```
 

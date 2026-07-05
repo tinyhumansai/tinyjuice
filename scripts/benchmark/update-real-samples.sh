@@ -126,12 +126,27 @@ do
   reset_category "$category"
 done
 
-echo "Writing JSON tool-catalog cases"
-for i in $(seq 1 "$case_count"); do
-  start=$(( (i - 1) * 50 ))
-  write_case "json-smartcrusher" "$i" "github-tools-$i" \
-    jq ".result.result.tools[$start:$((start + 50))]" "$openh_root/tests/fixtures/composio_github.json"
-done
+echo "Writing mixed JSON cases"
+write_case "json-smartcrusher" 1 "github-tools-array" \
+  jq '.result.result.tools[0:60]' "$openh_root/tests/fixtures/composio_github.json"
+write_case "json-smartcrusher" 2 "notion-tools-array" \
+  jq '.result.result.tools[0:60]' "$openh_root/tests/fixtures/composio_notion.json"
+write_case "json-smartcrusher" 3 "slack-tools-array" \
+  jq '.result.result.tools[0:60]' "$openh_root/tests/fixtures/composio_slack.json"
+write_case "json-smartcrusher" 4 "polymarket-markets-list" \
+  jq '.' "$openh_root/tests/fixtures/polymarket/markets_list.json"
+write_case "json-smartcrusher" 5 "polymarket-events-list" \
+  jq '.' "$openh_root/tests/fixtures/polymarket/events_list.json"
+write_case "json-smartcrusher" 6 "tauri-capabilities-schema" \
+  jq '.' "$openh_root/app/src-tauri/gen/schemas/capabilities.json"
+write_case "json-smartcrusher" 7 "app-schema-object" \
+  jq '.' "$openh_root/app/schema.json"
+write_case "json-smartcrusher" 8 "lottie-animation" \
+  jq '.' "$openh_root/app/public/lottie/safe.json"
+write_case "json-smartcrusher" 9 "package-manifest" \
+  jq '.' "$openh_root/app/package.json"
+write_case "json-smartcrusher" 10 "cargo-metadata" \
+  bash -c 'cd "$1" && cargo metadata --format-version 1 --no-deps' _ "$openh_root"
 
 echo "Writing Vitest command-log cases"
 vitest_logs=()
