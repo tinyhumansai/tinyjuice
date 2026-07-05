@@ -8,7 +8,7 @@ execute it. Write code; the planning phase is over.
 
 - **TinyJuice** (this repo): Rust compression engine crate. Core work happens
   in `src/`. Plans in `plan/`, reference specs in `docs/references/`.
-- **OpenHuman**: `../openhuman-2`. Rust + Tauri desktop agent product. It
+- **OpenHuman**: `../openhuman-4`. Rust + Tauri desktop agent product. It
   vendors this crate at `vendor/tinyjuice` (git submodule, wired via
   `[patch.crates-io]`) and exposes it as the "TokenJuice" feature through the
   adapter at `src/openhuman/tokenjuice/`.
@@ -32,7 +32,7 @@ unblock everything else:
 
 1. **P0-2a — Fix the OpenHuman hook** (highest value, smallest diff):
    `ToolOutputMiddleware::after_tool` in
-   `../openhuman-2/src/openhuman/tinyagents/middleware.rs` (~line 787) calls
+   `../openhuman-4/src/openhuman/tinyagents/middleware.rs` (~line 787) calls
    `compact_output_with_policy(content, tool_name, enabled, profile)`, which
    forwards `arguments: None, exit_code: None`. This leaves the 100-rule
    command catalog, extension/query hints, and exit-code handling dead in
