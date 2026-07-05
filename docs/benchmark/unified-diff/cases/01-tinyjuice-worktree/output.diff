@@ -1,231 +1,42 @@
 diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
-index cd47c7c..52199c7 100644
+index 52199c7..b50c26d 100644
 --- a/examples/compression_benchmark.rs
 +++ b/examples/compression_benchmark.rs
-@@ -1,148 +1,188 @@
- //! Fixture-driven TinyJuice compression benchmark.
- //!
- //! Run with:
-[... 60 context line(s) omitted ...]
-     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-         .join("docs/benchmark")
-         .join(doc_dir)
--        .join("full-input.txt");
--    std::fs::read_to_string(&path).unwrap_or(fallback)
-+        .join(input_artifact_name(doc_dir));
-+    std::fs::read_to_string(&path)
-+        .or_else(|_| {
-+            std::fs::read_to_string(
-+                Path::new(env!("CARGO_MANIFEST_DIR"))
-+                    .join("docs/benchmark")
-+                    .join(doc_dir)
-+                    .join("full-input.txt"),
-+            )
-+        })
-+        .unwrap_or(fallback)
-+}
-+
-+fn category_name(doc_dir: &str) -> &str {
-+    doc_dir.split('/').next().unwrap_or(doc_dir)
-+}
-+
-+fn input_artifact_name(doc_dir: &str) -> &'static str {
-+    match category_name(doc_dir) {
-+        "json-smartcrusher" => "input.json",
-+        "test-failure-log" => "input.log",
-+        "service-log" => "input.log",
-+        "search-results" => "input.rg",
-+        "unified-diff" => "input.diff",
-+        "html-status-report" if doc_dir.contains("-rss-") => "input.xml",
-+        "html-status-report" => "input.html",
-+        "rust-source" => "input.rs",
-+        "plain-text" => "input.md",
-+        _ => "input.txt",
-+    }
-+}
-+
-+fn output_artifact_name(doc_dir: &str) -> &'static str {
-+    match category_name(doc_dir) {
-+        "test-failure-log" => "output.log",
-+        "service-log" => "output.log",
-+        "search-results" => "output.rg",
-+        "unified-diff" => "output.diff",
-+        "rust-source" => "output.rs",
-+        "plain-text" => "output.md",
-+        _ => "output.txt",
-+    }
- }
+@@ -21,160 +21,161 @@ use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind}
  
- #[derive(Debug, Clone)]
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ enum ReportFormat {
 [... 74 context line(s) omitted ...]
+ 
+ fn output_artifact_name(doc_dir: &str) -> &'static str {
+     match category_name(doc_dir) {
++        "json-smartcrusher" => "output.md",
+         "test-failure-log" => "output.log",
+         "service-log" => "output.log",
+         "search-results" => "output.rg",
+[... 74 context line(s) omitted ...]
+         rt.block_on(dump_samples(root, &cases, &options));
+         return;
      }
- 
-     let report = BenchmarkReport {
-@@ -189,236 +229,241 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
-         .checks
-         .iter()
-         .filter(|check| !check.evaluate(&result.text))
-[... 74 context line(s) omitted ...]
-         let dir = root.join(&case.doc_dir);
-         std::fs::create_dir_all(&dir)
-             .unwrap_or_else(|e| panic!("cannot create {}: {e}", dir.display()));
--        let input_path = dir.join("full-input.txt");
--        let output_path = dir.join("full-output.txt");
-+        let input_path = dir.join(input_artifact_name(&case.doc_dir));
-+        let output_path = dir.join(output_artifact_name(&case.doc_dir));
-         std::fs::write(&input_path, &case.payload)
-             .unwrap_or_else(|e| panic!("cannot write {}: {e}", input_path.display()));
-         std::fs::write(&output_path, &result.text)
-             .unwrap_or_else(|e| panic!("cannot write {}: {e}", output_path.display()));
-+        let _ = std::fs::remove_file(dir.join("full-input.txt"));
-+        let _ = std::fs::remove_file(dir.join("full-output.txt"));
-         eprintln!(
-             "wrote {} and {}",
-             input_path.display(),
-[... 59 context line(s) omitted ...]
-         .flat_map(|entries| entries.filter_map(Result::ok))
-         .filter_map(|entry| {
-             let path = entry.path();
--            if path.join("full-input.txt").is_file() {
--                entry
--                    .file_name()
--                    .to_str()
--                    .map(|name| format!("{category}/cases/{name}"))
-+            let doc_dir = entry
-+                .file_name()
-+                .to_str()
-+                .map(|name| format!("{category}/cases/{name}"))?;
-+            if path.join(input_artifact_name(&doc_dir)).is_file()
-+                || path.join("full-input.txt").is_file()
-+            {
-+                Some(doc_dir)
-             } else {
-                 None
-             }
-[... 74 context line(s) omitted ...]
-                 )],
-             },
-         ));
 diff --git a/scripts/benchmark/update-real-samples.sh b/scripts/benchmark/update-real-samples.sh
-index aa6df1f..ab4bab8 100755
+index ab4bab8..798d2b0 100755
 --- a/scripts/benchmark/update-real-samples.sh
 +++ b/scripts/benchmark/update-real-samples.sh
-@@ -1,256 +1,295 @@
+@@ -1,126 +1,127 @@
  #!/usr/bin/env bash
  set -euo pipefail
  
-[... 16 context line(s) omitted ...]
-   printf '%s/%s/cases/%02d-%s' "$bench_root" "$category" "$index" "$slug"
- }
- 
-+input_name() {
-+  local category="$1"
-+  local slug="${2:-}"
-+  case "$category" in
-+    json-smartcrusher) echo "input.json" ;;
-+    test-failure-log|service-log) echo "input.log" ;;
-+    search-results) echo "input.rg" ;;
-+    unified-diff) echo "input.diff" ;;
-+    html-status-report)
-+      if [[ "$slug" == rss-* ]]; then
-+        echo "input.xml"
-+      else
-+        echo "input.html"
-+      fi
-+      ;;
-+    rust-source) echo "input.rs" ;;
-+    plain-text) echo "input.md" ;;
-+    *) echo "input.txt" ;;
-+  esac
-+}
-+
-+output_name() {
-+  local category="$1"
-+  case "$category" in
-+    test-failure-log|service-log) echo "output.log" ;;
-+    search-results) echo "output.rg" ;;
-+    unified-diff) echo "output.diff" ;;
-+    rust-source) echo "output.rs" ;;
-+    plain-text) echo "output.md" ;;
-+    *) echo "output.txt" ;;
-+  esac
-+}
-+
- reset_category() {
+[... 40 context line(s) omitted ...]
+ output_name() {
    local category="$1"
-   rm -rf "$bench_root/$category/cases"
-   mkdir -p "$bench_root/$category/cases"
--  rm -f "$bench_root/$category/full-input.txt" "$bench_root/$category/full-output.txt"
-+  rm -f "$bench_root/$category"/full-input.txt "$bench_root/$category"/full-output.txt
- }
- 
- copy_case() {
-   local category="$1"
-   local index="$2"
-   local slug="$3"
-   local source="$4"
-   local dir
-+  local input_file
-   dir="$(case_dir "$category" "$index" "$slug")"
-+  input_file="$(input_name "$category" "$slug")"
-   mkdir -p "$dir"
--  cp "$source" "$dir/full-input.txt"
--  if [[ ! -s "$dir/full-input.txt" ]]; then
--    echo "empty case input: $dir/full-input.txt" >&2
-+  cp "$source" "$dir/$input_file"
-+  if [[ ! -s "$dir/$input_file" ]]; then
-+    echo "empty case input: $dir/$input_file" >&2
-     exit 1
-   fi
- }
-[... 4 context line(s) omitted ...]
-   local slug="$3"
-   shift 3
-   local dir
-+  local input_file
-   dir="$(case_dir "$category" "$index" "$slug")"
-+  input_file="$(input_name "$category" "$slug")"
-   mkdir -p "$dir"
--  "$@" >"$dir/full-input.txt"
--  if [[ ! -s "$dir/full-input.txt" ]]; then
--    echo "empty case input: $dir/full-input.txt" >&2
-+  "$@" >"$dir/$input_file"
-+  if [[ ! -s "$dir/$input_file" ]]; then
-+    echo "empty case input: $dir/$input_file" >&2
-     exit 1
-   fi
- }
-[... 119 context line(s) omitted ...]
-   local slug="$2"
-   if command -v curl >/dev/null 2>&1; then
-     local dir
-+    local input_file
-     dir="$(case_dir "html-status-report" "$html_index" "$slug")"
-+    input_file="$(input_name "html-status-report" "$slug")"
-     mkdir -p "$dir"
--    if curl -L --max-time 15 --retry 1 -A 'tinyjuice-benchmark-snapshot/1.0' "$url" >"$dir/full-input.txt" 2>/dev/null \
--      && [[ -s "$dir/full-input.txt" ]]; then
-+    if curl -L --max-time 15 --retry 1 -A 'tinyjuice-benchmark-snapshot/1.0' "$url" >"$dir/$input_file" 2>/dev/null \
-+      && [[ -s "$dir/$input_file" ]]; then
-       html_index=$((html_index + 1))
-       return 0
-     fi
--    rm -f "$dir/full-input.txt"
-+    rm -f "$dir/$input_file"
-   fi
-   return 1
- }
-[... 57 context line(s) omitted ...]
- )
- 
- if command -v perl >/dev/null 2>&1; then
--  escaped_openh_root="$(printf '%s' "$openh_root" | perl -Mquotemeta -ne 'print quotemeta')"
--  escaped_home="$(printf '%s' "${HOME:-}" | perl -Mquotemeta -ne 'print quotemeta')"
--  find "$bench_root" -type f \( -name 'full-input.txt' -o -name 'full-output.txt' \) -print0 \
-+  escaped_openh_root="$(perl -e 'print quotemeta shift' "$openh_root")"
-+  escaped_home="$(perl -e 'print quotemeta shift' "${HOME:-}")"
-+  find "$bench_root" -type f \( -name 'input.*' -o -name 'output.*' \) -print0 \
-     | xargs -0 perl -pi -e "s#$escaped_openh_root#<OPENHUMAN_ROOT>#g; s#$escaped_home#<USER_HOME>#g"
- fi
+   case "$category" in
++    json-smartcrusher) echo "output.md" ;;
+     test-failure-log|service-log) echo "output.log" ;;
+     search-results) echo "output.rg" ;;
+     unified-diff) echo "output.diff" ;;
+[... 74 context line(s) omitted ...]
+ do
+   reset_category "$category"
+ done
 
-[compacted tool output — this is a PARTIAL view; the full original (24757 bytes) is available by calling tokenjuice_retrieve with token "12526fd16f14816b6a43ce986ad365d8" (marker ⟦tj:12526fd16f14816b6a43ce986ad365d8⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (7803 bytes) is available by calling tokenjuice_retrieve with token "808186e2151821202d70062c71bdd06e" (marker ⟦tj:808186e2151821202d70062c71bdd06e⟧)]

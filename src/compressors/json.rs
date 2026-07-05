@@ -88,7 +88,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
                 Some(v) => render_cell(v),
             })
             .collect();
-        rows.push(cells.join(" | "));
+        rows.push(render_markdown_row(&cells));
     }
 
     let lossy = rows.len() > ROW_DROP_THRESHOLD;
@@ -99,7 +99,12 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         rows.len(),
         columns.len()
     );
-    let _ = writeln!(out, "{}", columns.join(" | "));
+    let header_cells: Vec<String> = columns
+        .iter()
+        .map(|column| escape_markdown_cell(column))
+        .collect();
+    let _ = writeln!(out, "{}", render_markdown_row(&header_cells));
+    let _ = writeln!(out, "{}", render_markdown_separator(columns.len()));
 
     if lossy {
         // Keep head + tail PLUS any anomalous rows (errors / numeric outliers)
@@ -130,24 +135,41 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         }
     }
 
-    let out = out.trim_end().to_string();
-    if out.len() >= content.len() {
+    let table = out.trim_end().to_string();
+    let minified = serde_json::to_string(&value).ok()?;
+    let output = if table.len() < content.len() {
+        table
+    } else if minified.len() < content.len() {
+        log::debug!(
+            "[tokenjuice][json] minified {} rows × {} cols ({} -> {} bytes); markdown table was {} bytes",
+            rows.len(),
+            columns.len(),
+            content.len(),
+            minified.len(),
+            table.len(),
+        );
+        return Some(CompressOutput::reformatted(
+            minified,
+            CompressorKind::SmartCrusher,
+        ));
+    } else {
         return None;
-    }
+    };
+
     log::debug!(
-        "[tokenjuice][json] {} rows × {} cols, lossy={} ({} -> {} bytes)",
+        "[tokenjuice][json] markdown table {} rows × {} cols, lossy={} ({} -> {} bytes)",
         rows.len(),
         columns.len(),
         lossy,
         content.len(),
-        out.len(),
+        output.len(),
     );
     if lossy {
-        Some(CompressOutput::lossy(out, CompressorKind::SmartCrusher))
+        Some(CompressOutput::lossy(output, CompressorKind::SmartCrusher))
     } else {
         // All values preserved, but the array→table reformat changes layout.
         Some(CompressOutput::reformatted(
-            out,
+            output,
             CompressorKind::SmartCrusher,
         ))
     }
@@ -215,11 +237,24 @@ fn rows_to_keep(array: &[Value], columns: &[String], n: usize) -> Vec<usize> {
 /// JSON so the table remains lossless.
 fn render_cell(v: &Value) -> String {
     match v {
-        Value::String(s) if !s.contains('|') && !s.contains('\n') => s.clone(),
+        Value::String(s) if !s.contains('|') && !s.contains('\n') => escape_markdown_cell(s),
         Value::Bool(b) => b.to_string(),
         Value::Number(n) => n.to_string(),
-        other => serde_json::to_string(other).unwrap_or_default(),
+        other => escape_markdown_cell(&serde_json::to_string(other).unwrap_or_default()),
     }
+}
+
+fn render_markdown_row(cells: &[String]) -> String {
+    format!("| {} |", cells.join(" | "))
+}
+
+fn render_markdown_separator(width: usize) -> String {
+    let cols = vec!["---"; width];
+    format!("| {} |", cols.join(" | "))
+}
+
+fn escape_markdown_cell(cell: &str) -> String {
+    cell.replace('\\', "\\\\").replace('|', "\\|")
 }
 
 #[cfg(test)]
@@ -229,7 +264,7 @@ mod tests {
     #[test]
     fn crushes_uniform_array() {
         let mut rows = Vec::new();
-        for i in 0..20 {
+        for i in 0..80 {
             rows.push(format!(
                 r#"{{"id":{i},"name":"item number {i}","status":"active","owner":"team-alpha"}}"#
             ));
@@ -237,6 +272,8 @@ mod tests {
         let input = format!("[{}]", rows.join(","));
         let out = compress(&input).expect("compresses").text;
         assert_eq!(out.matches("status").count(), 1, "{out}");
+        assert!(out.contains("| id | name | owner | status |"), "{out}");
+        assert!(out.contains("| --- | --- | --- | --- |"), "{out}");
         assert!(out.contains("item number 7"));
         assert!(out.len() < input.len(), "expected shrink");
     }
@@ -304,5 +341,31 @@ mod tests {
         assert!(compress(r#"{"a":1}"#).is_none());
         assert!(compress("[1,2,3]").is_none());
         assert!(compress(r#"[{"a":1}]"#).is_none());
+    }
+
+    #[test]
+    fn markdown_table_cells_escape_pipes() {
+        let mut rows = vec![r#"{"id":0,"text":"alpha | beta","meta":{"note":"x|y"}}"#.to_string()];
+        for i in 1..80 {
+            rows.push(format!(
+                r#"{{"id":{i},"text":"record {i} with repeated detail","meta":{{"note":"z"}}}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let out = compress(&input).expect("compresses").text;
+        assert!(out.contains("| id | meta | text |"), "{out}");
+        assert!(out.contains("alpha \\| beta"), "{out}");
+        assert!(out.contains(r#"{"note":"x\|y"}"#), "{out}");
+    }
+
+    #[test]
+    fn falls_back_to_minified_json_when_table_is_larger() {
+        let input = r#"[
+          {"a": 1, "b": 2},
+          {"a": 3, "b": 4},
+          {"a": 5, "b": 6}
+        ]"#;
+        let out = compress(input).expect("minifies").text;
+        assert_eq!(out, r#"[{"a":1,"b":2},{"a":3,"b":4},{"a":5,"b":6}]"#);
     }
 }

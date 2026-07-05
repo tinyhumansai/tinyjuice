@@ -8,256 +8,22 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 295.9 KB | 23.0% | 1.172 ms | true |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.2 KB | 7.3 KB | 52.1% | 0.053 ms | true |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.5 KB | 3.9 KB | 88.6% | 0.109 ms | true |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.6 KB | 3.5 KB | 95.9% | 0.166 ms | true |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 1.4 KB | 79.3% | 0.024 ms | true |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 567 B | 87.3% | 0.014 ms | true |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 1.3 KB | 80.8% | 0.025 ms | true |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 661 B | 87.4% | 0.017 ms | true |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 5.1 KB | 79.2% | 0.087 ms | true |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 1.2 KB | 79.9% | 0.021 ms | true |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.6 KB | 3.5 KB | 95.9% | 0.145 ms | true |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.3 KB | 3.9 KB | 88.7% | 0.093 ms | true |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 661 B | 87.4% | 0.015 ms | true |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 567 B | 87.3% | 0.013 ms | true |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 1.3 KB | 80.8% | 0.021 ms | true |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 1.2 KB | 79.9% | 0.019 ms | true |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 1.4 KB | 79.3% | 0.020 ms | true |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 5.1 KB | 79.2% | 0.080 ms | true |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.1 KB | 7.3 KB | 51.7% | 0.049 ms | true |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 295.9 KB | 23.0% | 1.188 ms | true |
 
 ## What TinyJuice Is Doing
 
 HTML snapshots are converted into readable text. Script/style payloads and repeated markup disappear; the output keeps the content an agent would normally inspect.
 
 ## Syntax-Aware Samples
-
-### `01-rss-rust-blog`
-
-- [Full input](cases/01-rss-rust-blog/input.xml)
-- [Full output](cases/01-rss-rust-blog/output.txt)
-
-Input excerpt:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
-    <generator uri="https://blog.rust-lang.org/" version="0.1.0">Rust Blog</generator>
-    <link href="https://blog.rust-lang.org/feed.xml" rel="self" type="application/atom+xml" />
-    <link href="https://blog.rust-lang.org/" rel="alternate" type="text/html" />
-    <id>https://blog.rust-lang.org/</id>
-    <title>Rust Blog</title>
-    <subtitle>Empowering everyone to build reliable and efficient software.</subtitle>
-    <author>
-        <name>Maintained by the Rust Teams.</name>
-        <uri>https://github.com/rust-lang/blog.rust-lang.org/</uri>
-    </author>
-    <updated>2026-07-03T16:22:30+00:00</updated>
-
-    
-    <entry>
-        <title>Announcing Rust 1.96.1</title>
-        <link rel="alternate" href="https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/" type="text/html" title="Announcing Rust 1.96.1" />
-        <published>2026-06-30T00:00:00+00:00</published>
-        <updated>2026-06-30T00:00:00+00:00</updated>
-        <id>https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/</id>
-        <content type="html" xml:base="https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/">&lt;p&gt;The Rust team has published a new point release of Rust, 1.96.1. Rust is a programming language that is empowering every...
-&lt;p&gt;If you have a previous version of Rust installed via rustup, getting Rust 1.96.1 is as easy as:&lt;/p&gt;
-&lt;pre class&#x3D;&quot;giallo z-code&quot;&gt;&lt;code data-lang&#x3D;&quot;plain&quot;&gt;&lt;span class&#x3D;&quot;giallo-l&quot;&gt;&lt;span&gt;rustup update stable&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;If you don&#x27;t have it already, you can &lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://www.rust-lang.org/install.html&quot;&gt;get &lt;code&gt;rustup&lt;/code&gt;&lt;/a&gt; from the appropriate p...
-&lt;h2 id&#x3D;&quot;what-s-in-1-96-1&quot;&gt;&lt;a class&#x3D;&quot;anchor&quot; href&#x3D;&quot;#what-s-in-1-96-1&quot; aria-hidden&#x3D;&quot;true&quot;&gt;&lt;/a&gt;
-What&#x27;s in 1.96.1&lt;/h2&gt;
-&lt;p&gt;Rust 1.96.1 fixes:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://github.com/rust-lang/cargo/pull/17131&quot;&gt;Missing retries / timeouts in Cargo&#x27;s HTTP client&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://github.com/rust-lang/rust/pull/158214&quot;&gt;Miscompilation in a MIR optimization&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;It also &lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://github.com/rust-lang/cargo/pull/17140&quot;&gt;fixes&lt;/a&gt; three CVEs
-affecting libssh2 (which is compiled into Cargo):&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://www.cve.org/CVERecord?id&#x3D;CVE-2025-15661&quot;&gt;CVE-2025-15661&lt;/a&gt;&lt;/li&gt;
-
-```
-
-Output excerpt:
-
-```text
-Rust Blog
-
-https://blog.rust-lang.org/
-Rust Blog
-Empowering everyone to build reliable and efficient software.
-
-Maintained by the Rust Teams.
-https://github.com/rust-lang/blog.rust-lang.org/
-
-2026-07-03T16:22:30+00:00
-
-Announcing Rust 1.96.1
-
-2026-06-30T00:00:00+00:00
-2026-06-30T00:00:00+00:00
-https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/
-<p>The Rust team has published a new point release of Rust, 1.96.1. Rust is a programming language that is empowering everyone to build reliable and efficient software.</p>
-<p>If you have a previous version of Rust installed via rustup, getting Rust 1.96.1 is as easy as:</p>
-<pre class&#x3D;"giallo z-code"><code data-lang&#x3D;"plain"><span class&#x3D;"giallo-l"><span>rustup update stable</span></span></code></pre>
-<p>If you don&#x27;t have it already, you can <a rel&#x3D;"external" href&#x3D;"https://www.rust-lang.org/install.html">get <code>rustup</code></a> from the appropriate page on our website.</p>
-<h2 id&#x3D;"what-s-in-1-96-1"><a class&#x3D;"anchor" href&#x3D;"#what-s-in-1-96-1" aria-hidden&#x3D;"true"></a>
-What&#x27;s in 1.96.1</h2>
-<p>Rust 1.96.1 fixes:</p>
-<ul>
-<li><a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/cargo/pull/17131">Missing retries / timeouts in Cargo&#x27;s HTTP client</a></li>
-<li><a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/rust/pull/158214">Miscompilation in a MIR optimization</a></li>
-</ul>
-<p>It also <a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/cargo/pull/17140">fixes</a> three CVEs
-affecting libssh2 (which is compiled into Cargo):</p>
-<ul>
-<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2025-15661">CVE-2025-15661</a></li>
-<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2026-55199">CVE-2026-55199</a></li>
-<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2026-55200">CVE-2026-55200</a></li>
-</ul>
-<h3 id&#x3D;"contributors-to-1-96-1"><a class&#x3D;"anchor" href&#x3D;"#contributors-to-1-96-1" aria-hidden&#x3D;"true"></a>
-Contributors to 1.96.1</h3>
-
-```
-
-### `02-rss-hacker-news`
-
-- [Full input](cases/02-rss-hacker-news/input.xml)
-- [Full output](cases/02-rss-hacker-news/output.txt)
-
-Input excerpt:
-
-```xml
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hacker News: Front Page</title><link>https://news.ycombinator.com/</link><description>Hacker News RS...
-<p>Article URL: <a href="https://mihai.page/pi-square-is-10/">https://mihai.page/pi-square-is-10/</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48793073">https://news.ycombinator.com/item?id=48793073</a></p>
-<p>Points: 10</p>
-<p># Comments: 4</p>
-]]></description><pubDate>Sun, 05 Jul 2026 10:50:53 +0000</pubDate><link>https://mihai.page/pi-square-is-10/</link><dc:creator>freediver</dc:creator><comments>https://news.ycombinator.com/item?id=48793073</comments><guid...
-<p>Article URL: <a href="https://www.bbc.com/news/articles/c8e2j0j87reo">https://www.bbc.com/news/articles/c8e2j0j87reo</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792790">https://news.ycombinator.com/item?id=48792790</a></p>
-<p>Points: 39</p>
-<p># Comments: 5</p>
-]]></description><pubDate>Sun, 05 Jul 2026 09:56:10 +0000</pubDate><link>https://www.bbc.com/news/articles/c8e2j0j87reo</link><dc:creator>saikatsg</dc:creator><comments>https://news.ycombinator.com/item?id=48792790</comm...
-<p>Article URL: <a href="https://www.bbc.com/news/articles/cz758x04g83o">https://www.bbc.com/news/articles/cz758x04g83o</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792780">https://news.ycombinator.com/item?id=48792780</a></p>
-<p>Points: 9</p>
-<p># Comments: 2</p>
-]]></description><pubDate>Sun, 05 Jul 2026 09:55:22 +0000</pubDate><link>https://www.bbc.com/news/articles/cz758x04g83o</link><dc:creator>saikatsg</dc:creator><comments>https://news.ycombinator.com/item?id=48792780</comm...
-<p>Article URL: <a href="https://github.com/Trystan-SA/claude-design-system-prompt">https://github.com/Trystan-SA/claude-design-system-prompt</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792399">https://news.ycombinator.com/item?id=48792399</a></p>
-<p>Points: 18</p>
-<p># Comments: 1</p>
-]]></description><pubDate>Sun, 05 Jul 2026 08:43:37 +0000</pubDate><link>https://github.com/Trystan-SA/claude-design-system-prompt</link><dc:creator>handfuloflight</dc:creator><comments>https://news.ycombinator.com/item?...
-<p>Article URL: <a href="https://0dd.company/galleries/triumph/1.html">https://0dd.company/galleries/triumph/1.html</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792352">https://news.ycombinator.com/item?id=48792352</a></p>
-<p>Points: 26</p>
-<p># Comments: 3</p>
-]]></description><pubDate>Sun, 05 Jul 2026 08:32:09 +0000</pubDate><link>https://0dd.company/galleries/triumph/1.html</link><dc:creator>scaglio</dc:creator><comments>https://news.ycombinator.com/item?id=48792352</comment...
-<p>Article URL: <a href="https://jacob.gold/posts/programmers-need-to-start-meditating-now/">https://jacob.gold/posts/programmers-need-to-start-meditating-now/</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792080">https://news.ycombinator.com/item?id=48792080</a></p>
-<p>Points: 84</p>
-<p># Comments: 83</p>
-]]></description><pubDate>Sun, 05 Jul 2026 07:39:35 +0000</pubDate><link>https://jacob.gold/posts/programmers-need-to-start-meditating-now/</link><dc:creator>enz</dc:creator><comments>https://news.ycombinator.com/item?id...
-<p>Article URL: <a href="https://craigmod.com/essays/fast_software/">https://craigmod.com/essays/fast_software/</a></p>
-<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792008">https://news.ycombinator.com/item?id=48792008</a></p>
-<p>Points: 34</p>
-<p># Comments: 12</p>
-]]></description><pubDate>Sun, 05 Jul 2026 07:25:25 +0000</pubDate><link>https://craigmod.com/essays/fast_software/</link><dc:creator>ustad</dc:creator><comments>https://news.ycombinator.com/item?id=48792008</comments><g...
-
-```
-
-Output excerpt:
-
-```text
-Hacker News: Front Pagehttps://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 11:51:01 +0000Article URL: https://mihai.page/pi-square-is-10/
-
-Comments URL: https://news.ycombinator.com/item?id=48793073
-
-Points: 10
-
-# Comments: 4
-
-]]>Sun, 05 Jul 2026 10:50:53 +0000https://mihai.page/pi-square-is-10/freediverhttps://news.ycombinator.com/item?id=48793073https://news.ycombinator.com/item?id=48793073Article URL: https://www.bbc.com/news/articles/c8e2j...
-
-Comments URL: https://news.ycombinator.com/item?id=48792790
-
-Points: 39
-
-# Comments: 5
-
-]]>Sun, 05 Jul 2026 09:56:10 +0000https://www.bbc.com/news/articles/c8e2j0j87reosaikatsghttps://news.ycombinator.com/item?id=48792790https://news.ycombinator.com/item?id=48792790Article URL: https://www.bbc.com/news/arti...
-
-Comments URL: https://news.ycombinator.com/item?id=48792780
-
-Points: 9
-
-# Comments: 2
-
-]]>Sun, 05 Jul 2026 09:55:22 +0000https://www.bbc.com/news/articles/cz758x04g83osaikatsghttps://news.ycombinator.com/item?id=48792780https://news.ycombinator.com/item?id=48792780Article URL: https://github.com/Trystan-SA...
-
-Comments URL: https://news.ycombinator.com/item?id=48792399
-
-Points: 18
-
-# Comments: 1
-
-]]>Sun, 05 Jul 2026 08:43:37 +0000https://github.com/Trystan-SA/claude-design-system-prompthandfuloflighthttps://news.ycombinator.com/item?id=48792399https://news.ycombinator.com/item?id=48792399Article URL: https://0dd....
-
-Comments URL: https://news.ycombinator.com/item?id=48792352
-
-
-```
-
-### `03-noisy-hacker-news`
-
-- [Full input](cases/03-noisy-hacker-news/input.html)
-- [Full output](cases/03-noisy-hacker-news/output.txt)
-
-Input excerpt:
-
-```html
-<html lang="en" op="news"><head><meta name="referrer" content="origin"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" type="text/css" href="news.css?Ug1GY3B6Kr5c7uonNem9"><li...
-<center><span class="yclinks"><a href="newsguidelines.html">Guidelines</a> | <a href="newsfaq.html">FAQ</a> | <a href="lists">Lists</a> | <a href="https://github.com/HackerNews/API">API</a> | <a href="security.html">Secu...
-<form method="get" action="//hn.algolia.com/">Search: <input type="text" name="q" size="17" autocorrect="off" spellcheck="false" autocapitalize="off" autocomplete="off"></form></center></td></tr></table></center></body><...
-
-```
-
-Output excerpt:
-
-```text
-Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
-1.
-Europe&#x27;s new climate in seven charts (bbc.com)
-68 points by saikatsg 2 hours ago | hide | 26 comments
-2.
-Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
-159 points by dabinat 7 hours ago | hide | 59 comments
-3.
-If you&#x27;re a button, you have one job (aresluna.org)
-270 points by nozzlegear 10 hours ago | hide | 142 comments
-4.
-GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
-299 points by maille 14 hours ago | hide | 115 comments
-5.
-Fast Software, the Best Software (craigmod.com)
-38 points by ustad 4 hours ago | hide | 14 comments
-6.
-Pandoc Lua Filters (pandoc.org)
-81 points by ankitg12 7 hours ago | hide | 5 comments
-7.
-Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
-140 points by hhs 13 hours ago | hide | 30 comments
-8.
-Claude Design System Prompt (github.com/trystan-sa)
-23 points by handfuloflight 3 hours ago | hide | 1 comment
-9.
-Megawatts by Microwave (computer.rip)
-31 points by eternauta3k 6 hours ago | hide | 4 comments
-10.
-Functional Programming in hica (hica.dev)
-4 points by cladamski79 2 hours ago | hide | 1 comment
-11.
-Programmers need to start meditating (jacob.gold)
-88 points by enz 4 hours ago | hide | 88 comments
-12.
-Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
-
-```
 
 ### `04-forum-rust-users`
 
@@ -283,7 +49,7 @@ Input excerpt:
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 <link rel="canonical" href="https://users.rust-lang.org/" />
 <script type="application/ld+json">{"@context":"http://schema.org","@type":"WebSite","url":"https://users.rust-lang.org","name":"The Rust Programming Language Forum","potentialAction":{"@type":"SearchAction","target":"ht...
-<meta name="discourse-track-view-session-id" content="MJB6A4x0BksWVLRCPjWYI5q2nzGAvLPM">
+<meta name="discourse-track-view-session-id" content="P2XR9VHbIV8AYxdPxLVoIR40plyktlVB">
 <link rel="search" type="application/opensearchdescription+xml" href="https://users.rust-lang.org/opensearch.xml" title="The Rust Programming Language Forum Search">
 
     
@@ -348,10 +114,66 @@ fn main() …
 
 ```
 
-### `05-openhuman-coverage-5`
+### `03-noisy-hacker-news`
 
-- [Full input](cases/05-openhuman-coverage-5/input.html)
-- [Full output](cases/05-openhuman-coverage-5/output.txt)
+- [Full input](cases/03-noisy-hacker-news/input.html)
+- [Full output](cases/03-noisy-hacker-news/output.txt)
+
+Input excerpt:
+
+```html
+<html lang="en" op="news"><head><meta name="referrer" content="origin"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" type="text/css" href="news.css?Ug1GY3B6Kr5c7uonNem9"><li...
+<center><span class="yclinks"><a href="newsguidelines.html">Guidelines</a> | <a href="newsfaq.html">FAQ</a> | <a href="lists">Lists</a> | <a href="https://github.com/HackerNews/API">API</a> | <a href="security.html">Secu...
+<form method="get" action="//hn.algolia.com/">Search: <input type="text" name="q" size="17" autocorrect="off" spellcheck="false" autocapitalize="off" autocomplete="off"></form></center></td></tr></table></center></body><...
+
+```
+
+Output excerpt:
+
+```text
+Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
+1.
+Europe&#x27;s new climate in seven charts (bbc.com)
+89 points by saikatsg 2 hours ago | hide | 56 comments
+2.
+Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
+162 points by dabinat 7 hours ago | hide | 60 comments
+3.
+If you&#x27;re a button, you have one job (aresluna.org)
+279 points by nozzlegear 10 hours ago | hide | 146 comments
+4.
+GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
+305 points by maille 14 hours ago | hide | 116 comments
+5.
+Fast Software, the Best Software (craigmod.com)
+38 points by ustad 4 hours ago | hide | 16 comments
+6.
+Pandoc Lua Filters (pandoc.org)
+81 points by ankitg12 7 hours ago | hide | 5 comments
+7.
+Functional Programming in hica (hica.dev)
+6 points by cladamski79 2 hours ago | hide | 1 comment
+8.
+Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
+140 points by hhs 13 hours ago | hide | 30 comments
+9.
+Claude Design System Prompt (github.com/trystan-sa)
+25 points by handfuloflight 3 hours ago | hide | 1 comment
+10.
+Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
+10 points by saikatsg 2 hours ago | hide | 2 comments
+11.
+Megawatts by Microwave (computer.rip)
+31 points by eternauta3k 6 hours ago | hide | 4 comments
+12.
+Programmers need to start meditating (jacob.gold)
+
+```
+
+### `08-openhuman-coverage-8`
+
+- [Full input](cases/08-openhuman-coverage-8/input.html)
+- [Full output](cases/08-openhuman-coverage-8/output.txt)
 
 Input excerpt:
 
@@ -361,15 +183,15 @@ Input excerpt:
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/assets/icons/GoogleIcon.tsx</title>
+    <title>Code coverage report for src/chat</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../prettify.css" />
-    <link rel="stylesheet" href="../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../../sort-arrow-sprite.png);
+            background-image: url(../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -377,20 +199,20 @@ Input excerpt:
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/assets/icons</a> GoogleIcon.tsx</h1>
+        <h1><a href="../../index.html">All files</a> src/chat</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">55.55% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>25/45</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">46.34% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>19/41</span>
             </div>
 
 ```
@@ -398,42 +220,42 @@ Input excerpt:
 Output excerpt:
 
 ```text
-All files / src/assets/icons GoogleIcon.tsx
+All files src/chat
 
-0%
+55.55%
 Statements
-0/2
+25/45
 
-0%
+46.34%
 Branches
-0/1
+19/41
 
-0%
+80%
 Functions
-0/1
+4/5
 
-0%
+54.54%
 Lines
-0/2
+24/44
 
 Press n or j to go to the next uncovered block, b, p or k for the previous block.
 
 Filter:
 
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
+File
+
+Statements
+
+Branches
+
+Functions
+
+Lines
+
+chatSendError.ts
+
+100%
+2/2
 
 ```
 
@@ -615,10 +437,10 @@ Filter:
 
 ```
 
-### `08-openhuman-coverage-8`
+### `10-openhuman-coverage-10`
 
-- [Full input](cases/08-openhuman-coverage-8/input.html)
-- [Full output](cases/08-openhuman-coverage-8/output.txt)
+- [Full input](cases/10-openhuman-coverage-10/input.html)
+- [Full output](cases/10-openhuman-coverage-10/output.txt)
 
 Input excerpt:
 
@@ -628,7 +450,7 @@ Input excerpt:
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/chat</title>
+    <title>Code coverage report for src/components/AppBackground.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -644,20 +466,20 @@ Input excerpt:
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> src/chat</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/components</a> AppBackground.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/45</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">46.34% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>19/41</span>
+                <span class='fraction'>0/1</span>
             </div>
 
 ```
@@ -665,42 +487,131 @@ Input excerpt:
 Output excerpt:
 
 ```text
-All files src/chat
+All files / src/components AppBackground.tsx
 
-55.55%
+0%
 Statements
-25/45
+0/1
 
-46.34%
+0%
 Branches
-19/41
+0/1
 
-80%
+0%
 Functions
-4/5
+0/1
 
-54.54%
+0%
 Lines
-24/44
+0/1
 
 Press n or j to go to the next uncovered block, b, p or k for the previous block.
 
 Filter:
 
-File
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
 
+```
+
+### `05-openhuman-coverage-5`
+
+- [Full input](cases/05-openhuman-coverage-5/input.html)
+- [Full output](cases/05-openhuman-coverage-5/output.txt)
+
+Input excerpt:
+
+```html
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/assets/icons/GoogleIcon.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/assets/icons</a> GoogleIcon.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/2</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
+
+```
+
+Output excerpt:
+
+```text
+All files / src/assets/icons GoogleIcon.tsx
+
+0%
 Statements
+0/2
 
+0%
 Branches
+0/1
 
+0%
 Functions
+0/1
 
+0%
 Lines
+0/2
 
-chatSendError.ts
+Press n or j to go to the next uncovered block, b, p or k for the previous block.
 
-100%
-2/2
+Filter:
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
 
 ```
 
@@ -793,92 +704,181 @@ Filter:
 
 ```
 
-### `10-openhuman-coverage-10`
+### `02-rss-hacker-news`
 
-- [Full input](cases/10-openhuman-coverage-10/input.html)
-- [Full output](cases/10-openhuman-coverage-10/output.txt)
+- [Full input](cases/02-rss-hacker-news/input.xml)
+- [Full output](cases/02-rss-hacker-news/output.txt)
 
 Input excerpt:
 
-```html
-
-<!doctype html>
-<html lang="en">
-
-<head>
-    <title>Code coverage report for src/components/AppBackground.tsx</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../prettify.css" />
-    <link rel="stylesheet" href="../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type='text/css'>
-        .coverage-summary .sorter {
-            background-image: url(../../sort-arrow-sprite.png);
-        }
-    </style>
-</head>
-    
-<body>
-<div class='wrapper'>
-    <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/components</a> AppBackground.tsx</h1>
-        <div class='clearfix'>
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>0/1</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
-            </div>
+```xml
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hacker News: Front Page</title><link>https://news.ycombinator.com/</link><description>Hacker News RS...
+<p>Article URL: <a href="https://www.bbc.com/news/articles/c8e2j0j87reo">https://www.bbc.com/news/articles/c8e2j0j87reo</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792790">https://news.ycombinator.com/item?id=48792790</a></p>
+<p>Points: 74</p>
+<p># Comments: 29</p>
+]]></description><pubDate>Sun, 05 Jul 2026 09:56:10 +0000</pubDate><link>https://www.bbc.com/news/articles/c8e2j0j87reo</link><dc:creator>saikatsg</dc:creator><comments>https://news.ycombinator.com/item?id=48792790</comm...
+<p>Article URL: <a href="https://www.bbc.com/news/articles/cz758x04g83o">https://www.bbc.com/news/articles/cz758x04g83o</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792780">https://news.ycombinator.com/item?id=48792780</a></p>
+<p>Points: 10</p>
+<p># Comments: 2</p>
+]]></description><pubDate>Sun, 05 Jul 2026 09:55:22 +0000</pubDate><link>https://www.bbc.com/news/articles/cz758x04g83o</link><dc:creator>saikatsg</dc:creator><comments>https://news.ycombinator.com/item?id=48792780</comm...
+<p>Article URL: <a href="https://github.com/Trystan-SA/claude-design-system-prompt">https://github.com/Trystan-SA/claude-design-system-prompt</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792399">https://news.ycombinator.com/item?id=48792399</a></p>
+<p>Points: 23</p>
+<p># Comments: 1</p>
+]]></description><pubDate>Sun, 05 Jul 2026 08:43:37 +0000</pubDate><link>https://github.com/Trystan-SA/claude-design-system-prompt</link><dc:creator>handfuloflight</dc:creator><comments>https://news.ycombinator.com/item?...
+<p>Article URL: <a href="https://0dd.company/galleries/triumph/1.html">https://0dd.company/galleries/triumph/1.html</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792352">https://news.ycombinator.com/item?id=48792352</a></p>
+<p>Points: 26</p>
+<p># Comments: 5</p>
+]]></description><pubDate>Sun, 05 Jul 2026 08:32:09 +0000</pubDate><link>https://0dd.company/galleries/triumph/1.html</link><dc:creator>scaglio</dc:creator><comments>https://news.ycombinator.com/item?id=48792352</comment...
+<p>Article URL: <a href="https://www.formaly.io/blog/knowledge-should-not-be-gated">https://www.formaly.io/blog/knowledge-should-not-be-gated</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792195">https://news.ycombinator.com/item?id=48792195</a></p>
+<p>Points: 9</p>
+<p># Comments: 0</p>
+]]></description><pubDate>Sun, 05 Jul 2026 07:59:48 +0000</pubDate><link>https://www.formaly.io/blog/knowledge-should-not-be-gated</link><dc:creator>nezhar</dc:creator><comments>https://news.ycombinator.com/item?id=48792...
+<p>Article URL: <a href="https://hamiltonianresearch.xyz/blog/hr-diffuse-1.html">https://hamiltonianresearch.xyz/blog/hr-diffuse-1.html</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792118">https://news.ycombinator.com/item?id=48792118</a></p>
+<p>Points: 12</p>
+<p># Comments: 2</p>
+]]></description><pubDate>Sun, 05 Jul 2026 07:47:44 +0000</pubDate><link>https://hamiltonianresearch.xyz/blog/hr-diffuse-1.html</link><dc:creator>farisallafi</dc:creator><comments>https://news.ycombinator.com/item?id=487...
+<p>Article URL: <a href="https://jacob.gold/posts/programmers-need-to-start-meditating-now/">https://jacob.gold/posts/programmers-need-to-start-meditating-now/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792080">https://news.ycombinator.com/item?id=48792080</a></p>
+<p>Points: 88</p>
+<p># Comments: 90</p>
+]]></description><pubDate>Sun, 05 Jul 2026 07:39:35 +0000</pubDate><link>https://jacob.gold/posts/programmers-need-to-start-meditating-now/</link><dc:creator>enz</dc:creator><comments>https://news.ycombinator.com/item?id...
 
 ```
 
 Output excerpt:
 
 ```text
-All files / src/components AppBackground.tsx
+Hacker News: Front Pagehttps://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 12:06:08 +0000Article URL: https://www.bbc.com/news/articles/c8e2j0j87reo
 
-0%
-Statements
-0/1
+Comments URL: https://news.ycombinator.com/item?id=48792790
 
-0%
-Branches
-0/1
+Points: 74
 
-0%
-Functions
-0/1
+# Comments: 29
 
-0%
-Lines
-0/1
+]]>Sun, 05 Jul 2026 09:56:10 +0000https://www.bbc.com/news/articles/c8e2j0j87reosaikatsghttps://news.ycombinator.com/item?id=48792790https://news.ycombinator.com/item?id=48792790Article URL: https://www.bbc.com/news/arti...
 
-Press n or j to go to the next uncovered block, b, p or k for the previous block.
+Comments URL: https://news.ycombinator.com/item?id=48792780
 
-Filter:
+Points: 10
 
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
+# Comments: 2
+
+]]>Sun, 05 Jul 2026 09:55:22 +0000https://www.bbc.com/news/articles/cz758x04g83osaikatsghttps://news.ycombinator.com/item?id=48792780https://news.ycombinator.com/item?id=48792780Article URL: https://github.com/Trystan-SA...
+
+Comments URL: https://news.ycombinator.com/item?id=48792399
+
+Points: 23
+
+# Comments: 1
+
+]]>Sun, 05 Jul 2026 08:43:37 +0000https://github.com/Trystan-SA/claude-design-system-prompthandfuloflighthttps://news.ycombinator.com/item?id=48792399https://news.ycombinator.com/item?id=48792399Article URL: https://0dd....
+
+Comments URL: https://news.ycombinator.com/item?id=48792352
+
+Points: 26
+
+# Comments: 5
+
+]]>Sun, 05 Jul 2026 08:32:09 +0000https://0dd.company/galleries/triumph/1.htmlscagliohttps://news.ycombinator.com/item?id=48792352https://news.ycombinator.com/item?id=48792352Article URL: https://www.formaly.io/blog/know...
+
+Comments URL: https://news.ycombinator.com/item?id=48792195
+
+
+```
+
+### `01-rss-rust-blog`
+
+- [Full input](cases/01-rss-rust-blog/input.xml)
+- [Full output](cases/01-rss-rust-blog/output.txt)
+
+Input excerpt:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <generator uri="https://blog.rust-lang.org/" version="0.1.0">Rust Blog</generator>
+    <link href="https://blog.rust-lang.org/feed.xml" rel="self" type="application/atom+xml" />
+    <link href="https://blog.rust-lang.org/" rel="alternate" type="text/html" />
+    <id>https://blog.rust-lang.org/</id>
+    <title>Rust Blog</title>
+    <subtitle>Empowering everyone to build reliable and efficient software.</subtitle>
+    <author>
+        <name>Maintained by the Rust Teams.</name>
+        <uri>https://github.com/rust-lang/blog.rust-lang.org/</uri>
+    </author>
+    <updated>2026-07-03T16:22:30+00:00</updated>
+
+    
+    <entry>
+        <title>Announcing Rust 1.96.1</title>
+        <link rel="alternate" href="https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/" type="text/html" title="Announcing Rust 1.96.1" />
+        <published>2026-06-30T00:00:00+00:00</published>
+        <updated>2026-06-30T00:00:00+00:00</updated>
+        <id>https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/</id>
+        <content type="html" xml:base="https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/">&lt;p&gt;The Rust team has published a new point release of Rust, 1.96.1. Rust is a programming language that is empowering every...
+&lt;p&gt;If you have a previous version of Rust installed via rustup, getting Rust 1.96.1 is as easy as:&lt;/p&gt;
+&lt;pre class&#x3D;&quot;giallo z-code&quot;&gt;&lt;code data-lang&#x3D;&quot;plain&quot;&gt;&lt;span class&#x3D;&quot;giallo-l&quot;&gt;&lt;span&gt;rustup update stable&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If you don&#x27;t have it already, you can &lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://www.rust-lang.org/install.html&quot;&gt;get &lt;code&gt;rustup&lt;/code&gt;&lt;/a&gt; from the appropriate p...
+&lt;h2 id&#x3D;&quot;what-s-in-1-96-1&quot;&gt;&lt;a class&#x3D;&quot;anchor&quot; href&#x3D;&quot;#what-s-in-1-96-1&quot; aria-hidden&#x3D;&quot;true&quot;&gt;&lt;/a&gt;
+What&#x27;s in 1.96.1&lt;/h2&gt;
+&lt;p&gt;Rust 1.96.1 fixes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://github.com/rust-lang/cargo/pull/17131&quot;&gt;Missing retries / timeouts in Cargo&#x27;s HTTP client&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://github.com/rust-lang/rust/pull/158214&quot;&gt;Miscompilation in a MIR optimization&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It also &lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://github.com/rust-lang/cargo/pull/17140&quot;&gt;fixes&lt;/a&gt; three CVEs
+affecting libssh2 (which is compiled into Cargo):&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a rel&#x3D;&quot;external&quot; href&#x3D;&quot;https://www.cve.org/CVERecord?id&#x3D;CVE-2025-15661&quot;&gt;CVE-2025-15661&lt;/a&gt;&lt;/li&gt;
+
+```
+
+Output excerpt:
+
+```text
+Rust Blog
+
+https://blog.rust-lang.org/
+Rust Blog
+Empowering everyone to build reliable and efficient software.
+
+Maintained by the Rust Teams.
+https://github.com/rust-lang/blog.rust-lang.org/
+
+2026-07-03T16:22:30+00:00
+
+Announcing Rust 1.96.1
+
+2026-06-30T00:00:00+00:00
+2026-06-30T00:00:00+00:00
+https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/
+<p>The Rust team has published a new point release of Rust, 1.96.1. Rust is a programming language that is empowering everyone to build reliable and efficient software.</p>
+<p>If you have a previous version of Rust installed via rustup, getting Rust 1.96.1 is as easy as:</p>
+<pre class&#x3D;"giallo z-code"><code data-lang&#x3D;"plain"><span class&#x3D;"giallo-l"><span>rustup update stable</span></span></code></pre>
+<p>If you don&#x27;t have it already, you can <a rel&#x3D;"external" href&#x3D;"https://www.rust-lang.org/install.html">get <code>rustup</code></a> from the appropriate page on our website.</p>
+<h2 id&#x3D;"what-s-in-1-96-1"><a class&#x3D;"anchor" href&#x3D;"#what-s-in-1-96-1" aria-hidden&#x3D;"true"></a>
+What&#x27;s in 1.96.1</h2>
+<p>Rust 1.96.1 fixes:</p>
+<ul>
+<li><a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/cargo/pull/17131">Missing retries / timeouts in Cargo&#x27;s HTTP client</a></li>
+<li><a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/rust/pull/158214">Miscompilation in a MIR optimization</a></li>
+</ul>
+<p>It also <a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/cargo/pull/17140">fixes</a> three CVEs
+affecting libssh2 (which is compiled into Cargo):</p>
+<ul>
+<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2025-15661">CVE-2025-15661</a></li>
+<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2026-55199">CVE-2026-55199</a></li>
+<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2026-55200">CVE-2026-55200</a></li>
+</ul>
+<h3 id&#x3D;"contributors-to-1-96-1"><a class&#x3D;"anchor" href&#x3D;"#contributors-to-1-96-1" aria-hidden&#x3D;"true"></a>
+Contributors to 1.96.1</h3>
 
 ```
 

@@ -1,46 +1,46 @@
 Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
 1.
 Europe&#x27;s new climate in seven charts (bbc.com)
-68 points by saikatsg 2 hours ago | hide | 26 comments
+89 points by saikatsg 2 hours ago | hide | 56 comments
 2.
 Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
-159 points by dabinat 7 hours ago | hide | 59 comments
+162 points by dabinat 7 hours ago | hide | 60 comments
 3.
 If you&#x27;re a button, you have one job (aresluna.org)
-270 points by nozzlegear 10 hours ago | hide | 142 comments
+279 points by nozzlegear 10 hours ago | hide | 146 comments
 4.
 GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
-299 points by maille 14 hours ago | hide | 115 comments
+305 points by maille 14 hours ago | hide | 116 comments
 5.
 Fast Software, the Best Software (craigmod.com)
-38 points by ustad 4 hours ago | hide | 14 comments
+38 points by ustad 4 hours ago | hide | 16 comments
 6.
 Pandoc Lua Filters (pandoc.org)
 81 points by ankitg12 7 hours ago | hide | 5 comments
 7.
+Functional Programming in hica (hica.dev)
+6 points by cladamski79 2 hours ago | hide | 1 comment
+8.
 Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
 140 points by hhs 13 hours ago | hide | 30 comments
-8.
-Claude Design System Prompt (github.com/trystan-sa)
-23 points by handfuloflight 3 hours ago | hide | 1 comment
 9.
+Claude Design System Prompt (github.com/trystan-sa)
+25 points by handfuloflight 3 hours ago | hide | 1 comment
+10.
+Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
+10 points by saikatsg 2 hours ago | hide | 2 comments
+11.
 Megawatts by Microwave (computer.rip)
 31 points by eternauta3k 6 hours ago | hide | 4 comments
-10.
-Functional Programming in hica (hica.dev)
-4 points by cladamski79 2 hours ago | hide | 1 comment
-11.
-Programmers need to start meditating (jacob.gold)
-88 points by enz 4 hours ago | hide | 88 comments
 12.
-Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
-9 points by saikatsg 2 hours ago | hide | 2 comments
+Programmers need to start meditating (jacob.gold)
+91 points by enz 4 hours ago | hide | 93 comments
 13.
 Command and Conquer Generals natively ported to macOS, iPhone, iPad using Fable (github.com/ammaarreshi)
-589 points by asronline 16 hours ago | hide | 251 comments
+591 points by asronline 16 hours ago | hide | 253 comments
 14.
 Moby Dick Workout (2022) (hogbaysoftware.com)
-51 points by helloplanets 7 hours ago | hide | 17 comments
+52 points by helloplanets 7 hours ago | hide | 17 comments
 15.
 Artful Cats: Feline-Inspired Art and Artifacts (si.edu)
 50 points by jruohonen 8 hours ago | hide | 4 comments
@@ -48,51 +48,51 @@ Artful Cats: Feline-Inspired Art and Artifacts (si.edu)
 Apocketlypse (0dd.company)
 26 points by scaglio 3 hours ago | hide | 5 comments
 17.
-Better Models: Worse Tools (pocoo.org)
-184 points by leemoore 15 hours ago | hide | 65 comments
+Knowledge Should Not Be Gated (formaly.io)
+10 points by nezhar 4 hours ago | hide | discuss
 18.
+Better Models: Worse Tools (pocoo.org)
+189 points by leemoore 15 hours ago | hide | 65 comments
+19.
 Meta&#x27;s Un-Stable Signature (hackerfactor.com)
 98 points by ementally 12 hours ago | hide | 15 comments
-19.
-Atomic Force Microscope high-speed video, stainless etching, bacteria, and more (youtube.com)
-81 points by mhb 10 hours ago | hide | 8 comments
 20.
-Knowledge Should Not Be Gated (formaly.io)
-9 points by nezhar 4 hours ago | hide | discuss
+Atomic Force Microscope high-speed video, stainless etching, bacteria, and more (youtube.com)
+83 points by mhb 10 hours ago | hide | 8 comments
 21.
+The Log Is the Agent (arxiv.org)
+53 points by iacguy 9 hours ago | hide | 16 comments
+22.
 About the Digital Art (tricivenola.com)
 14 points by NaOH 5 hours ago | hide | 2 comments
-22.
-The Log Is the Agent (arxiv.org)
-50 points by iacguy 9 hours ago | hide | 15 comments
 23.
 “Beyond the limit”: Satellites and mirrors in space pose threat to the night sky (eso.org)
-154 points by Breadmaker 18 hours ago | hide | 255 comments
+154 points by Breadmaker 18 hours ago | hide | 256 comments
 24.
 What ORMs have taught me: just learn SQL (2014) (wozniak.ca)
-213 points by ciconia 22 hours ago | hide | 245 comments
+214 points by ciconia 22 hours ago | hide | 246 comments
 25.
 Return of the Nigerian Prince Redux: Beware Book Club and Book Review Scams (2025) (writerbeware.blog)
-55 points by Anon84 11 hours ago | hide | 18 comments
+57 points by Anon84 11 hours ago | hide | 18 comments
 26.
+Pi square is nearly 10 (mihai.page)
+15 points by freediver 1 hour ago | hide | 5 comments
+27.
 Dark Mode with Web Standards (olliewilliams.xyz)
 9 points by thm 4 hours ago | hide | discuss
-27.
-Show HN: I trained a language model that thinks the capital of Japan is Paris (hamiltonianresearch.xyz)
-12 points by farisallafi 4 hours ago | hide | 2 comments
 28.
+Show HN: I trained a language model that thinks the capital of Japan is Paris (hamiltonianresearch.xyz)
+12 points by farisallafi 4 hours ago | hide | 4 comments
+29.
 My ASN Journey series (2024) (animmouse.com)
 23 points by antonalekseev 7 hours ago | hide | 9 comments
-29.
-Drone Autonomy (2021) (cggonzalez.com)
-62 points by cgg1 12 hours ago | hide | 6 comments
 30.
-Record-breaking solo rower Kelsey Pfendler arrives in Hawaii (hawaiinewsnow.com)
-59 points by MaysonL 10 hours ago | hide | 6 comments
+Drone Autonomy (2021) (cggonzalez.com)
+63 points by cgg1 12 hours ago | hide | 6 comments
 More
 
 Guidelines | FAQ | Lists | API | Security | Legal | Apply to YC | Contact
 
 Search:
 
-[compacted tool output — this is a PARTIAL view; the full original (34463 bytes) is available by calling tokenjuice_retrieve with token "b98f3251d55ebac58ee460e62d21c25e" (marker ⟦tj:b98f3251d55ebac58ee460e62d21c25e⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (34336 bytes) is available by calling tokenjuice_retrieve with token "244ae6dbb917246278c43988b8bce72b" (marker ⟦tj:244ae6dbb917246278c43988b8bce72b⟧)]

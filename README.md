@@ -76,14 +76,14 @@ inline accuracy plus CCR recovery for lossy compactions.
 
 | Category | Cases | Avg est. token reduction | Avg latency |
 | --- | ---: | ---: | ---: |
-| JSON SmartCrusher | 10 | 58.2% | 0.362 ms |
-| Test failure logs | 10 | 14.1% | 0.050 ms |
-| Service and Docker logs | 10 | 86.3% | 0.177 ms |
-| Search results | 10 | 39.8% | 0.494 ms |
-| Unified diffs | 10 | 66.7% | 0.174 ms |
-| HTML, RSS, and page snapshots | 10 | 75.4% | 0.187 ms |
-| Rust source | 10 | 51.9% | 0.796 ms |
-| Plain text with ML off | 10 | 0.0% | 0.000 ms |
+| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 86.3% | 0.140 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 75.3% | 0.164 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 71.2% | 0.143 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 58.0% | 0.429 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 51.9% | 0.698 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 44.8% | 0.320 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 14.1% | 0.034 ms |
+| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0.0% | 0.000 ms |
 
 These are local real-snapshot corpus measurements, not production-wide claims.
 See [docs/benchmark](docs/benchmark) and

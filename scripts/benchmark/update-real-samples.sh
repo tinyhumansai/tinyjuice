@@ -44,6 +44,7 @@ input_name() {
 output_name() {
   local category="$1"
   case "$category" in
+    json-smartcrusher) echo "output.md" ;;
     test-failure-log|service-log) echo "output.log" ;;
     search-results) echo "output.rg" ;;
     unified-diff) echo "output.diff" ;;

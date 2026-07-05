@@ -1,24 +1,16 @@
-Hacker News: Front Pagehttps://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 11:51:01 +0000Article URL: https://mihai.page/pi-square-is-10/
-
-Comments URL: https://news.ycombinator.com/item?id=48793073
-
-Points: 10
-
-# Comments: 4
-
-]]>Sun, 05 Jul 2026 10:50:53 +0000https://mihai.page/pi-square-is-10/freediverhttps://news.ycombinator.com/item?id=48793073https://news.ycombinator.com/item?id=48793073Article URL: https://www.bbc.com/news/articles/c8e2j0j87reo
+Hacker News: Front Pagehttps://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 12:06:08 +0000Article URL: https://www.bbc.com/news/articles/c8e2j0j87reo
 
 Comments URL: https://news.ycombinator.com/item?id=48792790
 
-Points: 39
+Points: 74
 
-# Comments: 5
+# Comments: 29
 
 ]]>Sun, 05 Jul 2026 09:56:10 +0000https://www.bbc.com/news/articles/c8e2j0j87reosaikatsghttps://news.ycombinator.com/item?id=48792790https://news.ycombinator.com/item?id=48792790Article URL: https://www.bbc.com/news/articles/cz758x04g83o
 
 Comments URL: https://news.ycombinator.com/item?id=48792780
 
-Points: 9
+Points: 10
 
 # Comments: 2
 
@@ -26,7 +18,7 @@ Points: 9
 
 Comments URL: https://news.ycombinator.com/item?id=48792399
 
-Points: 18
+Points: 23
 
 # Comments: 1
 
@@ -36,33 +28,49 @@ Comments URL: https://news.ycombinator.com/item?id=48792352
 
 Points: 26
 
-# Comments: 3
+# Comments: 5
 
-]]>Sun, 05 Jul 2026 08:32:09 +0000https://0dd.company/galleries/triumph/1.htmlscagliohttps://news.ycombinator.com/item?id=48792352https://news.ycombinator.com/item?id=48792352Article URL: https://jacob.gold/posts/programmers-need-to-start-meditating-now/
+]]>Sun, 05 Jul 2026 08:32:09 +0000https://0dd.company/galleries/triumph/1.htmlscagliohttps://news.ycombinator.com/item?id=48792352https://news.ycombinator.com/item?id=48792352Article URL: https://www.formaly.io/blog/knowledge-should-not-be-gated
+
+Comments URL: https://news.ycombinator.com/item?id=48792195
+
+Points: 9
+
+# Comments: 0
+
+]]>Sun, 05 Jul 2026 07:59:48 +0000https://www.formaly.io/blog/knowledge-should-not-be-gatednezharhttps://news.ycombinator.com/item?id=48792195https://news.ycombinator.com/item?id=48792195Article URL: https://hamiltonianresearch.xyz/blog/hr-diffuse-1.html
+
+Comments URL: https://news.ycombinator.com/item?id=48792118
+
+Points: 12
+
+# Comments: 2
+
+]]>Sun, 05 Jul 2026 07:47:44 +0000https://hamiltonianresearch.xyz/blog/hr-diffuse-1.htmlfarisallafihttps://news.ycombinator.com/item?id=48792118https://news.ycombinator.com/item?id=48792118Article URL: https://jacob.gold/posts/programmers-need-to-start-meditating-now/
 
 Comments URL: https://news.ycombinator.com/item?id=48792080
 
-Points: 84
+Points: 88
 
-# Comments: 83
+# Comments: 90
 
 ]]>Sun, 05 Jul 2026 07:39:35 +0000https://jacob.gold/posts/programmers-need-to-start-meditating-now/enzhttps://news.ycombinator.com/item?id=48792080https://news.ycombinator.com/item?id=48792080Article URL: https://craigmod.com/essays/fast_software/
 
 Comments URL: https://news.ycombinator.com/item?id=48792008
 
-Points: 34
+Points: 38
 
-# Comments: 12
+# Comments: 14
 
-]]>Sun, 05 Jul 2026 07:25:25 +0000https://craigmod.com/essays/fast_software/ustadhttps://news.ycombinator.com/item?id=48792008https://news.ycombinator.com/item?id=48792008Article URL: https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/
+]]>Sun, 05 Jul 2026 07:25:25 +0000https://craigmod.com/essays/fast_software/ustadhttps://news.ycombinator.com/item?id=48792008https://news.ycombinator.com/item?id=48792008Article URL: https://olliewilliams.xyz/blog/dark-mode/
 
-Comments URL: https://news.ycombinator.com/item?id=48791708
+Comments URL: https://news.ycombinator.com/item?id=48791973
 
-Points: 55
+Points: 9
 
-# Comments: 59
+# Comments: 0
 
-]]>Sun, 05 Jul 2026 06:19:34 +0000https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/ognyankulevhttps://news.ycombinator.com/item?id=48791708https://news.ycombinator.com/item?id=48791708Article URL: https://computer.rip/2026-07-04-microwave-and-power.html
+]]>Sun, 05 Jul 2026 07:17:25 +0000https://olliewilliams.xyz/blog/dark-mode/thmhttps://news.ycombinator.com/item?id=48791973https://news.ycombinator.com/item?id=48791973Article URL: https://computer.rip/2026-07-04-microwave-and-power.html
 
 Comments URL: https://news.ycombinator.com/item?id=48791591
 
@@ -74,7 +82,7 @@ Points: 31
 
 Comments URL: https://news.ycombinator.com/item?id=48791328
 
-Points: 157
+Points: 160
 
 # Comments: 59
 
@@ -82,15 +90,23 @@ Points: 157
 
 Comments URL: https://news.ycombinator.com/item?id=48791266
 
-Points: 50
+Points: 51
 
-# Comments: 16
+# Comments: 17
 
-]]>Sun, 05 Jul 2026 04:30:33 +0000https://www.hogbaysoftware.com/posts/moby-dick-workout/helloplanetshttps://news.ycombinator.com/item?id=48791266https://news.ycombinator.com/item?id=48791266Article URL: https://arxiv.org/abs/2605.21997
+]]>Sun, 05 Jul 2026 04:30:33 +0000https://www.hogbaysoftware.com/posts/moby-dick-workout/helloplanetshttps://news.ycombinator.com/item?id=48791266https://news.ycombinator.com/item?id=48791266Article URL: https://www.animmouse.com/p/my-asn-journey/
+
+Comments URL: https://news.ycombinator.com/item?id=48791256
+
+Points: 23
+
+# Comments: 9
+
+]]>Sun, 05 Jul 2026 04:29:05 +0000https://www.animmouse.com/p/my-asn-journey/antonalekseevhttps://news.ycombinator.com/item?id=48791256https://news.ycombinator.com/item?id=48791256Article URL: https://arxiv.org/abs/2605.21997
 
 Comments URL: https://news.ycombinator.com/item?id=48790912
 
-Points: 48
+Points: 50
 
 # Comments: 15
 
@@ -98,23 +114,39 @@ Points: 48
 
 Comments URL: https://news.ycombinator.com/item?id=48790689
 
-Points: 262
+Points: 271
 
-# Comments: 141
+# Comments: 142
 
-]]>Sun, 05 Jul 2026 02:01:03 +0000https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/nozzlegearhttps://news.ycombinator.com/item?id=48790689https://news.ycombinator.com/item?id=48790689Article URL: https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/
+]]>Sun, 05 Jul 2026 02:01:03 +0000https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/nozzlegearhttps://news.ycombinator.com/item?id=48790689https://news.ycombinator.com/item?id=48790689Article URL: https://www.hawaiinewsnow.com/2026/07/04/record-breaking-solo-rower-kelsey-pfendler-arrives-hawaii/
+
+Comments URL: https://news.ycombinator.com/item?id=48790512
+
+Points: 60
+
+# Comments: 6
+
+]]>Sun, 05 Jul 2026 01:23:11 +0000https://www.hawaiinewsnow.com/2026/07/04/record-breaking-solo-rower-kelsey-pfendler-arrives-hawaii/MaysonLhttps://news.ycombinator.com/item?id=48790512https://news.ycombinator.com/item?id=48790512Article URL: https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/
 
 Comments URL: https://news.ycombinator.com/item?id=48790240
 
-Points: 54
+Points: 55
 
 # Comments: 18
 
-]]>Sun, 05 Jul 2026 00:22:25 +0000https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/Anon84https://news.ycombinator.com/item?id=48790240https://news.ycombinator.com/item?id=48790240Article URL: https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets
+]]>Sun, 05 Jul 2026 00:22:25 +0000https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/Anon84https://news.ycombinator.com/item?id=48790240https://news.ycombinator.com/item?id=48790240Article URL: https://www.cggonzalez.com/blog/index.html
+
+Comments URL: https://news.ycombinator.com/item?id=48789965
+
+Points: 62
+
+# Comments: 6
+
+]]>Sat, 04 Jul 2026 23:22:15 +0000https://www.cggonzalez.com/blog/index.htmlcgg1https://news.ycombinator.com/item?id=48789965https://news.ycombinator.com/item?id=48789965Article URL: https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets
 
 Comments URL: https://news.ycombinator.com/item?id=48789712
 
-Points: 138
+Points: 140
 
 # Comments: 30
 
@@ -122,42 +154,10 @@ Points: 138
 
 Comments URL: https://news.ycombinator.com/item?id=48789428
 
-Points: 296
+Points: 300
 
-# Comments: 115
+# Comments: 116
 
-]]>Sat, 04 Jul 2026 21:51:09 +0000https://github.com/openai/codex/issues/30364maillehttps://news.ycombinator.com/item?id=48789428https://news.ycombinator.com/item?id=48789428Article URL: https://lucumr.pocoo.org/2026/7/4/better-models-worse-tools/
+]]>Sat, 04 Jul 2026 21:51:09 +0000https://github.com/openai/codex/issues/30364maillehttps://news.ycombinator.com/item?id=48789428https://news.ycombinator.com/item?id=48789428
 
-Comments URL: https://news.ycombinator.com/item?id=48788599
-
-Points: 184
-
-# Comments: 65
-
-]]>Sat, 04 Jul 2026 20:16:22 +0000https://lucumr.pocoo.org/2026/7/4/better-models-worse-tools/leemoorehttps://news.ycombinator.com/item?id=48788599https://news.ycombinator.com/item?id=48788599Article URL: https://github.com/ammaarreshi/Generals-Mac-iOS-iPad/tree/main
-
-Comments URL: https://news.ycombinator.com/item?id=48788283
-
-Points: 589
-
-# Comments: 249
-
-]]>Sat, 04 Jul 2026 19:41:10 +0000https://github.com/ammaarreshi/Generals-Mac-iOS-iPad/tree/mainasronlinehttps://news.ycombinator.com/item?id=48788283https://news.ycombinator.com/item?id=48788283Article URL: https://www.eso.org/public/news/eso2607/
-
-Comments URL: https://news.ycombinator.com/item?id=48787042
-
-Points: 154
-
-# Comments: 255
-
-]]>Sat, 04 Jul 2026 17:17:28 +0000https://www.eso.org/public/news/eso2607/Breadmakerhttps://news.ycombinator.com/item?id=48787042https://news.ycombinator.com/item?id=48787042Article URL: https://www.ycombinator.com/companies/infracost/jobs/YTJcFwr-marketing-lead
-
-Comments URL: https://news.ycombinator.com/item?id=48779906
-
-Points: 0
-
-# Comments: 0
-
-]]>Fri, 03 Jul 2026 21:00:50 +0000https://www.ycombinator.com/companies/infracost/jobs/YTJcFwr-marketing-leadakhhttps://news.ycombinator.com/item?id=48779906https://news.ycombinator.com/item?id=48779906
-
-[compacted tool output — this is a PARTIAL view; the full original (15220 bytes) is available by calling tokenjuice_retrieve with token "cfa681c172c5cf5c4a7a8ddda20192a9" (marker ⟦tj:cfa681c172c5cf5c4a7a8ddda20192a9⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (15125 bytes) is available by calling tokenjuice_retrieve with token "739442c2d9de2fb2baf87c7373bba8e2" (marker ⟦tj:739442c2d9de2fb2baf87c7373bba8e2⟧)]

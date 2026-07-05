@@ -136,118 +136,19 @@
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:549:        let ctx = ProviderContext {
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:557:        match provider.sync(&ctx, SyncReason::Manual).await {
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:4://! provider/backend credentials. It records only sanitized progress metadata:
-<OPENHUMAN_ROOT>/AGENTS.md:148:**Provider chain** (`App.tsx`): `Sentry.ErrorBoundary` → `Redux Provider` → `PersistGate` → `BootCheckGate` → `CoreStateProvider` → `SocketProvider` → `ChatRuntimeProvider` → `HashRouter` → `CommandProvider` → `ServiceBlockingGate` → `AppShell`.
-<OPENHUMAN_ROOT>/AGENTS.md:150:No `UserProvider`/`AIProvider`/`SkillProvider` — auth lives in `CoreStateProvider` via `fetchCoreAppSnapshot()` RPC.
-<OPENHUMAN_ROOT>/AGENTS.md:152:**State** (`store/`): Redux Toolkit slices — `accounts`, `channelConnections`, `chatRuntime`, `coreMode`, `deepLinkAuth`, `mascot`, `notification`, `providerSurface`, `socket`, `thread`. Prefer Redux over ad-hoc `localStorage`.
-<OPENHUMAN_ROOT>/AGENTS.md:164:Thin desktop host. Key modules: `core_process`, `core_rpc`, `cdp`, `cef_preflight`, `cef_profile`, `dictation_hotkeys`, `file_logging`, `mascot_native_window`, `screen_capture`, `window_state`, per-provider scanners (`discord_scanner`, `slack_scanner`, `telegram_scanner`, `whatsapp_scanner`, etc.), `meet_audio`/`meet_call`/`meet_video`, `fake_camera`, `webview_accounts`, `webview_apis`.
-<OPENHUMAN_ROOT>/AGENTS.md:170:Embedded provider webviews **must not** grow new JS injection. No new `.js` under `webview_accounts/`, no new `build_init_script`/`RUNTIME_JS` blocks, no CDP `Page.addScriptToEvaluateOnNewDocument`. New behavior lives in CEF handlers, CDP from scanner modules, or Rust-side IPC hooks. Legacy injection (gmail, linkedin, google-meet) is grandfathered but should shrink. Audit new Tauri plugins for `js_init_script` calls.
-<OPENHUMAN_ROOT>/AGENTS.md:178:Domains: `about_app`, `accessibility`, `agent`, `app_state`, `approval`, `autocomplete`, `billing`, `channels`, `composio`, `config`, `context`, `cost`, `credentials`, `cron`, `doctor`, `embeddings`, `encryption`, `health`, `heartbeat`, `integrations`, `learning`, `local_ai`, `meet`, `meet_agent`, `memory`, `migration`, `node_runtime`, `notifications`, `overlay`, `people`, `prompt_injection`, `provider_surfaces`, `providers`, `redirect_links`, `referral`, `routing`, `scheduler_gate`, `screen_intelligence`, `security`, `service`, `skills`, `socket`, `subconscious`, `team`, `text_input`, `threads`, `tokenjuice`, `tool_timeout`, `tools`, `tree_summarizer`, `update`, `voice`, `wallet`, `webhooks`, `webview_accounts`, `webview_apis`, `webview_notifications`.
-<OPENHUMAN_ROOT>/AGENTS.md:242:- **Generated docs**: some architecture docs contain generated blocks marked `<!-- BEGIN/END GENERATED: … -->` sourced from code (today: the frontend provider chain in [`gitbooks/developing/architecture/frontend.md`](gitbooks/developing/architecture/frontend.md), from the `@generated-source:provider-chain` marker in `app/src/App.tsx`). Don't hand-edit between the markers — update the code source, then run `pnpm docs:generate`. CI (`pnpm docs:check`, the **Docs Drift** lane) fails on stale generated docs. Generator + tests: `scripts/generate-architecture-docs.mjs`.
-<OPENHUMAN_ROOT>/plan.md:32:  frontend E2E (WDIO + Playwright), Rust unit (agent/memory; channels/providers/platform;
-<OPENHUMAN_ROOT>/plan.md:55:| ✅ | `src/openhuman/routing/factory.rs` | `factory_constructs_without_panic_when_runtime_enabled`, `factory_llamacpp_provider_constructs_without_panic`, `factory_custom_openai_provider_constructs_without_panic`, `factory_lm_studio_provider_constructs_without_panic` | Skeptic traced the whole construction path — provably infallible (pure struct init), so the tests cannot fail. One test's comment claims to verify probe-URL selection but the body asserts nothing; fields are private so strengthening is blocked. |
-<OPENHUMAN_ROOT>/plan.md:59:| ⚠️ | `src/openhuman/channels/providers/whatsapp_tests.rs` | 7 × `whatsapp_parse_<type>_message_skipped` | All hit the identical `type != "text" → continue` branch; collapse to one parameterized loop over the type strings. |
-<OPENHUMAN_ROOT>/plan.md:79:| `src/openhuman/channels/providers/qq_tests.rs` | `test_name` | Sole coverage of `QQChannel::name()`, which keys routing (`routes.rs:345`) and the channel map (`runtime/startup.rs:701`). A rename would ship uncaught. |
-<OPENHUMAN_ROOT>/plan.md:80:| `src/openhuman/provider_surfaces/schemas.rs` | `all_schemas_returns_two` etc. | Weak but the only guard that the registration lists are populated. **Improve** (see §3), don't delete. |
-<OPENHUMAN_ROOT>/plan.md:95:| ✅ | `src/openhuman/provider_surfaces/schemas.rs::all_schemas_returns_two` / `all_controllers_returns_two` | Magic-number count breaks on any legitimate 3rd controller. | Replace with `schemas().len() == controllers().len()` parity + presence of a known op (`list_queue`). Standardize this as a shared `assert_schema_controller_parity()` helper — the `== N` pattern repeats across ~15 domains. |
-<OPENHUMAN_ROOT>/plan.md:96:| ✅ | every `connector-*.spec.ts::composio_sync RPC routes to mock backend` | Name promises routing; body only asserts the session didn't crash (original assertion removed per inline comment). | Rename to what it checks, or move the real routing assertion to a native-provider connector where sync actually hits the mock. |
-<OPENHUMAN_ROOT>/plan.md:179:- `socketSlice` / `channelConnectionsSlice` / `pttSlice` / `providerSurfaceSlice` reducer tests;
-<OPENHUMAN_ROOT>/plan.md:300:   11 connector WDIO specs, 4 scanner-registry suites, ~4 allowlist tests × N channel providers,
-<OPENHUMAN_ROOT>/plan.md:304:   declarations while *increasing* consistency (some copies have drifted, e.g. one provider's
-<OPENHUMAN_ROOT>/plan.md:406:  identity split (template-compare + labeled brand-voice lock), provider_surfaces parity via
-<OPENHUMAN_ROOT>/plan.md:428:  (socket/channelConnections/ptt/providerSurface) + TeamInvites. web3 tool layer has `web3_tests.rs`.
-<OPENHUMAN_ROOT>/plan.md:498:  `desktop_companion`, `devices`, `announcements`, `provider_surfaces`, `people`,
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:679:fn is_session_expired_error_does_not_match_byo_key_provider_401() {
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:680:    // BYO-key provider 401 should not clear the user session.
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:712:    // it was too broad and caught Discord/OAuth provider token errors. It is
-<OPENHUMAN_ROOT>/Cargo.lock:2938: "icu_provider 2.2.0",
-<OPENHUMAN_ROOT>/Cargo.lock:2958: "icu_provider 2.2.0",
-<OPENHUMAN_ROOT>/Cargo.lock:2970:name = "icu_provider"
-<OPENHUMAN_ROOT>/Cargo.lock:2977: "icu_provider_macros",
-<OPENHUMAN_ROOT>/Cargo.lock:2987:name = "icu_provider"
-<OPENHUMAN_ROOT>/Cargo.lock:3002:name = "icu_provider_macros"
-<OPENHUMAN_ROOT>/Cargo.lock:3022: "icu_provider 1.5.0",
-<OPENHUMAN_ROOT>/e2e/docker-compose.yml:85:  # Rust inference provider E2E tests (wiremock-based, no live LLM needed).
-<OPENHUMAN_ROOT>/src/core/socketio.rs:123:    /// `"provider"` | `"openhuman_budget"` | `"agent_loop"`
-<OPENHUMAN_ROOT>/src/core/socketio.rs:137:    /// Provider name extracted from `"<provider> API error (...)"`
-<OPENHUMAN_ROOT>/src/core/socketio.rs:138:    /// envelopes. `None` for non-provider errors (OpenHuman budget cap,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:139:    /// agent loop) and for transport failures without a provider prefix.
-<OPENHUMAN_ROOT>/src/core/socketio.rs:141:    pub error_provider: Option<String>,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:142:    /// `Some(false)` once the reliable-provider chain has exhausted
-<OPENHUMAN_ROOT>/src/core/socketio.rs:183:    /// Provider-assigned tool call id that groups `tool_args_delta`
-<OPENHUMAN_ROOT>/src/core/socketio.rs:503:                    match crate::openhuman::channels::providers::web::start_chat(
-<OPENHUMAN_ROOT>/src/core/socketio.rs:512:                        crate::openhuman::channels::providers::web::ChatRequestMetadata::default(),
-<OPENHUMAN_ROOT>/src/core/socketio.rs:554:                    let _ = crate::openhuman::channels::providers::web::cancel_chat(
-<OPENHUMAN_ROOT>/src/core/socketio.rs:604:        let mut rx = crate::openhuman::channels::providers::web::subscribe_web_channel_events();
-<OPENHUMAN_ROOT>/src/core/socketio.rs:967:                    provider,
-<OPENHUMAN_ROOT>/src/core/socketio.rs:975:                        "provider": provider,
-<OPENHUMAN_ROOT>/gitbooks/overview/troubleshooting-sign-in.md:46:On Windows the `openhuman://` URL scheme is registered to the running executable via `HKEY_CURRENT_USER\Software\Classes\openhuman\shell\open\command` at first launch. If that registration silently failed, or if the install was moved/copied after first launch, the browser cannot hand the OAuth callback back to the app, and sign-in stalls after the provider step (issue #2699).
-<OPENHUMAN_ROOT>/gitbooks/overview/troubleshooting-sign-in.md:84:* The OAuth provider used.
-<OPENHUMAN_ROOT>/src/core/auth.rs:56://!   `openhuman::inference::http::EXTERNAL_OPENAI_COMPAT_PROVIDER`.
-<OPENHUMAN_ROOT>/src/core/auth.rs:73:use crate::openhuman::inference::http::EXTERNAL_OPENAI_COMPAT_PROVIDER;
-<OPENHUMAN_ROOT>/src/core/auth.rs:382:    match auth.get_provider_bearer_token(EXTERNAL_OPENAI_COMPAT_PROVIDER, None) {
-<OPENHUMAN_ROOT>/src/core/auth.rs:644:        auth.store_provider_token(
-<OPENHUMAN_ROOT>/src/core/auth.rs:645:            EXTERNAL_OPENAI_COMPAT_PROVIDER,
-<OPENHUMAN_ROOT>/gitbooks/legal/privacy-policy.md:62:## Service Providers
-<OPENHUMAN_ROOT>/gitbooks/legal/privacy-policy.md:64:We may engage third-party service providers to support operation of the Service, such as infrastructure hosting or AI inference providers. These providers act only on our behalf, are subject to confidentiality obligations, and are restricted from using data for their own purposes.
-<OPENHUMAN_ROOT>/src/core/event_bus/native_request.rs:7://! objects (`Arc<dyn Provider>`), streaming channels (`mpsc::Sender<T>`),
-<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:207:        "openhuman.providers_list_models",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/rpc.rs:1://! RPC entry points for provider assistive surfaces.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/rpc.rs:3://! The first cut exposes normalized provider event ingestion plus a queue
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:2://! transient-upstream provider, backend_api, integrations, and updater
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:12:    is_all_transient_provider_exhaustion_event, is_budget_event, is_session_expired_event,
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:14:    is_transient_integrations_failure, is_transient_provider_http_failure,
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:61:            if is_transient_provider_http_failure(&event)
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:62:                || is_all_transient_provider_exhaustion_event(&event)
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:171:            ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:189:            ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:212:                ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:233:                ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:242:        "permanent provider failures must reach Sentry"
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:263:    // `failure=all_exhausted` event when every provider/model has been
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:267:        ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:283:            ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:287:        "All providers/models failed. Attempts: openai API error (503 Service Unavailable); custom_openai API error (502 Bad Gateway)",
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:300:            ("domain", "llm_provider"),
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:304:        "All providers/models failed. Attempts: openai API error (401 Unauthorized); custom_openai API error (503 Service Unavailable)",
-<OPENHUMAN_ROOT>/tests/observability_smoke.rs:318:    let event = event_with_tags(&[("domain", "llm_provider"), ("failure", "non_2xx")]);
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:1://! Controller registry for `provider_surfaces`.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:3://! The first cut exposes normalized provider event ingestion plus a queue
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:14:use super::types::ProviderEvent;
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:16:pub fn all_provider_surfaces_controller_schemas() -> Vec<ControllerSchema> {
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:20:pub fn all_provider_surfaces_registered_controllers() -> Vec<RegisteredController> {
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:36:            namespace: "provider_surfaces",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:38:            description: "Ingest a normalized provider event into the local respond queue.",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:40:                field("provider", TypeSchema::String, "Provider slug (e.g. linkedin, gmail)."),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:41:                field("account_id", TypeSchema::String, "Provider account identifier."),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:43:                field("entity_id", TypeSchema::String, "Stable provider entity identifier."),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:50:                optional("deep_link", TypeSchema::String, "Provider deep link used to open the source surface."),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:53:                    // ProviderEvent::requires_attention is #[serde(default)] so
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:63:                    comment: "Optional provider-specific raw payload for future debugging and enrichment.",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:70:            namespace: "provider_surfaces",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:72:            description: "List the local respond queue derived from provider events.",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:77:            namespace: "provider_surfaces",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:79:            description: "Unknown provider_surfaces controller.",
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:88:        let payload: ProviderEvent = parse_params(params)?;
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:140:            &all_provider_surfaces_controller_schemas(),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:141:            &all_provider_surfaces_registered_controllers(),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/schemas.rs:150:        assert_eq!(schema.namespace, "provider_surfaces");
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:7:5** — deleting the `ProviderDelta` bridge and `progress_tracing`.
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:28:    `spawn_delta_forwarder` maps engine callbacks + `ProviderDelta` →
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:32:  (`channels/providers/web/progress_bridge.rs:157`) is a side-observer of the
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:54:  adapter's provider `UsageInfo` FIFO) to restore **charged USD**, cache-creation
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:73:2. **Usage accounting**: decide whether charged-USD/provider-cost belongs on a
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:74:   crate event (e.g. a `provider_cost`/`cache_creation` extension on
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:170:   the legacy `ProviderDelta` bridge in `session/tool_progress.rs` (253) and the
-<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:189:`channels/providers/web/progress_bridge.rs:157`. Crate foundation:
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:4:    prepare_messages_for_provider,
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:7:use openhuman_core::openhuman::inference::provider::ChatMessage;
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:50:    let prepared = prepare_messages_for_provider(
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:69:    let prepared = prepare_messages_for_provider(
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:88:    let err = prepare_messages_for_provider(
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:100:    let err = prepare_messages_for_provider(
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:110:    let err = prepare_messages_for_provider(
-<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:130:    let err = prepare_messages_for_provider(
-<OPENHUMAN_ROOT>/gitbooks/guides/recover-failed-installation.md:69:| Sign-in stalls after the provider step; log mentions `openhuman://` scheme **not registered** (Windows) | The URL handler didn't register, or the install was moved after first launch | Follow the repair steps in [Troubleshooting Sign-In](../overview/troubleshooting-sign-in.md#windows-openhuman-handler-not-registered) |
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:123:                eprintln!("[subconscious] session token found — provider available");
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:126:                eprintln!("[subconscious] WARNING: no session token — cloud provider will fail");
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:134:        // Check provider availability
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:136:            crate::openhuman::subconscious::provider::subconscious_provider_unavailable_reason(
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:140:            eprintln!("[subconscious] provider unavailable: {reason}");
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:141:            return Err(anyhow!("provider unavailable: {reason}"));
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:195:        let provider_reason = if mode.is_enabled() {
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:196:            crate::openhuman::subconscious::provider::subconscious_provider_unavailable_reason(
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:212:            "provider_available": provider_reason.is_none(),
+<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:213:            "provider_unavailable_reason": provider_reason,
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:85:    /// A sub-agent failed (max iterations, provider error, missing
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:216:    /// The configured embedding provider is unreachable or the requested model
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:224:        /// Short provider slug, e.g. `"ollama"`.
@@ -276,225 +177,324 @@
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1116:        provider: String,
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1394:            Self::SessionExpired { .. } | Self::ProviderApiKeyRejected { .. } => "auth",
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1562:            Self::ProviderApiKeyRejected { .. } => "ProviderApiKeyRejected",
-<OPENHUMAN_ROOT>/scripts/debug/harness-subagent-audit.sh:15:echo "[harness_subagent_audit] running live audit; requires configured provider/backend credentials" >&2
-<OPENHUMAN_ROOT>/docs/tinycortex-migration-spec.md:100:- **Process glue:** `memory/global.rs` singleton + queue worker; `memory/source_scope.rs` task-locals; `memory/chat.rs`; embeddings provider wiring.
-<OPENHUMAN_ROOT>/docs/tinycortex-migration-spec.md:113:`embeddings.rs` (`EmbeddingBackend`/`Embedder`), `chat.rs` (`ChatProvider`/`Summariser`×2/
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:8:use openhuman_core::openhuman::inference::provider::{
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:9:    ChatMessage, ChatRequest, ChatResponse, Provider, ToolCall, UsageInfo,
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:59:struct ScriptedProvider {
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:65:impl ScriptedProvider {
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:80:impl Provider for ScriptedProvider {
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:83:    ) -> openhuman_core::openhuman::inference::provider::traits::ProviderCapabilities {
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:84:        openhuman_core::openhuman::inference::provider::traits::ProviderCapabilities {
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:367:    let provider = ScriptedProvider::new(
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:376:        .provider_arc(provider.clone())
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:413:    assert_eq!(provider.requests()[0].tool_names, vec!["round20_dup"]);
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:414:    assert!(provider.requests()[1]
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:428:    let provider = ScriptedProvider::new(
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:437:        .provider_arc(provider)
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:497:    let provider = ScriptedProvider::new(
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:517:        .provider_arc(provider)
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:562:    let empty_provider = ScriptedProvider::new(vec![text_response("   ", None)], false);
-<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:564:        .provider_arc(empty_provider)
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:1://! Core operations for provider assistive surfaces.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:12:use super::types::{ProviderEvent, RespondQueueItem, RespondQueueListResponse};
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:46:    request: ProviderEvent,
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:49:        provider = %request.provider,
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:54:        "[provider-surfaces] ingest_event"
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:65:    tracing::debug!(count, "[provider-surfaces] list_queue");
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:81:    fn sample_event(entity_id: &str) -> ProviderEvent {
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:82:        ProviderEvent {
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:83:            provider: "linkedin".into(),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/ops.rs:111:        assert_eq!(first_result["provider"], "linkedin");
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:134:                provider: "test-provider".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:418:                provider: "slack".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:426:                provider: "slack".into(),
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:500:            DomainEvent::ProviderApiKeyRejected {
-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:501:                provider: "openrouter".into(),
-<OPENHUMAN_ROOT>/gitbooks/guides/child-safe-companion.md:27:* Keep it local. Use a [local model](local-model.md) so conversations aren't sent to a cloud provider, and connect **no** personal integrations.
-<OPENHUMAN_ROOT>/gitbooks/guides/child-safe-companion.md:57:* Turn on a [local model](local-model.md), then **route chat and reasoning at the local provider** so conversations run on-device. Enabling Local AI alone keeps only embeddings/memory local. Chat still uses the default cloud route until you point the chat/reasoning workloads at the local provider and confirm with a test message.
-<OPENHUMAN_ROOT>/gitbooks/guides/child-safe-companion.md:75:* [ ] Inference is local (`ready`), so conversations aren't going to a cloud provider.
-<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:37:- LLM and embedding **compute** — abstracted behind `EmbeddingBackend`, `score::extract::ChatProvider`, `tree::summarise::Summariser` traits ("never makes a network call").
-<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:67:- **Process glue**: `memory/global.rs` singleton + background queue worker; `memory/source_scope.rs` tokio task-locals; `memory/chat.rs` (LLM adapter over `openhuman::inference`); embeddings provider wiring.
-<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:76:- `chat.rs` — `impl ChatProvider` + `impl Summariser` over `memory::chat::build_chat_provider` / `inference::provider`.
-<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:117:**W6 — Ingest.** `memory/ingest_pipeline.rs` + `memory/ingestion/` re-pointed to `tinycortex::ingest` + `score::extract` (LLM extraction via the seam's `ChatProvider`). The namespace document/graph store path stays host-side unless deliberately upstreamed (explicit decision in this workstream). `ingest_chat`/`ingest_document_with_scope` keep their signatures — 11 call sites (learning, agent harness, archivist) unchanged.
-<OPENHUMAN_ROOT>/src/core/all.rs:177:        crate::openhuman::channels::providers::web::all_web_channel_registered_controllers(),
-<OPENHUMAN_ROOT>/src/core/all.rs:198:    // Unified inference domain: text / vision / local runtime / cloud providers.
-<OPENHUMAN_ROOT>/src/core/all.rs:199:    // (Formerly split across inference, local AI, and providers modules.)
-<OPENHUMAN_ROOT>/src/core/all.rs:202:    // Embedding provider configuration and embed RPC.
-<OPENHUMAN_ROOT>/src/core/all.rs:241:        crate::openhuman::composio::providers::slack::all_slack_memory_registered_controllers(),
-<OPENHUMAN_ROOT>/src/core/all.rs:273:    // Local assistive surfaces over third-party provider apps
-<OPENHUMAN_ROOT>/src/core/all.rs:275:        crate::openhuman::provider_surfaces::all_provider_surfaces_registered_controllers(),
-<OPENHUMAN_ROOT>/src/core/all.rs:304:    // Integration notification ingest, triage, and per-provider settings
-<OPENHUMAN_ROOT>/src/core/all.rs:410:        .extend(crate::openhuman::channels::providers::web::all_web_channel_controller_schemas());
-<OPENHUMAN_ROOT>/src/core/all.rs:442:        crate::openhuman::composio::providers::slack::all_slack_memory_controller_schemas(),
-<OPENHUMAN_ROOT>/src/core/all.rs:458:    schemas.extend(crate::openhuman::provider_surfaces::all_provider_surfaces_controller_schemas());
-<OPENHUMAN_ROOT>/src/core/all.rs:479:    // Integration notification ingest, triage, and per-provider settings
-<OPENHUMAN_ROOT>/src/core/all.rs:533:        "agentbox" => Some("AgentBox marketplace adapter status — mode flag and GMI MaaS provider wiring."),
-<OPENHUMAN_ROOT>/src/core/all.rs:536:        "auth" => Some("Manage app session and provider credentials."),
-<OPENHUMAN_ROOT>/src/core/all.rs:632:        "provider_surfaces" => Some(
-<OPENHUMAN_ROOT>/src/core/all.rs:633:            "Local-first assistive surfaces for provider events, respond queues, and drafts.",
-<OPENHUMAN_ROOT>/src/core/all.rs:661:             and per-provider routing settings.",
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:2://! run against a **mocked LLM provider** — no network, no Ollama, no real
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:3://! model anywhere (cloud and local provider funnels are both overridden).
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:6://! SessionExecutor *above* the model), this test mocks at the *provider*
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:8://!   - `GatePass::evaluate` → `agent::triage::run_triage` → real provider
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:13://! The mock is installed via the factory's `test_provider_override` seam,
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:14://! which both provider funnels consult first.
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:28:use openhuman_core::openhuman::inference::provider::factory::test_provider_override;
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:29:use openhuman_core::openhuman::inference::provider::traits::{
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:30:    ChatRequest, ChatResponse, ProviderCapabilities, ToolCall,
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:32:use openhuman_core::openhuman::inference::provider::Provider;
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:37:// Mock LLM provider — deterministic, content-routed, no network.
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:141:impl Provider for MockLlm {
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:142:    fn capabilities(&self) -> ProviderCapabilities {
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:143:        ProviderCapabilities {
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:178:// Hermetic harness: temp HOME + config + globals + installed mock provider.
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:182:/// process-global provider override.
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:218:    _install: test_provider_override::InstallGuard,
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:226:    // api_url is never dialed — the provider override intercepts creation
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:276:    // Install the mock LLM — both provider funnels consult this first.
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:277:    let install = test_provider_override::install(mock.clone());
-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:396:// provider), whose output is merged by the orchestrator's follow-up turn.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/mod.rs:1://! Local assistive surfaces for third-party provider apps.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/mod.rs:4://! draft shelf, and provider-specific assistive actions that sit above
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/mod.rs:17:    all_provider_surfaces_controller_schemas, all_provider_surfaces_registered_controllers,
-<OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:85:**Routing:** App Router under `website/app/`. Pages: `app/page.tsx` (home), `app/explore/` (layout + page; the explore sections — directory, profiles, messaging, events, marketplace, payments, ledger, reputation, leaderboards, stats, explorer, search — render as **internal tab views** inside the explore shell, not separate route files), `app/poker/`, `app/not-found.tsx`. Providers are injected via `app/providers.tsx` / `app/client-layout.tsx`.
-<OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:120:- **Solana / wallet code must be client-only.** The wallet adapter breaks under SSR, so providers are lazy/client-loaded (`app/providers.tsx`, `app/client-layout.tsx`, `ClientOnly`). Don't import wallet/`@solana/*` code into server-rendered module scope.
-<OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:130:- **`job_escrow`** — job lifecycle `Open → Delivered → Resolved`, with `Disputed`/`Refunded` branches, plus a server **controller** key that decides disputed outcomes (`resolve(award_provider)`). `fund` / `fund_for` deposit into the job's own token vault; `approve` / `resolve` / `refund` release funds directly to the provider/client minus rake (no rake on refund).
-<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:3:  Carry your OpenHuman persona, memory, workspace, and model/provider config to
-<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:38:| **Config** (models, providers, routing, autonomy) | `config.toml` | ✅ Yes |
-<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:85:* **Bring-your-own keys:** if you had entered your own provider API key, a Composio direct key, or similar **local** secrets, re-enter them on the new machine. Those are stored in the OS keychain and don't come across in the folder.
-<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:87:### 6. Re-check model / provider config
-<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:89:Your `config.toml` came along, so model routing and provider choices should already match. If you used a [local model](local-model.md), remember that **Ollama/LM Studio is separate software**. Install it on the new machine too, and let OpenHuman re-pull the model weights (they aren't in the data folder).
-<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:11:`--isolated-workspace` defaults to `--provider-mode openhuman-backend`. It writes a temporary backend config, seeds the temp auth store from `JWT_TOKEN`, starts `openhuman-core`, and removes the temp workspace by default. Only pass `--keep-workspace` when you need to inspect artifacts locally.
-<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:13:The optional `--provider-mode direct-openai` control path writes a temporary direct-provider config using `OPENAI_API_KEY` or `OPENAI_KEY`.
-<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:28:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --provider-mode direct-openai --model gpt-4.1-mini --scenario reuse-parent-comm
-<OPENHUMAN_ROOT>/src/core/cli.rs:18:/// prompts, provider requests, and sub-agent tool loops.
-<OPENHUMAN_ROOT>/src/core/cli.rs:290:    // hundreds of tool specs + the nested provider/tool loop), and delegating
-<OPENHUMAN_ROOT>/tests/agent_retrieval_e2e.rs:9://! `agent_chat` requires a reachable provider (no provider connection
-<OPENHUMAN_ROOT>/tests/agent_retrieval_e2e.rs:119:        provider: "gmail".into(),
-<OPENHUMAN_ROOT>/tests/agent_retrieval_e2e.rs:345:            provider: "gmail".into(),
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:1:# provider_surfaces
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:3:Local assistive surfaces for third-party provider apps. This domain owns a normalized provider-event model and an in-memory **respond queue** that sits above embedded webviews (and future API-first integrations), so the assistant can surface actionable items (messages, mentions, etc.) from providers like LinkedIn/Gmail in a single local-first list. The current cut is an intentionally minimal scaffold: it exposes two RPC controllers, keeps state in process memory, and is wired into the controller registry ahead of behavioral/SQLite work.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:7:- Define a normalized inbound `ProviderEvent` contract (provider slug, account id, event kind, entity id, optional thread/title/snippet/sender/deep-link, timestamp, `requires_attention`, optional raw payload).
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:8:- Ingest provider events and upsert them into a local respond queue keyed by `provider:account_id:event_kind:entity_id`.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:10:- Bound queue growth with a soft cap (500 items, oldest-from-tail dropped) under provider firehose volume.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:16:| `src/openhuman/provider_surfaces/mod.rs` | Export-only: declares submodules; re-exports `all_provider_surfaces_controller_schemas` / `all_provider_surfaces_registered_controllers`. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:17:| `src/openhuman/provider_surfaces/types.rs` | Serde domain types: `ProviderEvent`, `RespondQueueItem`, `RespondQueueListResponse`. Snake_case contract shared by request and response. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:18:| `src/openhuman/provider_surfaces/ops.rs` | Business logic / entry points: `ingest_event`, `list_queue`. Wrap results in `ApiEnvelope` + `RpcOutcome`. Contains the inline test suite. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:19:| `src/openhuman/provider_surfaces/store.rs` | In-memory persistence: process-global `RESPOND_QUEUE` (`OnceLock<Mutex<Vec<…>>>`), `upsert_queue_item`, `list_queue_items`, `clear_queue` (test-only). |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:20:| `src/openhuman/provider_surfaces/schemas.rs` | Controller registry: `ControllerSchema`s + `handle_*` fns delegating to `ops.rs`. Inline schema tests. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:21:| `src/openhuman/provider_surfaces/rpc.rs` | Docstring-only placeholder; no code. The handler delegation lives in `schemas.rs`, not here. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:25:- `types::ProviderEvent` — inbound normalized provider event (`#[serde(deny_unknown_fields)]`).
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:28:- `ops::ingest_event(ProviderEvent)` / `ops::list_queue(EmptyRequest)` — async handlers returning `RpcOutcome<ApiEnvelope<T>>`.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:30:- Re-exported from `mod.rs`: `all_provider_surfaces_controller_schemas`, `all_provider_surfaces_registered_controllers`.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:34:Namespace `provider_surfaces` (two controllers, registered via `src/core/all.rs`):
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:38:| `provider_surfaces.ingest_event` | `provider`, `account_id`, `event_kind`, `entity_id`, `timestamp` (required); `thread_id`, `title`, `snippet`, `sender_name`, `sender_handle`, `deep_link` (optional); `requires_attention` (bool, defaults false), `raw_payload` (optional JSON) | Envelope containing the upserted `RespondQueueItem`. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:39:| `provider_surfaces.list_queue` | none | Envelope containing `{ items, count }`. |
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:41:`requires_attention` is `required: false` in the schema to match `ProviderEvent`'s `#[serde(default)]` so registry `validate_params` agrees with the struct.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:53:In-memory only. State lives in a process-global `RESPOND_QUEUE` (`static OnceLock<Mutex<Vec<RespondQueueItem>>>`) in `store.rs`, prepend-ordered (newest-first), soft-capped at `MAX_QUEUE_ITEMS = 500` (oldest dropped from the tail). Upsert dedupes by composite id `provider:account_id:event_kind:entity_id`. Module docstrings flag SQLite-backed persistence for normalized events, queue state, and local drafts as follow-up work — not yet present.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:61:- External crates: `serde` / `serde_json`, `uuid` (request ids), `tracing` (debug logging with `[provider-surfaces]` prefix).
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:65:- `src/core/all.rs` — registers the controllers/schemas into the global registry (`all_provider_surfaces_registered_controllers`, `all_provider_surfaces_controller_schemas`, and a `"provider_surfaces"` dispatch arm).
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:71:- **Scaffold, not finished domain.** Docstrings across `mod.rs`/`ops.rs`/`store.rs` explicitly call this an initial cut: state is in-memory, SQLite store + drafts + provider-specific assistive actions are deferred.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:73:- **Queue id is deterministic** (`provider:account_id:event_kind:entity_id`), so re-ingesting the same entity upserts (removes + re-prepends) rather than duplicating.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/README.md:75:- **Snake_case contract is intentional and shared** between request (`ProviderEvent`) and response (`RespondQueueItem`) so callers see one consistent shape.
-<OPENHUMAN_ROOT>/src/core/runtime.rs:4://! hundreds of tool specs + the nested provider/tool loop), and delegating
-<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:8:> configured provider/model + credentials in the target workspace.
-<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:13:- For `reflect`: a workspace with provider creds (use your real workspace —
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:1://! Persistence for provider assistive surfaces.
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:3://! Follow-up work will add a SQLite-backed store for normalized provider
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:8:use crate::openhuman::provider_surfaces::types::{ProviderEvent, RespondQueueItem};
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:10:/// Soft cap on the in-memory respond queue to bound growth under provider
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:27:fn queue_item_id(event: &ProviderEvent) -> String {
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:30:        event.provider, event.account_id, event.event_kind, event.entity_id
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:34:pub fn upsert_queue_item(event: ProviderEvent) -> RespondQueueItem {
-<OPENHUMAN_ROOT>/src/openhuman/provider_surfaces/store.rs:37:        provider: event.provider,
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:61:### 1.1 Multi-Provider Authentication
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:67:| 1.1.3 | Twitter (X) Login | WD    | `login-flow.spec.ts`                    | 🟡     | Generic OAuth path; assert provider tag in #968 |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:75:| 1.2.2 | Multi-Provider Linking     | WD    | _missing_ — tracked #968                      | ❌     | Need spec linking 4 providers to one account |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:164:| 3.3.3.4 | Provider Selection Persistence | RU+RI+VU | `src/openhuman/config/ops_tests.rs`, `tests/json_rpc_e2e.rs`, `app/src/utils/tauriCommands/config.test.ts` | ✅     | Covers `lm_studio` normalization and config round-trip |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:184:| 4.2.3 | Streaming Responses                                                | RI       | `tests/json_rpc_e2e.rs`, `tests/agent_harness_e2e.rs`                                                                                                                                                                                                                | ✅     | `tests/agent_harness_e2e.rs` adds provider-level SSE tool-arg accumulation (chunked args reassembled + parsed) and engine-level delta forwarding (#3471)                                                                                                                                                                                                                                                                                                                                                                                    |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:185:| 4.2.4 | Parallel inference (cross-thread + within-thread forked turns)     | RU+VU    | `src/openhuman/channels/providers/web_tests.rs`, `app/src/store/__tests__/chatRuntimeSlice.test.ts`, `app/src/providers/__tests__/ChatRuntimeProvider.test.tsx`                                                                                                      | 🟡     | Concurrent same-/cross-thread dispatch, cooperative `CancellationToken` teardown, and parallel-lane stream routing covered; dedicated WD E2E is a follow-up                                                                                                                                                                                                                                                                                                                                                                                 |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:188:| 4.2.7 | Plan-mode review (Approve / Reject / Send-feedback before execute) | RU+RI+VU | `src/openhuman/plan_review/gate.rs`, `src/openhuman/plan_review/tool.rs`, `src/openhuman/plan_review/schemas.rs`, `tests/json_rpc_e2e.rs`, `app/src/pages/conversations/components/PlanReviewCard.test.tsx`, `app/src/pages/__tests__/Conversations.render.test.tsx` | ✅     | Interactive turns call `request_plan_review`, which parks the LIVE turn on the in-memory `PlanReviewGate` (oneshot) until the user decides; `plan_review_request` socket event drives `PlanReviewCard`, which resolves via `openhuman.plan_review_decide` (approve resumes-and-executes / reject resumes-and-stops / revise resumes-with-feedback). RU covers gate park/resolve/timeout + tool auto-approve + parking; RI covers the decide RPC; VU covers the card + provider wiring. WD E2E (agent-driven park flow) tracked as follow-up |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:219:| 4.4.10 | Provider Error Retry                    | RI    | `tests/agent_harness_e2e.rs`                                                                                                 | ✅     | First upstream 500 retried by ReliableProvider; second succeeds                                                 |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:287:| 6.3.3 | Steer lands in child history                                           | RU    | `src/openhuman/agent/harness/subagent_runner/ops_tests.rs::run_queue_steer_lands_in_subagent_history`                                                                                                                                                                                                                             | ✅     | End-to-end: a queued steer is drained by the child `run_turn_engine` and appears as a `[User steering message]` user turn in the provider request.                                                                                                                                           |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:291:| 6.3.7 | Full-stack trigger pipeline with mocked LLM                            | RI    | `tests/subconscious_fullstack_e2e.rs` (feature `e2e-test-support`)                                                                                                                                                                                                                                                                | ✅     | Real `GatePass`+`LongLivedSession`+`Agent`+sub-agent run against a provider-layer mock (no network); promote/drop, persistence, real `spawn_subagent`.                                                                                                                                       |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:293:| 6.3.9 | Vision sub-agent reads attached images                                 | RU    | `src/openhuman/agent_registry/agents/loader.rs::vision_agent_loads_on_vision_hint`, `src/openhuman/inference/provider/factory_tests.rs::vision_tier_is_vision_capable`, `src/openhuman/agent/harness/engine/core.rs::gate_tests`, `src/openhuman/agent/multimodal_tests.rs::extract_image_placeholders_pulls_att_tokens_in_order` | ✅     | Orchestrator (non-vision `chat-v1`) keeps the image as a placeholder, delegates to `vision_agent` on the `vision-v1` tier, which rehydrates the on-disk attachment and reads it. Engine gate prefers per-tier `current_model_vision`; turn placeholders forwarded into the sub-agent prompt. |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:402:| 10.1.5 | Yuanbao Connection  | RU    | `src/openhuman/channels/providers/yuanbao/`, `src/openhuman/channels/controllers/ops.rs::tests::connect_yuanbao_*`, `src/openhuman/channels/runtime/startup.rs::yuanbao_secret_tests` | 🟡     | New API-key channel for Tencent Yuanbao. RU covers sign-token preflight (valid/invalid creds, env-override cluster routing), credentials store hydration (incl. stale app_key guard), and WS reconnect/shutdown. No WDIO spec yet — connect-flow UI is rendered via the generic `ChannelSetupModal` already exercised by other channel flow specs. |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:526:| 13.1.4 | Wallet Balances Panel               | VU         | `app/src/components/settings/panels/__tests__/WalletBalancesPanel.test.tsx`, `app/src/services/walletApi.test.ts`                                                           | ✅     | Loading/error/empty/loaded states; Retry + Refresh re-invocation; chain badges; truncated address; providerStatus chip                                                                                                                                                           |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:565:| 13.6.1 | Command Palette (⌘K / ⌘P)                          | VU+WD | `app/src/lib/commands/__tests__/globalActions.test.tsx`, `app/src/components/commands/__tests__/CommandProvider.test.tsx`, `app/test/e2e/specs/command-palette.spec.ts`         | ✅     | Opens via ⌘K, runs an action, lists seed nav actions, Esc closes                                                                                                    |
-<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:566:| 13.6.2 | Keyboard Shortcuts help directory (? / ⌘/)         | VU+WD | `app/src/components/shortcuts/__tests__/shortcutsView.test.tsx`, `app/src/components/commands/__tests__/CommandProvider.test.tsx`, `app/test/e2e/specs/command-palette.spec.ts` | ✅     | Registry-driven grouped list; opens via `?` and ⌘/ (mutually exclusive with palette); also reachable from the sidebar shortcut icon + Settings → Keyboard Shortcuts |
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:148:                // Downstream call (backend_api / integrations / provider) already
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:155:                // (backend / provider response) and can carry URL fragments,
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:156:                // query params, or pasted-through provider error text that
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:159:                let redacted = crate::openhuman::inference::provider::ops::sanitize_api_error(
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:237:    // the UI. Generic downstream/provider 401s must stay recoverable errors;
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:240:        let sanitized_reason = crate::openhuman::inference::provider::ops::sanitize_api_error(msg);
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:247:            // pasted-through provider replies. `sanitize_api_error` runs
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:280:/// downstream provider 401s (Discord bot token failures, BYO-key OpenAI /
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:288:/// - **Provider / downstream 401s** (`api_error` in
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:289:///   `src/openhuman/inference/provider/ops.rs`): formatted as
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:290:///   `"{ProviderName} API error (401 Unauthorized): {body}"` or
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:292:///   provider name, NOT an HTTP method verb.
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:302:/// - Provider-prefixed 401s (`"Discord API error: ..."`, `"OpenAI API error ..."`)
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:303:/// - `"invalid token"` — too broad; also matches Discord / OAuth provider tokens.
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:306:/// `inference/provider/ops.rs` lines 479–497) ALREADY publishes `SessionExpired`
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:319:    // The HTTP-method prefix distinguishes these from provider-prefixed errors.
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:340:/// either of which can come from BYO-key providers, Composio, channels, or
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:342:/// at the `invoke_method` call site so provider auth failures are visible
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1129:        // exceeded" before anything reached the provider (issue #3205). The
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1482:    let rx = crate::openhuman::channels::providers::web::subscribe_web_channel_events();
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1755:    // AgentBox GMI MaaS provider bridge — no-op when env vars absent.
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1760:    crate::openhuman::agentbox::register_gmi_provider_if_present();
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1788:    // Initialize the global MemoryClient so composio providers
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:2523:    // surface (`openhuman.cost_get_dashboard`) and `record_provider_usage`
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:2655:    crate::openhuman::channels::providers::web::register_approval_surface_subscriber();
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:2675:        crate::openhuman::channels::providers::web::register_artifact_surface_subscriber();
-<OPENHUMAN_ROOT>/src/core/jsonrpc.rs:2695:    crate::openhuman::channels::providers::web::register_artifact_surface_subscriber();
-<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:44:  --isolated-workspace With --spawn-core, use a throwaway temp workspace (needs provider creds in env to enrich)
-<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:331:    console.log("  (no transcript usage recorded — provider may not have emitted usage)");
-<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:507:      "  (enrichment needs a configured provider/model + the goals_agent definition)",
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:10:use openhuman_core::openhuman::inference::provider::thread_context::with_thread_id;
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:11:use openhuman_core::openhuman::inference::provider::traits::ProviderCapabilities;
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:12:use openhuman_core::openhuman::inference::provider::{
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:13:    ChatMessage, ChatRequest, ChatResponse, Provider, ToolCall,
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:33:enum ProviderStep {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:45:struct ScriptedProvider {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:46:    steps: Mutex<VecDeque<ProviderStep>>,
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:55:impl ScriptedProvider {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:56:    fn new(steps: Vec<ProviderStep>) -> Arc<Self> {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:69:impl Provider for ScriptedProvider {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:70:    fn capabilities(&self) -> ProviderCapabilities {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:71:        ProviderCapabilities {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:104:            Some(ProviderStep::Static(response)) => Ok(response),
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:105:            Some(ProviderStep::Delayed(delay, response)) => {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:109:            Some(ProviderStep::FromHistory(factory)) => Ok(factory(&messages)),
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:273:    provider: Arc<ScriptedProvider>,
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:278:        .provider_arc(provider)
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:305:    provider: Arc<ScriptedProvider>,
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:311:        provider,
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:329:    let provider = ScriptedProvider::new(vec![
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:330:        ProviderStep::Static(tool_response(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:340:        ProviderStep::Delayed(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:344:        ProviderStep::FromHistory(Box::new(|messages| {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:358:    let answer = run_monitor_turn(&tmp, provider.clone(), AutonomyLevel::Supervised, 5).await;
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:361:    let requests = provider.requests();
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:375:    let provider = ScriptedProvider::new(vec![
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:376:        ProviderStep::Static(tool_response(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:386:        ProviderStep::Delayed(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:390:        ProviderStep::FromHistory(Box::new(|messages| {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:398:        ProviderStep::FromHistory(Box::new(|messages| {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:405:    let answer = run_monitor_turn(&tmp, provider, AutonomyLevel::Supervised, 6).await;
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:414:    let provider = ScriptedProvider::new(vec![
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:415:        ProviderStep::Static(tool_response(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:425:        ProviderStep::FromHistory(Box::new(|messages| {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:433:        ProviderStep::FromHistory(Box::new(|messages| {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:443:    let answer = run_monitor_turn(&tmp, provider, AutonomyLevel::Supervised, 5).await;
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:452:    let provider = ScriptedProvider::new(vec![
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:453:        ProviderStep::Static(tool_response(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:463:        ProviderStep::Delayed(
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:467:        ProviderStep::FromHistory(Box::new(|messages| {
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:478:    let answer = run_monitor_turn(&tmp, provider, AutonomyLevel::Supervised, 5).await;
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:487:    let provider = ScriptedProvider::new(vec![
-<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:488:        ProviderStep::Static(tool_response(
+<OPENHUMAN_ROOT>/src/core/observability.rs:2://! `before_send` filters that drop deterministic provider noise:
+<OPENHUMAN_ROOT>/src/core/observability.rs:24:/// HTTP status codes that the reliable-provider layer already handles via
+<OPENHUMAN_ROOT>/src/core/observability.rs:34:/// (`openhuman::inference::provider::ops::should_report_provider_http_failure`) and the
+<OPENHUMAN_ROOT>/src/core/observability.rs:35:/// `before_send` filter (`is_transient_provider_http_failure`). Update here
+<OPENHUMAN_ROOT>/src/core/observability.rs:37:pub const TRANSIENT_PROVIDER_HTTP_STATUSES: &[u16] = &[408, 429, 502, 503, 504, 520];
+<OPENHUMAN_ROOT>/src/core/observability.rs:81:    /// Third-party provider (composio, gmail OAuth, …) surfaced a user-state
+<OPENHUMAN_ROOT>/src/core/observability.rs:86:    /// [`is_provider_user_state_message`] for the exact body shapes.
+<OPENHUMAN_ROOT>/src/core/observability.rs:92:    ProviderUserState,
+<OPENHUMAN_ROOT>/src/core/observability.rs:93:    /// A user-configured custom cloud provider (`custom_openai` → DeepSeek
+<OPENHUMAN_ROOT>/src/core/observability.rs:96:    /// tier alias leaked to a provider that only speaks its native ids
+<OPENHUMAN_ROOT>/src/core/observability.rs:98:    /// temperature constraint (#2076 — Moonshot Kimi K2). The provider
+<OPENHUMAN_ROOT>/src/core/observability.rs:99:    /// HTTP layer (`providers::ops::api_error`) already demotes its own
+<OPENHUMAN_ROOT>/src/core/observability.rs:106:    /// [`crate::openhuman::inference::provider::is_provider_config_rejection_message`]
+<OPENHUMAN_ROOT>/src/core/observability.rs:108:    ProviderConfigRejection,
+<OPENHUMAN_ROOT>/src/core/observability.rs:184:    /// The provider/model completed a turn with a completely empty body
+<OPENHUMAN_ROOT>/src/core/observability.rs:190:    /// a provider that dropped the stream — not a code bug. The UI already
+<OPENHUMAN_ROOT>/src/core/observability.rs:196:    /// `AgentError::EmptyProviderResponse` + `AgentError::skips_sentry()`
+<OPENHUMAN_ROOT>/src/core/observability.rs:197:    /// (PR #2790, TAURI-RUST-4JX). But `channels::providers::web::
+<OPENHUMAN_ROOT>/src/core/observability.rs:204:    /// layers. See [`is_empty_provider_response_message`].
+<OPENHUMAN_ROOT>/src/core/observability.rs:210:    /// any future channel provider) whose error chain contains `"model
+<OPENHUMAN_ROOT>/src/core/observability.rs:213:    EmptyProviderResponse,
+<OPENHUMAN_ROOT>/src/core/observability.rs:284:    /// large, context overflow, user-param rejection). The provider HTTP layer
+<OPENHUMAN_ROOT>/src/core/observability.rs:288:    /// `channels::providers::web::run_chat_task` →
+<OPENHUMAN_ROOT>/src/core/observability.rs:295:    /// [`crate::openhuman::inference::provider::backend_error_code_skips_sentry`].
+<OPENHUMAN_ROOT>/src/core/observability.rs:297:    /// A provider embedding call (Cohere `/v2/embed`, OpenAI/Voyage embed,
+<OPENHUMAN_ROOT>/src/core/observability.rs:299:    /// HTML page** instead of the provider's JSON error envelope — the
+<OPENHUMAN_ROOT>/src/core/observability.rs:301:    /// the provider API (the request never reached the provider app). The
+<OPENHUMAN_ROOT>/src/core/observability.rs:367:    if crate::openhuman::inference::provider::managed_error_skips_sentry(message) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:378:    // so a BYO provider's own context-overflow — genuine user-state, not our
+<OPENHUMAN_ROOT>/src/core/observability.rs:380:    if crate::openhuman::inference::provider::is_managed_backend_envelope(message)
+<OPENHUMAN_ROOT>/src/core/observability.rs:381:        && crate::openhuman::inference::provider::is_backend_client_guard_leak(message)
+<OPENHUMAN_ROOT>/src/core/observability.rs:451:    // user-environment distinction. Mirrors the `ProviderUserState`-before-
+<OPENHUMAN_ROOT>/src/core/observability.rs:461:    // Route them to the dedicated arm so they share the `ProviderUserState`
+<OPENHUMAN_ROOT>/src/core/observability.rs:465:        return Some(ExpectedErrorKind::ProviderUserState);
+<OPENHUMAN_ROOT>/src/core/observability.rs:471:    // matchers: an HTML 403 gateway page from a provider embed call carries a
+<OPENHUMAN_ROOT>/src/core/observability.rs:484:    // Check `is_provider_user_state_message` BEFORE `is_backend_user_error_message`:
+<OPENHUMAN_ROOT>/src/core/observability.rs:486:    // match, and the more specific `ProviderUserState` bucket is the right
+<OPENHUMAN_ROOT>/src/core/observability.rs:488:    if is_provider_user_state_message(&lower) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:489:        return Some(ExpectedErrorKind::ProviderUserState);
+<OPENHUMAN_ROOT>/src/core/observability.rs:492:    // no usable refresh token. The provider HTTP layer
+<OPENHUMAN_ROOT>/src/core/observability.rs:493:    // (`provider::ops::api_error` / `chat_via_responses`) already demotes its
+<OPENHUMAN_ROOT>/src/core/observability.rs:496:    // the shared `ProviderUserState` bucket so the re-report is demoted too
+<OPENHUMAN_ROOT>/src/core/observability.rs:501:    if crate::openhuman::inference::provider::is_openai_oauth_session_expired_message(message) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:502:        return Some(ExpectedErrorKind::ProviderUserState);
+<OPENHUMAN_ROOT>/src/core/observability.rs:505:    // (ref: <uuid>)`) for `*:cloud` models. The provider HTTP layer
+<OPENHUMAN_ROOT>/src/core/observability.rs:509:    // re-report at the agent / RPC boundary (`provider_chat` →
+<OPENHUMAN_ROOT>/src/core/observability.rs:512:    // reliable-provider layer retries + falls back over, with no client lever.
+<OPENHUMAN_ROOT>/src/core/observability.rs:513:    // Delegates to the single-source provider matcher so the phrasing can't
+<OPENHUMAN_ROOT>/src/core/observability.rs:515:    if crate::openhuman::inference::provider::is_ollama_cloud_internal_500_message(message) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:538:    // (the user pointed the Custom (OpenAI-compatible) provider at a chat-only
+<OPENHUMAN_ROOT>/src/core/observability.rs:542:    // embeddings-capable provider" message. Demote to info. Scoped to 404/405
+<OPENHUMAN_ROOT>/src/core/observability.rs:545:        return Some(ExpectedErrorKind::ProviderConfigRejection);
+<OPENHUMAN_ROOT>/src/core/observability.rs:552:    // `is_provider_config_rejection_message` (which key on the OpenAI-native
+<OPENHUMAN_ROOT>/src/core/observability.rs:560:        return Some(ExpectedErrorKind::ProviderConfigRejection);
+<OPENHUMAN_ROOT>/src/core/observability.rs:562:    // Provider config-rejection (unknown model / abstract tier leaked to a
+<OPENHUMAN_ROOT>/src/core/observability.rs:563:    // custom provider / model-specific temperature). Body-shape based and
+<OPENHUMAN_ROOT>/src/core/observability.rs:564:    // intrinsically scoped to third-party providers — the OpenHuman
+<OPENHUMAN_ROOT>/src/core/observability.rs:568:    if crate::openhuman::inference::provider::is_provider_config_rejection_message(message) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:569:        return Some(ExpectedErrorKind::ProviderConfigRejection);
+<OPENHUMAN_ROOT>/src/core/observability.rs:574:    if crate::openhuman::inference::provider::is_budget_exhausted_message(message) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:581:    // web_channel). The provider api_error cascade suppresses its own
+<OPENHUMAN_ROOT>/src/core/observability.rs:583:    // provider matcher so the phrasing can't drift. Runs last so a more
+<OPENHUMAN_ROOT>/src/core/observability.rs:585:    if crate::openhuman::inference::provider::is_context_window_exceeded_message(message) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:610:    // Empty-provider-response re-report from the web-channel layer. Runs
+<OPENHUMAN_ROOT>/src/core/observability.rs:612:    // variant doc-comment and [`is_empty_provider_response_message`] for
+<OPENHUMAN_ROOT>/src/core/observability.rs:616:    if is_empty_provider_response_message(&lower) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:617:        return Some(ExpectedErrorKind::EmptyProviderResponse);
+<OPENHUMAN_ROOT>/src/core/observability.rs:674:/// provider body that merely quotes the token half — e.g. an OpenAI-compatible
+<OPENHUMAN_ROOT>/src/core/observability.rs:708:    // and never a remote provider body that merely quotes the `code_to_str`
+<OPENHUMAN_ROOT>/src/core/observability.rs:831:/// (OpenAI-compatible) embeddings provider at a base URL whose host has no
+<OPENHUMAN_ROOT>/src/core/observability.rs:832:/// embeddings endpoint (e.g. a chat-only provider like DeepSeek). Every memory
+<OPENHUMAN_ROOT>/src/core/observability.rs:860:/// `inference::provider::is_provider_config_rejection_message` (those key on the
+<OPENHUMAN_ROOT>/src/core/observability.rs:900:/// other domains (provider reliability layer logs, doc strings, …). The
+<OPENHUMAN_ROOT>/src/core/observability.rs:912:/// Composio scope failures, and channel-provider 401s are actionable scoped
+<OPENHUMAN_ROOT>/src/core/observability.rs:918:///   log in again.\"…}"` — emitted by `providers::ops::api_error` from the
+<OPENHUMAN_ROOT>/src/core/observability.rs:920:///   `channels::providers::web::run_chat_task` (OPENHUMAN-TAURI-26). The
+<OPENHUMAN_ROOT>/src/core/observability.rs:931:///   provider scope errors still route to Sentry as actionable.
+<OPENHUMAN_ROOT>/src/core/observability.rs:938:///   from third-party providers (OpenAI / Voyage / Cohere) still escalate
+<OPENHUMAN_ROOT>/src/core/observability.rs:943:///   `inference/provider/compatible.rs:949` with the
+<OPENHUMAN_ROOT>/src/core/observability.rs:950:///   `providers::openhuman_backend::resolve_bearer`.
+<OPENHUMAN_ROOT>/src/core/observability.rs:957:/// `DomainEvent::SessionExpired` publication, so downstream/provider 401s stay
+<OPENHUMAN_ROOT>/src/core/observability.rs:969:        // `"OpenHuman API error (401"` prefix (so a third-party provider's
+<OPENHUMAN_ROOT>/src/core/observability.rs:989:        // `inference/provider/compatible.rs:949` with the
+<OPENHUMAN_ROOT>/src/core/observability.rs:1023:/// Detect the "a configured provider has no API key" user-config state.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1030:///   - `inference/provider/compatible_request.rs::credential_for_request`
+<OPENHUMAN_ROOT>/src/core/observability.rs:1031:///     ("<provider> API key not set. Configure via the web UI …")
+<OPENHUMAN_ROOT>/src/core/observability.rs:1036:/// Distinct from a *rejected* key (a provider 401 "Invalid API key"): that is a
+<OPENHUMAN_ROOT>/src/core/observability.rs:1047:/// Does this error text describe a **local** LLM provider (loopback host, e.g.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1056:pub fn is_local_provider_unreachable_message(text: &str) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1176:/// Routes to [`ExpectedErrorKind::ProviderUserState`] — the same bucket that
+<OPENHUMAN_ROOT>/src/core/observability.rs:1180:/// variant for every provider would balloon the enum without changing
+<OPENHUMAN_ROOT>/src/core/observability.rs:1221:    // + `status 401` so unrelated 401s from other call sites (provider
+<OPENHUMAN_ROOT>/src/core/observability.rs:1244:/// HTTP call site (provider chat, embeddings, backend RPC) when the request
+<OPENHUMAN_ROOT>/src/core/observability.rs:1355:/// provider layer and into higher-level domains (`agent`, `web_channel`, …).
+<OPENHUMAN_ROOT>/src/core/observability.rs:1357:/// The reliable-provider stack already retries / falls back on
+<OPENHUMAN_ROOT>/src/core/observability.rs:1358:/// [`TRANSIENT_PROVIDER_HTTP_STATUSES`] (408/429/502/503/504), and the
+<OPENHUMAN_ROOT>/src/core/observability.rs:1359:/// `before_send` filter drops the per-attempt provider events that carry
+<OPENHUMAN_ROOT>/src/core/observability.rs:1360:/// `domain=llm_provider`. But the same error is *also* returned via
+<OPENHUMAN_ROOT>/src/core/observability.rs:1361:/// `Result::Err` and re-reported by callers that wrap the provider — e.g.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1364:/// provider-scoped filter and producing one Sentry event per failed turn.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1366:/// The canonical wire format from `providers::ops::api_error` is:
+<OPENHUMAN_ROOT>/src/core/observability.rs:1367:/// `"<provider> API error (<status>): <sanitized>"` — e.g.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1392:    TRANSIENT_PROVIDER_HTTP_STATUSES.iter().any(|code| {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1401:/// Detect a non-2xx **HTML 403/Forbidden gateway page** returned to a provider
+<OPENHUMAN_ROOT>/src/core/observability.rs:1403:/// in front of the provider API, where the request never reached the provider
+<OPENHUMAN_ROOT>/src/core/observability.rs:1404:/// app and the body is a generic gateway error page rather than the provider's
+<OPENHUMAN_ROOT>/src/core/observability.rs:1411:/// not pin to a single provider prefix.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1418:///    `<title>403`) — proving the body is a gateway page, not the provider's
+<OPENHUMAN_ROOT>/src/core/observability.rs:1437:    // A JSON envelope means the provider's app answered with a structured
+<OPENHUMAN_ROOT>/src/core/observability.rs:1472:///   are surfaced via [`is_transient_upstream_http_message`] for the provider
+<OPENHUMAN_ROOT>/src/core/observability.rs:1492:/// Detect third-party provider validation failures that bubble up as
+<OPENHUMAN_ROOT>/src/core/observability.rs:1516:fn is_provider_user_state_message(lower: &str) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1517:    // TAURI-RUST-HXF: a direct BYO provider (groq `on_demand` free tier)
+<OPENHUMAN_ROOT>/src/core/observability.rs:1526:    // sees direct-provider TPM rejections. Shared matcher (single source of
+<OPENHUMAN_ROOT>/src/core/observability.rs:1528:    if crate::openhuman::inference::provider::is_provider_rate_cap_exceeded_message(lower) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1551:    // `inference/provider/compatible.rs::is_custom_openai_upstream_bad_request_http_400`:
+<OPENHUMAN_ROOT>/src/core/observability.rs:1554:    //     "message":"Bad request to upstream provider",
+<OPENHUMAN_ROOT>/src/core/observability.rs:1559:    // "bad request to upstream provider" and "upstream_error" elsewhere
+<OPENHUMAN_ROOT>/src/core/observability.rs:1560:    // (e.g. a future provider whose envelope reuses one of those strings).
+<OPENHUMAN_ROOT>/src/core/observability.rs:1562:        && lower.contains("bad request to upstream provider")
+<OPENHUMAN_ROOT>/src/core/observability.rs:1574:    // per provider (`Missing required fields: Tenant Name`, `Missing
+<OPENHUMAN_ROOT>/src/core/observability.rs:1597:    // OPENHUMAN-TAURI-S7: provider policy rejection on Kimi's coding
+<OPENHUMAN_ROOT>/src/core/observability.rs:1662:    // OPENHUMAN-TAURI-YJ: `inference/provider/ops.rs::list_models` probed a
+<OPENHUMAN_ROOT>/src/core/observability.rs:1663:    // user-configured custom-provider's `/models` endpoint and the upstream
+<OPENHUMAN_ROOT>/src/core/observability.rs:1666:    //   "provider returned 404: {\"error\":\"path \\\"/api/v1/models\\\" not found\"}"
+<OPENHUMAN_ROOT>/src/core/observability.rs:1669:    // `{"detail":...}`, bare HTML, etc.; we only anchor on the `provider returned
+<OPENHUMAN_ROOT>/src/core/observability.rs:1671:    // OpenAI-compatible provider at a base URL that does not host a `/models`
+<OPENHUMAN_ROOT>/src/core/observability.rs:1677:    //     `does_not_classify_byo_key_provider_401_as_session_expired` contract
+<OPENHUMAN_ROOT>/src/core/observability.rs:1682:    // No `inference/provider/ops.rs::list_models` other than this site emits
+<OPENHUMAN_ROOT>/src/core/observability.rs:1683:    // the `provider returned NNN` prefix (verified via grep), so the prefix
+<OPENHUMAN_ROOT>/src/core/observability.rs:1686:    // TAURI-RUST-8X3: anchor to the position where `provider returned 404` is
+<OPENHUMAN_ROOT>/src/core/observability.rs:1690:    // applied, so the raw shape always starts with `provider returned 404:`.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1696:    // formats as `provider returned 500: <body>`, and if `<body>` merely
+<OPENHUMAN_ROOT>/src/core/observability.rs:1697:    // relays an upstream phrase like `upstream provider returned 404 ...`, the
+<OPENHUMAN_ROOT>/src/core/observability.rs:1704:    if lower.starts_with("provider returned 404")
+<OPENHUMAN_ROOT>/src/core/observability.rs:1705:        || lower.contains("list_models:error: provider returned 404")
+<OPENHUMAN_ROOT>/src/core/observability.rs:1774:///   future provider/wallet/storage error would NOT match (no known
+<OPENHUMAN_ROOT>/src/core/observability.rs:1785:/// Detect the agent harness's empty-provider-response bail.
+<OPENHUMAN_ROOT>/src/core/observability.rs:1790:/// preserved verbatim as the provider/model returns a body with
+<OPENHUMAN_ROOT>/src/core/observability.rs:1794:/// `channels::providers::web::run_chat_task` wraps the failure as
+<OPENHUMAN_ROOT>/src/core/observability.rs:1798:/// `AgentError::EmptyProviderResponse` was flattened to a `String` at the
+<OPENHUMAN_ROOT>/src/core/observability.rs:1805:/// (`payload_summarizer`) and `"provider returned an empty response;
+<OPENHUMAN_ROOT>/src/core/observability.rs:1809:fn is_empty_provider_response_message(lower: &str) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1921:        ExpectedErrorKind::ProviderUserState => {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1922:            // Third-party provider (composio, gmail OAuth, …) rejected the
+<OPENHUMAN_ROOT>/src/core/observability.rs:1932:                kind = "provider_user_state",
+<OPENHUMAN_ROOT>/src/core/observability.rs:1934:                "[observability] {domain}.{operation} skipped expected provider-user-state error: {message}"
+<OPENHUMAN_ROOT>/src/core/observability.rs:1954:        ExpectedErrorKind::ProviderConfigRejection => {
+<OPENHUMAN_ROOT>/src/core/observability.rs:1955:            // User-config state: a custom cloud provider rejected the
+<OPENHUMAN_ROOT>/src/core/observability.rs:1957:            // OpenHuman abstract tier alias leaked to a provider that only
+<OPENHUMAN_ROOT>/src/core/observability.rs:1960:            // Moonshot Kimi K2). The provider HTTP layer already demoted
+<OPENHUMAN_ROOT>/src/core/observability.rs:1963:            // UI surfaces an actionable "fix your model/provider settings"
+<OPENHUMAN_ROOT>/src/core/observability.rs:1969:                kind = "provider_config_rejection",
+<OPENHUMAN_ROOT>/src/core/observability.rs:1971:                "[observability] {domain}.{operation} skipped expected provider config-rejection error: {message}"
+<OPENHUMAN_ROOT>/src/core/observability.rs:1993:            // surfaced by `providers::is_budget_exhausted_message`). The UI
+<OPENHUMAN_ROOT>/src/core/observability.rs:2057:            // Request too long for the model's context window. The provider
+<OPENHUMAN_ROOT>/src/core/observability.rs:2131:        ExpectedErrorKind::EmptyProviderResponse => {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2132:            // Model/user-config condition — the provider returned a
+<OPENHUMAN_ROOT>/src/core/observability.rs:2144:                kind = "empty_provider_response",
+<OPENHUMAN_ROOT>/src/core/observability.rs:2146:                "[observability] {domain}.{operation} skipped expected empty-provider-response error: {message}"
+<OPENHUMAN_ROOT>/src/core/observability.rs:2239:                crate::openhuman::inference::provider::extract_backend_error_code_token(message)
+<OPENHUMAN_ROOT>/src/core/observability.rs:2250:            // Provider embed call hit an edge/CDN/WAF or regional 403 block —
+<OPENHUMAN_ROOT>/src/core/observability.rs:2251:            // the body is a generic HTML gateway page, not the provider's JSON
+<OPENHUMAN_ROOT>/src/core/observability.rs:2379:/// Returns true when a Sentry event is a per-attempt provider HTTP failure
+<OPENHUMAN_ROOT>/src/core/observability.rs:2380:/// that the reliable-provider layer already handles via retry + fallback.
+<OPENHUMAN_ROOT>/src/core/observability.rs:2383:/// (`openhuman::inference::provider::ops::should_report_provider_http_failure`),
+<OPENHUMAN_ROOT>/src/core/observability.rs:2391:/// - tag `domain == "llm_provider"` — pins the filter to provider-originated
+<OPENHUMAN_ROOT>/src/core/observability.rs:2395:/// - tag `status` parses to one of [`TRANSIENT_PROVIDER_HTTP_STATUSES`]
+<OPENHUMAN_ROOT>/src/core/observability.rs:2396:pub fn is_transient_provider_http_failure(event: &sentry::protocol::Event<'_>) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2398:    if tags.get("domain").map(String::as_str) != Some("llm_provider") {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2407:    TRANSIENT_PROVIDER_HTTP_STATUSES.contains(&status_u16)
+<OPENHUMAN_ROOT>/src/core/observability.rs:2420:/// single-source [`crate::openhuman::inference::provider::managed_error_skips_sentry`]
+<OPENHUMAN_ROOT>/src/core/observability.rs:2430:        .any(crate::openhuman::inference::provider::managed_error_skips_sentry)
+<OPENHUMAN_ROOT>/src/core/observability.rs:2434:/// failures (F7): drops `domain=llm_provider, failure=transport` events whose
+<OPENHUMAN_ROOT>/src/core/observability.rs:2442:/// `compatible_provider_impl.rs` (`stream_chat` / `stream_chat_history`); this
+<OPENHUMAN_ROOT>/src/core/observability.rs:2447:/// suppressed. A non-streaming `domain=llm_provider, failure=transport` event
+<OPENHUMAN_ROOT>/src/core/observability.rs:2450:pub fn is_transient_provider_transport_failure(event: &sentry::protocol::Event<'_>) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2452:    if tags.get("domain").map(String::as_str) != Some("llm_provider") {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2467:/// Defense-in-depth filter for aggregate provider exhaustion events where the
+<OPENHUMAN_ROOT>/src/core/observability.rs:2472:/// where the aggregate body starts with the reliable-provider exhaustion
+<OPENHUMAN_ROOT>/src/core/observability.rs:2475:pub fn is_all_transient_provider_exhaustion_event(event: &sentry::protocol::Event<'_>) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2477:    if tags.get("domain").map(String::as_str) != Some("llm_provider") {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2490:        .any(all_provider_attempts_are_transient)
+<OPENHUMAN_ROOT>/src/core/observability.rs:2493:fn all_provider_attempts_are_transient(message: &str) -> bool {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2494:    let Some(attempts) = message.strip_prefix("All providers/models failed. Attempts:") else {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2514:/// `channels::providers::web::run_chat_task`, all of which now skip
+<OPENHUMAN_ROOT>/src/core/observability.rs:2547:/// (`llm_provider`, `backend_api`, `rpc`). Composio's OAuth-state 401
+<OPENHUMAN_ROOT>/src/core/observability.rs:2554:    if !matches!(domain, "llm_provider" | "backend_api" | "rpc") {
+<OPENHUMAN_ROOT>/src/core/observability.rs:2894:/// Whether a raw error / message string is a provider **insufficient-credits
+<OPENHUMAN_ROOT>/src/core/observability.rs:2909:    // as "<provider> API error (402 Payment Required): <body>". Matching a
+<OPENHUMAN_ROOT>/src/core/observability.rs:2928:    crate::openhuman::inference::provider::body_indicates_insufficient_credits(body)
+<OPENHUMAN_ROOT>/src/core/observability.rs:2932:/// provider events (TAURI-RUST-C62): the user's own BYO provider account
+<OPENHUMAN_ROOT>/src/core/observability.rs:2936:/// The primary emit-site demotion lives in the `Provider::chat()` native_chat
+<OPENHUMAN_ROOT>/src/core/observability.rs:2937:/// cascade (`is_provider_insufficient_credits_402`), but the compatible
+<OPENHUMAN_ROOT>/src/core/observability.rs:2938:/// provider reports the same failure from several other paths
+<OPENHUMAN_ROOT>/src/core/observability.rs:2948:///   (`provider::body_indicates_insufficient_credits`).
+<OPENHUMAN_ROOT>/src/core/observability.rs:2965:/// Message-level matcher for a provider **monthly-quota / usage-limit
+<OPENHUMAN_ROOT>/src/core/observability.rs:2970:/// [`crate::openhuman::inference::provider::body_indicates_quota_exhausted`], so
+<OPENHUMAN_ROOT>/src/core/observability.rs:2974:    crate::openhuman::inference::provider::body_indicates_quota_exhausted(text)
+<OPENHUMAN_ROOT>/src/core/observability.rs:2977:/// Defense-in-depth `before_send` filter for provider **monthly-quota
+<OPENHUMAN_ROOT>/src/core/observability.rs:2982:/// The primary emit-site demotion lives in the `Provider::chat()` native_chat
+<OPENHUMAN_ROOT>/src/core/observability.rs:2983:/// cascade and the shared `api_error` helper (`is_provider_quota_exhausted`),
+<OPENHUMAN_ROOT>/src/core/observability.rs:2984:/// but the compatible provider reports the same failure from several other
+<OPENHUMAN_ROOT>/src/core/observability.rs:3010:/// `ollama` provider name and the `internal server error (ref:` envelope, so a
+<OPENHUMAN_ROOT>/src/core/observability.rs:3011:/// generic 500 from another provider, or a local Ollama daemon crash (which
+<OPENHUMAN_ROOT>/src/core/observability.rs:3014:    if crate::openhuman::inference::provider::is_ollama_cloud_internal_500_message(text) {
+<OPENHUMAN_ROOT>/src/core/observability.rs:3025:/// fallen-back by the reliable-provider layer.
+<OPENHUMAN_ROOT>/src/core/observability.rs:3030:/// net for any other compatible-provider path (`chat_with_system`,
+<OPENHUMAN_ROOT>/src/core/observability.rs:3050:/// (user deleted the message provider-side, backend GC'd the relay row). The
+<OPENHUMAN_ROOT>/src/core/observability.rs:3095:        .is_some_and(crate::openhuman::inference::provider::is_budget_exhausted_message)
+<OPENHUMAN_ROOT>/src/core/observability.rs:3104:            .is_some_and(crate::openhuman::inference::provider::is_budget_exhausted_message)
+<OPENHUMAN_ROOT>/src/core/observability.rs:3196:                "agent.provider_chat failed: ollama API key not set. Configure via the web UI"
+<OPENHUMAN_ROOT>/src/core/observability.rs:3295:            "Unauthorized (HTTP 401) from some unrelated provider",
+<OPENHUMAN_ROOT>/src/core/observability.rs:3313:            "Auth profile not found: provider:openai/oauth",
+<OPENHUMAN_ROOT>/src/core/observability.rs:3325:    /// 401 re-raised at the RPC boundary (`{provider} Responses API error: …`)
+<OPENHUMAN_ROOT>/src/core/observability.rs:3326:    /// must classify as `ProviderUserState` so the re-report is demoted, not
+<OPENHUMAN_ROOT>/src/core/observability.rs:3329:    fn classifies_openai_oauth_token_expired_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:3335:            Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3343:            Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3385:    /// rejected key (401 "Invalid API key") nor an ordinary provider error.
+<OPENHUMAN_ROOT>/src/core/observability.rs:3473:        // same edge tier — also demoted (matcher is not pinned to one provider).
+<OPENHUMAN_ROOT>/src/core/observability.rs:3485:        // A JSON 403 envelope means the provider's app answered with a
+<OPENHUMAN_ROOT>/src/core/observability.rs:3545:            expected_error_kind("provider 'voyage' is not configured in settings"),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3578:                Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3618:                Some(ExpectedErrorKind::ProviderConfigRejection),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3639:                Some(ExpectedErrorKind::ProviderConfigRejection),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3665:        // Provider 401s with "invalid token" in the body but no
+<OPENHUMAN_ROOT>/src/core/observability.rs:3667:        // not the same wire shape and may indicate real provider bugs.
+<OPENHUMAN_ROOT>/src/core/observability.rs:3707:            expected_error_kind("provider config validation failed: invalid model name"),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3714:            expected_error_kind(r#"provider listing failed: model \"foo\" not found in registry"#),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3789:        // TAURI-RUST-501: the custom-provider 500 body that escapes the
+<OPENHUMAN_ROOT>/src/core/observability.rs:3790:        // provider api_error cascade's own status-gated checks. When the
+<OPENHUMAN_ROOT>/src/core/observability.rs:3802:        // The established phrasings the provider/reliable layer already
+<OPENHUMAN_ROOT>/src/core/observability.rs:3851:    // ── ProviderUserState: permanent TPM rate cap (TAURI-RUST-HXF) ─────────
+<OPENHUMAN_ROOT>/src/core/observability.rs:3854:    fn classifies_provider_rate_cap_413_tpm_rereport_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:3868:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:3877:        // ProviderUserState matcher runs, so the new TPM arm cannot demote it.
+<OPENHUMAN_ROOT>/src/core/observability.rs:3893:        // ProviderUserState — they stay retryable / Sentry-visible.
+<OPENHUMAN_ROOT>/src/core/observability.rs:3901:                Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:3978:            // prefix — must NOT classify (future provider/storage errors that
+<OPENHUMAN_ROOT>/src/core/observability.rs:3990:    // ── EmptyProviderResponse (TAURI-RUST-4Z1) ─────────────────────────────
+<OPENHUMAN_ROOT>/src/core/observability.rs:3993:    fn classifies_empty_provider_response_web_channel_rereport() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:3995:        // empty-provider-response bail. `run_chat_task` wraps the flattened
+<OPENHUMAN_ROOT>/src/core/observability.rs:4006:            Some(ExpectedErrorKind::EmptyProviderResponse)
+<OPENHUMAN_ROOT>/src/core/observability.rs:4013:            Some(ExpectedErrorKind::EmptyProviderResponse)
+<OPENHUMAN_ROOT>/src/core/observability.rs:4028:            "[extract_from_result] provider returned an empty response; returning empty extraction",
+<OPENHUMAN_ROOT>/src/core/observability.rs:4038:            // agent/harness/session/turn.rs:811 — "provider returned an empty
+<OPENHUMAN_ROOT>/src/core/observability.rs:4039:            // final response" uses subject "provider", not "model"; must not match.
+<OPENHUMAN_ROOT>/src/core/observability.rs:4040:            "[agent_loop] provider returned an empty final response (i=2, no text, no tool calls)",
+<OPENHUMAN_ROOT>/src/core/observability.rs:4045:                "must NOT classify as EmptyProviderResponse: {raw}"
+<OPENHUMAN_ROOT>/src/core/observability.rs:4394:            expected_error_kind("provider reliability: circuit breaker open for openai"),
+<OPENHUMAN_ROOT>/src/core/observability.rs:4432:            "provider failed: dns error: failed to lookup address information",
+<OPENHUMAN_ROOT>/src/core/observability.rs:4463:    fn does_not_classify_unrelated_provider_errors_as_network() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:4464:        // Status-bearing provider failures (404, 500, …) are surfaced via
+<OPENHUMAN_ROOT>/src/core/observability.rs:4641:        // `providers::ops::api_error` and re-raised through `agent.run_single`.
+<OPENHUMAN_ROOT>/src/core/observability.rs:4655:            "Provider API error (504): upstream timed out",
+<OPENHUMAN_ROOT>/src/core/observability.rs:4702:            expected_error_kind("provider returned api error 5042 (custom internal sentinel)"),
+<OPENHUMAN_ROOT>/src/core/observability.rs:4771:            // Same shape on other channels — supervisor wrapper is provider-agnostic.
+<OPENHUMAN_ROOT>/src/core/observability.rs:4805:    fn channels_dispatch_re_emit_of_provider_502_classifies_as_transient() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:4807:        // (~39 events): the reliable provider layer retried 5xx, the
+<OPENHUMAN_ROOT>/src/core/observability.rs:4818:        // `providers::ops::api_error`, that resolves to:
+<OPENHUMAN_ROOT>/src/core/observability.rs:4825:            "agent.provider_chat failed: OpenHuman API error (503 Service Unavailable): retry budget exhausted",
+<OPENHUMAN_ROOT>/src/core/observability.rs:4826:            "all providers exhausted: OpenHuman API error (504 Gateway Timeout): error code: 504",
+<OPENHUMAN_ROOT>/src/core/observability.rs:4905:    fn does_not_classify_actionable_provider_errors_as_transient_upstream() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:4919:                "must NOT silence actionable provider error: {raw}"
+<OPENHUMAN_ROOT>/src/core/observability.rs:4936:        // ProviderUserState classifier was added (#1472 wave E), this
+<OPENHUMAN_ROOT>/src/core/observability.rs:4938:        // ProviderUserState bucket — `"missing required fields"` wins
+<OPENHUMAN_ROOT>/src/core/observability.rs:4941:        // `kind="provider_user_state"` info-log facet for triage.
+<OPENHUMAN_ROOT>/src/core/observability.rs:4949:            Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:4950:            "OPENHUMAN-TAURI-BC wire shape must classify as ProviderUserState (the \
+<OPENHUMAN_ROOT>/src/core/observability.rs:5057:            "provider-formatted 4xx must keep going through the provider classifier path"
+<OPENHUMAN_ROOT>/src/core/observability.rs:5062:    fn classifies_trigger_type_not_found_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5073:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5084:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5092:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5097:    fn classifies_toolkit_not_enabled_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5099:        // enabled the toolkit. Must classify as ProviderUserState (more
+<OPENHUMAN_ROOT>/src/core/observability.rs:5107:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5117:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5122:    fn classifies_custom_openai_upstream_bad_request_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5126:                 {\"error\":{\"message\":\"Bad request to upstream provider\",\
+<OPENHUMAN_ROOT>/src/core/observability.rs:5129:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5137:                 {\"error\":{\"message\":\"Bad request to upstream provider\",\
+<OPENHUMAN_ROOT>/src/core/observability.rs:5140:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5146:    /// "bad request to upstream provider" and "upstream_error" without
+<OPENHUMAN_ROOT>/src/core/observability.rs:5151:        // as ProviderUserState, otherwise we'd silence actionable bugs.
+<OPENHUMAN_ROOT>/src/core/observability.rs:5154:                "internal panic in router: bad request to upstream provider \
+<OPENHUMAN_ROOT>/src/core/observability.rs:5160:        // A future hypothetical provider envelope reusing one substring
+<OPENHUMAN_ROOT>/src/core/observability.rs:5165:                 forwarding bad request to upstream provider"
+<OPENHUMAN_ROOT>/src/core/observability.rs:5172:    fn classifies_missing_required_fields_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5182:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5193:                Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:5200:    fn classifies_insufficient_scopes_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5211:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5218:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5223:    fn classifies_access_terminated_provider_policy_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5228:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5235:            Some(ExpectedErrorKind::ProviderUserState)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5240:    fn does_not_classify_unrelated_500s_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5241:        // Sanity check: a generic 500 with no provider-user-state body
+<OPENHUMAN_ROOT>/src/core/observability.rs:5272:    fn classifies_provider_config_rejection() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5274:        // provider; raised again by `agent.run_single` /
+<OPENHUMAN_ROOT>/src/core/observability.rs:5275:        // `web_channel.run_chat_task` so it escapes the provider-layer
+<OPENHUMAN_ROOT>/src/core/observability.rs:5283:            Some(ExpectedErrorKind::ProviderConfigRejection)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5290:            Some(ExpectedErrorKind::ProviderConfigRejection)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5298:            Some(ExpectedErrorKind::ProviderConfigRejection)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5304:        // TAURI-RUST-5JR — custom embeddings provider pointed at a chat-only
+<OPENHUMAN_ROOT>/src/core/observability.rs:5312:                 provider in Settings → Memory"
+<OPENHUMAN_ROOT>/src/core/observability.rs:5314:            Some(ExpectedErrorKind::ProviderConfigRejection)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5319:            Some(ExpectedErrorKind::ProviderConfigRejection)
+<OPENHUMAN_ROOT>/src/core/observability.rs:5346:    fn does_not_classify_unrelated_provider_failures_as_config_rejection() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5350:        // message-level predicate is intrinsically custom-provider scoped;
+<OPENHUMAN_ROOT>/src/core/observability.rs:5380:            Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:5386:    fn provider_user_state_takes_precedence_over_backend_user_error() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5388:        // toolkit-not-enabled phrasing must land in `ProviderUserState`
+<OPENHUMAN_ROOT>/src/core/observability.rs:5392:        // kind than intended (and miss the `kind="provider_user_state"`
+<OPENHUMAN_ROOT>/src/core/observability.rs:5399:            Some(ExpectedErrorKind::ProviderUserState),
+<OPENHUMAN_ROOT>/src/core/observability.rs:5400:            "4xx + toolkit-not-enabled must land in ProviderUserState, not BackendUserError"
+<OPENHUMAN_ROOT>/src/core/observability.rs:5407:    fn classifies_composio_direct_invalid_api_key_as_provider_user_state() {
+<OPENHUMAN_ROOT>/src/core/observability.rs:5411:        // this to `ProviderUserState` so the polling layer's 5 s retry
+<OPENHUMAN_ROOT>/src/core/observability.rs:5418:            Some(ExpectedErrorKind::ProviderUserState),

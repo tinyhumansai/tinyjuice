@@ -193,6 +193,156 @@
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:261:- Fork [tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman) and push branches to your fork.
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:298:2. Open a pull request against `tinyhumansai/openhuman:main`.
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:313:Thank you for contributing to OpenHuman.
+<OPENHUMAN_ROOT>/SECURITY.md:5:We provide security updates for the following versions of OpenHuman:
+<OPENHUMAN_ROOT>/SECURITY.md:13:We recommend always running the [latest release](https://github.com/tinyhumansai/openhuman/releases/latest). OpenHuman is in early beta; older versions may not receive patches.
+<OPENHUMAN_ROOT>/SECURITY.md:22:2. Email the maintainers with a clear description of the issue, steps to reproduce, and impact. You can reach us via the contact details listed in the [OpenHuman organization](https://github.com/openhumanxyz) or repository.
+<OPENHUMAN_ROOT>/SECURITY.md:41:Out-of-scope for this process: general bugs, feature requests, and issues in third-party services we integrate with (e.g., Telegram, Notion) unless they are specific to how OpenHuman uses them.
+<OPENHUMAN_ROOT>/SECURITY.md:53:Thank you for helping keep OpenHuman and its users safe.
+<OPENHUMAN_ROOT>/AGENTS.md:1:# OpenHuman
+<OPENHUMAN_ROOT>/AGENTS.md:13:| **`app/`**              | pnpm workspace `openhuman-app`: Vite + React (`app/src/`), Tauri desktop host (`app/src-tauri/`), Vitest tests                |
+<OPENHUMAN_ROOT>/AGENTS.md:14:| **`src/`** (root)       | Rust lib crate `openhuman` + `openhuman-core` CLI binary (`src/main.rs`) — `src/core/` (transport), `src/openhuman/*` domains |
+<OPENHUMAN_ROOT>/AGENTS.md:15:| **`Cargo.toml`** (root) | Core crate; `cargo build --bin openhuman-core`. Also `slack-backfill` and `gmail-backfill-3d` in `src/bin/`.                  |
+<OPENHUMAN_ROOT>/AGENTS.md:18:Commands assume **repo root**. Root `package.json` is `openhuman-repo` (private, pnpm-enforced).
+<OPENHUMAN_ROOT>/AGENTS.md:25:- **Core runs in-process** as a tokio task (sidecar removed PR #1061). Lifecycle: `core_process::CoreProcessHandle` in `app/src-tauri/src/core_process.rs`. Frontend RPC → `http://127.0.0.1:<port>/rpc` with per-launch hex bearer handed in-memory via `run_server_embedded_with_ready(rpc_token: Some(_))`. Renderer reads bearer via `core_rpc_token` Tauri command. `OPENHUMAN_CORE_TOKEN` still honoured for CLI/docker/cloud. Set `OPENHUMAN_CORE_REUSE_EXISTING=1` for external core debugging.
+<OPENHUMAN_ROOT>/AGENTS.md:36:Connects to desktop core via `ConnectionProfile` transport strategies in `app/src/services/transport/`: `LanHttpTransport`, `TunnelTransport` (E2E encrypted XChaCha20-Poly1305), `CloudHttpTransport`. Key paths: PTT plugin `packages/tauri-plugin-ptt/`, iOS screens `app/src/pages/ios/`, devices domain `src/openhuman/devices/`, tunnel crypto `app/src/lib/tunnel/`. Build: `pnpm tauri:ios:dev` (stock `@tauri-apps/cli`, not vendored CEF). Backend dep: `tinyhumansai/backend#709`.
+<OPENHUMAN_ROOT>/AGENTS.md:53:cargo build --manifest-path Cargo.toml --bin openhuman-core
+<OPENHUMAN_ROOT>/AGENTS.md:97:- **Rust config**: TOML `Config` struct (`src/openhuman/config/schema/types.rs`) with env overrides (`load.rs`).
+<OPENHUMAN_ROOT>/AGENTS.md:101:The `[autonomy]` block (`src/openhuman/config/schema/autonomy.rs`) drives `SecurityPolicy` (`src/openhuman/security/policy.rs`). Tiers: `readonly` / `supervised` / `full` × `workspace_only` × `trusted_roots` × `allow_tool_install`. Edit via `config.update_autonomy_settings` RPC or Settings → Agent access.
+<OPENHUMAN_ROOT>/AGENTS.md:103:**Two path roots** (`src/openhuman/config/schema/types.rs`):
+<OPENHUMAN_ROOT>/AGENTS.md:105:- **`action_dir`** — agent's read/write root. Acting tools resolve relative paths here. Default: `~/OpenHuman/projects` (`OPENHUMAN_ACTION_DIR`).
+<OPENHUMAN_ROOT>/AGENTS.md:106:- **`workspace_dir`** — internal state (`~/.openhuman/users/<id>/workspace`). Agent tools **cannot** write here — enforced by `is_workspace_internal_path` fail-closed regardless of tier/trusted_roots.
+<OPENHUMAN_ROOT>/AGENTS.md:110:**Approval gate** ON by default (opt out: `OPENHUMAN_APPROVAL_GATE=0`). Parks interactive chat turns only; background/cron allowed through. Frontend surfaces via `ApprovalRequestCard`. 10-min TTL → Deny.
+<OPENHUMAN_ROOT>/AGENTS.md:135:- `e2e-run-spec.sh` creates/cleans temp `OPENHUMAN_WORKSPACE` by default.
+<OPENHUMAN_ROOT>/AGENTS.md:158:**AI config**: bundled prompts in `src/openhuman/agent/prompts/` (also via `tauri.conf.json` resources). Loaders in `app/src/lib/ai/` with `?raw` imports.
+<OPENHUMAN_ROOT>/AGENTS.md:166:IPC commands: `greet`, `write_ai_config_file`, `ai_get_config`, `ai_refresh_config`, `core_rpc_relay`, `core_rpc_token`, `start_core_process`, `restart_core_process`, window commands, `openhuman_*` daemon helpers.
+<OPENHUMAN_ROOT>/AGENTS.md:176:### Domain layout (`src/openhuman/`)
+<OPENHUMAN_ROOT>/AGENTS.md:180:**Skills runtime removed**: QuickJS gone. `src/openhuman/skills/` is metadata-only now.
+<OPENHUMAN_ROOT>/AGENTS.md:184:- New functionality → dedicated subdirectory (`openhuman/<domain>/mod.rs` + siblings). No new root-level `*.rs` files.
+<OPENHUMAN_ROOT>/AGENTS.md:185:- **Tool ownership**: domain tools live in that domain's `tools.rs`, re-exported via `src/openhuman/tools/mod.rs`. Only cross-cutting families stay in `tools/impl/`.
+<OPENHUMAN_ROOT>/AGENTS.md:261:1. **Specify** — ground in existing domains, controller patterns, JSON-RPC naming (`openhuman.<namespace>_<function>`).
+<OPENHUMAN_ROOT>/AGENTS.md:268:Update `src/openhuman/about_app/` when adding/removing/renaming user-facing features. Define E2E scenarios up front covering happy paths, failures, auth gates.
+<OPENHUMAN_ROOT>/AGENTS.md:277:origin    git@github.com:<your-username>/openhuman.git  (push here)
+<OPENHUMAN_ROOT>/AGENTS.md:278:upstream  git@github.com:tinyhumansai/openhuman.git     (fetch-only)
+<OPENHUMAN_ROOT>/AGENTS.md:282:- Issues and PRs on upstream `tinyhumansai/openhuman`.
+<OPENHUMAN_ROOT>/AGENTS.md:293:- **Windows deep links**: `openhuman://` registered via `tauri-plugin-deep-link::register_all`. Check in `app/src-tauri/src/deep_link_registration_check.rs`.
+<OPENHUMAN_ROOT>/AGENTS.md:294:- **Core standalone debugging**: `./target/debug/openhuman-core serve` (token at `{workspace}/core.token`). Public endpoints: `GET /health`, `GET /schema`, `GET /events`.
+<OPENHUMAN_ROOT>/INSTALL.md:1:# Installing OpenHuman
+<OPENHUMAN_ROOT>/INSTALL.md:3:Download installers from [tinyhumans.ai/openhuman](https://tinyhumans.ai/openhuman?utm_source=github&utm_medium=readme) or from the [GitHub Releases](https://github.com/tinyhumansai/openhuman/releases/latest) page. For terminal installs, the native package paths below are preferred because they use your OS package manager or native installer where available.
+<OPENHUMAN_ROOT>/INSTALL.md:13:brew install openhuman
+<OPENHUMAN_ROOT>/INSTALL.md:19:# Download OpenHuman_<version>_amd64.deb or OpenHuman_<version>_arm64.deb
+<OPENHUMAN_ROOT>/INSTALL.md:20:# from https://github.com/tinyhumansai/openhuman/releases/latest, then:
+<OPENHUMAN_ROOT>/INSTALL.md:22:sudo apt-get install -y --no-install-recommends ./OpenHuman_*_amd64.deb
+<OPENHUMAN_ROOT>/INSTALL.md:25:**Linux (Arch, AUR):** the [`openhuman-bin` AUR recipe](./packages/arch/openhuman-bin/) is in the repo. Once published, Arch users can install it with `yay -S openhuman-bin`.
+<OPENHUMAN_ROOT>/INSTALL.md:27:**Windows:** download the signed `.msi` from the [latest release](https://github.com/tinyhumansai/openhuman/releases/latest) and run it.
+<OPENHUMAN_ROOT>/INSTALL.md:29:**Manual `.dmg` / `.deb` / `.AppImage` / `.msi`:** grab the installer for your platform directly from the [latest release page](https://github.com/tinyhumansai/openhuman/releases/latest).
+<OPENHUMAN_ROOT>/INSTALL.md:31:> **Linux:** the AppImage can crash on launch under Wayland, miss host system libraries such as `libgbm.so.1`, or fail on Arch-based distros with `sharun: Interpreter not found!`. See [#2463](https://github.com/tinyhumansai/openhuman/issues/2463) for the cause and env-var workarounds. The `.deb` package above avoids those failure modes on Debian/Ubuntu by letting apt resolve runtime dependencies.
+<OPENHUMAN_ROOT>/INSTALL.md:39:curl -fsSL https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.sh | bash
+<OPENHUMAN_ROOT>/INSTALL.md:42:irm https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.ps1 | iex
+<OPENHUMAN_ROOT>/INSTALL.md:45:On Debian/Ubuntu, `install.sh` resolves the latest release `.deb` first and installs it with `apt-get` so runtime dependencies are handled by apt. Set `OPENHUMAN_INSTALLER_LINUX_PACKAGE=appimage` to force the AppImage path.
+<OPENHUMAN_ROOT>/INSTALL.md:49:A separately signed script-install path is not currently available. Issue [#2620](https://github.com/tinyhumansai/openhuman/issues/2620) is closed after the native package paths were promoted, but current release assets do not include `install.sh.asc` / `install.ps1.asc` for pre-execution script verification. Treat the script install path as unverified and prefer the native package options above when possible.
+<OPENHUMAN_ROOT>/Dockerfile:2:# OpenHuman Core — multi-stage Docker build
+<OPENHUMAN_ROOT>/Dockerfile:3:# Produces a minimal image running the `openhuman-core` binary (JSON-RPC server).
+<OPENHUMAN_ROOT>/Dockerfile:5:# Build:   docker build -t openhuman-core .
+<OPENHUMAN_ROOT>/Dockerfile:6:# Run:     docker run -p 7788:7788 --env-file .env openhuman-core
+<OPENHUMAN_ROOT>/Dockerfile:57:    cargo build --profile "${CARGO_PROFILE}" --bin openhuman-core 2>/dev/null || true && \
+<OPENHUMAN_ROOT>/Dockerfile:64:    cargo build --profile "${CARGO_PROFILE}" --bin openhuman-core && \
+<OPENHUMAN_ROOT>/Dockerfile:65:    cp "target/${CARGO_PROFILE}/openhuman-core" /tmp/openhuman-core
+<OPENHUMAN_ROOT>/Dockerfile:88:RUN groupadd --gid 10001 openhuman \
+<OPENHUMAN_ROOT>/Dockerfile:89: && useradd --uid 10001 --gid 10001 --create-home --shell /bin/bash openhuman
+<OPENHUMAN_ROOT>/Dockerfile:94:ENV HOME=/home/openhuman
+<OPENHUMAN_ROOT>/Dockerfile:95:RUN mkdir -p /home/openhuman/.openhuman \
+<OPENHUMAN_ROOT>/Dockerfile:96: && chown -R openhuman:openhuman /home/openhuman
+<OPENHUMAN_ROOT>/Dockerfile:99:COPY --from=builder /tmp/openhuman-core /usr/local/bin/openhuman-core
+<OPENHUMAN_ROOT>/Dockerfile:112:# gosu to drop to the openhuman user before starting the binary.
+<OPENHUMAN_ROOT>/Dockerfile:116:ENV OPENHUMAN_WORKSPACE=/home/openhuman/.openhuman
+<OPENHUMAN_ROOT>/Dockerfile:118:ENV OPENHUMAN_CORE_HOST=0.0.0.0
+<OPENHUMAN_ROOT>/Dockerfile:119:ENV OPENHUMAN_CORE_PORT=7788
+<OPENHUMAN_ROOT>/Dockerfile:123:ENV OPENHUMAN_AGENTBOX_MODE=0
+<OPENHUMAN_ROOT>/package.json:2:  "name": "openhuman-repo",
+<OPENHUMAN_ROOT>/package.json:9:    "build": "pnpm --filter openhuman-app build",
+<OPENHUMAN_ROOT>/package.json:15:    "compile": "pnpm --filter openhuman-app compile",
+<OPENHUMAN_ROOT>/package.json:16:    "dev": "pnpm --filter openhuman-app dev",
+<OPENHUMAN_ROOT>/package.json:17:    "dev:app": "pnpm --filter openhuman-app dev:app",
+<OPENHUMAN_ROOT>/package.json:18:    "dev:app:win": "pnpm --filter openhuman-app dev:app:win",
+<OPENHUMAN_ROOT>/package.json:20:    "dev:cef": "pnpm --filter openhuman-app dev:cef",
+<OPENHUMAN_ROOT>/package.json:21:    "format": "pnpm --filter openhuman-app format",
+<OPENHUMAN_ROOT>/package.json:22:    "format:check": "pnpm --filter openhuman-app format:check",
+<OPENHUMAN_ROOT>/package.json:23:    "knip": "pnpm --filter openhuman-app knip",
+<OPENHUMAN_ROOT>/package.json:24:    "knip:production": "pnpm --filter openhuman-app knip:production",
+<OPENHUMAN_ROOT>/package.json:25:    "lint": "pnpm --filter openhuman-app lint",
+<OPENHUMAN_ROOT>/package.json:26:    "lint:fix": "pnpm --filter openhuman-app lint:fix",
+<OPENHUMAN_ROOT>/package.json:29:    "tauri": "pnpm --filter openhuman-app tauri",
+<OPENHUMAN_ROOT>/package.json:30:    "test": "pnpm --filter openhuman-app test",
+<OPENHUMAN_ROOT>/package.json:31:    "test:coverage": "pnpm --filter openhuman-app test:coverage",
+<OPENHUMAN_ROOT>/package.json:32:    "test:rust": "pnpm --filter openhuman-app test:rust",
+<OPENHUMAN_ROOT>/package.json:36:    "test:e2e": "pnpm --filter openhuman-app test:e2e:all",
+<OPENHUMAN_ROOT>/package.json:37:    "test:e2e:flows": "pnpm --filter openhuman-app test:e2e:all:flows",
+<OPENHUMAN_ROOT>/package.json:54:    "test:install-ps1": "pwsh -NoProfile -File scripts/tests/OpenHumanWindowsInstall.Tests.ps1",
+<OPENHUMAN_ROOT>/package.json:55:    "rust:check": "pnpm --filter openhuman-app rust:check",
+<OPENHUMAN_ROOT>/package.json:56:    "typecheck": "pnpm --filter openhuman-app compile",
+<OPENHUMAN_ROOT>/package.json:58:    "tauri:ios:dev": "pnpm --filter openhuman-app tauri:ios:dev",
+<OPENHUMAN_ROOT>/package.json:59:    "tauri:ios:build": "pnpm --filter openhuman-app tauri:ios:build",
+<OPENHUMAN_ROOT>/package.json:61:    "tauri:android:dev": "pnpm --filter openhuman-app tauri:android:dev",
+<OPENHUMAN_ROOT>/package.json:62:    "tauri:android:build": "pnpm --filter openhuman-app tauri:android:build",
+<OPENHUMAN_ROOT>/Cargo.lock:4343:name = "openhuman"
+<OPENHUMAN_ROOT>/README.md:1:<h1 align="center">OpenHuman</h1>
+<OPENHUMAN_ROOT>/README.md:9:		<img src="https://trendshift.io/api/badge/repositories/23680" alt="tinyhumansai%2Fopenhuman | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+<OPENHUMAN_ROOT>/README.md:11:	<a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/README.md:12:		<img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1136902&amp;theme=light&amp;period=daily&amp;t=1778916022823">
+<OPENHUMAN_ROOT>/README.md:14:		<a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/README.md:15:			<img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;t=1779351403565">
+<OPENHUMAN_ROOT>/README.md:19: <a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-topic-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/README.md:20:  <img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;topic_id=268&amp;t=1779351808756">
+<OPENHUMAN_ROOT>/README.md:22:  <a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-topic-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/README.md:23:   <img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;topic_id=46&amp;t=1779351808756">
+<OPENHUMAN_ROOT>/README.md:28: <strong>OpenHuman is your personal AI super intelligence: a brain that remembers everything, a fantastic orchestrator, a deep researcher. Local-first, simple, powerful.</strong>
+<OPENHUMAN_ROOT>/README.md:35: <a href="https://tinyhumans.gitbook.io/openhuman/">Docs</a> •
+<OPENHUMAN_ROOT>/README.md:45: <a href="https://github.com/tinyhumansai/openhuman/releases/latest"><img src="https://img.shields.io/github/v/release/tinyhumansai/openhuman?label=latest" alt="Latest Release" /></a>
+<OPENHUMAN_ROOT>/README.md:46: <a href="https://github.com/tinyhumansai/openhuman/stargazers"><img src="https://img.shields.io/github/stars/tinyhumansai/openhuman?style=flat" alt="GitHub Stars" /></a>
+<OPENHUMAN_ROOT>/README.md:47: <a href="./LICENSE"><img src="https://img.shields.io/github/license/tinyhumansai/openhuman" alt="License" /></a>
+<OPENHUMAN_ROOT>/README.md:52:> OpenHuman is not AGI. But it is a meaningful architectural step closer, with better memory, better orchestration, and better tooling.
+<OPENHUMAN_ROOT>/README.md:54:> 🎉 Within one week of launch, OpenHuman became the number one trending repository on GitHub for nine days in a row.
+<OPENHUMAN_ROOT>/README.md:58:Download installers from [tinyhumans.ai/openhuman](https://tinyhumans.ai/openhuman?utm_source=github&utm_medium=readme) or from the [GitHub Releases](https://github.com/tinyhumansai/openhuman/releases/latest) page.
+<OPENHUMAN_ROOT>/README.md:62:# What is OpenHuman?
+<OPENHUMAN_ROOT>/README.md:64:OpenHuman is three things most assistants aren't: **a brain** that builds a persistent, local memory of your world; **a fantastic orchestrator** that runs fleets of agents on durable graphs; and **a deep researcher** that sweeps your data and the web before you finish asking. Every bullet links to the deeper writeup in the [docs](https://tinyhumans.gitbook.io/openhuman/).
+<OPENHUMAN_ROOT>/README.md:68:- **[Memory Tree](https://tinyhumans.gitbook.io/openhuman/features/memory-tree) + [Obsidian Wiki](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki)**: your data compressed into scored Markdown trees in SQLite on your machine, mirrored as an [Obsidian vault](https://x.com/karpathy/status/2039805659525644595) you can open and edit. No vector-soup black box.
+<OPENHUMAN_ROOT>/README.md:69:- **[100+ OAuth integrations, 5,000+ MCP servers, 90,000+ Skills](https://tinyhumans.gitbook.io/openhuman/features/integrations)**: one click into Gmail, Notion, GitHub, Slack and the rest of your stack. [Auto-fetch](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/auto-fetch) feeds the brain every 20 minutes, so it has tomorrow's context this morning.
+<OPENHUMAN_ROOT>/README.md:70:- **[A subconscious](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: a background loop that diffs your world, advances your goals, and writes your morning briefing. Thinking continues after you stop typing.
+<OPENHUMAN_ROOT>/README.md:71:- **[Goals & Todos](https://tinyhumans.gitbook.io/openhuman/features/goals-and-todos)**: long-term goals, durable per-thread goals, and a shared kanban board per conversation.
+<OPENHUMAN_ROOT>/README.md:72:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: tool output compressed before it hits the model: same information, up to 80% fewer tokens. A brain this big would be unaffordable without it.
+<OPENHUMAN_ROOT>/README.md:76:- **[Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows)**: the agent proposes the automation; you review it on a canvas and save. Durable, trigger-driven, approval-gated runs on open-source [tinyflows](https://github.com/tinyhumansai/tinyflows).
+<OPENHUMAN_ROOT>/README.md:77:- **[A harness that finishes the job](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: checkpointed graph runs on open-source [tinyagents](https://github.com/tinyhumansai/tinyagents). Stuck agents get steered, halted ones return a root cause, and every run replays with real per-call costs.
+<OPENHUMAN_ROOT>/README.md:78:- **[A split brain, always on](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**: a fast reflex agent triages inbound traffic while a deep reasoning core delegates to worker fleets, steered by the subconscious.
+<OPENHUMAN_ROOT>/README.md:79:- **[An agent economy](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: a `@handle` on [tiny.place](https://tiny.place), Signal-encrypted agent-to-agent orchestration, x402 USDC bounties and trading. Keys never touch disk.
+<OPENHUMAN_ROOT>/README.md:83:- **[SuperContext](https://tinyhumans.gitbook.io/openhuman/features/super-context)**: a research scout sweeps your memory and files before the model reads your first message. No cold starts.
+<OPENHUMAN_ROOT>/README.md:84:- **Batteries included**: web search, scraper, coder toolset, a real [browser](https://tinyhumans.gitbook.io/openhuman/features/native-tools/browser-and-computer), and [native voice](gitbooks/features/native-tools/voice.md) with in-process Whisper. [Model routing](https://tinyhumans.gitbook.io/openhuman/features/model-routing) picks the right LLM per workload on one subscription, with [local AI optional](https://tinyhumans.gitbook.io/openhuman/features/model-routing/local-ai).
+<OPENHUMAN_ROOT>/README.md:85:- **[Meeting agents](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**: joins **Meet, Zoom, Teams, and Webex** with a face and a voice. It auto-joins from your calendar, streams a live transcript, answers by name, and files a summary with action items.
+<OPENHUMAN_ROOT>/README.md:86:- **[Image & video generation](https://tinyhumans.gitbook.io/openhuman/features/native-tools)**: Seedream/SeedEdit images and Seedance/Veo video, straight into your workspace on the same subscription.
+<OPENHUMAN_ROOT>/README.md:87:- **[17 messaging channels](https://tinyhumans.gitbook.io/openhuman/features/channels)**: Telegram, Discord, Slack, WhatsApp, Signal, iMessage… plus **native email** (IMAP IDLE + SMTP). Your agent reaches you where you already are.
+<OPENHUMAN_ROOT>/README.md:91:- **Simple, UI-first & Human**: install to working agent in a few clicks, with no config files and no terminal. And it has [a face](https://tinyhumans.gitbook.io/openhuman/features/mascot): a mascot that speaks, reacts, and remembers you.
+<OPENHUMAN_ROOT>/README.md:92:- **[Privacy & security](https://tinyhumans.gitbook.io/openhuman/features/privacy-and-security)**: on-device encrypted data, approval gate, OS-keyring secrets, and opt-in sandboxing. There is also **[Privacy Mode](https://tinyhumans.gitbook.io/openhuman/features/privacy-mode)**: flip one switch and no inference leaves your machine, enforced in the Rust core.
+<OPENHUMAN_ROOT>/README.md:93:- **[Themes & Theme Studio](https://tinyhumans.gitbook.io/openhuman/features/theming)**: five theme families plus a full visual editor, exportable as JSON.
+<OPENHUMAN_ROOT>/README.md:97:OpenHuman is the first agent harness that gets to know you in minutes. Inspired by [Karpathy's LLM Knowledgebase](https://x.com/karpathy/status/2039805659525644595). Most agents start cold. Hermes learns by watching you work; OpenClaw waits for plugins to ferry context in. Either way, you spend days or weeks before the agent knows enough about your stack to be genuinely useful.
+<OPENHUMAN_ROOT>/README.md:100: <img src="./gitbooks/.gitbook/assets/memory.png" alt="OpenHuman context-building diagram">
+<OPENHUMAN_ROOT>/README.md:103:> OpenHuman summarizes and compresses all your documents, emails & chats; and creates a memory graph that lets your agent remember everything about you.
+<OPENHUMAN_ROOT>/README.md:105:OpenHuman skips the wait. Connect your accounts, let [auto-fetch](https://tinyhumans.gitbook.io/openhuman/features/integrations/auto-fetch) pull data locally on a 20-minute loop, and then have [Memory Trees](https://tinyhumans.gitbook.io/openhuman/features/memory-tree) compress everything into Markdown files stored intelligently in a [Karpathy-style Obsidian wiki](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki).
+<OPENHUMAN_ROOT>/README.md:109:Already self-host [agentmemory](https://github.com/rohitg00/agentmemory) across other coding agents? OpenHuman ships an optional `Memory` backend that proxies to it. Set `memory.backend = "agentmemory"` in `config.toml` and the same durable store powers OpenHuman alongside Claude Code, Cursor, Codex, and OpenCode. See the [agentmemory backend](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend) page for setup.
+<OPENHUMAN_ROOT>/README.md:113:Most agent harnesses run one agent in one loop. OpenHuman is an **[orchestrator](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**:
+<OPENHUMAN_ROOT>/README.md:116: <img src="./gitbooks/.gitbook/assets/orchestration.png" alt="OpenHuman orchestration diagram">
+<OPENHUMAN_ROOT>/README.md:119:> Agent-to-agent messaging runs over Signal-protocol end-to-end encryption, so you can connect anything (Claude Code, Codex, OpenClaw, Hermes) and use OpenHuman to orchestrate all of your agents and tools.
+<OPENHUMAN_ROOT>/README.md:127:Heavily inspired by n8n and Zapier, [workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows) bring the same visual, trigger-driven automation to your agent, except the agent builds them for you. Ask for an automation and it proposes one: a [tinyflows](https://github.com/tinyhumansai/tinyflows) graph you review on a visual canvas before saving.
+<OPENHUMAN_ROOT>/README.md:130: <img src="./gitbooks/.gitbook/assets/workflows.png" alt="OpenHuman workflow canvas">
+<OPENHUMAN_ROOT>/README.md:137:## OpenHuman vs Other Agent Harnesses
+<OPENHUMAN_ROOT>/README.md:139:High-level comparison (products evolve, so verify against each vendor). OpenHuman is built to **minimize vendor sprawl**, keep **workflow knowledge on-device**, and give the agent a **persistent memory** of your data, not only chat.
+<OPENHUMAN_ROOT>/README.md:141:|                        | Claude Cowork     | OpenClaw          | Hermes Agent      | OpenHuman                                                                                                |
+<OPENHUMAN_ROOT>/README.md:165:3. Use `pnpm dev` for web-only UI work, `pnpm --filter openhuman-app dev:app` for the desktop shell, and focused checks such as `pnpm typecheck`, `pnpm format:check`, and `cargo check -p openhuman --lib` before opening a PR.
+<OPENHUMAN_ROOT>/README.md:167:Deeper docs: [Architecture](https://tinyhumans.gitbook.io/openhuman/developing/architecture) · [Getting Set Up](https://tinyhumans.gitbook.io/openhuman/developing/getting-set-up) · [Cloud Deploy](./gitbooks/features/cloud-deploy.md).
+<OPENHUMAN_ROOT>/README.md:174: <a href="https://www.star-history.com/#tinyhumansai/openhuman&type=date&legend=top-left">
+<OPENHUMAN_ROOT>/README.md:176: <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&theme=dark&legend=top-left" />
+<OPENHUMAN_ROOT>/README.md:177: <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
+<OPENHUMAN_ROOT>/README.md:178: <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
+<OPENHUMAN_ROOT>/README.md:187:<a href="https://github.com/tinyhumansai/openhuman/graphs/contributors">
+<OPENHUMAN_ROOT>/README.md:188: <img src="https://contrib.rocks/image?repo=tinyhumansai/openhuman" alt="OpenHuman contributors" />
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:1:# Beginner's Guide to Contributing to OpenHuman
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:27:OpenHuman is a desktop AI assistant app. The codebase has three main parts:
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:251:1. Go to [github.com/tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman)
@@ -212,12 +362,6 @@
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:411:CLAUDE.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/CLAUDE.md
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:470:### Desktop build fails (`pnpm --filter openhuman-app dev:app`)
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:482:Thank you for contributing to OpenHuman!
-<OPENHUMAN_ROOT>/SECURITY.md:5:We provide security updates for the following versions of OpenHuman:
-<OPENHUMAN_ROOT>/SECURITY.md:13:We recommend always running the [latest release](https://github.com/tinyhumansai/openhuman/releases/latest). OpenHuman is in early beta; older versions may not receive patches.
-<OPENHUMAN_ROOT>/SECURITY.md:22:2. Email the maintainers with a clear description of the issue, steps to reproduce, and impact. You can reach us via the contact details listed in the [OpenHuman organization](https://github.com/openhumanxyz) or repository.
-<OPENHUMAN_ROOT>/SECURITY.md:41:Out-of-scope for this process: general bugs, feature requests, and issues in third-party services we integrate with (e.g., Telegram, Notion) unless they are specific to how OpenHuman uses them.
-<OPENHUMAN_ROOT>/SECURITY.md:53:Thank you for helping keep OpenHuman and its users safe.
-<OPENHUMAN_ROOT>/pnpm-workspace.yaml:5:  # a `postinstall` that downloads a pre-built openhuman binary from a GitHub
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:21:        let lock = crate::openhuman::config::TEST_ENV_LOCK
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:101:/// To run manually: `cargo test --lib -p openhuman -- --ignored
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:106:    let _signed_out_restore = crate::openhuman::scheduler_gate::SignedOutTestGuard::set(false);
@@ -289,57 +433,63 @@
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1267:    let err = invoke_method(default_state(), "openhuman.totally_made_up_xyz", json!({}))
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1416:        crate::openhuman::wallet::WALLET_NOT_CONFIGURED_MESSAGE
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1426:        crate::openhuman::wallet::WALLET_NOT_CONFIGURED_MESSAGE,
-<OPENHUMAN_ROOT>/Cargo.toml:2:name = "openhuman"
-<OPENHUMAN_ROOT>/Cargo.toml:5:description = "OpenHuman core business logic and RPC server"
-<OPENHUMAN_ROOT>/Cargo.toml:9:name = "openhuman-core"
-<OPENHUMAN_ROOT>/Cargo.toml:37:name = "openhuman_core"
-<OPENHUMAN_ROOT>/Cargo.toml:42:# to the vendored tiny.place submodule so OpenHuman can test SDK changes before
-<OPENHUMAN_ROOT>/Cargo.toml:47:# `src/openhuman/tinyflows/` + the `flows::` domain. Pulls tinyagents 1.7 transitively
-<OPENHUMAN_ROOT>/Cargo.toml:48:# (same version openhuman already uses — no conflict). Published on crates.io
-<OPENHUMAN_ROOT>/Cargo.toml:51:# TinyJuice — host-agnostic TokenJuice compression engine. OpenHuman keeps
-<OPENHUMAN_ROOT>/Cargo.toml:52:# config/RPC/tool/runtime adapters in `src/openhuman/tokenjuice/` and patches
-<OPENHUMAN_ROOT>/Cargo.toml:57:# `.rag` workflow language. openhuman's agent engine + orchestration run on this
-<OPENHUMAN_ROOT>/Cargo.toml:58:# crate's primitives via the adapter seam in `src/openhuman/tinyagents/` (issue
-<OPENHUMAN_ROOT>/Cargo.toml:61:# We wire openhuman's own Provider/Tool, not the removed bundled openai client.
-<OPENHUMAN_ROOT>/Cargo.toml:62:# The `sqlite` feature is enabled now that openhuman's direct rusqlite pin is
-<OPENHUMAN_ROOT>/Cargo.toml:67:# the `rlm` language-workflow tool (`src/openhuman/rlm/`).
-<OPENHUMAN_ROOT>/Cargo.toml:71:# below to `vendor/tinycortex`. OpenHuman's memory subsystem migrates onto this
-<OPENHUMAN_ROOT>/Cargo.toml:72:# crate through the adapter seam in `src/openhuman/tinycortex/` (mirroring the
-<OPENHUMAN_ROOT>/Cargo.toml:81:# the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
-<OPENHUMAN_ROOT>/Cargo.toml:181:# optimization); declared directly here so `openhuman` owns the
-<OPENHUMAN_ROOT>/Cargo.toml:226:# only by `openhuman::scheduler_gate::signals` to decide when to throttle
-<OPENHUMAN_ROOT>/Cargo.toml:266:# AppContainer / process-jail backend in `openhuman::cwd_jail`.
-<OPENHUMAN_ROOT>/Cargo.toml:339:# Exposes the destructive `openhuman.test_reset` RPC. Off by default; the E2E
-<OPENHUMAN_ROOT>/Cargo.toml:350:# See: https://github.com/tinyhumansai/openhuman/issues/273
-<OPENHUMAN_ROOT>/Cargo.toml:354:# migration work can change the SDK source in-tree, test it against OpenHuman
-<OPENHUMAN_ROOT>/Cargo.toml:360:# TinyAgents so integration work can test crate changes against OpenHuman before
-<OPENHUMAN_ROOT>/Cargo.toml:397:#     debuginfo, so panics/backtraces in OpenHuman code still resolve to
-<OPENHUMAN_ROOT>/package.json:2:  "name": "openhuman-repo",
-<OPENHUMAN_ROOT>/package.json:9:    "build": "pnpm --filter openhuman-app build",
-<OPENHUMAN_ROOT>/package.json:15:    "compile": "pnpm --filter openhuman-app compile",
-<OPENHUMAN_ROOT>/package.json:16:    "dev": "pnpm --filter openhuman-app dev",
-<OPENHUMAN_ROOT>/package.json:17:    "dev:app": "pnpm --filter openhuman-app dev:app",
-<OPENHUMAN_ROOT>/package.json:18:    "dev:app:win": "pnpm --filter openhuman-app dev:app:win",
-<OPENHUMAN_ROOT>/package.json:20:    "dev:cef": "pnpm --filter openhuman-app dev:cef",
-<OPENHUMAN_ROOT>/package.json:21:    "format": "pnpm --filter openhuman-app format",
-<OPENHUMAN_ROOT>/package.json:22:    "format:check": "pnpm --filter openhuman-app format:check",
-<OPENHUMAN_ROOT>/package.json:23:    "knip": "pnpm --filter openhuman-app knip",
-<OPENHUMAN_ROOT>/package.json:24:    "knip:production": "pnpm --filter openhuman-app knip:production",
-<OPENHUMAN_ROOT>/package.json:25:    "lint": "pnpm --filter openhuman-app lint",
-<OPENHUMAN_ROOT>/package.json:26:    "lint:fix": "pnpm --filter openhuman-app lint:fix",
-<OPENHUMAN_ROOT>/package.json:29:    "tauri": "pnpm --filter openhuman-app tauri",
-<OPENHUMAN_ROOT>/package.json:30:    "test": "pnpm --filter openhuman-app test",
-<OPENHUMAN_ROOT>/package.json:31:    "test:coverage": "pnpm --filter openhuman-app test:coverage",
-<OPENHUMAN_ROOT>/package.json:32:    "test:rust": "pnpm --filter openhuman-app test:rust",
-<OPENHUMAN_ROOT>/package.json:36:    "test:e2e": "pnpm --filter openhuman-app test:e2e:all",
-<OPENHUMAN_ROOT>/package.json:37:    "test:e2e:flows": "pnpm --filter openhuman-app test:e2e:all:flows",
-<OPENHUMAN_ROOT>/package.json:54:    "test:install-ps1": "pwsh -NoProfile -File scripts/tests/OpenHumanWindowsInstall.Tests.ps1",
-<OPENHUMAN_ROOT>/package.json:55:    "rust:check": "pnpm --filter openhuman-app rust:check",
-<OPENHUMAN_ROOT>/package.json:56:    "typecheck": "pnpm --filter openhuman-app compile",
-<OPENHUMAN_ROOT>/package.json:58:    "tauri:ios:dev": "pnpm --filter openhuman-app tauri:ios:dev",
-<OPENHUMAN_ROOT>/package.json:59:    "tauri:ios:build": "pnpm --filter openhuman-app tauri:ios:build",
-<OPENHUMAN_ROOT>/package.json:61:    "tauri:android:dev": "pnpm --filter openhuman-app tauri:android:dev",
-<OPENHUMAN_ROOT>/package.json:62:    "tauri:android:build": "pnpm --filter openhuman-app tauri:android:build",
+<OPENHUMAN_ROOT>/docs/README.ko.md:1:<h1 align="center">OpenHuman</h1>
+<OPENHUMAN_ROOT>/docs/README.ko.md:9:		<img src="https://trendshift.io/api/badge/repositories/23680" alt="tinyhumansai%2Fopenhuman | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+<OPENHUMAN_ROOT>/docs/README.ko.md:11:	<a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/docs/README.ko.md:12:		<img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1136902&amp;theme=light&amp;period=daily&amp;t=1778916022823">
+<OPENHUMAN_ROOT>/docs/README.ko.md:14:		<a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/docs/README.ko.md:15:			<img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;t=1779351403565">
+<OPENHUMAN_ROOT>/docs/README.ko.md:19: <a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-topic-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/docs/README.ko.md:20:  <img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;topic_id=268&amp;t=1779351808756">
+<OPENHUMAN_ROOT>/docs/README.ko.md:22:  <a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-topic-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/docs/README.ko.md:23:   <img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;topic_id=46&amp;t=1779351808756">
+<OPENHUMAN_ROOT>/docs/README.ko.md:28: <strong>OpenHuman은 당신의 개인용 AI 슈퍼 지능입니다: 모든 것을 기억하는 두뇌, 탁월한 오케스트레이터, 깊이 있는 리서처. 로컬 우선, 단순하고 강력합니다.</strong>
+<OPENHUMAN_ROOT>/docs/README.ko.md:35: <a href="https://tinyhumans.gitbook.io/openhuman/">문서</a> •
+<OPENHUMAN_ROOT>/docs/README.ko.md:45: <a href="https://github.com/tinyhumansai/openhuman/releases/latest"><img src="https://img.shields.io/github/v/release/tinyhumansai/openhuman?label=latest" alt="최신 릴리스" /></a>
+<OPENHUMAN_ROOT>/docs/README.ko.md:46: <a href="https://github.com/tinyhumansai/openhuman/stargazers"><img src="https://img.shields.io/github/stars/tinyhumansai/openhuman?style=flat" alt="GitHub Stars" /></a>
+<OPENHUMAN_ROOT>/docs/README.ko.md:47: <a href="../LICENSE"><img src="https://img.shields.io/github/license/tinyhumansai/openhuman" alt="라이선스" /></a>
+<OPENHUMAN_ROOT>/docs/README.ko.md:52:> 🎉 출시 후 일주일 만에 OpenHuman은 9일 연속 GitHub 트렌딩 저장소 1위에 올랐습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:56:[tinyhumans.ai/openhuman](https://tinyhumans.ai/openhuman?utm_source=github&utm_medium=readme) 또는 [GitHub Releases](https://github.com/tinyhumansai/openhuman/releases/latest) 페이지에서 설치 프로그램을 다운로드하세요.
+<OPENHUMAN_ROOT>/docs/README.ko.md:60:# OpenHuman이란 무엇인가요?
+<OPENHUMAN_ROOT>/docs/README.ko.md:62:OpenHuman은 대부분의 어시스턴트가 갖지 못한 세 가지입니다: 당신의 세계에 대한 지속적인 로컬 메모리를 구축하는 **두뇌**, 내구성 있는 그래프 위에서 에이전트 함대를 운영하는 **탁월한 오케스트레이터**, 그리고 질문을 끝내기도 전에 당신의 데이터와 웹을 훑는 **깊이 있는 리서처**. 각 글머리 기호는 [문서](https://tinyhumans.gitbook.io/openhuman/)의 더 깊은 설명으로 연결됩니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:66:- **[메모리 트리(Memory Tree)](https://tinyhumans.gitbook.io/openhuman/features/memory-tree) + [Obsidian 위키](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki)**: 당신의 데이터는 점수가 매겨진 Markdown 트리로 압축되어 당신의 머신에 있는 SQLite에 저장되고, 열어서 직접 편집할 수 있는 [Obsidian 볼트](https://x.com/karpathy/status/2039805659525644595)로 미러링됩니다. 벡터 수프 같은 블랙박스가 아닙니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:67:- **[100개 이상의 OAuth 통합, 5,000개 이상의 MCP 서버, 90,000개 이상의 Skills](https://tinyhumans.gitbook.io/openhuman/features/integrations)**: Gmail, Notion, GitHub, Slack 등 당신의 스택을 원클릭으로 연결하세요. [자동 가져오기(auto-fetch)](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/auto-fetch)가 20분마다 두뇌에 데이터를 공급합니다. 덕분에 오늘 아침에 이미 내일의 컨텍스트를 가지고 있습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:68:- **[잠재의식(subconscious)](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: 당신의 세계의 변화를 비교 분석하고, 목표를 진전시키고, 아침 브리핑을 작성하는 백그라운드 루프입니다. 타이핑을 멈춘 후에도 생각은 계속됩니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:69:- **[목표 및 할 일(Goals & Todos)](https://tinyhumans.gitbook.io/openhuman/features/goals-and-todos)**: 장기 목표, 스레드별 지속 목표, 그리고 대화별 공유 칸반 보드를 제공합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:70:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: 도구 출력은 모델에 닿기 전에 압축되어, 동일한 정보가 최대 80% 적은 토큰으로 전달됩니다. 이것 없이는 이만큼 큰 두뇌를 감당할 수 없을 것입니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:74:- **[Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows)**: 에이전트가 자동화를 제안하면 캔버스에서 검토하고 저장하면 됩니다. 내구성 있고, 트리거 기반이며, 승인 게이트를 거치는 실행이 오픈 소스 [tinyflows](https://github.com/tinyhumansai/tinyflows) 위에서 동작합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:75:- **[일을 끝까지 마무리하는 하네스](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: 오픈 소스 [tinyagents](https://github.com/tinyhumansai/tinyagents) 기반의 체크포인트 그래프 실행입니다. 막힌 에이전트는 방향을 조정받고, 중단된 에이전트는 근본 원인을 돌려주며, 모든 실행은 호출별 실제 비용과 함께 재생됩니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:76:- **[상시 가동되는 분할 두뇌(split brain)](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**: 빠른 반사 에이전트가 들어오는 트래픽을 분류하는 동안 깊은 추론 코어가 워커 함대에 작업을 위임하며, 잠재의식이 이를 조종합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:77:- **[에이전트 경제](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: [tiny.place](https://tiny.place)의 `@handle`, Signal로 암호화된 에이전트 간 오케스트레이션, x402 USDC 바운티와 거래까지 제공합니다. 키는 디스크에 절대 닿지 않습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:81:- **[SuperContext](https://tinyhumans.gitbook.io/openhuman/features/super-context)**: 모델이 첫 메시지를 읽기 전에 리서치 스카우트가 당신의 메모리와 파일을 훑습니다. 콜드 스타트가 없습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:82:- **모든 것이 포함됨(Batteries included)**: 웹 검색, 스크레이퍼, 코더 툴셋, 실제 [브라우저](https://tinyhumans.gitbook.io/openhuman/features/native-tools/browser-and-computer), 인프로세스 Whisper를 갖춘 [네이티브 음성](../gitbooks/features/native-tools/voice.md), 그리고 워크로드별로 적합한 LLM을 선택하는 [모델 라우팅](https://tinyhumans.gitbook.io/openhuman/features/model-routing)까지. 하나의 구독으로, [로컬 AI는 선택 사항](https://tinyhumans.gitbook.io/openhuman/features/model-routing/local-ai)입니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:83:- **[미팅 에이전트](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**: 얼굴과 목소리를 가지고 **Meet, Zoom, Teams, Webex**에 참여합니다. 캘린더에서 자동으로 참여하고, 실시간 자막을 스트리밍하며, 이름이 불리면 대답하고, 요약과 액션 아이템을 정리합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:84:- **[이미지 및 비디오 생성](https://tinyhumans.gitbook.io/openhuman/features/native-tools)**: Seedream/SeedEdit 이미지와 Seedance/Veo 비디오가 동일한 구독으로 워크스페이스에 바로 생성됩니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:85:- **[17개의 메시징 채널](https://tinyhumans.gitbook.io/openhuman/features/channels)**: Telegram, Discord, Slack, WhatsApp, Signal, iMessage… 그리고 **네이티브 이메일**(IMAP IDLE + SMTP)까지. 에이전트는 당신이 이미 있는 곳에서 당신에게 닿습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:89:- **단순함, UI 우선 및 인간 중심**: 설치 후 몇 번의 클릭만으로 작동하는 에이전트를 만날 수 있습니다. 설정 파일도, 터미널도 필요 없습니다. 그리고 [얼굴](https://tinyhumans.gitbook.io/openhuman/features/mascot)이 있습니다: 말하고, 반응하고, 당신을 기억하는 마스코트입니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:90:- **[개인 정보 보호 및 보안](https://tinyhumans.gitbook.io/openhuman/features/privacy-and-security)**: 기기 내 암호화된 데이터, 승인 게이트, OS 키링 시크릿, 선택적 샌드박싱, 그리고 **[Privacy Mode](https://tinyhumans.gitbook.io/openhuman/features/privacy-mode)**: 스위치 하나로 어떤 추론도 당신의 머신을 떠나지 않으며, Rust 코어에서 강제됩니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:91:- **[테마 및 Theme Studio](https://tinyhumans.gitbook.io/openhuman/features/theming)**: 5가지 테마 패밀리와 완전한 시각적 에디터, JSON으로 내보낼 수 있습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:95:OpenHuman은 몇 분 만에 당신을 알게 되는 최초의 에이전트 하네스입니다. [Karpathy의 LLM 지식 베이스](https://x.com/karpathy/status/2039805659525644595)에서 영감을 받았습니다. 대부분의 에이전트는 아무런 정보 없이 시작합니다. Hermes는 당신의 작업을 지켜보며 학습하고, OpenClaw는 플러그인이 컨텍스트를 가져오기를 기다립니다. 어느 쪽이든 에이전트가 당신의 스택에 대해 충분히 알고 정말 유용해지기까지는 며칠 또는 몇 주가 걸립니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:98: <img src="../gitbooks/.gitbook/assets/memory.png" alt="OpenHuman 컨텍스트 구축 다이어그램">
+<OPENHUMAN_ROOT>/docs/README.ko.md:101:> OpenHuman은 당신의 모든 문서, 이메일 및 채팅을 요약하고 압축합니다. 그리고 에이전트가 당신에 대한 모든 것을 기억할 수 있도록 메모리 그래프를 생성합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:103:OpenHuman은 기다림을 생략합니다. 계정을 연결하고, [자동 가져오기](https://tinyhumans.gitbook.io/openhuman/features/integrations/auto-fetch)가 20분 주기로 데이터를 로컬로 가져오게 한 다음, [메모리 트리](https://tinyhumans.gitbook.io/openhuman/features/memory-tree)가 모든 것을 [Karpathy 스타일의 Obsidian 위키](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki)에 지능적으로 저장된 Markdown 파일로 압축하게 하세요.
+<OPENHUMAN_ROOT>/docs/README.ko.md:107:이미 다른 코딩 에이전트에서 [agentmemory](https://github.com/rohitg00/agentmemory)를 자체 호스팅하고 있나요? OpenHuman은 이를 프록시하는 선택적 `Memory` 백엔드를 제공합니다. `config.toml`에서 `memory.backend = "agentmemory"`를 설정하면 동일한 내구성 있는 저장소가 Claude Code, Cursor, Codex, OpenCode와 함께 OpenHuman을 구동합니다. 설정 방법은 [agentmemory 백엔드](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend) 페이지를 참조하세요.
+<OPENHUMAN_ROOT>/docs/README.ko.md:111:대부분의 에이전트 하네스는 하나의 루프에서 하나의 에이전트를 실행합니다. OpenHuman은 **[오케스트레이터](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**입니다:
+<OPENHUMAN_ROOT>/docs/README.ko.md:114: <img src="../gitbooks/.gitbook/assets/orchestration.png" alt="OpenHuman 오케스트레이션 다이어그램">
+<OPENHUMAN_ROOT>/docs/README.ko.md:117:> 에이전트 간 메시징은 Signal 프로토콜 종단 간 암호화 위에서 동작하므로, Claude Code, Codex, OpenClaw, Hermes 등 무엇이든 연결하고 OpenHuman으로 모든 에이전트와 도구를 오케스트레이션할 수 있습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:125:n8n과 Zapier에서 깊은 영감을 받은 [워크플로우](https://tinyhumans.gitbook.io/openhuman/features/workflows)는 동일한 시각적, 트리거 기반 자동화를 에이전트에 가져옵니다. 다만 에이전트가 대신 만들어 준다는 점이 다릅니다. 자동화를 요청하면 에이전트가 하나를 제안합니다: 저장하기 전에 시각적 캔버스에서 검토하는 [tinyflows](https://github.com/tinyhumansai/tinyflows) 그래프입니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:128: <img src="../gitbooks/.gitbook/assets/workflows.png" alt="OpenHuman 워크플로우 캔버스">
+<OPENHUMAN_ROOT>/docs/README.ko.md:135:## OpenHuman vs 다른 에이전트 하네스
+<OPENHUMAN_ROOT>/docs/README.ko.md:137:상위 수준 비교(제품은 진화하므로 각 벤더에 확인하세요). OpenHuman은 **벤더 분산화(sprawl)를 최소화**하고, **워크플로우 지식을 기기에 유지**하며, 채팅뿐만 아니라 당신의 데이터에 대한 **지속적인 기억**을 에이전트에게 제공하도록 구축되었습니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:139:|                    | Claude Cowork     | OpenClaw          | Hermes Agent      | OpenHuman                                                                                            |
+<OPENHUMAN_ROOT>/docs/README.ko.md:163:3. 웹 전용 UI 작업에는 `pnpm dev`를, 데스크톱 쉘에는 `pnpm --filter openhuman-app dev:app`을 사용하고, PR을 열기 전에 `pnpm typecheck`, `pnpm format:check`, `cargo check -p openhuman --lib`와 같은 집중 점검을 수행합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:165:상세 문서: [아키텍처](https://tinyhumans.gitbook.io/openhuman/developing/architecture) · [설정하기](https://tinyhumans.gitbook.io/openhuman/developing/getting-set-up) · [클라우드 배포](../gitbooks/features/cloud-deploy.md).
+<OPENHUMAN_ROOT>/docs/README.ko.md:172: <a href="https://www.star-history.com/#tinyhumansai/openhuman&type=date&legend=top-left">
+<OPENHUMAN_ROOT>/docs/README.ko.md:174: <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&theme=dark&legend=top-left" />
+<OPENHUMAN_ROOT>/docs/README.ko.md:175: <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
+<OPENHUMAN_ROOT>/docs/README.ko.md:176: <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
+<OPENHUMAN_ROOT>/docs/README.ko.md:185:<a href="https://github.com/tinyhumansai/openhuman/graphs/contributors">
+<OPENHUMAN_ROOT>/docs/README.ko.md:186: <img src="https://contrib.rocks/image?repo=tinyhumansai/openhuman" alt="OpenHuman 기여자" />
 <OPENHUMAN_ROOT>/docker-compose.yml:1:# OpenHuman Core — Docker Compose for self-hosted cloud deploy.
 <OPENHUMAN_ROOT>/docker-compose.yml:3:# Brings up the headless Rust core (`openhuman-core`) on :7788, persists the
 <OPENHUMAN_ROOT>/docker-compose.yml:9:#      OPENHUMAN_CORE_TOKEN; the latter is required for any client that calls
@@ -348,153 +498,3 @@
 <OPENHUMAN_ROOT>/docker-compose.yml:22:    image: openhuman-core:local
 <OPENHUMAN_ROOT>/docker-compose.yml:23:    container_name: openhuman-core
 <OPENHUMAN_ROOT>/docker-compose.yml:33:      - "${OPENHUMAN_CORE_PORT:-7788}:7788"
-<OPENHUMAN_ROOT>/docker-compose.yml:41:      OPENHUMAN_CORE_HOST: 0.0.0.0
-<OPENHUMAN_ROOT>/docker-compose.yml:42:      OPENHUMAN_CORE_PORT: "7788"
-<OPENHUMAN_ROOT>/docker-compose.yml:43:      OPENHUMAN_WORKSPACE: /home/openhuman/.openhuman
-<OPENHUMAN_ROOT>/docker-compose.yml:44:      XDG_CACHE_HOME: /home/openhuman/.openhuman/cache
-<OPENHUMAN_ROOT>/docker-compose.yml:48:      - openhuman-workspace:/home/openhuman/.openhuman
-<OPENHUMAN_ROOT>/docker-compose.yml:49:    mem_limit: ${OPENHUMAN_CORE_MEM_LIMIT:-4g}
-<OPENHUMAN_ROOT>/docker-compose.yml:50:    cpus: ${OPENHUMAN_CORE_CPUS:-2.0}
-<OPENHUMAN_ROOT>/docker-compose.yml:59:  openhuman-workspace:
-<OPENHUMAN_ROOT>/docker-compose.yml:60:    name: openhuman-workspace
-<OPENHUMAN_ROOT>/e2e/docker-compose.yml:6:#   - same image: ghcr.io/tinyhumansai/openhuman_ci:latest
-<OPENHUMAN_ROOT>/e2e/docker-compose.yml:14:#     bash -lc "pnpm install --frozen-lockfile && pnpm --filter openhuman-app test:e2e:build"
-<OPENHUMAN_ROOT>/e2e/docker-compose.yml:33:    image: ${OPENHUMAN_CI_IMAGE:-ghcr.io/tinyhumansai/openhuman_ci:latest}
-<OPENHUMAN_ROOT>/e2e/docker-compose.yml:88:    image: ${OPENHUMAN_CI_IMAGE:-ghcr.io/tinyhumansai/openhuman_ci:latest}
-<OPENHUMAN_ROOT>/src/core/types.rs:86:    /// The name of the method to be invoked (e.g., `openhuman.memory_doc_put`).
-<OPENHUMAN_ROOT>/src/core/types.rs:140:    /// The current version of the OpenHuman core binary, usually from `CARGO_PKG_VERSION`.
-<OPENHUMAN_ROOT>/src/core/types.rs:154:/// - [`HostKind::Cli`] — `openhuman-core` standalone binary spawned by an
-<OPENHUMAN_ROOT>/src/core/types.rs:163:/// `OPENHUMAN_DOCKER=1`). Tauri-shell callers MUST pass `TauriShell`
-<OPENHUMAN_ROOT>/src/core/types.rs:179:        if std::env::var("OPENHUMAN_DOCKER")
-<OPENHUMAN_ROOT>/src/core/types.rs:194:    /// gate to decide whether the `OPENHUMAN_APPROVAL_GATE=0` env override
-<OPENHUMAN_ROOT>/src/core/types.rs:213:/// Takes the host kind and whether an `OPENHUMAN_APPROVAL_GATE=0` env
-<OPENHUMAN_ROOT>/src/core/types.rs:388:        // Operator sets OPENHUMAN_APPROVAL_GATE=0 inside a Tauri-shell
-<OPENHUMAN_ROOT>/src/core/auth.rs:16://!    [`init_rpc_token`] reads `OPENHUMAN_CORE_TOKEN` from the environment.
-<OPENHUMAN_ROOT>/src/core/auth.rs:56://!   `openhuman::inference::http::EXTERNAL_OPENAI_COMPAT_PROVIDER`.
-<OPENHUMAN_ROOT>/src/core/auth.rs:71:use crate::openhuman::config::Config;
-<OPENHUMAN_ROOT>/src/core/auth.rs:72:use crate::openhuman::credentials::AuthService;
-<OPENHUMAN_ROOT>/src/core/auth.rs:73:use crate::openhuman::inference::http::EXTERNAL_OPENAI_COMPAT_PROVIDER;
-<OPENHUMAN_ROOT>/src/core/auth.rs:99:    // AgentBox marketplace surface — see `openhuman::agentbox::http`.
-<OPENHUMAN_ROOT>/src/core/auth.rs:100:    // Mounted only when `OPENHUMAN_AGENTBOX_MODE=1`; the public-path entry is
-<OPENHUMAN_ROOT>/src/core/auth.rs:149:/// `OPENHUMAN_CORE_TOKEN` remains the canonical configuration surface for
-<OPENHUMAN_ROOT>/src/core/auth.rs:152:/// file, or a developer running `openhuman-core serve` from a shell with the
-<OPENHUMAN_ROOT>/src/core/auth.rs:160:pub const CORE_TOKEN_ENV_VAR: &str = "OPENHUMAN_CORE_TOKEN";
-<OPENHUMAN_ROOT>/src/core/auth.rs:167:/// `OPENHUMAN_CORE_TOKEN`. This function is the bootstrap path for
-<OPENHUMAN_ROOT>/src/core/auth.rs:171:/// `OPENHUMAN_CORE_TOKEN` is set in the process environment (typically by
-<OPENHUMAN_ROOT>/src/core/auth.rs:196:    // OPENHUMAN_CORE_TOKEN. Used by Docker / cloud / systemd / a developer
-<OPENHUMAN_ROOT>/src/core/auth.rs:197:    // running `openhuman-core serve` from a pre-configured shell. Desktop
-<OPENHUMAN_ROOT>/src/core/auth.rs:225:/// without round-tripping through `OPENHUMAN_CORE_TOKEN` in the process
-<OPENHUMAN_ROOT>/src/core/auth.rs:605:        // by `OPENHUMAN_AGENTBOX_MODE` at router-build time).
-<OPENHUMAN_ROOT>/plan.md:3:Multi-agent audit of the OpenHuman test surface (2,367 files / ~25,900 test declarations per
-<OPENHUMAN_ROOT>/plan.md:15:   `src/openhuman/security/policy/command_checks.rs` + `path_checks.rs` (the documented
-<OPENHUMAN_ROOT>/plan.md:17:   and `src/openhuman/encryption/core.rs` (Argon2id + AES-256-GCM primitives) have **zero unit
-<OPENHUMAN_ROOT>/plan.md:52:| ✅ | `src/openhuman/agent/harness/harness_gap_tests.rs` | `datetime_section_is_static_grounding_rule_not_a_volatile_timestamp` | Strict subset of `agent/prompts/mod_tests.rs::datetime_section_is_static_grounding_rule_without_volatile_timestamp`; the file's own header lists item 6 as covered elsewhere. |
-<OPENHUMAN_ROOT>/plan.md:55:| ✅ | `src/openhuman/routing/factory.rs` | `factory_constructs_without_panic_when_runtime_enabled`, `factory_llamacpp_provider_constructs_without_panic`, `factory_custom_openai_provider_constructs_without_panic`, `factory_lm_studio_provider_constructs_without_panic` | Skeptic traced the whole construction path — provably infallible (pure struct init), so the tests cannot fail. One test's comment claims to verify probe-URL selection but the body asserts nothing; fields are private so strengthening is blocked. |
-<OPENHUMAN_ROOT>/plan.md:58:| ⚠️ | `src/openhuman/threads/ops_tests.rs` | `sanitize_generated_title_*`, `collapse_whitespace_*`, `title_log_fingerprint_*`, `title_from_user_message_*` | `threads/title.rs` inline tests already cover the same functions with equivalent cases. Keep the copies in `title.rs` (the owning module). |
-<OPENHUMAN_ROOT>/plan.md:59:| ⚠️ | `src/openhuman/channels/providers/whatsapp_tests.rs` | 7 × `whatsapp_parse_<type>_message_skipped` | All hit the identical `type != "text" → continue` branch; collapse to one parameterized loop over the type strings. |
-<OPENHUMAN_ROOT>/plan.md:60:| ⚠️ | `src/openhuman/routing/telemetry.rs` | `emit_does_not_panic` ×3 variants | Fire-and-forget calls with no assertion. |
-<OPENHUMAN_ROOT>/plan.md:78:| `src/openhuman/memory/schema_tests.rs` | registry-sync + unknown-fn tests | **False duplicate.** `memory/schema/` (singular, `memory_tree` namespace) and `memory/schemas/` (plural, `memory` namespace) are two distinct live registries with disjoint function sets. These are the *only* parity/unknown-fn guards for the `memory_tree` controller surface. |
-<OPENHUMAN_ROOT>/plan.md:79:| `src/openhuman/channels/providers/qq_tests.rs` | `test_name` | Sole coverage of `QQChannel::name()`, which keys routing (`routes.rs:345`) and the channel map (`runtime/startup.rs:701`). A rename would ship uncaught. |
-<OPENHUMAN_ROOT>/plan.md:80:| `src/openhuman/provider_surfaces/schemas.rs` | `all_schemas_returns_two` etc. | Weak but the only guard that the registration lists are populated. **Improve** (see §3), don't delete. |
-<OPENHUMAN_ROOT>/plan.md:91:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::grounding_contract_requires_exact_numeric_evidence` | Pins 5 verbatim prose substrings of the grounding contract — breaks on any copywriting pass. | Behavioral guarantee ("contract appended on every build path") already covered by the marker-based test; convert this to a single explicitly-labeled wording-lock, or assert stable structural markers. |
-<OPENHUMAN_ROOT>/plan.md:92:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::identity_section_creates_missing_workspace_files` | Also string-matches SOUL.md brand-voice prose (`"Don't validate FUD"`). | Split: (a) files created + seeded from the checked-in template (compare against template file content); (b) a narrow, labeled brand-voice lock if the phrase must stay pinned. |
-<OPENHUMAN_ROOT>/plan.md:94:| ✅ | `src/openhuman/hooks/../useDaemonLifecycle.test.ts` (`app/src/hooks/__tests__/`) | Pins exact `console.log` strings as an effect-rerun proxy. Listener-count assertions are legit — keep them. | Drop the log-text pinning; keep listener/startDaemon observable assertions. |
-<OPENHUMAN_ROOT>/plan.md:95:| ✅ | `src/openhuman/provider_surfaces/schemas.rs::all_schemas_returns_two` / `all_controllers_returns_two` | Magic-number count breaks on any legitimate 3rd controller. | Replace with `schemas().len() == controllers().len()` parity + presence of a known op (`list_queue`). Standardize this as a shared `assert_schema_controller_parity()` helper — the `== N` pattern repeats across ~15 domains. |
-<OPENHUMAN_ROOT>/plan.md:201:   Windows-install test (`OpenHumanWindowsInstall.Tests.ps1`). The mock server's socket-auth
-<OPENHUMAN_ROOT>/Dockerfile:2:# OpenHuman Core — multi-stage Docker build
-<OPENHUMAN_ROOT>/Dockerfile:3:# Produces a minimal image running the `openhuman-core` binary (JSON-RPC server).
-<OPENHUMAN_ROOT>/Dockerfile:5:# Build:   docker build -t openhuman-core .
-<OPENHUMAN_ROOT>/Dockerfile:6:# Run:     docker run -p 7788:7788 --env-file .env openhuman-core
-<OPENHUMAN_ROOT>/Dockerfile:57:    cargo build --profile "${CARGO_PROFILE}" --bin openhuman-core 2>/dev/null || true && \
-<OPENHUMAN_ROOT>/Dockerfile:64:    cargo build --profile "${CARGO_PROFILE}" --bin openhuman-core && \
-<OPENHUMAN_ROOT>/Dockerfile:65:    cp "target/${CARGO_PROFILE}/openhuman-core" /tmp/openhuman-core
-<OPENHUMAN_ROOT>/Dockerfile:88:RUN groupadd --gid 10001 openhuman \
-<OPENHUMAN_ROOT>/Dockerfile:89: && useradd --uid 10001 --gid 10001 --create-home --shell /bin/bash openhuman
-<OPENHUMAN_ROOT>/Dockerfile:94:ENV HOME=/home/openhuman
-<OPENHUMAN_ROOT>/Dockerfile:95:RUN mkdir -p /home/openhuman/.openhuman \
-<OPENHUMAN_ROOT>/Dockerfile:96: && chown -R openhuman:openhuman /home/openhuman
-<OPENHUMAN_ROOT>/Dockerfile:99:COPY --from=builder /tmp/openhuman-core /usr/local/bin/openhuman-core
-<OPENHUMAN_ROOT>/Dockerfile:112:# gosu to drop to the openhuman user before starting the binary.
-<OPENHUMAN_ROOT>/Dockerfile:116:ENV OPENHUMAN_WORKSPACE=/home/openhuman/.openhuman
-<OPENHUMAN_ROOT>/Dockerfile:118:ENV OPENHUMAN_CORE_HOST=0.0.0.0
-<OPENHUMAN_ROOT>/Dockerfile:119:ENV OPENHUMAN_CORE_PORT=7788
-<OPENHUMAN_ROOT>/Dockerfile:123:ENV OPENHUMAN_AGENTBOX_MODE=0
-<OPENHUMAN_ROOT>/e2e/run-local.sh:30:    "${RUN[@]}" bash -lc "pnpm --filter openhuman-app test:e2e:build"
-<OPENHUMAN_ROOT>/e2e/run-local.sh:51:    "${RUN[@]}" bash -lc "pnpm --filter openhuman-app test:e2e:build"
-<OPENHUMAN_ROOT>/e2e/docker-local-bootstrap.sh:5:# The CI image (`ghcr.io/tinyhumansai/openhuman_ci:latest`) intentionally
-<OPENHUMAN_ROOT>/e2e/docker-local-bootstrap.sh:97:# repo (e.g. `../secrets/openhuman/.env`). Inside this container only
-<OPENHUMAN_ROOT>/e2e/docker-local-bootstrap.sh:111:  # source via OPENHUMAN_DOTENV_FILE / VITE handles env loading itself.
-<OPENHUMAN_ROOT>/e2e/docker-local-bootstrap.sh:113:  stub="${HOME}/openhuman-e2e-$(echo "$target" | tr '/' '_').env"
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:20://! [`crate::openhuman::agent::bus::mock_agent_run_turn`]) compose on top of
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:24://! Tests in **any** module of `openhuman_core` can `use
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:61:/// [`crate::openhuman::agent::bus::use_real_agent_handler`] that need the
-<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:110:/// [`crate::openhuman::agent::bus::mock_agent_run_turn`]) should compose
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:1:OpenHuman for iPhone is the mobile companion for the OpenHuman desktop app.
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:3:Pair your phone with OpenHuman on your computer, then keep the conversation going from your pocket. Ask questions, send quick voice notes, and stay connected to the same assistant that understands your desktop context, memory, and connected tools.
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:7:- Pair securely with your OpenHuman desktop app by scanning a QR code
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:13:OpenHuman is built for people who want an AI assistant that can remember, reason, and work with the tools they already use. The iPhone app is intentionally lightweight: it is a remote control and conversation surface for your desktop OpenHuman runtime.
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:19:- Your long-term workspace, memory, and integration state remain managed by your OpenHuman desktop setup
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:25:- OpenHuman desktop app
-<OPENHUMAN_ROOT>/fastlane/metadata/en-US/description.txt:29:OpenHuman is in active development. Feedback is welcome through the OpenHuman support and community channels.
-<OPENHUMAN_ROOT>/e2e/docker-entrypoint.sh:46:# Run the provided command (default: yarn workspace openhuman-app test:e2e:all)
-<OPENHUMAN_ROOT>/src/core/all.rs:1://! Registry and dispatch logic for all OpenHuman controllers.
-<OPENHUMAN_ROOT>/src/core/all.rs:43:    /// Returns the canonical RPC method name for this controller (e.g., `openhuman.memory_doc_put`).
-<OPENHUMAN_ROOT>/src/core/all.rs:92:            handler: crate::openhuman::voice::cli::run_standalone_subcommand,
-<OPENHUMAN_ROOT>/src/core/all.rs:108:    controllers.extend(crate::openhuman::about_app::all_about_app_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:110:    controllers.extend(crate::openhuman::agentbox::all_agentbox_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:112:    controllers.extend(crate::openhuman::app_state::all_app_state_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:114:    controllers.extend(crate::openhuman::audio_toolkit::all_audio_toolkit_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:116:    controllers.extend(crate::openhuman::composio::all_composio_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:119:        .extend(crate::openhuman::recall_calendar::all_recall_calendar_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:121:    controllers.extend(crate::openhuman::cron::all_cron_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:123:    controllers.extend(crate::openhuman::flows::all_flows_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:125:    controllers.extend(crate::openhuman::task_sources::all_task_sources_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:126:    controllers.extend(crate::openhuman::dashboard::all_dashboard_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:128:    controllers.extend(crate::openhuman::mcp_registry::all_mcp_registry_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:131:    controllers.extend(crate::openhuman::webview_apis::all_webview_apis_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:133:    controllers.extend(crate::openhuman::agent::all_agent_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:137:        .extend(crate::openhuman::tinyagents::replay::all_agent_replay_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:139:    controllers.extend(crate::openhuman::profiles::all_profiles_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:142:        .extend(crate::openhuman::agent_registry::all_agent_registry_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:145:        .extend(crate::openhuman::agent_experience::all_agent_experience_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:147:    controllers.extend(crate::openhuman::health::all_health_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:149:    controllers.extend(crate::openhuman::harness_init::all_harness_init_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:151:    controllers.extend(crate::openhuman::doctor::all_doctor_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:153:    controllers.extend(crate::openhuman::encryption::all_encryption_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:156:        .extend(crate::openhuman::keyring_consent::all_keyring_consent_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:158:    controllers.extend(crate::openhuman::security::all_security_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:160:    controllers.extend(crate::openhuman::approval::all_approval_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:162:    controllers.extend(crate::openhuman::plan_review::all_plan_review_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:164:    controllers.extend(crate::openhuman::artifacts::all_artifacts_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:166:    controllers.extend(crate::openhuman::heartbeat::all_heartbeat_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:168:    controllers.extend(crate::openhuman::http_host::all_http_host_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:170:    controllers.extend(crate::openhuman::cost::all_cost_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:172:    controllers.extend(crate::openhuman::x402::all_x402_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:174:    controllers.extend(crate::openhuman::autocomplete::all_autocomplete_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:177:        crate::openhuman::channels::providers::web::all_web_channel_registered_controllers(),
-<OPENHUMAN_ROOT>/src/core/all.rs:180:        .extend(crate::openhuman::channels::controllers::all_channels_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:182:    controllers.extend(crate::openhuman::config::all_config_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:184:    controllers.extend(crate::openhuman::connectivity::all_connectivity_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:186:    controllers.extend(crate::openhuman::credentials::all_credentials_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:188:    controllers.extend(crate::openhuman::service::all_service_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:190:    controllers.extend(crate::openhuman::migration::all_migration_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:193:        .extend(crate::openhuman::council_registry::all_council_registry_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:195:    controllers.extend(crate::openhuman::model_council::all_model_council_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:197:    controllers.extend(crate::openhuman::monitor::all_monitor_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:200:    controllers.extend(crate::openhuman::inference::all_inference_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:201:    controllers.extend(crate::openhuman::inference::all_local_inference_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:203:    controllers.extend(crate::openhuman::embeddings::all_embeddings_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:205:    controllers.extend(crate::openhuman::people::all_people_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:208:        crate::openhuman::screen_intelligence::all_screen_intelligence_registered_controllers(),
-<OPENHUMAN_ROOT>/src/core/all.rs:211:    controllers.extend(crate::openhuman::sandbox::all_sandbox_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:213:    controllers.extend(crate::openhuman::socket::all_socket_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:215:    controllers.extend(crate::openhuman::javascript::all_javascript_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:217:    controllers.extend(crate::openhuman::workflows::all_workflows_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:219:    controllers.extend(crate::openhuman::skill_runtime::all_skill_runtime_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:222:        .extend(crate::openhuman::skill_registry::all_skill_registry_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:224:    controllers.extend(crate::openhuman::workspace::all_workspace_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:226:    controllers.extend(crate::openhuman::tools::all_tools_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:228:    controllers.extend(crate::openhuman::tool_registry::all_tool_registry_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:230:    controllers.extend(crate::openhuman::memory::all_memory_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:232:    controllers.extend(crate::openhuman::memory_goals::all_memory_goals_registered_controllers());
-<OPENHUMAN_ROOT>/src/core/all.rs:234:    controllers.extend(crate::openhuman::thread_goals::all_thread_goals_registered_controllers());

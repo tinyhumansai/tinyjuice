@@ -98,6 +98,7 @@ fn input_artifact_name(doc_dir: &str) -> &'static str {
 
 fn output_artifact_name(doc_dir: &str) -> &'static str {
     match category_name(doc_dir) {
+        "json-smartcrusher" => "output.md",
         "test-failure-log" => "output.log",
         "service-log" => "output.log",
         "search-results" => "output.rg",
