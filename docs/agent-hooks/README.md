@@ -2,10 +2,13 @@
 
 TinyJuice currently ships first-class hook installers for Codex and Claude Code.
 
-| Logo | Client | Install | Update | Uninstall |
-| --- | --- | --- | --- | --- |
-| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` | `tinyjuice update codex` | `tinyjuice uninstall codex` |
-| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` | `tinyjuice update claude-code` | `tinyjuice uninstall claude-code` |
+| Logo | Client | Install |
+| --- | --- | --- |
+| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` |
+| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` |
+
+Use `tinyjuice update <host>` to refresh an installed hook and
+`tinyjuice uninstall <host>` to remove it.
 
 ## Install The CLI
 
