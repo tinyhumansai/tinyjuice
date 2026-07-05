@@ -127,9 +127,7 @@ pub fn compress_heuristic(
         }
 
         let decl_opener = !was_in_comment && opens > closes && is_decl_opener_line(t);
-        let keep = start_depth == 0
-            || decl_opener
-            || (enclosing_container && is_member_line(t));
+        let keep = start_depth == 0 || decl_opener || (enclosing_container && is_member_line(t));
 
         if keep {
             emit_body(
@@ -284,7 +282,9 @@ fn brace_open_only(t: &str) -> bool {
 
 /// A line that is only closing punctuation: `}`, `};`, `},`, `})`, `});` …
 fn brace_close_only(t: &str) -> bool {
-    t.starts_with('}') && t.chars().all(|c| matches!(c, '}' | ';' | ',' | ')' | ' ' | '\t'))
+    t.starts_with('}')
+        && t.chars()
+            .all(|c| matches!(c, '}' | ';' | ',' | ')' | ' ' | '\t'))
 }
 
 /// Keywords that introduce a *container* whose members we keep visible.
@@ -858,7 +858,11 @@ mod tests {
             src.push_str(&format!("pub const K_{i}: i32 = {i};\n"));
         }
         let out = compress_heuristic(&src, false, None).expect("compresses");
-        assert!(out.text.contains("let head_a = items.len();"), "{}", out.text);
+        assert!(
+            out.text.contains("let head_a = items.len();"),
+            "{}",
+            out.text
+        );
         assert!(
             out.text.contains("let head_b = items.first"),
             "second head line kept: {}",
@@ -1088,8 +1092,16 @@ mod tests {
         src.push_str("    c_0\n}\n");
         let out = compress_heuristic(&src, false, Some("checksum")).expect("compresses");
         // The queried function stays open; the unrelated one collapses.
-        assert!(out.text.contains("let c_10"), "queried body kept: {}", out.text);
-        assert!(!out.text.contains("u_10"), "other body collapsed: {}", out.text);
+        assert!(
+            out.text.contains("let c_10"),
+            "queried body kept: {}",
+            out.text
+        );
+        assert!(
+            !out.text.contains("u_10"),
+            "other body collapsed: {}",
+            out.text
+        );
     }
 
     /// An error-handling dense body is kept even though it is long.
@@ -1139,7 +1151,11 @@ mod tests {
             assert!(o.text.len() < src.len(), "must never inflate: {}", o.text);
             // The one-line method bodies must not have been swapped for a
             // longer marker.
-            assert!(!o.text.contains("{ … "), "tiny bodies untouched: {}", o.text);
+            assert!(
+                !o.text.contains("{ … "),
+                "tiny bodies untouched: {}",
+                o.text
+            );
         }
     }
 
@@ -1165,7 +1181,8 @@ mod tests {
         let out = compress_heuristic(&src, false, None).expect("compresses");
         assert!(out.text.contains("class Repository"), "{}", out.text);
         assert!(
-            out.text.contains("public function findById(int $id): ?Record"),
+            out.text
+                .contains("public function findById(int $id): ?Record"),
             "method signature kept: {}",
             out.text
         );
@@ -1174,8 +1191,16 @@ mod tests {
             "method signature kept: {}",
             out.text
         );
-        assert!(out.text.contains("private ?Connection $conn;"), "field kept: {}", out.text);
-        assert!(out.text.contains("Find a record by id"), "phpdoc kept: {}", out.text);
+        assert!(
+            out.text.contains("private ?Connection $conn;"),
+            "field kept: {}",
+            out.text
+        );
+        assert!(
+            out.text.contains("Find a record by id"),
+            "phpdoc kept: {}",
+            out.text
+        );
         // Long bodies collapsed.
         assert!(!out.text.contains("step_10"), "{}", out.text);
         // Class must not have been reduced to a lone marker.
@@ -1204,7 +1229,11 @@ mod tests {
             "constructor body kept: {}",
             out.text
         );
-        assert!(!out.text.contains("$d_10"), "long body collapsed: {}", out.text);
+        assert!(
+            !out.text.contains("$d_10"),
+            "long body collapsed: {}",
+            out.text
+        );
     }
 
     /// Java class with Javadoc: class + method signatures + Javadoc survive.
@@ -1226,9 +1255,14 @@ mod tests {
         }
         src.push_str("        return null;\n    }\n}\n");
         let out = compress_heuristic(&src, false, None).expect("compresses");
-        assert!(out.text.contains("public final class Registry"), "{}", out.text);
         assert!(
-            out.text.contains("public void register(String name, Widget w)"),
+            out.text.contains("public final class Registry"),
+            "{}",
+            out.text
+        );
+        assert!(
+            out.text
+                .contains("public void register(String name, Widget w)"),
             "method signature kept: {}",
             out.text
         );
@@ -1237,9 +1271,21 @@ mod tests {
             "method signature kept: {}",
             out.text
         );
-        assert!(out.text.contains("Register a widget under a name"), "javadoc kept: {}", out.text);
-        assert!(out.text.contains("private final Map<String, Widget> items"), "field kept: {}", out.text);
-        assert!(!out.text.contains("candidate_10"), "body collapsed: {}", out.text);
+        assert!(
+            out.text.contains("Register a widget under a name"),
+            "javadoc kept: {}",
+            out.text
+        );
+        assert!(
+            out.text.contains("private final Map<String, Widget> items"),
+            "field kept: {}",
+            out.text
+        );
+        assert!(
+            !out.text.contains("candidate_10"),
+            "body collapsed: {}",
+            out.text
+        );
     }
 
     /// C# namespace + class: members inside the nested container stay visible
@@ -1271,7 +1317,11 @@ mod tests {
             "method signature kept: {}",
             out.text
         );
-        assert!(out.text.contains("private readonly ILogger _log;"), "field kept: {}", out.text);
+        assert!(
+            out.text.contains("private readonly ILogger _log;"),
+            "field kept: {}",
+            out.text
+        );
         assert!(!out.text.contains("v_10"), "body collapsed: {}", out.text);
     }
 
@@ -1328,15 +1378,27 @@ mod tests {
 
     #[test]
     fn fn_name_extracts_across_languages() {
-        assert_eq!(fn_name("pub fn process(items: &[i32]) -> i32 {").as_deref(), Some("process"));
+        assert_eq!(
+            fn_name("pub fn process(items: &[i32]) -> i32 {").as_deref(),
+            Some("process")
+        );
         assert_eq!(fn_name("def handler(event):").as_deref(), Some("handler"));
         assert_eq!(
             fn_name("public function getRoot(): ?AVLTreeNode").as_deref(),
             Some("getRoot")
         );
-        assert_eq!(fn_name("public void doThing(int x) {").as_deref(), Some("doThing"));
-        assert_eq!(fn_name("func (r *Repo) Save(x int) error {").as_deref(), Some("Save"));
-        assert_eq!(fn_name("func Serve(addr string) {").as_deref(), Some("Serve"));
+        assert_eq!(
+            fn_name("public void doThing(int x) {").as_deref(),
+            Some("doThing")
+        );
+        assert_eq!(
+            fn_name("func (r *Repo) Save(x int) error {").as_deref(),
+            Some("Save")
+        );
+        assert_eq!(
+            fn_name("func Serve(addr string) {").as_deref(),
+            Some("Serve")
+        );
     }
 
     #[test]

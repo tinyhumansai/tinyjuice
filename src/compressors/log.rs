@@ -311,7 +311,13 @@ fn collapse_by_template(
 /// makes the region recoverable — optionally preceded by template summaries
 /// when the region is dominated by a few repeating templates. Returns whether a
 /// retrieval token was emitted.
-fn emit_gap(out: &mut String, lines: &[&str], start: usize, end: usize, block_tokens: bool) -> bool {
+fn emit_gap(
+    out: &mut String,
+    lines: &[&str],
+    start: usize,
+    end: usize,
+    block_tokens: bool,
+) -> bool {
     let len = end - start;
     if len <= MIN_GAP {
         for line in &lines[start..end] {
@@ -486,13 +492,22 @@ mod tests {
             let _ = writeln!(s, "081109 20{i:04} 12 INFO worker: handled request {i} ok");
         }
         for i in 0..5 {
-            let _ = writeln!(s, "081110 00{i:04} 12 ERROR disk: write to /dev/sda{i} failed");
+            let _ = writeln!(
+                s,
+                "081110 00{i:04} 12 ERROR disk: write to /dev/sda{i} failed"
+            );
         }
         for i in 0..5 {
-            let _ = writeln!(s, "081110 01{i:04} 12 ERROR net: connection to host_{i} refused");
+            let _ = writeln!(
+                s,
+                "081110 01{i:04} 12 ERROR net: connection to host_{i} refused"
+            );
         }
         for i in 0..5 {
-            let _ = writeln!(s, "081110 02{i:04} 12 ERROR auth: token for user_{i} expired");
+            let _ = writeln!(
+                s,
+                "081110 02{i:04} 12 ERROR auth: token for user_{i} expired"
+            );
         }
         let out = compress_signal(&s, false).expect("compresses").text;
         assert!(out.contains("write to /dev/sda"), "disk error kept: {out}");
@@ -543,8 +558,14 @@ mod tests {
         }
         let out = compress_signal(&s, false).expect("compresses").text;
         assert!(out.contains("handshake rejected"), "error kept: {out}");
-        assert!(out.contains("before-1 sending handshake"), "ctx-1 before: {out}");
-        assert!(out.contains("before-2 opening connection"), "ctx-2 before: {out}");
+        assert!(
+            out.contains("before-1 sending handshake"),
+            "ctx-1 before: {out}"
+        );
+        assert!(
+            out.contains("before-2 opening connection"),
+            "ctx-2 before: {out}"
+        );
         assert!(out.contains("after-1 closing socket"), "ctx-1 after: {out}");
         assert!(out.contains("after-2 cleaning up"), "ctx-2 after: {out}");
     }
@@ -607,7 +628,10 @@ mod tests {
         // Every omitted region is recoverable through its marker token.
         let mut s = String::new();
         for i in 0..300 {
-            let _ = writeln!(s, "081109 20{i:04} 12 INFO dfs.DataNode: block blk_{i} stored ok");
+            let _ = writeln!(
+                s,
+                "081109 20{i:04} 12 INFO dfs.DataNode: block blk_{i} stored ok"
+            );
         }
         let _ = writeln!(s, "081110 000000 12 ERROR fatal corruption detected");
         let out = compress_signal(&s, true).expect("compresses");

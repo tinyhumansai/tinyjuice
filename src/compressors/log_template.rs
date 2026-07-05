@@ -266,8 +266,7 @@ fn replace_digit_runs(s: &str) -> String {
     let mut i = 0;
     while i < chars.len() {
         let c = chars[i];
-        let signed =
-            matches!(c, '-' | '+') && i + 1 < chars.len() && chars[i + 1].is_ascii_digit();
+        let signed = matches!(c, '-' | '+') && i + 1 < chars.len() && chars[i + 1].is_ascii_digit();
         if c.is_ascii_digit() || signed {
             if signed {
                 i += 1;
@@ -307,7 +306,10 @@ fn is_uuid(s: &str) -> bool {
 }
 
 fn is_hexish(s: &str) -> bool {
-    let s = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")).unwrap_or(s);
+    let s = s
+        .strip_prefix("0x")
+        .or_else(|| s.strip_prefix("0X"))
+        .unwrap_or(s);
     s.len() >= 8
         && s.bytes().any(|b| b.is_ascii_digit())
         && s.bytes().any(|b| b.is_ascii_alphabetic())
@@ -362,7 +364,17 @@ fn is_digits(s: &str, len: usize) -> bool {
 fn is_month(s: &str) -> bool {
     matches!(
         s,
-        "Jan" | "Feb" | "Mar" | "Apr" | "May" | "Jun" | "Jul" | "Aug" | "Sep" | "Oct" | "Nov"
+        "Jan"
+            | "Feb"
+            | "Mar"
+            | "Apr"
+            | "May"
+            | "Jun"
+            | "Jul"
+            | "Aug"
+            | "Sep"
+            | "Oct"
+            | "Nov"
             | "Dec"
     )
 }
@@ -431,7 +443,11 @@ mod tests {
     fn template_key_folds_variable_tail_but_keeps_prefix() {
         let a = "081109 214043 2561 WARN dfs.DataNode: Got exception while serving blk_-2918118818249673980 to /10.251.90.64:";
         let b = "081109 214402 2677 WARN dfs.DataNode: Got exception while serving blk_8376667364205250596 to /10.251.91.159:";
-        assert_eq!(template_key(a), template_key(b), "same template must collapse");
+        assert_eq!(
+            template_key(a),
+            template_key(b),
+            "same template must collapse"
+        );
     }
 
     #[test]
@@ -493,7 +509,12 @@ mod tests {
     fn miner_never_inflates_via_region_summary() {
         // The summary lines must be shorter than the region they describe.
         let lines: Vec<String> = (0..40)
-            .map(|i| format!("081109 20{:04} INFO dfs.DataNode: block blk_{i} stored ok", i))
+            .map(|i| {
+                format!(
+                    "081109 20{:04} INFO dfs.DataNode: block blk_{i} stored ok",
+                    i
+                )
+            })
             .collect();
         let refs: Vec<&str> = lines.iter().map(String::as_str).collect();
         let region_len: usize = lines.iter().map(|l| l.len() + 1).sum();
