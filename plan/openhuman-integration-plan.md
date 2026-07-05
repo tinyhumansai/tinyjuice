@@ -20,13 +20,14 @@ existing surface:
   plus per-agent `AgentTokenjuiceCompression` overrides and
   `tokenjuice/config_patch.rs` partial updates.
 - Hook site: `ToolOutputMiddleware::after_tool` in
-  `src/openhuman/tinyagents/middleware.rs` (~line 787). Per tool result the
-  chain is: (1) `PayloadSummarizer` semantic summarization (orchestrator only),
-  (2) TokenJuice compaction, (3) per-tool char cap, (4) shared 16 KiB byte-cap
-  backstop with artifact persistence (`ToolResultArtifactStore`).
+  `src/openhuman/tinyagents/middleware.rs` (~line 787). Per normal tool result
+  the chain is: (1) `PayloadSummarizer` semantic summarization (orchestrator
+  only), (2) TokenJuice compaction, (3) per-tool char cap, (4) shared 16 KiB
+  byte-cap backstop with artifact persistence (`ToolResultArtifactStore`).
   `HandoffMiddleware` is registered after but runs first (the harness runs
   `after_tool` in reverse registration order) and can stash raw >50k-token
-  payloads before any of this.
+  payloads before any of this. Recovery tool results bypass this chain and are
+  returned exactly.
 - Recovery tools: both `retrieve_tool_output`
   (`src/openhuman/tools/impl/system/retrieve_tool_output.rs`, legacy) and
   `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered.
@@ -48,7 +49,11 @@ existing surface:
    compatibility body+footer output. OpenHuman's tinyagents middleware caps the
    body and reattaches the footer afterward. Other host-side caps still need
    the same audit.
-3. **OpenHuman checkout shape.** The reviewed plan assumed a
+3. **Recovery-tool passthrough status.** OpenHuman's tinyagents middleware now
+   bypasses summarization, TokenJuice compaction, per-tool caps, and the shared
+   byte cap for both `tokenjuice_retrieve` and legacy `retrieve_tool_output`.
+   A host-path regression test covers both names with intentionally tiny caps.
+4. **OpenHuman checkout shape.** The reviewed plan assumed a
    `vendor/tinyjuice` submodule, but this `../openhuman-4` checkout carries a
    local TokenJuice copy under `src/openhuman/tokenjuice/`. Footer and hook
    contract changes therefore need to be mirrored there until the dependency
@@ -74,7 +79,7 @@ OpenHuman should own:
 - calling `install_config()` at startup and config reload
 - passing tool arguments and exit codes into TinyJuice
 - exposing `tokenjuice_retrieve(token, range?)`
-- ensuring recovery tool output is never compacted
+- ensuring recovery tool output is never compacted or host-capped
 - recording stats without raw content
 - deciding exact-read/stub-read policy
 - wiring optional ML compression through the existing callback
@@ -113,8 +118,8 @@ Tasks:
   (`auto` resolves in `definition.rs`, not in the crate — test the host
   mapping, and consider removing the crate's silent `Auto == Full` fallback in
   favor of an explicit resolution requirement).
-- Add tests proving recovery-tool output bypasses compaction for both
-  registered tool names.
+- Add tests proving recovery-tool output bypasses compaction and host caps for
+  both registered tool names.
 - Add tests proving config reload updates cache and compressor settings.
 
 Acceptance:
