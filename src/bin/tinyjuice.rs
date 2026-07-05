@@ -715,6 +715,7 @@ fn cli_cache_root() -> PathBuf {
 fn hook_options_from_env() -> SdkCompressOptions {
     SdkCompressOptions {
         min_bytes_to_compress: read_usize_env("TINYJUICE_MIN_BYTES_TO_COMPRESS"),
+        min_bytes_to_compress_log: read_usize_env("TINYJUICE_MIN_BYTES_LOG"),
         max_inline_chars: read_usize_env("TINYJUICE_MAX_INLINE_CHARS"),
         ccr_min_tokens: read_usize_env("TINYJUICE_CCR_MIN_TOKENS"),
         ccr_enabled: read_bool_env("TINYJUICE_CCR_ENABLED"),

@@ -106,11 +106,15 @@ pub struct SdkCompressOptions {
     #[serde(default)]
     pub min_bytes_to_compress: Option<usize>,
     #[serde(default)]
+    pub min_bytes_to_compress_log: Option<usize>,
+    #[serde(default)]
     pub ccr_min_tokens: Option<usize>,
     #[serde(default)]
     pub lossy_without_ccr: Option<bool>,
     #[serde(default)]
     pub max_inline_chars: Option<usize>,
+    #[serde(default)]
+    pub chars_per_token: Option<f32>,
 }
 
 impl SdkCompressOptions {
@@ -137,6 +141,9 @@ impl SdkCompressOptions {
         if let Some(value) = self.min_bytes_to_compress {
             opts.min_bytes_to_compress = value;
         }
+        if let Some(value) = self.min_bytes_to_compress_log {
+            opts.min_bytes_to_compress_log = value;
+        }
         if let Some(value) = self.ccr_min_tokens {
             opts.ccr_min_tokens = value;
         }
@@ -145,6 +152,9 @@ impl SdkCompressOptions {
         }
         if let Some(value) = self.max_inline_chars {
             opts.max_inline_chars = Some(value);
+        }
+        if let Some(value) = self.chars_per_token {
+            opts.chars_per_token = value;
         }
         opts
     }
@@ -320,9 +330,11 @@ impl From<CompressOptions> for SdkCompressOptions {
             html_enabled: Some(value.html_enabled),
             ml_text_enabled: Some(value.ml_text_enabled),
             min_bytes_to_compress: Some(value.min_bytes_to_compress),
+            min_bytes_to_compress_log: Some(value.min_bytes_to_compress_log),
             ccr_min_tokens: Some(value.ccr_min_tokens),
             lossy_without_ccr: Some(value.lossy_without_ccr),
             max_inline_chars: value.max_inline_chars,
+            chars_per_token: Some(value.chars_per_token),
         }
     }
 }

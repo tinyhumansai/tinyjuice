@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
+use super::adaptive::compute_optimal_k;
 use super::signals::line_score;
 use super::{BLOCK_NOTE, Compressor, block_token};
 use crate::detect::parse_search_line;
@@ -25,8 +26,12 @@ use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKin
 
 /// Only compress result sets with more than this many matching lines.
 pub const MIN_MATCHES: usize = 40;
-/// Matches kept per file before the "+N more" tally.
+/// Floor on matches kept per file before the "+N more" tally. The actual
+/// keep count adapts to the diversity of each file's matches (see
+/// [`compute_optimal_k`]) between this and [`MAX_K_PER_FILE`].
 pub const TOP_K_PER_FILE: usize = 5;
+/// Ceiling on matches kept per file when the matches are highly diverse.
+pub const MAX_K_PER_FILE: usize = 12;
 
 pub struct SearchCompressor;
 
@@ -124,17 +129,22 @@ pub fn compress(content: &str, query: Option<&str>, block_tokens: bool) -> Optio
     };
     let _ = writeln!(
         out,
-        "[search: {} match(es) across {} file(s) · top {} per file{} · full set via retrieve footer]",
+        "[search: {} match(es) across {} file(s) · top {}-{} per file (adaptive){} · full set via retrieve footer]",
         match_count,
         files.len(),
         TOP_K_PER_FILE,
+        MAX_K_PER_FILE,
         omitted_note
     );
 
     let mut any_token = false;
     for (path, mut matches) in files {
         let total = matches.len();
-        if total <= TOP_K_PER_FILE {
+        // Adapt the keep count to this file's match diversity: redundant
+        // matches collapse toward the floor, diverse ones keep more.
+        let bodies: Vec<&str> = matches.iter().map(|m| m.body).collect();
+        let top_k = compute_optimal_k(&bodies, TOP_K_PER_FILE, MAX_K_PER_FILE);
+        if total <= top_k {
             // Keep all in original (line-number) order.
             matches.sort_by_key(|m| m.line_no);
             for m in &matches {
@@ -149,22 +159,18 @@ pub fn compress(content: &str, query: Option<&str>, block_tokens: bool) -> Optio
                 .partial_cmp(&a.score)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-        let mut kept: Vec<&Match<'_>> = matches.iter().take(TOP_K_PER_FILE).collect();
+        let mut kept: Vec<&Match<'_>> = matches.iter().take(top_k).collect();
         kept.sort_by_key(|m| m.line_no);
         for m in &kept {
             let _ = writeln!(out, "{}:{}:{}", path, m.line_no, m.body);
         }
         // Offload this file's omitted matches (line order) behind one token.
-        let mut omitted: Vec<&Match<'_>> = matches.iter().skip(TOP_K_PER_FILE).collect();
+        let mut omitted: Vec<&Match<'_>> = matches.iter().skip(top_k).collect();
         omitted.sort_by_key(|m| m.line_no);
         let omitted_raw = omitted.iter().map(|m| m.raw).collect::<Vec<_>>().join("\n");
         let token = block_token(&omitted_raw, block_tokens);
         any_token |= !token.is_empty();
-        let _ = writeln!(
-            out,
-            "[+{} more match(es) in {path}{token}]",
-            total - TOP_K_PER_FILE
-        );
+        let _ = writeln!(out, "[+{} more match(es) in {path}{token}]", total - top_k);
     }
 
     let mut out = out.trim_end().to_string();
@@ -242,6 +248,97 @@ mod tests {
             out.contains("special needle token"),
             "ranked-in match missing:\n{out}"
         );
+    }
+
+    #[test]
+    fn adaptive_k_keeps_floor_for_redundant_matches() {
+        let mut s = String::new();
+        for i in 0..50 {
+            let _ = writeln!(s, "src/r.rs:{i}:// TODO deduplicate this helper later");
+        }
+        let out = compress(&s, None, false).expect("compresses").text;
+        let kept = out
+            .lines()
+            .filter(|line| line.starts_with("src/r.rs:"))
+            .count();
+        assert_eq!(kept, TOP_K_PER_FILE, "redundant matches collapse:\n{out}");
+        assert!(
+            out.contains(&format!("[+{} more match(es) in src/r.rs]", 50 - kept)),
+            "{out}"
+        );
+    }
+
+    #[test]
+    fn adaptive_k_keeps_more_for_diverse_matches() {
+        const WORDS: [&str; 50] = [
+            "database",
+            "migration",
+            "login",
+            "credential",
+            "cache",
+            "eviction",
+            "worker",
+            "heartbeat",
+            "handshake",
+            "cipher",
+            "latency",
+            "checkpoint",
+            "rollout",
+            "cohort",
+            "webhook",
+            "signature",
+            "resolver",
+            "nameserver",
+            "kernel",
+            "container",
+            "exporter",
+            "histogram",
+            "backlog",
+            "consumer",
+            "certificate",
+            "renewal",
+            "replica",
+            "election",
+            "limiter",
+            "burst",
+            "tokenizer",
+            "analyzer",
+            "cookie",
+            "rotation",
+            "saturation",
+            "queueing",
+            "multipart",
+            "upload",
+            "deadline",
+            "budget",
+            "ledger",
+            "quorum",
+            "snapshot",
+            "compaction",
+            "gossip",
+            "failover",
+            "throttle",
+            "warmup",
+            "vacuum",
+            "sharding",
+        ];
+        let mut s = String::new();
+        for i in 0..50 {
+            let _ = writeln!(
+                s,
+                "src/d.rs:{i}:{} {} {} {}",
+                WORDS[i],
+                WORDS[(i + 13) % 50],
+                WORDS[(i * 7 + 3) % 50],
+                WORDS[(i * 11 + 5) % 50],
+            );
+        }
+        let out = compress(&s, None, false).expect("compresses").text;
+        let kept = out
+            .lines()
+            .filter(|line| line.starts_with("src/d.rs:"))
+            .count();
+        assert_eq!(kept, MAX_K_PER_FILE, "diverse matches keep more:\n{out}");
     }
 
     #[test]

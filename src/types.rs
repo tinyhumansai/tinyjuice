@@ -526,10 +526,27 @@ pub struct CompressOptions {
     pub ml_text_enabled: bool,
     /// Outputs below this many bytes are never compressed.
     pub min_bytes_to_compress: usize,
+    /// Lower size floor for log-like content (detected `Log` kind or command
+    /// output routed through the rule engine). Test/build failure logs are
+    /// often only ~1–2 KB yet compress extremely well (a Vitest failure rule
+    /// reaches ~79% on sub-2 KB fixtures), so gating them behind the global
+    /// `min_bytes_to_compress` floor leaves real savings on the table. Content
+    /// in `[min_bytes_to_compress_log, min_bytes_to_compress)` is detected and
+    /// compressed only when it is log-like; every other kind keeps the global
+    /// floor.
+    pub min_bytes_to_compress_log: usize,
     /// CCR only fires (offload original + lossy compression) when the input is
     /// estimated to be at least this many tokens. Below it, the result passes
     /// through (lossless reformats may still apply without offload). Lets small
     /// tool results skip the cache entirely.
+    ///
+    /// This is the primary knob, but it is ratio-aware rather than a hard
+    /// cliff: when a compression is heavily lossy (the compacted text is at
+    /// most half the original tokens) CCR also fires for inputs down to a
+    /// quarter of this threshold. A heavy crush on a small input drops a large
+    /// *fraction* of the content, so recoverability matters there even though
+    /// the absolute token count is modest — while trivially small inputs
+    /// (below a quarter of the threshold) still skip the cache entirely.
     pub ccr_min_tokens: usize,
     /// Allow lossy compression when CCR is not in play (disabled, below
     /// `ccr_min_tokens`, or the original couldn't be retained). Dropped
@@ -540,6 +557,13 @@ pub struct CompressOptions {
     pub lossy_without_ccr: bool,
     /// Maximum inline character count for the generic/rule fallback path.
     pub max_inline_chars: Option<usize>,
+    /// Average characters per token used by the router's token estimates
+    /// (gating and savings accounting). The default 4.0 matches the standard
+    /// English-text heuristic; callers whose payloads skew denser (CJK text,
+    /// minified JSON) or sparser can calibrate. With the default value the
+    /// historical ceiling-division estimate is kept bit-for-bit; a custom
+    /// value uses round-half-up.
+    pub chars_per_token: f32,
 }
 
 impl Default for CompressOptions {
@@ -552,9 +576,11 @@ impl Default for CompressOptions {
             html_enabled: true,
             ml_text_enabled: false,
             min_bytes_to_compress: 2048,
+            min_bytes_to_compress_log: 512,
             ccr_min_tokens: 500,
             lossy_without_ccr: true,
             max_inline_chars: None,
+            chars_per_token: 4.0,
         }
     }
 }

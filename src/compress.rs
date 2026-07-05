@@ -15,7 +15,7 @@ use crate::cache;
 use crate::compressors::{compressor_for, generic_compressor};
 use crate::detect::detect_content_kind;
 use crate::savings;
-use crate::tokens::estimate_tokens;
+use crate::tokens::estimate_tokens_with;
 use crate::types::{
     CompressInput, CompressOptions, CompressOutput, CompressedOutput, ContentHint, ContentKind,
 };
@@ -51,16 +51,30 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     let content = input.content;
     let original_bytes = content.len();
 
-    if !opts.router_enabled || original_bytes < opts.min_bytes_to_compress {
-        // The kind is only a label on a passthrough — don't pay for full
-        // detection (which parses entire JSON blobs) for content that won't
-        // be compressed anyway.
+    // The global floor gates everything; the (lower) log floor lets small
+    // failure logs through. Below the smaller of the two, bail before paying
+    // for detection (which parses entire JSON blobs) — the kind is only a
+    // label on a passthrough.
+    let log_floor = opts
+        .min_bytes_to_compress_log
+        .min(opts.min_bytes_to_compress);
+    if !opts.router_enabled || original_bytes < log_floor {
         let kind = input.hint.explicit.unwrap_or(ContentKind::PlainText);
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
 
     let kind = detect_content_kind(content, input.hint);
     input.kind = kind;
+
+    // Between the log floor and the global floor only log-like content
+    // proceeds: detected logs, or command output headed for the rule engine.
+    // Everything else keeps the historical global floor.
+    if original_bytes < opts.min_bytes_to_compress {
+        let log_like = kind == ContentKind::Log || input.command.is_some();
+        if !log_like || original_bytes < opts.min_bytes_to_compress_log {
+            return CompressedOutput::passthrough(content.to_string(), kind);
+        }
+    }
 
     // Resolve which compressor to try, honouring per-kind config gates.
     let primary: Option<&'static dyn crate::compressors::Compressor> = match kind {
@@ -92,12 +106,18 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     }
 
     // CCR threshold: only offload when the input is large enough to be worth
-    // caching. When CCR is not in play a lossy result carries no recovery
-    // footer; whether that is acceptable is the caller's call via
-    // `lossy_without_ccr` (dropped content is still explicitly marked with
-    // omission markers — it just isn't retrievable).
-    let original_tokens = estimate_tokens(content);
-    let ccr_for_call = opts.ccr_enabled && original_tokens as usize >= opts.ccr_min_tokens;
+    // caching, or when the compression is heavily lossy on a non-trivial input
+    // (rationale on `CompressOptions::ccr_min_tokens`). When CCR is not in
+    // play a lossy result carries no recovery footer; whether that is
+    // acceptable is the caller's call via `lossy_without_ccr` (dropped content
+    // is still explicitly marked with omission markers — it just isn't
+    // retrievable).
+    let original_tokens = estimate_tokens_with(content, opts.chars_per_token);
+    let compacted_body_tokens = estimate_tokens_with(&out.text, opts.chars_per_token);
+    let heavy_crush = compacted_body_tokens <= original_tokens / 2
+        && original_tokens as usize >= opts.ccr_min_tokens / 4;
+    let ccr_for_call =
+        opts.ccr_enabled && (original_tokens as usize >= opts.ccr_min_tokens || heavy_crush);
     if out.lossy && !ccr_for_call && !opts.lossy_without_ccr {
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
@@ -134,7 +154,7 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     };
 
     let compacted_bytes = text.len();
-    let compacted_tokens = estimate_tokens(&text);
+    let compacted_tokens = estimate_tokens_with(&text, opts.chars_per_token);
     log::info!(
         "[tinyjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
         kind.as_str(),
@@ -262,6 +282,103 @@ mod tests {
         let res = compress_content(&original, None, &o).await;
         assert!(!res.applied, "strict mode must decline unrecoverable lossy");
         assert_eq!(res.text, original);
+    }
+
+    #[tokio::test]
+    async fn small_log_above_log_floor_is_compressed() {
+        // Default floors: global 2048, log 512. A ~1.8 KB failure log sits
+        // between them and must still be compressed.
+        let mut log = String::new();
+        for i in 0..45 {
+            log.push_str(&format!("info sync {i}\n"));
+        }
+        for i in 0..60 {
+            log.push_str(&format!("error shard down {i}\n"));
+        }
+        assert!(log.len() > 512 && log.len() < 2048, "len={}", log.len());
+
+        let res = compress_content(&log, None, &CompressOptions::default()).await;
+        assert!(res.applied, "small log must compress: {res:?}");
+        assert_eq!(res.content_kind, ContentKind::Log);
+        assert!(res.text.len() < log.len());
+    }
+
+    #[tokio::test]
+    async fn small_command_output_above_log_floor_runs_rules() {
+        // Command output between the log floor and the global floor still
+        // reaches the rule engine.
+        let mut lines = vec!["On branch main".to_string()];
+        for index in 0..30 {
+            lines.push(format!("\tmodified:   src/some_module/file_{index}.rs"));
+        }
+        let content = lines.join("\n");
+        assert!(content.len() > 512 && content.len() < 2048);
+        let hint = ContentHint::default();
+        let input = CompressInput {
+            content: &content,
+            kind: ContentKind::PlainText,
+            hint: &hint,
+            exit_code: Some(0),
+            command: Some("git status".to_string()),
+            argv: Some(vec!["git".to_string(), "status".to_string()]),
+            original_bytes: content.len(),
+        };
+        let res = route(input, &CompressOptions::default()).await;
+        assert!(res.applied, "command output must compress: {res:?}");
+        assert!(res.text.len() < content.len());
+    }
+
+    #[tokio::test]
+    async fn small_json_below_global_floor_still_passes_through() {
+        // Non-log content keeps the historical 2048-byte floor.
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"account_{i}","email":"a{i}@ex.com","tier":"gold"}}"#
+            ));
+        }
+        let original = format!("[{}]", rows.join(","));
+        assert!(original.len() > 512 && original.len() < 2048);
+        let res = compress_content(&original, None, &CompressOptions::default()).await;
+        assert!(!res.applied, "small JSON stays passthrough: {res:?}");
+        assert_eq!(res.text, original);
+    }
+
+    #[tokio::test]
+    async fn tiny_log_below_log_floor_passes_through() {
+        let log = "error failed to start\nwarning low disk\n".repeat(3);
+        assert!(log.len() < 512);
+        let res = compress_content(&log, None, &CompressOptions::default()).await;
+        assert!(!res.applied);
+        assert_eq!(res.text, log);
+    }
+
+    #[tokio::test]
+    async fn heavy_crush_below_ccr_min_tokens_still_offloads() {
+        // ~470 estimated tokens — under the flat ccr_min_tokens (500) but well
+        // over its quarter — crushed to less than half the tokens: the
+        // ratio-aware gate must offload so the original stays retrievable.
+        let mut o = opts();
+        assert_eq!(o.ccr_min_tokens, 500);
+        o.min_bytes_to_compress = 64;
+        // Long repeated keys, short values: the tabular re-render (keys
+        // emitted once) crushes this to well under half the tokens.
+        let mut rows = Vec::new();
+        for i in 0..18 {
+            rows.push(format!(
+                r#"{{"identifier":{i},"account_name":"a{i}","email_address":"a{i}@x.io","subscription_tier":"g","current_status":"ok"}}"#
+            ));
+        }
+        let original = format!("[{}]", rows.join(","));
+        let original_tokens = crate::tokens::estimate_tokens(&original) as usize;
+        assert!(
+            (125..500).contains(&original_tokens),
+            "tokens={original_tokens}"
+        );
+        let res = compress_content(&original, None, &o).await;
+        assert!(res.applied, "response: {res:?}");
+        let token = res.ccr_token.expect("ratio-aware gate offloads");
+        assert_eq!(cache::retrieve(&token).as_deref(), Some(original.as_str()));
     }
 
     #[tokio::test]
