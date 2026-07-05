@@ -45,6 +45,13 @@ const BLOCK_TAGS: &[&str] = &[
 /// dropped by their own tags and meta/link carry no text.
 const DROP_BODY_TAGS: &[&str] = &["script", "style", "noscript", "svg"];
 
+/// Inline formatting tags that do not break the text flow. Any other tag acts
+/// as a separator (space or newline) so adjacent element values — e.g. RSS
+/// `<guid>` / `<comments>` siblings — don't run together in the output.
+const INLINE_TAGS: &[&str] = &[
+    "a", "b", "i", "em", "strong", "span", "code", "small", "sub", "sup",
+];
+
 pub struct HtmlCompressor;
 
 #[async_trait]
@@ -85,6 +92,12 @@ pub fn html_to_text(html: &str) -> String {
     let mut out = String::with_capacity(html.len() / 2);
     let mut i = 0usize;
     let mut skip_until: Option<&'static str> = None;
+    // Number of `<![CDATA[` openers whose `]]>` closer we still owe. CDATA
+    // contents are scanned by this same loop (HN RSS wraps HTML in CDATA, so
+    // stripping its tags is what we want); only the delimiters are consumed
+    // as markup. Tracked iteratively rather than recursing on the payload so
+    // pathological nesting can't blow the stack.
+    let mut cdata_depth = 0usize;
 
     while i < bytes.len() {
         if bytes[i] == b'<' {
@@ -115,8 +128,16 @@ pub fn html_to_text(html: &str) -> String {
                 }
                 break;
             }
-            // Find the end of this tag.
-            let Some(rel_end) = html[i..].find('>') else {
+            // CDATA section: the delimiters are markup, the payload is
+            // scanned by this same loop (see `cdata_depth`).
+            if html[i..].starts_with("<![CDATA[") {
+                cdata_depth += 1;
+                i += "<![CDATA[".len();
+                continue;
+            }
+            // Find the end of this tag, skipping `>` inside quoted attribute
+            // values (e.g. `media="(width >= 40rem)"`).
+            let Some(rel_end) = find_tag_end(html, i) else {
                 break;
             };
             let tag_raw = &html[i + 1..i + rel_end];
@@ -128,8 +149,17 @@ pub fn html_to_text(html: &str) -> String {
                 continue;
             }
 
-            if BLOCK_TAGS.contains(&name.as_str()) && !out.ends_with('\n') {
-                out.push('\n');
+            if BLOCK_TAGS.contains(&name.as_str()) {
+                if !out.ends_with('\n') {
+                    out.push('\n');
+                }
+            } else if !INLINE_TAGS.contains(&name.as_str())
+                && !out.is_empty()
+                && !out.ends_with(|c: char| c.is_whitespace())
+            {
+                // Unrecognised tag: emit a separator so sibling element
+                // values (RSS `<guid>`, `<pubDate>`, ...) don't concatenate.
+                out.push(' ');
             }
             i += rel_end + 1;
             continue;
@@ -137,6 +167,13 @@ pub fn html_to_text(html: &str) -> String {
 
         if skip_until.is_some() {
             i += 1;
+            continue;
+        }
+
+        // Consume a pending CDATA closer as markup, not text.
+        if cdata_depth > 0 && html[i..].starts_with("]]>") {
+            cdata_depth -= 1;
+            i += "]]>".len();
             continue;
         }
 
@@ -153,6 +190,26 @@ pub fn html_to_text(html: &str) -> String {
         i += ch.len_utf8();
     }
     out
+}
+
+/// Find the offset (relative to `from`, which points at `<`) of the `>` that
+/// terminates the tag, skipping `>` inside single- or double-quoted attribute
+/// values. If a quote is left unterminated, falls back to the first raw `>`
+/// so one malformed tag can't swallow the rest of the document.
+fn find_tag_end(html: &str, from: usize) -> Option<usize> {
+    let bytes = html.as_bytes();
+    let mut j = from + 1;
+    while j < bytes.len() {
+        match bytes[j] {
+            b'>' => return Some(j - from),
+            quote @ (b'"' | b'\'') => match bytes[j + 1..].iter().position(|&b| b == quote) {
+                Some(close) => j += close + 2,
+                None => return html[from..].find('>'),
+            },
+            _ => j += 1,
+        }
+    }
+    None
 }
 
 /// Parse `<...>` inner text into `(lowercased name, is_closing)`.
@@ -325,6 +382,66 @@ mod tests {
         let text = html_to_text("<p>one</p><p>two</p><li>three</li>");
         let lines: Vec<&str> = text.lines().filter(|l| !l.trim().is_empty()).collect();
         assert!(lines.len() >= 3, "expected separate lines, got {lines:?}");
+    }
+
+    #[test]
+    fn gt_inside_quoted_attribute_does_not_split_tag() {
+        // Discourse ships `<link media="(width >= 40rem)" ...>`; the `>` in
+        // `>=` must not terminate the tag and leak the tail as text.
+        let html = "<head><link href=\"a.css\" media=\"(width >= 40rem)\" \
+            rel=\"stylesheet\" data-target=\"desktop\" /></head><body><p>real text</p></body>";
+        let text = html_to_text(html);
+        assert!(text.contains("real text"), "{text}");
+        assert!(!text.contains("40rem"), "attribute leaked: {text}");
+        assert!(!text.contains("stylesheet"), "attribute leaked: {text}");
+        // `<` inside quotes must also be harmless.
+        let text = html_to_text("<link media=\"(width < 40rem)\" /><p>kept</p>");
+        assert!(text.contains("kept"), "{text}");
+        assert!(!text.contains("40rem"), "{text}");
+    }
+
+    #[test]
+    fn unterminated_quote_falls_back_and_terminates() {
+        // A quote that never closes must not hang or swallow the document:
+        // fall back to the next `>` and keep going.
+        let text = html_to_text("<a href=\"broken>after</a> tail");
+        assert!(text.contains("after"), "{text}");
+        assert!(text.contains("tail"), "{text}");
+        // Unterminated quote with no `>` at all: stop cleanly.
+        let text = html_to_text("before<a href=\"never closed");
+        assert!(text.contains("before"), "{text}");
+    }
+
+    #[test]
+    fn cdata_delimiters_are_stripped_payload_kept() {
+        let html = "<item><title><![CDATA[Big <b>payout</b> story]]></title>\
+            <pubDate>Sun, 05 Jul 2026</pubDate></item>";
+        let text = html_to_text(html);
+        assert!(!text.contains("CDATA"), "{text}");
+        assert!(!text.contains("]]>"), "CDATA closer leaked: {text}");
+        assert!(text.contains("Big"), "{text}");
+        assert!(text.contains("payout"), "{text}");
+        assert!(!text.contains("<b>"), "markup in CDATA not stripped: {text}");
+        assert!(text.contains("Sun, 05 Jul 2026"), "{text}");
+        // Unterminated CDATA: payload still emitted, no hang.
+        let text = html_to_text("<title><![CDATA[open ended");
+        assert!(text.contains("open ended"), "{text}");
+    }
+
+    #[test]
+    fn rss_sibling_elements_are_separated() {
+        let html = "<item><guid>https://news.ycombinator.com/item?id=48793726</guid>\
+            <comments>https://news.ycombinator.com/item?id=48793726</comments>\
+            <dc:creator>alice</dc:creator></item>";
+        let text = html_to_text(html);
+        assert!(
+            !text.contains("48793726https"),
+            "sibling values ran together: {text}"
+        );
+        assert!(!text.contains("48793726alice"), "{text}");
+        // Inline tags still don't split words.
+        let text = html_to_text("<p>Hello <b>world</b>.</p>");
+        assert!(text.contains("Hello world."), "{text}");
     }
 
     #[test]
