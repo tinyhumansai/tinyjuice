@@ -5,7 +5,9 @@ TinyJuice has two benchmark surfaces:
 - `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
 - `cargo run --release --example compression_benchmark -- --iterations 20` runs a deterministic fixture suite and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
 
-The fixture suite emits metadata only. It does not print raw prompt, tool, or context payloads.
+By default, the fixture suite emits metadata only. It does not print raw prompt,
+tool, or context payloads unless `--dump-samples` is explicitly requested.
+Human-readable before/after samples live under [`docs/benchmark`](benchmark/README.md).
 
 ## Fixture Benchmark
 
@@ -19,6 +21,12 @@ Machine-readable report:
 
 ```sh
 cargo run --release --example compression_benchmark -- --iterations 20 --format json
+```
+
+Write the full input and output artifacts used by the human-review reports:
+
+```sh
+cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
 ```
 
 Every fixture can carry two inline accuracy layers:

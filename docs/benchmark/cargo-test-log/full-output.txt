@@ -1,0 +1,28 @@
+exit 101
+test integration::case_000 ... ok stdout: generated 50 rows
+test integration::case_001 ... ok stdout: generated 51 rows
+test integration::case_002 ... ok stdout: generated 52 rows
+test integration::case_003 ... ok stdout: generated 53 rows
+test integration::case_004 ... ok stdout: generated 54 rows
+test integration::case_005 ... ok stdout: generated 55 rows
+test integration::case_006 ... ok stdout: generated 56 rows
+test integration::case_007 ... ok stdout: generated 57 rows
+test integration::case_008 ... ok stdout: generated 58 rows
+test integration::case_009 ... ok stdout: generated 59 rows
+test integration::case_010 ... ok stdout: generated 60 rows
+test integration::case_011 ... ok stdout: generated 61 rows
+... 340 lines omitted ...
+test integration::case_352 ... ok stdout: generated 72 rows
+... omitted ...
+thread 'tests::panics_on_empty_payload' panicked at src/compress.rs:91:9:
+empty payload should be rejected before compression
+stack backtrace:
+0: tinyjuice::compress::route
+1: tinyjuice::tool_integration::compact_tool_output_with_policy
+
+failures:
+tests::panics_on_empty_payload
+
+test result: FAILED. 359 passed; 1 failed; 0 ignored; finished in 3.42s
+
+[compacted tool output — this is a PARTIAL view; the full original (22001 bytes) is available by calling tokenjuice_retrieve with token "a2ea90ceff61b037ae5d73518424ee61" (marker ⟦tj:a2ea90ceff61b037ae5d73518424ee61⟧)]
