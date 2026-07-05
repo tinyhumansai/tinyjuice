@@ -62,12 +62,73 @@ impl Compressor for LogCompressor {
     ) -> Option<CompressOutput> {
         let has_command =
             input.command.is_some() || input.argv.as_ref().is_some_and(|a| !a.is_empty());
-        if has_command {
-            compress_command(input, opts)
+        // The drop-based view wins whenever it will actually be emitted — with
+        // CCR every dropped line is recoverable, and a host that opts into
+        // `lossy_without_ccr` accepts marked-but-unrecoverable output. When
+        // neither holds (the strict no-CCR default) that view would be declined
+        // by the router as unrecoverable, so fall back to the one lossless log
+        // transform: collapse runs of byte-identical lines.
+        let lossy_ok = opts.ccr_enabled || opts.lossy_without_ccr;
+        if lossy_ok {
+            let lossy = if has_command {
+                compress_command(input, opts)
+            } else {
+                compress_signal(input.content, opts.ccr_enabled)
+            };
+            lossy.or_else(|| lossless_run_length(input.content))
         } else {
-            compress_signal(input.content, opts.ccr_enabled)
+            lossless_run_length(input.content)
         }
     }
+}
+
+/// Collapse runs of *byte-identical consecutive* lines into a single line plus
+/// a `[×N]` repeat count. Lossless: the exact line text and its repeat count
+/// both survive and order is preserved (only adjacent duplicates merge), so the
+/// reader can reconstruct the run — no line is dropped. Each run only collapses
+/// when doing so actually saves bytes; returns `None` when nothing collapses or
+/// the result wouldn't shrink. This is the compressor's no-CCR fallback: unlike
+/// the signal/rule paths it drops no information, so it ships without a cache.
+fn lossless_run_length(content: &str) -> Option<CompressOutput> {
+    // split('\n') + join('\n') round-trips the exact line/newline structure,
+    // including a trailing newline (which yields a final empty element).
+    let lines: Vec<&str> = content.split('\n').collect();
+    let mut out: Vec<String> = Vec::with_capacity(lines.len());
+    let mut collapsed = false;
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        let mut j = i + 1;
+        while j < lines.len() && lines[j] == line {
+            j += 1;
+        }
+        let run = j - i;
+        let merged = format!("{line} [×{run}]");
+        // Only merge when it beats re-emitting the run verbatim (run copies of
+        // the line, one newline each).
+        if run >= 2 && merged.len() + 1 < (line.len() + 1) * run {
+            out.push(merged);
+            collapsed = true;
+        } else {
+            for _ in 0..run {
+                out.push(line.to_string());
+            }
+        }
+        i = j;
+    }
+    if !collapsed {
+        return None;
+    }
+    let text = out.join("\n");
+    if text.len() >= content.len() {
+        return None;
+    }
+    log::debug!(
+        "[tinyjuice][log] lossless run-length {} -> {} bytes",
+        content.len(),
+        text.len()
+    );
+    Some(CompressOutput::reformatted(text, CompressorKind::Log))
 }
 
 /// Command output → run the rule engine, tagged as [`CompressorKind::Log`].
@@ -409,6 +470,63 @@ mod tests {
         let _ = writeln!(s, "error: aborting due to previous error");
         let _ = writeln!(s, "test result: FAILED. 3 passed; 1 failed");
         s
+    }
+
+    /// The lossless run-length fallback collapses byte-identical consecutive
+    /// lines into `line [×N]`, dropping nothing and preserving order.
+    #[test]
+    fn lossless_run_length_collapses_exact_duplicates() {
+        let mut s = String::from("start of stream\n");
+        for _ in 0..50 {
+            s.push_str("2026-07-05T09:00:00Z INFO heartbeat ok\n");
+        }
+        s.push_str("2026-07-05T09:00:01Z INFO heartbeat ok differs\n");
+        s.push_str("end of stream\n");
+        let result = lossless_run_length(&s).expect("collapses");
+        assert!(!result.lossy, "run-length collapse drops nothing");
+        assert_eq!(result.kind, CompressorKind::Log);
+        let out = result.text;
+        // Non-duplicated lines survive verbatim.
+        assert!(out.contains("start of stream"), "{out}");
+        assert!(out.contains("end of stream"), "{out}");
+        assert!(out.contains("heartbeat ok differs"), "{out}");
+        // The 50 identical lines collapse to one with an exact count.
+        assert!(
+            out.contains("2026-07-05T09:00:00Z INFO heartbeat ok [×50]"),
+            "run collapsed with count: {out}"
+        );
+        assert_eq!(
+            out.matches("INFO heartbeat ok [×50]").count(),
+            1,
+            "only one collapsed line: {out}"
+        );
+        assert!(out.len() < s.len());
+    }
+
+    /// A run shorter than the break-even point is left verbatim (the marker
+    /// would not save bytes), and content with no runs declines.
+    #[test]
+    fn lossless_run_length_declines_without_savings() {
+        // Distinct lines: nothing to collapse.
+        let distinct = (0..80)
+            .map(|i| format!("line number {i} is unique"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(lossless_run_length(&distinct).is_none());
+        // A 2-line run of a very short line does not save with the marker.
+        let short = "ok\nok\ntail line here to keep it distinct\n";
+        assert!(lossless_run_length(short).is_none());
+    }
+
+    #[test]
+    fn lossless_run_length_preserves_trailing_newline() {
+        let with_nl = "header line one\nx\nx\nx\nx\nx\ntail\n";
+        let out = lossless_run_length(with_nl).expect("collapses").text;
+        assert!(
+            out.ends_with("tail\n"),
+            "trailing newline preserved: {out:?}"
+        );
+        assert!(out.contains("x [×5]"), "{out}");
     }
 
     #[test]
