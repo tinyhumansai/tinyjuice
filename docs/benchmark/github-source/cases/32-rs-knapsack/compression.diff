@@ -1,0 +1,108 @@
+--- input/input.rs
++++ output/output.rs
+@@ -42,27 +42,8 @@
+ /// - Space complexity: O(num_items * capacity)
+ ///
+ /// where `num_items` is the number of items and `capacity` is the knapsack capacity.
+-pub fn knapsack(capacity: usize, items: Vec<Item>) -> KnapsackSolution {
+-    let num_items = items.len();
+-    let item_weights: Vec<usize> = items.iter().map(|item| item.weight).collect();
+-    let item_values: Vec<usize> = items.iter().map(|item| item.value).collect();
++pub fn knapsack(capacity: usize, items: Vec<Item>) -> KnapsackSolution { … 20 line(s) … ⟦tj:3e19850ef0b4fe2769090bb083e337ec⟧ }
+ 
+-    let knapsack_matrix = generate_knapsack_matrix(capacity, &item_weights, &item_values);
+-    let items_included =
+-        retrieve_knapsack_items(&item_weights, &knapsack_matrix, num_items, capacity);
+-
+-    let total_weight = items_included
+-        .iter()
+-        .map(|&index| item_weights[index - 1])
+-        .sum();
+-
+-    KnapsackSolution {
+-        optimal_profit: knapsack_matrix[num_items][capacity],
+-        total_weight,
+-        item_indices: items_included,
+-    }
+-}
+-
+ /// Generates the knapsack matrix (`num_items`, `capacity`) with maximum values.
+ ///
+ /// # Arguments:
+@@ -73,30 +54,7 @@
+     capacity: usize,
+     item_weights: &[usize],
+     item_values: &[usize],
+-) -> Vec<Vec<usize>> {
+-    let num_items = item_weights.len();
+-
+-    (0..=num_items).fold(
+-        vec![vec![0; capacity + 1]; num_items + 1],
+-        |mut matrix, item_index| {
+-            (0..=capacity).for_each(|current_capacity| {
+-                matrix[item_index][current_capacity] = if item_index == 0 || current_capacity == 0 {
+-                    0
+-                } else if item_weights[item_index - 1] <= current_capacity {
+-                    usize::max(
+-                        item_values[item_index - 1]
+-                            + matrix[item_index - 1]
+-                                [current_capacity - item_weights[item_index - 1]],
+-                        matrix[item_index - 1][current_capacity],
+-                    )
+-                } else {
+-                    matrix[item_index - 1][current_capacity]
+-                };
+-            });
+-            matrix
+-        },
+-    )
+-}
++) -> Vec<Vec<usize>> { … 24 line(s) … ⟦tj:9144734b0bfb47a62e1ca6f8ca21b006⟧ }
+ 
+ /// Retrieves the indices of items included in the optimal knapsack solution.
+ ///
+@@ -113,35 +71,8 @@
+     knapsack_matrix: &[Vec<usize>],
+     item_index: usize,
+     remaining_capacity: usize,
+-) -> Vec<usize> {
+-    match item_index {
+-        0 => vec![],
+-        _ => {
+-            let current_value = knapsack_matrix[item_index][remaining_capacity];
+-            let previous_value = knapsack_matrix[item_index - 1][remaining_capacity];
++) -> Vec<usize> { … 28 line(s) … ⟦tj:8dfc1f2b7ede0fba131f29480eb33d27⟧ }
+ 
+-            match current_value.cmp(&previous_value) {
+-                Ordering::Greater => {
+-                    let mut knap = retrieve_knapsack_items(
+-                        item_weights,
+-                        knapsack_matrix,
+-                        item_index - 1,
+-                        remaining_capacity - item_weights[item_index - 1],
+-                    );
+-                    knap.push(item_index);
+-                    knap
+-                }
+-                Ordering::Equal | Ordering::Less => retrieve_knapsack_items(
+-                    item_weights,
+-                    knapsack_matrix,
+-                    item_index - 1,
+-                    remaining_capacity,
+-                ),
+-            }
+-        }
+-    }
+-}
+-
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+@@ -361,3 +292,6 @@
+         ),
+     }
+ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (12426 bytes) is available by calling tinyjuice_retrieve with token "fb14afe7f59fbac023e5c6edd6a0c5e2" (marker ⟦tj:fb14afe7f59fbac023e5c6edd6a0c5e2⟧)]
+\ No newline at end of file

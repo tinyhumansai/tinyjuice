@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB | 95.8% | 95.8% | 95.5% | 0.287 ms | true |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB | 91.3% | 91.3% | 86.4% | 0.025 ms | true |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | [diff](cases/08-openhuman-coverage-8/compression.diff) | 5.2 KB | 90.9% | 90.9% | 86.7% | 0.029 ms | true |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB | 89.3% | 89.3% | 88.7% | 0.183 ms | true |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB | 83.4% | 83.4% | 80.0% | 0.040 ms | true |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | [diff](cases/10-openhuman-coverage-10/compression.diff) | 5.8 KB | 82.7% | 82.7% | 78.9% | 0.035 ms | true |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB | 81.8% | 81.8% | 78.5% | 0.040 ms | true |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB | 79.9% | 79.9% | 79.0% | 0.146 ms | true |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | [diff](cases/02-rss-hacker-news/compression.diff) | 15.2 KB | 52.9% | 52.9% | 51.4% | 0.087 ms | true |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB | 27.5% | 27.5% | 27.5% | 2.030 ms | true |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB | 95.8% | 95.8% | 95.5% | 0.183 ms | true |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB | 91.3% | 91.3% | 86.4% | 0.016 ms | true |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | [diff](cases/08-openhuman-coverage-8/compression.diff) | 5.2 KB | 90.9% | 90.9% | 86.7% | 0.021 ms | true |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB | 89.3% | 89.3% | 88.7% | 0.118 ms | true |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB | 83.4% | 83.4% | 80.0% | 0.025 ms | true |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | [diff](cases/10-openhuman-coverage-10/compression.diff) | 5.8 KB | 82.7% | 82.7% | 78.9% | 0.025 ms | true |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB | 81.8% | 81.8% | 78.5% | 0.026 ms | true |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB | 79.9% | 79.9% | 79.0% | 0.097 ms | true |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | [diff](cases/02-rss-hacker-news/compression.diff) | 15.2 KB | 52.9% | 52.9% | 51.4% | 0.058 ms | true |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB | 27.5% | 27.5% | 27.5% | 1.340 ms | true |
 
 ## What TinyJuice Is Doing
 

@@ -34,3 +34,9 @@ are truncated excerpts.
 | `25-sshesame-honeypot` | MIT | <https://raw.githubusercontent.com/crowdsecurity/hub/master/.tests/sshesame/sshesame.log> |
 | `26-gitlab-bf` | MIT | <https://raw.githubusercontent.com/crowdsecurity/hub/master/.tests/gitlab-bf/gitlab-bf.log> |
 | `27-suricata-eve` | MIT | <https://raw.githubusercontent.com/crowdsecurity/hub/master/.tests/suricata-logs-evelog/suricata-logs-evelog.log> |
+| `29-spark-eventlog` | Apache-2.0 | <https://raw.githubusercontent.com/apache/spark/v3.5.1/core/src/test/resources/spark-events/local-1642039451826> |
+| `30-laravel-app` | BSD-2-Clause | <https://raw.githubusercontent.com/tstack/lnav/62ac69b41bcfb2186ebd8ed6eece57842b5bbd0f/test/logfile_laravel.0> |
+| `31-zeek-http` | BSD-2-Clause | <https://raw.githubusercontent.com/tstack/lnav/v0.12.2/test/logfile_bro_http.log.0> |
+| `32-w3c-iis` | BSD-2-Clause | <https://raw.githubusercontent.com/tstack/lnav/v0.12.2/test/logfile_w3c_big.0> |
+| `33-postfix-mail` | GPL-2.0 | <https://raw.githubusercontent.com/fail2ban/fail2ban/1.0.2/fail2ban/tests/files/logs/postfix> |
+| `34-jvm-gc` | LGPL-3.0 (best effort) | <https://raw.githubusercontent.com/chewiebug/GCViewer/1.36/src/test/resources/openjdk/SampleSun1_6_0G1_gc_verbose.txt> |

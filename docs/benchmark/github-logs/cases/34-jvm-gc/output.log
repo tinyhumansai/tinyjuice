@@ -1,0 +1,15 @@
+[... 762 line(s) omitted ... ⟦tj:0946aaca4ddab79ce8e7587155f72bdd⟧]
+15.987: [GC concurrent-mark-abort]
+[... 314 line(s) omitted ... ⟦tj:a34d19015aff28fdf790be816dbb563f⟧]
+22.980: [GC concurrent-mark-abort]
+[... 106 line(s) omitted ... ⟦tj:198f2f38810f015e82aaf3ba417fb61f⟧]
+25.792: [GC concurrent-mark-abort]
+[... 538 line(s) omitted ... ⟦tj:a5aae823de5d33c1662f0aeecf1816f3⟧]
+37.369: [GC concurrent-mark-abort]
+[... 1245 line(s) omitted ... ⟦tj:e5e909f8b7961a42689b0fb4cbab9db2⟧]
+77.417: [GC concurrent-mark-abort]
+[... 1491 line(s) omitted ... ⟦tj:816bc2d8766343c9211a87ddeb9096d6⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (235561 bytes) is available by calling tinyjuice_retrieve with token "d8744977a631986bd19845f464437fa3" (marker ⟦tj:d8744977a631986bd19845f464437fa3⟧)]

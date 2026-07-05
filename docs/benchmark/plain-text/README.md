@@ -17,7 +17,7 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 | `06-codecrusher-md-` | [input](cases/06-codecrusher-md-/input.md) | [output](cases/06-codecrusher-md-/output.md) | [diff](cases/06-codecrusher-md-/compression.diff) | 5.5 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `05-build-agent-md-` | [input](cases/05-build-agent-md-/input.md) | [output](cases/05-build-agent-md-/output.md) | [diff](cases/05-build-agent-md-/compression.diff) | 2.0 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `04-architectobot-md-` | [input](cases/04-architectobot-md-/input.md) | [output](cases/04-architectobot-md-/output.md) | [diff](cases/04-architectobot-md-/compression.diff) | 4.4 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/input.md) | [output](cases/03-ship-and-babysit-md-/output.md) | [diff](cases/03-ship-and-babysit-md-/compression.diff) | 4.4 KB | 0.0% | 0.0% | 0.0% | 0.002 ms | n/a |
+| `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/input.md) | [output](cases/03-ship-and-babysit-md-/output.md) | [diff](cases/03-ship-and-babysit-md-/compression.diff) | 4.4 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/input.md) | [output](cases/02-pr-manager-md-/output.md) | [diff](cases/02-pr-manager-md-/compression.diff) | 13.6 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `01-pr-manager-lite-md-` | [input](cases/01-pr-manager-lite-md-/input.md) | [output](cases/01-pr-manager-lite-md-/output.md) | [diff](cases/01-pr-manager-lite-md-/compression.diff) | 9.6 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 

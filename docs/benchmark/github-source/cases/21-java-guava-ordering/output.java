@@ -58,7 +58,97 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * <ul>
  *   <li>Subclass it and implement {@link #compare} instead of implementing {@link Comparator}
-    { … 103 line(s) … ⟦tj:921ef22f4565e2fc45deb54b5fd0f821⟧ }
+ *       directly
+ *   <li>Pass a <i>pre-existing</i> {@link Comparator} instance to {@link #from(Comparator)}
+ *   <li>Use the natural ordering, {@link Ordering#natural}
+ * </ul>
+ *
+ * <h4>Chaining</h4>
+ *
+ * <p>Then you can use the <i>chaining</i> methods to get an altered version of that {@code
+ * Ordering}, including:
+ *
+ * <ul>
+ *   <li>{@link #reverse}
+ *   <li>{@link #compound(Comparator)}
+ *   <li>{@link #onResultOf(Function)}
+ *   <li>{@link #nullsFirst} / {@link #nullsLast}
+ * </ul>
+ *
+ * <h4>Using</h4>
+ *
+ * <p>Finally, use the resulting {@code Ordering} anywhere a {@link Comparator} is required, or use
+ * any of its special operations, such as:
+ *
+ * <ul>
+ *   <li>{@link #immutableSortedCopy}
+ *   <li>{@link #isOrdered} / {@link #isStrictlyOrdered}
+ *   <li>{@link #min} / {@link #max}
+ * </ul>
+ *
+ * <h3>Understanding complex orderings</h3>
+ *
+ * <p>Complex chained orderings like the following example can be challenging to understand.
+ *
+ * <pre>{@code
+ * Ordering<Foo> ordering =
+ *     Ordering.natural()
+ *         .nullsFirst()
+ *         .onResultOf(getBarFunction)
+ *         .nullsLast();
+ * }</pre>
+ *
+ * Note that each chaining method returns a new ordering instance which is backed by the previous
+ * instance, but has the chance to act on values <i>before</i> handing off to that backing instance.
+ * As a result, it usually helps to read chained ordering expressions <i>backwards</i>. For example,
+ * when {@code compare} is called on the above ordering:
+ *
+ * <ol>
+ *   <li>First, if only one {@code Foo} is null, that null value is treated as <i>greater</i>
+ *   <li>Next, non-null {@code Foo} values are passed to {@code getBarFunction} (we will be
+ *       comparing {@code Bar} values from now on)
+ *   <li>Next, if only one {@code Bar} is null, that null value is treated as <i>lesser</i>
+ *   <li>Finally, natural ordering is used (i.e. the result of {@code Bar.compareTo(Bar)} is
+ *       returned)
+ * </ol>
+ *
+ * <p>Alas, {@link #reverse} is a little different. As you read backwards through a chain and
+ * encounter a call to {@code reverse}, continue working backwards until a result is determined, and
+ * then reverse that result.
+ *
+ * <h3>Additional notes</h3>
+ *
+ * <p>Except as noted, the orderings returned by the factory methods of this class are serializable
+ * if and only if the provided instances that back them are. For example, if {@code ordering} and
+ * {@code function} can themselves be serialized, then {@code ordering.onResultOf(function)} can as
+ * well.
+ *
+ * <h3>Java 8+ users</h3>
+ *
+ * <p>If you are using Java 8+, this class is now obsolete. Most of its functionality is now
+ * provided by {@link java.util.stream.Stream Stream} and by {@link Comparator} itself, and the rest
+ * can now be found as static methods in our new {@link Comparators} class. See each method below
+ * for further instructions. Whenever possible, you should change any references of type {@code
+ * Ordering} to be of type {@code Comparator} instead. However, at this time we have no plan to
+ * <i>deprecate</i> this class.
+ *
+ * <p>Many replacements involve adopting {@code Stream}, and these changes can sometimes make your
+ * code verbose. Whenever following this advice, you should check whether {@code Stream} could be
+ * adopted more comprehensively in your code; the end result may be quite a bit simpler.
+ *
+ * <h3>See also</h3>
+ *
+ * <p>See the Guava User Guide article on <a href=
+ * "https://github.com/google/guava/wiki/OrderingExplained">{@code Ordering}</a>.
+ *
+ * @author Jesse Wilson
+ * @author Kevin Bourrillion
+ * @since 2.0
+ */
+@GwtCompatible
+@ElementTypesAreNonnullByDefault
+public abstract class Ordering<T extends @Nullable Object> implements Comparator<T> {
+    { … 13 line(s) … ⟦tj:1b26b18ef4b4adc186ba75e51f6ed881⟧ }
   // TODO(kevinb): right way to explain this??
     { … 59 line(s) … ⟦tj:473136e81df0660490f92ff99371ccf0⟧ }
   // TODO(kevinb): provide replacement

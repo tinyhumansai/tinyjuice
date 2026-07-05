@@ -43,6 +43,25 @@ github-source|25-swift-argparser-argumentset|input.swift|0|Apache-2.0|https://ra
 github-source|26-cs-newtonsoft-serializer|input.cs|0|MIT|https://raw.githubusercontent.com/JamesNK/Newtonsoft.Json/13.0.3/Src/Newtonsoft.Json/JsonSerializer.cs
 github-source|27-xml-gson-pom|input.xml|0|Apache-2.0|https://raw.githubusercontent.com/google/gson/gson-parent-2.11.0/pom.xml
 github-source|28-xml-maven-pom|input.xml|0|Apache-2.0|https://raw.githubusercontent.com/apache/maven/maven-3.9.7/pom.xml
+github-source|29-py-red-black-tree|input.py|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Python/master/data_structures/binary_tree/red_black_tree.py
+github-source|30-py-dijkstra|input.py|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Python/master/graphs/dijkstra_algorithm.py
+github-source|31-rs-huffman-encoding|input.rs|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Rust/master/src/compression/huffman_encoding.rs
+github-source|32-rs-knapsack|input.rs|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Rust/master/src/dynamic_programming/knapsack.rs
+github-source|33-rs-floyd-warshall|input.rs|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Rust/master/src/graph/floyd_warshall.rs
+github-source|34-go-avl-tree|input.go|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Go/master/structure/tree/avl.go
+github-source|35-go-segment-tree|input.go|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Go/master/structure/segmenttree/segmenttree.go
+github-source|36-cpp-a-star-search|input.cpp|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/C-Plus-Plus/master/machine_learning/a_star_search.cpp
+github-source|37-cpp-random-pivot-quicksort|input.cpp|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/C-Plus-Plus/master/sorting/random_pivot_quick_sort.cpp
+github-source|38-ts-heap|input.ts|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/TypeScript/master/data_structures/heap/heap.ts
+github-source|39-ts-binary-search-tree|input.ts|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/TypeScript/master/data_structures/tree/binary_search_tree.ts
+github-source|40-java-lru-cache|input.java|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Java/master/src/main/java/com/thealgorithms/datastructures/caches/LRUCache.java
+github-source|41-java-bellman-ford|input.java|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Java/master/src/main/java/com/thealgorithms/datastructures/graphs/BellmanFord.java
+github-source|42-js-kruskal-mst|input.js|0|GPL-3.0|https://raw.githubusercontent.com/TheAlgorithms/JavaScript/master/Graphs/KruskalMST.js
+github-source|43-c-trie|input.c|0|GPL-3.0|https://raw.githubusercontent.com/TheAlgorithms/C/master/data_structures/trie/trie.c
+github-source|44-rb-avl-tree|input.rb|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/Ruby/master/data_structures/binary_trees/avl_tree.rb
+github-source|45-php-avl-tree|input.php|0|MIT|https://raw.githubusercontent.com/TheAlgorithms/PHP/master/DataStructures/AVLTree/AVLTree.php
+github-source|46-cs-topological-sort|input.cs|0|GPL-3.0|https://raw.githubusercontent.com/TheAlgorithms/C-Sharp/master/Algorithms/Graph/TopologicalSort.cs
+github-source|47-kt-indexed-priority-queue|input.kt|0|MIT|https://raw.githubusercontent.com/bmaslakov/kotlin-algorithm-club/master/src/main/io/uuddlrlrba/ktalgs/datastructures/IndexedPriorityQueue.kt
 github-logs|01-hdfs|input.log|0|loghub (research use)|https://raw.githubusercontent.com/logpai/loghub/master/HDFS/HDFS_2k.log
 github-logs|02-hadoop|input.log|0|loghub (research use)|https://raw.githubusercontent.com/logpai/loghub/master/Hadoop/Hadoop_2k.log
 github-logs|03-spark|input.log|0|loghub (research use)|https://raw.githubusercontent.com/logpai/loghub/master/Spark/Spark_2k.log
@@ -70,6 +89,12 @@ github-logs|24-http-dos|input.log|1500|MIT|https://raw.githubusercontent.com/cro
 github-logs|25-sshesame-honeypot|input.log|1500|MIT|https://raw.githubusercontent.com/crowdsecurity/hub/master/.tests/sshesame/sshesame.log
 github-logs|26-gitlab-bf|input.log|1500|MIT|https://raw.githubusercontent.com/crowdsecurity/hub/master/.tests/gitlab-bf/gitlab-bf.log
 github-logs|27-suricata-eve|input.log|1500|MIT|https://raw.githubusercontent.com/crowdsecurity/hub/master/.tests/suricata-logs-evelog/suricata-logs-evelog.log
+github-logs|29-spark-eventlog|input.log|0|Apache-2.0|https://raw.githubusercontent.com/apache/spark/v3.5.1/core/src/test/resources/spark-events/local-1642039451826
+github-logs|30-laravel-app|input.log|0|BSD-2-Clause|https://raw.githubusercontent.com/tstack/lnav/62ac69b41bcfb2186ebd8ed6eece57842b5bbd0f/test/logfile_laravel.0
+github-logs|31-zeek-http|input.log|0|BSD-2-Clause|https://raw.githubusercontent.com/tstack/lnav/v0.12.2/test/logfile_bro_http.log.0
+github-logs|32-w3c-iis|input.log|0|BSD-2-Clause|https://raw.githubusercontent.com/tstack/lnav/v0.12.2/test/logfile_w3c_big.0
+github-logs|33-postfix-mail|input.log|0|GPL-2.0|https://raw.githubusercontent.com/fail2ban/fail2ban/1.0.2/fail2ban/tests/files/logs/postfix
+github-logs|34-jvm-gc|input.log|0|LGPL-3.0 (best effort)|https://raw.githubusercontent.com/chewiebug/GCViewer/1.36/src/test/resources/openjdk/SampleSun1_6_0G1_gc_verbose.txt
 dockerfiles|01-postgres|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/docker-library/postgres/master/17/bookworm/Dockerfile
 dockerfiles|02-postgres-16|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/docker-library/postgres/master/16/bookworm/Dockerfile
 dockerfiles|03-redis|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/docker-library/redis/master/7.4/debian/Dockerfile
@@ -102,6 +127,15 @@ dockerfiles|29-nextjs-example|input.dockerfile|0|MIT|https://raw.githubuserconte
 dockerfiles|30-influxdb|input.dockerfile|0|MIT|https://raw.githubusercontent.com/influxdata/influxdata-docker/master/influxdb/2.7/Dockerfile
 dockerfiles|31-julia|input.dockerfile|0|MIT|https://raw.githubusercontent.com/docker-library/julia/master/1.11/bookworm/Dockerfile
 dockerfiles|32-caddy|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/caddyserver/caddy-docker/master/2.11/alpine/Dockerfile
+dockerfiles|34-gitea|input.dockerfile|0|MIT|https://raw.githubusercontent.com/go-gitea/gitea/v1.24.0/Dockerfile
+dockerfiles|35-keycloak|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/keycloak/keycloak/26.2.0/quarkus/container/Dockerfile
+dockerfiles|36-ollama|input.dockerfile|0|MIT|https://raw.githubusercontent.com/ollama/ollama/v0.9.0/Dockerfile
+dockerfiles|37-mastodon|input.dockerfile|0|AGPL-3.0|https://raw.githubusercontent.com/mastodon/mastodon/v4.3.8/Dockerfile
+dockerfiles|38-superset|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/apache/superset/4.1.2/Dockerfile
+dockerfiles|39-home-assistant|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/home-assistant/core/2025.5.3/Dockerfile
+dockerfiles|40-clickhouse|input.dockerfile|0|Apache-2.0|https://raw.githubusercontent.com/ClickHouse/ClickHouse/v25.4.2.31-stable/docker/server/Dockerfile.ubuntu
+dockerfiles|41-vault|input.dockerfile|0|BUSL-1.1|https://raw.githubusercontent.com/hashicorp/vault/v1.19.4/Dockerfile
+dockerfiles|42-n8n|input.dockerfile|0|Sustainable-Use-License|https://raw.githubusercontent.com/n8n-io/n8n/n8n%401.94.0/docker/images/n8n/Dockerfile
 EOF
 }
 

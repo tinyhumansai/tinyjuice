@@ -8,12 +8,15 @@ Percentages are **token reduction: higher is better** (90% means the output shra
 
 | Category | Cases | Applied | Token reduction (mean) | Avg latency | Report |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Polyglot Source And XML | 6 | 6 | 86.8% | 0.638 ms | [report](polyglot-source/README.md) |
-| Service And Docker Logs | 10 | 10 | 86.0% | 0.293 ms | [report](service-log/README.md) |
-| HTML, RSS, And Page Snapshots | 10 | 10 | 77.5% | 0.290 ms | [report](html-status-report/README.md) |
-| Unified Diffs | 10 | 10 | 69.1% | 0.353 ms | [report](unified-diff/README.md) |
-| Rust Source | 10 | 8 | 50.0% | 1.138 ms | [report](rust-source/README.md) |
-| Search Results | 10 | 10 | 47.1% | 0.672 ms | [report](search-results/README.md) |
-| JSON SmartCrusher | 10 | 3 | 20.0% | 0.491 ms | [report](json-smartcrusher/README.md) |
-| Test Failure Logs | 10 | 2 | 15.3% | 0.057 ms | [report](test-failure-log/README.md) |
+| Polyglot Source And XML | 6 | 6 | 86.8% | 0.430 ms | [report](polyglot-source/README.md) |
+| Service And Docker Logs | 10 | 10 | 86.0% | 0.190 ms | [report](service-log/README.md) |
+| HTML, RSS, And Page Snapshots | 10 | 10 | 77.5% | 0.191 ms | [report](html-status-report/README.md) |
+| Unified Diffs | 10 | 10 | 69.1% | 0.217 ms | [report](unified-diff/README.md) |
+| GitHub Log Files | 33 | 24 | 67.9% | 0.623 ms | [report](github-logs/README.md) |
+| GitHub Source Files | 47 | 45 | 61.6% | 0.537 ms | [report](github-source/README.md) |
+| Rust Source | 10 | 8 | 50.0% | 0.748 ms | [report](rust-source/README.md) |
+| Search Results | 10 | 10 | 47.1% | 0.442 ms | [report](search-results/README.md) |
+| JSON SmartCrusher | 10 | 3 | 20.0% | 0.381 ms | [report](json-smartcrusher/README.md) |
+| Test Failure Logs | 10 | 2 | 15.3% | 0.039 ms | [report](test-failure-log/README.md) |
+| Dockerfiles | 41 | 0 | 0.0% | 0.065 ms | [report](dockerfiles/README.md) |
 | Plain Text | 10 | 0 | 0.0% | 0.000 ms | [report](plain-text/README.md) |

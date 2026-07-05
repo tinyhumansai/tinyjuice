@@ -10,14 +10,14 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | [diff](cases/02-notion-tools-array/compression.diff) | 890.8 KB | 74.1% | 74.1% | 74.0% | 3.335 ms | true |
-| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | [diff](cases/03-slack-tools-array/compression.diff) | 106.7 KB | 65.7% | 65.9% | 65.5% | 0.555 ms | true |
-| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | [diff](cases/01-github-tools-array/compression.diff) | 110.9 KB | 60.5% | 60.7% | 60.3% | 0.580 ms | true |
-| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | [diff](cases/10-cargo-metadata/compression.diff) | 62.0 KB | 0.0% | 0.0% | 0.0% | 0.225 ms | n/a |
-| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | [diff](cases/09-package-manifest/compression.diff) | 9.4 KB | 0.0% | 0.0% | 0.0% | 0.030 ms | n/a |
-| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | [diff](cases/08-lottie-animation/compression.diff) | 16.8 KB | 0.0% | 0.0% | 0.0% | 0.046 ms | n/a |
-| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | [diff](cases/07-app-schema-object/compression.diff) | 48.6 KB | 0.0% | 0.0% | 0.0% | 0.131 ms | n/a |
-| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | [diff](cases/06-tauri-capabilities-schema/compression.diff) | 2.4 KB | 0.0% | 0.0% | 0.0% | 0.007 ms | n/a |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | [diff](cases/02-notion-tools-array/compression.diff) | 890.8 KB | 74.1% | 74.1% | 74.0% | 2.593 ms | true |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | [diff](cases/03-slack-tools-array/compression.diff) | 106.7 KB | 65.7% | 65.9% | 65.5% | 0.421 ms | true |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | [diff](cases/01-github-tools-array/compression.diff) | 110.9 KB | 60.5% | 60.7% | 60.3% | 0.476 ms | true |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | [diff](cases/10-cargo-metadata/compression.diff) | 62.0 KB | 0.0% | 0.0% | 0.0% | 0.165 ms | n/a |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | [diff](cases/09-package-manifest/compression.diff) | 9.4 KB | 0.0% | 0.0% | 0.0% | 0.021 ms | n/a |
+| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | [diff](cases/08-lottie-animation/compression.diff) | 16.8 KB | 0.0% | 0.0% | 0.0% | 0.033 ms | n/a |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | [diff](cases/07-app-schema-object/compression.diff) | 48.6 KB | 0.0% | 0.0% | 0.0% | 0.095 ms | n/a |
+| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | [diff](cases/06-tauri-capabilities-schema/compression.diff) | 2.4 KB | 0.0% | 0.0% | 0.0% | 0.005 ms | n/a |
 | `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | [diff](cases/05-polymarket-events-list/compression.diff) | 201 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | [diff](cases/04-polymarket-markets-list/compression.diff) | 313 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 

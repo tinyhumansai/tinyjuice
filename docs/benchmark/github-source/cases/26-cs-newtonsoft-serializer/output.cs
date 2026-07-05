@@ -40,9 +40,16 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Newtonsoft.Json
 {
-    { … 39 line(s) … ⟦tj:b7c279b91c747bf4cf80f7356b51fabe⟧ }
+    /// <summary>
+    /// Serializes and deserializes objects into and from the JSON format.
+    /// The <see cref="JsonSerializer"/> enables you to control how objects are encoded into JSON.
+    /// </summary>
+    public class JsonSerializer
+    {
+    { … 33 line(s) … ⟦tj:884441ebac595db4fb2d48e2e035d84f⟧ }
         /// Occurs when the <see cref="JsonSerializer"/> errors during serialization and deserialization.
-    { … 1144 line(s) … ⟦tj:da5200c3474d709bdc89dfc7f230410d⟧ }
+    { … 1143 line(s) … ⟦tj:f66da1316c8349ae7a9bcb1198fc1d2b⟧ }
+}
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [compacted tool output — this is a PARTIAL view; the full original (50756 bytes) is available by calling tinyjuice_retrieve with token "1aa48b9cedf9cc9dc8c491ceb9368f21" (marker ⟦tj:1aa48b9cedf9cc9dc8c491ceb9368f21⟧)]
