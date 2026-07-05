@@ -111,14 +111,25 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     // play a lossy result carries no recovery footer; whether that is
     // acceptable is the caller's call via `lossy_without_ccr` (dropped content
     // is still explicitly marked with omission markers — it just isn't
-    // retrievable).
+    // retrievable), except for code, which is never emitted lossy without a
+    // recovery path (see `lossy_ok_without_ccr` below).
     let original_tokens = estimate_tokens_with(content, opts.chars_per_token);
     let compacted_body_tokens = estimate_tokens_with(&out.text, opts.chars_per_token);
     let heavy_crush = compacted_body_tokens <= original_tokens / 2
         && original_tokens as usize >= opts.ccr_min_tokens / 4;
     let ccr_for_call =
         opts.ccr_enabled && (original_tokens as usize >= opts.ccr_min_tokens || heavy_crush);
-    if out.lossy && !ccr_for_call && !opts.lossy_without_ccr {
+    // Code is special. A lossy code view collapses whole function bodies, and
+    // those lines are only recoverable when CCR is on (each collapsed body
+    // carries a per-block retrieval token, offloaded regardless of the
+    // file-level footer). Truncating a log to a head/tail is a bounded, marked
+    // loss; eating the middle of a function with no way to get it back is not.
+    // So code never rides the `lossy_without_ccr` escape hatch — with CCR off
+    // it passes through verbatim rather than dropping code the caller can't
+    // recover.
+    let unrecoverable_code = kind == ContentKind::Code && !opts.ccr_enabled;
+    let lossy_ok_without_ccr = opts.lossy_without_ccr && !unrecoverable_code;
+    if out.lossy && !ccr_for_call && !lossy_ok_without_ccr {
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
 
@@ -282,6 +293,74 @@ mod tests {
         let res = compress_content(&original, None, &o).await;
         assert!(!res.applied, "strict mode must decline unrecoverable lossy");
         assert_eq!(res.text, original);
+    }
+
+    /// A collapsible source file with many long function bodies. Big enough to
+    /// clear the global floor and to have bodies worth collapsing.
+    fn big_code_file() -> String {
+        let mut src = String::from("use std::collections::HashMap;\n\n");
+        for f in 0..4 {
+            src.push_str(&format!("pub fn worker_{f}(items: &[i32]) -> i32 {{\n"));
+            for i in 0..30 {
+                src.push_str(&format!(
+                    "    let tmp_{f}_{i} = items.iter().sum::<i32>() + {i};\n"
+                ));
+            }
+            src.push_str(&format!("    tmp_{f}_0\n}}\n\n"));
+        }
+        src
+    }
+
+    fn code_hint() -> ContentHint {
+        ContentHint {
+            explicit: Some(ContentKind::Code),
+            extension: Some("rs".into()),
+            ..Default::default()
+        }
+    }
+
+    /// Code must never be cut when it can't be recovered: with CCR off, even
+    /// though `lossy_without_ccr` is on (the default), the router passes the
+    /// source through verbatim rather than dropping function bodies with no
+    /// retrieval token.
+    #[tokio::test]
+    async fn code_is_not_cut_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(o.lossy_without_ccr, "escape hatch is on by default");
+        let original = big_code_file();
+        let res = compress_content(&original, Some(code_hint()), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Code);
+        assert!(
+            !res.applied,
+            "unrecoverable code must pass through, not be cut: {}",
+            res.text
+        );
+        assert_eq!(res.text, original, "source returned verbatim");
+        assert!(
+            res.text.contains("tmp_1_15"),
+            "no body lines eaten: {}",
+            res.text
+        );
+    }
+
+    /// With CCR on, code still collapses — every omitted body is individually
+    /// retrievable, so cutting it is safe.
+    #[tokio::test]
+    async fn code_collapses_with_ccr() {
+        let o = opts();
+        assert!(o.ccr_enabled);
+        let original = big_code_file();
+        let res = compress_content(&original, Some(code_hint()), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Code);
+        assert!(res.applied, "CCR makes the collapse recoverable");
+        assert!(res.text.len() < original.len());
+        assert!(res.text.contains("pub fn worker_0"), "signatures kept");
+        // Every collapsed body carries a per-block retrieval token.
+        let tokens = cache::parse_markers(&res.text);
+        assert!(!tokens.is_empty(), "recoverable tokens present: {}", res.text);
+        let body = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(body.contains("tmp_0_15"), "full body recoverable: {body}");
     }
 
     #[tokio::test]
