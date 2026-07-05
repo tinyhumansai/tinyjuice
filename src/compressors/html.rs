@@ -421,7 +421,10 @@ mod tests {
         assert!(!text.contains("]]>"), "CDATA closer leaked: {text}");
         assert!(text.contains("Big"), "{text}");
         assert!(text.contains("payout"), "{text}");
-        assert!(!text.contains("<b>"), "markup in CDATA not stripped: {text}");
+        assert!(
+            !text.contains("<b>"),
+            "markup in CDATA not stripped: {text}"
+        );
         assert!(text.contains("Sun, 05 Jul 2026"), "{text}");
         // Unterminated CDATA: payload still emitted, no hang.
         let text = html_to_text("<title><![CDATA[open ended");
