@@ -1,0 +1,101 @@
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hacker News: Front Page</title><link>https://news.ycombinator.com/</link><description>Hacker News RSS</description><docs>https://hnrss.org/</docs><generator>hnrss v2.1.1</generator><lastBuildDate>Sun, 05 Jul 2026 11:51:01 +0000</lastBuildDate><atom:link href="https://hnrss.org/frontpage" rel="self" type="application/rss+xml"></atom:link><item><title><![CDATA[Pi square is nearly 10]]></title><description><![CDATA[
+<p>Article URL: <a href="https://mihai.page/pi-square-is-10/">https://mihai.page/pi-square-is-10/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48793073">https://news.ycombinator.com/item?id=48793073</a></p>
+<p>Points: 10</p>
+<p># Comments: 4</p>
+]]></description><pubDate>Sun, 05 Jul 2026 10:50:53 +0000</pubDate><link>https://mihai.page/pi-square-is-10/</link><dc:creator>freediver</dc:creator><comments>https://news.ycombinator.com/item?id=48793073</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48793073</guid></item><item><title><![CDATA[Europe's new climate in seven charts]]></title><description><![CDATA[
+<p>Article URL: <a href="https://www.bbc.com/news/articles/c8e2j0j87reo">https://www.bbc.com/news/articles/c8e2j0j87reo</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792790">https://news.ycombinator.com/item?id=48792790</a></p>
+<p>Points: 39</p>
+<p># Comments: 5</p>
+]]></description><pubDate>Sun, 05 Jul 2026 09:56:10 +0000</pubDate><link>https://www.bbc.com/news/articles/c8e2j0j87reo</link><dc:creator>saikatsg</dc:creator><comments>https://news.ycombinator.com/item?id=48792790</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48792790</guid></item><item><title><![CDATA[Scientist who cleaned space toilet on work now leading Mars exploration]]></title><description><![CDATA[
+<p>Article URL: <a href="https://www.bbc.com/news/articles/cz758x04g83o">https://www.bbc.com/news/articles/cz758x04g83o</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792780">https://news.ycombinator.com/item?id=48792780</a></p>
+<p>Points: 9</p>
+<p># Comments: 2</p>
+]]></description><pubDate>Sun, 05 Jul 2026 09:55:22 +0000</pubDate><link>https://www.bbc.com/news/articles/cz758x04g83o</link><dc:creator>saikatsg</dc:creator><comments>https://news.ycombinator.com/item?id=48792780</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48792780</guid></item><item><title><![CDATA[Claude Design System Prompt]]></title><description><![CDATA[
+<p>Article URL: <a href="https://github.com/Trystan-SA/claude-design-system-prompt">https://github.com/Trystan-SA/claude-design-system-prompt</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792399">https://news.ycombinator.com/item?id=48792399</a></p>
+<p>Points: 18</p>
+<p># Comments: 1</p>
+]]></description><pubDate>Sun, 05 Jul 2026 08:43:37 +0000</pubDate><link>https://github.com/Trystan-SA/claude-design-system-prompt</link><dc:creator>handfuloflight</dc:creator><comments>https://news.ycombinator.com/item?id=48792399</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48792399</guid></item><item><title><![CDATA[Apocketlypse]]></title><description><![CDATA[
+<p>Article URL: <a href="https://0dd.company/galleries/triumph/1.html">https://0dd.company/galleries/triumph/1.html</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792352">https://news.ycombinator.com/item?id=48792352</a></p>
+<p>Points: 26</p>
+<p># Comments: 3</p>
+]]></description><pubDate>Sun, 05 Jul 2026 08:32:09 +0000</pubDate><link>https://0dd.company/galleries/triumph/1.html</link><dc:creator>scaglio</dc:creator><comments>https://news.ycombinator.com/item?id=48792352</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48792352</guid></item><item><title><![CDATA[Programmers need to start meditating]]></title><description><![CDATA[
+<p>Article URL: <a href="https://jacob.gold/posts/programmers-need-to-start-meditating-now/">https://jacob.gold/posts/programmers-need-to-start-meditating-now/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792080">https://news.ycombinator.com/item?id=48792080</a></p>
+<p>Points: 84</p>
+<p># Comments: 83</p>
+]]></description><pubDate>Sun, 05 Jul 2026 07:39:35 +0000</pubDate><link>https://jacob.gold/posts/programmers-need-to-start-meditating-now/</link><dc:creator>enz</dc:creator><comments>https://news.ycombinator.com/item?id=48792080</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48792080</guid></item><item><title><![CDATA[Fast Software, the Best Software]]></title><description><![CDATA[
+<p>Article URL: <a href="https://craigmod.com/essays/fast_software/">https://craigmod.com/essays/fast_software/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48792008">https://news.ycombinator.com/item?id=48792008</a></p>
+<p>Points: 34</p>
+<p># Comments: 12</p>
+]]></description><pubDate>Sun, 05 Jul 2026 07:25:25 +0000</pubDate><link>https://craigmod.com/essays/fast_software/</link><dc:creator>ustad</dc:creator><comments>https://news.ycombinator.com/item?id=48792008</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48792008</guid></item><item><title><![CDATA[sqlite-utils 4.0rc2, mostly written by Claude Fable (for about $149.25)]]></title><description><![CDATA[
+<p>Article URL: <a href="https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/">https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48791708">https://news.ycombinator.com/item?id=48791708</a></p>
+<p>Points: 55</p>
+<p># Comments: 59</p>
+]]></description><pubDate>Sun, 05 Jul 2026 06:19:34 +0000</pubDate><link>https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/</link><dc:creator>ognyankulev</dc:creator><comments>https://news.ycombinator.com/item?id=48791708</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48791708</guid></item><item><title><![CDATA[Megawatts by Microwave]]></title><description><![CDATA[
+<p>Article URL: <a href="https://computer.rip/2026-07-04-microwave-and-power.html">https://computer.rip/2026-07-04-microwave-and-power.html</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48791591">https://news.ycombinator.com/item?id=48791591</a></p>
+<p>Points: 31</p>
+<p># Comments: 4</p>
+]]></description><pubDate>Sun, 05 Jul 2026 05:56:03 +0000</pubDate><link>https://computer.rip/2026-07-04-microwave-and-power.html</link><dc:creator>eternauta3k</dc:creator><comments>https://news.ycombinator.com/item?id=48791591</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48791591</guid></item><item><title><![CDATA[Shadcn/UI now defaults to Base UI instead of Radix]]></title><description><![CDATA[
+<p>Article URL: <a href="https://ui.shadcn.com/docs/changelog">https://ui.shadcn.com/docs/changelog</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48791328">https://news.ycombinator.com/item?id=48791328</a></p>
+<p>Points: 157</p>
+<p># Comments: 59</p>
+]]></description><pubDate>Sun, 05 Jul 2026 04:46:08 +0000</pubDate><link>https://ui.shadcn.com/docs/changelog</link><dc:creator>dabinat</dc:creator><comments>https://news.ycombinator.com/item?id=48791328</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48791328</guid></item><item><title><![CDATA[Moby Dick Workout (2022)]]></title><description><![CDATA[
+<p>Article URL: <a href="https://www.hogbaysoftware.com/posts/moby-dick-workout/">https://www.hogbaysoftware.com/posts/moby-dick-workout/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48791266">https://news.ycombinator.com/item?id=48791266</a></p>
+<p>Points: 50</p>
+<p># Comments: 16</p>
+]]></description><pubDate>Sun, 05 Jul 2026 04:30:33 +0000</pubDate><link>https://www.hogbaysoftware.com/posts/moby-dick-workout/</link><dc:creator>helloplanets</dc:creator><comments>https://news.ycombinator.com/item?id=48791266</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48791266</guid></item><item><title><![CDATA[The Log Is the Agent]]></title><description><![CDATA[
+<p>Article URL: <a href="https://arxiv.org/abs/2605.21997">https://arxiv.org/abs/2605.21997</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48790912">https://news.ycombinator.com/item?id=48790912</a></p>
+<p>Points: 48</p>
+<p># Comments: 15</p>
+]]></description><pubDate>Sun, 05 Jul 2026 02:57:38 +0000</pubDate><link>https://arxiv.org/abs/2605.21997</link><dc:creator>iacguy</dc:creator><comments>https://news.ycombinator.com/item?id=48790912</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48790912</guid></item><item><title><![CDATA[If you're a button, you have one job]]></title><description><![CDATA[
+<p>Article URL: <a href="https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/">https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48790689">https://news.ycombinator.com/item?id=48790689</a></p>
+<p>Points: 262</p>
+<p># Comments: 141</p>
+]]></description><pubDate>Sun, 05 Jul 2026 02:01:03 +0000</pubDate><link>https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/</link><dc:creator>nozzlegear</dc:creator><comments>https://news.ycombinator.com/item?id=48790689</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48790689</guid></item><item><title><![CDATA[Return of the Nigerian Prince Redux: Beware Book Club and Book Review Scams (2025)]]></title><description><![CDATA[
+<p>Article URL: <a href="https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/">https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48790240">https://news.ycombinator.com/item?id=48790240</a></p>
+<p>Points: 54</p>
+<p># Comments: 18</p>
+]]></description><pubDate>Sun, 05 Jul 2026 00:22:25 +0000</pubDate><link>https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/</link><dc:creator>Anon84</dc:creator><comments>https://news.ycombinator.com/item?id=48790240</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48790240</guid></item><item><title><![CDATA[Jellyfish can heal wounds in minutes. Scientists want their secrets]]></title><description><![CDATA[
+<p>Article URL: <a href="https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets">https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48789712">https://news.ycombinator.com/item?id=48789712</a></p>
+<p>Points: 138</p>
+<p># Comments: 30</p>
+]]></description><pubDate>Sat, 04 Jul 2026 22:36:28 +0000</pubDate><link>https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets</link><dc:creator>hhs</dc:creator><comments>https://news.ycombinator.com/item?id=48789712</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48789712</guid></item><item><title><![CDATA[GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance]]></title><description><![CDATA[
+<p>Article URL: <a href="https://github.com/openai/codex/issues/30364">https://github.com/openai/codex/issues/30364</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48789428">https://news.ycombinator.com/item?id=48789428</a></p>
+<p>Points: 296</p>
+<p># Comments: 115</p>
+]]></description><pubDate>Sat, 04 Jul 2026 21:51:09 +0000</pubDate><link>https://github.com/openai/codex/issues/30364</link><dc:creator>maille</dc:creator><comments>https://news.ycombinator.com/item?id=48789428</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48789428</guid></item><item><title><![CDATA[Better Models: Worse Tools]]></title><description><![CDATA[
+<p>Article URL: <a href="https://lucumr.pocoo.org/2026/7/4/better-models-worse-tools/">https://lucumr.pocoo.org/2026/7/4/better-models-worse-tools/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48788599">https://news.ycombinator.com/item?id=48788599</a></p>
+<p>Points: 184</p>
+<p># Comments: 65</p>
+]]></description><pubDate>Sat, 04 Jul 2026 20:16:22 +0000</pubDate><link>https://lucumr.pocoo.org/2026/7/4/better-models-worse-tools/</link><dc:creator>leemoore</dc:creator><comments>https://news.ycombinator.com/item?id=48788599</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48788599</guid></item><item><title><![CDATA[Command and Conquer Generals natively ported to macOS, iPhone, iPad using Fable]]></title><description><![CDATA[
+<p>Article URL: <a href="https://github.com/ammaarreshi/Generals-Mac-iOS-iPad/tree/main">https://github.com/ammaarreshi/Generals-Mac-iOS-iPad/tree/main</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48788283">https://news.ycombinator.com/item?id=48788283</a></p>
+<p>Points: 589</p>
+<p># Comments: 249</p>
+]]></description><pubDate>Sat, 04 Jul 2026 19:41:10 +0000</pubDate><link>https://github.com/ammaarreshi/Generals-Mac-iOS-iPad/tree/main</link><dc:creator>asronline</dc:creator><comments>https://news.ycombinator.com/item?id=48788283</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48788283</guid></item><item><title><![CDATA[“Beyond the limit”: Satellites and mirrors in space pose threat to the night sky]]></title><description><![CDATA[
+<p>Article URL: <a href="https://www.eso.org/public/news/eso2607/">https://www.eso.org/public/news/eso2607/</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48787042">https://news.ycombinator.com/item?id=48787042</a></p>
+<p>Points: 154</p>
+<p># Comments: 255</p>
+]]></description><pubDate>Sat, 04 Jul 2026 17:17:28 +0000</pubDate><link>https://www.eso.org/public/news/eso2607/</link><dc:creator>Breadmaker</dc:creator><comments>https://news.ycombinator.com/item?id=48787042</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48787042</guid></item><item><title><![CDATA[Infracost (YC W21) Is Hiring a Marketing Lead to Shift FinOps Left]]></title><description><![CDATA[
+<p>Article URL: <a href="https://www.ycombinator.com/companies/infracost/jobs/YTJcFwr-marketing-lead">https://www.ycombinator.com/companies/infracost/jobs/YTJcFwr-marketing-lead</a></p>
+<p>Comments URL: <a href="https://news.ycombinator.com/item?id=48779906">https://news.ycombinator.com/item?id=48779906</a></p>
+<p>Points: 0</p>
+<p># Comments: 0</p>
+]]></description><pubDate>Fri, 03 Jul 2026 21:00:50 +0000</pubDate><link>https://www.ycombinator.com/companies/infracost/jobs/YTJcFwr-marketing-lead</link><dc:creator>akh</dc:creator><comments>https://news.ycombinator.com/item?id=48779906</comments><guid isPermaLink="false">https://news.ycombinator.com/item?id=48779906</guid></item></channel></rss>

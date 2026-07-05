@@ -1,0 +1,500 @@
+<OPENHUMAN_ROOT>/src/api/config.rs:14://! caused every `/auth/*`, `/agent-integrations/*`, and `/voice/*` request to
+<OPENHUMAN_ROOT>/src/api/config.rs:103:/// so `/auth/*`, `/voice/*`, and `/agent-integrations/*` never accidentally
+<OPENHUMAN_ROOT>/src/api/config.rs:460:/// (`/auth/me`, `/agent-integrations/…`) which then land on
+<OPENHUMAN_ROOT>/src/api/config.rs:502:/// | `https://api.tinyhumans.ai/openai/v1/…`   | `/agent-integrations/foo` | `https://api.tinyhumans.ai/agent-integrations/foo`  ← path replaced   |
+<OPENHUMAN_ROOT>/src/api/config.rs:678:             /agent-integrations/* requests don't 404 against your local LLM"
+<OPENHUMAN_ROOT>/src/api/config.rs:800:        // /agent-integrations/* calls.
+<OPENHUMAN_ROOT>/src/api/config.rs:804:                "/agent-integrations/composio/toolkits",
+<OPENHUMAN_ROOT>/src/api/config.rs:806:            "https://api.tinyhumans.ai/agent-integrations/composio/toolkits"
+<OPENHUMAN_ROOT>/src/api/config.rs:812:        let expected = "https://api.tinyhumans.ai/agent-integrations/composio/toolkits";
+<OPENHUMAN_ROOT>/src/api/config.rs:816:                "/agent-integrations/composio/toolkits"
+<OPENHUMAN_ROOT>/src/api/config.rs:823:                "/agent-integrations/composio/toolkits"
+<OPENHUMAN_ROOT>/src/api/config.rs:834:                "/agent-integrations/composio/tools?toolkits=gmail"
+<OPENHUMAN_ROOT>/src/api/config.rs:836:            "https://api.tinyhumans.ai/agent-integrations/composio/tools?toolkits=gmail"
+<OPENHUMAN_ROOT>/src/api/config.rs:852:            api_url("http://localhost:1234/v1", "/agent-integrations/foo"),
+<OPENHUMAN_ROOT>/src/api/config.rs:853:            "http://localhost:1234/agent-integrations/foo"
+<OPENHUMAN_ROOT>/src/api/rest.rs:919:    /// Signals "the agent is typing…" on a channel that supports it
+<OPENHUMAN_ROOT>/src/main.rs:111:            // the agent re-report routes through `TransientUpstreamHttp`, but the
+<OPENHUMAN_ROOT>/src/main.rs:120:            // `agent::harness::session::runtime::run_single`,
+<OPENHUMAN_ROOT>/src/main.rs:123:            // deterministic agent-state outcome surfaced to the user via
+<OPENHUMAN_ROOT>/src/lib.rs:6://! - Domain-specific logic for the OpenHuman agent runtime.
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:7://! - `--mode harness` (default): build a real `Agent::from_config()`
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:24://!   RUST_LOG=info,openhuman_core::openhuman::agent=debug,openhuman_core::openhuman::inference=debug \
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:33:use openhuman_core::openhuman::agent::Agent;
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:74:        "[probe] config.agent.tool_dispatcher = {:?}",
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:75:        config.agent.tool_dispatcher
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:89:    let mut agent = Agent::from_config(config).context("Agent::from_config failed")?;
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:94:    agent.fetch_connected_integrations().await;
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:95:    let refreshed = agent.refresh_delegation_tools();
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:96:    let conn_count = agent.connected_integrations().len();
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:101:    eprintln!("[probe] visible tool count = {}", agent.tools().len());
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:102:    eprintln!("[probe] model = {}", agent.model_name());
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:104:    eprintln!("[probe] >>> agent.run_single() ...");
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:106:    let response = agent
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:109:        .context("agent.run_single failed")?;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:1://! Live harness audit for reusable async sub-agent delegation.
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:12://! scripts/debug/harness-subagent-audit.sh --turns 2
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:24:use openhuman_core::openhuman::agent::progress::AgentProgress;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:25:use openhuman_core::openhuman::agent::Agent;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:26:use openhuman_core::openhuman::agent_orchestration::harness_audit::{
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:27:    self, AuditSteerError, AuditSubagentSessionStore, DurableSubagentSession, DurableSubagentStatus,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:34:#[command(name = "harness-subagent-audit")]
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:36:    /// Sub-agent archetype to request from the orchestrator.
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:38:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:40:    /// Stable reusable task key. Defaults to audit-subagent-<unix-seconds>.
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:68:    /// After the first async sub-agent spawn, steer the running child through its run queue.
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:72:    /// Delay after SubagentSpawned before attempting the steer.
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:89:    subagent_spawned: Vec<SubagentSpawnedEvent>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:90:    subagent_completed: Vec<SubagentCompletedEvent>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:91:    subagent_failed: Vec<SubagentFailedEvent>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:92:    subagent_tool_started: Vec<SubagentToolEvent>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:93:    subagent_tool_completed: Vec<SubagentToolCompletedEvent>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:119:struct SubagentSpawnedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:121:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:133:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:135:    subagent_session_id: Option<String>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:145:    store: AuditSubagentSessionStore,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:154:struct SubagentCompletedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:156:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:164:struct SubagentFailedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:166:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:172:struct SubagentToolEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:174:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:182:struct SubagentToolCompletedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:184:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:196:    subagent_session_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:200:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:204:    status: DurableSubagentStatus,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:214:    agent_id: String,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:233:        eprintln!("[harness_subagent_audit] ERROR: {err:#}");
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:244:        .unwrap_or_else(|| format!("audit-subagent-{}", unix_seconds()));
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:246:    eprintln!("[harness_subagent_audit] loading live OpenHuman config");
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:250:    let store = AuditSubagentSessionStore::new(config.workspace_dir.clone());
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:252:        "[harness_subagent_audit] workspace_dir={} session_store={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:257:        "[harness_subagent_audit] default_model={:?} dispatcher={:?}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:258:        config.default_model, config.agent.tool_dispatcher
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:262:        .context("loading existing matching durable subagent sessions")?;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:265:            "[harness_subagent_audit] found {} pre-existing session(s) for task_key={}; reuse checks may include prior state",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:271:    let mut agent = Agent::from_config(&config).context("Agent::from_config failed")?;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:272:    eprintln!("[harness_subagent_audit] fetching connected integrations");
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:273:    agent.fetch_connected_integrations().await;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:274:    let refreshed = agent.refresh_delegation_tools();
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:276:        "[harness_subagent_audit] connected_integrations={} delegation_tools_refreshed={} visible_tools={} model={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:277:        agent.connected_integrations().len(),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:279:        agent.tools().len(),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:280:        agent.model_name()
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:286:    agent.set_on_progress(Some(tx));
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:312:                .unwrap_or_else(|| first_turn_prompt(&args.agent_id, &task_key))
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:316:                .unwrap_or_else(|| second_turn_prompt(&args.agent_id, &task_key))
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:319:            "[harness_subagent_audit] >>> parent_turn={} prompt_chars={} task_key={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:325:        let reply = agent
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:328:            .with_context(|| format!("agent.run_single failed on turn {turn}"))?;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:330:            "[harness_subagent_audit] <<< parent_turn={} elapsed_ms={} assistant_reply_chars={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:345:    .context("polling durable subagent sessions")?;
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:347:    agent.set_on_progress(None);
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:348:    drop(agent);
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:353:        &args.agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:362:        agent_id: args.agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:383:    mut rx: mpsc::Receiver<AgentProgress>,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:391:            AgentProgress::ToolCallStarted {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:400:                    "[harness_subagent_audit] progress turn={} parent_tool_started tool={} call_id={} iteration={} argument_keys={:?}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:415:            AgentProgress::ToolCallCompleted {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:425:                    "[harness_subagent_audit] progress turn={} parent_tool_completed tool={} call_id={} success={} output_chars={} elapsed_ms={} iteration={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:442:            AgentProgress::SubagentSpawned {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:443:                agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:453:                    "[harness_subagent_audit] progress turn={} subagent_spawned agent_id={} task_id={} mode={} dedicated_thread={} prompt_chars={} worker_thread_id={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:455:                    agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:462:                let spawned = SubagentSpawnedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:464:                    agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:475:                    .subagent_spawned
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:488:                                "[harness_subagent_audit] steer_attempt turn={} task_id={} delivered={} attempts={} elapsed_ms={} message_chars={} error={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:506:            AgentProgress::SubagentCompleted {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:507:                agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:515:                    "[harness_subagent_audit] progress turn={} subagent_completed agent_id={} task_id={} elapsed_ms={} iterations={} output_chars={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:516:                    turn, agent_id, task_id, elapsed_ms, iterations, output_chars
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:521:                    .subagent_completed
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:522:                    .push(SubagentCompletedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:524:                        agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:531:            AgentProgress::SubagentFailed {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:532:                agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:537:                    "[harness_subagent_audit] progress turn={} subagent_failed agent_id={} task_id={} error_chars={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:539:                    agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:546:                    .subagent_failed
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:547:                    .push(SubagentFailedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:549:                        agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:554:            AgentProgress::SubagentToolCallStarted {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:555:                agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:564:                    "[harness_subagent_audit] progress turn={} subagent_tool_started agent_id={} task_id={} tool={} call_id={} iteration={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:565:                    turn, agent_id, task_id, tool_name, call_id, iteration
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:570:                    .subagent_tool_started
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:571:                    .push(SubagentToolEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:573:                        agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:580:            AgentProgress::SubagentToolCallCompleted {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:581:                agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:593:                    "[harness_subagent_audit] progress turn={} subagent_tool_completed agent_id={} task_id={} tool={} call_id={} success={} output_chars={} elapsed_ms={} iteration={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:594:                    turn, agent_id, task_id, tool_name, call_id, success, output_chars, elapsed_ms, iteration
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:599:                    .subagent_tool_completed
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:600:                    .push(SubagentToolCompletedEvent {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:602:                        agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:612:            AgentProgress::TurnCompleted { .. } => {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:618:            AgentProgress::SubagentAwaitingUser {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:619:                agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:625:                    "[harness_subagent_audit] progress turn={} subagent_awaiting_user agent_id={} task_id={} question_chars={} worker_thread_id={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:627:                    agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:633:            AgentProgress::IterationStarted { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:634:            | AgentProgress::SubagentIterationStarted { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:635:            | AgentProgress::TextDelta { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:636:            | AgentProgress::ThinkingDelta { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:637:            | AgentProgress::SubagentTextDelta { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:638:            | AgentProgress::SubagentThinkingDelta { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:639:            | AgentProgress::ToolCallArgsDelta { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:640:            | AgentProgress::TaskBoardUpdated { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:641:            | AgentProgress::TurnCostUpdated { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:642:            | AgentProgress::ModelCallCompleted { .. }
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:643:            | AgentProgress::TurnStarted
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:644:            | AgentProgress::TurnContent { .. } => {}
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:651:    spawned: SubagentSpawnedEvent,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:661:                match harness_audit::steer_running_subagent(
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:671:                            agent_id: spawned.agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:673:                            subagent_session_id: Some(session.subagent_session_id),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:717:    spawned: SubagentSpawnedEvent,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:725:        agent_id: spawned.agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:727:        subagent_session_id: None,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:737:    store: &AuditSubagentSessionStore,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:757:fn first_turn_prompt(agent_id: &str, task_key: &str) -> String {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:759:        "Harness audit run. Call spawn_subagent exactly once with agent_id `{agent_id}`, \
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:761:         the sub-agent to return a concise confirmation for audit marker `{task_key}` without \
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:763:         async reusable worker was started. Do not call wait_subagent in this turn."
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:767:fn second_turn_prompt(agent_id: &str, task_key: &str) -> String {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:769:        "Harness audit follow-up. Continue the same reusable sub-agent by calling spawn_subagent \
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:770:         exactly once with agent_id `{agent_id}`, the same task_key `{task_key}`, blocking false, \
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:773:         wait_subagent in this turn."
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:784:    store: &AuditSubagentSessionStore,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:793:            !require_completion || !matches!(session.status, DurableSubagentStatus::Running)
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:806:    store: &AuditSubagentSessionStore,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:811:            "loading durable subagent store at {}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:822:impl From<DurableSubagentSession> for SessionSummary {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:823:    fn from(session: DurableSubagentSession) -> Self {
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:825:            subagent_session_id: session.subagent_session_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:829:            agent_id: session.agent_id,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:843:    agent_id: &str,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:859:            "observed {parent_spawn_calls} spawn_subagent/spawn_async_subagent start event(s)"
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:893:        .subagent_spawned
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:895:        .filter(|event| event.agent_id == agent_id && event.mode == "async")
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:898:        name: "async_subagent_registered",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:901:            "observed {spawned_events} async SubagentSpawned event(s), {} persisted matching session(s)",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:914:        .map(|session| session.subagent_session_id.as_str())
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:920:            "unique matching subagent_session_id count={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:925:    let session_agent_ok = sessions
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:927:        .all(|session| session.agent_id == agent_id && session.reusable);
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:929:        name: "session_agent_and_reusable_flag_match",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:930:        passed: !sessions.is_empty() && session_agent_ok,
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:932:            "all sessions match agent_id={agent_id} and reusable=true: {session_agent_ok}"
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:938:        .filter(|session| matches!(session.status, DurableSubagentStatus::Running))
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:954:    tool_name == "spawn_subagent" || tool_name == "spawn_async_subagent"
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:965:    println!("=== Harness Subagent Audit ===");
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:967:    println!("agent_id: {}", summary.agent_id);
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:971:        "progress: parent_spawn_started={} parent_spawn_completed={} subagent_spawned={} subagent_completed={} subagent_failed={} subagent_tool_started={} subagent_tool_completed={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:984:        summary.progress.subagent_spawned.len(),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:985:        summary.progress.subagent_completed.len(),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:986:        summary.progress.subagent_failed.len(),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:987:        summary.progress.subagent_tool_started.len(),
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:988:        summary.progress.subagent_tool_completed.len()
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:1009:                "  subagent_session_id={} task_id={} status={:?} reusable={} worker_thread_id={} updated_at={}",
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:1010:                session.subagent_session_id,
+<OPENHUMAN_ROOT>/plan.md:3:Multi-agent audit of the OpenHuman test surface (2,367 files / ~25,900 test declarations per
+<OPENHUMAN_ROOT>/plan.md:32:  frontend E2E (WDIO + Playwright), Rust unit (agent/memory; channels/providers/platform;
+<OPENHUMAN_ROOT>/plan.md:52:| ✅ | `src/openhuman/agent/harness/harness_gap_tests.rs` | `datetime_section_is_static_grounding_rule_not_a_volatile_timestamp` | Strict subset of `agent/prompts/mod_tests.rs::datetime_section_is_static_grounding_rule_without_volatile_timestamp`; the file's own header lists item 6 as covered elsewhere. |
+<OPENHUMAN_ROOT>/plan.md:91:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::grounding_contract_requires_exact_numeric_evidence` | Pins 5 verbatim prose substrings of the grounding contract — breaks on any copywriting pass. | Behavioral guarantee ("contract appended on every build path") already covered by the marker-based test; convert this to a single explicitly-labeled wording-lock, or assert stable structural markers. |
+<OPENHUMAN_ROOT>/plan.md:92:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::identity_section_creates_missing_workspace_files` | Also string-matches SOUL.md brand-voice prose (`"Don't validate FUD"`). | Split: (a) files created + seeded from the checked-in template (compare against template file content); (b) a narrow, labeled brand-voice lock if the phrase must stay pinned. |
+<OPENHUMAN_ROOT>/plan.md:141:- **Approval gate × agent turn**: harness-level test that a Write/Destructive-class turn parks
+<OPENHUMAN_ROOT>/plan.md:164:- **Approval-gate Playwright mirror**: `agent-harness-behaviors.spec.ts` exists only in the slower
+<OPENHUMAN_ROOT>/plan.md:166:- **AgentAccessPanel tier cross-check**: which sub-controls are enabled/hidden per autonomy tier.
+<OPENHUMAN_ROOT>/plan.md:427:  onboarding pages, AgentAccessPanel (23 tests), and every P2 slice reducer
+<OPENHUMAN_ROOT>/plan.md:499:  `council_registry`, `audio_toolkit`, `agent_experience`, `http_host`, `skill_runtime`,
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:19:- [Optional — Let an AI coding agent guide you](#optional--let-an-ai-coding-agent-guide-you)
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:402:## Optional — Let an AI coding agent guide you
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:404:If you use Claude Code, Cursor, AmpCode, Codex, or another coding agent, you can paste this prompt after cloning the repo:
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:410:AGENTS.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/AGENTS.md
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:416:The agent should still ask before destructive actions like deleting files, resetting branches, or force-pushing. You are responsible for reviewing the final diff before opening a PR.
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:93:/// semaphore, `GLOBAL_REGISTRY` agent.run_turn handler, `STARTED`
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:697:    let msg = r#"[composio] list_connections failed: Backend returned 500 Internal Server Error for GET https://api.tinyhumans.ai/agent-integrations/composio/connections: 401 {"error":{"message":"Invalid API key: ak_o1Og5*****","code":10401,"slug":"HTTP_Unauthorized","status":401}}"#;
+<OPENHUMAN_ROOT>/Cargo.lock:4441: "tinyagents",
+<OPENHUMAN_ROOT>/Cargo.lock:6812:name = "tinyagents"
+<OPENHUMAN_ROOT>/Cargo.lock:6882: "tinyagents",
+<OPENHUMAN_ROOT>/AGENTS.md:5:Architecture docs: [`gitbooks/developing/architecture.md`](gitbooks/developing/architecture.md) | [Frontend](gitbooks/developing/architecture/frontend.md) | [Tauri shell](gitbooks/developing/architecture/tauri-shell.md) | [Agent harness](gitbooks/developing/architecture/agent-harness.md)
+<OPENHUMAN_ROOT>/AGENTS.md:71:### Agent debug runners (`scripts/debug/`)
+<OPENHUMAN_ROOT>/AGENTS.md:99:### Agent access & security
+<OPENHUMAN_ROOT>/AGENTS.md:101:The `[autonomy]` block (`src/openhuman/config/schema/autonomy.rs`) drives `SecurityPolicy` (`src/openhuman/security/policy.rs`). Tiers: `readonly` / `supervised` / `full` × `workspace_only` × `trusted_roots` × `allow_tool_install`. Edit via `config.update_autonomy_settings` RPC or Settings → Agent access.
+<OPENHUMAN_ROOT>/AGENTS.md:105:- **`action_dir`** — agent's read/write root. Acting tools resolve relative paths here. Default: `~/OpenHuman/projects` (`OPENHUMAN_ACTION_DIR`).
+<OPENHUMAN_ROOT>/AGENTS.md:106:- **`workspace_dir`** — internal state (`~/.openhuman/users/<id>/workspace`). Agent tools **cannot** write here — enforced by `is_workspace_internal_path` fail-closed regardless of tier/trusted_roots.
+<OPENHUMAN_ROOT>/AGENTS.md:112:**Sandbox backends** (opt-in per agent via `sandbox_mode = "sandboxed"`): Docker (remote/cron), Local OS jail (Landlock/Seatbelt/AppContainer, desktop), Noop fallback. In-Rust path hardening applies regardless.
+<OPENHUMAN_ROOT>/AGENTS.md:156:**Routing** (`AppRoutes.tsx`, HashRouter): `/` (Welcome), `/onboarding/*`, `/home`, `/human`, `/intelligence`, `/skills`, `/chat`, `/channels`, `/invites`, `/notifications`, `/rewards`, `/settings/*`. No `/login`, `/mnemonic`, `/agents`, `/conversations`.
+<OPENHUMAN_ROOT>/AGENTS.md:158:**AI config**: bundled prompts in `src/openhuman/agent/prompts/` (also via `tauri.conf.json` resources). Loaders in `app/src/lib/ai/` with `?raw` imports.
+<OPENHUMAN_ROOT>/AGENTS.md:178:Domains: `about_app`, `accessibility`, `agent`, `app_state`, `approval`, `autocomplete`, `billing`, `channels`, `composio`, `config`, `context`, `cost`, `credentials`, `cron`, `doctor`, `embeddings`, `encryption`, `health`, `heartbeat`, `integrations`, `learning`, `local_ai`, `meet`, `meet_agent`, `memory`, `migration`, `node_runtime`, `notifications`, `overlay`, `people`, `prompt_injection`, `provider_surfaces`, `providers`, `redirect_links`, `referral`, `routing`, `scheduler_gate`, `screen_intelligence`, `security`, `service`, `skills`, `socket`, `subconscious`, `team`, `text_input`, `threads`, `tokenjuice`, `tool_timeout`, `tools`, `tree_summarizer`, `update`, `voice`, `wallet`, `webhooks`, `webview_accounts`, `webview_apis`, `webview_notifications`.
+<OPENHUMAN_ROOT>/AGENTS.md:198:| `tools.rs`   | domain owns agent tools      | Tool implementations.                                                                         |
+<OPENHUMAN_ROOT>/AGENTS.md:221:Domains: `agent`, `memory`, `channel`, `cron`, `skill`, `tool`, `webhook`, `system`.
+<OPENHUMAN_ROOT>/AGENTS.md:302:- **Docs with code**: update AGENTS.md or architecture docs when rules or behavior change.
+<OPENHUMAN_ROOT>/scripts/build-apt-repo.sh:8:# The GPG signing key must be imported into the agent before calling.
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:12:#   1. GET  /agent-integrations/composio/toolkits
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:15:#   2. GET  /agent-integrations/composio/connections
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:18:#   3. POST /agent-integrations/composio/authorize  {toolkit}
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:22:#   4. GET  /agent-integrations/composio/tools?toolkits=<toolkit>
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:24:#   5. (optional) POST /agent-integrations/composio/execute
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:148:echo "--- Step 1: GET /agent-integrations/composio/toolkits ---"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:149:call GET "/agent-integrations/composio/toolkits"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:170:echo "--- Step 2: GET /agent-integrations/composio/connections ---"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:171:call GET "/agent-integrations/composio/connections"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:187:    echo "--- Step 3: POST /agent-integrations/composio/authorize ---"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:192:    call POST "/agent-integrations/composio/authorize" "$AUTHORIZE_BODY"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:224:        call GET "/agent-integrations/composio/connections"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:258:echo "--- Step 4: GET /agent-integrations/composio/tools?toolkits=$TOOLKIT ---"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:259:call GET "/agent-integrations/composio/tools?toolkits=$TOOLKIT"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:273:    echo "--- Step 5: POST /agent-integrations/composio/execute ($EXECUTE_TOOL) ---"
+<OPENHUMAN_ROOT>/scripts/debug-composio-login.sh:275:    call POST "/agent-integrations/composio/execute" "$EXECUTE_BODY"
+<OPENHUMAN_ROOT>/docs/README.ko.md:75:- **[일을 끝까지 마무리하는 하네스](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: 오픈 소스 [tinyagents](https://github.com/tinyhumansai/tinyagents) 기반의 체크포인트 그래프 실행입니다. 막힌 에이전트는 방향을 조정받고, 중단된 에이전트는 근본 원인을 돌려주며, 모든 실행은 호출별 실제 비용과 함께 재생됩니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:83:- **[미팅 에이전트](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**: 얼굴과 목소리를 가지고 **Meet, Zoom, Teams, Webex**에 참여합니다. 캘린더에서 자동으로 참여하고, 실시간 자막을 스트리밍하며, 이름이 불리면 대답하고, 요약과 액션 아이템을 정리합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:107:이미 다른 코딩 에이전트에서 [agentmemory](https://github.com/rohitg00/agentmemory)를 자체 호스팅하고 있나요? OpenHuman은 이를 프록시하는 선택적 `Memory` 백엔드를 제공합니다. `config.toml`에서 `memory.backend = "agentmemory"`를 설정하면 동일한 내구성 있는 저장소가 Claude Code, Cursor, Codex, OpenCode와 함께 OpenHuman을 구동합니다. 설정 방법은 [agentmemory 백엔드](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend) 페이지를 참조하세요.
+<OPENHUMAN_ROOT>/docs/README.ko.md:119:- **루프가 아닌 그래프**: 턴은 [tinyagents](https://github.com/tinyhumansai/tinyagents) 기반의 체크포인트가 있는 그래프로 실행되어, 사람을 위해 일시 정지하고, 재시작에도 살아남고, 실행 중간에 재개합니다.
+<OPENHUMAN_ROOT>/docs/README.ko.md:139:|                    | Claude Cowork     | OpenClaw          | Hermes Agent      | OpenHuman                                                                                            |
+<OPENHUMAN_ROOT>/docs/README.ko.md:144:| **메모리**         | ✅ 채팅 범위 한정 | ⚠️ 플러그인 의존  | ✅ 자기 학습      | 🚀 메모리 트리 + Obsidian 볼트, 선택적 [agentmemory](https://github.com/rohitg00/agentmemory) 백엔드 |
+<OPENHUMAN_ROOT>/docs/README.ko.md:159:새로운 기여자인가요? 포크/PR 워크플로우 및 로컬 검증 명령에 대해서는 [`CONTRIBUTING.md`](../CONTRIBUTING.md)에서 시작하거나, [`CONTRIBUTING-BEGINNERS.md`](../CONTRIBUTING-BEGINNERS.md#optional--let-an-ai-coding-agent-guide-you)의 복사-붙여넣기 AI 에이전트 프롬프트를 사용하세요. 빠른 경로는 다음과 같습니다.
+<OPENHUMAN_ROOT>/src/core/event_bus/bus.rs:59:/// (e.g., an agent turn completed, a memory was stored).
+<OPENHUMAN_ROOT>/scripts/debug/harness-subagent-audit.sh:13:export RUST_LOG="${RUST_LOG:-info,spawn_subagent=debug,openhuman_core::openhuman::agent=debug,openhuman_core::openhuman::agent_orchestration=debug}"
+<OPENHUMAN_ROOT>/scripts/debug/harness-subagent-audit.sh:15:echo "[harness_subagent_audit] running live audit; requires configured provider/backend credentials" >&2
+<OPENHUMAN_ROOT>/scripts/debug/harness-subagent-audit.sh:16:exec cargo run --manifest-path "$ROOT_DIR/Cargo.toml" --bin harness-subagent-audit -- "$@"
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:20://! [`crate::openhuman::agent::bus::mock_agent_run_turn`]) compose on top of
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:61:/// [`crate::openhuman::agent::bus::use_real_agent_handler`] that need the
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:62:/// real agent handler installed without racing against a stub-installing
+<OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:110:/// [`crate::openhuman::agent::bus::mock_agent_run_turn`]) should compose
+<OPENHUMAN_ROOT>/CONTRIBUTING.md:7:For deeper architecture and subsystem references, use the GitBook under [`gitbooks/developing/`](gitbooks/developing/). For coding-agent and repository-specific implementation rules, see [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md).
+<OPENHUMAN_ROOT>/CONTRIBUTING.md:201:If you only changed docs in a normal local workflow, `pnpm format:check` is usually the only validation you need. AI-authored or remote-agent PRs must still fill in the AI Authored PR Metadata section of the PR template and report any blocked commands with the exact command and error.
+<OPENHUMAN_ROOT>/CONTRIBUTING.md:220:- For AI-authored or remote-agent PRs, also fill in the AI Authored PR Metadata section of the PR template.
+<OPENHUMAN_ROOT>/CONTRIBUTING.md:249:├── AGENTS.md               # Coding-agent repo rules
+<OPENHUMAN_ROOT>/CONTRIBUTING.md:303:If you are contributing through a coding agent or remote environment, include the metadata required by the PR template and the Codex PR checklist.
+<OPENHUMAN_ROOT>/CONTRIBUTING.md:309:- Use the controller registry and domain module structure described in [`AGENTS.md`](AGENTS.md) for new Rust functionality.
+<OPENHUMAN_ROOT>/docs/tinycortex-drift-ledger.md:9:- **HOST-OWNED** — the change lives in a layer that stays in OpenHuman (RPC, agent tools,
+<OPENHUMAN_ROOT>/docs/tinycortex-drift-ledger.md:64:| D3 | `c43f79641` (07-03) (within TinyAgents migration) | `memory_store/vectors/store.rs` | `count()` reads `COUNT(*)` as `i64` and converts via `usize::try_from(...).context(...)` instead of `row.get::<usize>` directly — robustness against platform `usize`/`i64` mismatch. | **ABSENT.** `vendor/tinycortex/src/memory/store/vectors/store.rs:370–380` still does `let count: usize = ... row.get(0)` then `Ok(count)`. | `store::vectors::store` — small; port the `i64` + `try_from` guard. |
+<OPENHUMAN_ROOT>/docs/tinycortex-drift-ledger.md:77:| `0304d145f` (07-03) | `memory/tools/store.rs`, `memory/tools/forget.rs` | Agent tools | Tool contract/prompt text; agent tools stay host (plan §1). |
+<OPENHUMAN_ROOT>/docs/tinycortex-drift-ledger.md:82:| `c43f79641` (07-03) | `memory_search/{vector,tools}/*`, `memory_sync/composio/*` | Agent tools / live sync | Import-path churn from the TinyAgents cutover + live-sync; not engine semantics. |
+<OPENHUMAN_ROOT>/docs/tinycortex-drift-ledger.md:120:its `tools/` stay host (agent tools), its `vector`/`scoring` are engine (W5) — flagged for the gap audit.
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:2:// Live audit for harness-driven prepared context + the `context_scout` subagent.
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:31:const SCOUT_AGENT = "context_scout";
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:61:  return `Usage: node scripts/debug/agent-prepare-context-audit.mjs [options]
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:70:  --model <model>         Optional model_override passed to openhuman.inference_agent_chat
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:75:                          (writes a temporary workspace agent override; restored
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:89:  node scripts/debug/agent-prepare-context-audit.mjs --spawn-core
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:90:  node scripts/debug/agent-prepare-context-audit.mjs --query "what are my goals?" --model claude-sonnet-4-6
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:91:  node scripts/debug/agent-prepare-context-audit.mjs --scout-prompt-file /tmp/my-scout.md
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:332:    agent: String(meta.agent || "(unknown)"),
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:334:    isSubagent: path.basename(file).includes("__"),
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:526:agent_tier = "worker"
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:535:hint = "agentic"
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:776:    const agentsDir = path.join(opts.workspace, "agents");
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:777:    await mkdir(agentsDir, { recursive: true });
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:778:    overridePath = path.join(agentsDir, "context_scout.toml");
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:844:          "openhuman.inference_agent_chat",
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:855:        changed.find((t) => t.isSubagent && t.agent === SCOUT_AGENT) ||
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:856:        changed.find((t) => t.agent === SCOUT_AGENT);
+<OPENHUMAN_ROOT>/scripts/debug/agent-prepare-context-audit.mjs:857:      const root = changed.find((t) => !t.isSubagent);
+<OPENHUMAN_ROOT>/package.json:51:    "agent-batch": "node scripts/agent-batch/cli.mjs",
+<OPENHUMAN_ROOT>/package.json:52:    "agent-batch:test": "node --test scripts/agent-batch/__tests__/lib.test.mjs scripts/agent-batch/__tests__/cli.test.mjs",
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:8:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --model agentic-v1 --scenario all
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:17:- `async-steer`: starts a durable async subagent with `spawn_subagent`, waits until the live registry shows it running, then sends `openhuman.subagent_steer` mid-run and verifies the steer was accepted.
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:18:- `parallel-research-code`: asks the orchestrator to call `spawn_parallel_agents` with two workers. One researches `https://example.com`; the other writes a small Python code snippet. The audit checks that the parent turn completed and at least two subagent transcripts changed.
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:19:- `reuse-parent-comm`: runs two parent prompts. The first prompt spawns two blocking durable subagents that return parent-facing status updates. The second prompt uses the same durable task keys and verifies that the same subagent sessions are reused. Each turn prints transcript usage deltas: input tokens, cached input tokens, output tokens, and charged USD.
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:25:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --model agentic-v1 --scenario async-steer
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:26:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --model agentic-v1 --scenario parallel-research-code
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:27:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --model agentic-v1 --scenario reuse-parent-comm
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:28:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --provider-mode direct-openai --model gpt-4.1-mini --scenario reuse-parent-comm
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:75:- **[能把事情做完的执行框架](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**：基于开源 [tinyagents](https://github.com/tinyhumansai/tinyagents) 的检查点式图运行：卡住的智能体会被引导回正轨，中止的会交回根因，每次运行都可回放并附带真实的每次调用成本。
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:83:- **[会议智能体](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**：带着一张脸和一副嗓音加入 **Meet、Zoom、Teams 和 Webex**：根据日历自动入会、实时输出转写字幕、被点名时回答、归档摘要和行动项。
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:107:已经在其他编码智能体中自托管 [agentmemory](https://github.com/rohitg00/agentmemory)？OpenHuman 提供可选的 `Memory` 后端来代理它：在 `config.toml` 中设置 `memory.backend = "agentmemory"`，同一个持久化存储将同时服务于 OpenHuman 和 Claude Code、Cursor、Codex、OpenCode。详见 [agentmemory 后端](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend)页面。
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:119:- **图，而非循环**：每一轮对话都作为带检查点的图在 [tinyagents](https://github.com/tinyhumansai/tinyagents) 上运行，可暂停等待人工介入、可在重启后存活、可从运行中途恢复。
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:139:|                | Claude Cowork    | OpenClaw    | Hermes Agent | OpenHuman                                                                                   |
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:144:| **记忆**       | ✅ 对话范围      | ⚠️ 依赖插件 | ✅ 自学习    | 🚀 记忆树 + Obsidian 仓库，可选 [agentmemory](https://github.com/rohitg00/agentmemory) 后端 |
+<OPENHUMAN_ROOT>/docs/README.zh-CN.md:159:新贡献者？从 [`CONTRIBUTING.md`](../CONTRIBUTING.md) 了解 fork/PR 工作流和本地验证命令，或使用 [`CONTRIBUTING-BEGINNERS.md`](../CONTRIBUTING-BEGINNERS.md#optional--let-an-ai-coding-agent-guide-you) 中可直接复制粘贴的 AI 智能体提示词。快速路径：
+<OPENHUMAN_ROOT>/src/core/event_bus/mod.rs:5://! modules (like memory, skills, and agents) to communicate without
+<OPENHUMAN_ROOT>/README.md:64:OpenHuman is three things most assistants aren't: **a brain** that builds a persistent, local memory of your world; **a fantastic orchestrator** that runs fleets of agents on durable graphs; and **a deep researcher** that sweeps your data and the web before you finish asking. Every bullet links to the deeper writeup in the [docs](https://tinyhumans.gitbook.io/openhuman/).
+<OPENHUMAN_ROOT>/README.md:76:- **[Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows)**: the agent proposes the automation; you review it on a canvas and save. Durable, trigger-driven, approval-gated runs on open-source [tinyflows](https://github.com/tinyhumansai/tinyflows).
+<OPENHUMAN_ROOT>/README.md:77:- **[A harness that finishes the job](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: checkpointed graph runs on open-source [tinyagents](https://github.com/tinyhumansai/tinyagents). Stuck agents get steered, halted ones return a root cause, and every run replays with real per-call costs.
+<OPENHUMAN_ROOT>/README.md:78:- **[A split brain, always on](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**: a fast reflex agent triages inbound traffic while a deep reasoning core delegates to worker fleets, steered by the subconscious.
+<OPENHUMAN_ROOT>/README.md:79:- **[An agent economy](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: a `@handle` on [tiny.place](https://tiny.place), Signal-encrypted agent-to-agent orchestration, x402 USDC bounties and trading. Keys never touch disk.
+<OPENHUMAN_ROOT>/README.md:85:- **[Meeting agents](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**: joins **Meet, Zoom, Teams, and Webex** with a face and a voice. It auto-joins from your calendar, streams a live transcript, answers by name, and files a summary with action items.
+<OPENHUMAN_ROOT>/README.md:87:- **[17 messaging channels](https://tinyhumans.gitbook.io/openhuman/features/channels)**: Telegram, Discord, Slack, WhatsApp, Signal, iMessage… plus **native email** (IMAP IDLE + SMTP). Your agent reaches you where you already are.
+<OPENHUMAN_ROOT>/README.md:91:- **Simple, UI-first & Human**: install to working agent in a few clicks, with no config files and no terminal. And it has [a face](https://tinyhumans.gitbook.io/openhuman/features/mascot): a mascot that speaks, reacts, and remembers you.
+<OPENHUMAN_ROOT>/README.md:97:OpenHuman is the first agent harness that gets to know you in minutes. Inspired by [Karpathy's LLM Knowledgebase](https://x.com/karpathy/status/2039805659525644595). Most agents start cold. Hermes learns by watching you work; OpenClaw waits for plugins to ferry context in. Either way, you spend days or weeks before the agent knows enough about your stack to be genuinely useful.
+<OPENHUMAN_ROOT>/README.md:103:> OpenHuman summarizes and compresses all your documents, emails & chats; and creates a memory graph that lets your agent remember everything about you.
+<OPENHUMAN_ROOT>/README.md:107:In just one sync pass, the agent has full (compressed) context of your inbox, your calendar, your repos, your docs, your messages. No training period. No "give it a few weeks.". It becomes you, controlled by you.
+<OPENHUMAN_ROOT>/README.md:109:Already self-host [agentmemory](https://github.com/rohitg00/agentmemory) across other coding agents? OpenHuman ships an optional `Memory` backend that proxies to it. Set `memory.backend = "agentmemory"` in `config.toml` and the same durable store powers OpenHuman alongside Claude Code, Cursor, Codex, and OpenCode. See the [agentmemory backend](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend) page for setup.
+<OPENHUMAN_ROOT>/README.md:113:Most agent harnesses run one agent in one loop. OpenHuman is an **[orchestrator](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**:
+<OPENHUMAN_ROOT>/README.md:119:> Agent-to-agent messaging runs over Signal-protocol end-to-end encryption, so you can connect anything (Claude Code, Codex, OpenClaw, Hermes) and use OpenHuman to orchestrate all of your agents and tools.
+<OPENHUMAN_ROOT>/README.md:121:- **Graphs, not loops**: turns run as checkpointed graphs on [tinyagents](https://github.com/tinyhumansai/tinyagents). They pause for a human, survive a restart, and resume mid-run.
+<OPENHUMAN_ROOT>/README.md:122:- **Sub-agent fleets**: specialists spawn three levels deep; stuck agents become root-cause reports.
+<OPENHUMAN_ROOT>/README.md:123:- **Agent-to-agent, encrypted**: instances orchestrate each other over Signal-protocol E2E sessions with x402 payments. No server ever sees plaintext.
+<OPENHUMAN_ROOT>/README.md:127:Heavily inspired by n8n and Zapier, [workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows) bring the same visual, trigger-driven automation to your agent, except the agent builds them for you. Ask for an automation and it proposes one: a [tinyflows](https://github.com/tinyhumansai/tinyflows) graph you review on a visual canvas before saving.
+<OPENHUMAN_ROOT>/README.md:133:> The agent proposes the workflow; you review it on a canvas and save it.
+<OPENHUMAN_ROOT>/README.md:137:## OpenHuman vs Other Agent Harnesses
+<OPENHUMAN_ROOT>/README.md:139:High-level comparison (products evolve, so verify against each vendor). OpenHuman is built to **minimize vendor sprawl**, keep **workflow knowledge on-device**, and give the agent a **persistent memory** of your data, not only chat.
+<OPENHUMAN_ROOT>/README.md:141:|                        | Claude Cowork     | OpenClaw          | Hermes Agent      | OpenHuman                                                                                                |
+<OPENHUMAN_ROOT>/README.md:146:| **Memory**             | ✅ Chat-scoped    | ⚠️ Plugin-reliant | ✅ Self-learning  | 🚀 Memory Tree + Obsidian vault, optional [agentmemory](https://github.com/rohitg00/agentmemory) backend |
+<OPENHUMAN_ROOT>/README.md:149:| **Orchestration**      | ⚠️ Sub-tasks      | ⚠️ Single loop    | ⚠️ Single loop    | 🚀 Agent graphs + checkpoints + E2E-encrypted A2A                                                        |
+<OPENHUMAN_ROOT>/README.md:150:| **Workflows**          | 🚫 None           | ⚠️ Scripts        | ⚠️ Scripts        | 🚀 Visual, durable, agent-proposed, approval-gated                                                       |
+<OPENHUMAN_ROOT>/README.md:161:New contributor? Start with [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the fork/PR workflow and local validation commands, or use the copy-paste AI-agent prompt in [`CONTRIBUTING-BEGINNERS.md`](./CONTRIBUTING-BEGINNERS.md#optional--let-an-ai-coding-agent-guide-you). The short path is:
+<OPENHUMAN_ROOT>/fastlane/metadata/en-US/keywords.txt:1:AI assistant,voice chat,desktop companion,memory,agents,productivity,automation,tools
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:7:> `reflect` case runs the turn-based `goals_agent` and therefore needs a
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:35:enrichment agent's reasoning + token/cost.
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:41:Expect: CRUD cases, then a `reflect` run with a `ran: true`, an agent summary,
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:42:the post-enrichment goals, a token/cost table, and the `goals_agent` thread
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:49:Feed the enrichment agent specific context and watch what it does. This is the
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:50:loop for iterating on `goals_agent/prompt.md`: edit the prompt, re-run, read
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:58:Expect: first-run bootstrap (empty list) → the agent populates initial goals
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:84:- **goals_agent thread** (`--show-thoughts`) — each non-system message: the
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:13:- `pub enum DomainEvent` — `events.rs` — `#[non_exhaustive]` catalog of events; current variants cover Agent (`AgentTurnStarted/Completed`, `AgentError`), Memory (`MemoryStored`, `MemoryRecalled`), Channels (`ChannelInboundMessage`, `ChannelMessageReceived/Processed`, `ChannelReactionReceived/Sent`, `ChannelConnected/Disconnected`), Cron (`CronJobTriggered/Completed`, `CronDeliveryRequested`), Skills, Tools, Webhooks, and System.
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:31:- `src/openhuman/agent/bus.rs`, `agent/triage/{events,evaluator,escalation}.rs`, `agent_registry/tools/{dispatch,spawn_subagent}.rs` — agent + sub-agent events.
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:41:## Emission policy (tinyagents migration, 05.3)
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:43:The canonical run record is the TinyAgents event journal + status store
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:44:(`StoreEventJournal` / `FileStatusStore`, wired in `tinyagents/journal.rs`),
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:45:not this bus. When adding agent-run instrumentation:
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:48:  compression, tool-exposure, and steering signals ride the TinyAgents
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:49:  `AgentEvent` stream and are persisted to the journal; a UI reconstructs a
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:55:  module boundary the crate stream does not serve. Subagent lifecycle
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:57:  `agent_orchestration::subagent_events` (05.2), never hand-rolled
+<OPENHUMAN_ROOT>/src/core/event_bus/README.md:58:  `publish_global(DomainEvent::Subagent*)`.
+<OPENHUMAN_ROOT>/src/core/mod.rs:9:pub mod agent_cli;
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:5:// turn-based enrichment agent (reflect) against a running core over JSON-RPC.
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:6:// Surfaces the goals_agent's thoughts + tool calls and per-session token
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:8:// goals_agent prompt and watch what it actually does.
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:17:// No credential bodies are printed. Goal text and agent thoughts ARE printed
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:37:and prints the goals_agent's thoughts, tool calls, token usage and cost.
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:48:  --context <text>     Context/prompt handed to the reflect enrichment agent
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:49:  --model <model>      model_override for the reflect agent (forwarded if supported)
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:50:  --show-thoughts      Print the goals_agent transcript thread (thoughts + tool calls + results)
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:268:    agent: String(meta.agent || "(unknown)"),
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:312:  console.log(`\n  ── goals_agent thread (${path.basename(transcript.file)}) ──`);
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:336:      agent: r.agent,
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:491:  console.log("\n=== case: reflect (turn-based enrichment agent) ===");
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:507:      "  (enrichment needs a configured provider/model + the goals_agent definition)",
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:514:  console.log(`  agent summary: ${result.summary}`);
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:519:  const goalsRuns = changed.filter((r) => r.agent.includes("goals"));
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:527:      console.log("\n  (no goals_agent transcript found — run may not persist transcripts)");
+<OPENHUMAN_ROOT>/scripts/debug/goals-live.mjs:530:    console.log("\n  (re-run with --show-thoughts to see the agent's reasoning + tool calls)");
+<OPENHUMAN_ROOT>/vendor/tinychannels/src/controllers/schemas.rs:134:            description: "Set the default messaging channel for proactive agent delivery (persists active_channel + applies live).",
+<OPENHUMAN_ROOT>/docs/README.de.md:62:OpenHuman ist drei Dinge, die die meisten Assistenten nicht sind: **ein Gehirn**, das ein persistentes, lokales Gedächtnis deiner Welt aufbaut; **ein fantastischer Orchestrator**, der Flotten von Agenten auf dauerhaften Graphen betreibt; und **ein Deep Researcher**, der deine Daten und das Web durchkämmt, bevor du deine Frage zu Ende gestellt hast. Jeder Punkt verlinkt auf die ausführliche Beschreibung in der [Doku](https://tinyhumans.gitbook.io/openhuman/).
+<OPENHUMAN_ROOT>/docs/README.de.md:74:- **[Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows)**: der Agent schlägt die Automatisierung vor; du prüfst sie auf einer Canvas und speicherst. Dauerhafte, trigger-gesteuerte, freigabe-gesicherte Läufe auf dem quelloffenen [tinyflows](https://github.com/tinyhumansai/tinyflows).
+<OPENHUMAN_ROOT>/docs/README.de.md:75:- **[Ein Harness, das die Arbeit zu Ende bringt](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: checkpointed Graph-Läufe auf dem quelloffenen [tinyagents](https://github.com/tinyhumansai/tinyagents). Festgefahrene Agenten werden nachgesteuert, gestoppte liefern eine Root Cause zurück, jeder Lauf lässt sich mit echten Kosten pro Aufruf wieder abspielen.
+<OPENHUMAN_ROOT>/docs/README.de.md:76:- **[Ein Split Brain, immer an](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**: ein schneller Reflex-Agent triagiert eingehenden Traffic, während ein tiefer Reasoning-Kern an Worker-Flotten delegiert, gesteuert vom Unterbewusstsein.
+<OPENHUMAN_ROOT>/docs/README.de.md:77:- **[Eine Agenten-Ökonomie](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: ein `@handle` auf [tiny.place](https://tiny.place), Signal-verschlüsselte Agent-zu-Agent-Orchestrierung, x402-USDC-Bounties und Handel. Keys berühren nie die Festplatte.
+<OPENHUMAN_ROOT>/docs/README.de.md:83:- **[Meeting-Agenten](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**: nimmt an **Meet, Zoom, Teams und Webex** teil, mit Gesicht und Stimme. Tritt automatisch aus deinem Kalender bei, streamt ein Live-Transkript, antwortet auf seinen Namen und legt Zusammenfassung + Action Items ab.
+<OPENHUMAN_ROOT>/docs/README.de.md:85:- **[17 Messaging-Kanäle](https://tinyhumans.gitbook.io/openhuman/features/channels)**: Telegram, Discord, Slack, WhatsApp, Signal, iMessage… plus **native E-Mail** (IMAP IDLE + SMTP). Dein Agent erreicht dich dort, wo du ohnehin schon bist.
+<OPENHUMAN_ROOT>/docs/README.de.md:89:- **Schlicht, UI-zuerst & menschlich**: von der Installation zum laufenden Agenten in wenigen Klicks, ohne Config-Dateien und ohne Terminal. Und es hat [ein Gesicht](https://tinyhumans.gitbook.io/openhuman/features/mascot): ein Maskottchen, das spricht, reagiert und sich an dich erinnert.
+<OPENHUMAN_ROOT>/docs/README.de.md:95:OpenHuman ist das erste Agent-Harness, das dich in Minuten kennenlernt. Inspiriert von [Karpathys LLM-Knowledgebase](https://x.com/karpathy/status/2039805659525644595). Die meisten Agenten starten aus dem Kalten. Hermes lernt, indem er dir bei der Arbeit zusieht; OpenClaw wartet darauf, dass Plugins Kontext einspielen. So oder so vergehen Tage oder Wochen, bevor der Agent genug über deinen Stack weiß, um wirklich nützlich zu sein.
+<OPENHUMAN_ROOT>/docs/README.de.md:101:> OpenHuman fasst all deine Dokumente, E-Mails und Chats zusammen, komprimiert sie und legt einen Memory Graph an, mit dem dein Agent sich alles über dich merken kann.
+<OPENHUMAN_ROOT>/docs/README.de.md:105:Nach nur einem Sync-Durchlauf hat der Agent den vollständigen (komprimierten) Kontext deines Postfachs, deines Kalenders, deiner Repos, deiner Dokumente und deiner Nachrichten. Keine Trainingsphase. Kein „gib ihm ein paar Wochen". Er wird zu dir, gesteuert von dir.
+<OPENHUMAN_ROOT>/docs/README.de.md:107:Du hostest [agentmemory](https://github.com/rohitg00/agentmemory) bereits selbst für andere Coding-Agenten? OpenHuman bringt ein optionales `Memory`-Backend mit, das dorthin proxyt: setze `memory.backend = "agentmemory"` in `config.toml`, und derselbe persistente Store treibt OpenHuman zusammen mit Claude Code, Cursor, Codex und OpenCode an. Setup-Details auf der Seite zum [agentmemory-Backend](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend).
+<OPENHUMAN_ROOT>/docs/README.de.md:111:Die meisten Agent-Harnesses betreiben einen Agenten in einer Schleife. OpenHuman ist ein **[Orchestrator](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**:
+<OPENHUMAN_ROOT>/docs/README.de.md:117:> Agent-zu-Agent-Messaging läuft über Signal-Protokoll-Ende-zu-Ende-Verschlüsselung. Du kannst also alles anbinden (Claude Code, Codex, OpenClaw, Hermes) und mit OpenHuman all deine Agenten und Tools orchestrieren.
+<OPENHUMAN_ROOT>/docs/README.de.md:119:- **Graphen statt Schleifen**: Turns laufen als checkpointed Graphen auf [tinyagents](https://github.com/tinyhumansai/tinyagents): für einen Menschen pausieren, einen Neustart überleben, mitten im Lauf weitermachen.
+<OPENHUMAN_ROOT>/docs/README.de.md:120:- **Sub-Agenten-Flotten**: Spezialisten spawnen drei Ebenen tief; festgefahrene Agenten werden zu Root-Cause-Berichten.
+<OPENHUMAN_ROOT>/docs/README.de.md:121:- **Agent-zu-Agent, verschlüsselt**: Instanzen orchestrieren sich gegenseitig über Signal-Protokoll-E2E-Sitzungen mit x402-Zahlungen. Kein Server sieht jemals Klartext.
+<OPENHUMAN_ROOT>/docs/README.de.md:125:Stark inspiriert von n8n und Zapier bringen [Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows) dieselbe visuelle, trigger-gesteuerte Automatisierung zu deinem Agenten, nur dass der Agent sie für dich baut. Bitte um eine Automatisierung, und er schlägt eine vor: einen [tinyflows](https://github.com/tinyhumansai/tinyflows)-Graphen, den du vor dem Speichern auf einer visuellen Canvas prüfst.
+<OPENHUMAN_ROOT>/docs/README.de.md:131:> Der Agent schlägt den Workflow vor; du prüfst ihn auf einer Canvas und speicherst ihn.
+<OPENHUMAN_ROOT>/docs/README.de.md:135:## OpenHuman vs. andere Agent-Harnesses
+<OPENHUMAN_ROOT>/docs/README.de.md:137:Übersichtsvergleich (Produkte entwickeln sich weiter, bitte beim jeweiligen Anbieter verifizieren). OpenHuman ist darauf ausgelegt, **Vendor-Wildwuchs zu reduzieren**, **Workflow-Wissen auf dem Gerät zu halten** und dem Agenten eine **persistente Erinnerung** an deine Daten zu geben, nicht nur an den Chat.
+<OPENHUMAN_ROOT>/docs/README.de.md:139:|                        | Claude Cowork         | OpenClaw           | Hermes Agent       | OpenHuman                                                                                                |
+<OPENHUMAN_ROOT>/docs/README.de.md:144:| **Memory**             | ✅ chat-gebunden      | ⚠️ plugin-abhängig | ✅ selbstlernend   | 🚀 Memory Tree + Obsidian-Vault, optional [agentmemory](https://github.com/rohitg00/agentmemory)-Backend |
+<OPENHUMAN_ROOT>/docs/README.de.md:147:| **Orchestrierung**     | ⚠️ Sub-Tasks          | ⚠️ eine Schleife   | ⚠️ eine Schleife   | 🚀 Agent-Graphen + Checkpoints + E2E-verschlüsseltes A2A                                                 |
+<OPENHUMAN_ROOT>/docs/README.de.md:148:| **Workflows**          | 🚫 keine              | ⚠️ Skripte         | ⚠️ Skripte         | 🚀 visuell, dauerhaft, agent-vorgeschlagen, freigabe-gesichert                                           |
+<OPENHUMAN_ROOT>/docs/README.de.md:159:Neu hier? Beginne mit [`CONTRIBUTING.md`](../CONTRIBUTING.md) für den Fork-/PR-Workflow und die lokalen Prüfbefehle, oder nutze den Copy-Paste-Prompt für KI-Coding-Agenten in [`CONTRIBUTING-BEGINNERS.md`](../CONTRIBUTING-BEGINNERS.md#optional--let-an-ai-coding-agent-guide-you). Der kurze Weg:
+<OPENHUMAN_ROOT>/tests/observability_smoke.rs:158:        "GET /agent-integrations/tools failed: operation timed out",
+<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:2:use openhuman_core::openhuman::agent::multimodal::{
+<OPENHUMAN_ROOT>/src/core/socketio.rs:123:    /// `"provider"` | `"openhuman_budget"` | `"agent_loop"`
+<OPENHUMAN_ROOT>/src/core/socketio.rs:139:    /// agent loop) and for transport failures without a provider prefix.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:197:    /// Sub-agent specific progress detail. Populated on
+<OPENHUMAN_ROOT>/src/core/socketio.rs:198:    /// `subagent_spawned`, `subagent_completed`, `subagent_iteration_start`,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:199:    /// `subagent_tool_call`, and `subagent_tool_result` events so the UI
+<OPENHUMAN_ROOT>/src/core/socketio.rs:200:    /// can attribute child activity to the parent's live subagent row
+<OPENHUMAN_ROOT>/src/core/socketio.rs:202:    /// non-subagent event.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:204:    pub subagent: Option<SubagentProgressDetail>,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:209:    /// `subagent_tool_call`), e.g. "Reading messages". The frontend renders
+<OPENHUMAN_ROOT>/src/core/socketio.rs:215:    /// `subagent_tool_call`), e.g. "steven@gmail.com" — the bracketed target
+<OPENHUMAN_ROOT>/src/core/socketio.rs:220:    /// sub-agents), carried on `chat_done`. Lets the UI footer show session
+<OPENHUMAN_ROOT>/src/core/socketio.rs:222:    /// per-sub-agent hover breakdown. `None` for every non-`chat_done` event and
+<OPENHUMAN_ROOT>/src/core/socketio.rs:230:/// Every numeric is a turn total (parent agent **plus** any sub-agents spawned
+<OPENHUMAN_ROOT>/src/core/socketio.rs:231:/// during the turn); the `subagents` list breaks the same spend down per child
+<OPENHUMAN_ROOT>/src/core/socketio.rs:243:    /// Per-sub-agent spend, omitted from the wire when no sub-agents ran.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:245:    pub subagents: Vec<SubagentUsagePayload>,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:248:/// One sub-agent's token/cost contribution within a turn (hover breakdown).
+<OPENHUMAN_ROOT>/src/core/socketio.rs:251:pub struct SubagentUsagePayload {
+<OPENHUMAN_ROOT>/src/core/socketio.rs:253:    pub agent_id: String,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:259:/// Per-event subagent progress detail attached to `WebChannelEvent`.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:262:/// subagent block — child iteration counters, mode, child task/agent
+<OPENHUMAN_ROOT>/src/core/socketio.rs:264:/// the agent id on top-level subagent events but not on nested
+<OPENHUMAN_ROOT>/src/core/socketio.rs:265:/// `subagent_tool_*` events where `tool_name` is the *child's* tool),
+<OPENHUMAN_ROOT>/src/core/socketio.rs:266:/// and final-run statistics on `subagent_completed`.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:269:/// absent — this keeps the wire format compact for non-subagent events
+<OPENHUMAN_ROOT>/src/core/socketio.rs:274:pub struct SubagentProgressDetail {
+<OPENHUMAN_ROOT>/src/core/socketio.rs:281:    /// Character length of the delegation prompt (on `subagent_spawned`).
+<OPENHUMAN_ROOT>/src/core/socketio.rs:284:    /// Sub-agent's child iteration counter (on `subagent_iteration_start`,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:285:    /// `subagent_tool_call`, `subagent_tool_result`). 1-based.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:288:    /// Sub-agent's configured iteration cap.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:291:    /// Child agent id (on nested `subagent_tool_*` events where the flat
+<OPENHUMAN_ROOT>/src/core/socketio.rs:292:    /// `tool_name` is the child's tool, not the agent).
+<OPENHUMAN_ROOT>/src/core/socketio.rs:294:    pub agent_id: Option<String>,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:295:    /// Spawn task id (on nested `subagent_tool_*` events).
+<OPENHUMAN_ROOT>/src/core/socketio.rs:301:    /// Total iterations the sub-agent used (on `subagent_completed`).
+<OPENHUMAN_ROOT>/src/core/socketio.rs:304:    /// Character length of the sub-agent's final assistant text
+<OPENHUMAN_ROOT>/src/core/socketio.rs:305:    /// (on `subagent_completed`) or the tool result
+<OPENHUMAN_ROOT>/src/core/socketio.rs:306:    /// (on `subagent_tool_result`).
+<OPENHUMAN_ROOT>/src/core/socketio.rs:310:    /// `subagent_spawned`). The frontend stores it on the subagent row and
+<OPENHUMAN_ROOT>/src/core/socketio.rs:311:    /// uses it to reopen the full parent↔subagent conversation from memory.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:314:    /// Human-readable display name from the agent registry (e.g.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:315:    /// "Researcher", "Coding Agent"). The frontend uses this for
+<OPENHUMAN_ROOT>/src/core/socketio.rs:316:    /// consistent agent labels across timeline, sub-mascots, and drawer.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:320:    /// (on `subagent_completed`, when the worker ran with
+<OPENHUMAN_ROOT>/src/core/socketio.rs:326:    /// after the run (on `subagent_completed`). Absent for non-isolated
+<OPENHUMAN_ROOT>/src/core/socketio.rs:331:    /// (on `subagent_completed`). A dirty worktree must not be auto-removed —
+<OPENHUMAN_ROOT>/src/core/socketio.rs:433:            // (welcome agent, morning briefing, cron-driven announcements)
+<OPENHUMAN_ROOT>/src/core/socketio.rs:630:    let io_agent_meetings = io.clone();
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1095:                        "[socketio] event_bus not initialised after {}s — agent_meetings bridge giving up",
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1109:                        "[socketio] dropped {} event_bus events due to lag (agent_meetings bridge)",
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1122:                    log::debug!("[socketio] broadcast agent_meetings:joined");
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1123:                    let _ = io_agent_meetings.emit("agent_meetings:joined", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1131:                    log::debug!("[socketio] broadcast agent_meetings:left reason={}", reason);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1132:                    let _ = io_agent_meetings.emit("agent_meetings:left", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1147:                        "[socketio] broadcast agent_meetings:reply reply_len={}",
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1150:                    let _ = io_agent_meetings.emit("agent_meetings:reply", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1165:                        "[socketio] broadcast agent_meetings:harness instruction_len={}",
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1168:                    let _ = io_agent_meetings.emit("agent_meetings:harness", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1181:                        "[socketio] broadcast agent_meetings:transcript turns={} duration_ms={}",
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1185:                    let _ = io_agent_meetings.emit("agent_meetings:transcript", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1200:                        "[socketio] broadcast agent_meetings:transcript_delta index={} is_partial={}",
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1204:                    let _ = io_agent_meetings.emit("agent_meetings:transcript_delta", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1212:                    log::debug!("[socketio] broadcast agent_meetings:error");
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1213:                    let _ = io_agent_meetings.emit("agent_meetings:error", &payload);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1218:        log::debug!("[socketio] agent_meetings bridge stopped");
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1474:    // Match against the canonical underscore form after stripping a `subagent_`
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1475:    // prefix (subagent streaming mirrors the parent's deltas), so `text_delta`,
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1476:    // `text:delta`, and `subagent_text_delta` all resolve to a listed event.
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1479:    let base = normalized.strip_prefix("subagent_").unwrap_or(&normalized);
+<OPENHUMAN_ROOT>/src/core/socketio.rs:1540:        assert_eq!(event_alias("subagent_tool_args_delta"), None);
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:31:  --turns <n>             Number of agent turns to run (default: 3)
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:32:  --model <model>         Optional model_override passed to openhuman.agent_chat
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:37:  --isolated-workspace    With --spawn-core, use a temp workspace and custom audit agent definitions
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:270:    agent: String(meta.agent || "(unknown)"),
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:275:    isSubagent: path.basename(file).includes("__"),
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:300:      agent: current.agent,
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:301:      isSubagent: current.isSubagent,
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:321:      if (row.isSubagent) acc.subagentSessions += 1;
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:330:      subagentSessions: 0,
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:339:  const byAgent = new Map();
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:341:    const item = byAgent.get(row.agent) || {
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:342:      agent: row.agent,
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:348:      subagentSessions: 0,
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:355:    if (row.isSubagent) item.subagentSessions += 1;
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:356:    byAgent.set(row.agent, item);
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:362:  console.log(`  subagent transcript sessions: ${totals.subagentSessions}`);
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:369:  if (byAgent.size > 0) {
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:370:    console.log("\n[harness-cache-audit] by agent");
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:371:    const rowsForTable = [...byAgent.values()].map((row) => ({
+<OPENHUMAN_ROOT>/scripts/debug/harness-cache-audit.mjs:372:      agent: row.agent,

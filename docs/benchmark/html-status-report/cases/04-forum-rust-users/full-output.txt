@@ -1,0 +1,328 @@
+The Rust Programming Language Forum
+
+General discussion of The Rust Programming Language
+
+Topic
+
+Replies
+Views
+Activity
+
+Welcome to the Rust programming language users forum
+
+meta
+
+This forum is for help, discussion, and announcements related to the Rust programming language.
+Please read our code of conduct before participating. We will remove any posts that are not respectful, constructive, and o…
+
+1
+
+56124
+
+June 24, 2022
+
+Forum Code Formatting and Syntax Highlighting
+
+meta
+
+To format code in this forum you need to surround the code with three backticks (```). For example, typing this...
+```
+fn main() {
+println!()
+}
+```
+
+...will be rendered as highlighted Rust code, like so:
+fn main() …
+
+3
+
+50332
+
+May 7, 2020
+
+Per-read file integrity in a no_std kernel: block-level BLAKE3 instead of re-hashing the whole file
+
+community
+
+10
+
+236
+
+July 5, 2026
+
+Need ideas for my narrative authoring tool
+
+help
+
+3
+
+68
+
+July 5, 2026
+
+Learning how to navigate/ modify tree-like structure with parsed AST SQL
+
+help
+
+0
+
+49
+
+July 5, 2026
+
+How smart is the compiler about avoiding monomorphization?
+
+help
+
+1
+
+139
+
+July 4, 2026
+
+Cargo refused to format the code. Is it by design?
+
+7
+
+224
+
+July 4, 2026
+
+Simple unzip CLI tool for Windows
+
+announcements
+
+2
+
+177
+
+July 4, 2026
+
+Rupon_developer procto_top В сети Learning Compiler Development by Building My Own Language
+
+code review
+
+0
+
+45
+
+July 4, 2026
+
+Primus — a post-quantum Layer-1 blockchain in Rust (research project, ML-DSA-87 everywhere)
+
+code review
+
+10
+
+165
+
+July 4, 2026
+
+Crate of the Week
+
+community
+
+1586
+
+276729
+
+July 4, 2026
+
+[Beginner] File navigator
+
+code review
+
+2
+
+84
+
+July 4, 2026
+
+What's the semantic difference between `use<'a>` and `+'a` in the returned opaque type place
+
+help
+
+6
+
+214
+
+July 4, 2026
+
+SlotMap attach/reattach, but without moving?
+
+help
+
+20
+
+303
+
+July 4, 2026
+
+Announcing actix_tower: Bridge Tower Middleware into Actix Web
+
+0
+
+47
+
+July 4, 2026
+
+Rust Quest: retro terminal adventure to help beginners learn Rust, written in Rust
+
+community
+
+9
+
+178
+
+July 3, 2026
+
+Mixing SeqCst with other orderings
+
+6
+
+216
+
+July 3, 2026
+
+Method post in actix-web
+
+help
+
+2
+
+69
+
+July 3, 2026
+
+Converting Rust to C
+
+help
+
+7
+
+544
+
+July 3, 2026
+
+How to search job
+
+help
+
+4
+
+258
+
+July 3, 2026
+
+Does the indirection of a pointer immediately create a reference?
+
+help
+
+10
+
+217
+
+July 3, 2026
+
+TWiR quote of the week
+
+community
+
+1743
+
+281361
+
+July 3, 2026
+
+[Beginner] Improvements to anagram searching function (exercism)
+
+code review
+
+5
+
+196
+
+July 3, 2026
+
+Covariant, invariant and PhantomData; Why does this compile?
+
+help
+
+11
+
+390
+
+July 3, 2026
+
+Looking for code review on my 4 small crates
+
+code review
+
+8
+
+295
+
+July 3, 2026
+
+Proposal: Speed up `cargo build` by constraining language to disallow mutual usage between files
+
+12
+
+471
+
+July 2, 2026
+
+STD HashMap is slower than other languages HashMap
+
+help
+
+35
+
+1005
+
+July 2, 2026
+
+Atomic concurrency: when do I need something stronger than Ordering::Relaxed?
+
+help
+
+4
+
+187
+
+July 1, 2026
+
+Rc<Foo>, but Foo needs context to drop/cleanup?
+
+help
+
+17
+
+330
+
+July 1, 2026
+
+Armstrong Numbers
+
+code review
+
+6
+
+215
+
+July 1, 2026
+
+next page →
+
+Home
+
+Categories
+
+Guidelines
+
+Terms of Service
+
+Powered by Discourse, best viewed with JavaScript enabled
+
+[compacted tool output — this is a PARTIAL view; the full original (83646 bytes) is available by calling tokenjuice_retrieve with token "082eba239fd6dad3042b559da5daa83c" (marker ⟦tj:082eba239fd6dad3042b559da5daa83c⟧)]

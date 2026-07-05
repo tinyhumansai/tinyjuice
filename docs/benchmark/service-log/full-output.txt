@@ -1,8 +1,0 @@
-2026-07-05T09:00:45Z warning: queue-depth high partition=0 depth=900
-[... 976 line(s) omitted ...]
-2026-07-05T09:17:12Z ERROR worker-7 request failed: upstream timeout request_id=req-977
-[... 3333 line(s) omitted ...]
-2026-07-05T09:51:12Z ERROR worker-7 request failed: upstream timeout request_id=req-4311
-[... 688 line(s) omitted ...]
-
-[compacted tool output — this is a PARTIAL view; the full original (295945 bytes) is available by calling tokenjuice_retrieve with token "cc57c835b239c1836d6d41fdc12257dc" (marker ⟦tj:cc57c835b239c1836d6d41fdc12257dc⟧)]

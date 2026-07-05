@@ -1,0 +1,159 @@
+diff --git a/.github/workflows/release-production.yml b/.github/workflows/release-production.yml
+index 6f13136e7..e66dba04d 100644
+--- a/.github/workflows/release-production.yml
++++ b/.github/workflows/release-production.yml
+@@ -345,161 +345,161 @@ jobs:
+               owner,
+               repo,
+               tag_name: tag,
+[... 74 context line(s) omitted ...]
+       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+       - name: Init vendored Rust submodules
+-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice
++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+       - name: Log in to GHCR
+[... 74 context line(s) omitted ...]
+         with:
+           ref: ${{ needs.prepare-build.outputs.build_ref }}
+           fetch-depth: 1
+diff --git a/.github/workflows/release-staging.yml b/.github/workflows/release-staging.yml
+index 9913ff760..3b7a830c2 100644
+--- a/.github/workflows/release-staging.yml
++++ b/.github/workflows/release-staging.yml
+@@ -240,161 +240,161 @@ jobs:
+           else
+             echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
+           fi
+[... 74 context line(s) omitted ...]
+       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+       - name: Init vendored Rust submodules
+-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice
++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+       - name: Build image (no push)
+[... 74 context line(s) omitted ...]
+       always()
+       && inputs.create_tag
+       && needs.prepare-build.result == 'success'
+diff --git a/.gitmodules b/.gitmodules
+index c07bfb8cf..ce992e204 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,19 +1,22 @@
+ [submodule "app/src-tauri/vendor/tauri-cef"]
+ 	path = app/src-tauri/vendor/tauri-cef
+ 	url = https://github.com/tinyhumansai/tauri-cef.git
+[... 13 context line(s) omitted ...]
+ [submodule "vendor/tinyjuice"]
+ 	path = vendor/tinyjuice
+ 	url = https://github.com/tinyhumansai/tinyjuice
++[submodule "vendor/tinyplace"]
++	path = vendor/tinyplace
++	url = https://github.com/tinyhumansai/tiny.place.git
+diff --git a/Cargo.lock b/Cargo.lock
+index 0b9058932..7aa978e60 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -6829,163 +6829,161 @@ name = "tinychannels"
+[... lockfile/bundle hunk: +1/-3 line(s) omitted ...]
+@@ -8170,161 +8168,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+diff --git a/Cargo.toml b/Cargo.toml
+index 5ba2492c5..cea66d3b4 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,122 +1,124 @@
+ [package]
+ name = "openhuman"
+ version = "0.58.11"
+[... 34 context line(s) omitted ...]
+ crate-type = ["rlib"]
+ 
+ [dependencies]
+-# tiny.place A2A social network SDK — published on crates.io (tinyhumansai/tiny.place)
+-tinyplace = "1.0.1"
++# tiny.place A2A social network SDK — published on crates.io and patched below
++# to the vendored tiny.place submodule so OpenHuman can test SDK changes before
++# publishing.
++tinyplace = "2.0"
+ # tinyflows — host-agnostic workflow engine (typed node graph → validate → compile →
+ # run on tinyagents). Powers the "Workflows" feature via the seam in
+ # `src/openhuman/tinyflows/` + the `flows::` domain. Pulls tinyagents 1.7 transitively
+[... 74 context line(s) omitted ...]
+ sha1 = "0.10"
+ hmac = "0.12"
+ # Archive extraction for the Node.js runtime bootstrap. Unix Node
+@@ -282,119 +284,120 @@ windows-sys = { version = "0.61", features = [
+ # the UIA COM API; the Windows analogue of the macOS AXUIElement Swift helper.
+ uiautomation = "0.25"
+ 
+[... 74 context line(s) omitted ...]
+ tinyflows = { path = "vendor/tinyflows" }
+ tinycortex = { path = "vendor/tinycortex" }
+ tinyjuice = { path = "vendor/tinyjuice" }
++tinyplace = { path = "vendor/tinyplace/sdk/rust" }
+ 
+ # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
+ # panics + render surrounding source lines. `line-tables-only` keeps the
+[... 33 context line(s) omitted ...]
+ #     `target/` substantially.
+ [profile.dev.package."*"]
+ debug = false
+diff --git a/app/src-tauri/Cargo.lock b/app/src-tauri/Cargo.lock
+index c71496c0f..d39344b86 100644
+--- a/app/src-tauri/Cargo.lock
++++ b/app/src-tauri/Cargo.lock
+@@ -173,161 +173,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -2016,161 +2016,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -2419,161 +2419,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -4059,161 +4059,161 @@ version = "3.1.0"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -4953,161 +4953,161 @@ checksum = "b93853da6d84c2e3c7d730d6473e8817692dd89be387eb01b94d7f108ecb5b8c"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -6649,161 +6649,161 @@ checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -7236,220 +7236,220 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+@@ -8921,161 +8921,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+@@ -9175,163 +9175,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-3 line(s) omitted ...]
+@@ -10537,161 +10535,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+diff --git a/app/src-tauri/Cargo.toml b/app/src-tauri/Cargo.toml
+index 0258d69d3..f5ca5599e 100644
+--- a/app/src-tauri/Cargo.toml
++++ b/app/src-tauri/Cargo.toml
+@@ -140,150 +140,151 @@ nix = { version = "0.29", default-features = false, features = ["hostname", "sig
+ 
+ [target.'cfg(target_os = "macos")'.dependencies]
+ objc2 = "0.6"
+[... 74 context line(s) omitted ...]
+ tinyflows = { path = "../../vendor/tinyflows" }
+ tinycortex = { path = "../../vendor/tinycortex" }
+ tinyjuice = { path = "../../vendor/tinyjuice" }
++tinyplace = { path = "../../vendor/tinyplace/sdk/rust" }
+ 
+ # CEF support lives on the `feat/cef` branch of tauri-apps/tauri. We carry our
+ # own fork at tinyhumansai/tauri-cef on `feat/cef-notification-intercept` which
+[... 64 context line(s) omitted ...]
+ #   * No artifact paths, features, or runtime behaviour change.
+ [profile.dev.package."*"]
+ debug = false
+diff --git a/vendor/tinyplace b/vendor/tinyplace
+new file mode 160000
+index 000000000..65faa27b8
+--- /dev/null
++++ b/vendor/tinyplace
+@@ -0,0 +1 @@
++Subproject commit 65faa27b84344cc33428dc74d965221f60554ac6
+
+[compacted tool output — this is a PARTIAL view; the full original (87201 bytes) is available by calling tokenjuice_retrieve with token "489dae09418b8eece3cdeab5ebc5c72e" (marker ⟦tj:489dae09418b8eece3cdeab5ebc5c72e⟧)]

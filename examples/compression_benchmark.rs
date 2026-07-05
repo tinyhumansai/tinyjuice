@@ -34,8 +34,8 @@ struct Args {
 
 #[derive(Debug, Clone)]
 struct SignalCheck {
-    label: &'static str,
-    needle: &'static str,
+    label: String,
+    needle: String,
     expectation: CheckExpectation,
 }
 
@@ -47,10 +47,10 @@ enum CheckExpectation {
 
 #[derive(Debug, Clone)]
 struct BenchCase {
-    id: &'static str,
-    doc_dir: &'static str,
-    family: &'static str,
-    description: &'static str,
+    id: String,
+    doc_dir: String,
+    family: String,
+    description: String,
     payload: String,
     hint: ContentHint,
     command: Option<String>,
@@ -60,11 +60,19 @@ struct BenchCase {
     task_checks: Vec<TaskCheck>,
 }
 
+fn sample_payload(doc_dir: &str, fallback: String) -> String {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("docs/benchmark")
+        .join(doc_dir)
+        .join("full-input.txt");
+    std::fs::read_to_string(&path).unwrap_or(fallback)
+}
+
 #[derive(Debug, Clone)]
 struct TaskCheck {
-    label: &'static str,
-    question: &'static str,
-    answer_needles: Vec<&'static str>,
+    label: String,
+    question: String,
+    answer_needles: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -89,6 +97,7 @@ struct BenchmarkOptionsReport {
 #[serde(rename_all = "camelCase")]
 struct CaseReport {
     id: String,
+    doc_dir: String,
     family: String,
     description: String,
     applied: bool,
@@ -209,6 +218,7 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
 
     CaseReport {
         id: case.id.to_string(),
+        doc_dir: case.doc_dir.to_string(),
         family: case.family.to_string(),
         description: case.description.to_string(),
         applied: result.applied,
@@ -253,7 +263,7 @@ async fn run_once(case: &BenchCase, options: &CompressOptions) -> tinyjuice::Com
 async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOptions) {
     for case in cases {
         let result = run_once(case, options).await;
-        let dir = root.join(case.doc_dir);
+        let dir = root.join(&case.doc_dir);
         std::fs::create_dir_all(&dir)
             .unwrap_or_else(|e| panic!("cannot create {}: {e}", dir.display()));
         let input_path = dir.join("full-input.txt");
@@ -271,39 +281,39 @@ async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOption
 }
 
 impl SignalCheck {
-    fn present(label: &'static str, needle: &'static str) -> Self {
+    fn present(label: impl Into<String>, needle: impl Into<String>) -> Self {
         Self {
-            label,
-            needle,
+            label: label.into(),
+            needle: needle.into(),
             expectation: CheckExpectation::Present,
         }
     }
 
-    fn absent(label: &'static str, needle: &'static str) -> Self {
+    fn absent(label: impl Into<String>, needle: impl Into<String>) -> Self {
         Self {
-            label,
-            needle,
+            label: label.into(),
+            needle: needle.into(),
             expectation: CheckExpectation::Absent,
         }
     }
 
     fn evaluate(&self, output: &str) -> bool {
         match self.expectation {
-            CheckExpectation::Present => output.contains(self.needle),
-            CheckExpectation::Absent => !output.contains(self.needle),
+            CheckExpectation::Present => output.contains(&self.needle),
+            CheckExpectation::Absent => !output.contains(&self.needle),
         }
     }
 }
 
 impl TaskCheck {
     fn answer(
-        label: &'static str,
-        question: &'static str,
-        answer_needles: Vec<&'static str>,
+        label: impl Into<String>,
+        question: impl Into<String>,
+        answer_needles: Vec<String>,
     ) -> Self {
         Self {
-            label,
-            question,
+            label: label.into(),
+            question: question.into(),
             answer_needles,
         }
     }
@@ -315,246 +325,277 @@ impl TaskCheck {
     }
 }
 
+fn category_case_dirs(category: &str) -> Vec<String> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("docs/benchmark")
+        .join(category)
+        .join("cases");
+
+    let mut dirs: Vec<String> = std::fs::read_dir(&root)
+        .ok()
+        .into_iter()
+        .flat_map(|entries| entries.filter_map(Result::ok))
+        .filter_map(|entry| {
+            let path = entry.path();
+            if path.join("full-input.txt").is_file() {
+                entry
+                    .file_name()
+                    .to_str()
+                    .map(|name| format!("{category}/cases/{name}"))
+            } else {
+                None
+            }
+        })
+        .collect();
+    dirs.sort();
+
+    if dirs.is_empty() {
+        vec![category.to_string()]
+    } else {
+        dirs
+    }
+}
+
+fn case_slug(doc_dir: &str) -> String {
+    doc_dir
+        .rsplit('/')
+        .next()
+        .unwrap_or(doc_dir)
+        .trim_start_matches(|c: char| c.is_ascii_digit() || c == '-')
+        .replace('-', "_")
+}
+
+struct CaseSeed {
+    category: &'static str,
+    family: &'static str,
+    description: &'static str,
+    fallback: String,
+    hint: ContentHint,
+    checks: Vec<SignalCheck>,
+    task_checks: Vec<TaskCheck>,
+}
+
+fn make_case(doc_dir: String, seed: CaseSeed) -> BenchCase {
+    BenchCase {
+        id: format!(
+            "{}_{}",
+            seed.category.replace('-', "_"),
+            case_slug(&doc_dir)
+        ),
+        doc_dir: doc_dir.clone(),
+        family: seed.family.to_string(),
+        description: seed.description.to_string(),
+        payload: sample_payload(&doc_dir, seed.fallback),
+        hint: seed.hint,
+        command: None,
+        argv: None,
+        exit_code: None,
+        checks: seed.checks,
+        task_checks: seed.task_checks,
+    }
+}
+
 fn benchmark_cases() -> Vec<BenchCase> {
-    vec![
-        BenchCase {
-            id: "json_service_inventory",
-            doc_dir: "json-smartcrusher",
-            family: "json",
-            description: "Large API list with a rare error row and latency outlier.",
-            payload: json_service_inventory(260),
-            hint: ContentHint {
-                extension: Some("json".to_string()),
-                source_tool: Some("read_file".to_string()),
-                ..Default::default()
+    let mut cases = Vec::new();
+
+    for doc_dir in category_case_dirs("json-smartcrusher") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "json-smartcrusher",
+                family: "json",
+                description: "Real OpenHuman Composio tool-catalog JSON slice.",
+                fallback: json_service_inventory(260),
+                hint: ContentHint {
+                    extension: Some("json".to_string()),
+                    source_tool: Some("read_file".to_string()),
+                    ..Default::default()
+                },
+                checks: vec![
+                    SignalCheck::present("json table retained", "function"),
+                    SignalCheck::present("schema retained", "type"),
+                ],
+                task_checks: vec![TaskCheck::answer(
+                    "schema answer",
+                    "Does the compacted view preserve the tool schema shape?",
+                    vec!["function".to_string(), "type".to_string()],
+                )],
             },
-            command: None,
-            argv: None,
-            exit_code: Some(0),
-            checks: vec![
-                SignalCheck::present("error row retained", "critical"),
-                SignalCheck::present("omission marker", "omitted"),
-                SignalCheck::present("schema retained", "latency_ms"),
-            ],
-            task_checks: vec![
-                TaskCheck::answer(
-                    "critical service answer",
-                    "Which service is critical?",
-                    vec!["svc-137", "critical"],
-                ),
-                TaskCheck::answer(
-                    "latency outlier answer",
-                    "What latency marks the anomaly?",
-                    vec!["9250"],
-                ),
-            ],
-        },
-        BenchCase {
-            id: "cargo_test_failure",
-            doc_dir: "cargo-test-log",
-            family: "command_log",
-            description: "Noisy cargo test output with one failing test and panic details.",
-            payload: cargo_test_failure_log(360),
-            hint: ContentHint {
-                source_tool: Some("shell".to_string()),
-                explicit: Some(ContentKind::Log),
-                ..Default::default()
+        ));
+    }
+
+    for doc_dir in category_case_dirs("test-failure-log") {
+        let mut case = make_case(
+            doc_dir,
+            CaseSeed {
+                category: "test-failure-log",
+                family: "command_log",
+                description: "Real OpenHuman Vitest command output.",
+                fallback: cargo_test_failure_log(360),
+                hint: ContentHint {
+                    source_tool: Some("exec".to_string()),
+                    explicit: Some(ContentKind::Log),
+                    ..Default::default()
+                },
+                checks: vec![
+                    SignalCheck::present("vitest run retained", "RUN"),
+                    SignalCheck::present("test summary retained", "Test Files"),
+                ],
+                task_checks: vec![TaskCheck::answer(
+                    "summary answer",
+                    "Does the compacted output preserve the test summary?",
+                    vec!["Test Files".to_string()],
+                )],
             },
-            command: Some("cargo test --all-targets".to_string()),
-            argv: Some(vec![
-                "cargo".to_string(),
-                "test".to_string(),
-                "--all-targets".to_string(),
-            ]),
-            exit_code: Some(101),
-            checks: vec![
-                SignalCheck::present("failing test retained", "tests::panics_on_empty_payload"),
-                SignalCheck::present("panic retained", "panicked at"),
-                SignalCheck::present("summary retained", "test result: FAILED"),
-            ],
-            task_checks: vec![
-                TaskCheck::answer(
-                    "failed test answer",
-                    "Which test failed?",
-                    vec!["tests::panics_on_empty_payload"],
-                ),
-                TaskCheck::answer(
-                    "panic reason answer",
-                    "What was the panic reason?",
-                    vec!["empty payload should be rejected before compression"],
-                ),
-            ],
-        },
-        BenchCase {
-            id: "docker_error_log",
-            doc_dir: "service-log",
-            family: "log",
-            description: "High-volume service log with sparse errors and warnings.",
-            payload: docker_error_log(5_000),
-            hint: ContentHint {
-                explicit: Some(ContentKind::Log),
-                source_tool: Some("docker_logs".to_string()),
-                ..Default::default()
+        );
+        case.command = Some("pnpm vitest".to_string());
+        case.argv = Some(vec!["pnpm".to_string(), "vitest".to_string()]);
+        case.exit_code = Some(101);
+        cases.push(case);
+    }
+
+    for doc_dir in category_case_dirs("service-log") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "service-log",
+                family: "log",
+                description: "Real OpenHuman runtime or Docker-style service log snapshot.",
+                fallback: docker_error_log(5_000),
+                hint: ContentHint {
+                    explicit: Some(ContentKind::Log),
+                    source_tool: Some("docker_logs".to_string()),
+                    ..Default::default()
+                },
+                checks: vec![],
+                task_checks: vec![],
             },
-            command: None,
-            argv: None,
-            exit_code: None,
-            checks: vec![
-                SignalCheck::present("error retained", "ERROR worker-7"),
-                SignalCheck::present("warning retained", "warning: queue-depth"),
-                SignalCheck::present("noise dropped", "omitted"),
-            ],
-            task_checks: vec![
-                TaskCheck::answer(
-                    "timeout worker answer",
-                    "Which worker hit an upstream timeout?",
-                    vec!["worker-7", "upstream timeout"],
-                ),
-                TaskCheck::answer(
-                    "queue warning answer",
-                    "What warning class appeared?",
-                    vec!["queue-depth high"],
-                ),
-            ],
-        },
-        BenchCase {
-            id: "ripgrep_many_matches",
-            doc_dir: "search-results",
-            family: "search",
-            description: "Ripgrep-style output with many matches across files.",
-            payload: ripgrep_results(150),
-            hint: ContentHint {
-                source_tool: Some("rg".to_string()),
-                query: Some("tokenjuice recover compression".to_string()),
-                explicit: Some(ContentKind::Search),
-                ..Default::default()
+        ));
+    }
+
+    for doc_dir in category_case_dirs("search-results") {
+        let mut case = make_case(
+            doc_dir,
+            CaseSeed {
+                category: "search-results",
+                family: "search",
+                description: "Real ripgrep output from an OpenHuman checkout.",
+                fallback: ripgrep_results(150),
+                hint: ContentHint {
+                    source_tool: Some("rg".to_string()),
+                    query: Some("tokenjuice recover compression".to_string()),
+                    explicit: Some(ContentKind::Search),
+                    ..Default::default()
+                },
+                checks: vec![SignalCheck::present("search summary retained", "match(es)")],
+                task_checks: vec![TaskCheck::answer(
+                    "search summary answer",
+                    "Does the compacted output retain the search result shape?",
+                    vec!["match(es)".to_string()],
+                )],
             },
-            command: Some("rg tokenjuice recover compression".to_string()),
-            argv: Some(vec![
-                "rg".to_string(),
-                "tokenjuice".to_string(),
-                "recover".to_string(),
-                "compression".to_string(),
-            ]),
-            exit_code: Some(0),
-            checks: vec![
-                SignalCheck::present("ranked hit retained", "recover exact original"),
-                SignalCheck::present("per-file tally", "more match(es)"),
-            ],
-            task_checks: vec![TaskCheck::answer(
-                "best search hit answer",
-                "Where is the recovery hit?",
-                vec!["src/cache.rs:83", "recover exact original"],
-            )],
-        },
-        BenchCase {
-            id: "unified_diff_router_change",
-            doc_dir: "unified-diff",
-            family: "diff",
-            description: "Patch with long unchanged context around a small router change.",
-            payload: unified_diff(80),
-            hint: ContentHint {
-                extension: Some("diff".to_string()),
-                explicit: Some(ContentKind::Diff),
-                ..Default::default()
+        );
+        case.command = Some("rg tokenjuice recover compression".to_string());
+        case.argv = Some(vec![
+            "rg".to_string(),
+            "tokenjuice".to_string(),
+            "recover".to_string(),
+            "compression".to_string(),
+        ]);
+        case.exit_code = Some(0);
+        cases.push(case);
+    }
+
+    for doc_dir in category_case_dirs("unified-diff") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "unified-diff",
+                family: "diff",
+                description: "Real TinyJuice or OpenHuman unified diff snapshot.",
+                fallback: unified_diff(80),
+                hint: ContentHint {
+                    extension: Some("diff".to_string()),
+                    explicit: Some(ContentKind::Diff),
+                    ..Default::default()
+                },
+                checks: vec![
+                    SignalCheck::present("diff header retained", "diff --git"),
+                    SignalCheck::present("hunk retained", "@@"),
+                ],
+                task_checks: vec![TaskCheck::answer(
+                    "diff shape answer",
+                    "Does the compacted output remain recognizable as a diff?",
+                    vec!["diff --git".to_string(), "@@".to_string()],
+                )],
             },
-            command: None,
-            argv: None,
-            exit_code: None,
-            checks: vec![
-                SignalCheck::present("added config retained", "+    ccr_enabled: true,"),
-                SignalCheck::present("removed config retained", "-    ccr_enabled: false,"),
-                SignalCheck::present("context collapsed", "context line(s) omitted"),
-            ],
-            task_checks: vec![TaskCheck::answer(
-                "config change answer",
-                "What changed in the router config?",
-                vec!["-    ccr_enabled: false,", "+    ccr_enabled: true,"],
-            )],
-        },
-        BenchCase {
-            id: "html_status_report",
-            doc_dir: "html-status-report",
-            family: "html",
-            description: "Rendered admin status page with repeated table markup.",
-            payload: html_status_report(160),
-            hint: ContentHint {
-                mime: Some("text/html".to_string()),
-                source_tool: Some("browser".to_string()),
-                explicit: Some(ContentKind::Html),
-                ..Default::default()
+        ));
+    }
+
+    for doc_dir in category_case_dirs("html-status-report") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "html-status-report",
+                family: "html",
+                description: "Real HTML, RSS, coverage, or forum-style page snapshot.",
+                fallback: html_status_report(160),
+                hint: ContentHint {
+                    mime: Some("text/html".to_string()),
+                    source_tool: Some("browser".to_string()),
+                    explicit: Some(ContentKind::Html),
+                    ..Default::default()
+                },
+                checks: vec![SignalCheck::absent("script removed", "<script>")],
+                task_checks: vec![],
             },
-            command: None,
-            argv: None,
-            exit_code: None,
-            checks: vec![
-                SignalCheck::present("visible error retained", "critical backlog"),
-                SignalCheck::absent("script removed", "<script>"),
-            ],
-            task_checks: vec![TaskCheck::answer(
-                "critical row answer",
-                "Which service has the critical backlog?",
-                vec!["service-91", "critical backlog on ingestion queue"],
-            )],
-        },
-        BenchCase {
-            id: "rust_source_large_file",
-            doc_dir: "rust-source",
-            family: "code",
-            description: "Rust source with long function bodies and important markers.",
-            payload: rust_source_file(70),
-            hint: ContentHint {
-                extension: Some("rs".to_string()),
-                source_tool: Some("read_file".to_string()),
-                explicit: Some(ContentKind::Code),
-                ..Default::default()
+        ));
+    }
+
+    for doc_dir in category_case_dirs("rust-source") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "rust-source",
+                family: "code",
+                description: "Real OpenHuman Rust source file.",
+                fallback: rust_source_file(70),
+                hint: ContentHint {
+                    extension: Some("rs".to_string()),
+                    source_tool: Some("read_file".to_string()),
+                    explicit: Some(ContentKind::Code),
+                    ..Default::default()
+                },
+                checks: vec![SignalCheck::present("rust item retained", "fn")],
+                task_checks: vec![TaskCheck::answer(
+                    "source shape answer",
+                    "Does the compacted output retain Rust function structure?",
+                    vec!["fn".to_string()],
+                )],
             },
-            command: None,
-            argv: None,
-            exit_code: None,
-            checks: vec![
-                SignalCheck::present("public signature retained", "pub fn compress_payload"),
-                SignalCheck::present("todo retained", "TODO"),
-                SignalCheck::present("body collapsed", "line(s)"),
-            ],
-            task_checks: vec![
-                TaskCheck::answer(
-                    "signature answer",
-                    "What public function is available?",
-                    vec!["pub fn compress_payload", "CompressionJob"],
-                ),
-                TaskCheck::answer(
-                    "todo answer",
-                    "What TODO marker survived?",
-                    vec!["TODO", "preserve anomaly rows"],
-                ),
-            ],
-        },
-        BenchCase {
-            id: "plain_text_decline",
-            doc_dir: "plain-text",
-            family: "plain_text",
-            description: "Natural-language notes should pass through while ML text compression is off.",
-            payload: plain_text_notes(180),
-            hint: ContentHint {
-                explicit: Some(ContentKind::PlainText),
-                source_tool: Some("notes".to_string()),
-                ..Default::default()
+        ));
+    }
+
+    for doc_dir in category_case_dirs("plain-text") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "plain-text",
+                family: "plain_text",
+                description: "Real OpenHuman Markdown or prose while ML text compression is off.",
+                fallback: plain_text_notes(180),
+                hint: ContentHint {
+                    explicit: Some(ContentKind::PlainText),
+                    source_tool: Some("notes".to_string()),
+                    ..Default::default()
+                },
+                checks: vec![],
+                task_checks: vec![],
             },
-            command: None,
-            argv: None,
-            exit_code: None,
-            checks: vec![SignalCheck::present(
-                "original text retained",
-                "Decision record 42",
-            )],
-            task_checks: vec![TaskCheck::answer(
-                "pass-through answer",
-                "Did decision record 42 survive?",
-                vec!["Decision record 42"],
-            )],
-        },
-    ]
+        ));
+    }
+
+    cases
 }
 
 fn json_service_inventory(rows: usize) -> String {

@@ -3,13 +3,26 @@
 TinyJuice has two benchmark surfaces:
 
 - `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
-- `cargo run --release --example compression_benchmark -- --iterations 20` runs a deterministic fixture suite and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
+- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
 
 By default, the fixture suite emits metadata only. It does not print raw prompt,
 tool, or context payloads unless `--dump-samples` is explicitly requested.
 Human-readable before/after samples live under [`docs/benchmark`](benchmark/README.md).
 
-## Fixture Benchmark
+## Corpus Benchmark
+
+Refresh the real sample corpus and Markdown reports:
+
+```sh
+scripts/benchmark/update-real-samples.sh
+cargo run --release --example compression_benchmark -- --iterations 20 --format json > /tmp/tinyjuice-corpus-benchmark.json
+scripts/benchmark/render-reports.sh /tmp/tinyjuice-corpus-benchmark.json
+```
+
+The updater writes 10 cases per category under `docs/benchmark/<category>/cases/`.
+It uses the adjacent OpenHuman checkout, live OpenHuman Docker logs when
+available, public RSS/page snapshots when reachable, and checked-in OpenHuman
+artifacts as fallbacks.
 
 Default Markdown report:
 
@@ -23,31 +36,31 @@ Machine-readable report:
 cargo run --release --example compression_benchmark -- --iterations 20 --format json
 ```
 
-Write the full input and output artifacts used by the human-review reports:
+Write the full input and output artifacts used by the reports:
 
 ```sh
 cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
 ```
 
-Every fixture can carry two inline accuracy layers:
+Every case can carry two inline accuracy layers:
 
 - Signal checks: structural facts that should survive compaction, such as error lines, changed diff lines, schema columns, or script removal.
 - Task checks: small pinned questions that must be answerable from the compacted inline text, such as "Which test failed?" or "What config value changed?"
 
 Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
 
-Current fixtures cover:
+Current categories cover:
 
-- JSON API inventories with rare anomaly rows.
-- Cargo/test command output with a failure and panic details.
-- High-volume service logs with sparse errors and warnings.
-- Ripgrep-style search results.
-- Unified diffs with long unchanged context.
-- HTML status pages.
-- Rust source files with long function bodies.
+- JSON tool-catalog slices.
+- Vitest command output.
+- Runtime and Docker-style service logs.
+- Ripgrep result sets.
+- Unified diffs.
+- RSS feeds, noisy HTML pages, forum pages, and coverage HTML.
+- Rust source files.
 - Plain text, which should pass through while ML text compression is disabled.
 
-Use the fixture runner for regression comparisons and candidate release notes. Only market reductions that also pass inline accuracy and CCR recovery gates. Do not turn one local run into a public production-corpus claim; claims need pinned corpora, quality gates, and hardware/runtime metadata.
+Use the corpus runner for regression comparisons and candidate release notes. Only market reductions that also pass inline accuracy and CCR recovery gates. Do not turn one local run into a public production-wide claim; claims need pinned corpora, quality gates, and hardware/runtime metadata.
 
 ## External Benchmarks To Cross-Reference
 

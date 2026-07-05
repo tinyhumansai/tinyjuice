@@ -1,0 +1,176 @@
+[search: 500 match(es) across 47 file(s) · top 5 per file · full set via retrieve footer]
+<OPENHUMAN_ROOT>/src/api/jwt.rs:7:pub use crate::openhuman::credentials::{APP_SESSION_PROVIDER, DEFAULT_AUTH_PROFILE_NAME};
+<OPENHUMAN_ROOT>/Cargo.lock:2938: "icu_provider 2.2.0",
+<OPENHUMAN_ROOT>/Cargo.lock:2958: "icu_provider 2.2.0",
+<OPENHUMAN_ROOT>/Cargo.lock:2970:name = "icu_provider"
+<OPENHUMAN_ROOT>/Cargo.lock:2977: "icu_provider_macros",
+<OPENHUMAN_ROOT>/Cargo.lock:2987:name = "icu_provider"
+[+2 more match(es) in <OPENHUMAN_ROOT>/Cargo.lock]
+<OPENHUMAN_ROOT>/src/api/rest_tests.rs:330:        provider,
+<OPENHUMAN_ROOT>/src/api/rest_tests.rs:336:    assert_eq!(provider, "telegram");
+<OPENHUMAN_ROOT>/src/api/rest_tests.rs:339:    // Discord path — proves the helper is provider-agnostic.
+<OPENHUMAN_ROOT>/src/api/rest_tests.rs:351:        provider,
+<OPENHUMAN_ROOT>/src/api/rest_tests.rs:357:    assert_eq!(provider, "discord");
+[+5 more match(es) in <OPENHUMAN_ROOT>/src/api/rest_tests.rs]
+<OPENHUMAN_ROOT>/gitbooks/overview/troubleshooting-sign-in.md:46:On Windows the `openhuman://` URL scheme is registered to the running executable via `HKEY_CURRENT_USER\Software\Classes\openhuman\shell\open\command` at first launch. If that registration silently failed, or if the install was moved/copied after first launch, the browser cannot hand the OAuth callback back to the app, and sign-in stalls after the provider step (issue #2699).
+<OPENHUMAN_ROOT>/gitbooks/overview/troubleshooting-sign-in.md:84:* The OAuth provider used.
+<OPENHUMAN_ROOT>/tests/observability_smoke.rs:14:    is_transient_integrations_failure, is_transient_provider_http_failure,
+<OPENHUMAN_ROOT>/tests/observability_smoke.rs:61:            if is_transient_provider_http_failure(&event)
+<OPENHUMAN_ROOT>/tests/observability_smoke.rs:242:        "permanent provider failures must reach Sentry"
+<OPENHUMAN_ROOT>/tests/observability_smoke.rs:263:    // `failure=all_exhausted` event when every provider/model has been
+<OPENHUMAN_ROOT>/tests/observability_smoke.rs:287:        "All providers/models failed. Attempts: openai API error (503 Service Unavailable); custom_openai API error (502 Bad Gateway)",
+[+12 more match(es) in <OPENHUMAN_ROOT>/tests/observability_smoke.rs]
+<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:4:    prepare_messages_for_provider,
+<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:7:use openhuman_core::openhuman::inference::provider::ChatMessage;
+<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:50:    let prepared = prepare_messages_for_provider(
+<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:69:    let prepared = prepare_messages_for_provider(
+<OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs:88:    let err = prepare_messages_for_provider(
+[+3 more match(es) in <OPENHUMAN_ROOT>/tests/agent_multimodal_public.rs]
+<OPENHUMAN_ROOT>/gitbooks/guides/recover-failed-installation.md:69:| Sign-in stalls after the provider step; log mentions `openhuman://` scheme **not registered** (Windows) | The URL handler didn't register, or the install was moved after first launch | Follow the repair steps in [Troubleshooting Sign-In](../overview/troubleshooting-sign-in.md#windows-openhuman-handler-not-registered) |
+<OPENHUMAN_ROOT>/gitbooks/legal/privacy-policy.md:62:## Service Providers
+<OPENHUMAN_ROOT>/gitbooks/legal/privacy-policy.md:64:We may engage third-party service providers to support operation of the Service, such as infrastructure hosting or AI inference providers. These providers act only on our behalf, are subject to confidentiality obligations, and are restricted from using data for their own purposes.
+<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:8:use openhuman_core::openhuman::inference::provider::{
+<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:9:    ChatMessage, ChatRequest, ChatResponse, Provider, ToolCall, UsageInfo,
+<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:59:struct ScriptedProvider {
+<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:65:impl ScriptedProvider {
+<OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs:80:impl Provider for ScriptedProvider {
+[+12 more match(es) in <OPENHUMAN_ROOT>/tests/agent_turn_builder_leftovers_raw_coverage_e2e.rs]
+<OPENHUMAN_ROOT>/gitbooks/guides/child-safe-companion.md:27:* Keep it local. Use a [local model](local-model.md) so conversations aren't sent to a cloud provider, and connect **no** personal integrations.
+<OPENHUMAN_ROOT>/gitbooks/guides/child-safe-companion.md:57:* Turn on a [local model](local-model.md), then **route chat and reasoning at the local provider** so conversations run on-device. Enabling Local AI alone keeps only embeddings/memory local. Chat still uses the default cloud route until you point the chat/reasoning workloads at the local provider and confirm with a test message.
+<OPENHUMAN_ROOT>/gitbooks/guides/child-safe-companion.md:75:* [ ] Inference is local (`ready`), so conversations aren't going to a cloud provider.
+<OPENHUMAN_ROOT>/gitbooks/features/notifications-and-activity.md:49:### Per-provider routing & thresholds
+<OPENHUMAN_ROOT>/gitbooks/features/notifications-and-activity.md:51:Every provider has its own settings (`notification.settings_set`), letting you tune the noise per source:
+<OPENHUMAN_ROOT>/gitbooks/features/notifications-and-activity.md:55:| `enabled`              | When off, that provider's notifications are not ingested at all             |
+<OPENHUMAN_ROOT>/gitbooks/features/notifications-and-activity.md:59:Auto-routing re-reads the provider's settings the moment before escalating, so toggling a setting mid-flight takes effect immediately. A notification is only routed to the agent when its score clears the provider threshold **and** `route_to_orchestrator` is enabled.
+<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:3:  Carry your OpenHuman persona, memory, workspace, and model/provider config to
+<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:38:| **Config** (models, providers, routing, autonomy) | `config.toml` | ✅ Yes |
+<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:85:* **Bring-your-own keys:** if you had entered your own provider API key, a Composio direct key, or similar **local** secrets, re-enter them on the new machine. Those are stored in the OS keychain and don't come across in the folder.
+<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:87:### 6. Re-check model / provider config
+<OPENHUMAN_ROOT>/gitbooks/guides/move-to-new-pc.md:89:Your `config.toml` came along, so model routing and provider choices should already match. If you used a [local model](local-model.md), remember that **Ollama/LM Studio is separate software**. Install it on the new machine too, and let OpenHuman re-pull the model weights (they aren't in the data folder).
+<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:2://! run against a **mocked LLM provider** — no network, no Ollama, no real
+<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:3://! model anywhere (cloud and local provider funnels are both overridden).
+<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:6://! SessionExecutor *above* the model), this test mocks at the *provider*
+<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:8://!   - `GatePass::evaluate` → `agent::triage::run_triage` → real provider
+<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:13://! The mock is installed via the factory's `test_provider_override` seam,
+[+16 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs]
+<OPENHUMAN_ROOT>/scripts/debug/harness-subagent-audit.sh:15:echo "[harness_subagent_audit] running live audit; requires configured provider/backend credentials" >&2
+<OPENHUMAN_ROOT>/gitbooks/features/privacy-and-security.md:38:| **LLM calls**                      | Proxied through the backend under one subscription, then forwarded to the underlying provider (Anthropic / OpenAI / Google / etc.) per the [model router](model-routing/). |
+<OPENHUMAN_ROOT>/gitbooks/features/privacy-and-security.md:52:* A **per-provider sync interval** (e.g. Gmail every 15 min by default).
+<OPENHUMAN_ROOT>/docs/tinycortex-api-gap-audit.md:46:| `ChatProvider` | `score/extract/llm.rs:70` | `tinycortex/chat.rs` over `memory::chat` / `inference` |
+<OPENHUMAN_ROOT>/gitbooks/guides/local-model.md:14:For the config-level reference (every flag and provider field), see [Local AI (optional)](../features/model-routing/local-ai.md). This guide is the task-oriented version: get it running and confirm it works.
+<OPENHUMAN_ROOT>/gitbooks/guides/local-model.md:28:* If the local provider becomes unreachable mid-session, requests **transparently fall back** to the remote provider. That means a crashed Ollama can send that data to the cloud path instead. If strict locality matters, watch the diagnostics (below).
+<OPENHUMAN_ROOT>/gitbooks/guides/local-model.md:48:By default the tier keeps **embeddings and memory** on-device while chat and reasoning stay on the cloud route. To move those workloads local too, use **custom routing** to point the chat and reasoning workloads at the local provider, then test that a message stays on the machine.
+<OPENHUMAN_ROOT>/gitbooks/guides/local-model.md:61:Don't assume; verify. The Local AI settings expose a **test action** that sends a short prompt to the configured local provider and shows you the reply. If you get a coherent response back, the path is live end-to-end (detection → model loaded → inference).
+<OPENHUMAN_ROOT>/gitbooks/guides/local-model.md:90:| It "works" but answers feel cloud-quality | The local provider was unreachable and OpenHuman **fell back to remote** | Fix reachability above; strict-local users should confirm status is `ready` before relying on it |
+<OPENHUMAN_ROOT>/tests/agent_retrieval_e2e.rs:9://! `agent_chat` requires a reachable provider (no provider connection
+<OPENHUMAN_ROOT>/tests/agent_retrieval_e2e.rs:119:        provider: "gmail".into(),
+<OPENHUMAN_ROOT>/tests/agent_retrieval_e2e.rs:345:            provider: "gmail".into(),
+<OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:15:| `src/openhuman/inference/` | ~53,000 (121 files) | Provider trait + OpenAI-compatible wire client, factory/routing, local runtime (Ollama/LM Studio/Whisper/Piper), voice, OAuth, RPC surface |
+<OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:30:| `inference/provider/traits.rs` (`Provider`, `ChatMessage`, `ChatResponse`, `UsageInfo`) | `harness/model/` (`ChatModel`, `ModelRequest/Response`), `harness/usage/` (field-for-field) |
+<OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:31:| `inference/provider/compatible*.rs` (~6.6k + 4.9k tests) | `harness/providers/openai/` (same 9-provider OpenAI-compat fan-out) |
+<OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:32:| `inference/provider/reliable.rs` (retry wrapper) | `harness/retry/` + `middleware/library/resilience.rs` — `reliable.rs`'s own module doc says it is "slated for removal once the tinyagents crate owns retry/fallback" and pins retry to 1 attempt |
+<OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:63:| `inference/provider/error_classify.rs` (777 L, 35 tests, extracted for this purpose in #4249) | port | `harness/retry/` classification (or `harness/providers/` error module) |
+[+26 more match(es) in <OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md]
+<OPENHUMAN_ROOT>/gitbooks/features/cloud-deploy.md:25:provider's TLS, for example `https://core.example.com/rpc`. Private-only hosts
+<OPENHUMAN_ROOT>/gitbooks/features/cloud-deploy.md:398:Restart the desktop app. The provider chain in `App.tsx` will route all RPC
+<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:39:use openhuman_core::openhuman::composio::providers::gmail::ingest::ingest_page_into_memory_tree;
+<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:40:use openhuman_core::openhuman::composio::providers::registry::{
+<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:41:    get_provider, init_default_providers,
+<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:140:    init_default_providers();
+<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:141:    let provider = get_provider("gmail").ok_or_else(|| {
+[+2 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs]
+<OPENHUMAN_ROOT>/gitbooks/guides/doctor-assistant.md:29:* If you route reasoning to the [OpenHuman backend](../features/privacy-and-security.md) (the default), relevant snippets are sent to the model provider for each turn. For sensitive material, turn on a [local model](local-model.md) so that work stays on-device.
+<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:7:5** — deleting the `ProviderDelta` bridge and `progress_tracing`.
+<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:28:    `spawn_delta_forwarder` maps engine callbacks + `ProviderDelta` →
+<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:32:  (`channels/providers/web/progress_bridge.rs:157`) is a side-observer of the
+<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:54:  adapter's provider `UsageInfo` FIFO) to restore **charged USD**, cache-creation
+<OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md:73:2. **Usage accounting**: decide whether charged-USD/provider-cost belongs on a
+[+3 more match(es) in <OPENHUMAN_ROOT>/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md]
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:11:`--isolated-workspace` defaults to `--provider-mode openhuman-backend`. It writes a temporary backend config, seeds the temp auth store from `JWT_TOKEN`, starts `openhuman-core`, and removes the temp workspace by default. Only pass `--keep-workspace` when you need to inspect artifacts locally.
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:13:The optional `--provider-mode direct-openai` control path writes a temporary direct-provider config using `OPENAI_API_KEY` or `OPENAI_KEY`.
+<OPENHUMAN_ROOT>/scripts/debug/harness-live-audit-cases.md:28:node scripts/debug/harness-subagent-rpc-audit.mjs --spawn-core --isolated-workspace --provider-mode direct-openai --model gpt-4.1-mini --scenario reuse-parent-comm
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:14://!   chat provider (no harness, no real tools). Useful to isolate
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:28://! # Raw provider call (no harness):
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:35:use openhuman_core::openhuman::inference::provider::create_chat_provider;
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:121:        create_chat_provider(role, config).context("create_chat_provider failed")?;
+<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:200:        .context("provider.chat() failed")?;
+[+8 more match(es) in <OPENHUMAN_ROOT>/src/bin/inference_probe.rs]
+<OPENHUMAN_ROOT>/src/api/config.rs:157:        let is_inference_provider = looks_like_inference_provider_endpoint(u);
+<OPENHUMAN_ROOT>/src/api/config.rs:167:            crate::openhuman::config::schema::cloud_providers::endpoint_host(u).is_some_and(|h| {
+<OPENHUMAN_ROOT>/src/api/config.rs:168:                crate::openhuman::config::schema::cloud_providers::host_is_builtin_cloud_provider(
+<OPENHUMAN_ROOT>/src/api/config.rs:176:            is_inference_provider,
+<OPENHUMAN_ROOT>/src/api/config.rs:183:        // (local model runner OR remote managed provider), OR when it is one of
+[+41 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs]
+<OPENHUMAN_ROOT>/gitbooks/guides/personal-assistant.md:43:* **Custom**: walk through choosing your inference provider, voice, integrations (OAuth), web search, and embeddings yourself.
+<OPENHUMAN_ROOT>/docs/tinycortex-migration-spec.md:100:- **Process glue:** `memory/global.rs` singleton + queue worker; `memory/source_scope.rs` task-locals; `memory/chat.rs`; embeddings provider wiring.
+<OPENHUMAN_ROOT>/docs/tinycortex-migration-spec.md:113:`embeddings.rs` (`EmbeddingBackend`/`Embedder`), `chat.rs` (`ChatProvider`/`Summariser`×2/
+<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:10:use openhuman_core::openhuman::inference::provider::thread_context::with_thread_id;
+<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:11:use openhuman_core::openhuman::inference::provider::traits::ProviderCapabilities;
+<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:12:use openhuman_core::openhuman::inference::provider::{
+<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:13:    ChatMessage, ChatRequest, ChatResponse, Provider, ToolCall,
+<OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs:33:enum ProviderStep {
+[+40 more match(es) in <OPENHUMAN_ROOT>/tests/monitor_agent_e2e.rs]
+<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:37:- LLM and embedding **compute** — abstracted behind `EmbeddingBackend`, `score::extract::ChatProvider`, `tree::summarise::Summariser` traits ("never makes a network call").
+<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:67:- **Process glue**: `memory/global.rs` singleton + background queue worker; `memory/source_scope.rs` tokio task-locals; `memory/chat.rs` (LLM adapter over `openhuman::inference`); embeddings provider wiring.
+<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:76:- `chat.rs` — `impl ChatProvider` + `impl Summariser` over `memory::chat::build_chat_provider` / `inference::provider`.
+<OPENHUMAN_ROOT>/docs/tinycortex-memory-migration-plan.md:117:**W6 — Ingest.** `memory/ingest_pipeline.rs` + `memory/ingestion/` re-pointed to `tinycortex::ingest` + `score::extract` (LLM extraction via the seam's `ChatProvider`). The namespace document/graph store path stays host-side unless deliberately upstreamed (explicit decision in this workstream). `ingest_chat`/`ingest_document_with_scope` keep their signatures — 11 call sites (learning, agent harness, archivist) unchanged.
+<OPENHUMAN_ROOT>/plan.md:32:  frontend E2E (WDIO + Playwright), Rust unit (agent/memory; channels/providers/platform;
+<OPENHUMAN_ROOT>/plan.md:55:| ✅ | `src/openhuman/routing/factory.rs` | `factory_constructs_without_panic_when_runtime_enabled`, `factory_llamacpp_provider_constructs_without_panic`, `factory_custom_openai_provider_constructs_without_panic`, `factory_lm_studio_provider_constructs_without_panic` | Skeptic traced the whole construction path — provably infallible (pure struct init), so the tests cannot fail. One test's comment claims to verify probe-URL selection but the body asserts nothing; fields are private so strengthening is blocked. |
+<OPENHUMAN_ROOT>/plan.md:59:| ⚠️ | `src/openhuman/channels/providers/whatsapp_tests.rs` | 7 × `whatsapp_parse_<type>_message_skipped` | All hit the identical `type != "text" → continue` branch; collapse to one parameterized loop over the type strings. |
+<OPENHUMAN_ROOT>/plan.md:79:| `src/openhuman/channels/providers/qq_tests.rs` | `test_name` | Sole coverage of `QQChannel::name()`, which keys routing (`routes.rs:345`) and the channel map (`runtime/startup.rs:701`). A rename would ship uncaught. |
+<OPENHUMAN_ROOT>/plan.md:96:| ✅ | every `connector-*.spec.ts::composio_sync RPC routes to mock backend` | Name promises routing; body only asserts the session didn't crash (original assertion removed per inline comment). | Rename to what it checks, or move the real routing assertion to a native-provider connector where sync actually hits the mock. |
+[+8 more match(es) in <OPENHUMAN_ROOT>/plan.md]
+<OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-3-rlm-domain.md:43:- **Model**: register the turn's `ProviderModel` (and workload routes via
+<OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-3-rlm-domain.md:45:  `model_query(#{model: "chat-v1", ...})` hits the real provider with usage
+<OPENHUMAN_ROOT>/gitbooks/guides/README.md:38:* **Privacy implications**: what stays on your machine and what is sent to the OpenHuman backend or a model provider for this workflow, in plain language.
+<OPENHUMAN_ROOT>/tests/domain_modules_e2e.rs:105:provider = "none"
+<OPENHUMAN_ROOT>/tests/domain_modules_e2e.rs:106:embedding_provider = "none"
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:2://! provider.
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:5://! `SlackProvider::sync()` for each active Slack Composio connection —
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:30://! export RUST_LOG=info,openhuman_core::openhuman::composio::providers::slack=debug,openhuman_core::openhuman::memory=debug
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:45:use openhuman_core::openhuman::composio::providers::registry::{
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:356:                    let err = r.error.as_deref().unwrap_or("provider failure");
+[+16 more match(es) in <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs]
+<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:26:| Capabilities    | ✅ host-injected traits: `LlmProvider`, `ToolInvoker`, `HttpClient`, `CodeRunner`, `StateStore`; opaque `connection_ref` (host resolves secrets)         |
+<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:227:- Plumbing reuses the existing chat runtime (`ChatRuntimeProvider` already parses `propose_workflow` outputs into `pendingWorkflowProposalsByThread`); the new work is thread scoping per draft/flow, the canvas diff overlay, and routing turns to the `workflow-builder` definition instead of the main agent.
+<OPENHUMAN_ROOT>/src/api/rest.rs:18:    /// user deletes the message on the provider side (Telegram, Discord,
+<OPENHUMAN_ROOT>/src/api/rest.rs:23:    #[error("message not found on {provider}: {message_id}")]
+<OPENHUMAN_ROOT>/src/api/rest.rs:25:        /// Channel provider segment (e.g. `"telegram"`, `"discord"`).
+<OPENHUMAN_ROOT>/src/api/rest.rs:26:        provider: String,
+<OPENHUMAN_ROOT>/src/api/rest.rs:27:        /// Provider-specific message id from the URL.
+[+19 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs]
+<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:53:- **Message received** with filters: provider/channel id, sender, regex or keyword, mention-of-me, DM vs group.
+<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:83:Backing events: `SystemStartup`, `HealthChanged`, `HealthRestarted`, `AutonomyConfigChanged`, `McpServerDisconnected`, `ProviderApiKeyRejected`, `EmbeddingModelUnhealthy`.
+<OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-6-tests.md:11:no network and no real provider is needed.
+<OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-6-tests.md:55:`rlm` with a fan-out script (mock provider supplies the tool_call). Asserts:
+<OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-4-rlm-tool.md:60:- The tool needs the turn's tool list + provider to build its bridge, so it
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:8:> configured provider/model + credentials in the target workspace.
+<OPENHUMAN_ROOT>/scripts/debug/goals-live-cases.md:13:- For `reflect`: a workspace with provider creds (use your real workspace —
+<OPENHUMAN_ROOT>/src/main.rs:51:            // Defense-in-depth: drop transient-upstream provider failures that
+<OPENHUMAN_ROOT>/src/main.rs:58:            // `openhuman::inference::provider::ops::should_report_provider_http_failure`
+<OPENHUMAN_ROOT>/src/main.rs:61:            if openhuman_core::core::observability::is_transient_provider_http_failure(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:79:            // (domain=llm_provider, failure=transport) — flaky-network
+<OPENHUMAN_ROOT>/src/main.rs:83:            if openhuman_core::core::observability::is_transient_provider_transport_failure(&event)
+[+10 more match(es) in <OPENHUMAN_ROOT>/src/main.rs]
+<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:4://! provider/backend credentials. It records only sanitized progress metadata:
+<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:61:### 1.1 Multi-Provider Authentication
+<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:67:| 1.1.3 | Twitter (X) Login | WD    | `login-flow.spec.ts`                    | 🟡     | Generic OAuth path; assert provider tag in #968 |
+<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:75:| 1.2.2 | Multi-Provider Linking     | WD    | _missing_ — tracked #968                      | ❌     | Need spec linking 4 providers to one account |
+<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:219:| 4.4.10 | Provider Error Retry                    | RI    | `tests/agent_harness_e2e.rs`                                                                                                 | ✅     | First upstream 500 retried by ReliableProvider; second succeeds                                                 |
+<OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:526:| 13.1.4 | Wallet Balances Panel               | VU         | `app/src/components/settings/panels/__tests__/WalletBalancesPanel.test.tsx`, `app/src/services/walletApi.test.ts`                                                           | ✅     | Loading/error/empty/loaded states; Retry + Refresh re-invocation; chain badges; truncated address; providerStatus chip                                                                                                                                                           |
+[+10 more match(es) in <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md]
+<OPENHUMAN_ROOT>/gitbooks/features/model-routing/README.md:10:Different parts of an agent want different models. Long reasoning wants a frontier model. Quick "fix this typo" calls want a fast cheap one. Vision wants a vision model. OpenHuman handles this with a built-in **router provider** so you never have to think about it.
+<OPENHUMAN_ROOT>/gitbooks/features/model-routing/README.md:16:- **Concrete model name**. e.g. `anthropic/claude-sonnet-4`. Routes to the default provider with that exact model.
+<OPENHUMAN_ROOT>/gitbooks/features/model-routing/README.md:17:- **Hint prefix**. e.g. `hint:reasoning`. Looks the hint up in the route table and resolves to a `(provider, model)` pair.
+<OPENHUMAN_ROOT>/gitbooks/features/model-routing/README.md:20:// src/openhuman/providers/router.rs
+<OPENHUMAN_ROOT>/gitbooks/features/model-routing/README.md:31:The router wraps several pre-created providers (Anthropic, OpenAI, Google, Groq, etc.) and picks the right one per request. Hints can be remapped at runtime without restarting the core.
+[+3 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/model-routing/README.md]
+<OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-5-hardening.md:64:  provider/observability path; tag spans with `rlm.session_id`.
+<OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:32:    generate_provider_id, generate_voice_provider_id, is_slug_reserved, is_voice_slug_reserved,
+<OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:33:    migrate_legacy_fields, AuditConfig, AuthStyle, CapabilityProviderConfig,
+<OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:34:    CapabilityProviderTrustState, CloudProviderCreds, CloudProviderType, DashboardConfig,
+<OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:38:    SttApiStyle, TelegramConfig, TtsApiStyle, VoiceCapability, VoiceProviderCreds, WebhookConfig,
+<OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:66:    list_provider_credentials_by_prefix, normalize_provider, rpc_store_composio_api_key,
+[+110 more match(es) in <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs]
+
+[compacted tool output — this is a PARTIAL view; the full original (75135 bytes) is available by calling tokenjuice_retrieve with token "70bda7403ab5e1568522755cc1c16c25" (marker ⟦tj:70bda7403ab5e1568522755cc1c16c25⟧)]

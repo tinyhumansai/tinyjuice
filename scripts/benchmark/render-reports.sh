@@ -1,0 +1,227 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+bench_root="$repo_root/docs/benchmark"
+json_report="${1:-/tmp/tinyjuice-corpus-benchmark.json}"
+
+if [[ ! -s "$json_report" ]]; then
+  echo "benchmark JSON not found: $json_report" >&2
+  exit 1
+fi
+
+format_bytes() {
+  local bytes="$1"
+  if [[ "$bytes" -ge 1000000 ]]; then
+    awk -v b="$bytes" 'BEGIN { printf "%.1f MB", b / 1000000 }'
+  elif [[ "$bytes" -ge 1000 ]]; then
+    awk -v b="$bytes" 'BEGIN { printf "%.1f KB", b / 1000 }'
+  else
+    printf '%s B' "$bytes"
+  fi
+}
+
+snippet() {
+  local file="$1"
+  awk 'NR <= 36 {
+    line = $0
+    gsub(/```/, "` ` `", line)
+    if (length(line) > 220) {
+      print substr(line, 1, 220) "..."
+    } else {
+      print line
+    }
+  }' "$file"
+}
+
+category_title() {
+  case "$1" in
+    json-smartcrusher) echo "JSON SmartCrusher" ;;
+    test-failure-log) echo "Test Failure Logs" ;;
+    service-log) echo "Service And Docker Logs" ;;
+    search-results) echo "Search Results" ;;
+    unified-diff) echo "Unified Diffs" ;;
+    html-status-report) echo "HTML, RSS, And Page Snapshots" ;;
+    rust-source) echo "Rust Source" ;;
+    plain-text) echo "Plain Text" ;;
+    *) echo "$1" ;;
+  esac
+}
+
+category_summary() {
+  case "$1" in
+    json-smartcrusher)
+      echo "Real OpenHuman Composio tool-catalog slices. TinyJuice converts repeated JSON object arrays into compact tables and keeps the full original recoverable through CCR."
+      ;;
+    test-failure-log)
+      echo "Real OpenHuman Vitest command logs. The command-aware reducer keeps failure summaries and drops repetitive success or setup noise."
+      ;;
+    service-log)
+      echo "Real OpenHuman runtime crash-log slices, with live Docker OpenHuman logs used first when a container is available. The log compressor keeps incident signals and collapses repeated low-value lines."
+      ;;
+    search-results)
+      echo "Real ripgrep result sets from an OpenHuman checkout. TinyJuice groups matches by file, keeps top hits, and records omitted match counts."
+      ;;
+    unified-diff)
+      echo "Real TinyJuice and OpenHuman patches. The diff compressor keeps file headers, hunk headers, and changed lines while collapsing long unchanged context."
+      ;;
+    html-status-report)
+      echo "Real RSS feeds, noisy web pages, forum pages, and OpenHuman coverage HTML. The HTML compressor strips markup/script noise and keeps readable page text."
+      ;;
+    rust-source)
+      echo "Real OpenHuman Rust files. The source compressor keeps imports, signatures, and top-level structure while collapsing large bodies when useful."
+      ;;
+    plain-text)
+      echo "Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged."
+      ;;
+  esac
+}
+
+input_lang() {
+  if [[ "${2:-}" == *rss-* ]]; then
+    echo "xml"
+    return
+  fi
+
+  case "$1" in
+    json-smartcrusher) echo "json" ;;
+    unified-diff) echo "diff" ;;
+    html-status-report) echo "html" ;;
+    rust-source) echo "rust" ;;
+    plain-text) echo "markdown" ;;
+    *) echo "text" ;;
+  esac
+}
+
+output_lang() {
+  case "$1" in
+    unified-diff) echo "diff" ;;
+    rust-source) echo "rust" ;;
+    plain-text) echo "markdown" ;;
+    *) echo "text" ;;
+  esac
+}
+
+categories=(
+  json-smartcrusher
+  test-failure-log
+  service-log
+  search-results
+  unified-diff
+  html-status-report
+  rust-source
+  plain-text
+)
+
+for category in "${categories[@]}"; do
+  readme="$bench_root/$category/README.md"
+  title="$(category_title "$category")"
+  {
+    printf '# %s\n\n' "$title"
+    printf '%s\n\n' "$(category_summary "$category")"
+    printf 'Each row links to the full raw input and the exact compacted output used by the benchmark.\n\n'
+    printf '## Cases\n\n'
+    printf '| Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |\n'
+    printf '| --- | --- | --- | ---: | ---: | ---: | ---: | --- |\n'
+
+    jq -r --arg category "$category" '
+      .cases[]
+      | select(.docDir | startswith($category + "/cases/"))
+      | [
+          .docDir,
+          .originalBytes,
+          .compactedBytes,
+          (.tokenReductionPercent | tostring),
+          (.avgLatencyMs | tostring),
+          ((.ccrRecoverable // "n/a") | tostring)
+        ]
+      | @tsv
+    ' "$json_report" | while IFS=$'\t' read -r doc_dir original compacted reduction latency ccr; do
+      case_name="${doc_dir##*/}"
+      rel_dir="${doc_dir#"$category/"}"
+      printf '| `%s` | [input](%s/full-input.txt) | [output](%s/full-output.txt) | %s | %s | %.1f%% | %.3f ms | %s |\n' \
+        "$case_name" \
+        "$rel_dir" \
+        "$rel_dir" \
+        "$(format_bytes "$original")" \
+        "$(format_bytes "$compacted")" \
+        "$reduction" \
+        "$latency" \
+        "$ccr"
+    done
+
+    printf '\n## What TinyJuice Is Doing\n\n'
+    case "$category" in
+      json-smartcrusher)
+        printf 'TinyJuice recognizes repeated JSON object arrays and pays for the keys once by rendering a table. Large arrays are partial inline views, so CCR stores the full JSON and the footer makes the omitted rows retrievable.\n'
+        ;;
+      test-failure-log)
+        printf 'The command context routes these logs through the Vitest rule. Setup chatter and repeated passing output are removed, while failure blocks, summaries, and locations remain visible.\n'
+        ;;
+      service-log)
+        printf 'The log path scores lines by signal. Errors, warnings, exception metadata, stack frames, and summaries are favored; repetitive routine lines are collapsed behind omission markers.\n'
+        ;;
+      search-results)
+        printf 'Search results are parsed as file/line/body records. TinyJuice groups by file, keeps high-value matches per file, and tells the reader how many additional matches were hidden.\n'
+        ;;
+      unified-diff)
+        printf 'Diff compression preserves review-critical structure: file headers, hunk headers, additions, and removals. Long unchanged context is collapsed because it is recoverable and usually lower value.\n'
+        ;;
+      html-status-report)
+        printf 'HTML snapshots are converted into readable text. Script/style payloads and repeated markup disappear; the output keeps the content an agent would normally inspect.\n'
+        ;;
+      rust-source)
+        printf 'The code path keeps the navigation surface: imports, signatures, top-level items, and important comments. Large function bodies can be collapsed and recovered through CCR.\n'
+        ;;
+      plain-text)
+        printf 'Plain text is the control group. With ML text compression off, the router declines compression and returns the original unchanged whenever deterministic structure is not available.\n'
+        ;;
+    esac
+
+    printf '\n## Syntax-Aware Samples\n\n'
+    jq -r --arg category "$category" '
+      .cases[]
+      | select(.docDir | startswith($category + "/cases/"))
+      | .docDir
+    ' "$json_report" | while IFS= read -r doc_dir; do
+      case_name="${doc_dir##*/}"
+      rel_dir="${doc_dir#"$category/"}"
+      input_file="$bench_root/$doc_dir/full-input.txt"
+      output_file="$bench_root/$doc_dir/full-output.txt"
+      printf '### `%s`\n\n' "$case_name"
+      printf -- '- [Full input](%s/full-input.txt)\n' "$rel_dir"
+      printf -- '- [Full output](%s/full-output.txt)\n\n' "$rel_dir"
+      printf 'Input excerpt:\n\n'
+      printf '```%s\n' "$(input_lang "$category" "$doc_dir")"
+      snippet "$input_file"
+      printf '\n```\n\n'
+      printf 'Output excerpt:\n\n'
+      printf '```%s\n' "$(output_lang "$category")"
+      snippet "$output_file"
+      printf '\n```\n\n'
+    done
+  } >"$readme"
+done
+
+{
+  printf '# Benchmark Sample Reports\n\n'
+  printf 'This folder contains ordered, human-readable benchmark reports. Each category has 10 real snapshots under `cases/`, and every case links to its full raw input and full compacted output.\n\n'
+  printf 'The current corpus is generated by `scripts/benchmark/update-real-samples.sh`. It uses an adjacent OpenHuman checkout, live OpenHuman Docker logs when available, public RSS/page snapshots when reachable, and checked-in OpenHuman artifacts as fallbacks.\n\n'
+  printf '| Category | Cases | Avg est. token reduction | Avg latency | Report |\n'
+  printf '| --- | ---: | ---: | ---: | --- |\n'
+  for category in "${categories[@]}"; do
+    title="$(category_title "$category")"
+    stats="$(jq -r --arg category "$category" '
+      [.cases[] | select(.docDir | startswith($category + "/cases/"))] as $cases
+      | [
+          ($cases | length),
+          (($cases | map(.tokenReductionPercent) | add) / ($cases | length)),
+          (($cases | map(.avgLatencyMs) | add) / ($cases | length))
+        ]
+      | @tsv
+    ' "$json_report")"
+    IFS=$'\t' read -r count avg_reduction avg_latency <<<"$stats"
+    printf '| %s | %s | %.1f%% | %.3f ms | [report](%s/README.md) |\n' \
+      "$title" "$count" "$avg_reduction" "$avg_latency" "$category"
+  done
+} >"$bench_root/README.md"

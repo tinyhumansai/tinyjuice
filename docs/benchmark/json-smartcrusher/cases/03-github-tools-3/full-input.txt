@@ -1,0 +1,4699 @@
+[
+  {
+    "function": {
+      "description": "Posts a reply to a specific review comment on a GitHub pull request, requiring the repository, pull request, and original comment to exist, and a non-empty reply body.",
+      "name": "GITHUB_CREATE_A_REPLY_FOR_A_REVIEW_COMMENT",
+      "parameters": {
+        "additionalProperties": false,
+        "description": "Request schema for `CreateAReplyForAReviewComment`",
+        "properties": {
+          "body": {
+            "description": "The text of the reply to the review comment.",
+            "examples": [
+              "Thanks for the clarification!"
+            ],
+            "title": "Body",
+            "type": "string"
+          },
+          "comment_id": {
+            "description": "The unique identifier of the top-level review comment to which the reply is being made. This must be the ID of a top-level review comment, not a reply to that comment. Replies to replies are not supported.",
+            "examples": [
+              "10233"
+            ],
+            "title": "Comment Id",
+            "type": "integer"
+          },
+          "owner": {
+            "description": "The account owner of the repository. The name is not case sensitive.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "pull_number": {
+            "description": "The number that identifies the pull request.",
+            "examples": [
+              "1347"
+            ],
+            "title": "Pull Number",
+            "type": "integer"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
+            "examples": [
+              "Hello-World"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number",
+          "comment_id",
+          "body"
+        ],
+        "title": "CreateAReplyForAReviewCommentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Triggers a GitHub Actions workflow or a webhook on a repository by creating a repository dispatch event, allowing programmatic triggering of workflows based on events outside of GitHub.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_DISPATCH_EVENT",
+      "parameters": {
+        "description": "Request schema for `CreateARepositoryDispatchEvent`",
+        "properties": {
+          "client_payload": {
+            "description": "JSON string containing extra information for the webhook event (max 10 top-level properties), passed to the triggered workflow or action. Example: '{\"ref\": \"main\", \"sha\": \"abc123\"}'",
+            "examples": [
+              "{\"ref\": \"main\", \"sha\": \"0123456789abcdef\", \"actor\": \"monalisa\"}",
+              "{\"custom_data\": \"value1\", \"user_id\": 123, \"trigger_reason\": \"manual_dispatch\"}"
+            ],
+            "title": "Client Payload",
+            "type": "string"
+          },
+          "event_type": {
+            "description": "Custom webhook event name (100 characters or fewer).",
+            "examples": [
+              "deploy_staging",
+              "run_integration_tests",
+              "custom_event_1"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository (not case-sensitive).",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension (not case-sensitive).",
+            "examples": [
+              "hello-world",
+              "my-awesome-project"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "event_type"
+        ],
+        "title": "CreateARepositoryDispatchEventRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new repository for the authenticated user, optionally within an organization if `team_id` is specified.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_FOR_THE_AUTHENTICATED_USER",
+      "parameters": {
+        "description": "Request schema for `CreateARepositoryForTheAuthenticatedUser`",
+        "properties": {
+          "allow_auto_merge": {
+            "default": false,
+            "description": "Whether to allow auto-merge on pull requests.",
+            "title": "Allow Auto Merge",
+            "type": "boolean"
+          },
+          "allow_merge_commit": {
+            "default": true,
+            "description": "Whether to allow merging pull requests with a merge commit.",
+            "title": "Allow Merge Commit",
+            "type": "boolean"
+          },
+          "allow_rebase_merge": {
+            "default": true,
+            "description": "Whether to allow rebase-merging pull requests.",
+            "title": "Allow Rebase Merge",
+            "type": "boolean"
+          },
+          "allow_squash_merge": {
+            "default": true,
+            "description": "Whether to allow squash-merging pull requests.",
+            "title": "Allow Squash Merge",
+            "type": "boolean"
+          },
+          "auto_init": {
+            "default": false,
+            "description": "Whether to initialize the repository with a README.",
+            "title": "Auto Init",
+            "type": "boolean"
+          },
+          "delete_branch_on_merge": {
+            "default": false,
+            "description": "Whether to automatically delete head branches when pull requests are merged.",
+            "title": "Delete Branch On Merge",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "A short description of the repository.",
+            "examples": [
+              "This is a project about X.",
+              "My personal blog."
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "gitignore_template": {
+            "description": "Desired .gitignore template (e.g., 'Python', 'Node').",
+            "examples": [
+              "Python",
+              "Node",
+              "Ruby"
+            ],
+            "title": "Gitignore Template",
+            "type": "string"
+          },
+          "has_discussions": {
+            "default": false,
+            "description": "Whether discussions are enabled.",
+            "title": "Has Discussions",
+            "type": "boolean"
+          },
+          "has_downloads": {
+            "default": true,
+            "description": "Whether downloads are enabled (deprecated by GitHub and may not be configurable).",
+            "title": "Has Downloads",
+            "type": "boolean"
+          },
+          "has_issues": {
+            "default": true,
+            "description": "Whether issues are enabled.",
+            "title": "Has Issues",
+            "type": "boolean"
+          },
+          "has_projects": {
+            "default": true,
+            "description": "Whether projects are enabled.",
+            "title": "Has Projects",
+            "type": "boolean"
+          },
+          "has_wiki": {
+            "default": true,
+            "description": "Whether the wiki is enabled.",
+            "title": "Has Wiki",
+            "type": "boolean"
+          },
+          "homepage": {
+            "description": "A URL with more information about the repository.",
+            "examples": [
+              "https://example.com/my-new-repo"
+            ],
+            "title": "Homepage",
+            "type": "string"
+          },
+          "is_template": {
+            "default": false,
+            "description": "Whether this repository is a template repository.",
+            "title": "Is Template",
+            "type": "boolean"
+          },
+          "license_template": {
+            "description": "SPDX license key identifier (lowercase). Examples: 'mit', 'apache-2.0', 'gpl-3.0'. Must be one of the GitHub-supported licenses.",
+            "examples": [
+              "mit",
+              "apache-2.0",
+              "gpl-3.0"
+            ],
+            "title": "License Template",
+            "type": "string"
+          },
+          "merge_commit_message": {
+            "description": "The default message for a merge commit. `PR_BODY` uses the pull request's body. `PR_TITLE` uses the pull request's title. `BLANK` results in a blank commit message. Valid combinations with merge_commit_title: (PR_TITLE, PR_BODY), (PR_TITLE, BLANK), (MERGE_MESSAGE, PR_TITLE).",
+            "enum": [
+              "PR_BODY",
+              "PR_TITLE",
+              "BLANK"
+            ],
+            "examples": [
+              "PR_BODY",
+              "PR_TITLE",
+              "BLANK"
+            ],
+            "title": "MergeCommitMessageEnm",
+            "type": "string"
+          },
+          "merge_commit_title": {
+            "description": "The default title for a merge commit. `PR_TITLE` uses the pull request's title. `MERGE_MESSAGE` uses a classic title like 'Merge pull request #123 from branch-name'. Required when `merge_commit_message` is set. Valid combinations: (PR_TITLE, PR_BODY), (PR_TITLE, BLANK), (MERGE_MESSAGE, PR_TITLE).",
+            "enum": [
+              "PR_TITLE",
+              "MERGE_MESSAGE"
+            ],
+            "examples": [
+              "PR_TITLE",
+              "MERGE_MESSAGE"
+            ],
+            "title": "MergeCommitTitleEnm",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the repository. Must be unique within your account. Will be used in the repository URL (github.com/username/repo-name). Can only contain alphanumeric characters, hyphens, underscores, and periods.",
+            "examples": [
+              "my-new-repo",
+              "hello-world"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "private": {
+            "default": false,
+            "description": "Whether the repository is private (true) or public (false).",
+            "title": "Private",
+            "type": "boolean"
+          },
+          "squash_merge_commit_message": {
+            "description": "The default message for a squash merge commit. `PR_BODY` uses the pull request's body. `COMMIT_MESSAGES` uses the branch's commit messages. `BLANK` results in a blank commit message.",
+            "enum": [
+              "PR_BODY",
+              "COMMIT_MESSAGES",
+              "BLANK"
+            ],
+            "examples": [
+              "PR_BODY",
+              "COMMIT_MESSAGES",
+              "BLANK"
+            ],
+            "title": "SquashMergeCommitMessageEnm",
+            "type": "string"
+          },
+          "squash_merge_commit_title": {
+            "description": "The default title for a squash merge commit. `PR_TITLE` uses the pull request's title. `COMMIT_OR_PR_TITLE` uses the commit's title (if only one commit) or the pull request's title (if multiple commits).",
+            "enum": [
+              "PR_TITLE",
+              "COMMIT_OR_PR_TITLE"
+            ],
+            "examples": [
+              "PR_TITLE",
+              "COMMIT_OR_PR_TITLE"
+            ],
+            "title": "SquashMergeCommitTitleEnm",
+            "type": "string"
+          },
+          "team_id": {
+            "description": "The ID of the team to be granted access. Only valid if creating in an organization.",
+            "examples": [
+              12345
+            ],
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateARepositoryForTheAuthenticatedUserRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Publishes the specified codespace to a new repository, using the codespace's current state as the initial commit.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_FROM_AN_UNPUBLISHED_CODESPACE",
+      "parameters": {
+        "description": "Request schema for `CreateARepositoryFromAnUnpublishedCodespace`",
+        "properties": {
+          "codespace_name": {
+            "description": "The unique name of the codespace to be published as a new repository. This codespace must exist, be unpublished, and belong to the authenticated user.",
+            "examples": [
+              "monalisa-glorious-space-machine-vrg5779x7p92r7w"
+            ],
+            "title": "Codespace Name",
+            "type": "string"
+          },
+          "name": {
+            "description": "The desired name for the new repository to be created from the codespace. If omitted, GitHub might generate a name (e.g., based on the codespace name).",
+            "examples": [
+              "my-new-project",
+              "codespace-to-repo-conversion"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "private": {
+            "default": false,
+            "description": "Specifies the visibility of the new repository. Set to `true` for a private repository, or `false` for a public one. Defaults to `false` (public).",
+            "title": "Private",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "codespace_name"
+        ],
+        "title": "CreateARepositoryFromAnUnpublishedCodespaceRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new GitHub Projects V2 project board linked to a specified repository. Note: This action uses GitHub's Projects V2 GraphQL API. The legacy Projects V1 REST API has been sunset by GitHub. The project is owned by the repository owner (user or organization) and linked to the specified repository.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_PROJECT",
+      "parameters": {
+        "description": "Request schema for `CreateARepositoryProject`",
+        "properties": {
+          "body": {
+            "description": "An optional detailed description for the project board. Note: GitHub Projects V2 does not support a body/description field during creation, so this field is accepted but not used.",
+            "examples": [
+              "Tasks and milestones for the upcoming website redesign.",
+              "Product features and initiatives for the fourth quarter."
+            ],
+            "title": "Body",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the project board to be created.",
+            "examples": [
+              "New Website Launch Plan",
+              "Q4 Roadmap"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. The name is not case sensitive.",
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "name"
+        ],
+        "title": "CreateARepositoryProjectRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a uniquely named ruleset for a repository, defining rules for branches or tags with specified enforcement, conditions, and bypass actors.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_RULESET",
+      "parameters": {
+        "description": "Request schema for `CreateARepositoryRuleset`",
+        "properties": {
+          "bypass_actors": {
+            "description": "Actors that can bypass rules in this ruleset as a JSON string. Each actor object requires `actor_id`, `actor_type` (e.g., 'Team', 'Integration'), and `bypass_mode` (e.g., 'always'). Example: '[{\"actor_id\": 1, \"actor_type\": \"Team\", \"bypass_mode\": \"always\"}]'",
+            "examples": [
+              "[{\"actor_id\": 1, \"actor_type\": \"Team\", \"bypass_mode\": \"always\"}, {\"actor_id\": 5, \"actor_type\": \"RepositoryRole\", \"bypass_mode\": \"pull_request\"}]"
+            ],
+            "title": "Bypass Actors",
+            "type": "string"
+          },
+          "conditions__ref__name__exclude": {
+            "description": "Ref names or patterns to exclude. Condition fails if any pattern matches the ref name.",
+            "examples": [
+              [
+                "refs/heads/release/*",
+                "refs/heads/experimental-*"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions  Ref  Name  Exclude",
+            "type": "array"
+          },
+          "conditions__ref__name__include": {
+            "description": "Ref names/patterns to include. Condition passes if one pattern matches the ref name. Use `~DEFAULT_BRANCH` for default branch, `~ALL` for all branches.",
+            "examples": [
+              [
+                "refs/heads/main",
+                "~DEFAULT_BRANCH",
+                "refs/heads/feature-*"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Conditions  Ref  Name  Include",
+            "type": "array"
+          },
+          "enforcement": {
+            "description": "Enforcement level: `disabled` (ruleset is not enforced), `active` (ruleset is enforced), or `evaluate` (test rules before enforcing; GitHub Enterprise only).",
+            "enum": [
+              "disabled",
+              "active",
+              "evaluate"
+            ],
+            "examples": [
+              "disabled",
+              "active",
+              "evaluate"
+            ],
+            "title": "Enforcement",
+            "type": "string"
+          },
+          "name": {
+            "description": "Unique name for the ruleset.",
+            "examples": [
+              "My branch protection ruleset"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Account owner of the repository (not case-sensitive).",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Name of the repository, without the `.git` extension (not case-sensitive).",
+            "examples": [
+              "Hello-World"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "rules": {
+            "description": "Array of rule objects as a JSON string to be enforced. Each must have `type` and may have `parameters`. Refer to GitHub API docs for available rule types and parameters. Example: '[{\"type\": \"creation\"}, {\"type\": \"deletion\"}]'",
+            "examples": [
+              "[{\"type\": \"creation\"}, {\"type\": \"deletion\"}, {\"type\": \"required_linear_history\"}]"
+            ],
+            "title": "Rules",
+            "type": "string"
+          },
+          "target": {
+            "description": "The target of the ruleset, whether it applies to branches or tags.",
+            "enum": [
+              "branch",
+              "tag"
+            ],
+            "examples": [
+              "branch",
+              "tag"
+            ],
+            "title": "TargetEnm",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "name",
+          "enforcement"
+        ],
+        "title": "CreateARepositoryRulesetRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new repository from an existing template repository; the authenticated user must have access to the template and, if creating in an organization, repository creation permissions within it.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_USING_A_TEMPLATE",
+      "parameters": {
+        "description": "Request schema for `CreateARepositoryUsingATemplate`",
+        "properties": {
+          "description": {
+            "description": "A brief summary or description for the new repository.",
+            "examples": [
+              "A new microservice for processing widgets."
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "include_all_branches": {
+            "default": false,
+            "description": "Set to `true` to copy the directory structure and files from all branches of the template repository, not just the default branch.",
+            "examples": [
+              true,
+              false
+            ],
+            "title": "Include All Branches",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The desired name for the new repository to be created.",
+            "examples": [
+              "my-new-service"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name that will own the new repository. Defaults to the authenticated user if not provided.",
+            "examples": [
+              "my-github-username",
+              "my-cool-org"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "private": {
+            "default": false,
+            "description": "Set to `true` to create a private repository, or `false` to create a public repository.",
+            "examples": [
+              true,
+              false
+            ],
+            "title": "Private",
+            "type": "boolean"
+          },
+          "template_owner": {
+            "description": "The username or organization name that owns the template repository. This field is not case-sensitive.",
+            "examples": [
+              "octo-org"
+            ],
+            "title": "Template Owner",
+            "type": "string"
+          },
+          "template_repo": {
+            "description": "The name of the template repository, without the `.git` extension. This field is not case-sensitive.",
+            "examples": [
+              "template-for-projects"
+            ],
+            "title": "Template Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_owner",
+          "template_repo",
+          "name"
+        ],
+        "title": "CreateARepositoryUsingATemplateRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new, unencrypted variable in a repository for GitHub Actions workflows; fails if a variable with the same name already exists.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_VARIABLE",
+      "parameters": {
+        "description": "Request schema for creating a variable within a specific repository.",
+        "properties": {
+          "name": {
+            "description": "The name of the variable to create. Variable names are case-sensitive and can only contain alphanumeric characters ([a-z], [A-Z], [0-9]) or underscores (_). They cannot start with the `GITHUB_` prefix, and spaces are not allowed.",
+            "examples": [
+              "DEPLOY_SERVER_URL",
+              "BUILD_VERSION"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name that owns the repository. This field is not case sensitive.",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension. This field is not case sensitive.",
+            "examples": [
+              "hello-world",
+              "my-app-repository"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "value": {
+            "description": "The value of the variable. This will be stored as a string.",
+            "examples": [
+              "https://prod.example.com",
+              "1.2.3"
+            ],
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "name",
+          "value"
+        ],
+        "title": "CreateARepositoryVariableRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a webhook for a specified repository; requires admin permissions on the repository.",
+      "name": "GITHUB_CREATE_A_REPOSITORY_WEBHOOK",
+      "parameters": {
+        "description": "Request schema for creating a repository webhook.",
+        "properties": {
+          "active": {
+            "default": true,
+            "description": "Determines if notifications are sent when the webhook is triggered. `true` sends notifications (active), `false` disables them (inactive).",
+            "examples": [
+              true,
+              false
+            ],
+            "title": "Active",
+            "type": "boolean"
+          },
+          "config__content__type": {
+            "description": "Media type for serializing payloads: `json` or `form`. Defaults to `form` if not specified. `json` delivers JSON, `form` delivers URL-encoded data.",
+            "examples": [
+              "json",
+              "form"
+            ],
+            "title": "Config  Content  Type",
+            "type": "string"
+          },
+          "config__insecure__ssl": {
+            "description": "Determines SSL certificate verification for the payload URL: \"0\" to verify SSL (recommended), or \"1\" to skip. Defaults to \"0\" (verify SSL) if not provided.",
+            "examples": [
+              "0",
+              "1"
+            ],
+            "title": "Config  Insecure  Ssl",
+            "type": "string"
+          },
+          "config__secret": {
+            "description": "Optional secret string for HMAC hex digest in delivery signature headers, enhancing security. See GitHub's 'delivery signature headers' documentation for details.",
+            "examples": [
+              "mysecrettoken"
+            ],
+            "title": "Config  Secret",
+            "type": "string"
+          },
+          "config__url": {
+            "description": "The URL to which webhook payloads will be delivered via POST for subscribed events.",
+            "examples": [
+              "https://example.com/webhook"
+            ],
+            "title": "Config  Url",
+            "type": "string"
+          },
+          "events": {
+            "default": [
+              "push"
+            ],
+            "description": "List of events to trigger the webhook (e.g., `['push']`, `['issues']`). See GitHub documentation for 'webhook event payloads'.",
+            "examples": [
+              [
+                "push"
+              ],
+              [
+                "issues",
+                "pull_request"
+              ],
+              [
+                "*"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the webhook. Use `web`. This parameter currently only accepts `web` and defaults to `web` if not provided.",
+            "examples": [
+              "web"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. This name is not case sensitive.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. This name is not case sensitive.",
+            "examples": [
+              "Hello-World"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ],
+        "title": "CreateARepositoryWebhookRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a review comment on a pull request's diff, targeting a specific line, range of lines, an entire file, or replying to an existing comment.",
+      "name": "GITHUB_CREATE_A_REVIEW_COMMENT_FOR_A_PULL_REQUEST",
+      "parameters": {
+        "description": "Request schema for `CreateAReviewCommentForAPullRequest`",
+        "properties": {
+          "body": {
+            "description": "Text content of the review comment.",
+            "examples": [
+              "This looks great!",
+              "Could you clarify this section?"
+            ],
+            "title": "Body",
+            "type": "string"
+          },
+          "commit_id": {
+            "description": "SHA of the commit for the comment. Using an outdated `commit_id` can misplace the comment if lines change.",
+            "examples": [
+              "c5b97d5ae6c19d5c5df71a34c7fbeeda2479ccbc"
+            ],
+            "title": "Commit Id",
+            "type": "string"
+          },
+          "in_reply_to": {
+            "description": "**[REPLY MODE]** ID of an existing review comment to reply to. When using reply mode, do not provide position, line, side, start_line, or start_side parameters as they will be ignored.",
+            "examples": [
+              "8663694"
+            ],
+            "title": "In Reply To",
+            "type": "integer"
+          },
+          "line": {
+            "description": "**[LINE-BASED MODE]** Line number in the diff for the comment. Required when using line-based mode (must be used with `side`). For multi-line comments, this is the last line of the range. Do not use with position or in_reply_to parameters.",
+            "examples": [
+              "25"
+            ],
+            "title": "Line",
+            "type": "integer"
+          },
+          "owner": {
+            "description": "Account owner of the repository (not case sensitive).",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "path": {
+            "description": "Relative path of the file for the comment.",
+            "examples": [
+              "file1.txt",
+              "src/main.py"
+            ],
+            "title": "Path",
+            "type": "string"
+          },
+          "position": {
+            "description": "**[DEPRECATED - Use line-based mode instead]** Position in the diff hunk for the comment. When using position mode, do not provide line, side, start_line, start_side, or in_reply_to parameters.",
+            "title": "Position",
+            "type": "integer"
+          },
+          "pull_number": {
+            "description": "Identifier of the pull request.",
+            "examples": [
+              "1347"
+            ],
+            "title": "Pull Number",
+            "type": "integer"
+          },
+          "repo": {
+            "description": "Repository name without the `.git` extension (not case sensitive).",
+            "examples": [
+              "Spoon-Knife"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "side": {
+            "description": "**[LINE-BASED MODE]** Side of the diff (`LEFT` or `RIGHT`) for the comment. Required when using line-based mode with the `line` parameter. For multi-line comments, refers to the last line of the range. Do not use with position or in_reply_to parameters. **IMPORTANT:** Use `LEFT` only for deletions that appear in red in the diff. Use `RIGHT` for additions (green) or unchanged context lines (white). Attempting to comment on LEFT side lines that are not visible deletions in the diff will result in a 'could not be resolved' error.",
+            "enum": [
+              "LEFT",
+              "RIGHT"
+            ],
+            "title": "SideEnm",
+            "type": "string"
+          },
+          "start_line": {
+            "description": "**[LINE-BASED MODE - MULTI-LINE]** First line in the diff for a multi-line comment. Required when creating a multi-line comment (must be used with `start_side`, `line`, and `side`). Do not use with position or in_reply_to parameters.",
+            "examples": [
+              "20"
+            ],
+            "title": "Start Line",
+            "type": "integer"
+          },
+          "start_side": {
+            "description": "**[LINE-BASED MODE - MULTI-LINE]** Starting side of the diff (`LEFT` or `RIGHT`) for a multi-line comment. Required when creating a multi-line comment (must be used with `start_line`, `line`, and `side`). Do not use with position or in_reply_to parameters. **IMPORTANT:** Use `LEFT` only for deletions that appear in red in the diff. Use `RIGHT` for additions (green) or unchanged context lines (white). Attempting to use LEFT for lines that are not visible deletions will result in a 'could not be resolved' error.",
+            "enum": [
+              "LEFT",
+              "RIGHT",
+              "side"
+            ],
+            "title": "StartSideEnm",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number",
+          "body",
+          "commit_id",
+          "path"
+        ],
+        "title": "CreateAReviewCommentForAPullRequestRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a pull request review, allowing approval, change requests, or comments; `body` is required if `event` is `REQUEST_CHANGES` or `COMMENT`, and omitting `event` makes the review `PENDING`.",
+      "name": "GITHUB_CREATE_A_REVIEW_FOR_A_PULL_REQUEST",
+      "parameters": {
+        "description": "Request schema for `CreateAReviewForAPullRequest`",
+        "properties": {
+          "body": {
+            "description": "Review's main body text; required if `event` is `REQUEST_CHANGES` or `COMMENT`.",
+            "examples": [
+              "This looks great overall!",
+              "Please address the comments below."
+            ],
+            "title": "Body",
+            "type": "string"
+          },
+          "comments": {
+            "description": "Inline draft review comments. Each object requires `path` (relative file path) and `body` (comment text). Optionally, specify `line` (or `start_line` for multi-line), and `side` (or `start_side`) for diff location. `position` is deprecated; use `line`. Example: `[{'path': 'file.py', 'line': 10, 'body': 'Refactor this.'}]`",
+            "examples": [
+              "[{\"path\": \"README.md\", \"line\": 5, \"body\": \"Needs more detail here.\"}]",
+              "[{\"path\": \"src/main.py\", \"start_line\": 10, \"line\": 12, \"side\": \"RIGHT\", \"body\": \"This logic can be simplified.\"}]"
+            ],
+            "items": {
+              "description": "Schema for individual review comments",
+              "properties": {
+                "body": {
+                  "description": "The text of the comment",
+                  "title": "Body",
+                  "type": "string"
+                },
+                "line": {
+                  "description": "The line number in the diff to comment on (required for single-line comments)",
+                  "title": "Line",
+                  "type": "integer"
+                },
+                "path": {
+                  "description": "The relative path to the file being commented on",
+                  "title": "Path",
+                  "type": "string"
+                },
+                "side": {
+                  "description": "Which side of the diff to place the comment on. Use 'LEFT' for deleted lines (red in diff) or unchanged context on the old version. Use 'RIGHT' for added/changed lines (green in diff) or unchanged context on the new version. Defaults to 'RIGHT' if not specified.",
+                  "enum": [
+                    "LEFT",
+                    "RIGHT"
+                  ],
+                  "title": "SideEnm",
+                  "type": "string"
+                },
+                "start_line": {
+                  "description": "The start line number for multi-line comments",
+                  "title": "Start Line",
+                  "type": "integer"
+                },
+                "start_side": {
+                  "description": "Which side of the diff to start a multi-line comment on. Use 'LEFT' for deleted lines or unchanged context on the old version. Use 'RIGHT' for added/changed lines or unchanged context on the new version. Defaults to 'RIGHT' if not specified.",
+                  "enum": [
+                    "LEFT",
+                    "RIGHT"
+                  ],
+                  "title": "SideEnm",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "body"
+              ],
+              "title": "ReviewComment",
+              "type": "object"
+            },
+            "title": "Comments",
+            "type": "array"
+          },
+          "commit_id": {
+            "description": "SHA of the commit to review; defaults to the latest pull request commit. Outdated SHAs may lead to stale comments.",
+            "examples": [
+              "c4d3a6f8a0c2b0e8e2b8f3c9e8b4b0e5b0b0e0e0"
+            ],
+            "title": "Commit Id",
+            "type": "string"
+          },
+          "event": {
+            "description": "Review action type (`APPROVE`, `REQUEST_CHANGES`, `COMMENT`); if omitted, review is `PENDING` and requires later submission.",
+            "enum": [
+              "APPROVE",
+              "REQUEST_CHANGES",
+              "COMMENT"
+            ],
+            "examples": [
+              "APPROVE",
+              "REQUEST_CHANGES",
+              "COMMENT"
+            ],
+            "title": "EventEnm",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Username of the account owning the repository (case-insensitive).",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "pull_number": {
+            "description": "Identifying number of the pull request.",
+            "examples": [
+              1,
+              123
+            ],
+            "title": "Pull Number",
+            "type": "integer"
+          },
+          "repo": {
+            "description": "Repository name, without the `.git` extension (case-insensitive).",
+            "examples": [
+              "Hello-World",
+              "my-private-repo"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pull_number"
+        ],
+        "title": "CreateAReviewForAPullRequestRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Exchanges a user-to-server token for a new, fine-grained scoped access token for a GitHub App, requiring `client_id`, `access_token`, either `target` or `target_id`, and at least one permission; for repository-specific scoping, provide either `repositories` (names) or `repository_ids` (IDs), but not both.",
+      "name": "GITHUB_CREATE_A_SCOPED_ACCESS_TOKEN",
+      "parameters": {
+        "description": "Request schema for creating a new scoped access token for a GitHub App.",
+        "properties": {
+          "access_token": {
+            "description": "User-to-server access token to be exchanged for a new scoped token.",
+            "examples": [
+              "ghu_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            ],
+            "title": "Access Token",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "Client ID of the GitHub App.",
+            "examples": [
+              "iv1.1234567890abcdef"
+            ],
+            "title": "Client Id",
+            "type": "string"
+          },
+          "permissions__actions": {
+            "description": "Permission for GitHub Actions workflows, workflow runs, and artifacts. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "ActionsEnm",
+            "type": "string"
+          },
+          "permissions__administration": {
+            "description": "Permission for repository administration (settings, teams, collaborators). Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "AdministrationEnm",
+            "type": "string"
+          },
+          "permissions__checks": {
+            "description": "Permission for checks on code (e.g., CI statuses). Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "ChecksEnm",
+            "type": "string"
+          },
+          "permissions__codespaces": {
+            "description": "Permission for Codespaces. Applies to target user/organization if repositories are not specified, otherwise to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "CodespacesEnm",
+            "type": "string"
+          },
+          "permissions__contents": {
+            "description": "Permission for repository contents, commits, branches, downloads, releases, and merges. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "ContentsEnm",
+            "type": "string"
+          },
+          "permissions__dependabot__secrets": {
+            "description": "Permission for Dependabot secrets for targeted repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "DependabotSecretsEnm",
+            "type": "string"
+          },
+          "permissions__deployments": {
+            "description": "Permission for deployments and deployment statuses. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "DeploymentsEnm",
+            "type": "string"
+          },
+          "permissions__email__addresses": {
+            "description": "Permission to manage email addresses for the user account. Applies to target user.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "EmailAddressesEnm",
+            "type": "string"
+          },
+          "permissions__environments": {
+            "description": "Permission for repository environments. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "EnvironmentsEnm",
+            "type": "string"
+          },
+          "permissions__followers": {
+            "description": "Permission to manage followers for the user account. Applies to target user.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "FollowersEnm",
+            "type": "string"
+          },
+          "permissions__git__ssh__keys": {
+            "description": "Permission to manage Git SSH keys for the user account. Applies to target user.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "GitSshKeysEnm",
+            "type": "string"
+          },
+          "permissions__gpg__keys": {
+            "description": "Permission to view and manage GPG keys for the user account. Applies to target user.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "GpgKeysEnm",
+            "type": "string"
+          },
+          "permissions__interaction__limits": {
+            "description": "Permission to view and manage interaction limits on a repository. Applies to target repositories or organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "InteractionLimitsEnm",
+            "type": "string"
+          },
+          "permissions__issues": {
+            "description": "Permission for issues, comments, assignees, labels, and milestones. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "IssuesEnm",
+            "type": "string"
+          },
+          "permissions__members": {
+            "description": "Permission for organization members and teams. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "MembersEnm",
+            "type": "string"
+          },
+          "permissions__metadata": {
+            "description": "Read-only permission for repository metadata, search, and collaborator listing. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read"
+            ],
+            "title": "MetadataEnm",
+            "type": "string"
+          },
+          "permissions__organization__administration": {
+            "description": "Permission for administrative settings of an organization. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationAdministrationEnm",
+            "type": "string"
+          },
+          "permissions__organization__announcement__banners": {
+            "description": "Permission to view and manage organization announcement banners. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationAnnouncementBannersEnm",
+            "type": "string"
+          },
+          "permissions__organization__copilot__seat__management": {
+            "description": "Permission for GitHub Copilot seat assignments for organization members (beta). Applies to target organization.",
+            "enum": [
+              "write"
+            ],
+            "examples": [
+              "write"
+            ],
+            "title": "OrganizationCopilotSeatManagementEnm",
+            "type": "string"
+          },
+          "permissions__organization__custom__org__roles": {
+            "description": "Permission for custom organization roles. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationCustomOrgRolesEnm",
+            "type": "string"
+          },
+          "permissions__organization__custom__properties": {
+            "description": "Permission for custom properties for an organization. Applies to target organization.",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "examples": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "title": "OrganizationCustomPropertiesEnm",
+            "type": "string"
+          },
+          "permissions__organization__custom__roles": {
+            "description": "Permission for custom repository roles within an organization. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationCustomRolesEnm",
+            "type": "string"
+          },
+          "permissions__organization__events": {
+            "description": "Read-only permission to view organization audit log events. Applies to target organization.",
+            "enum": [
+              "read"
+            ],
+            "examples": [
+              "read"
+            ],
+            "title": "OrganizationEventsEnm",
+            "type": "string"
+          },
+          "permissions__organization__hooks": {
+            "description": "Permission for organization webhooks. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationHooksEnm",
+            "type": "string"
+          },
+          "permissions__organization__packages": {
+            "description": "Permission for organization-level GitHub Packages. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationPackagesEnm",
+            "type": "string"
+          },
+          "permissions__organization__personal__access__token__requests": {
+            "description": "Permission for requests for fine-grained personal access tokens within an organization. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationPersonalAccessTokenRequestsEnm",
+            "type": "string"
+          },
+          "permissions__organization__personal__access__tokens": {
+            "description": "Permission for fine-grained personal access tokens requested by organization members. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationPersonalAccessTokensEnm",
+            "type": "string"
+          },
+          "permissions__organization__plan": {
+            "description": "Read-only permission for viewing an organization's billing plan. Applies to target organization.",
+            "enum": [
+              "read"
+            ],
+            "examples": [
+              "read"
+            ],
+            "title": "OrganizationPlanEnm",
+            "type": "string"
+          },
+          "permissions__organization__projects": {
+            "description": "Permission for organization projects and projects beta (if available). Applies to target organization.",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "examples": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "title": "OrganizationProjectsEnm",
+            "type": "string"
+          },
+          "permissions__organization__secrets": {
+            "description": "Permission for organization-level secrets (e.g., Actions secrets). Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationSecretsEnm",
+            "type": "string"
+          },
+          "permissions__organization__self__hosted__runners": {
+            "description": "Permission for GitHub Actions self-hosted runners for an organization. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationSelfHostedRunnersEnm",
+            "type": "string"
+          },
+          "permissions__organization__user__blocking": {
+            "description": "Permission for viewing and managing users blocked by the organization. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "OrganizationUserBlockingEnm",
+            "type": "string"
+          },
+          "permissions__packages": {
+            "description": "Permission for packages in GitHub Packages. Applies to target repositories or organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "PackagesEnm",
+            "type": "string"
+          },
+          "permissions__pages": {
+            "description": "Permission for GitHub Pages settings, statuses, configurations, builds, and creating new builds. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "PagesEnm",
+            "type": "string"
+          },
+          "permissions__profile": {
+            "description": "Permission to manage profile settings for the user account. Applies to target user.",
+            "enum": [
+              "write"
+            ],
+            "examples": [
+              "write"
+            ],
+            "title": "ProfileEnm",
+            "type": "string"
+          },
+          "permissions__pull__requests": {
+            "description": "Permission for pull requests, comments, assignees, labels, milestones, and merges. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "PullRequestsEnm",
+            "type": "string"
+          },
+          "permissions__repository__custom__properties": {
+            "description": "Permission to view and edit repository custom properties, if allowed by property definition. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "RepositoryCustomPropertiesEnm",
+            "type": "string"
+          },
+          "permissions__repository__hooks": {
+            "description": "Permission for repository webhooks. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "RepositoryHooksEnm",
+            "type": "string"
+          },
+          "permissions__repository__projects": {
+            "description": "Permission for repository projects, columns, and cards. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "examples": [
+              "read",
+              "write",
+              "admin"
+            ],
+            "title": "RepositoryProjectsEnm",
+            "type": "string"
+          },
+          "permissions__secret__scanning__alerts": {
+            "description": "Permission for secret scanning alerts. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "SecretScanningAlertsEnm",
+            "type": "string"
+          },
+          "permissions__secrets": {
+            "description": "Permission for repository secrets (e.g., Actions secrets). Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "SecretsEnm",
+            "type": "string"
+          },
+          "permissions__security__events": {
+            "description": "Permission for security events (e.g., code scanning alerts). Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "SecurityEventsEnm",
+            "type": "string"
+          },
+          "permissions__single__file": {
+            "description": "Permission to access specific files in targeted repositories. The file paths must be configured in the GitHub App settings.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "SingleFileEnm",
+            "type": "string"
+          },
+          "permissions__starring": {
+            "description": "Permission to list and manage repositories a user is starring. Applies to target user.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "StarringEnm",
+            "type": "string"
+          },
+          "permissions__statuses": {
+            "description": "Permission for commit statuses. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "StatusesEnm",
+            "type": "string"
+          },
+          "permissions__team__discussions": {
+            "description": "Permission for team discussions and related comments. Applies to target organization.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "TeamDiscussionsEnm",
+            "type": "string"
+          },
+          "permissions__vulnerability__alerts": {
+            "description": "Permission for Dependabot alerts. Applies to target repositories.",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "examples": [
+              "read",
+              "write"
+            ],
+            "title": "VulnerabilityAlertsEnm",
+            "type": "string"
+          },
+          "permissions__workflows": {
+            "description": "Permission for updating GitHub Actions workflow files. Requires `contents: write`. Applies to target repositories.",
+            "enum": [
+              "write"
+            ],
+            "examples": [
+              "write"
+            ],
+            "title": "WorkflowsEnm",
+            "type": "string"
+          },
+          "repositories": {
+            "description": "Repository names to scope the new token to. Cannot be used if `repository_ids` is specified.",
+            "examples": [
+              [
+                "my-repo",
+                "another-repo"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Repositories",
+            "type": "array"
+          },
+          "repository_ids": {
+            "description": "Repository IDs to scope the new token to. Cannot be used if `repositories` is specified.",
+            "examples": [
+              [
+                1234567,
+                7654321
+              ]
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Repository Ids",
+            "type": "array"
+          },
+          "target": {
+            "description": "Username or organization name for scoping the new token. Required if `target_id` is not provided.",
+            "examples": [
+              "octocat",
+              "github-org"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "target_id": {
+            "description": "ID of the user or organization for scoping the new token. Required if `target` is not provided.",
+            "examples": [
+              12345,
+              67890
+            ],
+            "title": "Target Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "client_id",
+          "access_token"
+        ],
+        "title": "CreateAScopedAccessTokenRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a snapshot of a repository's dependencies to populate the GitHub dependency graph and enable security alerts; `sha` must be a 40-character commit ID, `ref` a fully qualified Git reference (e.g., `refs/heads/main`), and `scanned` an ISO 8601 timestamp.",
+      "name": "GITHUB_CREATE_A_SNAPSHOT_OF_DEPENDENCIES_FOR_A_REPOSITORY",
+      "parameters": {
+        "description": "Input for creating a dependency snapshot, capturing the repository's dependency state at a specific commit.",
+        "properties": {
+          "detector__name": {
+            "description": "Optional name of the tool used to detect dependencies.",
+            "examples": [
+              "dependency-check"
+            ],
+            "title": "Detector  Name",
+            "type": "string"
+          },
+          "detector__url": {
+            "description": "Optional URL of the detector tool used.",
+            "examples": [
+              "https://jeremylong.github.io/DependencyCheck/"
+            ],
+            "title": "Detector  Url",
+            "type": "string"
+          },
+          "detector__version": {
+            "description": "Optional version of the detector tool used.",
+            "examples": [
+              "7.0.0"
+            ],
+            "title": "Detector  Version",
+            "type": "string"
+          },
+          "job__correlator": {
+            "description": "Optional string to group snapshots. For a given `job.correlator` and `detector.name`, only the 'latest' snapshot is current. Useful to distinguish detection runs (e.g., concatenating GITHUB_WORKFLOW and GITHUB_JOB).",
+            "examples": [
+              "my-workflow-job-123"
+            ],
+            "title": "Job  Correlator",
+            "type": "string"
+          },
+          "job__html__url": {
+            "description": "Optional URL for the job that generated this snapshot.",
+            "examples": [
+              "https://github.com/octocat/hello-world/actions/runs/123"
+            ],
+            "title": "Job  Html  Url",
+            "type": "string"
+          },
+          "job__id": {
+            "description": "Optional external ID of the job that generated this snapshot.",
+            "title": "Job  Id",
+            "type": "string"
+          },
+          "manifests": {
+            "description": "Optional collection of package manifests as a JSON string (e.g., package-lock.json, pom.xml). Keys are manifest file names; values detail dependencies. Example: '{\"package-lock.json\": {\"name\": \"...\", \"resolved\": {...}}}'",
+            "title": "Manifests",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Optional user-defined metadata as a JSON string for domain-specific information. Limited to 8 keys with scalar values (e.g., string, number, boolean). Example: '{\"key1\": \"value1\", \"key2\": 123}'",
+            "title": "Metadata",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Account owner of the repository (name is not case-sensitive).",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "ref": {
+            "description": "Git reference (fully qualified, e.g., `refs/heads/main`) of the repository branch/tag that triggered this snapshot.",
+            "examples": [
+              "refs/heads/main",
+              "refs/tags/v1.0"
+            ],
+            "pattern": "^refs/",
+            "title": "Ref",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository name, without `.git` extension (name is not case-sensitive).",
+            "examples": [
+              "hello-world"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "scanned": {
+            "description": "UTC timestamp (ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ) when the snapshot was taken.",
+            "examples": [
+              "2023-10-26T14:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Scanned",
+            "type": "string"
+          },
+          "sha": {
+            "description": "Commit SHA (maximum 40 characters) associated with this dependency snapshot.",
+            "examples": [
+              "ddc90423135c402f345907a6032d9054137dd9ee"
+            ],
+            "title": "Sha",
+            "type": "string"
+          },
+          "version": {
+            "description": "Version of the dependency snapshot submission, typically of the manifest or lock file format.",
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "version",
+          "sha",
+          "ref",
+          "scanned"
+        ],
+        "title": "CreateASnapshotOfDependenciesForARepositoryRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates an annotated Git tag object in a repository, pointing to an existing Git object (commit, tree, or blob) defined by its SHA and ensuring the `type` field correctly specifies the object's type.",
+      "name": "GITHUB_CREATE_A_TAG_OBJECT",
+      "parameters": {
+        "description": "Request schema for `CreateATagObject` action.",
+        "properties": {
+          "message": {
+            "description": "The message associated with the tag.",
+            "examples": [
+              "Initial release v1.0.0"
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "object": {
+            "description": "The SHA of the Git object (commit, tree, or blob) that this tag is pointing to.",
+            "examples": [
+              "c3d0be41ecbe669545ee3e94d31ed9a4bc91ee3c"
+            ],
+            "title": "Object",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. This name is not case-sensitive.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension. This name is not case-sensitive.",
+            "examples": [
+              "Hello-World"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "tag": {
+            "description": "The name of the tag, typically a version identifier (e.g., \"v0.0.1\").",
+            "examples": [
+              "v1.0.0"
+            ],
+            "title": "Tag",
+            "type": "string"
+          },
+          "tagger__date": {
+            "description": "The timestamp for when this object was tagged. This should be in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ`.",
+            "examples": [
+              "2014-11-07T22:01:45Z"
+            ],
+            "format": "date-time",
+            "title": "Tagger  Date",
+            "type": "string"
+          },
+          "tagger__email": {
+            "description": "The email address of the person creating the tag.",
+            "examples": [
+              "monalisa.octocat@example.com"
+            ],
+            "title": "Tagger  Email",
+            "type": "string"
+          },
+          "tagger__name": {
+            "description": "The name of the person creating the tag.",
+            "examples": [
+              "Monalisa Octocat"
+            ],
+            "title": "Tagger  Name",
+            "type": "string"
+          },
+          "type": {
+            "description": "The type of the Git object being tagged.",
+            "enum": [
+              "commit",
+              "tree",
+              "blob"
+            ],
+            "examples": [
+              "commit"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "tag",
+          "message",
+          "object",
+          "type"
+        ],
+        "title": "CreateATagObjectRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "DEPRECATED: This API was sunset on August 30, 2024. Use GITHUB_CREATE_A_REPOSITORY_RULESET instead to create tag protection rules via repository rulesets.",
+      "name": "GITHUB_CREATE_A_TAG_PROTECTION_STATE_FOR_A_REPOSITORY",
+      "parameters": {
+        "description": "Request schema for `CreateATagProtectionStateForARepository`",
+        "properties": {
+          "owner": {
+            "description": "The account owner of the repository (username or organization name). Not case sensitive.",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Glob pattern to protect tags. Examples: `v1.*` (protects tags starting with `v1.`), `*` (protects all tags).",
+            "examples": [
+              "v1.*",
+              "releases/stable/*",
+              "*"
+            ],
+            "title": "Pattern",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. Not case sensitive.",
+            "examples": [
+              "Hello-World",
+              "my-awesome-project"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "pattern"
+        ],
+        "title": "CreateATagProtectionStateForARepositoryRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new team in an organization, optionally with maintainers, repositories, specific privacy, notification settings, or a parent team; if `parent_team_id` is given, `privacy` must be 'closed'.",
+      "name": "GITHUB_CREATE_A_TEAM",
+      "parameters": {
+        "description": "Request schema for creating a new team in a GitHub organization.",
+        "properties": {
+          "description": {
+            "description": "Team's purpose or focus.",
+            "examples": [
+              "A team for frontend development projects."
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "maintainers": {
+            "description": "GitHub user handles of organization members to be team maintainers; users must be organization members.",
+            "examples": [
+              [
+                "octocat",
+                "gh-user123"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Maintainers",
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the new team.",
+            "examples": [
+              "The A-Team",
+              "Developers"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "notification_setting": {
+            "description": "Notification settings for @mentions: 'notifications_enabled' (members notified) or 'notifications_disabled' (no one notified). Default: 'notifications_enabled'.",
+            "enum": [
+              "notifications_enabled",
+              "notifications_disabled"
+            ],
+            "examples": [
+              "notifications_enabled",
+              "notifications_disabled"
+            ],
+            "title": "NotificationSettingEnm",
+            "type": "string"
+          },
+          "org": {
+            "description": "Organization name where the team will be created (not case-sensitive).",
+            "examples": [
+              "my-github-org"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "parent_team_id": {
+            "description": "ID of an existing team to be the parent, creating a nested team. If provided, new team `privacy` must be 'closed'.",
+            "examples": [
+              123,
+              456
+            ],
+            "title": "Parent Team Id",
+            "type": "integer"
+          },
+          "permission": {
+            "default": "pull",
+            "description": "**Deprecated**. Default repository permission ('pull' for read access, 'push' for write access) for the team.",
+            "enum": [
+              "pull",
+              "push"
+            ],
+            "examples": [
+              "pull",
+              "push"
+            ],
+            "title": "Permission",
+            "type": "string"
+          },
+          "privacy": {
+            "description": "Team privacy: 'secret' (visible to owners and members) or 'closed' (visible to all org members). Defaults to 'secret' for non-nested teams; must be 'closed' if `parent_team_id` is set.",
+            "enum": [
+              "secret",
+              "closed"
+            ],
+            "examples": [
+              "secret",
+              "closed"
+            ],
+            "title": "PrivacyEnm",
+            "type": "string"
+          },
+          "repo_names": {
+            "description": "Repository full names (e.g., \"org-name/repo-name\") for team access; repositories must exist and be accessible to the organization.",
+            "examples": [
+              [
+                "my-github-org/internal-project",
+                "my-github-org/another-repo"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Repo Names",
+            "type": "array"
+          }
+        },
+        "required": [
+          "org",
+          "name"
+        ],
+        "title": "CreateATeamRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a temporary private fork of the specified repository to address a security vulnerability, linking the fork to a GHSA ID that must be specifically associated with this repository; the fork may take up to 5 minutes to become accessible.",
+      "name": "GITHUB_CREATE_A_TEMPORARY_PRIVATE_FORK",
+      "parameters": {
+        "description": "Request schema for `CreateATemporaryPrivateFork`",
+        "properties": {
+          "ghsa_id": {
+            "description": "Identifier for the GitHub Security Advisory (e.g., GHSA-rfv9-x7w6-39px) that the fork will address.",
+            "examples": [
+              "GHSA-rfv9-x7w6-39px",
+              "GHSA- কাদের-abc1-2def"
+            ],
+            "title": "Ghsa Id",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Account owner (username or organization) of the repository; not case-sensitive.",
+            "examples": [
+              "octocat",
+              "github"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Name of the repository, without the `.git` extension; not case-sensitive.",
+            "examples": [
+              "linguist",
+              "docs"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "ghsa_id"
+        ],
+        "title": "CreateATemporaryPrivateForkRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new Git tree object in a repository, defining file/directory structure by specifying tree entries, optionally building on a `base_tree` SHA; all provided SHAs must be valid.",
+      "name": "GITHUB_CREATE_A_TREE",
+      "parameters": {
+        "description": "Request schema for `CreateATree`",
+        "properties": {
+          "base_tree": {
+            "description": "SHA1 of an existing Git tree object to use as a base. If provided, its entries are combined with `tree` entries, where `tree` entries overwrite those from `base_tree` with the same path. Typically the SHA1 of the latest commit's tree for new branch changes. If omitted, the new tree is built from `tree` entries; files from the parent commit's tree not in `tree` are treated as deleted.",
+            "title": "Base Tree",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. The name is not case sensitive.",
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. The name is not case sensitive. ",
+            "title": "Repo",
+            "type": "string"
+          },
+          "tree": {
+            "description": "Array of objects defining the tree structure. Each object (node) requires `path` (string), `mode` (string; e.g., '100644' file, '100755' executable, '040000' subdirectory/tree, '160000' submodule, '120000' symlink), and `type` (string: 'blob', 'tree', or 'commit'). For new/updated blobs, provide `content` (UTF-8 string). For existing objects or `tree`/`commit` types, provide `sha` (string). To delete, specify `path`, `mode`, `type`, and set `sha` to `null`.",
+            "examples": [
+              [
+                {
+                  "content": "Hello World!",
+                  "mode": "100644",
+                  "path": "new_file.txt",
+                  "type": "blob"
+                },
+                {
+                  "content": "# Markdown Content",
+                  "mode": "100644",
+                  "path": "subdir/another_file.md",
+                  "type": "blob"
+                }
+              ]
+            ],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Tree",
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "tree"
+        ],
+        "title": "CreateATreeRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new GitHub Projects V2 project board for the authenticated user to organize and track issues, pull requests, and notes. Note: This action uses GitHub's Projects V2 GraphQL API. The legacy Projects V1 REST API has been sunset by GitHub.",
+      "name": "GITHUB_CREATE_A_USER_PROJECT",
+      "parameters": {
+        "description": "Request schema for `CreateAUserProject`",
+        "properties": {
+          "body": {
+            "description": "Optional description for the new project. Note: GitHub Projects V2 does not support a body/description field during creation, so this field is accepted but not used.",
+            "examples": [
+              "A project to track Q3 deliverables.",
+              "Planning for the next product launch.",
+              "Collection of ideas and tasks for the website redesign."
+            ],
+            "title": "Body",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name/title for the new project. This will be displayed as the project board title.",
+            "examples": [
+              "My New Project",
+              "Q3 Roadmap",
+              "Website Redesign Ideas"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateAUserProjectRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Manually triggers a GitHub Actions workflow identified by `workflow_id` at a given `ref`, if the workflow is configured to accept `workflow_dispatch` events.",
+      "name": "GITHUB_CREATE_A_WORKFLOW_DISPATCH_EVENT",
+      "parameters": {
+        "description": "Request schema for initiating a GitHub Actions workflow dispatch event.",
+        "properties": {
+          "inputs": {
+            "description": "JSON string containing key-value inputs for the workflow, matching `on.workflow_dispatch.inputs` definitions (max 10); uses workflow defaults if omitted. Example: '{\"actor\": \"mona\", \"environment\": \"production\"}'",
+            "examples": [
+              "{\"actor\": \"mona\", \"environment\": \"production\"}",
+              "{\"version\": \"1.2.3\", \"skip_tests\": false, \"deploy_group\": \"canary\"}"
+            ],
+            "title": "Inputs",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Owner of the repository (username or organization, case-insensitive).",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "ref": {
+            "description": "Git reference (branch or tag) for the workflow.",
+            "examples": [
+              "main",
+              "refs/heads/feature-branch",
+              "refs/tags/v1.2.0"
+            ],
+            "title": "Ref",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository name, excluding the `.git` extension (case-insensitive).",
+            "examples": [
+              "hello-world",
+              "my-app-repository"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Identifier of the workflow: numeric ID or just the filename (e.g., 'main.yml'). If a full path like '.github/workflows/main.yml' is provided, the prefix is automatically stripped.",
+            "examples": [
+              1234567,
+              "build-and-deploy.yml"
+            ],
+            "title": "Workflow Id"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "workflow_id",
+          "ref"
+        ],
+        "title": "CreateAWorkflowDispatchEventRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Enables commit signature protection for a specified branch, requiring all new commits to be signed.",
+      "name": "GITHUB_CREATE_COMMIT_SIGNATURE_PROTECTION",
+      "parameters": {
+        "description": "Request schema for `CreateCommitSignatureProtection`",
+        "properties": {
+          "branch": {
+            "description": "The name of the branch. Cannot contain wildcard characters. To use wildcard characters in branch names, use [the GraphQL API](https://docs.github.com/graphql).",
+            "examples": [
+              "main",
+              "develop",
+              "feature/new-login"
+            ],
+            "title": "Branch",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. The name is not case sensitive.",
+            "examples": [
+              "octocat",
+              "github"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
+            "examples": [
+              "Hello-World",
+              "linguist"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "branch"
+        ],
+        "title": "CreateCommitSignatureProtectionRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Enables a custom deployment protection rule for an existing environment in a repository by linking a configured GitHub App (via `integration_id`) to control deployments.",
+      "name": "GITHUB_CREATE_DEPLOYMENT_PROTECTION_RULE",
+      "parameters": {
+        "description": "Request to enable a custom deployment protection rule on an environment.",
+        "properties": {
+          "environment_name": {
+            "description": "The name of the environment to which the protection rule will be applied. This name must be URL-encoded if it contains special characters (e.g., slashes `/` should be replaced with `%2F`).",
+            "examples": [
+              "production",
+              "staging%2Fuser-testing"
+            ],
+            "title": "Environment Name",
+            "type": "string"
+          },
+          "integration_id": {
+            "description": "The unique identifier of the GitHub App that provides the custom deployment protection rule. This app must be installed and configured for the repository. Required - use GITHUB_LIST_ENVIRONMENT_CUSTOM_DEPLOYMENT_RULES to find available integration IDs for your environment.",
+            "title": "Integration Id",
+            "type": "integer"
+          },
+          "owner": {
+            "description": "The GitHub username or organization name that owns the repository. This name is not case sensitive.",
+            "examples": [
+              "octocat",
+              "MyOrganization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository where the environment exists. Do not include the `.git` extension. This name is not case sensitive.",
+            "examples": [
+              "my-awesome-app",
+              "BackendService"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "environment_name",
+          "repo",
+          "owner"
+        ],
+        "title": "CreateACustomDeploymentProtectionRuleOnAnEnvironmentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a draft issue item in a user-owned GitHub ProjectsV2. Use when you need to add a new draft item to track ideas or tasks in a user's project.",
+      "name": "GITHUB_CREATE_DRAFT_ITEM_FOR_USER_PROJECT",
+      "parameters": {
+        "description": "Request schema for creating a draft item in a user-owned GitHub ProjectV2.",
+        "properties": {
+          "body": {
+            "description": "The body content of the draft issue item to create in the project.",
+            "examples": [
+              "This is a test draft item created via API to verify endpoint functionality",
+              "Detailed description of the draft item"
+            ],
+            "title": "Body",
+            "type": "string"
+          },
+          "project_number": {
+            "description": "The project's number.",
+            "examples": [
+              22,
+              1
+            ],
+            "title": "Project Number",
+            "type": "integer"
+          },
+          "title": {
+            "description": "The title of the draft issue item to create in the project.",
+            "examples": [
+              "Test Draft Item",
+              "New feature idea"
+            ],
+            "title": "Title",
+            "type": "string"
+          },
+          "username": {
+            "description": "The handle for the GitHub user account.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "project_number",
+          "title"
+        ],
+        "title": "CreateDraftItemForUserProjectRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to create chat completions using GitHub Models inference API. Use when you need to generate AI-powered text responses using models like GPT-4, Claude, or Llama through GitHub's inference endpoint.",
+      "name": "GITHUB_CREATE_INFERENCE_CHAT_COMPLETIONS",
+      "parameters": {
+        "description": "Request model for creating chat completions using GitHub Models.",
+        "properties": {
+          "frequency_penalty": {
+            "description": "Influences probability of generated tokens appearing based on their cumulative frequency in the text so far. Range: [-2.0, 2.0]. Positive values decrease likelihood of repetition.",
+            "maximum": 2,
+            "minimum": -2,
+            "title": "Frequency Penalty",
+            "type": "number"
+          },
+          "max_tokens": {
+            "description": "Maximum number of tokens to generate in the completion. The total length of input tokens and generated tokens is limited by the model's context length.",
+            "exclusiveMinimum": 0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "messages": {
+            "description": "The collection of context messages associated with this chat completion request. Each message must have a role (assistant, developer, system, or user) and content.",
+            "items": {
+              "description": "A single message in the chat conversation.",
+              "properties": {
+                "content": {
+                  "description": "The text content of the message.",
+                  "examples": [
+                    "Say hello",
+                    "Hello! How can I help you today?"
+                  ],
+                  "title": "Content",
+                  "type": "string"
+                },
+                "role": {
+                  "description": "Role of the message sender.",
+                  "enum": [
+                    "assistant",
+                    "developer",
+                    "system",
+                    "user"
+                  ],
+                  "examples": [
+                    "user",
+                    "assistant",
+                    "system"
+                  ],
+                  "title": "Role",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "role",
+                "content"
+              ],
+              "title": "ChatMessage",
+              "type": "object"
+            },
+            "minItems": 1,
+            "title": "Messages",
+            "type": "array"
+          },
+          "modalities": {
+            "description": "List of supported modalities for this request. Supported values: text, audio.",
+            "examples": [
+              [
+                "text"
+              ],
+              [
+                "text",
+                "audio"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Modalities",
+            "type": "array"
+          },
+          "model": {
+            "description": "ID of the specific model to use for the request. Format: {publisher}/{model_name}, e.g., openai/gpt-4o, anthropic/claude-3.5-sonnet.",
+            "examples": [
+              "openai/gpt-4o",
+              "anthropic/claude-3.5-sonnet",
+              "meta/llama-3.1-405b-instruct"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "presence_penalty": {
+            "description": "Influences probability of generated tokens appearing based on whether they appear in the text so far. Range: [-2.0, 2.0]. Positive values increase likelihood of new topics.",
+            "maximum": 2,
+            "minimum": -2,
+            "title": "Presence Penalty",
+            "type": "number"
+          },
+          "response_format": {
+            "additionalProperties": false,
+            "description": "Specifies the format of the model's output.",
+            "properties": {
+              "type": {
+                "description": "The type of response format.",
+                "enum": [
+                  "text",
+                  "json_object",
+                  "json_schema"
+                ],
+                "examples": [
+                  "text",
+                  "json_object"
+                ],
+                "title": "Type",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "ResponseFormat",
+            "type": "object"
+          },
+          "seed": {
+            "description": "If specified, the system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result.",
+            "title": "Seed",
+            "type": "integer"
+          },
+          "stop": {
+            "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Stop",
+            "type": "array"
+          },
+          "stream": {
+            "default": false,
+            "description": "If true, partial message deltas will be sent as data-only server-sent events as they become available.",
+            "title": "Stream",
+            "type": "boolean"
+          },
+          "stream_options": {
+            "additionalProperties": false,
+            "description": "Options for streaming responses.",
+            "properties": {
+              "include_usage": {
+                "default": false,
+                "description": "If true, usage information will be included in the streaming response.",
+                "title": "Include Usage",
+                "type": "boolean"
+              }
+            },
+            "title": "StreamOptions",
+            "type": "object"
+          },
+          "temperature": {
+            "description": "Controls the apparent creativity of generated completions. Range: [0.0, 1.0]. Lower values make output more deterministic, higher values more random.",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Temperature",
+            "type": "number"
+          },
+          "tool_choice": {
+            "description": "Controls which (if any) tool is called by the model.",
+            "enum": [
+              "auto",
+              "required",
+              "none"
+            ],
+            "examples": [
+              "auto",
+              "required",
+              "none"
+            ],
+            "title": "Tool Choice",
+            "type": "string"
+          },
+          "tools": {
+            "description": "A list of tools (functions) the model may call. The model will choose when and how to call these functions based on the conversation context.",
+            "items": {
+              "description": "Definition of a function the model can call.",
+              "properties": {
+                "description": {
+                  "description": "A description of what the function does.",
+                  "title": "Description",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "The name of the function to be called.",
+                  "examples": [
+                    "get_weather",
+                    "search_database"
+                  ],
+                  "title": "Name",
+                  "type": "string"
+                },
+                "parameters": {
+                  "additionalProperties": false,
+                  "description": "Schema defining function parameters.",
+                  "properties": {
+                    "properties": {
+                      "additionalProperties": {
+                        "description": "Schema definition for a single property.",
+                        "properties": {
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null,
+                            "description": "Description of the property.",
+                            "title": "Description"
+                          },
+                          "items": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null,
+                            "description": "For array types, defines the schema of array items.",
+                            "title": "Items"
+                          },
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "default": null,
+                            "description": "The type of the property (e.g., string, number, boolean, array, object).",
+                            "title": "Type"
+                          }
+                        },
+                        "title": "PropertySchema",
+                        "type": "object"
+                      },
+                      "description": "Dictionary defining each parameter's schema.",
+                      "title": "Properties",
+                      "type": "object"
+                    },
+                    "required": {
+                      "description": "List of required parameter names.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Required",
+                      "type": "array"
+                    },
+                    "type": {
+                      "description": "The type of the parameters object, typically 'object'.",
+                      "examples": [
+                        "object"
+                      ],
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "properties"
+                  ],
+                  "title": "FunctionParameters",
+                  "type": "object"
+                },
+                "type": {
+                  "const": "function",
+                  "default": "function",
+                  "description": "The type of tool.",
+                  "title": "Type",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "title": "FunctionDefinition",
+              "type": "object"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "top_p": {
+            "description": "An alternative to temperature called nucleus sampling. Range: [0.0, 1.0]. The model considers tokens with top_p probability mass.",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Top P",
+            "type": "number"
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ],
+        "title": "CreateInferenceChatCompletionsRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to create inference embeddings using GitHub's AI models. Use when you need to convert text into vector representations for similarity search, clustering, or other ML tasks.",
+      "name": "GITHUB_CREATE_INFERENCE_EMBEDDINGS",
+      "parameters": {
+        "properties": {
+          "dimensions": {
+            "description": "The number of dimensions the resulting output embeddings should have. Must be supported by the model (max 2048).",
+            "examples": [
+              512,
+              1024,
+              1536
+            ],
+            "title": "Dimensions",
+            "type": "integer"
+          },
+          "encoding_format": {
+            "description": "Format for embeddings: 'float' (default) or 'base64'. Float returns arrays of numbers, base64 returns encoded strings.",
+            "examples": [
+              "float",
+              "base64"
+            ],
+            "title": "Encoding Format",
+            "type": "string"
+          },
+          "input": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Input text to embed, encoded as a string or array of strings. Each string will be converted to an embedding vector.",
+            "examples": [
+              "Test text for embedding",
+              [
+                "First text",
+                "Second text",
+                "Third text"
+              ]
+            ],
+            "title": "Input"
+          },
+          "model": {
+            "description": "ID of the specific model to use for the request. Format: {publisher}/{model_name}",
+            "examples": [
+              "openai/text-embedding-3-small",
+              "openai/text-embedding-ada-002"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "user": {
+            "description": "A unique identifier representing your end-user, which can help monitor and detect abuse.",
+            "examples": [
+              "user-123"
+            ],
+            "title": "User",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "input"
+        ],
+        "title": "CreateInferenceEmbeddingsRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Create a new issue type for a GitHub organization. Requires the authenticated user to be an organization administrator. OAuth tokens need admin:org scope.",
+      "name": "GITHUB_CREATE_ISSUE_TYPE",
+      "parameters": {
+        "description": "Request schema for creating an issue type.",
+        "properties": {
+          "color": {
+            "description": "The color of the issue type.",
+            "enum": [
+              "gray",
+              "blue",
+              "green",
+              "yellow",
+              "orange",
+              "red",
+              "pink",
+              "purple"
+            ],
+            "examples": [
+              "red",
+              "blue",
+              "green"
+            ],
+            "title": "Color",
+            "type": "string"
+          },
+          "description": {
+            "description": "A short description of the issue type.",
+            "examples": [
+              "Track bugs and issues"
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "is_enabled": {
+            "description": "Whether the issue type is enabled at the organization level.",
+            "examples": [
+              true,
+              false
+            ],
+            "title": "Is Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The name of the issue type.",
+            "examples": [
+              "Bug",
+              "Feature",
+              "Task"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "org": {
+            "description": "The organization name (case-insensitive).",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Org",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "name",
+          "is_enabled"
+        ],
+        "title": "GITHUB_CREATE_ISSUE_TYPE_Request",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Generates a temporary Just-In-Time (JIT) configuration for a new self-hosted GitHub Actions runner for a repository; any specified non-default `runner_group_id` must be an existing runner group accessible by the repository.",
+      "name": "GITHUB_CREATE_JIT_RUNNER_CONFIG",
+      "parameters": {
+        "description": "Request schema to generate a Just-In-Time (JIT) runner configuration for a repository, used by the runner for registration.",
+        "properties": {
+          "labels": {
+            "description": "A list of custom labels to assign to the runner. These labels help in targeting specific runners for jobs. Minimum items: 1. Maximum items: 100.",
+            "examples": [
+              [
+                "self-hosted",
+                "linux",
+                "x64"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Labels",
+            "type": "array"
+          },
+          "name": {
+            "description": "The desired name for the new self-hosted runner.",
+            "examples": [
+              "my-jit-runner-1"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name that owns the repository. This field is not case-sensitive.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the '.git' extension. This field is not case-sensitive.",
+            "examples": [
+              "hello-world"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "runner_group_id": {
+            "description": "The unique identifier of the runner group to which the new runner will be assigned. Use 0 for the default group or the ID of a specific runner group.",
+            "examples": [
+              1,
+              0
+            ],
+            "title": "Runner Group Id",
+            "type": "integer"
+          },
+          "work_folder": {
+            "default": "_work",
+            "description": "The working directory for the runner, relative to its installation path. This is where job execution will take place.",
+            "examples": [
+              "_work_custom"
+            ],
+            "title": "Work Folder",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "name",
+          "runner_group_id",
+          "labels"
+        ],
+        "title": "CreateJitRunnerConfigRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new environment or updates an existing one in a GitHub repository, allowing configuration of deployment protection rules such as wait timers and reviewers; ensure `environment_name` is URL-encoded if it contains special characters.",
+      "name": "GITHUB_CREATE_OR_UPDATE_AN_ENVIRONMENT",
+      "parameters": {
+        "description": "Request schema for `CreateOrUpdateAnEnvironment`",
+        "properties": {
+          "deployment__branch__policy__custom__branch__policies": {
+            "description": "If true, deployment is restricted to branches matching custom name patterns; `deployment_branch_policy_protected_branches` must then be false.",
+            "examples": [
+              "true",
+              "false"
+            ],
+            "title": "Deployment  Branch  Policy  Custom  Branch  Policies",
+            "type": "boolean"
+          },
+          "deployment__branch__policy__protected__branches": {
+            "description": "If true, only branches with existing protection rules can deploy; `deployment_branch_policy_custom_branch_policies` must then be false.",
+            "examples": [
+              "true",
+              "false"
+            ],
+            "title": "Deployment  Branch  Policy  Protected  Branches",
+            "type": "boolean"
+          },
+          "environment_name": {
+            "description": "Name of the environment. URL-encode if it contains special characters (e.g., '/' becomes '%2F').",
+            "examples": [
+              "production",
+              "staging%2Ffrontend",
+              "dev-test"
+            ],
+            "title": "Environment Name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name of the repository owner (not case-sensitive).",
+            "examples": [
+              "octocat",
+              "github"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "prevent_self_review": {
+            "description": "If true, prevents the user who triggered deployment from approving their own job.",
+            "examples": [
+              "true",
+              "false"
+            ],
+            "title": "Prevent Self Review",
+            "type": "boolean"
+          },
+          "repo": {
+            "description": "Name of the repository, without the `.git` extension (not case-sensitive).",
+            "examples": [
+              "hello-world",
+              "dotfiles"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "reviewers": {
+            "description": "JSON string containing up to 6 users or teams allowed to review deployments. Reviewers need at least read access; one approval suffices. Each reviewer object requires `id` and `type` ('User' or 'Team'). Example: '[{\"id\": 4532, \"type\": \"User\"}]'",
+            "examples": [
+              "[{\"id\": 4532, \"type\": \"User\"}]",
+              "[{\"id\": 123, \"type\": \"Team\"}, {\"id\": 9876, \"type\": \"User\"}]"
+            ],
+            "title": "Reviewers",
+            "type": "string"
+          },
+          "wait_timer": {
+            "description": "Time in minutes to delay a job after it's triggered (0-43,200, i.e., up to 30 days).",
+            "examples": [
+              "0",
+              "30",
+              "1440"
+            ],
+            "title": "Wait Timer",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "environment_name"
+        ],
+        "title": "CreateOrUpdateAnEnvironmentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates or updates an environment secret with an `encrypted_value` that was encrypted using the public key identified by `key_id` for the specified environment.",
+      "name": "GITHUB_CREATE_OR_UPDATE_AN_ENVIRONMENT_SECRET",
+      "parameters": {
+        "description": "Request schema for `CreateOrUpdateAnEnvironmentSecret`",
+        "properties": {
+          "encrypted_value": {
+            "description": "Value of the secret, encrypted with LibSodium using the public key obtained from the 'Get an environment public key' GitHub API endpoint for the target environment.",
+            "examples": [
+              "yourBase64EncodedEncryptedSecretValue"
+            ],
+            "title": "Encrypted Value",
+            "type": "string"
+          },
+          "environment_name": {
+            "description": "Name of the environment. Case-sensitive; URL-encode special characters (e.g., `/` becomes `%2F`).",
+            "examples": [
+              "production",
+              "staging%2Ffeature-branch",
+              "development_env"
+            ],
+            "title": "Environment Name",
+            "type": "string"
+          },
+          "key_id": {
+            "description": "ID of the public key used for encryption, obtained from the 'Get an environment public key' GitHub API endpoint.",
+            "examples": [
+              "publicKeyIdentifierString12345"
+            ],
+            "title": "Key Id",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository. Not case-sensitive.",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository. Not case-sensitive.",
+            "examples": [
+              "hello-world",
+              "my-app-repository"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "secret_name": {
+            "description": "Name of the secret. Case-sensitive.",
+            "examples": [
+              "DATABASE_PASSWORD",
+              "API_TOKEN",
+              "DEPLOYMENT_KEY"
+            ],
+            "title": "Secret Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "environment_name",
+          "secret_name",
+          "encrypted_value",
+          "key_id"
+        ],
+        "title": "CreateOrUpdateAnEnvironmentSecretRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates or updates an organization secret for GitHub Actions, requiring its value to be pre-encrypted via LibSodium using the organization's public key.",
+      "name": "GITHUB_CREATE_OR_UPDATE_AN_ORGANIZATION_SECRET",
+      "parameters": {
+        "description": "Request schema for creating or updating an organization secret.",
+        "properties": {
+          "encrypted_value": {
+            "description": "Value for the secret, pre-encrypted using LibSodium with the organization's public key (obtained from 'Get an organization public key' endpoint). This is required for both creating and updating secrets.",
+            "examples": [
+              "VGhpcyBpcyBhbiBleGFtcGxlIG9mIGFuIGVuY3J5cHRlZCB2YWx1ZQ=="
+            ],
+            "title": "Encrypted Value",
+            "type": "string"
+          },
+          "key_id": {
+            "description": "ID of the public key (from 'Get an organization public key' endpoint) used for encryption. This is required for both creating and updating secrets.",
+            "examples": [
+              "key_identifier_from_github_12345"
+            ],
+            "title": "Key Id",
+            "type": "string"
+          },
+          "org": {
+            "description": "The organization name. The name is not case sensitive.",
+            "examples": [
+              "my-github-organization"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "secret_name": {
+            "description": "The name of the secret.",
+            "examples": [
+              "ORGANIZATION_API_KEY"
+            ],
+            "title": "Secret Name",
+            "type": "string"
+          },
+          "selected_repository_ids": {
+            "description": "List of repository IDs that can access this secret. Required and only applicable when `visibility` is 'selected'.",
+            "examples": [
+              [
+                12345,
+                67890,
+                98761
+              ]
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Selected Repository Ids",
+            "type": "array"
+          },
+          "visibility": {
+            "description": "Controls which repositories can access the secret. If 'selected', `selected_repository_ids` must be provided.",
+            "enum": [
+              "all",
+              "private",
+              "selected"
+            ],
+            "examples": [
+              "all",
+              "private",
+              "selected"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "secret_name",
+          "encrypted_value",
+          "key_id",
+          "visibility"
+        ],
+        "title": "CreateOrUpdateAnOrganizationSecretRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates or updates a GitHub Actions secret within a specific repository; use `encrypted_value` and `key_id` to set or change its value.",
+      "name": "GITHUB_CREATE_OR_UPDATE_A_REPOSITORY_SECRET",
+      "parameters": {
+        "description": "Request schema for `CreateOrUpdateARepositorySecret`",
+        "properties": {
+          "encrypted_value": {
+            "description": "Value for the secret, pre-encrypted with the repository's public key using LibSodium (public key is obtained via 'Get a repository public key' endpoint).",
+            "examples": [
+              "ENCRYPTED_STRING_OBTAINED_VIA_LIBSODIUM..."
+            ],
+            "title": "Encrypted Value",
+            "type": "string"
+          },
+          "key_id": {
+            "description": "ID of the public key used to encrypt `encrypted_value` (obtained with the public key). Required if `encrypted_value` is provided.",
+            "examples": [
+              "1234567890ABCDEF"
+            ],
+            "title": "Key Id",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The repository owner's username or organization name (case-insensitive).",
+            "examples": [
+              "octocat",
+              "my-organization"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The repository name, without the `.git` extension (case-insensitive).",
+            "examples": [
+              "hello-world",
+              "my-action-repo"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "secret_name": {
+            "description": "The name for the secret being created or updated. Must not start with 'GITHUB_' prefix (reserved for GitHub internal secrets).",
+            "examples": [
+              "GH_TOKEN",
+              "AWS_SECRET_KEY",
+              "NPM_TOKEN"
+            ],
+            "title": "Secret Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "secret_name"
+        ],
+        "title": "CreateOrUpdateARepositorySecretRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates or updates a Codespaces secret for the authenticated user; `encrypted_value` must be encrypted with the public key (ID: `key_id`) from GitHub's 'Get public key for the authenticated user' endpoint.",
+      "name": "GITHUB_CREATE_OR_UPDATE_A_SECRET_FOR_THE_AUTHENTICATED_USER",
+      "parameters": {
+        "description": "Request schema for creating or updating a Codespaces secret for the authenticated user.",
+        "properties": {
+          "encrypted_value": {
+            "description": "Secret's value, encrypted using [LibSodium](https://libsodium.gitbook.io/doc/bindings_for_other_languages) with the public key (see `key_id`) obtained from GitHub's 'Get public key for the authenticated user' endpoint.",
+            "title": "Encrypted Value",
+            "type": "string"
+          },
+          "key_id": {
+            "description": "ID of the public key (from GitHub's 'Get public key for the authenticated user' endpoint) used to encrypt `encrypted_value`. If not provided, it will be fetched automatically.",
+            "examples": [
+              "key_id_12345"
+            ],
+            "title": "Key Id",
+            "type": "string"
+          },
+          "secret_name": {
+            "description": "The name of the secret. This name must be unique among the user's Codespaces secrets.",
+            "examples": [
+              "MY_API_KEY",
+              "DATABASE_PASSWORD"
+            ],
+            "title": "Secret Name",
+            "type": "string"
+          },
+          "secret_value": {
+            "description": "The plaintext value for your secret. This will be automatically encrypted using the user's Codespaces public key before being sent to GitHub. If you already have an encrypted value, use the encrypted_value parameter instead.",
+            "examples": [
+              "my-secret-api-key-12345"
+            ],
+            "title": "Secret Value",
+            "type": "string"
+          },
+          "selected_repository_ids": {
+            "description": "Repository IDs that can access this secret. If omitted or empty, accessible to all user's Codespaces-enabled repositories.",
+            "examples": [
+              [
+                12345,
+                67890
+              ]
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Selected Repository Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "secret_name"
+        ],
+        "title": "CreateOrUpdateASecretForTheAuthenticatedUserRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates new custom property schemas or updates existing ones in bulk for a specified organization; each property definition must include `property_name` and `value_type`.",
+      "name": "GITHUB_CREATE_OR_UPDATE_CUSTOM_PROPERTIES_FOR_AN_ORG",
+      "parameters": {
+        "description": "Request schema for `GithubCreateOrUpdateCustomPropertiesForAnOrg`",
+        "properties": {
+          "org": {
+            "description": "The case-insensitive organization name.",
+            "examples": [
+              "my-organization",
+              "github"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "properties": {
+            "description": "Definitions for custom properties as a JSON string. Each must include a unique `property_name` (max 75 chars, no spaces) and `value_type`. Optional: `description`, `required`, `default_value`, `allowed_values` (for 'single_select' type).",
+            "examples": [
+              "[{\"property_name\": \"project-priority\", \"value_type\": \"single_select\", \"description\": \"Priority of the project\", \"required\": true, \"allowed_values\": [\"High\", \"Medium\", \"Low\"]}, {\"property_name\": \"environment\", \"value_type\": \"string\", \"description\": \"Deployment environment\"}]"
+            ],
+            "title": "Properties",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "properties"
+        ],
+        "title": "CreateOrUpdateCustomPropertiesForAnOrganizationRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new custom property (name must be unique for creation) or updates an existing one for an organization to define metadata for its repositories.",
+      "name": "GITHUB_CREATE_OR_UPDATE_CUSTOM_PROPERTY_ORG",
+      "parameters": {
+        "description": "Request to create or update a custom metadata property for an organization's repositories.",
+        "properties": {
+          "allowed_values": {
+            "description": "Ordered list of allowed values (up to 200). Required and non-empty if `value_type` is `single_select` or `multi_select`.",
+            "examples": [
+              [
+                "pending",
+                "active",
+                "completed",
+                "archived"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Values",
+            "type": "array"
+          },
+          "custom_property_name": {
+            "description": "Name of the custom property (case-sensitive).",
+            "examples": [
+              "project-status"
+            ],
+            "title": "Custom Property Name",
+            "type": "string"
+          },
+          "default_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Default value if property isn't set. For `single_select` type, must be one of `allowed_values`. Can be a string for single values or an array for multi_select.",
+            "examples": [
+              "pending",
+              "active"
+            ],
+            "title": "Default Value"
+          },
+          "description": {
+            "description": "Explanation of the custom property's purpose.",
+            "examples": [
+              "Tracks the current status of a project."
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "org": {
+            "description": "The organization's unique identifier (case-insensitive).",
+            "examples": [
+              "my-org-name"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "required": {
+            "description": "If true, property must be set for all repositories and `default_value` is mandatory.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "value_type": {
+            "description": "Data type of the custom property. Can be 'string' (free text), 'single_select' (single choice from list), 'multi_select' (multiple choices from list), 'true_false' (boolean), or 'url' (URL format).",
+            "enum": [
+              "string",
+              "single_select",
+              "multi_select",
+              "true_false",
+              "url"
+            ],
+            "examples": [
+              "string",
+              "single_select",
+              "multi_select",
+              "true_false",
+              "url"
+            ],
+            "title": "Value Type",
+            "type": "string"
+          },
+          "values_editable_by": {
+            "description": "Who can edit the values of the property. Can be 'org_actors' (organization actors only) or 'org_and_repo_actors' (organization and repository actors).",
+            "enum": [
+              "org_actors",
+              "org_and_repo_actors"
+            ],
+            "examples": [
+              "org_actors",
+              "org_and_repo_actors"
+            ],
+            "title": "ValuesEditableByEnm",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "custom_property_name",
+          "value_type"
+        ],
+        "title": "CreateOrUpdateCustomPropertyOrgRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a new file or updates an existing file in a GitHub repository; SHA can be provided to validate file updates, automatically fetched if not provided.",
+      "name": "GITHUB_CREATE_OR_UPDATE_FILE_CONTENTS",
+      "parameters": {
+        "description": "Request schema for creating or updating a file's contents in a GitHub repository.",
+        "properties": {
+          "author__date": {
+            "description": "Author's timestamp (ISO 8601 format). Defaults to committer's date if author details are provided but date is not.",
+            "examples": [
+              "2023-10-26T11:30:00Z"
+            ],
+            "title": "Author  Date",
+            "type": "string"
+          },
+          "author__email": {
+            "description": "Author's email. If specified, `author_name` is also required. Defaults to committer details; if all committer/author details omitted, GitHub uses authenticated user.",
+            "examples": [
+              "jane.smith@example.com"
+            ],
+            "title": "Author  Email",
+            "type": "string"
+          },
+          "author__name": {
+            "description": "Author's name. If specified, `author_email` is also required. Defaults to committer details; if all committer/author details omitted, GitHub uses authenticated user.",
+            "examples": [
+              "Jane Smith"
+            ],
+            "title": "Author  Name",
+            "type": "string"
+          },
+          "branch": {
+            "description": "The branch name. Defaults to the repository's default branch if omitted. If a non-existent branch is specified, the action will automatically fall back to the repository's default branch. For empty repositories, omitting this parameter is recommended to let GitHub initialize with the repository's configured default branch.",
+            "examples": [
+              "main",
+              "develop"
+            ],
+            "title": "Branch",
+            "type": "string"
+          },
+          "committer__date": {
+            "description": "Committer's commit timestamp (ISO 8601 format). Defaults to current time if committer details are provided but date is not.",
+            "examples": [
+              "2023-10-26T12:00:00Z"
+            ],
+            "title": "Committer  Date",
+            "type": "string"
+          },
+          "committer__email": {
+            "description": "Committer's email. If specified, `committer_name` is also required. GitHub uses authenticated user if all committer/author details omitted.",
+            "examples": [
+              "john.doe@example.com"
+            ],
+            "title": "Committer  Email",
+            "type": "string"
+          },
+          "committer__name": {
+            "description": "Committer's name. If specified, `committer_email` is also required. GitHub uses authenticated user if all committer/author details omitted.",
+            "examples": [
+              "John Doe"
+            ],
+            "title": "Committer  Name",
+            "type": "string"
+          },
+          "content": {
+            "description": "The new file content. Can be provided as plain text (will be automatically encoded to Base64) or as Base64-encoded text. GitHub API requires Base64 encoding, which this action handles automatically.",
+            "examples": [
+              "Hello World",
+              "SGVsbG8gV29ybGQ="
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "message": {
+            "description": "The commit message for this file creation or update.",
+            "examples": [
+              "feat: add new documentation",
+              "docs: update README"
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository (not case sensitive).",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "path": {
+            "description": "The full path to the file in the repository, including the filename and extension. Do not include leading slashes.",
+            "examples": [
+              "README.md",
+              "src/main.js"
+            ],
+            "title": "Path",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository (not case sensitive, without the `.git` extension).",
+            "examples": [
+              "Spoon-Knife"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "sha": {
+            "description": "The blob SHA of the file being replaced. Automatically fetched if not provided. If a 409 conflict occurs (SHA mismatch due to concurrent modifications), the action will automatically retry up to 5 times with exponential backoff and jitter.",
+            "examples": [
+              "aa218f56b14c9653891f9e74264a383fa43fefbd"
+            ],
+            "title": "Sha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "path",
+          "message",
+          "content"
+        ],
+        "title": "CreateOrUpdateFileContentsRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to enable or update GitHub Pages configuration for a repository. Use when setting up GitHub Pages for static site deployment or modifying Pages settings like custom domains and HTTPS enforcement.",
+      "name": "GITHUB_CREATE_OR_UPDATE_GITHUB_PAGES_SITE",
+      "parameters": {
+        "description": "Request model for creating or updating a GitHub Pages site.",
+        "properties": {
+          "build_type": {
+            "default": "legacy",
+            "description": "Build process type: 'legacy' for traditional GitHub Pages build from a branch, 'workflow' for GitHub Actions. When 'workflow', source_branch and source_path are ignored.",
+            "enum": [
+              "legacy",
+              "workflow"
+            ],
+            "examples": [
+              "legacy",
+              "workflow"
+            ],
+            "title": "Build Type",
+            "type": "string"
+          },
+          "cname": {
+            "description": "Custom domain for the Pages site (e.g., 'example.com'). Set to null to remove custom domain. Only used during updates.",
+            "examples": [
+              "www.example.com",
+              "docs.example.com"
+            ],
+            "title": "Cname",
+            "type": "string"
+          },
+          "https_enforced": {
+            "description": "Whether to enforce HTTPS for the Pages site. Only used during updates.",
+            "examples": [
+              true,
+              false
+            ],
+            "title": "Https Enforced",
+            "type": "boolean"
+          },
+          "owner": {
+            "description": "The account owner of the repository (username or organization). Not case-sensitive.",
+            "examples": [
+              "octocat",
+              "github"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the .git extension. Not case-sensitive.",
+            "examples": [
+              "Hello-World",
+              "docs-site"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "source_branch": {
+            "description": "The repository branch to use for GitHub Pages source (e.g., 'main', 'gh-pages'). Required if build_type is 'legacy'. Ignored if build_type is 'workflow'.",
+            "examples": [
+              "main",
+              "gh-pages",
+              "master"
+            ],
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "source_path": {
+            "default": "/",
+            "description": "The directory path within source_branch containing the site files: '/' for root or '/docs' for docs folder. Ignored if build_type is 'workflow'.",
+            "enum": [
+              "/",
+              "/docs"
+            ],
+            "examples": [
+              "/",
+              "/docs"
+            ],
+            "title": "Source Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ],
+        "title": "CreateOrUpdateGithubPagesSiteRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates or updates a Dependabot secret in a repository using an `encrypted_value` (pre-encrypted with LibSodium using the repository's Dependabot public key) and its corresponding `key_id`. This action allows you to securely manage secrets for a given repository, ensuring that sensitive data remains protected during the update process. By providing the encrypted value alongside the key ID, you can seamlessly maintain the necessary credentials for your repository's operations.",
+      "name": "GITHUB_CREATE_OR_UPDATE_REPO_SECRET_WITH_ENCRYPTED_VALUE",
+      "parameters": {
+        "description": "Request schema for `CreateOrUpdateRepoSecretWithEncryptedValue`",
+        "properties": {
+          "encrypted_value": {
+            "description": "Value for your secret. This value must be encrypted with LibSodium, using the public key retrieved from the GitHub API's 'Get a repository public key' endpoint for Dependabot secrets. The resulting encrypted string is typically Base64 encoded.",
+            "title": "Encrypted Value",
+            "type": "string"
+          },
+          "key_id": {
+            "description": "The ID of the public key that was used to encrypt the secret value. This ID is retrieved from GitHub along with the public key via the 'Get a repository public key' endpoint for Dependabot secrets. If not provided or if an outdated key_id is used, the action will automatically fetch the latest public key from GitHub and retry with the current key_id.",
+            "title": "Key Id",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The account owner of the repository (e.g., a GitHub username or organization name). This name is not case-sensitive.",
+            "examples": [
+              "octocat",
+              "github"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension. This name is not case-sensitive.",
+            "examples": [
+              "hello-world",
+              "my-awesome-app"
+            ],
+            "title": "Repo",
+            "type": "string"
+          },
+          "secret_name": {
+            "description": "The name of the Dependabot secret to create or update.",
+            "examples": [
+              "NPM_TOKEN",
+              "DOCKER_REGISTRY_PASSWORD"
+            ],
+            "title": "Secret Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "secret_name"
+        ],
+        "title": "CreateOrUpdateRepoSecretWithEncryptedValueRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates an emoji reaction for a commit comment; if the user has already reacted with the same content, details of the existing reaction are returned.",
+      "name": "GITHUB_CREATE_REACTION_FOR_A_COMMIT_COMMENT",
+      "parameters": {
+        "description": "Request schema for `CreateReactionForACommitComment`",
+        "properties": {
+          "comment_id": {
+            "description": "Unique ID of the commit comment.",
+            "examples": [
+              "12345",
+              "8675309"
+            ],
+            "title": "Comment Id",
+            "type": "integer"
+          },
+          "content": {
+            "description": "The [reaction type](https://docs.github.com/rest/reactions/reactions#about-reactions) to add to the commit comment.",
+            "enum": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Username of the repository owner. Not case-sensitive.",
+            "examples": [
+              "octocat",
+              "github"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Name of the repository, without the `.git` extension. Not case-sensitive.",
+            "examples": [
+              "Spoon-Knife",
+              "linguist"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "comment_id",
+          "content"
+        ],
+        "title": "CreateReactionForACommitCommentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a reaction for a specified issue within a GitHub repository.",
+      "name": "GITHUB_CREATE_REACTION_FOR_AN_ISSUE",
+      "parameters": {
+        "description": "Request schema for `CreateReactionForAnIssue`",
+        "properties": {
+          "content": {
+            "description": "The reaction type to add to the issue. See the [GitHub documentation on reactions](https://docs.github.com/rest/reactions/reactions#about-reactions) for full details.",
+            "enum": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "issue_number": {
+            "description": "The number that identifies the issue.",
+            "examples": [
+              1347
+            ],
+            "title": "Issue Number",
+            "type": "integer"
+          },
+          "owner": {
+            "description": "The account owner of the repository. The name is not case-sensitive.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository without the `.git` extension. The name is not case-sensitive.",
+            "examples": [
+              "Spoon-Knife"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "issue_number",
+          "content"
+        ],
+        "title": "CreateReactionForAnIssueRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a reaction for a specific comment on an issue within a GitHub repository.",
+      "name": "GITHUB_CREATE_REACTION_FOR_AN_ISSUE_COMMENT",
+      "parameters": {
+        "description": "Request model to create a reaction for an issue comment.",
+        "properties": {
+          "comment_id": {
+            "description": "Unique identifier of the issue comment.",
+            "examples": [
+              12345,
+              98765
+            ],
+            "title": "Comment Id",
+            "type": "integer"
+          },
+          "content": {
+            "description": "Reaction content to add to the issue comment. Must be one of the values from `ContentEnm`.",
+            "enum": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "heart",
+              "rocket"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Username of the account that owns the repository (not case-sensitive).",
+            "examples": [
+              "octocat",
+              "actions"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Name of the repository, without the `.git` extension (not case-sensitive).",
+            "examples": [
+              "Spoon-Knife",
+              "runner"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "comment_id",
+          "content"
+        ],
+        "title": "CreateReactionForAnIssueCommentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Adds a specified reaction to a pull request review comment within a GitHub repository.",
+      "name": "GITHUB_CREATE_REACTION_FOR_A_PULL_REQUEST_REVIEW_COMMENT",
+      "parameters": {
+        "description": "Request schema for `CreateReactionForAPullRequestReviewComment`",
+        "properties": {
+          "comment_id": {
+            "description": "The unique identifier of the pull request review comment to which the reaction will be added.",
+            "title": "Comment Id",
+            "type": "integer"
+          },
+          "content": {
+            "description": "The reaction to add. See the [GitHub API documentation on reactions](https://docs.github.com/rest/reactions/reactions#about-reactions) for more context on reactions.",
+            "enum": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username or organization name that owns the repository. This field is case-insensitive.",
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension. This field is case-insensitive.",
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "comment_id",
+          "content"
+        ],
+        "title": "CreateReactionForAPullRequestReviewCommentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates an emoji reaction for a specific, existing release in a GitHub repository.",
+      "name": "GITHUB_CREATE_REACTION_FOR_A_RELEASE",
+      "parameters": {
+        "description": "Request schema for creating a reaction to a specific release within a repository.",
+        "properties": {
+          "content": {
+            "description": "The type of reaction to add to the release.",
+            "enum": [
+              "+1",
+              "laugh",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "laugh",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "owner": {
+            "description": "The username of the account that owns the repository. This field is not case-sensitive.",
+            "examples": [
+              "octocat"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "release_id": {
+            "description": "The unique identifier (ID) of the release to add a reaction to.",
+            "examples": [
+              12345
+            ],
+            "title": "Release Id",
+            "type": "integer"
+          },
+          "repo": {
+            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+            "examples": [
+              "Hello-World"
+            ],
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "release_id",
+          "content"
+        ],
+        "title": "CreateReactionForAReleaseRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates a reaction for a team discussion within a GitHub organization.",
+      "name": "GITHUB_CREATE_REACTION_FOR_A_TEAM_DISCUSSION",
+      "parameters": {
+        "description": "Request schema for `CreateReactionForATeamDiscussion`",
+        "properties": {
+          "content": {
+            "description": "The reaction content to add to the team discussion.",
+            "enum": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "discussion_number": {
+            "description": "The unique number identifying the team discussion.",
+            "examples": [
+              42
+            ],
+            "title": "Discussion Number",
+            "type": "integer"
+          },
+          "org": {
+            "description": "The name of the GitHub organization. This field is not case-sensitive.",
+            "examples": [
+              "octo-org"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "team_slug": {
+            "description": "The slug (URL-friendly version) of the team name.",
+            "examples": [
+              "justice-league"
+            ],
+            "title": "Team Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "team_slug",
+          "discussion_number",
+          "content"
+        ],
+        "title": "CreateReactionForATeamDiscussionRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Adds a reaction to a team discussion comment, requiring the specified organization, team, discussion, and comment to exist.",
+      "name": "GITHUB_CREATE_REACTION_FOR_A_TEAM_DISCUSSION_COMMENT",
+      "parameters": {
+        "description": "Defines the request parameters for creating a reaction on a team discussion comment.",
+        "properties": {
+          "comment_number": {
+            "description": "The unique number identifying the comment within the discussion.",
+            "examples": [
+              101
+            ],
+            "title": "Comment Number",
+            "type": "integer"
+          },
+          "content": {
+            "description": "The type of reaction to add to the team discussion comment. For more information on reaction types, see the [GitHub API documentation on reactions](https://docs.github.com/rest/reactions/reactions#about-reactions).",
+            "enum": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "examples": [
+              "+1",
+              "-1",
+              "laugh",
+              "confused",
+              "heart",
+              "hooray",
+              "rocket",
+              "eyes"
+            ],
+            "title": "Content",
+            "type": "string"
+          },
+          "discussion_number": {
+            "description": "The unique number identifying the team discussion.",
+            "examples": [
+              42
+            ],
+            "title": "Discussion Number",
+            "type": "integer"
+          },
+          "org": {
+            "description": "The organization name on GitHub. This name is not case sensitive.",
+            "examples": [
+              "octo-org"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "team_slug": {
+            "description": "The slug (URL-friendly version) of the team name.",
+            "examples": [
+              "justice-league"
+            ],
+            "title": "Team Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "team_slug",
+          "discussion_number",
+          "comment_number",
+          "content"
+        ],
+        "title": "CreateReactionForATeamDiscussionCommentRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to start a new GitHub sponsorship or reactivate a past sponsorship using GraphQL. Use when you need to sponsor a maintainer through GitHub Sponsors with a specified amount and privacy level.",
+      "name": "GITHUB_CREATE_SPONSORSHIP",
+      "parameters": {
+        "description": "Request schema for creating a GitHub sponsorship",
+        "properties": {
+          "amount": {
+            "description": "The amount to sponsor in cents (USD). For example, 500 cents equals $5.00.",
+            "examples": [
+              500,
+              1000,
+              5000
+            ],
+            "minimum": 1,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "client_mutation_id": {
+            "description": "A unique identifier for the client performing the mutation. Used to ensure idempotency of mutations.",
+            "examples": [
+              "create-sponsorship-12345",
+              "mutation-xyz"
+            ],
+            "title": "Client Mutation Id",
+            "type": "string"
+          },
+          "is_recurring": {
+            "description": "Whether the sponsorship is recurring (true) or one-time (false). Note: one-time payments currently have a known bug in the GitHub API and may not work as expected.",
+            "title": "Is Recurring",
+            "type": "boolean"
+          },
+          "privacy_level": {
+            "description": "Privacy level for GitHub sponsorships",
+            "enum": [
+              "PRIVATE",
+              "PUBLIC"
+            ],
+            "title": "SponsorshipPrivacy",
+            "type": "string"
+          },
+          "sponsor_id": {
+            "description": "The global node ID of the user or organization acting as sponsor (e.g., 'U_kgDOABCDEF'). Required if sponsor_login is not provided.",
+            "examples": [
+              "U_kgDOABCDEF",
+              "O_kgDOGHIJKL"
+            ],
+            "title": "Sponsor Id",
+            "type": "string"
+          },
+          "sponsor_login": {
+            "description": "The username of the sponsoring user or organization. Required if sponsor_id is not provided.",
+            "examples": [
+              "github",
+              "octocat"
+            ],
+            "title": "Sponsor Login",
+            "type": "string"
+          },
+          "sponsorable_id": {
+            "description": "The global node ID of the user or organization to sponsor (e.g., 'U_kgDOMNOPQR'). Required if sponsorable_login is not provided.",
+            "examples": [
+              "U_kgDOMNOPQR",
+              "O_kgDOSTUVWX"
+            ],
+            "title": "Sponsorable Id",
+            "type": "string"
+          },
+          "sponsorable_login": {
+            "description": "The username of the user or organization to sponsor. Required if sponsorable_id is not provided.",
+            "examples": [
+              "octocat",
+              "rails",
+              "sindresorhus"
+            ],
+            "title": "Sponsorable Login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "CreateSponsorshipRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to create a new payment tier for your GitHub Sponsors profile using GraphQL. Use when you need to add a new sponsorship tier with a specific monthly price and description. The amount is specified in dollars and will be converted to cents automatically.",
+      "name": "GITHUB_CREATE_SPONSORS_TIER",
+      "parameters": {
+        "description": "Request schema for creating a new GitHub Sponsors tier",
+        "properties": {
+          "amount": {
+            "description": "The monthly sponsorship amount in dollars (USD). This value will be converted to cents internally (e.g., 5 for $5/month becomes 500 cents, 500 for $500/month becomes 50000 cents). Minimum is $1.",
+            "examples": [
+              5,
+              10,
+              25,
+              50,
+              100,
+              500
+            ],
+            "minimum": 1,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "client_mutation_id": {
+            "description": "A unique identifier for the client performing the mutation. Used to ensure idempotency of mutations and track request origin.",
+            "examples": [
+              "create-tier-12345",
+              "mutation-abc"
+            ],
+            "title": "Client Mutation Id",
+            "type": "string"
+          },
+          "description": {
+            "description": "A detailed description of what this sponsorship tier provides. Explain the benefits and perks sponsors will receive at this level. This is a required field.",
+            "examples": [
+              "Get access to exclusive content and updates",
+              "Priority support and early access to new features"
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "sponsorable_id": {
+            "description": "The global node ID of the user or organization who will receive sponsorships for this tier (e.g., 'U_kgDOABCDEF' for users, 'O_kgDOGHIJKL' for organizations). Use the get_viewer_graphql_id action to fetch your own ID.",
+            "examples": [
+              "U_kgDOCNqc1g",
+              "O_kgDOGHIJKL"
+            ],
+            "title": "Sponsorable Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sponsorable_id",
+          "amount",
+          "description"
+        ],
+        "title": "CreateSponsorsTierRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Creates or updates a Dependabot organization secret, requiring the secret value to be pre-encrypted with LibSodium using the organization's public key obtained from the 'Get an organization public key' endpoint.",
+      "name": "GITHUB_CREATE_UPDATE_ORG_SECRET_WITH_LIB_SODIUM",
+      "parameters": {
+        "description": "Request schema for creating or updating an organization secret with LibSodium encryption.",
+        "properties": {
+          "encrypted_value": {
+            "description": "Value of the secret, encrypted using [LibSodium](https://libsodium.gitbook.io/doc/bindings_for_other_languages) and the organization's Dependabot public key (obtained from the 'Get an organization public key for Dependabot' endpoint: GET /orgs/{org}/dependabot/secrets/public-key). Required to create or update the secret's value.",
+            "examples": [
+              "vZgX2lZ8v6k6gJ1x7L4w..."
+            ],
+            "title": "Encrypted Value",
+            "type": "string"
+          },
+          "key_id": {
+            "description": "ID of the Dependabot public key used for encryption (retrieved from 'Get an organization public key for Dependabot' endpoint: GET /orgs/{org}/dependabot/secrets/public-key). Required if `encrypted_value` is provided.",
+            "examples": [
+              "1234567890"
+            ],
+            "title": "Key Id",
+            "type": "string"
+          },
+          "org": {
+            "description": "The organization name (case-insensitive).",
+            "examples": [
+              "octo-org"
+            ],
+            "title": "Org",
+            "type": "string"
+          },
+          "secret_name": {
+            "description": "The secret name (case-insensitive and unique within the organization).",
+            "examples": [
+              "MY_API_TOKEN"
+            ],
+            "title": "Secret Name",
+            "type": "string"
+          },
+          "selected_repository_ids": {
+            "description": "List of repository IDs that can access the secret; required and used only when `visibility` is `selected`.",
+            "examples": [
+              [
+                1296269,
+                1296270
+              ]
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Selected Repository Ids",
+            "type": "array"
+          },
+          "visibility": {
+            "description": "Secret visibility: `all` (all repositories), `private` (private repositories), or `selected` (specific repositories designated by `selected_repository_ids`).",
+            "enum": [
+              "all",
+              "private",
+              "selected"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org",
+          "secret_name",
+          "visibility"
+        ],
+        "title": "CreateUpdateOrgSecretWithLibSodiumRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to create a new user list on GitHub. Use when you need to organize and group GitHub users for easier tracking and management.",
+      "name": "GITHUB_CREATE_USER_LIST",
+      "parameters": {
+        "description": "Request schema for creating a new user list via GitHub GraphQL API.",
+        "properties": {
+          "clientMutationId": {
+            "description": "A unique identifier for the client performing the mutation. This can be used to track the request.",
+            "examples": [
+              "unique-client-id-123"
+            ],
+            "title": "Client Mutation Id",
+            "type": "string"
+          },
+          "description": {
+            "description": "A description for the user list to provide context about its purpose.",
+            "examples": [
+              "A list of contributors I follow regularly",
+              "Members of my development team"
+            ],
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the user list to create.",
+            "examples": [
+              "My Favorite Contributors",
+              "Team Members"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateUserListRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Tool to create a new view in a user-owned GitHub project (Projects V2). Use when you need to add a customized view with specific layout, filters, and visible fields to organize project items. Note: This action works with GitHub Projects V2. The view can be configured with different layouts (table, board, roadmap) and optional filters. The visible_fields parameter is not applicable to roadmap layouts.",
+      "name": "GITHUB_CREATE_VIEW_FOR_USER_PROJECT",
+      "parameters": {
+        "description": "Request schema for creating a view in a user-owned GitHub project.",
+        "properties": {
+          "filter": {
+            "description": "The filter query for the view. See GitHub's filtering projects documentation for syntax details.",
+            "examples": [
+              "is:issue is:open",
+              "assignee:@me",
+              "status:todo,in-progress"
+            ],
+            "title": "Filter",
+            "type": "string"
+          },
+          "layout": {
+            "description": "The layout type for the view. Options are 'table', 'board', or 'roadmap'.",
+            "enum": [
+              "table",
+              "board",
+              "roadmap"
+            ],
+            "examples": [
+              "board",
+              "table",
+              "roadmap"
+            ],
+            "title": "Layout",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the view to be created.",
+            "examples": [
+              "Sprint Board",
+              "Backlog View",
+              "Roadmap 2024"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "project_number": {
+            "description": "The project's number as displayed in the project URL.",
+            "examples": [
+              1,
+              22,
+              100
+            ],
+            "title": "Project Number",
+            "type": "integer"
+          },
+          "user_id": {
+            "description": "The unique identifier of the user who owns the project. This can be the username or user login.",
+            "examples": [
+              "octocat",
+              "composio-dev"
+            ],
+            "title": "User Id",
+            "type": "string"
+          },
+          "visible_fields": {
+            "description": "List of field IDs that should be visible in the view. Not applicable to roadmap layout. If not provided, default visible fields will be used.",
+            "examples": [
+              [
+                123,
+                456,
+                789
+              ],
+              [
+                1,
+                2,
+                3
+              ]
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "title": "Visible Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "user_id",
+          "project_number",
+          "name",
+          "layout"
+        ],
+        "title": "CreateViewForUserProjectRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Declines a specific, pending repository invitation for the authenticated user, identified by its `invitation_id`.",
+      "name": "GITHUB_DECLINE_A_REPOSITORY_INVITATION",
+      "parameters": {
+        "description": "Input parameters to decline a repository invitation.",
+        "properties": {
+          "invitation_id": {
+            "description": "Identifier of the pending repository invitation to decline; obtained by listing the user's pending invitations.",
+            "examples": [
+              "123",
+              "456",
+              "789"
+            ],
+            "title": "Invitation Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "invitation_id"
+        ],
+        "title": "DeclineARepositoryInvitationRequest",
+        "type": "object"
+      }
+    },
+    "type": "function"
+  }
+]

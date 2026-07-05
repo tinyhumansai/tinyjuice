@@ -306,6 +306,42 @@ cargo run --bin tinyjuice -- hosts
 cargo run --bin tinyjuice -- host-template codex
 ```
 
+Run hot-path benchmarks:
+
+```sh
+cargo bench
+```
+
+Run the real-snapshot compression benchmark corpus:
+
+```sh
+cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
+cargo run --release --example compression_benchmark -- --iterations 20
+cargo run --release --example compression_benchmark -- --iterations 20 --format json
+```
+
+Corpus benchmark snapshot from `cargo run --release --example
+compression_benchmark -- --iterations 20`:
+
+| Use case | Cases | Compressor | Avg est. token reduction | Avg latency | CCR recovery |
+| --- | ---: | --- | ---: | ---: | --- |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | SmartCrusher | 58.2% | 0.362 ms | yes |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | Log | 14.1% | 0.050 ms | yes |
+| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | Log | 86.3% | 0.177 ms | yes |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | Search | 39.8% | 0.494 ms | yes |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | Diff | 66.7% | 0.174 ms | yes |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | HTML | 75.4% | 0.187 ms | yes |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | Code | 51.9% | 0.796 ms | yes |
+| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | None | 0.0% | 0.000 ms | n/a |
+
+CCR recovery byte-compares the retrieved original for every lossy compaction.
+These are local real-snapshot measurements from the checked-in benchmark corpus,
+not production-wide claims.
+
+See [docs/benchmarking.md](docs/benchmarking.md) for benchmark scope,
+comparison targets, and reporting cautions. See [docs/benchmark](docs/benchmark)
+for human-readable before/after sample reports and accuracy-check details.
+
 Run the local analytics interface:
 
 ```sh
