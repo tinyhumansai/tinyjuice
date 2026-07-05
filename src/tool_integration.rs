@@ -297,6 +297,23 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    fn stringified_json_rows() -> String {
+        let rows: Vec<_> = (0..80)
+            .map(|i| {
+                json!({
+                    "id": i,
+                    "status": "active",
+                    "metadata": json!({
+                        "owner": format!("team-{i}"),
+                        "flags": { "retry": i % 2 == 0 }
+                    })
+                    .to_string()
+                })
+            })
+            .collect();
+        serde_json::to_string_pretty(&rows).expect("rows serialize")
+    }
+
     #[tokio::test]
     async fn skips_short_output() {
         let (out, stats) = compact_tool_output_with_policy(
@@ -329,6 +346,29 @@ mod tests {
         )
         .await;
         assert!(stats.applied, "expected compaction, got {:?}", stats);
+        assert!(compacted.len() < output.len());
+    }
+
+    #[tokio::test]
+    async fn compacts_stringified_json_through_tool_adapter() {
+        let output = stringified_json_rows();
+        let args = json!({"path": "accounts.json"});
+
+        let (compacted, stats) = compact_tool_output_with_policy(
+            "web_fetch",
+            Some(&args),
+            &output,
+            Some(0),
+            AgentTokenjuiceCompression::Full,
+        )
+        .await;
+
+        assert!(stats.applied, "expected SmartCrusher, got {:?}", stats);
+        assert_eq!(stats.rule_id, "smartcrusher");
+        assert!(compacted.contains("metadata.owner"), "{compacted}");
+        assert!(compacted.contains("metadata.flags.retry"), "{compacted}");
+        assert!(compacted.contains("team-7"), "{compacted}");
+        assert!(compacted.contains("tokenjuice_retrieve"), "{compacted}");
         assert!(compacted.len() < output.len());
     }
 
