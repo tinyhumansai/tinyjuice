@@ -109,8 +109,10 @@ compressor upgrades, P2 slices — all specified in the port plan.
   TinyJuice and the mirrored OpenHuman copy now treat unresolved `Auto` as
   passthrough with `none/agent-profile-auto-unresolved`; do not pass unresolved
   `Auto` into the TokenJuice adapter.
-- Two recovery tools are registered in OpenHuman with separate
-  implementations; consolidation is a Phase 3 task in the integration plan.
+- Two recovery tool names are still registered in OpenHuman during migration:
+  canonical `tokenjuice_retrieve` plus legacy `retrieve_tool_output`. The
+  legacy tool now delegates to the canonical implementation; remaining Phase 3
+  work is migration cleanup, not behavior divergence.
 - `ml_compression_enabled` (Kompress bridge) stays default-off until tag
   protection fixtures exist.
 

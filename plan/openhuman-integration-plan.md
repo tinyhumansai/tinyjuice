@@ -29,8 +29,9 @@ existing surface:
   payloads before any of this. Recovery tool results bypass this chain and are
   returned exactly.
 - Recovery tools: both `retrieve_tool_output`
-  (`src/openhuman/tools/impl/system/retrieve_tool_output.rs`, legacy) and
-  `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered.
+  (`src/openhuman/tools/impl/system/retrieve_tool_output.rs`, legacy alias) and
+  `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered;
+  the legacy tool delegates to the canonical implementation.
 - `Auto` profile resolution is host-side in
   `agent/harness/definition.rs:487`: coding models resolve to `Light`,
   everything else to `Full`. TinyJuice now treats unresolved `Auto` as
@@ -158,11 +159,11 @@ Acceptance:
 Tasks:
 
 - Expose `tokenjuice_retrieve` in every agent profile that may see a footer.
-- Consolidate the duplicate recovery tools: OpenHuman registers both the
-  legacy `retrieve_tool_output` and `tokenjuice_retrieve` with separate
-  implementations. Keep one implementation, alias the legacy name during
-  migration, and make sure footer text, tool schema docs, and
-  `RECOVERY_TOOL_NAMES` agree on the canonical name.
+- Continue recovery-tool migration cleanup: OpenHuman registers both the
+  legacy `retrieve_tool_output` and canonical `tokenjuice_retrieve`, with the
+  legacy name delegated to the canonical implementation. Keep footer text, tool
+  schema docs, visibility tests, and `RECOVERY_TOOL_NAMES` aligned on
+  `tokenjuice_retrieve` as canonical.
 - Support full and ranged retrieval by lines or bytes.
 - Return clear not-found output for expired or evicted CCR entries.
 - Consider UI affordances for "retrieve full original" without requiring the
