@@ -42,6 +42,10 @@ pub const MAX_CHANGE_POINT_ANCHORS: usize = 20;
 pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
 /// Maximum exact duplicate row clusters to anchor while row-dropping.
 pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
+/// Maximum near-duplicate row clusters to anchor while row-dropping.
+pub const MAX_NEAR_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
+/// Maximum SimHash bit distance for rows to share a near-duplicate cluster.
+pub const NEAR_DUPLICATE_SIMHASH_DISTANCE: u32 = 3;
 /// Maximum evenly-spaced middle anchors to add for large generic arrays.
 pub const MAX_SPREAD_ANCHORS: usize = 8;
 /// Maximum extra spread anchors when semantic bigrams do not saturate early.
@@ -240,6 +244,9 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
     for i in duplicate_cluster_representatives(rows) {
         keep.insert(i);
     }
+    for i in near_duplicate_cluster_representatives(rows, &keep) {
+        keep.insert(i);
+    }
     for i in information_dense_rows(rows, &keep) {
         keep.insert(i);
     }
@@ -349,6 +356,45 @@ fn duplicate_cluster_representatives(rows: &[FlatRow]) -> Vec<usize> {
         .collect()
 }
 
+#[derive(Debug, Clone)]
+struct NearDuplicateCluster {
+    first: usize,
+    count: usize,
+    fingerprint: u64,
+}
+
+fn near_duplicate_cluster_representatives(
+    rows: &[FlatRow],
+    existing_keep: &BTreeSet<usize>,
+) -> Vec<usize> {
+    let mut clusters: Vec<NearDuplicateCluster> = Vec::new();
+    for (i, row) in rows.iter().enumerate() {
+        let fingerprint = semantic_simhash(&row_text(row));
+        if fingerprint == 0 {
+            continue;
+        }
+        if let Some(cluster) = clusters.iter_mut().find(|cluster| {
+            (cluster.fingerprint ^ fingerprint).count_ones() <= NEAR_DUPLICATE_SIMHASH_DISTANCE
+        }) {
+            cluster.count += 1;
+        } else {
+            clusters.push(NearDuplicateCluster {
+                first: i,
+                count: 1,
+                fingerprint,
+            });
+        }
+    }
+
+    clusters.retain(|cluster| cluster.count > 1 && !existing_keep.contains(&cluster.first));
+    clusters.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.first.cmp(&b.first)));
+    clusters
+        .into_iter()
+        .take(MAX_NEAR_DUPLICATE_CLUSTER_ANCHORS)
+        .map(|cluster| cluster.first)
+        .collect()
+}
+
 fn spread_anchor_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<usize> {
     let n = rows.len();
     let start = dynamic_head_rows(n).min(n);
@@ -416,6 +462,45 @@ fn semantic_tokens(text: &str) -> Vec<String> {
         .into_iter()
         .filter(|token| !token.chars().any(|ch| ch.is_ascii_digit()))
         .collect()
+}
+
+fn semantic_simhash(text: &str) -> u64 {
+    let tokens = semantic_tokens(text);
+    if tokens.is_empty() {
+        return 0;
+    }
+
+    let mut buckets = [0i32; 64];
+    for token in tokens {
+        let hash = stable_token_hash(&token);
+        for (bit, bucket) in buckets.iter_mut().enumerate() {
+            if (hash >> bit) & 1 == 1 {
+                *bucket += 1;
+            } else {
+                *bucket -= 1;
+            }
+        }
+    }
+
+    buckets
+        .into_iter()
+        .enumerate()
+        .fold(0u64, |fingerprint, (bit, score)| {
+            if score > 0 {
+                fingerprint | (1u64 << bit)
+            } else {
+                fingerprint
+            }
+        })
+}
+
+fn stable_token_hash(token: &str) -> u64 {
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in token.as_bytes() {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    hash
 }
 
 fn nearest_unseen_row(
@@ -990,6 +1075,32 @@ mod tests {
         assert!(c.lossy);
         assert!(c.text.contains("retry-batch-17"), "{}", c.text);
         assert!(c.text.contains("duplicate cluster payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn near_duplicate_cluster_representative_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if (72..=76).contains(&i) {
+                "retry backlog service failed"
+            } else {
+                "routine healthy service stable"
+            };
+            rows.push(format!(
+                r#"{{"id":"job-{i}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("job-72"), "{}", c.text);
+        assert!(
+            c.text.contains("retry backlog service failed"),
+            "{}",
+            c.text
+        );
     }
 
     #[test]
