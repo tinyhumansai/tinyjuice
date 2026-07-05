@@ -33,6 +33,9 @@ pub const HEAD_ROWS: usize = 20;
 pub const TAIL_ROWS: usize = 10;
 /// Z-score beyond which a numeric cell is treated as an outlier worth keeping.
 pub const OUTLIER_SIGMA: f64 = 2.0;
+/// Maximum distinct values for a full-present field to be treated as a
+/// discriminator bucket anchor.
+pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
 /// Do not spend unbounded parse effort on huge string cells.
 const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
@@ -196,8 +199,8 @@ pub fn analyze(content: &str) -> Option<JsonAnalysis> {
 }
 
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
-/// any row flagged as anomalous (error text or a numeric outlier in any
-/// column). Returns ascending, de-duplicated indices.
+/// rows flagged as anomalous, representative discriminator buckets, or
+/// query-relevant. Returns ascending, de-duplicated indices.
 fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
     let n = rows.len();
     let lossy = n > ROW_DROP_THRESHOLD;
@@ -249,6 +252,16 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
                 }
             }
         }
+        if is_discriminator_field(field, rows.len()) {
+            let mut seen_values = BTreeSet::new();
+            for (i, row) in rows.iter().enumerate() {
+                if let Some(value) = row.values.get(&field.key)
+                    && seen_values.insert(render_cell(value))
+                {
+                    keep.insert(i);
+                }
+            }
+        }
     }
 
     if let Some(query) = query.filter(|q| !q.trim().is_empty()) {
@@ -274,6 +287,12 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
         lossy,
         keep_rows: keep.into_iter().collect(),
     }
+}
+
+fn is_discriminator_field(field: &JsonFieldAnalysis, row_count: usize) -> bool {
+    field.present == row_count
+        && field.numeric.is_none()
+        && (2..=MAX_DISCRIMINATOR_BUCKETS).contains(&field.unique_count)
 }
 
 #[derive(Debug, Clone)]
@@ -578,6 +597,35 @@ mod tests {
 
         assert!(c.lossy);
         assert!(c.text.contains("rare sparse field"), "{}", c.text);
+    }
+
+    #[test]
+    fn discriminator_bucket_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let kind = if i == 72 {
+                "audit"
+            } else if i % 2 == 0 {
+                "service"
+            } else {
+                "worker"
+            };
+            let message = if i == 72 {
+                "audit bucket unique payload"
+            } else {
+                "ordinary payload"
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"kind":"{kind}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("audit"), "{}", c.text);
+        assert!(c.text.contains("audit bucket unique payload"), "{}", c.text);
     }
 
     #[test]
