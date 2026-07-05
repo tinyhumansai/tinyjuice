@@ -42,18 +42,18 @@ pub fn format_marker(hash: &str) -> String {
 /// `lossy` distinguishes a partial view (data dropped) from a faithful reformat
 /// (no data lost, layout changed); both offer exact recovery.
 pub fn recovery_footer(hash: &str, original_bytes: usize, lossy: bool) -> String {
-    let marker = format_marker(hash);
+    // Fixed-cost overhead on every compacted output, so keep it tight: the
+    // hash appears exactly once, in the `token "<hash>"` form parse_markers
+    // recognizes (the tool name in front satisfies its proximity guard).
     if lossy {
         format!(
-            "\n\n[compacted tool output — this is a PARTIAL view; the full original \
-             ({original_bytes} bytes) is available by calling {RETRIEVE_TOOL_NAME} with \
-             token \"{hash}\" (marker {marker})]"
+            "\n\n[PARTIAL view — full original ({original_bytes} bytes): call \
+             {RETRIEVE_TOOL_NAME} with token \"{hash}\"]"
         )
     } else {
         format!(
-            "\n\n[reformatted tool output — no data lost, but layout changed; the exact \
-             original ({original_bytes} bytes) is available by calling {RETRIEVE_TOOL_NAME} \
-             with token \"{hash}\" (marker {marker})]"
+            "\n\n[reformatted, no data lost — exact original ({original_bytes} bytes): call \
+             {RETRIEVE_TOOL_NAME} with token \"{hash}\"]"
         )
     }
 }
