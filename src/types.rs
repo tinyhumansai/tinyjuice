@@ -557,6 +557,12 @@ pub struct CompressOptions {
     pub lossy_without_ccr: bool,
     /// Maximum inline character count for the generic/rule fallback path.
     pub max_inline_chars: Option<usize>,
+    /// Target output/input byte ratio for source-code compression. When set
+    /// (e.g. `Some(0.4)`), the code compressor collapses eligible bodies
+    /// largest-first and stops once the projected output is at or below this
+    /// fraction of the input, leaving the remaining bodies fully intact.
+    /// `None` (the default) collapses every eligible body.
+    pub code_target_ratio: Option<f32>,
     /// Average characters per token used by the router's token estimates
     /// (gating and savings accounting). The default 4.0 matches the standard
     /// English-text heuristic; callers whose payloads skew denser (CJK text,
@@ -580,6 +586,7 @@ impl Default for CompressOptions {
             ccr_min_tokens: 500,
             lossy_without_ccr: true,
             max_inline_chars: None,
+            code_target_ratio: None,
             chars_per_token: 4.0,
         }
     }

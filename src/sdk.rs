@@ -114,6 +114,8 @@ pub struct SdkCompressOptions {
     #[serde(default)]
     pub max_inline_chars: Option<usize>,
     #[serde(default)]
+    pub code_target_ratio: Option<f32>,
+    #[serde(default)]
     pub chars_per_token: Option<f32>,
 }
 
@@ -152,6 +154,9 @@ impl SdkCompressOptions {
         }
         if let Some(value) = self.max_inline_chars {
             opts.max_inline_chars = Some(value);
+        }
+        if let Some(value) = self.code_target_ratio {
+            opts.code_target_ratio = Some(value);
         }
         if let Some(value) = self.chars_per_token {
             opts.chars_per_token = value;
@@ -334,6 +339,7 @@ impl From<CompressOptions> for SdkCompressOptions {
             ccr_min_tokens: Some(value.ccr_min_tokens),
             lossy_without_ccr: Some(value.lossy_without_ccr),
             max_inline_chars: value.max_inline_chars,
+            code_target_ratio: value.code_target_ratio,
             chars_per_token: Some(value.chars_per_token),
         }
     }

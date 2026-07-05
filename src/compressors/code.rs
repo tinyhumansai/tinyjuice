@@ -57,17 +57,67 @@ impl Compressor for CodeCompressor {
         // A query token in a function name or body pins that body open so the
         // caller can still read the code they were looking for.
         let query = input.hint.query.as_deref();
+        // When set, collapse only enough (largest bodies first) to reach this
+        // output/input byte ratio; `None` collapses every eligible body.
+        let target_ratio = opts.code_target_ratio;
         // Prefer the AST path when a grammar matches the file's language; fall
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
         #[cfg(feature = "tinyjuice-treesitter")]
         if let Some(ext) = input.hint.extension.as_deref()
-            && let Some(out) = treesitter::compress(input.content, ext, per_body_tokens, query)
+            && let Some(out) =
+                treesitter::compress(input.content, ext, per_body_tokens, query, target_ratio)
         {
             return Some(out);
         }
-        compress_heuristic(input.content, per_body_tokens, query)
+        compress_heuristic(input.content, per_body_tokens, query, target_ratio)
     }
+}
+
+/// An eligible collapse, fed to [`select_collapses`] for budget selection.
+struct Candidate {
+    /// Position in the caller's segment/body list.
+    idx: usize,
+    /// Byte size of the body's interior lines — the largest-first sort key.
+    interior_bytes: usize,
+    /// Bytes saved by collapsing this body (verbatim minus rendered size).
+    savings: usize,
+    /// Whether the rendered placeholder carries a retrieval token (the first
+    /// one also pays for the shared [`BLOCK_NOTE`] footer).
+    has_token: bool,
+}
+
+/// Pick which eligible bodies actually collapse. With no target ratio every
+/// candidate collapses (the historical behavior). With a target, candidates
+/// collapse largest-interior-first until the projected output size reaches
+/// `target_ratio × input_len`; the rest stay fully intact. `baseline` is the
+/// projected output size with nothing collapsed.
+fn select_collapses(
+    mut candidates: Vec<Candidate>,
+    baseline: usize,
+    input_len: usize,
+    target_ratio: Option<f32>,
+) -> Vec<usize> {
+    let Some(ratio) = target_ratio else {
+        return candidates.into_iter().map(|c| c.idx).collect();
+    };
+    let target = (f64::from(ratio) * input_len as f64) as usize;
+    candidates.sort_by_key(|c| std::cmp::Reverse(c.interior_bytes));
+    let mut projected = baseline;
+    let mut note_paid = false;
+    let mut chosen = Vec::new();
+    for c in candidates {
+        if projected <= target {
+            break;
+        }
+        if c.has_token && !note_paid {
+            note_paid = true;
+            projected += BLOCK_NOTE.len();
+        }
+        projected = projected.saturating_sub(c.savings);
+        chosen.push(c.idx);
+    }
+    chosen
 }
 
 /// Language-agnostic declaration-skeleton compressor. Keeps top-level lines,
@@ -80,13 +130,14 @@ pub fn compress_heuristic(
     content: &str,
     per_body_tokens: bool,
     query: Option<&str>,
+    target_ratio: Option<f32>,
 ) -> Option<CompressOutput> {
     let lines: Vec<&str> = content.lines().collect();
     if lines.len() < 12 {
         return None;
     }
 
-    let mut out = String::with_capacity(content.len() / 2 + 64);
+    // Phase 1: walk the file into alternating kept-text and body segments.
     // Each entry records whether the open block is a container (true) or a
     // function/other block (false). Stack length is the brace-nesting depth.
     let mut stack: Vec<bool> = Vec::new();
@@ -96,8 +147,8 @@ pub fn compress_heuristic(
     let mut collapsed: Vec<&str> = Vec::new();
     // The kept line that opened the body currently accumulating in `collapsed`.
     let mut body_sig: Option<&str> = None;
-    let mut any_token = false;
     let mut in_block_comment = false;
+    let mut segments: Vec<Segment> = Vec::new();
 
     for line in &lines {
         let was_in_comment = in_block_comment;
@@ -110,16 +161,14 @@ pub fn compress_heuristic(
         // kept; inside a body they stay glued to the body so it collapses as one.
         if t.is_empty() && !was_in_comment {
             if start_depth == 0 || enclosing_container {
-                emit_body(
-                    &mut out,
-                    &collapsed,
+                flush_body(
+                    &mut segments,
+                    &mut collapsed,
                     per_body_tokens,
-                    &mut any_token,
                     body_sig,
                     query,
                 );
-                collapsed.clear();
-                let _ = writeln!(out, "{line}");
+                push_kept(&mut segments, line);
             } else {
                 collapsed.push(line);
             }
@@ -130,16 +179,14 @@ pub fn compress_heuristic(
         let keep = start_depth == 0 || decl_opener || (enclosing_container && is_member_line(t));
 
         if keep {
-            emit_body(
-                &mut out,
-                &collapsed,
+            flush_body(
+                &mut segments,
+                &mut collapsed,
                 per_body_tokens,
-                &mut any_token,
                 body_sig,
                 query,
             );
-            collapsed.clear();
-            let _ = writeln!(out, "{line}");
+            push_kept(&mut segments, line);
             // This kept line is the signature for whatever body follows.
             body_sig = Some(line);
         } else {
@@ -179,14 +226,55 @@ pub fn compress_heuristic(
             pending_container = None;
         }
     }
-    emit_body(
-        &mut out,
-        &collapsed,
+    flush_body(
+        &mut segments,
+        &mut collapsed,
         per_body_tokens,
-        &mut any_token,
         body_sig,
         query,
     );
+
+    // Phase 2: pick which eligible bodies collapse. Baseline = the output size
+    // if every body stayed verbatim.
+    let baseline: usize = segments
+        .iter()
+        .map(|s| match s {
+            Segment::Kept(text) => text.len(),
+            Segment::Body(b) => b.verbatim.len(),
+        })
+        .sum();
+    let candidates: Vec<Candidate> = segments
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, s)| match s {
+            Segment::Body(b) => b.collapsed.as_ref().map(|c| Candidate {
+                idx,
+                interior_bytes: b.interior_bytes,
+                savings: b.verbatim.len().saturating_sub(c.text.len()),
+                has_token: c.has_token,
+            }),
+            Segment::Kept(_) => None,
+        })
+        .collect();
+    let mut collapse_flags = vec![false; segments.len()];
+    for idx in select_collapses(candidates, baseline, content.len(), target_ratio) {
+        collapse_flags[idx] = true;
+    }
+
+    let mut out = String::with_capacity(content.len() / 2 + 64);
+    let mut any_token = false;
+    for (idx, seg) in segments.iter().enumerate() {
+        match seg {
+            Segment::Kept(text) => out.push_str(text),
+            Segment::Body(b) => match &b.collapsed {
+                Some(c) if collapse_flags[idx] => {
+                    any_token |= c.has_token;
+                    out.push_str(&c.text);
+                }
+                _ => out.push_str(&b.verbatim),
+            },
+        }
+    }
 
     let mut out = out.trim_end().to_string();
     if any_token {
@@ -204,22 +292,68 @@ pub fn compress_heuristic(
     Some(CompressOutput::lossy(out, CompressorKind::Code))
 }
 
-/// Emit an accumulated body run: verbatim when it is short, worth less than the
-/// marker, or pinned by `keep_body`; otherwise a placeholder. Large bodies keep
-/// a head/tail skeleton around the elided middle. `sig` is the signature line
-/// that opened the body (used to read its name for the keep heuristics).
-fn emit_body(
-    out: &mut String,
-    collapsed: &[&str],
+/// One stretch of output from the phase-1 walk: kept lines, or a body run that
+/// may collapse.
+enum Segment {
+    Kept(String),
+    Body(BodySeg),
+}
+
+/// A body run with both renderings: verbatim (always available) and the
+/// collapsed placeholder when the body is eligible.
+struct BodySeg {
+    verbatim: String,
+    collapsed: Option<CollapsedRender>,
+    /// Byte size of the interior lines — the largest-first selection key.
+    interior_bytes: usize,
+}
+
+/// The rendered collapse of an eligible body.
+struct CollapsedRender {
+    text: String,
+    has_token: bool,
+}
+
+/// Append a kept line to the trailing kept segment (starting one if needed).
+fn push_kept(segments: &mut Vec<Segment>, line: &str) {
+    if let Some(Segment::Kept(text)) = segments.last_mut() {
+        let _ = writeln!(text, "{line}");
+    } else {
+        segments.push(Segment::Kept(format!("{line}\n")));
+    }
+}
+
+/// Close the accumulated body run (if any) into a body segment and clear it.
+fn flush_body(
+    segments: &mut Vec<Segment>,
+    collapsed: &mut Vec<&str>,
     per_body_tokens: bool,
-    any_token: &mut bool,
     sig: Option<&str>,
     query: Option<&str>,
 ) {
     if collapsed.is_empty() {
         return;
     }
+    segments.push(Segment::Body(render_body(
+        collapsed,
+        per_body_tokens,
+        sig,
+        query,
+    )));
+    collapsed.clear();
+}
 
+/// Render an accumulated body run: verbatim when it is short, worth less than
+/// the marker, or pinned by `keep_body`; otherwise also a placeholder rendering
+/// the caller may substitute. Large bodies keep a head/tail skeleton around the
+/// elided middle. `sig` is the signature line that opened the body (used to
+/// read its name for the keep heuristics).
+fn render_body(
+    collapsed: &[&str],
+    per_body_tokens: bool,
+    sig: Option<&str>,
+    query: Option<&str>,
+) -> BodySeg {
     // Interior = the run minus a leading bare `{` and a trailing `}` line.
     let lo = usize::from(brace_open_only(collapsed[0].trim()));
     let mut hi = collapsed.len();
@@ -228,13 +362,19 @@ fn emit_body(
     }
     let interior = &collapsed[lo..hi];
     let interior_count = interior.len();
+    let interior_bytes: usize = interior.iter().map(|l| l.len() + 1).sum();
 
     let name = sig.and_then(fn_name);
     let body_text = collapsed.join("\n");
+    let mut verbatim = String::with_capacity(body_text.len() + 1);
+    for l in collapsed {
+        let _ = writeln!(verbatim, "{l}");
+    }
 
     let collapse = interior_count >= MIN_BODY_LINES_TO_COLLAPSE
         && !keep_body(name.as_deref(), &body_text, interior_count, query);
 
+    let mut rendered = None;
     if collapse {
         let indent = leading_ws(interior.first().copied().unwrap_or(collapsed[0]));
         // The token recovers the FULL original body regardless of skeleton.
@@ -248,25 +388,31 @@ fn emit_body(
                 .map(|l| l.len() + 1)
                 .sum();
             if removed > marker.len() + MIN_BYTE_SAVINGS {
-                *any_token |= !token.is_empty();
-                let _ = writeln!(out, "{}", interior[0]);
-                let _ = writeln!(out, "{}", interior[1]);
-                let _ = writeln!(out, "{marker}");
-                let _ = writeln!(out, "{}", interior[interior_count - 1]);
-                return;
+                let mut text = String::new();
+                let _ = writeln!(text, "{}", interior[0]);
+                let _ = writeln!(text, "{}", interior[1]);
+                let _ = writeln!(text, "{marker}");
+                let _ = writeln!(text, "{}", interior[interior_count - 1]);
+                rendered = Some(CollapsedRender {
+                    text,
+                    has_token: !token.is_empty(),
+                });
             }
         } else {
             let marker = format!("{indent}{{ … {} line(s) …{token} }}", collapsed.len());
             if body_text.len() > marker.len() + MIN_BYTE_SAVINGS {
-                *any_token |= !token.is_empty();
-                let _ = writeln!(out, "{marker}");
-                return;
+                rendered = Some(CollapsedRender {
+                    text: format!("{marker}\n"),
+                    has_token: !token.is_empty(),
+                });
             }
         }
     }
 
-    for l in collapsed {
-        let _ = writeln!(out, "{l}");
+    BodySeg {
+        verbatim,
+        collapsed: rendered,
+        interior_bytes,
     }
 }
 
@@ -618,8 +764,8 @@ fn brace_delta(line: &str, in_block_comment: &mut bool) -> (usize, usize) {
 #[cfg(feature = "tinyjuice-treesitter")]
 mod treesitter {
     use super::{
-        BLOCK_NOTE, CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE,
-        SKELETON_MIN_INTERIOR, block_token, keep_body, leading_ws,
+        BLOCK_NOTE, Candidate, CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE,
+        SKELETON_MIN_INTERIOR, block_token, keep_body, leading_ws, select_collapses,
     };
     use tree_sitter::{Node, Parser};
 
@@ -665,6 +811,7 @@ mod treesitter {
         ext: &str,
         per_body_tokens: bool,
         query: Option<&str>,
+        target_ratio: Option<f32>,
     ) -> Option<CompressOutput> {
         let (language, braced) = language_for(ext)?;
         let mut parser = Parser::new();
@@ -689,33 +836,65 @@ mod treesitter {
             return None;
         }
 
+        // Phase 1: render the collapse for every eligible body.
+        let renders: Vec<Option<(String, bool)>> = merged
+            .iter()
+            .map(|b| {
+                let body = &content[b.start..b.end];
+                let n_lines = body.lines().count();
+                // Interior excludes the brace lines for braced bodies.
+                let interior = if braced {
+                    n_lines.saturating_sub(2)
+                } else {
+                    n_lines
+                };
+                let collapse = interior >= MIN_BODY_LINES_TO_COLLAPSE
+                    && !keep_body(b.name.as_deref(), body, interior, query);
+                if !collapse {
+                    return None;
+                }
+                let token = block_token(body, per_body_tokens);
+                let rendered = render_collapse(body, braced, interior, n_lines, &token);
+                Some((rendered, !token.is_empty()))
+            })
+            .collect();
+
+        // Phase 2: pick which eligible bodies collapse (largest interior
+        // first when a target ratio is set). Baseline = the full content, i.e.
+        // the output size if nothing collapsed.
+        let candidates: Vec<Candidate> = merged
+            .iter()
+            .zip(&renders)
+            .enumerate()
+            .filter_map(|(idx, (b, render))| {
+                render.as_ref().map(|(text, has_token)| Candidate {
+                    idx,
+                    interior_bytes: interior_bytes(&content[b.start..b.end], braced),
+                    savings: (b.end - b.start).saturating_sub(text.len()),
+                    has_token: *has_token,
+                })
+            })
+            .collect();
+        let mut collapse_flags = vec![false; merged.len()];
+        for idx in select_collapses(candidates, content.len(), content.len(), target_ratio) {
+            collapse_flags[idx] = true;
+        }
+
         let mut out = String::with_capacity(content.len());
         let mut cursor = 0usize;
         let mut any_token = false;
-        for b in merged {
+        for (idx, b) in merged.iter().enumerate() {
             if b.start < cursor {
                 continue;
             }
             out.push_str(&content[cursor..b.start]);
-            let body = &content[b.start..b.end];
-            let n_lines = body.lines().count();
-            // Interior excludes the brace lines for braced bodies.
-            let interior = if braced {
-                n_lines.saturating_sub(2)
-            } else {
-                n_lines
-            };
-            let collapse = interior >= MIN_BODY_LINES_TO_COLLAPSE
-                && !keep_body(b.name.as_deref(), body, interior, query);
-            if !collapse {
-                out.push_str(body);
-                cursor = b.end;
-                continue;
+            match &renders[idx] {
+                Some((rendered, has_token)) if collapse_flags[idx] => {
+                    any_token |= *has_token;
+                    out.push_str(rendered);
+                }
+                _ => out.push_str(&content[b.start..b.end]),
             }
-            let token = block_token(body, per_body_tokens);
-            any_token |= !token.is_empty();
-            let rendered = render_collapse(body, braced, interior, n_lines, &token);
-            out.push_str(&rendered);
             cursor = b.end;
         }
         out.push_str(&content[cursor..]);
@@ -734,6 +913,20 @@ mod treesitter {
             out.len()
         );
         Some(CompressOutput::lossy(out, CompressorKind::Code))
+    }
+
+    /// Byte size of a body's interior lines (excluding the brace lines for
+    /// braced bodies) — the largest-first selection key.
+    fn interior_bytes(body: &str, braced: bool) -> usize {
+        if braced {
+            let lines: Vec<&str> = body.lines().collect();
+            if lines.len() < 3 {
+                return 0;
+            }
+            lines[1..lines.len() - 1].iter().map(|l| l.len() + 1).sum()
+        } else {
+            body.len()
+        }
     }
 
     /// Render a collapsed body: a head/tail skeleton for large bodies, a single
@@ -816,7 +1009,7 @@ mod tests {
         }
         src.push_str("        tmp_0\n}\n\n");
         src.push_str("struct Config {\n    name: String,\n    size: usize,\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(out.lossy);
         assert!(
             out.text.contains("pub fn process"),
@@ -839,7 +1032,7 @@ mod tests {
     #[test]
     fn short_file_passes_through() {
         let src = "fn a() {}\nfn b() {}\n";
-        assert!(compress_heuristic(src, false, None).is_none());
+        assert!(compress_heuristic(src, false, None, None).is_none());
     }
 
     /// A large body keeps a head/tail skeleton: the first two and the last
@@ -857,7 +1050,7 @@ mod tests {
         for i in 0..4 {
             src.push_str(&format!("pub const K_{i}: i32 = {i};\n"));
         }
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(
             out.text.contains("let head_a = items.len();"),
             "{}",
@@ -891,7 +1084,7 @@ mod tests {
         for i in 0..4 {
             src.push_str(&format!("pub const C_{i}: i32 = {i};\n"));
         }
-        let out = compress_heuristic(&src, true, None).expect("compresses");
+        let out = compress_heuristic(&src, true, None, None).expect("compresses");
         let tokens = cache::parse_markers(&out.text);
         assert_eq!(tokens.len(), 1, "{}", out.text);
         let body = cache::retrieve(&tokens[0]).expect("stored");
@@ -911,7 +1104,7 @@ mod tests {
         }
         src.push_str("    tmp_0\n}\n\n");
         src.push_str("pub struct Config {\n    pub name: String,\n    pub size: usize,\n}\n");
-        let out = treesitter::compress(&src, "rs", false, None).expect("compresses");
+        let out = treesitter::compress(&src, "rs", false, None, None).expect("compresses");
         assert!(
             out.text.contains("pub fn process(items: &[i32]) -> i32"),
             "{}",
@@ -934,7 +1127,7 @@ mod tests {
             src.push_str(&format!("    x_{i} = compute(event, {i})\n"));
         }
         src.push_str("    return x_0\n");
-        let out = treesitter::compress(&src, "py", false, None).expect("compresses");
+        let out = treesitter::compress(&src, "py", false, None, None).expect("compresses");
         assert!(out.text.contains("def handler(event):"), "{}", out.text);
         assert!(out.text.contains("collapsed"), "{}", out.text);
         assert!(!out.text.contains("x_15"));
@@ -953,7 +1146,7 @@ mod tests {
             src.push_str(&format!("    println!(\"step {i}\");\n"));
         }
         src.push_str("    helper(&[]);\n}\n");
-        let out = treesitter::compress(&src, "rs", false, None).expect("compresses");
+        let out = treesitter::compress(&src, "rs", false, None, None).expect("compresses");
         // main is an entrypoint — it must survive verbatim.
         assert!(out.text.contains("println!(\"step 10\")"), "{}", out.text);
         // helper's body still collapses.
@@ -999,7 +1192,7 @@ mod tests {
         }
         src.push_str("        None\n}\n\n");
         src.push_str("pub struct Cursor<'a> {\n    buf: &'a [u8],\n    pos: usize,\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         // Both signatures after the first lifetime-carrying line must survive
         // at top level — depth drift used to collapse them.
         assert!(out.text.contains("pub fn lookup<'a>"), "{}", out.text);
@@ -1025,7 +1218,7 @@ mod tests {
         }
         src.push_str("        b_0\n}\n");
 
-        let out = compress_heuristic(&src, true, None).expect("compresses");
+        let out = compress_heuristic(&src, true, None, None).expect("compresses");
         let tokens = cache::parse_markers(&out.text);
         assert_eq!(
             tokens.len(),
@@ -1055,7 +1248,7 @@ mod tests {
             src.push_str(&format!("        let g_{i} = compute({i});\n"));
         }
         src.push_str("        g_0\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(cache::parse_markers(&out.text).is_empty(), "{}", out.text);
         assert!(!out.text.contains("individually retrievable"));
     }
@@ -1070,7 +1263,7 @@ mod tests {
             ));
         }
         src.push_str("    d_0\n}\n");
-        let out = treesitter::compress(&src, "rs", true, None).expect("compresses");
+        let out = treesitter::compress(&src, "rs", true, None, None).expect("compresses");
         let tokens = cache::parse_markers(&out.text);
         assert_eq!(tokens.len(), 1, "{}", out.text);
         let body = cache::retrieve(&tokens[0]).expect("stored");
@@ -1090,7 +1283,7 @@ mod tests {
             src.push_str(&format!("    let c_{i} = data.len() as u32 + {i};\n"));
         }
         src.push_str("    c_0\n}\n");
-        let out = compress_heuristic(&src, false, Some("checksum")).expect("compresses");
+        let out = compress_heuristic(&src, false, Some("checksum"), None).expect("compresses");
         // The queried function stays open; the unrelated one collapses.
         assert!(
             out.text.contains("let c_10"),
@@ -1124,7 +1317,7 @@ mod tests {
             src.push_str(&format!("    let f_{i} = {i};\n"));
         }
         src.push_str("    f_0\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(
             out.text.contains("return Err(E::Bad)"),
             "error-dense body kept: {}",
@@ -1146,7 +1339,7 @@ mod tests {
         src.push_str("}\n");
         // Nothing collapses, so it does not shrink -> None (no inflation, no
         // bogus compression).
-        let out = compress_heuristic(&src, false, None);
+        let out = compress_heuristic(&src, false, None, None);
         if let Some(o) = out {
             assert!(o.text.len() < src.len(), "must never inflate: {}", o.text);
             // The one-line method bodies must not have been swapped for a
@@ -1178,7 +1371,7 @@ mod tests {
             src.push_str(&format!("        $this->purge({i});\n"));
         }
         src.push_str("    }\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(out.text.contains("class Repository"), "{}", out.text);
         assert!(
             out.text
@@ -1223,7 +1416,7 @@ mod tests {
             src.push_str(&format!("        $d_{i} = hypot($this->x, {i});\n"));
         }
         src.push_str("        return $d_0;\n    }\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(
             out.text.contains("$this->x = $x;"),
             "constructor body kept: {}",
@@ -1254,7 +1447,7 @@ mod tests {
             src.push_str(&format!("        var candidate_{i} = items.get(name);\n"));
         }
         src.push_str("        return null;\n    }\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(
             out.text.contains("public final class Registry"),
             "{}",
@@ -1305,7 +1498,7 @@ mod tests {
             src.push_str(&format!("            var v_{i} = seed + {i};\n"));
         }
         src.push_str("            return seed;\n        }\n    }\n}\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(out.text.contains("public class Service"), "{}", out.text);
         assert!(
             out.text.contains("public void Run(int count)"),
@@ -1341,7 +1534,7 @@ mod tests {
         }
         src.push_str("    }\n");
         src.push_str("};\n\n}  // namespace engine\n");
-        let out = compress_heuristic(&src, false, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, None).expect("compresses");
         assert!(
             out.text.contains("class SceneNode"),
             "class inside namespace must stay visible: {}",
@@ -1399,6 +1592,127 @@ mod tests {
             fn_name("func Serve(addr string) {").as_deref(),
             Some("Serve")
         );
+    }
+
+    /// Build a file with one huge body plus several small (but still eligible)
+    /// bodies, so budget selection has a clear largest-first choice.
+    fn huge_plus_small_bodies() -> String {
+        let mut src = String::from("use std::io;\n\n");
+        src.push_str("pub fn giant(items: &[i32]) -> i32 {\n");
+        for i in 0..80 {
+            src.push_str(&format!(
+                "    let giant_{i} = items.iter().sum::<i32>() + {i};\n"
+            ));
+        }
+        src.push_str("    giant_0\n}\n");
+        for f in 0..3 {
+            src.push_str(&format!("\npub fn small_{f}(x: i32) -> i32 {{\n"));
+            for i in 0..9 {
+                src.push_str(&format!("    let small_{f}_{i} = x + {i};\n"));
+            }
+            src.push_str(&format!("    small_{f}_0\n}}\n"));
+        }
+        src
+    }
+
+    /// With a lenient target ratio only the largest body collapses; the small
+    /// eligible bodies stay fully intact.
+    #[test]
+    fn target_ratio_collapses_only_largest_body() {
+        let src = huge_plus_small_bodies();
+        let out = compress_heuristic(&src, false, None, Some(0.9)).expect("compresses");
+        assert!(
+            !out.text.contains("giant_40"),
+            "largest body collapsed: {}",
+            out.text
+        );
+        for f in 0..3 {
+            assert!(
+                out.text.contains(&format!("let small_{f}_5 = x + 5;")),
+                "small body {f} left intact: {}",
+                out.text
+            );
+        }
+        assert!(
+            (out.text.len() as f32) <= 0.9 * src.len() as f32,
+            "target met: {} vs {}",
+            out.text.len(),
+            src.len()
+        );
+    }
+
+    /// A very small target ratio collapses every eligible body — identical to
+    /// the default collapse-everything behavior.
+    #[test]
+    fn tiny_target_ratio_matches_collapse_all() {
+        let src = huge_plus_small_bodies();
+        let all = compress_heuristic(&src, false, None, None).expect("compresses");
+        let budgeted = compress_heuristic(&src, false, None, Some(0.01)).expect("compresses");
+        assert_eq!(all.text, budgeted.text);
+        assert!(!budgeted.text.contains("small_1_5"), "{}", budgeted.text);
+    }
+
+    /// Projected-size accounting: with several equal bodies and an achievable
+    /// mid-range target, the output lands at or under the target while some
+    /// bodies are left uncollapsed (early stop).
+    #[test]
+    fn target_ratio_projection_is_sane() {
+        let mut src = String::from("use std::io;\n\n");
+        for f in 0..6 {
+            src.push_str(&format!("pub fn worker_{f}(x: i32) -> i32 {{\n"));
+            for i in 0..20 {
+                src.push_str(&format!("    let step_{f}_{i} = compute(x, {i});\n"));
+            }
+            src.push_str(&format!("    step_{f}_0\n}}\n\n"));
+        }
+        let full = compress_heuristic(&src, false, None, None).expect("compresses");
+        let out = compress_heuristic(&src, false, None, Some(0.6)).expect("compresses");
+        assert!(
+            (out.text.len() as f32) <= 0.6 * src.len() as f32,
+            "output within target: {} vs input {}",
+            out.text.len(),
+            src.len()
+        );
+        assert!(
+            out.text.len() > full.text.len(),
+            "early stop leaves some bodies open: {} vs fully collapsed {}",
+            out.text.len(),
+            full.text.len()
+        );
+        let open = (0..6)
+            .filter(|f| out.text.contains(&format!("step_{f}_10")))
+            .count();
+        assert!(
+            (1..=5).contains(&open),
+            "some but not all bodies stay open (open={open}): {}",
+            out.text
+        );
+    }
+
+    /// Tree-sitter path honors the target ratio the same way: largest first,
+    /// stop once the budget is met.
+    #[cfg(feature = "tinyjuice-treesitter")]
+    #[test]
+    fn treesitter_target_ratio_collapses_only_largest() {
+        let src = huge_plus_small_bodies();
+        let out = treesitter::compress(&src, "rs", false, None, Some(0.9)).expect("compresses");
+        assert!(
+            !out.text.contains("giant_40"),
+            "largest body collapsed: {}",
+            out.text
+        );
+        for f in 0..3 {
+            assert!(
+                out.text.contains(&format!("let small_{f}_5 = x + 5;")),
+                "small body {f} left intact: {}",
+                out.text
+            );
+        }
+        // And a tiny ratio matches collapse-all.
+        let all = treesitter::compress(&src, "rs", false, None, None).expect("compresses");
+        let budgeted =
+            treesitter::compress(&src, "rs", false, None, Some(0.01)).expect("compresses");
+        assert_eq!(all.text, budgeted.text);
     }
 
     #[test]

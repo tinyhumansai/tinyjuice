@@ -720,6 +720,7 @@ fn hook_options_from_env() -> SdkCompressOptions {
         ccr_min_tokens: read_usize_env("TINYJUICE_CCR_MIN_TOKENS"),
         ccr_enabled: read_bool_env("TINYJUICE_CCR_ENABLED"),
         lossy_without_ccr: read_bool_env("TINYJUICE_LOSSY_WITHOUT_CCR"),
+        code_target_ratio: read_f32_env("TINYJUICE_CODE_TARGET_RATIO"),
         ..Default::default()
     }
 }
@@ -728,6 +729,12 @@ fn read_usize_env(name: &str) -> Option<usize> {
     env::var(name)
         .ok()
         .and_then(|value| value.trim().parse::<usize>().ok())
+}
+
+fn read_f32_env(name: &str) -> Option<f32> {
+    env::var(name)
+        .ok()
+        .and_then(|value| value.trim().parse::<f32>().ok())
 }
 
 fn read_u64_env(name: &str) -> Option<u64> {
