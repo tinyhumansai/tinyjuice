@@ -2,24 +2,24 @@
 
 Real OpenHuman runtime crash-log slices, with live Docker OpenHuman logs used first when a container is available. The log compressor keeps incident signals and collapses repeated low-value lines.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Algorithm` is the compressor-only reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
 
 ## Cases
 
 Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
 
-| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | [output](cases/02-openhuman-crash-slice-2/output.log) | [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 29.7 KB | 96.1% | 97.1% | 95.4% | 0.121 ms | true |
-| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | [output](cases/01-openhuman-crash-slice-1/output.log) | [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 26.6 KB | 96.1% | 97.2% | 95.3% | 0.119 ms | true |
-| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | [output](cases/04-openhuman-crash-slice-4/output.log) | [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 47.0 KB | 95.5% | 96.4% | 95.1% | 0.155 ms | true |
-| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | [output](cases/03-openhuman-crash-slice-3/output.log) | [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 45.9 KB | 95.4% | 96.3% | 95.0% | 0.156 ms | true |
-| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | [output](cases/05-openhuman-crash-slice-5/output.log) | [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 44.5 KB | 95.3% | 96.2% | 94.8% | 0.139 ms | true |
-| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | [output](cases/07-openhuman-crash-slice-7/output.log) | [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 40.9 KB | 95.0% | 95.9% | 94.4% | 0.127 ms | true |
-| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | [output](cases/08-openhuman-crash-slice-8/output.log) | [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 41.0 KB | 94.6% | 95.6% | 94.1% | 0.128 ms | true |
-| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | [output](cases/06-openhuman-crash-slice-6/output.log) | [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 41.0 KB | 94.6% | 95.4% | 94.0% | 0.128 ms | true |
-| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | [output](cases/09-openhuman-crash-slice-9/output.log) | [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 38.1 KB | 94.3% | 95.3% | 93.7% | 0.129 ms | true |
-| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | [output](cases/10-openhuman-crash-slice-10/output.log) | [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 493.4 KB | 3.0% | 3.1% | 3.0% | 0.698 ms | true |
+| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | [output](cases/02-openhuman-crash-slice-2/output.log) | [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 29.7 KB -> 1.2 KB (-96%) | 97.1% | 95.4% | 0.119 ms |
+| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | [output](cases/01-openhuman-crash-slice-1/output.log) | [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 26.6 KB -> 1.0 KB (-96%) | 97.2% | 95.3% | 0.118 ms |
+| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | [output](cases/04-openhuman-crash-slice-4/output.log) | [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 47.0 KB -> 2.1 KB (-95%) | 96.4% | 95.1% | 0.151 ms |
+| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | [output](cases/03-openhuman-crash-slice-3/output.log) | [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 45.9 KB -> 2.1 KB (-95%) | 96.3% | 95.0% | 0.153 ms |
+| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | [output](cases/05-openhuman-crash-slice-5/output.log) | [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 44.5 KB -> 2.1 KB (-95%) | 96.2% | 94.8% | 0.145 ms |
+| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | [output](cases/07-openhuman-crash-slice-7/output.log) | [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 40.9 KB -> 2.1 KB (-95%) | 95.9% | 94.4% | 0.140 ms |
+| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | [output](cases/08-openhuman-crash-slice-8/output.log) | [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 41.0 KB -> 2.2 KB (-95%) | 95.6% | 94.1% | 0.136 ms |
+| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | [output](cases/06-openhuman-crash-slice-6/output.log) | [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 41.0 KB -> 2.3 KB (-94%) | 95.4% | 94.0% | 0.136 ms |
+| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | [output](cases/09-openhuman-crash-slice-9/output.log) | [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 38.1 KB -> 2.2 KB (-94%) | 95.3% | 93.7% | 0.136 ms |
+| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | [output](cases/10-openhuman-crash-slice-10/output.log) | [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 493.4 KB -> 478.5 KB (-3%) | 3.1% | 3.0% | 0.721 ms |
 
 ## What TinyJuice Is Doing
 

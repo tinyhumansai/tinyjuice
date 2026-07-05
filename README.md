@@ -78,9 +78,9 @@ attribution for agent-created commits.
 
 ## How Much Does It Save?
 
-The checked-in benchmark corpus is 15.7 MB of real content across 207 cases —
-real OpenHuman snapshots plus source files, algorithm implementations, logs,
-and Dockerfiles fetched from public GitHub repositories (see the per-category
+The checked-in benchmark corpus is 15.4 MB of real content across 166 cases —
+real OpenHuman snapshots plus source files, algorithm implementations, and
+logs fetched from public GitHub repositories (see the per-category
 `ATTRIBUTION.md` for sources and licenses; refresh with
 `scripts/benchmark/fetch-github-samples.sh`). Percentages are
 **token reduction: higher is better**
@@ -109,10 +109,9 @@ through because they are too small or a shape the compressor declines.
 | [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 48.3% | 48.0% | 0.401 ms |
 | [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 3 | 20.1% | 20.0% | 0.535 ms |
 | [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 2 | 15.3% | 14.1% | 0.041 ms |
-| [Dockerfiles](docs/benchmark/dockerfiles/README.md) (41 real images — honesty category) | 41 | 0 | 0.0% | 0.0% | 0.065 ms |
 | [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
 
-Across the whole corpus TinyJuice cut 15.7 MB of content down to 6.2 MB, and
+Across the whole corpus TinyJuice cut 15.4 MB of content down to 5.8 MB, and
 every case passes its accuracy gates: signal checks (errors, changed lines,
 matches, class/function signatures survive), task checks, and a byte-exact
 CCR recovery compare.

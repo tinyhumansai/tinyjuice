@@ -46,7 +46,6 @@ category_title() {
     polyglot-source) echo "Polyglot Source And XML" ;;
     github-source) echo "GitHub Source Files" ;;
     github-logs) echo "GitHub Log Files" ;;
-    dockerfiles) echo "Dockerfiles" ;;
     plain-text) echo "Plain Text" ;;
     *) echo "$1" ;;
   esac
@@ -83,9 +82,6 @@ category_summary() {
       ;;
     github-logs)
       echo "Real log files from public GitHub repositories: the loghub corpus (HDFS, Hadoop, Spark, Zookeeper, BGL, HPC, Thunderbird, Windows, Linux, Android, HealthApp, Apache, Proxifier, OpenSSH, OpenStack, macOS), Elastic example datasets (Apache/nginx access logs, auth.log), and CrowdSec parser test fixtures (WAF, Traefik, Authelia, GitLab, Suricata). Sources and licenses in ATTRIBUTION.md."
-      ;;
-    dockerfiles)
-      echo "Real Dockerfiles from official Docker library images and popular projects (postgres, redis, python, golang, mongo, nginx, kubernetes, moby, grafana, prometheus, airflow, and more). Sources and licenses in ATTRIBUTION.md."
       ;;
     plain-text)
       echo "Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged."
@@ -174,7 +170,6 @@ input_file_name() {
       esac
       ;;
     github-logs) echo "input.log" ;;
-    dockerfiles) echo "input.dockerfile" ;;
     plain-text) echo "input.md" ;;
     *) echo "input.txt" ;;
   esac
@@ -208,7 +203,6 @@ output_file_name() {
       esac
       ;;
     github-logs) echo "output.log" ;;
-    dockerfiles) echo "output.dockerfile" ;;
     plain-text) echo "output.md" ;;
     *) echo "output.txt" ;;
   esac
@@ -225,7 +219,6 @@ categories=(
   polyglot-source
   github-source
   github-logs
-  dockerfiles
   plain-text
 )
 
@@ -235,14 +228,14 @@ for category in "${categories[@]}"; do
   {
     printf '# %s\n\n' "$title"
     printf '%s\n\n' "$(category_summary "$category")"
-    printf 'Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0%% means pass-through. `Algorithm` is the compressor-only reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.\n\n'
+    printf 'Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0%% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.\n\n'
     if [[ "$category" == "unified-diff" ]]; then
       printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
     fi
     printf '## Cases\n\n'
     printf 'Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.\n\n'
-    printf '| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |\n'
-    printf '| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n'
+    printf '| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |\n'
+    printf '| --- | --- | --- | --- | ---: | ---: | ---: | ---: |\n'
 
     jq -r --arg category "$category" '
       [.cases[] | select(.docDir | startswith($category + "/cases/"))]
@@ -252,14 +245,14 @@ for category in "${categories[@]}"; do
       | [
           .docDir,
           .originalBytes,
-          (.algorithmTokenReductionPercent | tostring),
+          .algorithmBytes,
+          (.algorithmByteReductionPercent | tostring),
           (.noCcrTokenReductionPercent | tostring),
           (.tokenReductionPercent | tostring),
-          (.avgLatencyMs | tostring),
-          ((.ccrRecoverable // "n/a") | tostring)
+          (.avgLatencyMs | tostring)
         ]
       | @tsv
-    ' "$json_report" | while IFS=$'\t' read -r doc_dir original algo pass1 pass2 latency ccr; do
+    ' "$json_report" | while IFS=$'\t' read -r doc_dir original algo_bytes algo_pct pass1 pass2 latency; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
       input_name="$(input_file_name "$category" "$doc_dir")"
@@ -273,7 +266,7 @@ for category in "${categories[@]}"; do
         -L "output/$output_name" \
         "$input_file" "$output_file" \
         >"$bench_root/$doc_dir/compression.diff" || true
-      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | [diff](%s/compression.diff) | %s | %.1f%% | %.1f%% | %.1f%% | %.3f ms | %s |\n' \
+      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | [diff](%s/compression.diff) | %s -> %s (-%.0f%%) | %.1f%% | %.1f%% | %.3f ms |\n' \
         "$case_name" \
         "$rel_dir" \
         "$input_name" \
@@ -281,11 +274,11 @@ for category in "${categories[@]}"; do
         "$output_name" \
         "$rel_dir" \
         "$(format_bytes "$original")" \
-        "$algo" \
+        "$(format_bytes "$algo_bytes")" \
+        "$algo_pct" \
         "$pass1" \
         "$pass2" \
-        "$latency" \
-        "$ccr"
+        "$latency"
     done
 
     printf '\n## What TinyJuice Is Doing\n\n'
@@ -316,9 +309,6 @@ for category in "${categories[@]}"; do
         ;;
       github-logs)
         printf 'The signal-based log path keeps errors, warnings, stack frames, and summaries and collapses the rest behind per-gap retrieval tokens. Logs with no failure signal (pure access logs) are deliberately passed through rather than blindly truncated.\n'
-        ;;
-      dockerfiles)
-        printf 'Dockerfiles are a coverage/honesty category: they carry no collapsible structure the current compressors target, so the router should pass them through untouched rather than mangle them.\n'
         ;;
       polyglot-source)
         printf 'The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token.\n'

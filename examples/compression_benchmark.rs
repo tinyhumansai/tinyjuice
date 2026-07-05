@@ -157,7 +157,6 @@ fn input_artifact_name(doc_dir: &str) -> &'static str {
         "rust-source" => "input.rs",
         "polyglot-source" | "github-source" => source_input_name(polyglot_lang(doc_dir)),
         "github-logs" => "input.log",
-        "dockerfiles" => "input.dockerfile",
         "plain-text" => "input.md",
         _ => "input.txt",
     }
@@ -173,7 +172,6 @@ fn output_artifact_name(doc_dir: &str) -> &'static str {
         "rust-source" => "output.rs",
         "polyglot-source" | "github-source" => source_output_name(polyglot_lang(doc_dir)),
         "github-logs" => "output.log",
-        "dockerfiles" => "output.dockerfile",
         "plain-text" => "output.md",
         _ => "output.txt",
     }
@@ -881,24 +879,6 @@ fn benchmark_cases() -> Vec<BenchCase> {
                     ..Default::default()
                 },
                 checks: vec![],
-                task_checks: vec![],
-            },
-        ));
-    }
-
-    for doc_dir in category_case_dirs("dockerfiles") {
-        cases.push(make_case(
-            doc_dir,
-            CaseSeed {
-                category: "dockerfiles",
-                family: "dockerfile",
-                description: "Real Dockerfile fetched from a public GitHub repository.",
-                fallback: "FROM debian:bookworm-slim\nRUN apt-get update\n".repeat(40),
-                hint: ContentHint {
-                    source_tool: Some("read_file".to_string()),
-                    ..Default::default()
-                },
-                checks: vec![SignalCheck::present("base image retained", "FROM")],
                 task_checks: vec![],
             },
         ));

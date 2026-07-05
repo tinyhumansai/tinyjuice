@@ -2,20 +2,20 @@
 
 Representative TypeScript, Python, C++, Go, and Rust sources plus an XML document. The language-agnostic code compressor collapses deep bodies across all of them (tree-sitter grammars refine Rust/TS/Python), and XML routes through the readable-text extractor.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Algorithm` is the compressor-only reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
 
 ## Cases
 
 Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
 
-| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `03-cpp-geometry-engine` | [input](cases/03-cpp-geometry-engine/input.cpp) | [output](cases/03-cpp-geometry-engine/output.cpp) | [diff](cases/03-cpp-geometry-engine/compression.diff) | 12.5 KB | 95.8% | 97.5% | 94.1% | 0.047 ms | true |
-| `02-py-etl-pipeline` | [input](cases/02-py-etl-pipeline/input.py) | [output](cases/02-py-etl-pipeline/output.py) | [diff](cases/02-py-etl-pipeline/compression.diff) | 11.9 KB | 88.9% | 91.7% | 87.0% | 0.823 ms | true |
-| `01-ts-api-client` | [input](cases/01-ts-api-client/input.ts) | [output](cases/01-ts-api-client/output.ts) | [diff](cases/01-ts-api-client/compression.diff) | 17.1 KB | 87.5% | 90.5% | 86.2% | 0.988 ms | true |
-| `05-rs-lexer` | [input](cases/05-rs-lexer/input.rs) | [output](cases/05-rs-lexer/output.rs) | [diff](cases/05-rs-lexer/compression.diff) | 9.3 KB | 86.5% | 90.1% | 84.2% | 0.600 ms | true |
-| `04-go-http-server` | [input](cases/04-go-http-server/input.go) | [output](cases/04-go-http-server/output.go) | [diff](cases/04-go-http-server/compression.diff) | 8.8 KB | 85.3% | 89.9% | 82.8% | 0.042 ms | true |
-| `06-xml-maven-pom` | [input](cases/06-xml-maven-pom/input.xml) | [output](cases/06-xml-maven-pom/output.txt) | [diff](cases/06-xml-maven-pom/compression.diff) | 14.2 KB | 76.8% | 76.8% | 75.3% | 0.082 ms | true |
+| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| `03-cpp-geometry-engine` | [input](cases/03-cpp-geometry-engine/input.cpp) | [output](cases/03-cpp-geometry-engine/output.cpp) | [diff](cases/03-cpp-geometry-engine/compression.diff) | 12.5 KB -> 537 B (-96%) | 97.5% | 94.1% | 0.055 ms |
+| `02-py-etl-pipeline` | [input](cases/02-py-etl-pipeline/input.py) | [output](cases/02-py-etl-pipeline/output.py) | [diff](cases/02-py-etl-pipeline/compression.diff) | 11.9 KB -> 1.3 KB (-89%) | 91.7% | 87.0% | 0.890 ms |
+| `01-ts-api-client` | [input](cases/01-ts-api-client/input.ts) | [output](cases/01-ts-api-client/output.ts) | [diff](cases/01-ts-api-client/compression.diff) | 17.1 KB -> 2.2 KB (-87%) | 90.5% | 86.2% | 1.102 ms |
+| `05-rs-lexer` | [input](cases/05-rs-lexer/input.rs) | [output](cases/05-rs-lexer/output.rs) | [diff](cases/05-rs-lexer/compression.diff) | 9.3 KB -> 1.3 KB (-86%) | 90.1% | 84.2% | 0.678 ms |
+| `04-go-http-server` | [input](cases/04-go-http-server/input.go) | [output](cases/04-go-http-server/output.go) | [diff](cases/04-go-http-server/compression.diff) | 8.8 KB -> 1.4 KB (-85%) | 89.9% | 82.8% | 0.052 ms |
+| `06-xml-maven-pom` | [input](cases/06-xml-maven-pom/input.xml) | [output](cases/06-xml-maven-pom/output.txt) | [diff](cases/06-xml-maven-pom/compression.diff) | 14.2 KB -> 3.3 KB (-77%) | 76.8% | 75.3% | 0.087 ms |
 
 ## What TinyJuice Is Doing
 
