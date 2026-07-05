@@ -47,6 +47,144 @@ searching broadly, running noisy commands, and needing a compact but reversible
 view that keeps failures, anomalies, changed hunks, signatures, and matching
 lines visible.
 
+## Agent Hooks
+
+TinyJuice currently ships first-class hook installers for Codex and Claude Code:
+
+| Agent | Install command | Hook file | Hook event |
+| --- | --- | --- | --- |
+| Codex | `tinyjuice install codex` | `~/.codex/hooks.json` | `PostToolUse` for `Bash` |
+| Claude Code | `tinyjuice install claude-code` | `~/.claude/settings.json` | `PostToolUse` for `Bash` |
+
+Install the CLI first from crates.io:
+
+```sh
+cargo install tinyjuice --locked
+```
+
+For development builds, install from Git:
+
+```sh
+cargo install --git https://github.com/tinyhumansai/tinyjuice --locked --bin tinyjuice
+```
+
+Or install the exact code in a local checkout:
+
+```sh
+cargo install --path . --locked --bin tinyjuice
+```
+
+Make sure Cargo's bin directory is on `PATH` before installing hooks:
+
+```sh
+export PATH="$HOME/.cargo/bin:$PATH"
+tinyjuice --help
+```
+
+Then merge TinyJuice into the agent's hook config:
+
+```sh
+tinyjuice install codex
+tinyjuice install claude-code
+```
+
+The Codex installer updates `~/.codex/hooks.json`. When TinyJuice compacts a
+large result, it emits `hookSpecificOutput.additionalContext`, matching Codex's
+hook output model.
+
+The Claude Code installer updates `~/.claude/settings.json`. When TinyJuice
+compacts a large result, it emits `hookSpecificOutput.updatedToolOutput`, so
+Claude Code sees the compacted tool result rather than the noisy original.
+
+Both installers:
+
+- preserve existing hooks and settings
+- replace an older TinyJuice hook for the same host
+- write a `.bak` file next to the edited JSON file
+- expect `tinyjuice` to be on `PATH` unless `--binary` is supplied
+
+Examples:
+
+```sh
+tinyjuice install codex --binary "$HOME/.cargo/bin/tinyjuice"
+tinyjuice install claude-code --path ~/.claude/settings.json
+```
+
+The raw hook entrypoints are also available for custom installers:
+
+```sh
+tinyjuice codex-post-tool-use
+tinyjuice claude-code-post-tool-use
+```
+
+Hook invocations use a disk-backed CCR store so recovery tokens survive the
+short-lived hook process. By default the store lives under the user's cache
+directory at `tinyjuice/ccr`; override it with:
+
+```sh
+export TINYJUICE_CCR_DIR=/path/to/tinyjuice-ccr
+```
+
+Recover a full original from a hook footer:
+
+```sh
+tinyjuice retrieve <token>
+```
+
+Useful hook tuning variables:
+
+```sh
+export TINYJUICE_MIN_BYTES_TO_COMPRESS=2048
+export TINYJUICE_MAX_INLINE_CHARS=1200
+export TINYJUICE_CCR_MIN_TOKENS=500
+export TINYJUICE_CCR_ENABLED=true
+```
+
+Templates remain available for inspection or custom packaging:
+
+```sh
+tinyjuice hosts
+tinyjuice host-template codex
+tinyjuice host-template claude-code
+tinyjuice host-template generic-json
+```
+
+## Benchmarks
+
+Run hot-path benchmarks:
+
+```sh
+cargo bench
+```
+
+Run fixture-driven compression benchmarks:
+
+```sh
+cargo run --release --example compression_benchmark -- --iterations 20
+cargo run --release --example compression_benchmark -- --iterations 20 --format json
+```
+
+Fixture benchmark snapshot from `cargo run --release --example
+compression_benchmark -- --iterations 20`:
+
+| Use case | Compressor | Est. token reduction | Avg latency | CCR recovery |
+| --- | --- | ---: | ---: | --- |
+| JSON service inventory | SmartCrusher | 94.9% | 0.397 ms | yes |
+| Cargo test failure log | Log | 93.6% | 0.667 ms | yes |
+| Docker service log | Log | 99.8% | 1.110 ms | yes |
+| Ripgrep search results | Search | 75.3% | 0.034 ms | yes |
+| Unified diff | Diff | 84.3% | 0.008 ms | yes |
+| HTML status report | HTML | 61.2% | 0.063 ms | yes |
+| Rust source file | Code | 88.6% | 0.199 ms | yes |
+| Plain text with ML off | None | 0.0% | 0.000 ms | n/a |
+
+CCR recovery byte-compares the retrieved original for every lossy compaction.
+These numbers are generated-fixture measurements, not production corpus claims.
+
+See [docs/benchmarking.md](docs/benchmarking.md) for benchmark scope,
+comparison targets, and reporting cautions. See [docs/benchmark](docs/benchmark)
+for human-readable before/after sample reports and accuracy-check details.
+
 ## How It Works
 
 ```text
@@ -89,14 +227,13 @@ the original bytes unchanged.
 - **Generic command fallback** - line-oriented head/tail reduction for command
   output when no specialized rule wins.
 
-TinyJuice does not publish compression percentage claims yet. Throughput
-benchmarks exist for hot paths, but ratio and quality claims require benchmark
-fixtures that prove retained facts, latency, reversibility, and regression
-safety.
+TinyJuice does not publish production-corpus compression percentage claims yet.
+The fixture benchmarks above exercise retained facts, latency, reversibility,
+and regression safety without claiming universal savings.
 
 ## Quick Start
 
-Add TinyJuice to a Rust project once published:
+Add TinyJuice to a Rust project:
 
 ```toml
 [dependencies]
@@ -242,108 +379,6 @@ cat payload.json | tinyjuice reduce-json --host generic-json -
 A bare `ToolExecutionInput` object is also accepted when the host, profile, and
 options can stay at defaults.
 
-### Agent Hooks
-
-TinyJuice currently ships first-class hook installers for Codex and Claude Code:
-
-| Agent | Install command | Hook file | Hook event |
-| --- | --- | --- | --- |
-| Codex | `tinyjuice install codex` | `~/.codex/hooks.json` | `PostToolUse` for `Bash` |
-| Claude Code | `tinyjuice install claude-code` | `~/.claude/settings.json` | `PostToolUse` for `Bash` |
-
-Install the CLI first from crates.io:
-
-```sh
-cargo install tinyjuice --locked
-```
-
-For development builds, install from Git:
-
-```sh
-cargo install --git https://github.com/tinyhumansai/tinyjuice --locked --bin tinyjuice
-```
-
-Or install the exact code in a local checkout:
-
-```sh
-cargo install --path . --locked --bin tinyjuice
-```
-
-Make sure Cargo's bin directory is on `PATH` before installing hooks:
-
-```sh
-export PATH="$HOME/.cargo/bin:$PATH"
-tinyjuice --help
-```
-
-Then merge TinyJuice into the agent's hook config:
-
-```sh
-tinyjuice install codex
-tinyjuice install claude-code
-```
-
-The Codex installer updates `~/.codex/hooks.json`. When TinyJuice compacts a
-large result, it emits `hookSpecificOutput.additionalContext`, matching Codex's
-hook output model.
-
-The Claude Code installer updates `~/.claude/settings.json`. When TinyJuice
-compacts a large result, it emits `hookSpecificOutput.updatedToolOutput`, so
-Claude Code sees the compacted tool result rather than the noisy original.
-
-Both installers:
-
-- preserve existing hooks and settings
-- replace an older TinyJuice hook for the same host
-- write a `.bak` file next to the edited JSON file
-- expect `tinyjuice` to be on `PATH` unless `--binary` is supplied
-
-Examples:
-
-```sh
-tinyjuice install codex --binary "$HOME/.cargo/bin/tinyjuice"
-tinyjuice install claude-code --path ~/.claude/settings.json
-```
-
-The raw hook entrypoints are also available for custom installers:
-
-```sh
-tinyjuice codex-post-tool-use
-tinyjuice claude-code-post-tool-use
-```
-
-Hook invocations use a disk-backed CCR store so recovery tokens survive the
-short-lived hook process. By default the store lives under the user's cache
-directory at `tinyjuice/ccr`; override it with:
-
-```sh
-export TINYJUICE_CCR_DIR=/path/to/tinyjuice-ccr
-```
-
-Recover a full original from a hook footer:
-
-```sh
-tinyjuice retrieve <token>
-```
-
-Useful hook tuning variables:
-
-```sh
-export TINYJUICE_MIN_BYTES_TO_COMPRESS=2048
-export TINYJUICE_MAX_INLINE_CHARS=1200
-export TINYJUICE_CCR_MIN_TOKENS=500
-export TINYJUICE_CCR_ENABLED=true
-```
-
-Templates remain available for inspection or custom packaging:
-
-```sh
-tinyjuice hosts
-tinyjuice host-template codex
-tinyjuice host-template claude-code
-tinyjuice host-template generic-json
-```
-
 ## Local Development
 
 ```sh
@@ -354,40 +389,6 @@ cargo run --example passthrough
 cargo run --bin tinyjuice -- hosts
 cargo run --bin tinyjuice -- host-template codex
 ```
-
-Run hot-path benchmarks:
-
-```sh
-cargo bench
-```
-
-Run fixture-driven compression benchmarks:
-
-```sh
-cargo run --release --example compression_benchmark -- --iterations 20
-cargo run --release --example compression_benchmark -- --iterations 20 --format json
-```
-
-Fixture benchmark snapshot from `cargo run --release --example
-compression_benchmark -- --iterations 20`:
-
-| Use case | Compressor | Est. token reduction | Avg latency | CCR recovery |
-| --- | --- | ---: | ---: | --- |
-| JSON service inventory | SmartCrusher | 94.9% | 0.397 ms | yes |
-| Cargo test failure log | Log | 93.6% | 0.667 ms | yes |
-| Docker service log | Log | 99.8% | 1.110 ms | yes |
-| Ripgrep search results | Search | 75.3% | 0.034 ms | yes |
-| Unified diff | Diff | 84.3% | 0.008 ms | yes |
-| HTML status report | HTML | 61.2% | 0.063 ms | yes |
-| Rust source file | Code | 88.6% | 0.199 ms | yes |
-| Plain text with ML off | None | 0.0% | 0.000 ms | n/a |
-
-CCR recovery byte-compares the retrieved original for every lossy compaction.
-These numbers are generated-fixture measurements, not production corpus claims.
-
-See [docs/benchmarking.md](docs/benchmarking.md) for benchmark scope,
-comparison targets, and reporting cautions. See [docs/benchmark](docs/benchmark)
-for human-readable before/after sample reports and accuracy-check details.
 
 Run the local analytics interface:
 
