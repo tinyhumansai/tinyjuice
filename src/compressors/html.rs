@@ -71,7 +71,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         return None;
     }
     log::debug!(
-        "[tokenjuice][html] {} -> {} bytes",
+        "[tinyjuice][html] {} -> {} bytes",
         content.len(),
         text.len()
     );

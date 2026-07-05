@@ -23,7 +23,7 @@ fn all_builtins_parse_without_error() {
             }
             Err(e) => {
                 parse_failures.push((id, e.to_string()));
-                eprintln!("[tokenjuice/builtin] PARSE FAIL '{}': {}", id, e);
+                eprintln!("[tinyjuice/builtin] PARSE FAIL '{}': {}", id, e);
             }
         }
     }
@@ -32,7 +32,7 @@ fn all_builtins_parse_without_error() {
     for (rule_id, ids) in &id_count {
         if ids.len() > 1 {
             eprintln!(
-                "[tokenjuice/builtin] DUPLICATE id '{}' in entries: {:?}",
+                "[tinyjuice/builtin] DUPLICATE id '{}' in entries: {:?}",
                 rule_id, ids
             );
         }
@@ -85,7 +85,7 @@ fn all_builtins_compile() {
 
     if !compile_issues.is_empty() {
         eprintln!(
-            "[tokenjuice/builtin] {} compile issues (lenient — not failing test):",
+            "[tinyjuice/builtin] {} compile issues (lenient — not failing test):",
             compile_issues.len()
         );
         for issue in &compile_issues {

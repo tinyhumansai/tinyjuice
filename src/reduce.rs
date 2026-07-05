@@ -254,7 +254,7 @@ fn compact_whitespace(text: &str) -> String {
 /// Compiled once at first use; previously `Regex::new` ran per line, which is
 /// a textbook regex-in-a-loop hot-path bug: a `gh pr list` with N rows paid
 /// for N compilations of the same trivial pattern. Matches the project
-/// convention (see `tokenjuice::text::ansi`).
+/// convention (see `tinyjuice::text::ansi`).
 static GH_TABLE_SPLIT_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\s{2,}|\t+").expect("gh table split regex"));
 
@@ -652,7 +652,7 @@ fn apply_rule(
     };
 
     log::debug!(
-        "[tokenjuice] apply_rule '{}': {} lines → head={} tail={} failure={}",
+        "[tinyjuice] apply_rule '{}': {} lines → head={} tail={} failure={}",
         rule.id,
         lines.len(),
         head,
@@ -785,7 +785,7 @@ pub fn reduce_execution_with_rules(
     let classification = classify_execution(&normalized_input, rules, opts.classifier.as_deref());
 
     log::debug!(
-        "[tokenjuice] reduce_execution: tool='{}' raw_chars={} family='{}'",
+        "[tinyjuice] reduce_execution: tool='{}' raw_chars={} family='{}'",
         normalized_input.tool_name,
         measured_raw_chars,
         classification.family
@@ -863,7 +863,7 @@ pub fn reduce_execution_with_rules(
     };
 
     log::debug!(
-        "[tokenjuice] reduce_execution complete: rule='{}' raw={} reduced={} ratio={:.2}",
+        "[tinyjuice] reduce_execution complete: rule='{}' raw={} reduced={} ratio={:.2}",
         classification.matched_reducer.as_deref().unwrap_or("?"),
         measured_raw_chars,
         reduced_chars,

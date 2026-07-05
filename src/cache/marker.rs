@@ -8,15 +8,21 @@
 
 /// The retrieve tool's name, surfaced in footers and used by the harness to
 /// keep the tool's own output from being re-compacted and to always advertise it.
-pub const RETRIEVE_TOOL_NAME: &str = "tokenjuice_retrieve";
+pub const RETRIEVE_TOOL_NAME: &str = "tinyjuice_retrieve";
 
-/// The legacy retrieve tool name (kept as an alias during migration).
+/// Legacy retrieve tool names (kept as aliases during migration): the
+/// pre-rename `tokenjuice_retrieve` and the original `retrieve_tool_output`.
 pub const LEGACY_RETRIEVE_TOOL_NAME: &str = "retrieve_tool_output";
+pub const LEGACY_TOKENJUICE_RETRIEVE_TOOL_NAME: &str = "tokenjuice_retrieve";
 
-/// All CCR recovery tool names. Both must be (a) always advertised to every
+/// All CCR recovery tool names. Each must be (a) always advertised to every
 /// agent — any agent that sees a retrieval footer must be able to call the tool
 /// — and (b) never re-compacted (their job is to return an original in full).
-pub const RECOVERY_TOOL_NAMES: &[&str] = &[RETRIEVE_TOOL_NAME, LEGACY_RETRIEVE_TOOL_NAME];
+pub const RECOVERY_TOOL_NAMES: &[&str] = &[
+    RETRIEVE_TOOL_NAME,
+    LEGACY_TOKENJUICE_RETRIEVE_TOOL_NAME,
+    LEGACY_RETRIEVE_TOOL_NAME,
+];
 
 /// Tools whose output must never be re-compacted. See [`RECOVERY_TOOL_NAMES`].
 pub const NEVER_COMPACT_TOOLS: &[&str] = RECOVERY_TOOL_NAMES;
@@ -76,8 +82,10 @@ pub fn parse_markers(text: &str) -> Vec<String> {
         }
     }
 
-    // Legacy: retrieve_tool_output("HASH") or tokenjuice_retrieve("HASH")
+    // Call-shaped and legacy forms: tinyjuice_retrieve("HASH"),
+    // tokenjuice_retrieve("HASH"), retrieve_tool_output("HASH")
     for needle in [
+        "tinyjuice_retrieve(\"",
         "retrieve_tool_output(\"",
         "tokenjuice_retrieve(\"",
         "token \"",

@@ -36,7 +36,7 @@ pub fn strip_ansi(text: &str) -> String {
     // Remove any lone ESC bytes that slipped through
     let out = s.replace('\x1b', "");
     log::trace!(
-        "[tokenjuice] strip_ansi in_len={} out_len={}",
+        "[tinyjuice] strip_ansi in_len={} out_len={}",
         input_len,
         out.len()
     );

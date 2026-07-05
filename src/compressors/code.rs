@@ -44,7 +44,7 @@ impl Compressor for CodeCompressor {
         // Prefer the AST path when a grammar matches the file's language; fall
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
-        #[cfg(feature = "tokenjuice-treesitter")]
+        #[cfg(feature = "tinyjuice-treesitter")]
         if let Some(ext) = input.hint.extension.as_deref()
             && let Some(out) = treesitter::compress(input.content, ext, per_body_tokens)
         {
@@ -56,7 +56,7 @@ impl Compressor for CodeCompressor {
 
 /// One-line note appended when any collapsed body carries its own token, so
 /// the model knows the placeholders are individually expandable.
-const PER_BODY_NOTE: &str = "\n[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]";
+const PER_BODY_NOTE: &str = "\n[collapsed bodies are individually retrievable: call tinyjuice_retrieve with the token inside a placeholder to expand just that body]";
 
 /// Offload a collapsed body to CCR and return the placeholder token text
 /// (e.g. `⟦tj:abc123⟧`), or an empty string when tokens are disabled or the
@@ -135,7 +135,7 @@ pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<Compre
         return None;
     }
     log::debug!(
-        "[tokenjuice][code] heuristic {} -> {} bytes ({} lines)",
+        "[tinyjuice][code] heuristic {} -> {} bytes ({} lines)",
         content.len(),
         out.len(),
         lines.len()
@@ -197,7 +197,7 @@ fn brace_delta(line: &str) -> (i32, i32) {
 /// source but replaces function/method bodies longer than a threshold with a
 /// `{ … N lines … }` (or `...` for Python) placeholder, preserving signatures,
 /// imports, type declarations and struct/enum fields exactly.
-#[cfg(feature = "tokenjuice-treesitter")]
+#[cfg(feature = "tinyjuice-treesitter")]
 mod treesitter {
     use super::{
         CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE, PER_BODY_NOTE, body_token,
@@ -293,7 +293,7 @@ mod treesitter {
             return None;
         }
         log::debug!(
-            "[tokenjuice][code] tree-sitter ext={} {} -> {} bytes",
+            "[tinyjuice][code] tree-sitter ext={} {} -> {} bytes",
             ext,
             content.len(),
             out.len()
@@ -359,7 +359,7 @@ mod tests {
         assert!(compress_heuristic(src, false).is_none());
     }
 
-    #[cfg(feature = "tokenjuice-treesitter")]
+    #[cfg(feature = "tinyjuice-treesitter")]
     #[test]
     fn treesitter_collapses_rust_body_keeps_struct() {
         let mut src = String::from("use std::collections::HashMap;\n\n");
@@ -386,7 +386,7 @@ mod tests {
         assert!(out.text.len() < src.len());
     }
 
-    #[cfg(feature = "tokenjuice-treesitter")]
+    #[cfg(feature = "tinyjuice-treesitter")]
     #[test]
     fn treesitter_collapses_python_body() {
         let mut src = String::from("import os\n\ndef handler(event):\n");
@@ -491,7 +491,7 @@ mod tests {
         assert!(!out.text.contains("individually retrievable"));
     }
 
-    #[cfg(feature = "tokenjuice-treesitter")]
+    #[cfg(feature = "tinyjuice-treesitter")]
     #[test]
     fn treesitter_per_body_tokens_round_trip() {
         let mut src = String::from("pub fn delta(items: &[i32]) -> i32 {\n");

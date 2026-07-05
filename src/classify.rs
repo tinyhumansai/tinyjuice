@@ -148,7 +148,7 @@ pub fn classify_execution(
         && let Some(rule) = rules.iter().find(|r| r.rule.id == id)
     {
         log::debug!(
-            "[tokenjuice] forced classification: rule='{}' family='{}'",
+            "[tinyjuice] forced classification: rule='{}' family='{}'",
             id,
             rule.rule.family
         );
@@ -167,7 +167,7 @@ pub fn classify_execution(
 
     if matched.is_empty() {
         log::debug!(
-            "[tokenjuice] no rule matched tool='{}' argv={:?} — using generic fallback",
+            "[tinyjuice] no rule matched tool='{}' argv={:?} — using generic fallback",
             input.tool_name,
             input.argv
         );
@@ -193,7 +193,7 @@ pub fn classify_execution(
     };
 
     log::debug!(
-        "[tokenjuice] classified tool='{}' → rule='{}' family='{}' confidence={}",
+        "[tinyjuice] classified tool='{}' → rule='{}' family='{}' confidence={}",
         input.tool_name,
         best.rule.id,
         best.rule.family,

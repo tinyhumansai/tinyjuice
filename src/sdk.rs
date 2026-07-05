@@ -390,7 +390,7 @@ pub fn host_install_spec(host: TinyJuiceHost) -> HostInstallSpec {
                 .to_string(),
             notes: vec![
                 "Map host config into CompressOptions.".to_string(),
-                "Expose a tokenjuice_retrieve tool before enabling lossy CCR views.".to_string(),
+                "Expose a tinyjuice_retrieve tool before enabling lossy CCR views.".to_string(),
             ],
         },
         TinyJuiceHost::RustHarness => HostInstallSpec {

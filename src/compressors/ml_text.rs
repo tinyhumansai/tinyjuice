@@ -4,7 +4,7 @@
 //! compression needs a learned model (Headroom uses ModernBERT token
 //! classification to drop low-salience spans). That path runs the `kompress`
 //! backend of the shared `runtime_python_server` and is **opt-in** behind the
-//! `tokenjuice.ml_compression_enabled` config flag.
+//! `tinyjuice.ml_compression_enabled` config flag.
 //!
 //! This module is the [`Compressor`] slot; it delegates to
 //! [`crate::ml`]. Whenever the flag is off or the Python
@@ -38,7 +38,7 @@ impl Compressor for MlTextCompressor {
             }
             Ok(_) => None,
             Err(e) => {
-                log::debug!("[tokenjuice][ml] unavailable, falling back: {e:#}");
+                log::debug!("[tinyjuice][ml] unavailable, falling back: {e:#}");
                 None
             }
         }

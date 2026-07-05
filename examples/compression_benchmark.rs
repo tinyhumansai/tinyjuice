@@ -641,7 +641,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
                 fallback: ripgrep_results(150),
                 hint: ContentHint {
                     source_tool: Some("rg".to_string()),
-                    query: Some("tokenjuice recover compression".to_string()),
+                    query: Some("tinyjuice recover compression".to_string()),
                     explicit: Some(ContentKind::Search),
                     ..Default::default()
                 },
@@ -653,10 +653,10 @@ fn benchmark_cases() -> Vec<BenchCase> {
                 )],
             },
         );
-        case.command = Some("rg tokenjuice recover compression".to_string());
+        case.command = Some("rg tinyjuice recover compression".to_string());
         case.argv = Some(vec![
             "rg".to_string(),
-            "tokenjuice".to_string(),
+            "tinyjuice".to_string(),
             "recover".to_string(),
             "compression".to_string(),
         ]);
@@ -842,9 +842,9 @@ fn ripgrep_results(lines: usize) -> String {
             _ => "docs/architecture.md",
         };
         let body = if i == 73 {
-            "recover exact original when tokenjuice compression emits a footer".to_string()
+            "recover exact original when tinyjuice compression emits a footer".to_string()
         } else {
-            format!("ordinary tokenjuice mention number {i} in compression path")
+            format!("ordinary tinyjuice mention number {i} in compression path")
         };
         let _ = writeln!(out, "{file}:{}:{body}", 10 + i);
     }

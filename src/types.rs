@@ -304,7 +304,7 @@ pub struct CompactResult {
 /// Per-agent TokenJuice profile.
 ///
 /// `Auto` is resolved by the agent definition layer. TokenJuice itself treats
-/// `Auto` like `Full` so non-agent callers keep the global `[tokenjuice]`
+/// `Auto` like `Full` so non-agent callers keep the global `[tinyjuice]`
 /// behaviour unless they explicitly pass a narrower profile.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -508,7 +508,7 @@ impl CompressOutput {
 }
 
 /// Knobs for the router and compressors, built by the caller from the
-/// `[tokenjuice]` config block. TokenJuice stays decoupled from the config
+/// `[tinyjuice]` config block. TokenJuice stays decoupled from the config
 /// schema crate by taking this plain struct rather than `Config`.
 #[derive(Debug, Clone)]
 pub struct CompressOptions {

@@ -163,7 +163,7 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
         return None;
     }
     log::debug!(
-        "[tokenjuice][search] {} matches -> {} bytes (from {} bytes)",
+        "[tinyjuice][search] {} matches -> {} bytes (from {} bytes)",
         match_count,
         out.len(),
         content.len()

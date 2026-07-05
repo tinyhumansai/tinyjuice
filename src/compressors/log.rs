@@ -95,7 +95,7 @@ fn run_rule_engine(
         ..Default::default()
     };
     // Full three-layer overlay (builtin → user → project) so project rules in
-    // `<cwd>/.tokenjuice/rules/` apply to the compression path, as documented.
+    // `<cwd>/.tinyjuice/rules/` apply to the compression path, as documented.
     let rules = cached_overlay_rules(None);
     let result = reduce_execution_with_rules(exec, &rules, &reduce_opts);
     if result.inline_text.len() >= input.content.len() {
@@ -106,7 +106,7 @@ fn run_rule_engine(
         .matched_reducer
         .unwrap_or(result.classification.family);
     log::debug!(
-        "[tokenjuice][log] command rule={} kind={} {} -> {} bytes",
+        "[tinyjuice][log] command rule={} kind={} {} -> {} bytes",
         rule_label,
         kind.as_str(),
         input.content.len(),
@@ -214,7 +214,7 @@ pub fn compress_signal(content: &str) -> Option<CompressOutput> {
         return None;
     }
     log::debug!(
-        "[tokenjuice][log] signal kept {} of {} line(s)",
+        "[tinyjuice][log] signal kept {} of {} line(s)",
         kept_set.len(),
         lines.len(),
     );

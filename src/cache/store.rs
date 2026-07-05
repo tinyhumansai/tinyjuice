@@ -3,7 +3,7 @@
 //! When a compressor drops data (lossy paths), the router stows the original
 //! here keyed by a short content hash and embeds a retrieval marker in the
 //! compacted text (see [`super::marker`]). The agent calls the
-//! `tokenjuice_retrieve` tool to get the original back on demand — so even
+//! `tinyjuice_retrieve` tool to get the original back on demand — so even
 //! aggressive compaction stays reversible and is safe under the always-on
 //! default.
 //!
@@ -29,7 +29,7 @@ pub const DEFAULT_MAX_BYTES: usize = 64 * 1024 * 1024;
 /// capability token.
 const HASH_BYTES: usize = 16;
 
-/// Tunable limits, settable once at startup from the `[tokenjuice]` config.
+/// Tunable limits, settable once at startup from the `[tinyjuice]` config.
 struct Limits {
     max_entries: usize,
     max_bytes: usize,
@@ -65,13 +65,13 @@ pub fn configure(max_entries: usize, max_bytes: usize, ttl_secs: Option<u64>) {
     l.ttl = ttl_secs.map(Duration::from_secs);
 }
 
-/// Enable the on-disk tier rooted at `root` (e.g. `<workspace>/.tokenjuice/ccr`).
+/// Enable the on-disk tier rooted at `root` (e.g. `<workspace>/.tinyjuice/ccr`).
 /// Best-effort: directory creation failures disable the tier silently.
 pub fn enable_disk_tier(root: PathBuf) {
     if std::fs::create_dir_all(&root).is_ok() {
         *disk_root().write().unwrap_or_else(|p| p.into_inner()) = Some(root);
     } else {
-        log::warn!("[tokenjuice][ccr] could not create disk tier at {root:?}");
+        log::warn!("[tinyjuice][ccr] could not create disk tier at {root:?}");
     }
 }
 
@@ -194,7 +194,7 @@ pub fn offload_checked(content: &str) -> (String, bool) {
         let path = root.join(&hash);
         match std::fs::write(&path, content) {
             Ok(()) => disk_retained = true,
-            Err(e) => log::debug!("[tokenjuice][ccr] disk write failed for {hash}: {e}"),
+            Err(e) => log::debug!("[tinyjuice][ccr] disk write failed for {hash}: {e}"),
         }
     }
     (hash, mem_retained || disk_retained)
@@ -237,7 +237,7 @@ pub fn retrieve(hash: &str) -> Option<String> {
         .clone()?;
     let path = root.join(hash);
     if disk_entry_expired(&path, ttl) {
-        log::debug!("[tokenjuice][ccr] disk entry expired for {hash}");
+        log::debug!("[tinyjuice][ccr] disk entry expired for {hash}");
         let _ = std::fs::remove_file(&path);
         return None;
     }

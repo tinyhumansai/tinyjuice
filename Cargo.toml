@@ -50,8 +50,8 @@ name = "compression"
 harness = false
 
 [features]
-default = ["tokenjuice-treesitter"]
-tokenjuice-treesitter = [
+default = ["tinyjuice-treesitter"]
+tinyjuice-treesitter = [
     "dep:tree-sitter",
     "dep:tree-sitter-python",
     "dep:tree-sitter-rust",

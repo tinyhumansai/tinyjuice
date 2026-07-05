@@ -142,7 +142,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
     let minified = serde_json::to_string(&value).ok()?;
     let output = if minified.len() < content.len() && minified.len() < table.len() {
         log::debug!(
-            "[tokenjuice][json] minified {} rows × {} cols ({} -> {} bytes); markdown table was {} bytes",
+            "[tinyjuice][json] minified {} rows × {} cols ({} -> {} bytes); markdown table was {} bytes",
             rows.len(),
             columns.len(),
             content.len(),
@@ -160,7 +160,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
     };
 
     log::debug!(
-        "[tokenjuice][json] markdown table {} rows × {} cols, lossy={} ({} -> {} bytes)",
+        "[tinyjuice][json] markdown table {} rows × {} cols, lossy={} ({} -> {} bytes)",
         rows.len(),
         columns.len(),
         lossy,

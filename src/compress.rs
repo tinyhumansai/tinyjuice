@@ -136,7 +136,7 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     let compacted_bytes = text.len();
     let compacted_tokens = estimate_tokens(&text);
     log::info!(
-        "[tokenjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
+        "[tinyjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
         kind.as_str(),
         out.kind.as_str(),
         out.lossy,

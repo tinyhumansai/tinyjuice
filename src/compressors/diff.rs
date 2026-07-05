@@ -110,7 +110,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         return None;
     }
     log::debug!(
-        "[tokenjuice][diff] {} -> {} bytes ({} input lines)",
+        "[tinyjuice][diff] {} -> {} bytes ({} input lines)",
         content.len(),
         out.len(),
         lines.len(),
