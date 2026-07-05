@@ -389,7 +389,7 @@ fn strip_ascii_whitespace(s: &str) -> String {
 
 fn diff_path_is_noisy(diff_git_line: &str) -> bool {
     let line = diff_git_line.to_ascii_lowercase();
-    const NOISY_SUFFIXES: &[&str] = &[
+    const LOCKFILE_PATTERNS: &[&str] = &[
         "cargo.lock",
         "package-lock.json",
         "pnpm-lock.yaml",
@@ -398,11 +398,12 @@ fn diff_path_is_noisy(diff_git_line: &str) -> bool {
         "poetry.lock",
         "gemfile.lock",
         "go.sum",
-        ".min.js",
-        ".min.css",
-        ".map",
     ];
-    NOISY_SUFFIXES.iter().any(|suffix| line.contains(suffix))
+    const GENERATED_BUNDLE_PATTERNS: &[&str] = &[".min.js", ".min.css", ".map"];
+    LOCKFILE_PATTERNS
+        .iter()
+        .chain(GENERATED_BUNDLE_PATTERNS)
+        .any(|pattern| line.contains(pattern))
 }
 
 fn log_line_has_priority(line: &str) -> bool {
@@ -496,6 +497,23 @@ mod tests {
         }
         for i in 0..20 {
             diff.push_str(&format!("- old dep version {i}\n"));
+        }
+
+        let estimate = estimate_bloat(&diff, ContentKind::Diff);
+
+        assert_eq!(estimate.reason, BloatReason::DiffNoise);
+        assert!(estimate.score > 80, "{estimate:?}");
+    }
+
+    #[test]
+    fn diff_noise_estimate_detects_generated_bundle_hunks() {
+        let mut diff = String::from("diff --git a/dist/app.min.js b/dist/app.min.js\n");
+        diff.push_str("@@ -1,40 +1,40 @@\n");
+        for i in 0..40 {
+            diff.push_str(&format!("+ minified chunk {i}\n"));
+        }
+        for i in 0..40 {
+            diff.push_str(&format!("- previous minified chunk {i}\n"));
         }
 
         let estimate = estimate_bloat(&diff, ContentKind::Diff);
