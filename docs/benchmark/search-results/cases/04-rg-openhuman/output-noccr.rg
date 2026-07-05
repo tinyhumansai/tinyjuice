@@ -1,4 +1,3 @@
-[search: 500 match(es) across 25 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
 <OPENHUMAN_ROOT>/src/rpc/structured_error.rs:28:pub const STRUCTURED_RPC_ERROR_SENTINEL: &str = "__OPENHUMAN_STRUCTURED_RPC_ERROR_V1__:";
 <OPENHUMAN_ROOT>/src/rpc/structured_error.rs:93:        assert!(StructuredRpcError::decode("__OPENHUMAN_STRUCTURED_RPC_ERROR_V1__").is_none());
 <OPENHUMAN_ROOT>/src/rpc/dispatch.rs:31:        let result = try_dispatch("openhuman.security_policy_info", json!({})).await;
@@ -20,8 +19,45 @@
 <OPENHUMAN_ROOT>/src/api/config.rs:151:/// `OPENHUMAN-TAURI-51 / -80 / -7Z` — Ollama users saw every integration
 <OPENHUMAN_ROOT>/src/api/config.rs:158:        let is_openhuman = looks_like_openhuman_backend_endpoint(u);
 <OPENHUMAN_ROOT>/src/api/config.rs:161:        // local-AI nor an OpenHuman backend, so without this check the override
+<OPENHUMAN_ROOT>/src/api/config.rs:165:        // of the local-AI guard (OPENHUMAN-TAURI-51/-80/-7Z, Ollama).
+<OPENHUMAN_ROOT>/src/api/config.rs:167:            crate::openhuman::config::schema::cloud_providers::endpoint_host(u).is_some_and(|h| {
+<OPENHUMAN_ROOT>/src/api/config.rs:168:                crate::openhuman::config::schema::cloud_providers::host_is_builtin_cloud_provider(
+<OPENHUMAN_ROOT>/src/api/config.rs:178:            is_openhuman,
+<OPENHUMAN_ROOT>/src/api/config.rs:196:        // arm already covered Ollama (`OPENHUMAN-TAURI-51 / -80 / -7Z`); this
+<OPENHUMAN_ROOT>/src/api/config.rs:207:        if (!is_local_ai && !is_inference_provider && !is_cloud_inference) || is_openhuman {
+<OPENHUMAN_ROOT>/src/api/config.rs:229:    // `OPENHUMAN-TAURI-H6 / -HN`, issue #2075).
+<OPENHUMAN_ROOT>/src/api/config.rs:238:/// runner rather than the hosted OpenHuman backend.
+<OPENHUMAN_ROOT>/src/api/config.rs:304:/// an OpenHuman control-plane backend — so backend calls must NOT route there.
+<OPENHUMAN_ROOT>/src/api/config.rs:310:/// recognised by [`looks_like_openhuman_backend_endpoint`] and must route.
+<OPENHUMAN_ROOT>/src/api/config.rs:334:/// provider** base rather than the hosted OpenHuman backend.
+<OPENHUMAN_ROOT>/src/api/config.rs:347:///    never an OpenHuman control-plane base. A bare `/v1/chat/completions` is
+<OPENHUMAN_ROOT>/src/api/config.rs:359:    if looks_like_openhuman_backend_endpoint(trimmed) {
+<OPENHUMAN_ROOT>/src/api/config.rs:391:/// Returns `true` when the URL's host is one of the known OpenHuman backends.
+<OPENHUMAN_ROOT>/src/api/config.rs:396:fn looks_like_openhuman_backend_endpoint(url: &str) -> bool {
+<OPENHUMAN_ROOT>/src/api/config.rs:404:                "[api/config] parsed api_url for OpenHuman backend classification"
 <OPENHUMAN_ROOT>/src/api/config.rs:412:                "[api/config] api_url parse failed during OpenHuman backend classification"
-[+38 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs]
+<OPENHUMAN_ROOT>/src/api/config.rs:421:            "[api/config] api_url has no host — not classified as OpenHuman backend"
+<OPENHUMAN_ROOT>/src/api/config.rs:426:    let is_openhuman = matches!(
+<OPENHUMAN_ROOT>/src/api/config.rs:434:        is_openhuman,
+<OPENHUMAN_ROOT>/src/api/config.rs:435:        "[api/config] OpenHuman backend classification complete"
+<OPENHUMAN_ROOT>/src/api/config.rs:438:    is_openhuman
+<OPENHUMAN_ROOT>/src/api/config.rs:469:/// every backend call — Sentry `OPENHUMAN-TAURI-H6 / -HN`, issue #2075.
+<OPENHUMAN_ROOT>/src/api/config.rs:631:        option_env!("OPENHUMAN_APP_ENV"),
+<OPENHUMAN_ROOT>/src/api/config.rs:632:        option_env!("VITE_OPENHUMAN_APP_ENV"),
+<OPENHUMAN_ROOT>/src/api/config.rs:920:        // Sentry OPENHUMAN-TAURI-H6 / issue #2075.
+<OPENHUMAN_ROOT>/src/api/config.rs:1119:    // ── openhuman_backend detection ───────────────────────────────────────────
+<OPENHUMAN_ROOT>/src/api/config.rs:1122:    fn openhuman_backend_detection_accepts_hosted_api_paths() {
+<OPENHUMAN_ROOT>/src/api/config.rs:1123:        assert!(looks_like_openhuman_backend_endpoint(
+<OPENHUMAN_ROOT>/src/api/config.rs:1126:        assert!(looks_like_openhuman_backend_endpoint(
+<OPENHUMAN_ROOT>/src/api/config.rs:1129:        assert!(!looks_like_openhuman_backend_endpoint(
+<OPENHUMAN_ROOT>/src/api/config.rs:1132:        assert!(!looks_like_openhuman_backend_endpoint(
+<OPENHUMAN_ROOT>/src/api/config.rs:1204:        // Our own hosted backend still passes through (is_openhuman short-circuit),
+<OPENHUMAN_ROOT>/src/api/config.rs:1208:        // non-`/v1` base (see the `my-openhuman.example.com` case) to keep routing.
+<OPENHUMAN_ROOT>/src/api/config.rs:1212:            "openhuman backend host must pass through"
+<OPENHUMAN_ROOT>/src/api/config.rs:1285:    fn inference_provider_excludes_openhuman_backend_and_plain_hosts() {
+<OPENHUMAN_ROOT>/src/api/config.rs:1293:        // A custom self-hosted OpenHuman backend (no provider host, no `/v1`
+<OPENHUMAN_ROOT>/src/api/config.rs:1296:            "https://my-openhuman.example.com/"
+<OPENHUMAN_ROOT>/src/api/config.rs:1336:        // Regression: OPENHUMAN-TAURI-H6 / -HN, issue #2075.
 <OPENHUMAN_ROOT>/src/api/rest.rs:22:    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
 <OPENHUMAN_ROOT>/src/api/rest.rs:33:    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
 <OPENHUMAN_ROOT>/src/api/rest.rs:81:/// silently fall through to `report_error` (OPENHUMAN-TAURI-R7).
@@ -37,16 +73,45 @@
 <OPENHUMAN_ROOT>/src/main.rs:1://! The entry point for the OpenHuman core application.
 <OPENHUMAN_ROOT>/src/main.rs:6://! - Dispatching command-line arguments to the core logic in `openhuman_core`.
 <OPENHUMAN_ROOT>/src/main.rs:23:    // `OPENHUMAN_DOTENV_PATH`; this early call handles the common default
+<OPENHUMAN_ROOT>/src/main.rs:30:    //   1. `OPENHUMAN_CORE_SENTRY_DSN` at runtime (preferred, namespaced name)
+<OPENHUMAN_ROOT>/src/main.rs:31:    //   2. `OPENHUMAN_SENTRY_DSN` at runtime (legacy unprefixed name — kept
+<OPENHUMAN_ROOT>/src/main.rs:37:        dsn: std::env::var("OPENHUMAN_CORE_SENTRY_DSN")
+<OPENHUMAN_ROOT>/src/main.rs:40:            .or_else(|| std::env::var("OPENHUMAN_SENTRY_DSN").ok())
+<OPENHUMAN_ROOT>/src/main.rs:42:            .or_else(|| option_env!("OPENHUMAN_CORE_SENTRY_DSN").map(|s| s.to_string()))
+<OPENHUMAN_ROOT>/src/main.rs:44:            .or_else(|| option_env!("OPENHUMAN_SENTRY_DSN").map(|s| s.to_string()))
+<OPENHUMAN_ROOT>/src/main.rs:56:            // Sentry — see OPENHUMAN-TAURI-2E (~1393 events), -84 (~1050),
 <OPENHUMAN_ROOT>/src/main.rs:58:            // `openhuman::inference::provider::ops::should_report_provider_http_failure`
 <OPENHUMAN_ROOT>/src/main.rs:61:            if openhuman_core::core::observability::is_transient_provider_http_failure(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:64:            if openhuman_core::core::observability::is_all_transient_provider_exhaustion_event(
 <OPENHUMAN_ROOT>/src/main.rs:75:            if openhuman_core::core::observability::is_backend_error_code_event(&event) {
 <OPENHUMAN_ROOT>/src/main.rs:83:            if openhuman_core::core::observability::is_transient_provider_transport_failure(&event)
+<OPENHUMAN_ROOT>/src/main.rs:91:            if openhuman_core::core::observability::is_budget_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:99:            if openhuman_core::core::observability::is_insufficient_credits_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:106:            if openhuman_core::core::observability::is_quota_exhausted_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:115:            if openhuman_core::core::observability::is_ollama_cloud_internal_500_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:125:            // surface for it (OPENHUMAN-TAURI-99 / -98).
+<OPENHUMAN_ROOT>/src/main.rs:126:            if openhuman_core::core::observability::is_max_iterations_event(&event) {
 <OPENHUMAN_ROOT>/src/main.rs:129:            if openhuman_core::core::observability::is_transient_backend_api_failure(&event)
 <OPENHUMAN_ROOT>/src/main.rs:130:                || openhuman_core::core::observability::is_transient_integrations_failure(&event)
+<OPENHUMAN_ROOT>/src/main.rs:131:                || openhuman_core::core::observability::is_updater_transient_event(&event)
 <OPENHUMAN_ROOT>/src/main.rs:132:                || openhuman_core::core::observability::is_skill_install_user_fetch_failure(&event)
 <OPENHUMAN_ROOT>/src/main.rs:142:            if openhuman_core::core::observability::is_skills_install_client_error_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:148:            // site that bypasses it. Targets OPENHUMAN-TAURI-R7 (28 events).
+<OPENHUMAN_ROOT>/src/main.rs:149:            if openhuman_core::core::observability::is_channel_message_not_found_event(&event) {
 <OPENHUMAN_ROOT>/src/main.rs:155:            // lives at the call sites (`openhuman::inference::provider::ops::api_error`
-[+30 more match(es) in <OPENHUMAN_ROOT>/src/main.rs]
+<OPENHUMAN_ROOT>/src/main.rs:160:            // shape — keeping OPENHUMAN-TAURI-25 / -1Q / -27 / -1G off
+<OPENHUMAN_ROOT>/src/main.rs:163:            // `openhuman.auth_get_me` RPC. The primary fix in
+<OPENHUMAN_ROOT>/src/main.rs:170:            if openhuman_core::core::observability::is_auth_get_me_opaque_transport_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:177:            if openhuman_core::core::observability::is_session_expired_event(&event) {
+<OPENHUMAN_ROOT>/src/main.rs:207:                    openhuman_core::openhuman::app_state::peek_cached_current_user_identity()
+<OPENHUMAN_ROOT>/src/main.rs:233:    if let Err(err) = openhuman_core::run_core_from_args(&args) {
+<OPENHUMAN_ROOT>/src/main.rs:256:/// Canonical release tag: `openhuman@<version>[+<short_sha>]`.
+<OPENHUMAN_ROOT>/src/main.rs:264:    let sha = option_env!("OPENHUMAN_BUILD_SHA").unwrap_or("").trim();
+<OPENHUMAN_ROOT>/src/main.rs:267:        format!("openhuman@{version}")
+<OPENHUMAN_ROOT>/src/main.rs:269:        format!("openhuman@{version}+{sha_short}")
+<OPENHUMAN_ROOT>/src/main.rs:275:/// Honors `OPENHUMAN_APP_ENV` at runtime (`staging` / `production`) so the
+<OPENHUMAN_ROOT>/src/main.rs:279:    if let Ok(value) = std::env::var("OPENHUMAN_APP_ENV") {
+<OPENHUMAN_ROOT>/src/main.rs:297:/// `src/openhuman/memory/safety/mod.rs`.
 <OPENHUMAN_ROOT>/src/lib.rs:1://! Core library for the OpenHuman platform.
 <OPENHUMAN_ROOT>/src/lib.rs:3://! This crate provides the central logic for the OpenHuman core binary, including:
 <OPENHUMAN_ROOT>/src/lib.rs:6://! - Domain-specific logic for the OpenHuman agent runtime.
@@ -83,7 +148,14 @@
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:42:use openhuman_core::openhuman::composio::client::{
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:45:use openhuman_core::openhuman::composio::providers::registry::{
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:48:use openhuman_core::openhuman::composio::providers::slack::run_backfill_via_search;
-[+8 more match(es) in <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs]
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:49:use openhuman_core::openhuman::composio::providers::{ProviderContext, SyncReason};
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:50:use openhuman_core::openhuman::composio::types::{
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:53:use openhuman_core::openhuman::config::Config;
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:54:use openhuman_core::openhuman::memory;
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:119:    /// 30 unless `OPENHUMAN_SLACK_BACKFILL_DAYS` overrides.
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:161:    // `RUST_LOG` (e.g. `RUST_LOG=info,openhuman_core=debug`).
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:214:        use openhuman_core::openhuman::memory::ingest_pipeline::ingest_chat;
+<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:215:        use openhuman_core::openhuman::memory_sync::canonicalize::chat::{ChatBatch, ChatMessage};
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:3://! This binary intentionally uses the user's real OpenHuman config and live
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:24:use openhuman_core::openhuman::agent::progress::AgentProgress;
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:25:use openhuman_core::openhuman::agent::Agent;
@@ -104,11 +176,69 @@
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:125:            "OPENHUMAN_CORE_TOKEN",
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:153:    let result = invoke_method(default_state(), "openhuman.health_snapshot", json!({}))
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:161:    let err = invoke_method(default_state(), "openhuman.encrypt_secret", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:171:        "openhuman.doctor_models",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:183:        "openhuman.config_get_runtime_flags",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:195:        "openhuman.autocomplete_status",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:205:    let err = invoke_method(default_state(), "openhuman.auth_store_session", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:215:        "openhuman.service_status",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:228:    let result = invoke_method(default_state(), "openhuman.memory_init", json!({})).await;
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:241:        "openhuman.memory_list_namespaces",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:253:        "openhuman.memory_query_namespace",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:265:        "openhuman.memory_recall_memories",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:277:        "openhuman.migrate_openclaw",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:289:        "openhuman.migrate_hermes",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:298:fn http_schema_dump_includes_openhuman_and_core_methods() {
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:311:            .any(|m| m.method == "openhuman.health_snapshot"),
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:312:        "schema dump should include migrated openhuman methods"
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:318:            .any(|m| m.method == "openhuman.billing_get_current_plan"),
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:325:            .any(|m| m.method == "openhuman.team_list_members"),
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:334:        "openhuman.billing_get_current_plan",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:346:        "openhuman.billing_purchase_plan",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:356:    let err = invoke_method(default_state(), "openhuman.billing_top_up", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:366:        "openhuman.billing_top_up",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:378:        "openhuman.billing_create_portal_session",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:388:    let err = invoke_method(default_state(), "openhuman.team_list_members", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:398:        "openhuman.team_list_members",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:408:    let err = invoke_method(default_state(), "openhuman.team_create_invite", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:418:        "openhuman.team_remove_member",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:430:        "openhuman.team_change_member_role",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:442:        "openhuman.billing_create_coinbase_charge",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:454:        "openhuman.billing_create_coinbase_charge",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:464:    let err = invoke_method(default_state(), "openhuman.team_list_invites", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:474:        "openhuman.team_list_invites",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:484:    let err = invoke_method(default_state(), "openhuman.team_revoke_invite", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:494:        "openhuman.team_revoke_invite",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:507:        "openhuman.billing_get_current_plan",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:508:        "openhuman.billing_purchase_plan",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:509:        "openhuman.billing_create_portal_session",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:510:        "openhuman.billing_top_up",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:511:        "openhuman.billing_create_coinbase_charge",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:512:        "openhuman.team_list_members",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:513:        "openhuman.team_create_invite",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:514:        "openhuman.team_list_invites",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:515:        "openhuman.team_revoke_invite",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:516:        "openhuman.team_remove_member",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:517:        "openhuman.team_change_member_role",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:581:    // Issue #2286: only OpenHuman backend path 401s (HTTP-method prefix) should
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:647:fn is_session_expired_error_matches_openhuman_backend_path_401() {
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:648:    // OpenHuman backend calls via authed_json use the format:
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:696:    // that the user's OpenHuman app session expired.
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:723:fn is_session_expired_error_matches_openhuman_session_expired_body() {
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:727:        r#"OpenHuman API error (401 Unauthorized): {"success":false,"error":"Session expired. Please log in again."}"#
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:752:    // card click would once again log the user out of OpenHuman.
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:777:    // Regression guard for OPENHUMAN-TAURI-20: pre-#1467 cores rejected
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:843:        "OPENHUMAN_WORKSPACE",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:850:        method: "openhuman.threads_generate_title".to_string(),
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:864:        !message.contains("__OPENHUMAN_STRUCTURED_RPC_ERROR_V1__"),
-[+59 more match(es) in <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs]
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:881:        "OPENHUMAN_WORKSPACE",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:918:        method: "openhuman.threads_message_append".to_string(),
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:998:        "OPENHUMAN_WORKSPACE",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1233:        "openhuman.health_snapshot",
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1244:    let err = invoke_method(default_state(), "openhuman.health_snapshot", json!("oops"))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1254:    let result = invoke_method(default_state(), "openhuman.health_snapshot", json!(null)).await;
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1267:    let err = invoke_method(default_state(), "openhuman.totally_made_up_xyz", json!({}))
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1416:        crate::openhuman::wallet::WALLET_NOT_CONFIGURED_MESSAGE
+<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1426:        crate::openhuman::wallet::WALLET_NOT_CONFIGURED_MESSAGE,
 <OPENHUMAN_ROOT>/src/core/logging.rs:1://! Logging for `openhuman run` (and other CLI paths that need stderr output).
 <OPENHUMAN_ROOT>/src/core/logging.rs:6://!   * [`init_for_cli_run`] — stderr only, used by `openhuman run` / CLI
 <OPENHUMAN_ROOT>/src/core/logging.rs:9://!     `<data_dir>/logs/openhuman-YYYY-MM-DD.log`, used by the Tauri shell
@@ -121,7 +251,16 @@
 <OPENHUMAN_ROOT>/src/core/logging.rs:245:                    .filename_prefix("openhuman")
 <OPENHUMAN_ROOT>/src/core/logging.rs:329:/// Drop the file appender's worker guard so the rolling `openhuman-*.log`
 <OPENHUMAN_ROOT>/src/core/logging.rs:374:            format!("off,openhuman_core::openhuman::autocomplete={level}")
-[+10 more match(es) in <OPENHUMAN_ROOT>/src/core/logging.rs]
+<OPENHUMAN_ROOT>/src/core/logging.rs:388:                "off,openhuman_core::openhuman::autocomplete={level}"
+<OPENHUMAN_ROOT>/src/core/logging.rs:418:    /// Serialize tests that mutate `RUST_LOG` / `OPENHUMAN_LOG_FILE_CONSTRAINTS` —
+<OPENHUMAN_ROOT>/src/core/logging.rs:454:        assert_eq!(short_target("openhuman_core::core::rpc"), "rpc");
+<OPENHUMAN_ROOT>/src/core/logging.rs:481:                "off,openhuman_core::openhuman::autocomplete=debug"
+<OPENHUMAN_ROOT>/src/core/logging.rs:488:                "off,openhuman_core::openhuman::autocomplete=trace"
+<OPENHUMAN_ROOT>/src/core/logging.rs:517:        let prior = std::env::var("OPENHUMAN_LOG_FILE_CONSTRAINTS").ok();
+<OPENHUMAN_ROOT>/src/core/logging.rs:518:        std::env::set_var("OPENHUMAN_LOG_FILE_CONSTRAINTS", "rpc, , agent ,memory");
+<OPENHUMAN_ROOT>/src/core/logging.rs:522:        std::env::remove_var("OPENHUMAN_LOG_FILE_CONSTRAINTS");
+<OPENHUMAN_ROOT>/src/core/logging.rs:526:            Some(v) => std::env::set_var("OPENHUMAN_LOG_FILE_CONSTRAINTS", v),
+<OPENHUMAN_ROOT>/src/core/logging.rs:527:            None => std::env::remove_var("OPENHUMAN_LOG_FILE_CONSTRAINTS"),
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:1://! `openhuman memory` — CLI for memory ingestion, graph inspection, and debugging.
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:8://!   openhuman memory ingest  <file|->  [--namespace <ns>] [--key <key>] [--title <title>] [-v]
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:9://!   openhuman memory docs    [--namespace <ns>]
@@ -133,8 +272,27 @@
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:21:/// Entry point for `openhuman memory <subcommand>`.
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:36:            "unknown memory subcommand '{other}'. Run `openhuman memory --help`."
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:45:/// `openhuman memory ingest <file|-> [options]`
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:74:                println!("Usage: openhuman memory ingest <file|-> [options]");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:135:            taint: crate::openhuman::memory::MemoryTaint::Internal,
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:175:/// `openhuman memory docs [--namespace <ns>]`
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:191:                println!("Usage: openhuman memory docs [--namespace <ns>] [-v]");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:216:/// `openhuman memory graph [--namespace <ns>] [--subject <s>] [--predicate <p>]`
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:241:                    "Usage: openhuman memory graph [--namespace <ns>] [--subject <s>] [--predicate <p>] [-v]"
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:271:/// `openhuman memory query --namespace <ns> --query <text> [--limit <n>]`
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:299:                    "Usage: openhuman memory query --namespace <ns> --query <text> [--limit <n>] [-v]"
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:329:/// `openhuman memory namespaces`
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:336:                println!("Usage: openhuman memory namespaces [-v]");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:360:/// `openhuman memory clear --namespace <ns>`
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:376:                println!("Usage: openhuman memory clear --namespace <ns> [-v]");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:436:async fn create_memory_client() -> Result<crate::openhuman::memory_store::MemoryClientRef> {
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:437:    let config = crate::openhuman::config::Config::load_or_init()
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:440:    crate::openhuman::memory::global::init(config.workspace_dir).map_err(anyhow::Error::msg)
-[+20 more match(es) in <OPENHUMAN_ROOT>/src/core/memory_cli.rs]
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:444:    println!("Usage: openhuman memory <subcommand> [options]");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:455:    println!("  openhuman memory ingest notes.md -n my-project -v");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:456:    println!("  echo 'Alice works on ProjectX' | openhuman memory ingest - -n test -v");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:457:    println!("  openhuman memory graph -n my-project");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:458:    println!("  openhuman memory docs -n my-project");
+<OPENHUMAN_ROOT>/src/core/memory_cli.rs:459:    println!("  openhuman memory query -n my-project -q 'who works on what?'");
 <OPENHUMAN_ROOT>/src/core/cli.rs:1://! Command-line interface for the OpenHuman core binary.
 <OPENHUMAN_ROOT>/src/core/cli.rs:30:Contribute & Star us on GitHub: https://github.com/tinyhumansai/openhuman
 <OPENHUMAN_ROOT>/src/core/cli.rs:67:        "mcp" | "mcp-server" => crate::openhuman::mcp_server::run_stdio_from_cli(&args[1..]),
@@ -144,10 +302,34 @@
 <OPENHUMAN_ROOT>/src/core/cli.rs:91:        // Generic namespace dispatcher: `openhuman <namespace> <function> ...`
 <OPENHUMAN_ROOT>/src/core/cli.rs:104:/// `OPENHUMAN_CORE_SENTRY_DSN` env var (or the legacy `OPENHUMAN_SENTRY_DSN`
 <OPENHUMAN_ROOT>/src/core/cli.rs:128:                println!("Usage: openhuman sentry-test [--message <text>] [--panic]");
+<OPENHUMAN_ROOT>/src/core/cli.rs:131:                println!("                    (default: \"openhuman sentry-test ping\")");
+<OPENHUMAN_ROOT>/src/core/cli.rs:136:                    "Requires OPENHUMAN_CORE_SENTRY_DSN (or the legacy OPENHUMAN_SENTRY_DSN alias)"
+<OPENHUMAN_ROOT>/src/core/cli.rs:157:                 Set OPENHUMAN_CORE_SENTRY_DSN (or the legacy OPENHUMAN_SENTRY_DSN alias) \
+<OPENHUMAN_ROOT>/src/core/cli.rs:163:    let msg = message.unwrap_or_else(|| "openhuman sentry-test ping".to_string());
 <OPENHUMAN_ROOT>/src/core/cli.rs:186:        panic!("openhuman sentry-test intentional panic");
+<OPENHUMAN_ROOT>/src/core/cli.rs:199:/// 2. If `OPENHUMAN_DOTENV_PATH` is set, that file is loaded.
+<OPENHUMAN_ROOT>/src/core/cli.rs:202:    match std::env::var("OPENHUMAN_DOTENV_PATH") {
 <OPENHUMAN_ROOT>/src/core/cli.rs:205:                anyhow::anyhow!("failed to load dotenv from OPENHUMAN_DOTENV_PATH={path}: {e}")
+<OPENHUMAN_ROOT>/src/core/cli.rs:266:                println!("Usage: openhuman run [--host <addr>] [--port <u16>] [--jsonrpc-only] [--autocomplete-logs] [-v|--verbose]");
+<OPENHUMAN_ROOT>/src/core/cli.rs:269:                    "  --host <addr>    Bind address (default: 127.0.0.1 or OPENHUMAN_CORE_HOST)"
+<OPENHUMAN_ROOT>/src/core/cli.rs:272:                    "  --port <u16>     Listen address port (default: 7788 or OPENHUMAN_CORE_PORT)"
+<OPENHUMAN_ROOT>/src/core/cli.rs:278:                println!("Logging: set RUST_LOG (e.g. RUST_LOG=debug openhuman run). Default level is info.");
+<OPENHUMAN_ROOT>/src/core/cli.rs:337:                println!("Usage: openhuman call --method <name> [--params '<json>']");
+<OPENHUMAN_ROOT>/src/core/cli.rs:362:/// Dispatches commands that fall under a specific namespace (e.g., `openhuman <namespace> <function>`).
+<OPENHUMAN_ROOT>/src/core/cli.rs:378:            "unknown namespace '{namespace}'. Run `openhuman --help` to see available namespaces."
+<OPENHUMAN_ROOT>/src/core/cli.rs:400:            "unknown function '{namespace} {function}'. Run `openhuman {namespace} --help`."
+<OPENHUMAN_ROOT>/src/core/cli.rs:558:    println!("OpenHuman core CLI\n");
+<OPENHUMAN_ROOT>/src/core/cli.rs:560:    println!("  openhuman run [--host <addr>] [--port <u16>] [--jsonrpc-only] [--verbose]");
+<OPENHUMAN_ROOT>/src/core/cli.rs:561:    println!("  openhuman call --method <name> [--params '<json>']");
+<OPENHUMAN_ROOT>/src/core/cli.rs:563:        "  openhuman mcp [-v|--verbose]              (stdio MCP server; read-only memory tools)"
+<OPENHUMAN_ROOT>/src/core/cli.rs:565:    println!("  openhuman skills <subcommand> [options]   (skill development runtime)");
+<OPENHUMAN_ROOT>/src/core/cli.rs:566:    println!("  openhuman agent <subcommand> [options]    (inspect agent definitions & prompts)");
+<OPENHUMAN_ROOT>/src/core/cli.rs:567:    println!("  openhuman voice [--hotkey <combo>] [--mode <tap|push>]  (voice dictation server)");
+<OPENHUMAN_ROOT>/src/core/cli.rs:568:    println!("  openhuman tree-summarizer <subcommand> [options]  (summary tree CLI)");
 <OPENHUMAN_ROOT>/src/core/cli.rs:569:    println!("  openhuman sentry-test [--message <text>] [--panic]  (verify Sentry wiring)");
-[+25 more match(es) in <OPENHUMAN_ROOT>/src/core/cli.rs]
+<OPENHUMAN_ROOT>/src/core/cli.rs:570:    println!("  openhuman <namespace> <function> [--param value ...]\n");
+<OPENHUMAN_ROOT>/src/core/cli.rs:577:    println!("\nUse `openhuman <namespace> --help` to see functions.");
+<OPENHUMAN_ROOT>/src/core/cli.rs:590:    println!("\nUse `openhuman {namespace} <function> --help` for parameters.");
 <OPENHUMAN_ROOT>/README.md:1:<h1 align="center">OpenHuman</h1>
 <OPENHUMAN_ROOT>/README.md:9:		<img src="https://trendshift.io/api/badge/repositories/23680" alt="tinyhumansai%2Fopenhuman | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
 <OPENHUMAN_ROOT>/README.md:11:	<a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
@@ -157,10 +339,55 @@
 <OPENHUMAN_ROOT>/README.md:19: <a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-topic-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
 <OPENHUMAN_ROOT>/README.md:20:  <img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;topic_id=268&amp;t=1779351808756">
 <OPENHUMAN_ROOT>/README.md:22:  <a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-topic-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
+<OPENHUMAN_ROOT>/README.md:23:   <img alt="OpenHuman - An open source AI harness built with the human in mind | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1136902&amp;theme=light&amp;period=weekly&amp;topic_id=46&amp;t=1779351808756">
+<OPENHUMAN_ROOT>/README.md:28: <strong>OpenHuman is your personal AI super intelligence: a brain that remembers everything, a fantastic orchestrator, a deep researcher. Local-first, simple, powerful.</strong>
+<OPENHUMAN_ROOT>/README.md:35: <a href="https://tinyhumans.gitbook.io/openhuman/">Docs</a> •
+<OPENHUMAN_ROOT>/README.md:45: <a href="https://github.com/tinyhumansai/openhuman/releases/latest"><img src="https://img.shields.io/github/v/release/tinyhumansai/openhuman?label=latest" alt="Latest Release" /></a>
+<OPENHUMAN_ROOT>/README.md:46: <a href="https://github.com/tinyhumansai/openhuman/stargazers"><img src="https://img.shields.io/github/stars/tinyhumansai/openhuman?style=flat" alt="GitHub Stars" /></a>
+<OPENHUMAN_ROOT>/README.md:47: <a href="./LICENSE"><img src="https://img.shields.io/github/license/tinyhumansai/openhuman" alt="License" /></a>
+<OPENHUMAN_ROOT>/README.md:52:> OpenHuman is not AGI. But it is a meaningful architectural step closer, with better memory, better orchestration, and better tooling.
+<OPENHUMAN_ROOT>/README.md:54:> 🎉 Within one week of launch, OpenHuman became the number one trending repository on GitHub for nine days in a row.
+<OPENHUMAN_ROOT>/README.md:58:Download installers from [tinyhumans.ai/openhuman](https://tinyhumans.ai/openhuman?utm_source=github&utm_medium=readme) or from the [GitHub Releases](https://github.com/tinyhumansai/openhuman/releases/latest) page.
+<OPENHUMAN_ROOT>/README.md:62:# What is OpenHuman?
+<OPENHUMAN_ROOT>/README.md:64:OpenHuman is three things most assistants aren't: **a brain** that builds a persistent, local memory of your world; **a fantastic orchestrator** that runs fleets of agents on durable graphs; and **a deep researcher** that sweeps your data and the web before you finish asking. Every bullet links to the deeper writeup in the [docs](https://tinyhumans.gitbook.io/openhuman/).
+<OPENHUMAN_ROOT>/README.md:68:- **[Memory Tree](https://tinyhumans.gitbook.io/openhuman/features/memory-tree) + [Obsidian Wiki](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki)**: your data compressed into scored Markdown trees in SQLite on your machine, mirrored as an [Obsidian vault](https://x.com/karpathy/status/2039805659525644595) you can open and edit. No vector-soup black box.
+<OPENHUMAN_ROOT>/README.md:69:- **[100+ OAuth integrations, 5,000+ MCP servers, 90,000+ Skills](https://tinyhumans.gitbook.io/openhuman/features/integrations)**: one click into Gmail, Notion, GitHub, Slack and the rest of your stack. [Auto-fetch](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/auto-fetch) feeds the brain every 20 minutes, so it has tomorrow's context this morning.
+<OPENHUMAN_ROOT>/README.md:70:- **[A subconscious](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: a background loop that diffs your world, advances your goals, and writes your morning briefing. Thinking continues after you stop typing.
 <OPENHUMAN_ROOT>/README.md:71:- **[Goals & Todos](https://tinyhumans.gitbook.io/openhuman/features/goals-and-todos)**: long-term goals, durable per-thread goals, and a shared kanban board per conversation.
 <OPENHUMAN_ROOT>/README.md:72:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: tool output compressed before it hits the model: same information, up to 80% fewer tokens. A brain this big would be unaffordable without it.
+<OPENHUMAN_ROOT>/README.md:76:- **[Workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows)**: the agent proposes the automation; you review it on a canvas and save. Durable, trigger-driven, approval-gated runs on open-source [tinyflows](https://github.com/tinyhumansai/tinyflows).
+<OPENHUMAN_ROOT>/README.md:77:- **[A harness that finishes the job](https://tinyhumans.gitbook.io/openhuman/developing/architecture/agent-harness)**: checkpointed graph runs on open-source [tinyagents](https://github.com/tinyhumansai/tinyagents). Stuck agents get steered, halted ones return a root cause, and every run replays with real per-call costs.
+<OPENHUMAN_ROOT>/README.md:78:- **[A split brain, always on](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**: a fast reflex agent triages inbound traffic while a deep reasoning core delegates to worker fleets, steered by the subconscious.
+<OPENHUMAN_ROOT>/README.md:79:- **[An agent economy](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: a `@handle` on [tiny.place](https://tiny.place), Signal-encrypted agent-to-agent orchestration, x402 USDC bounties and trading. Keys never touch disk.
+<OPENHUMAN_ROOT>/README.md:83:- **[SuperContext](https://tinyhumans.gitbook.io/openhuman/features/super-context)**: a research scout sweeps your memory and files before the model reads your first message. No cold starts.
+<OPENHUMAN_ROOT>/README.md:84:- **Batteries included**: web search, scraper, coder toolset, a real [browser](https://tinyhumans.gitbook.io/openhuman/features/native-tools/browser-and-computer), and [native voice](gitbooks/features/native-tools/voice.md) with in-process Whisper. [Model routing](https://tinyhumans.gitbook.io/openhuman/features/model-routing) picks the right LLM per workload on one subscription, with [local AI optional](https://tinyhumans.gitbook.io/openhuman/features/model-routing/local-ai).
+<OPENHUMAN_ROOT>/README.md:85:- **[Meeting agents](https://tinyhumans.gitbook.io/openhuman/features/mascot/meeting-agents)**: joins **Meet, Zoom, Teams, and Webex** with a face and a voice. It auto-joins from your calendar, streams a live transcript, answers by name, and files a summary with action items.
+<OPENHUMAN_ROOT>/README.md:86:- **[Image & video generation](https://tinyhumans.gitbook.io/openhuman/features/native-tools)**: Seedream/SeedEdit images and Seedance/Veo video, straight into your workspace on the same subscription.
+<OPENHUMAN_ROOT>/README.md:87:- **[17 messaging channels](https://tinyhumans.gitbook.io/openhuman/features/channels)**: Telegram, Discord, Slack, WhatsApp, Signal, iMessage… plus **native email** (IMAP IDLE + SMTP). Your agent reaches you where you already are.
+<OPENHUMAN_ROOT>/README.md:91:- **Simple, UI-first & Human**: install to working agent in a few clicks, with no config files and no terminal. And it has [a face](https://tinyhumans.gitbook.io/openhuman/features/mascot): a mascot that speaks, reacts, and remembers you.
 <OPENHUMAN_ROOT>/README.md:92:- **[Privacy & security](https://tinyhumans.gitbook.io/openhuman/features/privacy-and-security)**: on-device encrypted data, approval gate, OS-keyring secrets, and opt-in sandboxing. There is also **[Privacy Mode](https://tinyhumans.gitbook.io/openhuman/features/privacy-mode)**: flip one switch and no inference leaves your machine, enforced in the Rust core.
-[+46 more match(es) in <OPENHUMAN_ROOT>/README.md]
+<OPENHUMAN_ROOT>/README.md:93:- **[Themes & Theme Studio](https://tinyhumans.gitbook.io/openhuman/features/theming)**: five theme families plus a full visual editor, exportable as JSON.
+<OPENHUMAN_ROOT>/README.md:97:OpenHuman is the first agent harness that gets to know you in minutes. Inspired by [Karpathy's LLM Knowledgebase](https://x.com/karpathy/status/2039805659525644595). Most agents start cold. Hermes learns by watching you work; OpenClaw waits for plugins to ferry context in. Either way, you spend days or weeks before the agent knows enough about your stack to be genuinely useful.
+<OPENHUMAN_ROOT>/README.md:100: <img src="./gitbooks/.gitbook/assets/memory.png" alt="OpenHuman context-building diagram">
+<OPENHUMAN_ROOT>/README.md:103:> OpenHuman summarizes and compresses all your documents, emails & chats; and creates a memory graph that lets your agent remember everything about you.
+<OPENHUMAN_ROOT>/README.md:105:OpenHuman skips the wait. Connect your accounts, let [auto-fetch](https://tinyhumans.gitbook.io/openhuman/features/integrations/auto-fetch) pull data locally on a 20-minute loop, and then have [Memory Trees](https://tinyhumans.gitbook.io/openhuman/features/memory-tree) compress everything into Markdown files stored intelligently in a [Karpathy-style Obsidian wiki](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki).
+<OPENHUMAN_ROOT>/README.md:109:Already self-host [agentmemory](https://github.com/rohitg00/agentmemory) across other coding agents? OpenHuman ships an optional `Memory` backend that proxies to it. Set `memory.backend = "agentmemory"` in `config.toml` and the same durable store powers OpenHuman alongside Claude Code, Cursor, Codex, and OpenCode. See the [agentmemory backend](https://tinyhumans.gitbook.io/openhuman/features/obsidian-wiki/agentmemory-backend) page for setup.
+<OPENHUMAN_ROOT>/README.md:113:Most agent harnesses run one agent in one loop. OpenHuman is an **[orchestrator](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**:
+<OPENHUMAN_ROOT>/README.md:116: <img src="./gitbooks/.gitbook/assets/orchestration.png" alt="OpenHuman orchestration diagram">
+<OPENHUMAN_ROOT>/README.md:119:> Agent-to-agent messaging runs over Signal-protocol end-to-end encryption, so you can connect anything (Claude Code, Codex, OpenClaw, Hermes) and use OpenHuman to orchestrate all of your agents and tools.
+<OPENHUMAN_ROOT>/README.md:127:Heavily inspired by n8n and Zapier, [workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows) bring the same visual, trigger-driven automation to your agent, except the agent builds them for you. Ask for an automation and it proposes one: a [tinyflows](https://github.com/tinyhumansai/tinyflows) graph you review on a visual canvas before saving.
+<OPENHUMAN_ROOT>/README.md:130: <img src="./gitbooks/.gitbook/assets/workflows.png" alt="OpenHuman workflow canvas">
+<OPENHUMAN_ROOT>/README.md:137:## OpenHuman vs Other Agent Harnesses
+<OPENHUMAN_ROOT>/README.md:139:High-level comparison (products evolve, so verify against each vendor). OpenHuman is built to **minimize vendor sprawl**, keep **workflow knowledge on-device**, and give the agent a **persistent memory** of your data, not only chat.
+<OPENHUMAN_ROOT>/README.md:141:|                        | Claude Cowork     | OpenClaw          | Hermes Agent      | OpenHuman                                                                                                |
+<OPENHUMAN_ROOT>/README.md:165:3. Use `pnpm dev` for web-only UI work, `pnpm --filter openhuman-app dev:app` for the desktop shell, and focused checks such as `pnpm typecheck`, `pnpm format:check`, and `cargo check -p openhuman --lib` before opening a PR.
+<OPENHUMAN_ROOT>/README.md:167:Deeper docs: [Architecture](https://tinyhumans.gitbook.io/openhuman/developing/architecture) · [Getting Set Up](https://tinyhumans.gitbook.io/openhuman/developing/getting-set-up) · [Cloud Deploy](./gitbooks/features/cloud-deploy.md).
+<OPENHUMAN_ROOT>/README.md:174: <a href="https://www.star-history.com/#tinyhumansai/openhuman&type=date&legend=top-left">
+<OPENHUMAN_ROOT>/README.md:176: <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&theme=dark&legend=top-left" />
+<OPENHUMAN_ROOT>/README.md:177: <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
+<OPENHUMAN_ROOT>/README.md:178: <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
+<OPENHUMAN_ROOT>/README.md:187:<a href="https://github.com/tinyhumansai/openhuman/graphs/contributors">
+<OPENHUMAN_ROOT>/README.md:188: <img src="https://contrib.rocks/image?repo=tinyhumansai/openhuman" alt="OpenHuman contributors" />
 <OPENHUMAN_ROOT>/plan.md:3:Multi-agent audit of the OpenHuman test surface (2,367 files / ~25,900 test declarations per
 <OPENHUMAN_ROOT>/plan.md:15:   `src/openhuman/security/policy/command_checks.rs` + `path_checks.rs` (the documented
 <OPENHUMAN_ROOT>/plan.md:17:   and `src/openhuman/encryption/core.rs` (Argon2id + AES-256-GCM primitives) have **zero unit
@@ -172,8 +399,11 @@
 <OPENHUMAN_ROOT>/plan.md:78:| `src/openhuman/memory/schema_tests.rs` | registry-sync + unknown-fn tests | **False duplicate.** `memory/schema/` (singular, `memory_tree` namespace) and `memory/schemas/` (plural, `memory` namespace) are two distinct live registries with disjoint function sets. These are the *only* parity/unknown-fn guards for the `memory_tree` controller surface. |
 <OPENHUMAN_ROOT>/plan.md:79:| `src/openhuman/channels/providers/qq_tests.rs` | `test_name` | Sole coverage of `QQChannel::name()`, which keys routing (`routes.rs:345`) and the channel map (`runtime/startup.rs:701`). A rename would ship uncaught. |
 <OPENHUMAN_ROOT>/plan.md:80:| `src/openhuman/provider_surfaces/schemas.rs` | `all_schemas_returns_two` etc. | Weak but the only guard that the registration lists are populated. **Improve** (see §3), don't delete. |
+<OPENHUMAN_ROOT>/plan.md:91:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::grounding_contract_requires_exact_numeric_evidence` | Pins 5 verbatim prose substrings of the grounding contract — breaks on any copywriting pass. | Behavioral guarantee ("contract appended on every build path") already covered by the marker-based test; convert this to a single explicitly-labeled wording-lock, or assert stable structural markers. |
+<OPENHUMAN_ROOT>/plan.md:92:| ✅ | `src/openhuman/agent/prompts/mod_tests.rs::identity_section_creates_missing_workspace_files` | Also string-matches SOUL.md brand-voice prose (`"Don't validate FUD"`). | Split: (a) files created + seeded from the checked-in template (compare against template file content); (b) a narrow, labeled brand-voice lock if the phrase must stay pinned. |
 <OPENHUMAN_ROOT>/plan.md:94:| ✅ | `src/openhuman/hooks/../useDaemonLifecycle.test.ts` (`app/src/hooks/__tests__/`) | Pins exact `console.log` strings as an effect-rerun proxy. Listener-count assertions are legit — keep them. | Drop the log-text pinning; keep listener/startDaemon observable assertions. |
-[+4 more match(es) in <OPENHUMAN_ROOT>/plan.md]
+<OPENHUMAN_ROOT>/plan.md:95:| ✅ | `src/openhuman/provider_surfaces/schemas.rs::all_schemas_returns_two` / `all_controllers_returns_two` | Magic-number count breaks on any legitimate 3rd controller. | Replace with `schemas().len() == controllers().len()` parity + presence of a known op (`list_queue`). Standardize this as a shared `assert_schema_controller_parity()` helper — the `== N` pattern repeats across ~15 domains. |
+<OPENHUMAN_ROOT>/plan.md:201:   Windows-install test (`OpenHumanWindowsInstall.Tests.ps1`). The mock server's socket-auth
 <OPENHUMAN_ROOT>/docker-compose.yml:1:# OpenHuman Core — Docker Compose for self-hosted cloud deploy.
 <OPENHUMAN_ROOT>/docker-compose.yml:3:# Brings up the headless Rust core (`openhuman-core`) on :7788, persists the
 <OPENHUMAN_ROOT>/docker-compose.yml:9:#      OPENHUMAN_CORE_TOKEN; the latter is required for any client that calls
@@ -186,7 +416,11 @@
 <OPENHUMAN_ROOT>/docker-compose.yml:42:      OPENHUMAN_CORE_PORT: "7788"
 <OPENHUMAN_ROOT>/docker-compose.yml:43:      OPENHUMAN_WORKSPACE: /home/openhuman/.openhuman
 <OPENHUMAN_ROOT>/docker-compose.yml:44:      XDG_CACHE_HOME: /home/openhuman/.openhuman/cache
-[+5 more match(es) in <OPENHUMAN_ROOT>/docker-compose.yml]
+<OPENHUMAN_ROOT>/docker-compose.yml:48:      - openhuman-workspace:/home/openhuman/.openhuman
+<OPENHUMAN_ROOT>/docker-compose.yml:49:    mem_limit: ${OPENHUMAN_CORE_MEM_LIMIT:-4g}
+<OPENHUMAN_ROOT>/docker-compose.yml:50:    cpus: ${OPENHUMAN_CORE_CPUS:-2.0}
+<OPENHUMAN_ROOT>/docker-compose.yml:59:  openhuman-workspace:
+<OPENHUMAN_ROOT>/docker-compose.yml:60:    name: openhuman-workspace
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:1:# Beginner's Guide to Contributing to OpenHuman
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:27:OpenHuman is a desktop AI assistant app. The codebase has three main parts:
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:251:1. Go to [github.com/tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman)
@@ -198,8 +432,14 @@
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:275:# upstream  https://github.com/tinyhumansai/openhuman.git   ← the original
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:314:pnpm --filter openhuman-app dev:app
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:323:1. Go to [github.com/tinyhumansai/openhuman/issues](https://github.com/tinyhumansai/openhuman/issues)
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:393:1. Go to your fork on GitHub: `github.com/YOUR_USERNAME/openhuman`
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:395:3. Make sure the PR targets **`tinyhumansai/openhuman:main`** (not your fork)
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:407:I want to make my first contribution to OpenHuman. First read these upstream docs:
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:409:CONTRIBUTING.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/CONTRIBUTING.md
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:410:AGENTS.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/AGENTS.md
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:411:CLAUDE.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/CLAUDE.md
 <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:470:### Desktop build fails (`pnpm --filter openhuman-app dev:app`)
-[+7 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md]
+<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:482:Thank you for contributing to OpenHuman!
 <OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:20://! [`crate::openhuman::agent::bus::mock_agent_run_turn`]) compose on top of
 <OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:24://! Tests in **any** module of `openhuman_core` can `use
 <OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:61:/// [`crate::openhuman::agent::bus::use_real_agent_handler`] that need the
@@ -215,8 +455,9 @@
 <OPENHUMAN_ROOT>/src/core/all_tests.rs:543:    // be rejected to prevent `openhuman.   _fn` nonsense RPC method names.
 <OPENHUMAN_ROOT>/src/core/all_tests.rs:594:    let out = try_invoke_registered_rpc("openhuman.not_a_real_method_xyz_123", Map::new()).await;
 <OPENHUMAN_ROOT>/src/core/all_tests.rs:600:    // `openhuman.health_snapshot` is registered at startup and takes no
+<OPENHUMAN_ROOT>/src/core/all_tests.rs:602:    let out = try_invoke_registered_rpc("openhuman.health_snapshot", Map::new()).await;
 <OPENHUMAN_ROOT>/src/core/all_tests.rs:608:    let out = try_invoke_registered_rpc("openhuman.security_policy_info", Map::new())
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/all_tests.rs]
+<OPENHUMAN_ROOT>/src/core/all_tests.rs:624:    assert_eq!(rpc_method_name(&s), "openhuman.team_change_member_role");
 <OPENHUMAN_ROOT>/package.json:2:  "name": "openhuman-repo",
 <OPENHUMAN_ROOT>/package.json:9:    "build": "pnpm --filter openhuman-app build",
 <OPENHUMAN_ROOT>/package.json:15:    "compile": "pnpm --filter openhuman-app compile",
@@ -229,7 +470,20 @@
 <OPENHUMAN_ROOT>/package.json:23:    "knip": "pnpm --filter openhuman-app knip",
 <OPENHUMAN_ROOT>/package.json:24:    "knip:production": "pnpm --filter openhuman-app knip:production",
 <OPENHUMAN_ROOT>/package.json:25:    "lint": "pnpm --filter openhuman-app lint",
-[+14 more match(es) in <OPENHUMAN_ROOT>/package.json]
+<OPENHUMAN_ROOT>/package.json:26:    "lint:fix": "pnpm --filter openhuman-app lint:fix",
+<OPENHUMAN_ROOT>/package.json:29:    "tauri": "pnpm --filter openhuman-app tauri",
+<OPENHUMAN_ROOT>/package.json:30:    "test": "pnpm --filter openhuman-app test",
+<OPENHUMAN_ROOT>/package.json:31:    "test:coverage": "pnpm --filter openhuman-app test:coverage",
+<OPENHUMAN_ROOT>/package.json:32:    "test:rust": "pnpm --filter openhuman-app test:rust",
+<OPENHUMAN_ROOT>/package.json:36:    "test:e2e": "pnpm --filter openhuman-app test:e2e:all",
+<OPENHUMAN_ROOT>/package.json:37:    "test:e2e:flows": "pnpm --filter openhuman-app test:e2e:all:flows",
+<OPENHUMAN_ROOT>/package.json:54:    "test:install-ps1": "pwsh -NoProfile -File scripts/tests/OpenHumanWindowsInstall.Tests.ps1",
+<OPENHUMAN_ROOT>/package.json:55:    "rust:check": "pnpm --filter openhuman-app rust:check",
+<OPENHUMAN_ROOT>/package.json:56:    "typecheck": "pnpm --filter openhuman-app compile",
+<OPENHUMAN_ROOT>/package.json:58:    "tauri:ios:dev": "pnpm --filter openhuman-app tauri:ios:dev",
+<OPENHUMAN_ROOT>/package.json:59:    "tauri:ios:build": "pnpm --filter openhuman-app tauri:ios:build",
+<OPENHUMAN_ROOT>/package.json:61:    "tauri:android:dev": "pnpm --filter openhuman-app tauri:android:dev",
+<OPENHUMAN_ROOT>/package.json:62:    "tauri:android:build": "pnpm --filter openhuman-app tauri:android:build",
 <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:26:    // `openhuman.<namespace>_<function>` form was established.
 <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:27:    ("channels.list", "openhuman.channels_list"),
 <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:33:    // `mcp_clients.list` sorts before all `openhuman.*` entries (m < o).
@@ -242,4 +496,5 @@
 <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:45:        "openhuman.get_dashboard_settings",
 <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:46:        "openhuman.config_get_dashboard_settings",
 <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:48:    ("openhuman.get_config", "openhuman.config_get"),
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs]
+<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:50:        "openhuman.get_runtime_flags",
+<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:51:        "openhuman.config_get_runtime_flags",

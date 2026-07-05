@@ -2,7 +2,7 @@
 
 Real log files from public GitHub repositories: the loghub corpus (HDFS, Hadoop, Spark, Zookeeper, BGL, HPC, Thunderbird, Windows, Linux, Android, HealthApp, Apache, Proxifier, OpenSSH, OpenStack, macOS), Elastic example datasets (Apache/nginx access logs, auth.log), and CrowdSec parser test fixtures (WAF, Traefik, Authelia, GitLab, Suricata). Sources and licenses in ATTRIBUTION.md.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. For faithful-reshape categories the two passes are identical (Pass 2 is marginally lower only for the recovery footer); for information-dropping categories Pass 1 is 0% and all the compression happens in Pass 2. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,106 +10,45 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `15-openstack` | [input](cases/15-openstack/input.log) | 595.1 KB -> 906 B (-100%) | 99.9%<br>[output](cases/15-openstack/output-noccr.log) - [diff](cases/15-openstack/compression-noccr.diff) | 99.8%<br>[output](cases/15-openstack/output.log) - [diff](cases/15-openstack/compression.diff) | 2.799 ms |
-| `01-hdfs` | [input](cases/01-hdfs/input.log) | 287.8 KB -> 470 B (-100%) | 99.9%<br>[output](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff) | 99.8%<br>[output](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff) | 1.772 ms |
-| `17-apache-access` | [input](cases/17-apache-access/input.log) | 578.0 KB -> 1.7 KB (-100%) | 99.7%<br>[output](cases/17-apache-access/output-noccr.log) - [diff](cases/17-apache-access/compression-noccr.diff) | 99.7%<br>[output](cases/17-apache-access/output.log) - [diff](cases/17-apache-access/compression.diff) | 16.518 ms |
-| `11-healthapp` | [input](cases/11-healthapp/input.log) | 187.5 KB -> 1.1 KB (-99%) | 99.5%<br>[output](cases/11-healthapp/output-noccr.log) - [diff](cases/11-healthapp/compression-noccr.diff) | 99.4%<br>[output](cases/11-healthapp/output.log) - [diff](cases/11-healthapp/compression.diff) | 5.111 ms |
-| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | 235.6 KB -> 1.9 KB (-99%) | 99.4%<br>[output](cases/34-jvm-gc/output-noccr.log) - [diff](cases/34-jvm-gc/compression-noccr.diff) | 99.2%<br>[output](cases/34-jvm-gc/output.log) - [diff](cases/34-jvm-gc/compression.diff) | 10.757 ms |
-| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | 279.9 KB -> 4.6 KB (-98%) | 98.5%<br>[output](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff) | 98.3%<br>[output](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff) | 4.220 ms |
-| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | 104.5 KB -> 3.8 KB (-96%) | 96.8%<br>[output](cases/30-laravel-app/output-noccr.log) - [diff](cases/30-laravel-app/compression-noccr.diff) | 96.3%<br>[output](cases/30-laravel-app/output.log) - [diff](cases/30-laravel-app/compression.diff) | 3.111 ms |
-| `09-linux` | [input](cases/09-linux/input.log) | 216.5 KB -> 11.2 KB (-95%) | 95.0%<br>[output](cases/09-linux/output-noccr.log) - [diff](cases/09-linux/compression-noccr.diff) | 94.8%<br>[output](cases/09-linux/output.log) - [diff](cases/09-linux/compression.diff) | 6.392 ms |
-| `19-auth-log` | [input](cases/19-auth-log/input.log) | 282.2 KB -> 16.4 KB (-94%) | 94.6%<br>[output](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff) | 94.2%<br>[output](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff) | 7.950 ms |
-| `12-apache-error` | [input](cases/12-apache-error/input.log) | 171.2 KB -> 10.6 KB (-94%) | 94.2%<br>[output](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff) | 93.8%<br>[output](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff) | 2.638 ms |
-| `06-hpc` | [input](cases/06-hpc/input.log) | 151.2 KB -> 9.6 KB (-94%) | 94.1%<br>[output](cases/06-hpc/output-noccr.log) - [diff](cases/06-hpc/compression-noccr.diff) | 93.6%<br>[output](cases/06-hpc/output.log) - [diff](cases/06-hpc/compression.diff) | 5.207 ms |
-| `05-bgl` | [input](cases/05-bgl/input.log) | 317.1 KB -> 20.2 KB (-94%) | 94.0%<br>[output](cases/05-bgl/output-noccr.log) - [diff](cases/05-bgl/compression-noccr.diff) | 93.6%<br>[output](cases/05-bgl/output.log) - [diff](cases/05-bgl/compression.diff) | 3.017 ms |
-| `13-proxifier` | [input](cases/13-proxifier/input.log) | 237.0 KB -> 15.5 KB (-93%) | 93.7%<br>[output](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff) | 93.4%<br>[output](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff) | 7.174 ms |
-| `16-mac` | [input](cases/16-mac/input.log) | 319.4 KB -> 24.3 KB (-92%) | 92.9%<br>[output](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff) | 92.4%<br>[output](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff) | 10.514 ms |
-| `14-openssh` | [input](cases/14-openssh/input.log) | 225.2 KB -> 18.1 KB (-92%) | 92.4%<br>[output](cases/14-openssh/output-noccr.log) - [diff](cases/14-openssh/compression-noccr.diff) | 92.0%<br>[output](cases/14-openssh/output.log) - [diff](cases/14-openssh/compression.diff) | 7.172 ms |
-| `08-windows` | [input](cases/08-windows/input.log) | 285.4 KB -> 28.2 KB (-90%) | 90.5%<br>[output](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff) | 90.1%<br>[output](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff) | 6.795 ms |
-| `02-hadoop` | [input](cases/02-hadoop/input.log) | 384.9 KB -> 38.1 KB (-90%) | 90.4%<br>[output](cases/02-hadoop/output-noccr.log) - [diff](cases/02-hadoop/compression-noccr.diff) | 90.1%<br>[output](cases/02-hadoop/output.log) - [diff](cases/02-hadoop/compression.diff) | 4.417 ms |
-| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | 325.2 KB -> 32.3 KB (-90%) | 90.2%<br>[output](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff) | 90.0%<br>[output](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff) | 7.917 ms |
-| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | 427.0 KB -> 53.7 KB (-87%) | 87.5%<br>[output](cases/20-caddy-coraza-waf/output-noccr.log) - [diff](cases/20-caddy-coraza-waf/compression-noccr.diff) | 87.4%<br>[output](cases/20-caddy-coraza-waf/output.log) - [diff](cases/20-caddy-coraza-waf/compression.diff) | 10.257 ms |
-| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | 16.3 KB -> 3.8 KB (-76%) | 79.3%<br>[output](cases/33-postfix-mail/output-noccr.log) - [diff](cases/33-postfix-mail/compression-noccr.diff) | 75.8%<br>[output](cases/33-postfix-mail/output.log) - [diff](cases/33-postfix-mail/compression.diff) | 0.510 ms |
-| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | 82.7 KB -> 68.4 KB (-17%) | 17.6%<br>[output](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff) | 17.2%<br>[output](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff) | 0.878 ms |
-| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | 412.7 KB -> 353.5 KB (-14%) | 14.4%<br>[output](cases/29-spark-eventlog/output-noccr.log) - [diff](cases/29-spark-eventlog/compression-noccr.diff) | 14.3%<br>[output](cases/29-spark-eventlog/output.log) - [diff](cases/29-spark-eventlog/compression.diff) | 5.297 ms |
-| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | 47.4 KB -> 47.4 KB (-0%) | 0.0%<br>[output](cases/32-w3c-iis/output-noccr.log) - [diff](cases/32-w3c-iis/compression-noccr.diff) | 0.0%<br>[output](cases/32-w3c-iis/output.log) - [diff](cases/32-w3c-iis/compression.diff) | 0.788 ms |
-| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | 71.2 KB -> 71.2 KB (-0%) | 0.0%<br>[output](cases/31-zeek-http/output-noccr.log) - [diff](cases/31-zeek-http/compression-noccr.diff) | 0.0%<br>[output](cases/31-zeek-http/output.log) - [diff](cases/31-zeek-http/compression.diff) | 1.447 ms |
+| `15-openstack` | [input](cases/15-openstack/input.log) | 595.1 KB -> 906 B (-100%) | 0.0%<br>[output](cases/15-openstack/output-noccr.log) - [diff](cases/15-openstack/compression-noccr.diff) | 99.8%<br>[output](cases/15-openstack/output.log) - [diff](cases/15-openstack/compression.diff) | 2.811 ms |
+| `01-hdfs` | [input](cases/01-hdfs/input.log) | 287.8 KB -> 470 B (-100%) | 0.0%<br>[output](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff) | 99.8%<br>[output](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff) | 1.813 ms |
+| `17-apache-access` | [input](cases/17-apache-access/input.log) | 578.0 KB -> 1.7 KB (-100%) | 0.0%<br>[output](cases/17-apache-access/output-noccr.log) - [diff](cases/17-apache-access/compression-noccr.diff) | 99.7%<br>[output](cases/17-apache-access/output.log) - [diff](cases/17-apache-access/compression.diff) | 17.380 ms |
+| `11-healthapp` | [input](cases/11-healthapp/input.log) | 187.5 KB -> 1.1 KB (-99%) | 0.0%<br>[output](cases/11-healthapp/output-noccr.log) - [diff](cases/11-healthapp/compression-noccr.diff) | 99.4%<br>[output](cases/11-healthapp/output.log) - [diff](cases/11-healthapp/compression.diff) | 5.236 ms |
+| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | 235.6 KB -> 1.9 KB (-99%) | 0.0%<br>[output](cases/34-jvm-gc/output-noccr.log) - [diff](cases/34-jvm-gc/compression-noccr.diff) | 99.2%<br>[output](cases/34-jvm-gc/output.log) - [diff](cases/34-jvm-gc/compression.diff) | 10.714 ms |
+| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | 279.9 KB -> 4.6 KB (-98%) | 0.0%<br>[output](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff) | 98.3%<br>[output](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff) | 4.274 ms |
+| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | 104.5 KB -> 3.8 KB (-96%) | 0.0%<br>[output](cases/30-laravel-app/output-noccr.log) - [diff](cases/30-laravel-app/compression-noccr.diff) | 96.3%<br>[output](cases/30-laravel-app/output.log) - [diff](cases/30-laravel-app/compression.diff) | 3.236 ms |
+| `09-linux` | [input](cases/09-linux/input.log) | 216.5 KB -> 11.2 KB (-95%) | 0.0%<br>[output](cases/09-linux/output-noccr.log) - [diff](cases/09-linux/compression-noccr.diff) | 94.8%<br>[output](cases/09-linux/output.log) - [diff](cases/09-linux/compression.diff) | 6.483 ms |
+| `19-auth-log` | [input](cases/19-auth-log/input.log) | 282.2 KB -> 16.4 KB (-94%) | 0.0%<br>[output](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff) | 94.2%<br>[output](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff) | 8.034 ms |
+| `12-apache-error` | [input](cases/12-apache-error/input.log) | 171.2 KB -> 10.6 KB (-94%) | 0.0%<br>[output](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff) | 93.8%<br>[output](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff) | 2.738 ms |
+| `06-hpc` | [input](cases/06-hpc/input.log) | 151.2 KB -> 9.6 KB (-94%) | 0.0%<br>[output](cases/06-hpc/output-noccr.log) - [diff](cases/06-hpc/compression-noccr.diff) | 93.6%<br>[output](cases/06-hpc/output.log) - [diff](cases/06-hpc/compression.diff) | 5.202 ms |
+| `05-bgl` | [input](cases/05-bgl/input.log) | 317.1 KB -> 20.2 KB (-94%) | 0.0%<br>[output](cases/05-bgl/output-noccr.log) - [diff](cases/05-bgl/compression-noccr.diff) | 93.6%<br>[output](cases/05-bgl/output.log) - [diff](cases/05-bgl/compression.diff) | 3.075 ms |
+| `13-proxifier` | [input](cases/13-proxifier/input.log) | 237.0 KB -> 15.5 KB (-93%) | 0.0%<br>[output](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff) | 93.4%<br>[output](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff) | 7.219 ms |
+| `16-mac` | [input](cases/16-mac/input.log) | 319.4 KB -> 24.3 KB (-92%) | 0.0%<br>[output](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff) | 92.4%<br>[output](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff) | 10.509 ms |
+| `14-openssh` | [input](cases/14-openssh/input.log) | 225.2 KB -> 18.1 KB (-92%) | 0.0%<br>[output](cases/14-openssh/output-noccr.log) - [diff](cases/14-openssh/compression-noccr.diff) | 92.0%<br>[output](cases/14-openssh/output.log) - [diff](cases/14-openssh/compression.diff) | 7.160 ms |
+| `08-windows` | [input](cases/08-windows/input.log) | 285.4 KB -> 28.2 KB (-90%) | 0.0%<br>[output](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff) | 90.1%<br>[output](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff) | 7.073 ms |
+| `02-hadoop` | [input](cases/02-hadoop/input.log) | 384.9 KB -> 38.1 KB (-90%) | 0.0%<br>[output](cases/02-hadoop/output-noccr.log) - [diff](cases/02-hadoop/compression-noccr.diff) | 90.1%<br>[output](cases/02-hadoop/output.log) - [diff](cases/02-hadoop/compression.diff) | 4.435 ms |
+| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | 325.2 KB -> 32.3 KB (-90%) | 0.0%<br>[output](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff) | 90.0%<br>[output](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff) | 8.185 ms |
+| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | 427.0 KB -> 53.7 KB (-87%) | 0.0%<br>[output](cases/20-caddy-coraza-waf/output-noccr.log) - [diff](cases/20-caddy-coraza-waf/compression-noccr.diff) | 87.4%<br>[output](cases/20-caddy-coraza-waf/output.log) - [diff](cases/20-caddy-coraza-waf/compression.diff) | 10.371 ms |
+| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | 16.3 KB -> 3.8 KB (-76%) | 0.0%<br>[output](cases/33-postfix-mail/output-noccr.log) - [diff](cases/33-postfix-mail/compression-noccr.diff) | 75.8%<br>[output](cases/33-postfix-mail/output.log) - [diff](cases/33-postfix-mail/compression.diff) | 0.555 ms |
+| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | 82.7 KB -> 68.4 KB (-17%) | 0.0%<br>[output](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff) | 17.2%<br>[output](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff) | 0.895 ms |
+| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | 412.7 KB -> 353.5 KB (-14%) | 0.0%<br>[output](cases/29-spark-eventlog/output-noccr.log) - [diff](cases/29-spark-eventlog/compression-noccr.diff) | 14.3%<br>[output](cases/29-spark-eventlog/output.log) - [diff](cases/29-spark-eventlog/compression.diff) | 5.409 ms |
+| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | 47.4 KB -> 47.4 KB (-0%) | 0.0%<br>[output](cases/32-w3c-iis/output-noccr.log) - [diff](cases/32-w3c-iis/compression-noccr.diff) | 0.0%<br>[output](cases/32-w3c-iis/output.log) - [diff](cases/32-w3c-iis/compression.diff) | 0.880 ms |
+| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | 71.2 KB -> 71.2 KB (-0%) | 0.0%<br>[output](cases/31-zeek-http/output-noccr.log) - [diff](cases/31-zeek-http/compression-noccr.diff) | 0.0%<br>[output](cases/31-zeek-http/output.log) - [diff](cases/31-zeek-http/compression.diff) | 1.496 ms |
 | `27-suricata-eve` | [input](cases/27-suricata-eve/input.log) | 19.4 KB -> 19.4 KB (-0%) | 0.0%<br>[output](cases/27-suricata-eve/output-noccr.log) - [diff](cases/27-suricata-eve/compression-noccr.diff) | 0.0%<br>[output](cases/27-suricata-eve/output.log) - [diff](cases/27-suricata-eve/compression.diff) | 0.002 ms |
 | `26-gitlab-bf` | [input](cases/26-gitlab-bf/input.log) | 40.7 KB -> 40.7 KB (-0%) | 0.0%<br>[output](cases/26-gitlab-bf/output-noccr.log) - [diff](cases/26-gitlab-bf/compression-noccr.diff) | 0.0%<br>[output](cases/26-gitlab-bf/output.log) - [diff](cases/26-gitlab-bf/compression.diff) | 0.004 ms |
-| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | 42.1 KB -> 42.1 KB (-0%) | 0.0%<br>[output](cases/25-sshesame-honeypot/output-noccr.log) - [diff](cases/25-sshesame-honeypot/compression-noccr.diff) | 0.0%<br>[output](cases/25-sshesame-honeypot/output.log) - [diff](cases/25-sshesame-honeypot/compression.diff) | 1.064 ms |
-| `24-http-dos` | [input](cases/24-http-dos/input.log) | 73.0 KB -> 73.0 KB (-0%) | 0.0%<br>[output](cases/24-http-dos/output-noccr.log) - [diff](cases/24-http-dos/compression-noccr.diff) | 0.0%<br>[output](cases/24-http-dos/output.log) - [diff](cases/24-http-dos/compression.diff) | 1.153 ms |
+| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | 42.1 KB -> 42.1 KB (-0%) | 0.0%<br>[output](cases/25-sshesame-honeypot/output-noccr.log) - [diff](cases/25-sshesame-honeypot/compression-noccr.diff) | 0.0%<br>[output](cases/25-sshesame-honeypot/output.log) - [diff](cases/25-sshesame-honeypot/compression.diff) | 1.131 ms |
+| `24-http-dos` | [input](cases/24-http-dos/input.log) | 73.0 KB -> 73.0 KB (-0%) | 0.0%<br>[output](cases/24-http-dos/output-noccr.log) - [diff](cases/24-http-dos/compression-noccr.diff) | 0.0%<br>[output](cases/24-http-dos/output.log) - [diff](cases/24-http-dos/compression.diff) | 1.184 ms |
 | `22-traefik-http` | [input](cases/22-traefik-http/input.log) | 116.4 KB -> 116.4 KB (-0%) | 0.0%<br>[output](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff) | 0.0%<br>[output](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff) | 0.011 ms |
-| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | 133.6 KB -> 133.6 KB (-0%) | 0.0%<br>[output](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff) | 0.0%<br>[output](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff) | 0.206 ms |
-| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | 337.5 KB -> 337.5 KB (-0%) | 0.0%<br>[output](cases/18-nginx-access/output-noccr.log) - [diff](cases/18-nginx-access/compression-noccr.diff) | 0.0%<br>[output](cases/18-nginx-access/output.log) - [diff](cases/18-nginx-access/compression.diff) | 6.452 ms |
-| `10-android` | [input](cases/10-android/input.log) | 279.1 KB -> 279.1 KB (-0%) | 0.0%<br>[output](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff) | 0.0%<br>[output](cases/10-android/output.log) - [diff](cases/10-android/compression.diff) | 6.207 ms |
-| `03-spark` | [input](cases/03-spark/input.log) | 196.3 KB -> 196.3 KB (-0%) | 0.0%<br>[output](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff) | 0.0%<br>[output](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff) | 0.315 ms |
+| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | 133.6 KB -> 133.6 KB (-0%) | 0.0%<br>[output](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff) | 0.0%<br>[output](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff) | 0.220 ms |
+| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | 337.5 KB -> 337.5 KB (-0%) | 0.0%<br>[output](cases/18-nginx-access/output-noccr.log) - [diff](cases/18-nginx-access/compression-noccr.diff) | 0.0%<br>[output](cases/18-nginx-access/output.log) - [diff](cases/18-nginx-access/compression.diff) | 9.206 ms |
+| `10-android` | [input](cases/10-android/input.log) | 279.1 KB -> 279.1 KB (-0%) | 0.0%<br>[output](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff) | 0.0%<br>[output](cases/10-android/output.log) - [diff](cases/10-android/compression.diff) | 6.364 ms |
+| `03-spark` | [input](cases/03-spark/input.log) | 196.3 KB -> 196.3 KB (-0%) | 0.0%<br>[output](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff) | 0.0%<br>[output](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff) | 0.344 ms |
 
 ## What TinyJuice Is Doing
 
 The signal-based log path keeps errors, warnings, stack frames, and summaries and collapses the rest behind per-gap retrieval tokens. Logs with no failure signal (pure access logs) are deliberately passed through rather than blindly truncated.
 
 ## Syntax-Aware Samples
-
-### `01-hdfs`
-
-- [Full input](cases/01-hdfs/input.log)
-- [Output with CCR](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff)
-- [Output without CCR](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-081109 203615 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
-081109 203807 222 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-6952295868487656571 terminating
-081109 204005 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_7128370237687728475 size 67108864
-081109 204015 308 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_8229193803249955061 terminating
-081109 204106 329 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_-6670958622368987959 terminating
-081109 204132 26 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.43.115:50010 is added to blk_3050920587428079149 size 67108864
-081109 204324 34 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.203.80:50010 is added to blk_7888946331804732825 size 67108864
-081109 204453 34 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.11.85:50010 is added to blk_2377150260128098806 size 67108864
-081109 204525 512 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_572492839287299681 terminating
-081109 204655 556 INFO dfs.DataNode$PacketResponder: Received block blk_3587508140051953248 of size 67108864 from /10.251.42.84
-081109 204722 567 INFO dfs.DataNode$PacketResponder: Received block blk_5402003568334525940 of size 67108864 from /10.251.214.112
-081109 204815 653 INFO dfs.DataNode$DataXceiver: Receiving block blk_5792489080791696128 src: /10.251.30.6:33145 dest: /10.251.30.6:50010
-081109 204842 663 INFO dfs.DataNode$DataXceiver: Receiving block blk_1724757848743533110 src: /10.251.111.130:49851 dest: /10.251.111.130:50010
-081109 204908 31 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.110.8:50010 is added to blk_8015913224713045110 size 67108864
-081109 204925 673 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5623176793330377570 src: /10.251.75.228:53725 dest: /10.251.75.228:50010
-081109 205035 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000590_0/part-00590. blk_-1727475099218615100
-081109 205056 710 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_5017373558217225674 terminating
-081109 205157 752 INFO dfs.DataNode$PacketResponder: Received block blk_9212264480425680329 of size 67108864 from /10.251.123.1
-081109 205315 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000742_0/part-00742. blk_-7878121102358435702
-081109 205409 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.111.130:50010 is added to blk_4568434182693165548 size 67108864
-081109 205412 832 INFO dfs.DataNode$PacketResponder: Received block blk_-5704899712662113150 of size 67108864 from /10.251.91.229
-081109 205632 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.74.79:50010 is added to blk_-4794867979917102672 size 67108864
-081109 205739 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.38.197:50010 is added to blk_8763662564934652249 size 67108864
-081109 205742 1001 INFO dfs.DataNode$PacketResponder: Received block blk_-5861636720645142679 of size 67108864 from /10.251.70.211
-081109 205746 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.74.134:50010 is added to blk_7453815855294711849 size 67108864
-081109 205749 997 INFO dfs.DataNode$DataXceiver: Receiving block blk_-28342503914935090 src: /10.251.123.132:57542 dest: /10.251.123.132:50010
-081109 205754 952 INFO dfs.DataNode$PacketResponder: Received block blk_8291449241650212794 of size 67108864 from /10.251.89.155
-081109 205858 31 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000487_0/part-00487. blk_-5319073033164653435
-081109 205931 13 INFO dfs.DataBlockScanner: Verification succeeded for blk_-4980916519894289629
-081109 210022 1110 INFO dfs.DataNode$PacketResponder: Received block blk_-5974833545991408899 of size 67108864 from /10.251.31.180
-081109 210037 1084 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5009020203888190378 src: /10.251.199.19:52622 dest: /10.251.199.19:50010
-081109 210248 1138 INFO dfs.DataNode$PacketResponder: Received block blk_6921674711959888070 of size 67108864 from /10.251.65.203
-081109 210407 33 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.7.244:50010 is added to blk_5165786360127153975 size 67108864
-081109 210458 1278 INFO dfs.DataNode$DataXceiver: Receiving block blk_2937758977269298350 src: /10.251.194.129:37476 dest: /10.251.194.129:50010
-081109 210551 32 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.6.191:50010 is added to blk_673825774073966710 size 67108864
-081109 210637 1283 INFO dfs.DataNode$PacketResponder: Received block blk_-7526945448667194862 of size 67108864 from /10.251.203.80
-
-```
-
-Output excerpt:
-
-```text
-[... 77 line(s) omitted ... ⟦tj:4bec07bb1d48c444a07b61c7e9766683⟧]
-081109 214043 2561 WARN dfs.DataNode$DataXceiver: 10.251.30.85:50010:Got exception while serving blk_-2918118818249673980 to /10.251.90.64:  [×80 first 081109 214043, last 081111 014431]
-[... 1922 line(s) omitted ... ⟦tj:277cd8998699c04f24456f04a5793caa⟧]
-
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
-
-[PARTIAL view — full original (287848 bytes): call tinyjuice_retrieve with token "7c967000980c086ed55fa6544ba4f05f"]
-
-```
 
 ### `15-openstack`
 
@@ -171,6 +110,67 @@ nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:09:41.850 2931 WARNING nova
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [PARTIAL view — full original (595119 bytes): call tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5"]
+
+```
+
+### `01-hdfs`
+
+- [Full input](cases/01-hdfs/input.log)
+- [Output with CCR](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff)
+- [Output without CCR](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+081109 203615 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
+081109 203807 222 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-6952295868487656571 terminating
+081109 204005 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_7128370237687728475 size 67108864
+081109 204015 308 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_8229193803249955061 terminating
+081109 204106 329 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_-6670958622368987959 terminating
+081109 204132 26 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.43.115:50010 is added to blk_3050920587428079149 size 67108864
+081109 204324 34 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.203.80:50010 is added to blk_7888946331804732825 size 67108864
+081109 204453 34 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.11.85:50010 is added to blk_2377150260128098806 size 67108864
+081109 204525 512 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_572492839287299681 terminating
+081109 204655 556 INFO dfs.DataNode$PacketResponder: Received block blk_3587508140051953248 of size 67108864 from /10.251.42.84
+081109 204722 567 INFO dfs.DataNode$PacketResponder: Received block blk_5402003568334525940 of size 67108864 from /10.251.214.112
+081109 204815 653 INFO dfs.DataNode$DataXceiver: Receiving block blk_5792489080791696128 src: /10.251.30.6:33145 dest: /10.251.30.6:50010
+081109 204842 663 INFO dfs.DataNode$DataXceiver: Receiving block blk_1724757848743533110 src: /10.251.111.130:49851 dest: /10.251.111.130:50010
+081109 204908 31 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.110.8:50010 is added to blk_8015913224713045110 size 67108864
+081109 204925 673 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5623176793330377570 src: /10.251.75.228:53725 dest: /10.251.75.228:50010
+081109 205035 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000590_0/part-00590. blk_-1727475099218615100
+081109 205056 710 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_5017373558217225674 terminating
+081109 205157 752 INFO dfs.DataNode$PacketResponder: Received block blk_9212264480425680329 of size 67108864 from /10.251.123.1
+081109 205315 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000742_0/part-00742. blk_-7878121102358435702
+081109 205409 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.111.130:50010 is added to blk_4568434182693165548 size 67108864
+081109 205412 832 INFO dfs.DataNode$PacketResponder: Received block blk_-5704899712662113150 of size 67108864 from /10.251.91.229
+081109 205632 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.74.79:50010 is added to blk_-4794867979917102672 size 67108864
+081109 205739 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.38.197:50010 is added to blk_8763662564934652249 size 67108864
+081109 205742 1001 INFO dfs.DataNode$PacketResponder: Received block blk_-5861636720645142679 of size 67108864 from /10.251.70.211
+081109 205746 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.74.134:50010 is added to blk_7453815855294711849 size 67108864
+081109 205749 997 INFO dfs.DataNode$DataXceiver: Receiving block blk_-28342503914935090 src: /10.251.123.132:57542 dest: /10.251.123.132:50010
+081109 205754 952 INFO dfs.DataNode$PacketResponder: Received block blk_8291449241650212794 of size 67108864 from /10.251.89.155
+081109 205858 31 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000487_0/part-00487. blk_-5319073033164653435
+081109 205931 13 INFO dfs.DataBlockScanner: Verification succeeded for blk_-4980916519894289629
+081109 210022 1110 INFO dfs.DataNode$PacketResponder: Received block blk_-5974833545991408899 of size 67108864 from /10.251.31.180
+081109 210037 1084 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5009020203888190378 src: /10.251.199.19:52622 dest: /10.251.199.19:50010
+081109 210248 1138 INFO dfs.DataNode$PacketResponder: Received block blk_6921674711959888070 of size 67108864 from /10.251.65.203
+081109 210407 33 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.7.244:50010 is added to blk_5165786360127153975 size 67108864
+081109 210458 1278 INFO dfs.DataNode$DataXceiver: Receiving block blk_2937758977269298350 src: /10.251.194.129:37476 dest: /10.251.194.129:50010
+081109 210551 32 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.6.191:50010 is added to blk_673825774073966710 size 67108864
+081109 210637 1283 INFO dfs.DataNode$PacketResponder: Received block blk_-7526945448667194862 of size 67108864 from /10.251.203.80
+
+```
+
+Output excerpt:
+
+```text
+[... 77 line(s) omitted ... ⟦tj:4bec07bb1d48c444a07b61c7e9766683⟧]
+081109 214043 2561 WARN dfs.DataNode$DataXceiver: 10.251.30.85:50010:Got exception while serving blk_-2918118818249673980 to /10.251.90.64:  [×80 first 081109 214043, last 081111 014431]
+[... 1922 line(s) omitted ... ⟦tj:277cd8998699c04f24456f04a5793caa⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (287848 bytes): call tinyjuice_retrieve with token "7c967000980c086ed55fa6544ba4f05f"]
 
 ```
 

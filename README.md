@@ -88,20 +88,24 @@ logs fetched from public GitHub repositories (see the per-category
 (90% means the output shrank to a tenth of its size; 0% means it passed
 through untouched). Two passes are measured:
 
-- **Pass 1 — compression without CCR**: compacted output with omission
-  markers, but no recovery footer. The dropped detail is not retrievable.
-- **Pass 2 — compression with CCR**: the same compaction plus a retrieval
-  footer that lets the agent pull back the exact original on demand. It reads
-  marginally lower than Pass 1 only because the footer adds a few dozen
-  bytes — the compression itself is identical.
+- **Pass 1 — without CCR (lossless)**: only information-preserving output
+  ships. Faithful reshapes — JSON minify/tables, HTML→readable text — still
+  apply because nothing is lost. Anything that would *drop* detail (log lines,
+  diff context, search matches, code bodies, sampled JSON rows) passes the
+  original through untouched: without the recovery cache there is no way to get
+  that detail back, so TinyJuice refuses to emit a view the caller can't
+  recover. Pass 1 is lossless by construction.
+- **Pass 2 — with CCR**: the recovery cache is on, so information-dropping
+  compression is allowed — every dropped block is offloaded behind a retrieval
+  token and the exact original is one call away. This is where logs, diffs,
+  search, and source code actually compress.
 
-Source code is the exception. A collapsed function body is only recoverable
-through CCR, so without CCR there is no safe way to cut it. Rather than eat
-code the caller can't get back, TinyJuice passes source through untouched in
-Pass 1 (0% reduction) and only compresses it in Pass 2, where every collapsed
-body carries a per-block retrieval token. That is why the source-code
-categories read *higher* with CCR than without — the opposite of every other
-row.
+Two shapes show up in the table. **Faithful-reshape** categories (HTML, some
+JSON) compress the same in both passes — Pass 2 reads marginally lower only
+because the optional recovery footer adds a few dozen bytes. **Information-
+dropping** categories (logs, diffs, search, source code) are 0% in Pass 1 —
+lossless pass-through — and only compress in Pass 2, where the drops are
+recoverable.
 
 `Applied` counts the cases where compression actually fired — the rest pass
 through because they are too small or a shape the compressor declines.
@@ -109,16 +113,16 @@ through because they are too small or a shape the compressor declines.
 <!-- bench:table -->
 | Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 86.7% | 85.9% | 1.233 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 77.9% | 69.6% | 0.083 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 75.8% | 0.173 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 68.9% | 0.271 ms |
-| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 58.0% | 57.7% | 4.487 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 35.4% | 35.3% | 1.595 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 32.4% | 31.5% | 0.949 ms |
-| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 12.8% | 76.6% | 0.445 ms |
-| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 3.4% | 30.8% | 0.571 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 0.0% | 26.6% | 0.801 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 75.6% | 0.182 ms |
+| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 12.8% | 76.6% | 0.457 ms |
+| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 3.4% | 30.8% | 0.589 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 0.0% | 35.3% | 1.616 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 0.0% | 69.6% | 0.116 ms |
+| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 0.0% | 85.9% | 1.737 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 0.0% | 31.5% | 1.026 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 0.0% | 68.9% | 0.269 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 0.0% | 26.6% | 0.862 ms |
+| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 0.0% | 57.7% | 4.656 ms |
 | [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
 
 Across the whole corpus TinyJuice cut 15.4 MB of content down to

@@ -540,4 +540,4 @@ maven-surefire-plugin
 maven.repo.local
 ${maven.repo.local}
 
-[PARTIAL view — full original (28981 bytes): call tinyjuice_retrieve with token "3ce5523c596b9e49ee7ed58b8c54117e"]
+[reformatted, no data lost — exact original (28981 bytes): call tinyjuice_retrieve with token "3ce5523c596b9e49ee7ed58b8c54117e"]

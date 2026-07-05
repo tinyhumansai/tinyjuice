@@ -2,7 +2,7 @@
 
 Real OpenHuman runtime crash-log slices, with live Docker OpenHuman logs used first when a container is available. The log compressor keeps incident signals and collapses repeated low-value lines.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. For faithful-reshape categories the two passes are identical (Pass 2 is marginally lower only for the recovery footer); for information-dropping categories Pass 1 is 0% and all the compression happens in Pass 2. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,16 +10,16 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | 41.0 KB -> 916 B (-98%) | 98.2%<br>[output](cases/08-openhuman-crash-slice-8/output-noccr.log) - [diff](cases/08-openhuman-crash-slice-8/compression-noccr.diff) | 97.5%<br>[output](cases/08-openhuman-crash-slice-8/output.log) - [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 0.921 ms |
-| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | 41.0 KB -> 987 B (-98%) | 98.1%<br>[output](cases/06-openhuman-crash-slice-6/output-noccr.log) - [diff](cases/06-openhuman-crash-slice-6/compression-noccr.diff) | 97.3%<br>[output](cases/06-openhuman-crash-slice-6/output.log) - [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 0.972 ms |
-| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | 40.9 KB -> 987 B (-98%) | 98.1%<br>[output](cases/07-openhuman-crash-slice-7/output-noccr.log) - [diff](cases/07-openhuman-crash-slice-7/compression-noccr.diff) | 97.3%<br>[output](cases/07-openhuman-crash-slice-7/output.log) - [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 0.910 ms |
-| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | 38.1 KB -> 1.3 KB (-97%) | 97.3%<br>[output](cases/09-openhuman-crash-slice-9/output-noccr.log) - [diff](cases/09-openhuman-crash-slice-9/compression-noccr.diff) | 96.3%<br>[output](cases/09-openhuman-crash-slice-9/output.log) - [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 0.921 ms |
-| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | 45.9 KB -> 2.1 KB (-95%) | 96.0%<br>[output](cases/03-openhuman-crash-slice-3/output-noccr.log) - [diff](cases/03-openhuman-crash-slice-3/compression-noccr.diff) | 95.2%<br>[output](cases/03-openhuman-crash-slice-3/output.log) - [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 1.089 ms |
-| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | 26.6 KB -> 1.4 KB (-95%) | 95.6%<br>[output](cases/01-openhuman-crash-slice-1/output-noccr.log) - [diff](cases/01-openhuman-crash-slice-1/compression-noccr.diff) | 94.2%<br>[output](cases/01-openhuman-crash-slice-1/output.log) - [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 0.960 ms |
-| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | 47.0 KB -> 3.2 KB (-93%) | 93.8%<br>[output](cases/04-openhuman-crash-slice-4/output-noccr.log) - [diff](cases/04-openhuman-crash-slice-4/compression-noccr.diff) | 92.9%<br>[output](cases/04-openhuman-crash-slice-4/output.log) - [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 1.111 ms |
-| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | 29.7 KB -> 2.1 KB (-93%) | 93.9%<br>[output](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff) | 92.6%<br>[output](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 0.863 ms |
-| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | 44.5 KB -> 3.2 KB (-93%) | 93.5%<br>[output](cases/05-openhuman-crash-slice-5/output-noccr.log) - [diff](cases/05-openhuman-crash-slice-5/compression-noccr.diff) | 92.5%<br>[output](cases/05-openhuman-crash-slice-5/output.log) - [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 0.973 ms |
-| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | 493.4 KB -> 479.4 KB (-3%) | 2.9%<br>[output](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff) | 2.8%<br>[output](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 3.613 ms |
+| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | 41.0 KB -> 916 B (-98%) | 0.0%<br>[output](cases/08-openhuman-crash-slice-8/output-noccr.log) - [diff](cases/08-openhuman-crash-slice-8/compression-noccr.diff) | 97.5%<br>[output](cases/08-openhuman-crash-slice-8/output.log) - [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 1.201 ms |
+| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | 41.0 KB -> 987 B (-98%) | 0.0%<br>[output](cases/06-openhuman-crash-slice-6/output-noccr.log) - [diff](cases/06-openhuman-crash-slice-6/compression-noccr.diff) | 97.3%<br>[output](cases/06-openhuman-crash-slice-6/output.log) - [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 0.983 ms |
+| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | 40.9 KB -> 987 B (-98%) | 0.0%<br>[output](cases/07-openhuman-crash-slice-7/output-noccr.log) - [diff](cases/07-openhuman-crash-slice-7/compression-noccr.diff) | 97.3%<br>[output](cases/07-openhuman-crash-slice-7/output.log) - [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 1.009 ms |
+| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | 38.1 KB -> 1.3 KB (-97%) | 0.0%<br>[output](cases/09-openhuman-crash-slice-9/output-noccr.log) - [diff](cases/09-openhuman-crash-slice-9/compression-noccr.diff) | 96.3%<br>[output](cases/09-openhuman-crash-slice-9/output.log) - [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 1.219 ms |
+| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | 45.9 KB -> 2.1 KB (-95%) | 0.0%<br>[output](cases/03-openhuman-crash-slice-3/output-noccr.log) - [diff](cases/03-openhuman-crash-slice-3/compression-noccr.diff) | 95.2%<br>[output](cases/03-openhuman-crash-slice-3/output.log) - [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 1.295 ms |
+| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | 26.6 KB -> 1.4 KB (-95%) | 0.0%<br>[output](cases/01-openhuman-crash-slice-1/output-noccr.log) - [diff](cases/01-openhuman-crash-slice-1/compression-noccr.diff) | 94.2%<br>[output](cases/01-openhuman-crash-slice-1/output.log) - [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 1.637 ms |
+| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | 47.0 KB -> 3.2 KB (-93%) | 0.0%<br>[output](cases/04-openhuman-crash-slice-4/output-noccr.log) - [diff](cases/04-openhuman-crash-slice-4/compression-noccr.diff) | 92.9%<br>[output](cases/04-openhuman-crash-slice-4/output.log) - [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 1.642 ms |
+| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | 29.7 KB -> 2.1 KB (-93%) | 0.0%<br>[output](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff) | 92.6%<br>[output](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 1.526 ms |
+| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | 44.5 KB -> 3.2 KB (-93%) | 0.0%<br>[output](cases/05-openhuman-crash-slice-5/output-noccr.log) - [diff](cases/05-openhuman-crash-slice-5/compression-noccr.diff) | 92.5%<br>[output](cases/05-openhuman-crash-slice-5/output.log) - [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 2.038 ms |
+| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | 493.4 KB -> 479.4 KB (-3%) | 0.0%<br>[output](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff) | 2.8%<br>[output](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 4.823 ms |
 
 ## What TinyJuice Is Doing
 
@@ -442,80 +442,6 @@ Terminating Process: exc handler [90825]
 
 ```
 
-### `02-openhuman-crash-slice-2`
-
-- [Full input](cases/02-openhuman-crash-slice-2/input.log)
-- [Output with CCR](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff)
-- [Output without CCR](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-Thread 19:: ThreadPoolForegroundWorker
-0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
-1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
-2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
-3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
-4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
-5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
-6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
-7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
-8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
-9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
-10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
-11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
-12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
-
-Thread 20:: ThreadPoolForegroundWorker
-0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
-1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
-2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
-3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
-4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
-5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
-6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
-7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
-8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
-9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
-10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
-11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
-12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
-
-Thread 21:: NetworkNotificationThreadMac
-0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
-1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
-2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
-3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
-4   CoreFoundation                	       0x18ad0b0d8 __CFRunLoopServiceMachPort + 160
-
-```
-
-Output excerpt:
-
-```text
-[... 324 line(s) omitted ... ⟦tj:bcb99c5f052759cf6055d655d6e73e11⟧]
-26  OpenHuman                     	       0x1052256c8 tokio::runtime::task::core::Core$LT$T$C$S$GT$::poll::h3c393af5c9cccfb5 + 72
-27  OpenHuman                     	       0x1052142b8 tokio::runtime::task::harness::poll_future::_$u7b$$u7b$closure$u7d$$u7d$::hbb7135acba10cb1b + 64
-28  OpenHuman                     	       0x10523cae4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::hd44b258fb813656b + 44
-29  OpenHuman                     	       0x1052a64b0 std::panicking::catch_unwind::do_call::h72377314c177ff75 + 64
-30  OpenHuman                     	       0x1052965a4 __rust_try + 32
-31  OpenHuman                     	       0x105291df0 std::panic::catch_unwind::hfd000fe64f5efc68 + 96
-32  OpenHuman                     	       0x105211138 tokio::runtime::task::harness::poll_future::h13c71e773a7b909e + 96
-33  OpenHuman                     	       0x105215998 tokio::runtime::task::harness::Harness$LT$T$C$S$GT$::poll_inner::h8d4c47df8e07256b + 172
-[... 7 line(s) omitted ... ⟦tj:2ed0bc214763cab87cba05b7ba7365c5⟧]
-41  OpenHuman                     	       0x10523d088 std::sys::backtrace::__rust_begin_short_backtrace::hdb34a205259453e8 + 16
-42  OpenHuman                     	       0x10522c42c std::thread::lifecycle::spawn_unchecked::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::h05989c1143d288cd + 116
-43  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
-44  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-45  OpenHuman                     	       0x105232e84 __rust_try + 32
-[... 5 line(s) omitted ... ⟦tj:9e882b305f6417078d0d49f096c0b1d1⟧]
-
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
-
-[PARTIAL view — full original (29717 bytes): call tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09"]
-
-```
-
 ### `04-openhuman-crash-slice-4`
 
 - [Full input](cases/04-openhuman-crash-slice-4/input.log)
@@ -596,6 +522,80 @@ Output excerpt:
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [PARTIAL view — full original (46952 bytes): call tinyjuice_retrieve with token "68101d9a95ec3ff37b0d77c3cbc60a20"]
+
+```
+
+### `02-openhuman-crash-slice-2`
+
+- [Full input](cases/02-openhuman-crash-slice-2/input.log)
+- [Output with CCR](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff)
+- [Output without CCR](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+Thread 19:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 20:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 21:: NetworkNotificationThreadMac
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   CoreFoundation                	       0x18ad0b0d8 __CFRunLoopServiceMachPort + 160
+
+```
+
+Output excerpt:
+
+```text
+[... 324 line(s) omitted ... ⟦tj:bcb99c5f052759cf6055d655d6e73e11⟧]
+26  OpenHuman                     	       0x1052256c8 tokio::runtime::task::core::Core$LT$T$C$S$GT$::poll::h3c393af5c9cccfb5 + 72
+27  OpenHuman                     	       0x1052142b8 tokio::runtime::task::harness::poll_future::_$u7b$$u7b$closure$u7d$$u7d$::hbb7135acba10cb1b + 64
+28  OpenHuman                     	       0x10523cae4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::hd44b258fb813656b + 44
+29  OpenHuman                     	       0x1052a64b0 std::panicking::catch_unwind::do_call::h72377314c177ff75 + 64
+30  OpenHuman                     	       0x1052965a4 __rust_try + 32
+31  OpenHuman                     	       0x105291df0 std::panic::catch_unwind::hfd000fe64f5efc68 + 96
+32  OpenHuman                     	       0x105211138 tokio::runtime::task::harness::poll_future::h13c71e773a7b909e + 96
+33  OpenHuman                     	       0x105215998 tokio::runtime::task::harness::Harness$LT$T$C$S$GT$::poll_inner::h8d4c47df8e07256b + 172
+[... 7 line(s) omitted ... ⟦tj:2ed0bc214763cab87cba05b7ba7365c5⟧]
+41  OpenHuman                     	       0x10523d088 std::sys::backtrace::__rust_begin_short_backtrace::hdb34a205259453e8 + 16
+42  OpenHuman                     	       0x10522c42c std::thread::lifecycle::spawn_unchecked::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::h05989c1143d288cd + 116
+43  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
+44  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
+45  OpenHuman                     	       0x105232e84 __rust_try + 32
+[... 5 line(s) omitted ... ⟦tj:9e882b305f6417078d0d49f096c0b1d1⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (29717 bytes): call tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09"]
 
 ```
 

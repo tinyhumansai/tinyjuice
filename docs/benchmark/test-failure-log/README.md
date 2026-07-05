@@ -2,7 +2,7 @@
 
 Real OpenHuman Vitest command logs. The command-aware reducer keeps failure summaries and drops repetitive success or setup noise.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. For faithful-reshape categories the two passes are identical (Pass 2 is marginally lower only for the recovery footer); for information-dropping categories Pass 1 is 0% and all the compression happens in Pass 2. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,16 +10,16 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | 5.6 KB -> 1.2 KB (-78%) | 79.5%<br>[output](cases/07-vitest-excerpt-7/output-noccr.log) - [diff](cases/07-vitest-excerpt-7/compression-noccr.diff) | 77.3%<br>[output](cases/07-vitest-excerpt-7/output.log) - [diff](cases/07-vitest-excerpt-7/compression.diff) | 0.228 ms |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | 2.8 KB -> 792 B (-71%) | 73.6%<br>[output](cases/01-vitest-unit-20260704-234941/output-noccr.log) - [diff](cases/01-vitest-unit-20260704-234941/compression-noccr.diff) | 69.2%<br>[output](cases/01-vitest-unit-20260704-234941/output.log) - [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 0.141 ms |
-| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | 1.9 KB -> 1.9 KB (-0%) | 78.7%<br>[output](cases/10-vitest-excerpt-10/output-noccr.log) - [diff](cases/10-vitest-excerpt-10/compression-noccr.diff) | 72.7%<br>[output](cases/10-vitest-excerpt-10/output.log) - [diff](cases/10-vitest-excerpt-10/compression.diff) | 0.077 ms |
-| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | 1.9 KB -> 1.9 KB (-0%) | 78.7%<br>[output](cases/09-vitest-excerpt-9/output-noccr.log) - [diff](cases/09-vitest-excerpt-9/compression-noccr.diff) | 72.7%<br>[output](cases/09-vitest-excerpt-9/output.log) - [diff](cases/09-vitest-excerpt-9/compression.diff) | 0.077 ms |
-| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | 1.9 KB -> 1.9 KB (-0%) | 78.6%<br>[output](cases/08-vitest-excerpt-8/output-noccr.log) - [diff](cases/08-vitest-excerpt-8/compression-noccr.diff) | 72.6%<br>[output](cases/08-vitest-excerpt-8/output.log) - [diff](cases/08-vitest-excerpt-8/compression.diff) | 0.080 ms |
-| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | 967 B -> 967 B (-0%) | 78.1%<br>[output](cases/04-vitest-unit-20260704-235125/output-noccr.log) - [diff](cases/04-vitest-unit-20260704-235125/compression-noccr.diff) | 66.5%<br>[output](cases/04-vitest-unit-20260704-235125/output.log) - [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 0.045 ms |
-| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | 967 B -> 967 B (-0%) | 78.1%<br>[output](cases/03-vitest-unit-20260704-235052/output-noccr.log) - [diff](cases/03-vitest-unit-20260704-235052/compression-noccr.diff) | 66.5%<br>[output](cases/03-vitest-unit-20260704-235052/output.log) - [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 0.046 ms |
-| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | 971 B -> 971 B (-0%) | 77.8%<br>[output](cases/06-vitest-unit-20260704-235240/output-noccr.log) - [diff](cases/06-vitest-unit-20260704-235240/compression-noccr.diff) | 66.3%<br>[output](cases/06-vitest-unit-20260704-235240/output.log) - [diff](cases/06-vitest-unit-20260704-235240/compression.diff) | 0.044 ms |
-| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | 970 B -> 970 B (-0%) | 78.2%<br>[output](cases/05-vitest-unit-20260704-235231/output-noccr.log) - [diff](cases/05-vitest-unit-20260704-235231/compression-noccr.diff) | 66.3%<br>[output](cases/05-vitest-unit-20260704-235231/output.log) - [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 0.045 ms |
-| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | 969 B -> 969 B (-0%) | 78.2%<br>[output](cases/02-vitest-unit-20260704-234958/output-noccr.log) - [diff](cases/02-vitest-unit-20260704-234958/compression-noccr.diff) | 66.3%<br>[output](cases/02-vitest-unit-20260704-234958/output.log) - [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 0.047 ms |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | 5.6 KB -> 1.2 KB (-78%) | 0.0%<br>[output](cases/07-vitest-excerpt-7/output-noccr.log) - [diff](cases/07-vitest-excerpt-7/compression-noccr.diff) | 77.3%<br>[output](cases/07-vitest-excerpt-7/output.log) - [diff](cases/07-vitest-excerpt-7/compression.diff) | 0.366 ms |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | 2.8 KB -> 792 B (-71%) | 0.0%<br>[output](cases/01-vitest-unit-20260704-234941/output-noccr.log) - [diff](cases/01-vitest-unit-20260704-234941/compression-noccr.diff) | 69.2%<br>[output](cases/01-vitest-unit-20260704-234941/output.log) - [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 0.231 ms |
+| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | 1.9 KB -> 1.9 KB (-0%) | 0.0%<br>[output](cases/10-vitest-excerpt-10/output-noccr.log) - [diff](cases/10-vitest-excerpt-10/compression-noccr.diff) | 72.7%<br>[output](cases/10-vitest-excerpt-10/output.log) - [diff](cases/10-vitest-excerpt-10/compression.diff) | 0.091 ms |
+| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | 1.9 KB -> 1.9 KB (-0%) | 0.0%<br>[output](cases/09-vitest-excerpt-9/output-noccr.log) - [diff](cases/09-vitest-excerpt-9/compression-noccr.diff) | 72.7%<br>[output](cases/09-vitest-excerpt-9/output.log) - [diff](cases/09-vitest-excerpt-9/compression.diff) | 0.080 ms |
+| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | 1.9 KB -> 1.9 KB (-0%) | 0.0%<br>[output](cases/08-vitest-excerpt-8/output-noccr.log) - [diff](cases/08-vitest-excerpt-8/compression-noccr.diff) | 72.6%<br>[output](cases/08-vitest-excerpt-8/output.log) - [diff](cases/08-vitest-excerpt-8/compression.diff) | 0.091 ms |
+| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | 967 B -> 967 B (-0%) | 0.0%<br>[output](cases/04-vitest-unit-20260704-235125/output-noccr.log) - [diff](cases/04-vitest-unit-20260704-235125/compression-noccr.diff) | 66.5%<br>[output](cases/04-vitest-unit-20260704-235125/output.log) - [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 0.059 ms |
+| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | 967 B -> 967 B (-0%) | 0.0%<br>[output](cases/03-vitest-unit-20260704-235052/output-noccr.log) - [diff](cases/03-vitest-unit-20260704-235052/compression-noccr.diff) | 66.5%<br>[output](cases/03-vitest-unit-20260704-235052/output.log) - [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 0.061 ms |
+| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | 971 B -> 971 B (-0%) | 0.0%<br>[output](cases/06-vitest-unit-20260704-235240/output-noccr.log) - [diff](cases/06-vitest-unit-20260704-235240/compression-noccr.diff) | 66.3%<br>[output](cases/06-vitest-unit-20260704-235240/output.log) - [diff](cases/06-vitest-unit-20260704-235240/compression.diff) | 0.059 ms |
+| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | 970 B -> 970 B (-0%) | 0.0%<br>[output](cases/05-vitest-unit-20260704-235231/output-noccr.log) - [diff](cases/05-vitest-unit-20260704-235231/compression-noccr.diff) | 66.3%<br>[output](cases/05-vitest-unit-20260704-235231/output.log) - [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 0.061 ms |
+| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | 969 B -> 969 B (-0%) | 0.0%<br>[output](cases/02-vitest-unit-20260704-234958/output-noccr.log) - [diff](cases/02-vitest-unit-20260704-234958/compression-noccr.diff) | 66.3%<br>[output](cases/02-vitest-unit-20260704-234958/output.log) - [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 0.064 ms |
 
 ## What TinyJuice Is Doing
 
@@ -306,16 +306,16 @@ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
 
 ```
 
-### `05-vitest-unit-20260704-235231`
+### `01-vitest-unit-20260704-234941`
 
-- [Full input](cases/05-vitest-unit-20260704-235231/input.log)
-- [Output with CCR](cases/05-vitest-unit-20260704-235231/output.log) - [diff](cases/05-vitest-unit-20260704-235231/compression.diff)
-- [Output without CCR](cases/05-vitest-unit-20260704-235231/output-noccr.log) - [diff](cases/05-vitest-unit-20260704-235231/compression-noccr.diff)
+- [Full input](cases/01-vitest-unit-20260704-234941/input.log)
+- [Output with CCR](cases/01-vitest-unit-20260704-234941/output.log) - [diff](cases/01-vitest-unit-20260704-234941/compression.diff)
+- [Output without CCR](cases/01-vitest-unit-20260704-234941/output-noccr.log) - [diff](cases/01-vitest-unit-20260704-234941/compression-noccr.diff)
 
 Input excerpt:
 
 ```text
-11:52:31 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+11:49:42 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
 Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
   banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
     'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
@@ -327,56 +327,30 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
  RUN  v4.1.5 <OPENHUMAN_ROOT>/app
 
+stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx
+[MockServer] Listening on http://127.0.0.1:5005
 
- Test Files  1 passed (1)
-      Tests  13 passed (13)
-   Start at  23:52:32
-   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
+stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx
+[MockServer] Stopped
 
+ ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx (9 tests | 1 failed) 80ms
+     × per-kind spinner: only the triggering kind spins 8ms
 
-```
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
 
-Output excerpt:
+ FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
+Error: expect(element).not.toBeInTheDocument()
 
-```text
-exit 101
-RUN  v4.1.5 <OPENHUMAN_ROOT>/app
- Test Files  1 passed (1)
-      Tests  13 passed (13)
-   Start at  23:52:32
-   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
-
-[PARTIAL view — full original (970 bytes): call tinyjuice_retrieve with token "ddb0cfd662fa34d5f4bba410ef1e402f"]
-
-```
-
-### `02-vitest-unit-20260704-234958`
-
-- [Full input](cases/02-vitest-unit-20260704-234958/input.log)
-- [Output with CCR](cases/02-vitest-unit-20260704-234958/output.log) - [diff](cases/02-vitest-unit-20260704-234958/compression.diff)
-- [Output without CCR](cases/02-vitest-unit-20260704-234958/output-noccr.log) - [diff](cases/02-vitest-unit-20260704-234958/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
+expected document not to contain element, found <button
+  class="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-no...
+  disabled=""
+  type="button"
+>
+  <div
+    class="w-3 h-3 border border-stone-400 border-t-transparent rounded-full animate-spin"
+  />
+  Run review now
+</button> instead
 
 ```
 
@@ -384,13 +358,20 @@ Output excerpt:
 
 ```text
 exit 101
+2 failed suites, 4 failures
 RUN  v4.1.5 <OPENHUMAN_ROOT>/app
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+ ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx (9 tests | 1 failed) 80ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
+Error: expect(element).not.toBeInTheDocument()
+ ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx:144:54
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  23:49:42
+   Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
-[PARTIAL view — full original (969 bytes): call tinyjuice_retrieve with token "33584aa40077e45faaf15e86ed05b667"]
+[PARTIAL view — full original (2777 bytes): call tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5"]
 
 ```
 
@@ -526,16 +507,16 @@ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
 
 ```
 
-### `01-vitest-unit-20260704-234941`
+### `05-vitest-unit-20260704-235231`
 
-- [Full input](cases/01-vitest-unit-20260704-234941/input.log)
-- [Output with CCR](cases/01-vitest-unit-20260704-234941/output.log) - [diff](cases/01-vitest-unit-20260704-234941/compression.diff)
-- [Output without CCR](cases/01-vitest-unit-20260704-234941/output-noccr.log) - [diff](cases/01-vitest-unit-20260704-234941/compression-noccr.diff)
+- [Full input](cases/05-vitest-unit-20260704-235231/input.log)
+- [Output with CCR](cases/05-vitest-unit-20260704-235231/output.log) - [diff](cases/05-vitest-unit-20260704-235231/compression.diff)
+- [Output without CCR](cases/05-vitest-unit-20260704-235231/output-noccr.log) - [diff](cases/05-vitest-unit-20260704-235231/compression-noccr.diff)
 
 Input excerpt:
 
 ```text
-11:49:42 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+11:52:31 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
 Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
   banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
     'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
@@ -547,30 +528,12 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
  RUN  v4.1.5 <OPENHUMAN_ROOT>/app
 
-stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx
-[MockServer] Listening on http://127.0.0.1:5005
 
-stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx
-[MockServer] Stopped
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  23:52:32
+   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
 
- ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx (9 tests | 1 failed) 80ms
-     × per-kind spinner: only the triggering kind spins 8ms
-
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
-
- FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
-Error: expect(element).not.toBeInTheDocument()
-
-expected document not to contain element, found <button
-  class="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-no...
-  disabled=""
-  type="button"
->
-  <div
-    class="w-3 h-3 border border-stone-400 border-t-transparent rounded-full animate-spin"
-  />
-  Run review now
-</button> instead
 
 ```
 
@@ -578,20 +541,57 @@ Output excerpt:
 
 ```text
 exit 101
-2 failed suites, 4 failures
 RUN  v4.1.5 <OPENHUMAN_ROOT>/app
- ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx (9 tests | 1 failed) 80ms
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
- FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
-Error: expect(element).not.toBeInTheDocument()
- ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx:144:54
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
- Test Files  1 failed (1)
-      Tests  1 failed | 8 passed (9)
-   Start at  23:49:42
-   Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  23:52:32
+   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
 
-[PARTIAL view — full original (2777 bytes): call tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5"]
+[PARTIAL view — full original (970 bytes): call tinyjuice_retrieve with token "ddb0cfd662fa34d5f4bba410ef1e402f"]
+
+```
+
+### `02-vitest-unit-20260704-234958`
+
+- [Full input](cases/02-vitest-unit-20260704-234958/input.log)
+- [Output with CCR](cases/02-vitest-unit-20260704-234958/output.log) - [diff](cases/02-vitest-unit-20260704-234958/compression.diff)
+- [Output without CCR](cases/02-vitest-unit-20260704-234958/output-noccr.log) - [diff](cases/02-vitest-unit-20260704-234958/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+[PARTIAL view — full original (969 bytes): call tinyjuice_retrieve with token "33584aa40077e45faaf15e86ed05b667"]
 
 ```
 

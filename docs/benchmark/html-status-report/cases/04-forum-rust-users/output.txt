@@ -327,4 +327,4 @@ Terms of Service
 
 Powered by Discourse, best viewed with JavaScript enabled
 
-[PARTIAL view — full original (83922 bytes): call tinyjuice_retrieve with token "3ef374c298be77e40221b21f750f635c"]
+[reformatted, no data lost — exact original (83922 bytes): call tinyjuice_retrieve with token "3ef374c298be77e40221b21f750f635c"]

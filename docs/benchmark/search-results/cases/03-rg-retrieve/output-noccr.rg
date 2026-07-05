@@ -1,4 +1,3 @@
-[search: 500 match(es) across 174 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
 <OPENHUMAN_ROOT>/src/core/all.rs:296:    // TokenJuice content-router debug controllers (detect / compress / cache_stats / retrieve)
 <OPENHUMAN_ROOT>/src/core/all.rs:708:/// Retrieves the schema for a specific RPC method.
 <OPENHUMAN_ROOT>/src/openhuman/agent_memory/memory_loader.rs:161:    let entries = crate::openhuman::tinyagents::retriever::recall_through_facade(
@@ -39,7 +38,7 @@
 <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:83:    .expect("fast_retrieve should succeed");
 <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:112:    let resp = fast_retrieve(
 <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:115:        FastRetrieveOptions::default(),
-[+1 more match(es) in <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs]
+<OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:126:    let resp = fast_retrieve(&cfg, "anything at all", FastRetrieveOptions::default())
 <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:48:**Why local memory *is* the privacy design.** Most assistants trade privacy for context, because more context means more of your raw data uploaded. OpenHuman does the heavy work (chunking, scoring, summarizing) inside the local core, so the model only ever sees what you asked it to retrieve, at the moment you ask. Locality is the privacy feature, not a setting bolted on top.
 <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:82:* [ ] Are you comfortable that model turns send *retrieved snippets*, not your whole memory?
 <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:88:| "OpenHuman uploads my whole memory to answer." | It sends only what it retrieves for that specific turn. |
@@ -61,7 +60,8 @@
 <OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:182:        to_json(crate::openhuman::agent_experience::ops::retrieve(params).await?)
 <OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:212:    fn schemas_cover_capture_retrieve_list_and_dismiss() {
 <OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:220:            BTreeSet::from(["capture", "retrieve", "list", "dismiss"])
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs]
+<OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:231:    fn retrieve_schema_has_query_and_tools_inputs() {
+<OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:232:        let schema = schemas("retrieve");
 <OPENHUMAN_ROOT>/src/openhuman/agent_experience/ops.rs:14:pub struct RetrieveParams {
 <OPENHUMAN_ROOT>/src/openhuman/agent_experience/ops.rs:58:pub async fn retrieve(params: RetrieveParams) -> Result<RpcOutcome<Vec<ExperienceHit>>, String> {
 <OPENHUMAN_ROOT>/src/openhuman/agent_experience/ops.rs:61:        .retrieve(ExperienceQuery {
@@ -190,7 +190,11 @@
 <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:48:                    "description": "The hash from a retrieve_tool_output(\"…\") marker."
 <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:67:                "retrieve_tool_output: missing required 'hash' argument".to_string(),
 <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:71:        match crate::openhuman::tokenjuice::cache::retrieve(hash) {
-[+5 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs]
+<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:74:                    "[compaction][ccr] retrieved hash={} bytes={}",
+<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:81:                "retrieve_tool_output: no cached original for hash '{hash}' \
+<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:94:    async fn retrieves_offloaded_original() {
+<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:97:        let tool = RetrieveToolOutputTool::new();
+<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:105:        let tool = RetrieveToolOutputTool::new();
 <OPENHUMAN_ROOT>/src/openhuman/artifacts/README.md:10:- Retrieve a single artifact by ID, returning metadata plus a computed `absolute_path` (`get_artifact` / `ai_get_artifact`).
 <OPENHUMAN_ROOT>/src/openhuman/artifacts/store.rs:230:/// Retrieve a single artifact by ID.
 <OPENHUMAN_ROOT>/src/openhuman/artifacts/tools.rs:100:/// Retrieve a single artifact's metadata plus its absolute on-disk path.
@@ -226,7 +230,7 @@
 <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:326:                retrieved.len()
 <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:332:            append_retrieved_context: retrieved,
 <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:334:                "agent_execution: retrieved long-term context".to_string(),
-[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs]
+<OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:440:fn retrieve_context(memory: &[MemoryRecord], query: &str) -> Vec<String> {
 <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:37:- Reasoning layer: `agent_execution` retrieves from long-term memory, simulates
 <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:79:- `retrieved_context`: memory traces retrieved for the current run.
 <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:98:1. retrieve historical traces before execution;
@@ -266,7 +270,14 @@
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:83:                "tokenjuice_retrieve: missing required 'token' argument".to_string(),
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:95:            return match cache::retrieve_range(token, start, end, unit) {
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:98:                        "[tokenjuice][ccr] retrieved range token={token} {start}..{end} {} bytes",
-[+8 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs]
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:107:        match cache::retrieve(token) {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:110:                    "[tokenjuice][ccr] retrieved token={token} bytes={}",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:122:        "tokenjuice_retrieve: no cached original for token '{token}' \
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:133:    async fn retrieves_offloaded_original() {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:136:        let tool = TokenjuiceRetrieveTool::new();
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:143:    async fn retrieves_line_range() {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:146:        let tool = TokenjuiceRetrieveTool::new();
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:157:        let tool = TokenjuiceRetrieveTool::new();
 <OPENHUMAN_ROOT>/src/openhuman/agent_meetings/schemas.rs:389:        description: "Retrieve stored per-event join-policy overrides for a batch of calendar \
 <OPENHUMAN_ROOT>/src/openhuman/agent_meetings/store.rs:143:/// Retrieve a session by its unique ID. Returns `None` if not found.
 <OPENHUMAN_ROOT>/src/openhuman/agent_meetings/store.rs:274:/// Retrieve the join-policy override for a specific calendar event. Returns
@@ -305,7 +316,8 @@
 <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:218:impl Retriever {
 <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:219:    /// Creates a retriever from an embedding model and a vector store.
 <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:227:    /// Returns the embedding model backing this retriever.
-[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs]
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:232:    /// Returns the vector store backing this retriever.
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:269:    pub async fn retrieve(&self, query: &str, top_k: usize) -> Result<Vec<ScoredDoc>> {
 <OPENHUMAN_ROOT>/src/openhuman/whatsapp_data/schemas.rs:130:                required_string("chat_id", "JID of the chat to retrieve messages for."),
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/memory_context.rs:49:    if let Ok(entries) = crate::openhuman::tinyagents::retriever::recall_through_facade(
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/memory_context.rs:84:    if let Ok(entries) = crate::openhuman::tinyagents::retriever::recall_through_facade(
@@ -337,7 +349,11 @@
 <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:240:async fn retriever_empty_index_is_noop() {
 <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:241:    let retriever = Retriever::new(
 <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:245:    retriever.index(vec![]).await.unwrap();
-[+5 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs]
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:246:    assert!(retriever.retrieve("anything", 5).await.unwrap().is_empty());
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:250:async fn retriever_accessors_expose_collaborators() {
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:251:    let retriever = Retriever::new(
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:255:    assert_eq!(retriever.model().dimensions(), 8);
+<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:256:    let _ = retriever.store();
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:6:stores, retrievers, indexing records, retrieval events, and deterministic test
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:22:- retriever interface:
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:23:  <https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/retrievers.py>
@@ -348,9 +364,19 @@
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:63:- It does not automatically inject retrieved documents into every prompt.
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:86:  retriever.rs
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:178:- report retriever provenance in events
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:224:## Retrievers
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:226:Retrievers are query-to-document components. They are more general than vector
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:232:pub trait Retriever<Ctx = ()>: Send + Sync {
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:233:    async fn retrieve(
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:241:Retriever requests should carry:
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:253:Retrievers should emit `retriever.started`, `retriever.completed`, and
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:254:`retriever.failed` events. Events should include retriever name, embedding
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:388:- `retriever.started`
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:389:- `retriever.completed`
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:390:- `retriever.failed`
-[+11 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md]
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:402:Retrievers return candidate documents. Prompt and middleware code decide how to
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:405:- run one or more retrievers before a model call
+<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:413:The harness must preserve provenance so model outputs can cite retrieved
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/context.md:139:1. drop nonessential retrieved context
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/tool_filter_tests.rs:24:             "Retrieves a specific pull request by number."),
 <OPENHUMAN_ROOT>/src/openhuman/whatsapp_data/types.rs:109:    /// JID of the chat to retrieve messages for.
@@ -402,7 +428,8 @@
 <OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:384:        let resp = fast_retrieve(&cfg, "  ", FastRetrieveOptions::default())
 <OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:395:        let resp = fast_retrieve(
 <OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:398:            FastRetrieveOptions::default(),
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs]
+<OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:417:        let resp = fast_retrieve(
+<OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:420:            FastRetrieveOptions::default(),
 <OPENHUMAN_ROOT>/src/openhuman/webhooks/bus.rs:79:        // Retrieve the router from the global socket manager.
 <OPENHUMAN_ROOT>/src/openhuman/keyring/backend.rs:29:    /// Retrieve a secret.  Returns `Ok(None)` when no entry exists.
 <OPENHUMAN_ROOT>/src/openhuman/webhooks/ops.rs:43:/// Retrieve the global webhook router, returning an error if the socket
@@ -437,7 +464,22 @@
 <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:46:async fn retrieve_ranks_exact_match_first() {
 <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:47:    let retriever = indexed_retriever().await;
 <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:51:    let hits = retriever
-[+16 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs]
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:52:        .retrieve("rust is a systems programming language", 3)
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:54:        .expect("retrieve succeeds");
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:78:async fn retrieve_respects_top_k() {
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:79:    let retriever = indexed_retriever().await;
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:81:    let top1 = retriever
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:82:        .retrieve("the stock market crashed today", 1)
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:84:        .expect("retrieve succeeds");
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:89:    let all = retriever
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:90:        .retrieve("cats are great pets that purr", 10)
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:92:        .expect("retrieve succeeds");
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:102:    let retriever = Retriever::new(Arc::new(MockEmbeddingModel::new(64)), store.clone());
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:103:    retriever
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:127:    retriever
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:138:    let hits = retriever
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:139:        .retrieve("kittens love to nap in the sun", 1)
+<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:141:        .expect("retrieve succeeds");
 <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_harness_provider_contracts.rs:477:            retrieved_at: "2026-06-29T00:00:00Z".into(),
 <OPENHUMAN_ROOT>/src/openhuman/composio/tools/direct.rs:716:         use query='from:me' or query='label:SENT' to retrieve sent emails, query='label:INBOX' for inbox, \
 <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs:41:  start retrieve

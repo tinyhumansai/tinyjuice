@@ -1,4 +1,33 @@
-[... 30 line(s) omitted ...]
+-------------------------------------
+Translated Report (Full Report Below)
+-------------------------------------
+Process:             OpenHuman [90825]
+Path:                /Users/USER/*/OpenHuman.app/Contents/MacOS/OpenHuman
+Identifier:          com.openhuman.app
+Version:             0.53.49 (0.53.49)
+Code Type:           ARM-64 (Native)
+Role:                Foreground
+Parent Process:      cargo-tauri [90125]
+Coalition:           com.mitchellh.ghostty [1140]
+Responsible Process: ghostty [1684]
+User ID:             501
+
+Date/Time:           2026-05-17 22:22:21.2525 -0700
+Launch Time:         2026-05-17 22:21:08.3067 -0700
+Hardware Model:      Mac17,9
+OS Version:          macOS 26.5 (25F71)
+Release Type:        User
+
+Crash Reporter Key:  54C8B0B1-AAA7-FB80-382A-B9EF705FB713
+Incident Identifier: 296E9C85-2978-4CF1-99AF-8344D328256F
+
+Sleep/Wake UUID:       88CACA1E-ECCE-4B52-8067-80E6D6970B4C
+
+Time Awake Since Boot: 250000 seconds
+Time Since Wake:       15790 seconds
+
+System Integrity Protection: enabled
+
 Triggered by Thread: 46  tokio-rt-worker
 
 Exception Type:    EXC_BAD_ACCESS (SIGBUS)
@@ -9,10 +38,312 @@ Exception Codes:   0x0000000000000002, 0x00000003028534f0
 Termination Reason:  Namespace SIGNAL, Code 10, Bus error: 10
 Terminating Process: exc handler [90825]
 
-[... 57 line(s) omitted ...]
+
+VM Region Info: 0x3028534f0 is in 0x302850000-0x302854000;  bytes after start: 13552  bytes before end: 2831
+      REGION TYPE                    START - END         [ VSIZE] PRT/MAX SHRMOD  REGION DETAIL
+      Stack                       302648000-302850000    [ 2080K] rw-/rwx SM=PRV  thread 45
+--->  Stack Guard                 302850000-302854000    [   16K] ---/rwx SM=PRV  
+      Stack                       302854000-302a5c000    [ 2080K] rw-/rwx SM=PRV  
+
+Thread 0:: CrBrowserMain Dispatch queue: com.apple.main-thread
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   CoreFoundation                	       0x18ad0b0d8 __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                	       0x18ad099c4 __CFRunLoopRun + 1188
+6   CoreFoundation                	       0x18addc1c4 _CFRunLoopRunSpecificWithOptions + 532
+7   HIToolbox                     	       0x197aef560 RunCurrentEventLoopInMode + 320
+8   HIToolbox                     	       0x197af28bc ReceiveNextEventCommon + 488
+9   HIToolbox                     	       0x197c7c14c _BlockUntilNextEventMatchingListInMode + 48
+10  AppKit                        	       0x18f7e435c _DPSBlockUntilNextEventMatchingListInMode + 228
+11  AppKit                        	       0x18f138084 _DPSNextEvent + 576
+12  AppKit                        	       0x18fccd8b0 -[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:] + 688
+13  AppKit                        	       0x18fccd5bc -[NSApplication(NSEventRouting) nextEventMatchingMask:untilDate:inMode:dequeue:] + 72
+14  AppKit                        	       0x18f12b13c -[NSApplication run] + 368
+15  Chromium Embedded Framework   	       0x123509a4c ChromeWebAppShortcutCopierMain + 5514284
+16  Chromium Embedded Framework   	       0x123507660 ChromeWebAppShortcutCopierMain + 5505088
+17  Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+18  Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+19  Chromium Embedded Framework   	       0x12347c2f0 ChromeWebAppShortcutCopierMain + 4934864
+20  Chromium Embedded Framework   	       0x11ee2370c temporal_rs_ZonedDateTime_offset_nanoseconds + 168144
+21  OpenHuman                     	       0x1051a4f74 cef::bindings::aarch64_apple_darwin::do_message_loop_work::h9101deb2330797d3 + 12
+22  OpenHuman                     	       0x100be6bdc _$LT$tauri_runtime_cef..CefRuntime$LT$T$GT$$u20$as$u20$tauri_runtime..Runtime$LT$T$GT$$GT$::run::h15872280a13ad67f + 740
+23  OpenHuman                     	       0x100b185cc tauri::app::App$LT$R$GT$::run::he4cc9bfdec3c3918 + 632
+24  OpenHuman                     	       0x100ea4258 openhuman::run::hd65d3b75458a7539 + 8588
+25  OpenHuman                     	       0x100aa202c OpenHuman::main::h0a1f4c8c83ccb058 + 320 (main.rs:33)
+26  OpenHuman                     	       0x100aa1bcc core::ops::function::FnOnce::call_once::h1f48a8578ab36fb7 + 20 (function.rs:250)
+27  OpenHuman                     	       0x100aa1e80 std::sys::backtrace::__rust_begin_short_backtrace::h41272f0d7f326421 + 24 (backtrace.rs:160)
+28  OpenHuman                     	       0x100aa1e50 std::rt::lang_start::_$u7b$$u7b$closure$u7d$$u7d$::hd07de65046602504 + 28 (rt.rs:206)
+29  OpenHuman                     	       0x1057e2b9c std::rt::lang_start_internal::h0662b076b027b010 + 952
+30  OpenHuman                     	       0x100aa1e28 std::rt::lang_start::hbdf014ff7c073e94 + 84 (rt.rs:205)
+31  OpenHuman                     	       0x100aa2150 main + 36
+32  dyld                          	       0x18a88fe00 start + 6992
+
+Thread 1:: tracing-appender
+0   libsystem_kernel.dylib        	       0x18ac09bb0 semaphore_wait_trap + 8
+1   libdispatch.dylib             	       0x18aa94490 _dispatch_sema4_wait + 28
+2   libdispatch.dylib             	       0x18aa94b20 _dispatch_semaphore_wait_slow + 132
+3   OpenHuman                     	       0x1057eff7c std::thread::functions::park::h4b143ad52af9659e + 96
+4   OpenHuman                     	       0x1015e3ab8 crossbeam_channel::context::Context::wait_until::h905c67a105ef6a45 + 208
+5   OpenHuman                     	       0x102c5f48c crossbeam_channel::flavors::array::Channel$LT$T$GT$::recv::_$u7b$$u7b$closure$u7d$$u7d$::h1fabe65730c5535c + 152
+6   OpenHuman                     	       0x103ab2cd8 crossbeam_channel::context::Context::with::_$u7b$$u7b$closure$u7d$$u7d$::h04a9465e009af20e + 116
+7   OpenHuman                     	       0x103ab31cc crossbeam_channel::context::Context::with::_$u7b$$u7b$closure$u7d$$u7d$::h6b85ade3372a7b7c + 232
+8   OpenHuman                     	       0x101b6d45c std::thread::local::LocalKey$LT$T$GT$::try_with::h57a395331da2e3d5 + 152
+9   OpenHuman                     	       0x103ab2c20 crossbeam_channel::context::Context::with::hf71fc2657d96dc02 + 52
+10  OpenHuman                     	       0x102c5f2a8 crossbeam_channel::flavors::array::Channel$LT$T$GT$::recv::hb7f78fcbf9686eb6 + 292
+11  OpenHuman                     	       0x102446e0c crossbeam_channel::channel::Receiver$LT$T$GT$::recv::h930301b6a7f3d61b + 160
+12  OpenHuman                     	       0x101844d7c tracing_appender::worker::Worker$LT$T$GT$::work::h68f90452ab8c0579 + 52
+13  OpenHuman                     	       0x101844a14 tracing_appender::worker::Worker$LT$T$GT$::worker_thread::_$u7b$$u7b$closure$u7d$$u7d$::hb7811fcc92cf916c + 32
 14  OpenHuman                     	       0x10177388c std::sys::backtrace::__rust_begin_short_backtrace::h9059a573f3ca8f30 + 16
 15  OpenHuman                     	       0x101a79868 std::thread::lifecycle::spawn_unchecked::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::hc1ad5879cbb72eea + 124
 16  OpenHuman                     	       0x1029a57bc _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h0abea6da5fd65be4 + 48
 17  OpenHuman                     	       0x1024a5688 std::panicking::catch_unwind::do_call::h34447d5ada7f4206 + 56
 18  OpenHuman                     	       0x101a7e64c __rust_try + 32
-[... 247 line(s) omitted ...]
+19  OpenHuman                     	       0x101a77514 std::thread::lifecycle::spawn_unchecked::_$u7b$$u7b$closure$u7d$$u7d$::h8fe83effcfb77d9e + 248
+20  OpenHuman                     	       0x101eab80c core::ops::function::FnOnce::call_once$u7b$$u7b$vtable.shim$u7d$$u7d$::h97346d264557b673 + 24
+21  OpenHuman                     	       0x1057e9fdc std::sys::thread::unix::Thread::new::thread_start::hd42ed9e591878587 + 408
+22  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+23  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 2:: com.apple.NSEventThread
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   CoreFoundation                	       0x18ad0b0d8 __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                	       0x18ad099c4 __CFRunLoopRun + 1188
+6   CoreFoundation                	       0x18addc1c4 _CFRunLoopRunSpecificWithOptions + 532
+7   AppKit                        	       0x18f259c7c _NSEventThread + 184
+8   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+9   libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 3:: StackSamplingProfiler
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x12344e344 ChromeWebAppShortcutCopierMain + 4746532
+7   Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+8   Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+9   Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+10  Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+11  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+12  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+13  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 4:: HangWatcher
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d5bb8 ChromeWebAppShortcutCopierMain + 5301656
+7   Chromium Embedded Framework   	       0x1234d5c8c ChromeWebAppShortcutCopierMain + 5301868
+8   Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+9   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+10  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 5:: PerfettoTrace
+0   libsystem_kernel.dylib        	       0x18ac15ba8 kevent64 + 8
+1   Chromium Embedded Framework   	       0x123519e20 ChromeWebAppShortcutCopierMain + 5580800
+2   Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+3   Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+4   Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+5   Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+6   Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+7   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+8   libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 6:: ThreadPoolServiceThread
+0   libsystem_kernel.dylib        	       0x18ac15ba8 kevent64 + 8
+1   Chromium Embedded Framework   	       0x123519e20 ChromeWebAppShortcutCopierMain + 5580800
+2   Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+3   Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+4   Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+5   Chromium Embedded Framework   	       0x1234c4068 ChromeWebAppShortcutCopierMain + 5229128
+6   Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+7   Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+8   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+9   libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 7:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d3f4c ChromeWebAppShortcutCopierMain + 5294380
+7   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+8   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+9   Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+10  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+11  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 8:: ThreadPoolBackgroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3a40 ChromeWebAppShortcutCopierMain + 5293088
+9   Chromium Embedded Framework   	       0x1234d39d0 ChromeWebAppShortcutCopierMain + 5292976
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 9:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 10:: Chrome_IOThread
+0   libsystem_kernel.dylib        	       0x18ac15ba8 kevent64 + 8
+1   Chromium Embedded Framework   	       0x123519e20 ChromeWebAppShortcutCopierMain + 5580800
+2   Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+3   Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+4   Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+5   Chromium Embedded Framework   	       0x121361bb4 _v8_internal_Node_Print(void*) + 7600360
+6   Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+7   Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+8   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+9   libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 11:: MemoryInfra
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x12344e344 ChromeWebAppShortcutCopierMain + 4746532
+7   Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+8   Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+9   Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+10  Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+11  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+12  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+13  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 12:: NetworkConfigWatcher
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   CoreFoundation                	       0x18ad0b0d8 __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                	       0x18ad099c4 __CFRunLoopRun + 1188
+6   CoreFoundation                	       0x18addc1c4 _CFRunLoopRunSpecificWithOptions + 532
+7   Foundation                    	       0x18c553b44 -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 212
+8   Chromium Embedded Framework   	       0x1235098a8 ChromeWebAppShortcutCopierMain + 5513864
+9   Chromium Embedded Framework   	       0x123507660 ChromeWebAppShortcutCopierMain + 5505088
+10  Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+11  Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+12  Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+13  Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+14  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+15  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+16  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 13:: CrShutdownDetector
+0   libsystem_kernel.dylib        	       0x18ac0a91c read + 8
+1   Chromium Embedded Framework   	       0x1252061a4 rust_png$cxxbridge1$194$ResultOfWriter$operator$sizeof + 13368704
+2   Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+3   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+4   libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 14:: NetworkConfigWatcher
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   CoreFoundation                	       0x18ad0b0d8 __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                	       0x18ad099c4 __CFRunLoopRun + 1188
+6   CoreFoundation                	       0x18addc1c4 _CFRunLoopRunSpecificWithOptions + 532
+7   Foundation                    	       0x18c553b44 -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 212
+8   Chromium Embedded Framework   	       0x1235098a8 ChromeWebAppShortcutCopierMain + 5513864
+9   Chromium Embedded Framework   	       0x123507660 ChromeWebAppShortcutCopierMain + 5505088
+10  Chromium Embedded Framework   	       0x1234b9cf4 ChromeWebAppShortcutCopierMain + 5187284
+11  Chromium Embedded Framework   	       0x12347ba74 ChromeWebAppShortcutCopierMain + 4932692
+12  Chromium Embedded Framework   	       0x1234dbd98 ChromeWebAppShortcutCopierMain + 5326712
+13  Chromium Embedded Framework   	       0x1234dbf24 ChromeWebAppShortcutCopierMain + 5327108
+14  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+15  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+16  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 15:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 16:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 17:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+
+Thread 18:: ThreadPoolForegroundWorker
+0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x18ac129c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x18ac09fc0 mach_msg + 24
+4   Chromium Embedded Framework   	       0x12350e064 ChromeWebAppShortcutCopierMain + 5532228
+5   Chromium Embedded Framework   	       0x123496984 ChromeWebAppShortcutCopierMain + 5043044
+6   Chromium Embedded Framework   	       0x1234d2fe4 ChromeWebAppShortcutCopierMain + 5290436
+7   Chromium Embedded Framework   	       0x1234d40e0 ChromeWebAppShortcutCopierMain + 5294784
+8   Chromium Embedded Framework   	       0x1234d3ac4 ChromeWebAppShortcutCopierMain + 5293220
+9   Chromium Embedded Framework   	       0x1234d399c ChromeWebAppShortcutCopierMain + 5292924
+10  Chromium Embedded Framework   	       0x1234f1678 ChromeWebAppShortcutCopierMain + 5415000
+11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
+12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
+

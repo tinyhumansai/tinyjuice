@@ -1,6 +1,18 @@
-exit 101
-RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
  Test Files  1 passed (1)
       Tests  9 passed (9)
    Start at  23:49:59
    Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+

@@ -303,4 +303,4 @@ verify
 
 sign
 
-[PARTIAL view — full original (26017 bytes): call tinyjuice_retrieve with token "8acb1f3b72a6f026916ac0735bad9aab"]
+[reformatted, no data lost — exact original (26017 bytes): call tinyjuice_retrieve with token "8acb1f3b72a6f026916ac0735bad9aab"]
