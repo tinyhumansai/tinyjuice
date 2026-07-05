@@ -16,6 +16,7 @@ pub mod generic;
 pub mod html;
 pub mod json;
 pub mod log;
+pub mod log_template;
 pub mod ml_text;
 pub mod search;
 pub mod signals;
