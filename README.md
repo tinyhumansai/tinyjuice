@@ -11,43 +11,20 @@
  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3" /></a>
 </p>
 
-**TinyJuice is a Rust token-compression engine for agent context.** It gives
-OpenHuman and other Rust hosts a small, inspectable boundary for shrinking large
-tool outputs before they enter a model context, while keeping exact originals
-recoverable when a lossy view is shown.
+**TinyJuice is token compression for terminal-heavy agents.** It sits between
+tool output and model context, turning noisy logs, diffs, JSON, search results,
+HTML, and source files into compact views that keep the signal visible.
 
-Most agent systems pay the same context tax over and over: 5,000-line logs,
-huge JSON lists, repeated grep output, lockfile diffs, rendered HTML, and full
-source files all land in the model as raw text. TinyJuice routes those blobs by
-content kind, applies a deterministic compressor tuned to the signal in that
-kind, and reports what changed.
+Agents waste context on the same junk over and over: passing test chatter,
+duplicated JSON keys, huge Docker logs, repetitive grep hits, lockfile diffs,
+and markup nobody needs to reason about. TinyJuice cuts that noise before it
+hits the model.
 
-The result is not a magic "make prompts smaller" black box. It is a pluggable,
-auditable compression layer with conservative pass-through behavior, recovery
-markers for partial views, and host-owned policy for cost attribution.
+The important part: compacted output stays recoverable. When TinyJuice shows a
+partial view, it stores the exact original behind a retrieval token instead of
+silently throwing data away.
 
-## Why TinyJuice
-
-- **Content-aware by default** - JSON, code, logs, search results, diffs, HTML,
-  and plain text take different paths instead of one generic truncation rule.
-- **Recoverable lossy views** - the CCR cache stores exact originals and appends
-  a `tokenjuice_retrieve` footer whenever data is dropped.
-- **Agent-profile policy** - hosts can run `full`, `light`, `off`, or runtime
-  `auto` profiles per agent instead of using one global behavior.
-- **Command-aware reduction** - built-in rules compact common shell, git, cargo,
-  npm, docker, kubectl, database, cloud, lint, and test outputs.
-- **OpenHuman-ready boundary** - the core crate avoids OpenHuman runtime
-  dependencies; adapters install configuration, ML callbacks, and savings
-  recorders from the host side.
-- **No raw-content analytics requirement** - the dashboard consumes metadata,
-  token and byte counts, latency, status, and strategy labels, not prompt text.
-
-TinyJuice is designed for the work agents actually do: reading too much,
-searching broadly, running noisy commands, and needing a compact but reversible
-view that keeps failures, anomalies, changed hunks, signatures, and matching
-lines visible.
-
-## Agent Hooks
+## Quick Setup
 
 Install the CLI:
 
@@ -62,338 +39,71 @@ Run one hook installer:
 | <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` |
 | <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` |
 
-See [docs/agent-hooks/README.md](docs/agent-hooks/README.md) for custom paths,
-development installs, recovery, and hook tuning.
-
-## Benchmarks
-
-Run hot-path benchmarks:
-
-```sh
-cargo bench
-```
-
-Run fixture-driven compression benchmarks:
-
-```sh
-cargo run --release --example compression_benchmark -- --iterations 20
-cargo run --release --example compression_benchmark -- --iterations 20 --format json
-```
-
-Fixture benchmark snapshot from `cargo run --release --example
-compression_benchmark -- --iterations 20`:
-
-| Use case | Compressor | Est. token reduction | Avg latency | CCR recovery |
-| --- | --- | ---: | ---: | --- |
-| JSON service inventory | SmartCrusher | 94.9% | 0.397 ms | yes |
-| Cargo test failure log | Log | 93.6% | 0.667 ms | yes |
-| Docker service log | Log | 99.8% | 1.110 ms | yes |
-| Ripgrep search results | Search | 75.3% | 0.034 ms | yes |
-| Unified diff | Diff | 84.3% | 0.008 ms | yes |
-| HTML status report | HTML | 61.2% | 0.063 ms | yes |
-| Rust source file | Code | 88.6% | 0.199 ms | yes |
-| Plain text with ML off | None | 0.0% | 0.000 ms | n/a |
-
-CCR recovery byte-compares the retrieved original for every lossy compaction.
-These numbers are generated-fixture measurements, not production corpus claims.
-
-See [docs/benchmarking.md](docs/benchmarking.md) for benchmark scope,
-comparison targets, and reporting cautions. See [docs/benchmark](docs/benchmark)
-for human-readable before/after sample reports and accuracy-check details.
-
-## How It Works
-
-```text
-tool output / file / web payload
-        |
-        v
-ContentHint + structural detection
-        |
-        v
-JSON | Code | Log | Search | Diff | HTML | PlainText
-        |
-        v
-specialized compressor or command-rule reducer
-        |
-        v
-pass-through if unsafe, too small, disabled, or not smaller
-        |
-        v
-CCR offload + retrieval footer when the view is lossy
-```
-
-The router is intentionally fail-soft. If it cannot shrink safely, it returns
-the original bytes unchanged.
-
-## Compression Surfaces
-
-- **JSON SmartCrusher** - renders repeated object arrays as compact tables and
-  keeps anomaly rows when large arrays are row-dropped.
-- **Code compressor** - keeps imports, signatures, shallow structure, and
-  important markers while collapsing deep bodies.
-- **Log compressor** - preserves failures, warnings, summaries, stack traces,
-  and command-rule outputs while dropping passing noise.
-- **Search compressor** - groups grep/ripgrep output by file, ranks matches,
-  and keeps top hits with per-file tallies.
-- **Diff compressor** - keeps patch structure and changed lines, collapses long
-  context and noisy lockfile/bundle hunks.
-- **HTML compressor** - extracts readable text from rendered markup.
-- **Plain-text ML slot** - optional host-provided callback for learned text
-  compression; disabled by default.
-- **Generic command fallback** - line-oriented head/tail reduction for command
-  output when no specialized rule wins.
-
-TinyJuice does not publish production-corpus compression percentage claims yet.
-The fixture benchmarks above exercise retained facts, latency, reversibility,
-and regression safety without claiming universal savings.
-
-## Quick Start
-
-Add TinyJuice to a Rust project:
-
-```toml
-[dependencies]
-tinyjuice = "0.2"
-```
-
-Use the small public trait scaffold when you want a simple strategy boundary:
-
-```rust
-use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
-
-fn main() -> Result<(), tinyjuice::TinyJuiceError> {
-    let compressor = PassthroughCompressor;
-    let output = compressor.compress(
-        CompressionInput::new("Keep this text unchanged for now."),
-        &CompressionConfig::default(),
-    )?;
-
-    assert_eq!(output.report.strategy, "passthrough");
-    Ok(())
-}
-```
-
-Use the content router for real tool-output compaction:
-
-```rust
-use tinyjuice::{CompressOptions, ContentHint, compress_content};
-
-async fn compact_payload(big_payload: &str) {
-    let hint = ContentHint {
-        source_tool: Some("read_file".to_string()),
-        extension: Some("json".to_string()),
-        ..Default::default()
-    };
-
-    let result = compress_content(big_payload, Some(hint), &CompressOptions::default()).await;
-    if result.applied {
-        println!("{} -> {} bytes", result.original_bytes, result.compacted_bytes);
-    }
-}
-```
-
-OpenHuman-style tool output integration goes through:
-
-```rust
-use tinyjuice::{AgentTokenjuiceCompression, compact_tool_output_with_policy};
-
-async fn compact_command_output(command_output: &str) {
-    let (_text, _stats) = compact_tool_output_with_policy(
-        "shell",
-        Some(&serde_json::json!({ "command": "cargo test" })),
-        command_output,
-        Some(101),
-        AgentTokenjuiceCompression::Full,
-    ).await;
-}
-```
-
-## SDK and Plugin Integration
-
-TinyJuice now exposes two integration paths:
-
-- Rust hosts use the crate SDK directly.
-- Non-Rust plugins and harnesses call the `tinyjuice reduce-json` protocol.
-
-The SDK accepts a host-neutral `ToolExecutionInput` with tool name, command,
-argv, stdout/stderr or combined text, exit code, cwd, and metadata. The response
-contains the inline text plus metadata about the applied content kind,
-compressor, token estimate, byte counts, and CCR recovery token when one was
-created. Do not log the request body from adapters; tool output may contain
-prompts, credentials, or private context.
-
-### Rust SDK
-
-```rust
-use tinyjuice::{
-    AgentTokenjuiceCompression, TinyJuiceHost, TinyJuiceSdk, ToolExecutionInput,
-};
-
-async fn compact_for_harness(tool_output: String, exit_code: i32) {
-    let sdk = TinyJuiceSdk::new(TinyJuiceHost::RustHarness)
-        .with_profile(AgentTokenjuiceCompression::Full);
-
-    let response = sdk
-        .compress_tool_output(ToolExecutionInput {
-            tool_name: "shell".to_string(),
-            command: Some("cargo test".to_string()),
-            argv: Some(vec!["cargo".to_string(), "test".to_string()]),
-            combined_text: Some(tool_output),
-            exit_code: Some(exit_code),
-            ..Default::default()
-        })
-        .await;
-
-    println!("{}", response.inline_text);
-}
-```
-
-Use `TinyJuiceHost::OpenHuman` for OpenHuman adapters and
-`TinyJuiceHost::RustHarness` for standalone Rust harnesses. Hosts should map
-their own config into `CompressOptions`, choose the per-agent profile, and expose
-CCR retrieval before enabling lossy compaction in production.
-
-### JSON Protocol
-
-Build the binary locally:
-
-```sh
-cargo build --release --bin tinyjuice
-```
-
-Send a full SDK request:
-
-```json
-{
-  "host": "generic-json",
-  "profile": "full",
-  "input": {
-    "toolName": "shell",
-    "command": "cargo test",
-    "argv": ["cargo", "test"],
-    "combinedText": "large tool output...",
-    "exitCode": 0,
-    "metadata": {
-      "source": "custom-harness"
-    }
-  },
-  "options": {
-    "minBytesToCompress": 512,
-    "maxInlineChars": 1200,
-    "ccrEnabled": true
-  }
-}
-```
-
-Run it through the protocol:
-
-```sh
-tinyjuice reduce-json payload.json
-cat payload.json | tinyjuice reduce-json --host generic-json -
-```
-
-A bare `ToolExecutionInput` object is also accepted when the host, profile, and
-options can stay at defaults.
-
-## Local Development
-
-```sh
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-cargo run --example passthrough
-cargo run --bin tinyjuice -- hosts
-cargo run --bin tinyjuice -- host-template codex
-```
-
-Run hot-path benchmarks:
-
-```sh
-cargo bench
-```
-
-Run the real-snapshot compression benchmark corpus:
-
-```sh
-cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
-cargo run --release --example compression_benchmark -- --iterations 20
-cargo run --release --example compression_benchmark -- --iterations 20 --format json
-```
-
-Corpus benchmark snapshot from `cargo run --release --example
-compression_benchmark -- --iterations 20`:
-
-| Use case | Cases | Compressor | Avg est. token reduction | Avg latency | CCR recovery |
-| --- | ---: | --- | ---: | ---: | --- |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | SmartCrusher | 58.2% | 0.362 ms | yes |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | Log | 14.1% | 0.050 ms | yes |
-| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | Log | 86.3% | 0.177 ms | yes |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | Search | 39.8% | 0.494 ms | yes |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | Diff | 66.7% | 0.174 ms | yes |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | HTML | 75.4% | 0.187 ms | yes |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | Code | 51.9% | 0.796 ms | yes |
-| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | None | 0.0% | 0.000 ms | n/a |
-
-CCR recovery byte-compares the retrieved original for every lossy compaction.
-These are local real-snapshot measurements from the checked-in benchmark corpus,
-not production-wide claims.
-
-See [docs/benchmarking.md](docs/benchmarking.md) for benchmark scope,
-comparison targets, and reporting cautions. See [docs/benchmark](docs/benchmark)
-for human-readable before/after sample reports and accuracy-check details.
-
-Run the local analytics interface:
-
-```sh
-cd interface
-npm install
-npm run dev
-```
-
-The interface accepts metadata-oriented compression records. Do not feed raw
-prompt, context, tool output, or credentials into analytics datasets.
-
-## Crate Layout
-
-```text
-src/
-  compress.rs        Universal content router
-  compressors/       JSON, code, log, search, diff, HTML, ML, generic paths
-  detect/            Content-kind hints and structural detection
-  cache/             CCR offload, retrieval markers, memory/disk store
-  rules/             Built-in + user + project command reduction rules
-  reduce.rs          Rule-engine reduction pipeline
-  sdk.rs             Host-neutral SDK and reduce-json request/response types
-  tool_integration.rs OpenHuman-style tool-output adapter
-  compressor/        Small public Compressor trait scaffold
-  config/            Small public CompressionConfig scaffold
-  openhuman/         Runtime-neutral OpenHuman adapter types
-  savings.rs         Host-installed savings attribution hook
-interface/           Self-hostable analytics UI
-wiki/                Technical GitHub wiki source
-docs/references/     Design references and candidate strategy specs
-```
-
-## Documentation
-
-- [Wiki home](wiki/Home.md)
+Custom paths, development installs, recovery, and tuning live in
+[docs/agent-hooks/README.md](docs/agent-hooks/README.md).
+
+## Why It Helps
+
+- **More useful context** - failures, summaries, changed hunks, matching lines,
+  signatures, and anomalies stay visible.
+- **Less transcript waste** - repeated structure, boilerplate, setup chatter,
+  and markup get collapsed.
+- **Recoverable partial views** - exact originals can be pulled back when a
+  compact view is not enough.
+- **Agent-ready defaults** - command-aware reducers understand common shell,
+  git, cargo, npm, Docker, kubectl, database, cloud, lint, and test output.
+- **Host-owned policy** - OpenHuman and other runtimes decide when compression
+  is full, light, off, or profile-driven.
+- **Privacy-aware by design** - analytics can use metadata, byte counts,
+  latency, status, and strategy labels without requiring raw prompt text.
+
+## What It Compresses
+
+| Surface | What stays visible |
+| --- | --- |
+| JSON | Tables, schema shape, anomaly rows |
+| Logs | Errors, warnings, stack traces, summaries |
+| Search results | Top matches, file grouping, match counts |
+| Diffs | File headers, hunk headers, changed lines |
+| Code | Imports, signatures, top-level structure |
+| HTML | Readable page text without script and markup noise |
+| Plain text | Pass-through unless a host enables an ML callback |
+
+## Benchmark Snapshot
+
+The checked-in benchmark corpus uses 10 real snapshots per category and verifies
+inline accuracy plus CCR recovery for lossy compactions.
+
+| Category | Cases | Avg est. token reduction | Avg latency |
+| --- | ---: | ---: | ---: |
+| JSON SmartCrusher | 10 | 58.2% | 0.362 ms |
+| Test failure logs | 10 | 14.1% | 0.050 ms |
+| Service and Docker logs | 10 | 86.3% | 0.177 ms |
+| Search results | 10 | 39.8% | 0.494 ms |
+| Unified diffs | 10 | 66.7% | 0.174 ms |
+| HTML, RSS, and page snapshots | 10 | 75.4% | 0.187 ms |
+| Rust source | 10 | 51.9% | 0.796 ms |
+| Plain text with ML off | 10 | 0.0% | 0.000 ms |
+
+These are local real-snapshot corpus measurements, not production-wide claims.
+See [docs/benchmark](docs/benchmark) and
+[docs/benchmarking.md](docs/benchmarking.md) for the reproducible reports.
+
+## For Developers
+
+The technical docs live in the wiki:
+
+- [SDK and Plugin Integration](wiki/SDK-and-Plugin-Integration.md)
 - [Quick Start](wiki/Quick-Start.md)
 - [Capabilities](wiki/Capabilities.md)
 - [Architecture](wiki/Architecture.md)
 - [Router and Compressors](wiki/Router-and-Compressors.md)
-- [Rule Engine](wiki/Rule-Engine.md)
 - [CCR Recovery](wiki/CCR-Recovery.md)
+- [Rule Engine](wiki/Rule-Engine.md)
 - [OpenHuman Integration](wiki/OpenHuman-Integration.md)
-- [Agent Guide](wiki/Agent-Guide.md)
-- [Agent Hooks](docs/agent-hooks/README.md)
+- [Development](wiki/Development.md)
+- [Security and Privacy](wiki/Security-and-Privacy.md)
 
-## Status
-
-TinyJuice is pre-1.0. The router, command-rule engine, CCR recovery store,
-content detectors, several native compressors, the OpenHuman-style tool adapter,
-and the analytics interface are implemented. Public API names may still move as
-OpenHuman integration hardens.
-
-The project boundary is deliberate: keep the core crate small, do not add
-OpenHuman runtime dependencies without a feature or adapter boundary, and do not
-present fixture reductions as production corpus claims.
+TinyJuice is pre-1.0. The CLI, router, command-rule engine, CCR recovery store,
+content detectors, native compressors, and OpenHuman-style adapter are in place;
+public API names may still move as host integration hardens.
