@@ -1,0 +1,3095 @@
+--- input/input.json
++++ output/output-noccr.md
+@@ -1,3027 +1,64 @@
+-[
+-  {
+-    "function": {
+-      "description": "Tool to abort a repository migration that is queued or in progress. Use when you need to cancel an ongoing migration operation.",
+-      "name": "GITHUB_ABORT_REPOSITORY_MIGRATION",
+-      "parameters": {
+-        "description": "Request parameters for aborting a repository migration.",
+-        "properties": {
+-          "clientMutationId": {
+-            "description": "A unique identifier for the client performing the mutation. This can be used to track the mutation in logs or for idempotency purposes.",
+-            "examples": [
+-              "mutation-12345",
+-              "abort-migration-xyz"
+-            ],
+-            "title": "Client Mutation Id",
+-            "type": "string"
+-          },
+-          "migrationId": {
+-            "description": "The ID of the repository migration to abort. This is the migration ID returned when a migration was queued (e.g., 'RM_kgDOABCDEF').",
+-            "examples": [
+-              "RM_kgDOABCDEF",
+-              "RM_kgDOGw8pTA"
+-            ],
+-            "title": "Migration Id",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "migrationId"
+-        ],
+-        "title": "AbortRepositoryMigrationRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Accepts a PENDING repository invitation that has been issued to the authenticated user.",
+-      "name": "GITHUB_ACCEPT_REPOSITORY_INVITATION",
+-      "parameters": {
+-        "description": "Request schema for accepting a repository invitation.",
+-        "properties": {
+-          "invitation_id": {
+-            "description": "Unique identifier of the repository invitation sent TO the authenticated user. Get this ID by listing your pending invitations using the 'List repository invitations for the authenticated user' action.",
+-            "minimum": 1,
+-            "title": "Invitation Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "invitation_id"
+-        ],
+-        "title": "AcceptRepositoryInvitationRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds GitHub Apps to the list of apps allowed to push to a protected branch. The branch must already have protection rules with restrictions enabled. This endpoint only works for organization repositories, not personal repositories. Apps must be installed on the repository with 'contents' write permissions.",
+-      "name": "GITHUB_ADD_APP_ACCESS_RESTRICTIONS",
+-      "parameters": {
+-        "description": "Request schema defining the target repository and branch for applying app access restrictions.",
+-        "properties": {
+-          "apps": {
+-            "description": "The list of GitHub App slugs with push access to grant. Apps must be installed on the repository and have 'contents' write permissions. The app slug is the URL-friendly name of the GitHub App (e.g., 'github-actions', 'dependabot').",
+-            "examples": [
+-              [
+-                "github-actions",
+-                "dependabot"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Apps",
+-            "type": "array"
+-          },
+-          "branch": {
+-            "description": "The name of the branch to which restrictions will be applied. Wildcard characters (e.g., '*') are not allowed in the branch name when using this REST API endpoint. For operations involving wildcard branch names, consult the GitHub GraphQL API.",
+-            "examples": [
+-              "main"
+-            ],
+-            "title": "Branch",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The organization name that owns the repository. This field is not case-sensitive. Note: This endpoint only works for organization-owned repositories.",
+-            "examples": [
+-              "my-org"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+-            "examples": [
+-              "hello-world"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "branch",
+-          "apps"
+-        ],
+-        "title": "AddAppAccessRestrictionsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a GitHub user as a repository collaborator, or updates their permission if already a collaborator; `permission` applies to organization-owned repositories (personal ones default to 'push' and ignore this field), and an invitation may be created or permissions updated directly.",
+-      "name": "GITHUB_ADD_A_REPOSITORY_COLLABORATOR",
+-      "parameters": {
+-        "description": "Request schema for adding a collaborator to a GitHub repository.",
+-        "properties": {
+-          "owner": {
+-            "description": "The account owner of the repository. This name is not case sensitive.",
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "permission": {
+-            "default": "push",
+-            "description": "Permission level for the collaborator. For organization-owned repositories, valid values are `pull` (read-only), `triage` (manage issues/PRs), `push` (read/write), `maintain` (manage most settings), `admin` (full control), or a custom repository role name if defined by the owning organization. This parameter is ignored for personal repositories, which grant `push` access.",
+-            "examples": [
+-              "pull",
+-              "triage",
+-              "push",
+-              "maintain",
+-              "admin",
+-              "custom_role_name"
+-            ],
+-            "title": "Permission",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This name is not case sensitive.",
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub handle for the user account to add as a collaborator. Cannot be the same as the repository owner, as owners are automatically collaborators.",
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "username"
+-        ],
+-        "title": "AddARepositoryCollaboratorRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds assignees to a GitHub issue. This action only adds users - it does not remove existing assignees. Changes are silently ignored if the authenticated user lacks push access to the repository.",
+-      "name": "GITHUB_ADD_ASSIGNEES_TO_AN_ISSUE",
+-      "parameters": {
+-        "description": "Request model for adding assignees to a GitHub issue.",
+-        "properties": {
+-          "assignees": {
+-            "description": "A list of GitHub usernames to add as assignees to the issue. Up to 10 assignees total can be on an issue. NOTE: This endpoint ADDS assignees - it does not replace existing ones. Users already assigned are kept. To remove assignees, use the 'remove_assignees_from_an_issue' action instead. The authenticated user must have push access to the repository; otherwise changes are silently ignored.",
+-            "examples": [
+-              [
+-                "octocat",
+-                "hubot"
+-              ],
+-              [
+-                "dev-user1"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Assignees",
+-            "type": "array"
+-          },
+-          "issue_number": {
+-            "description": "The unique number identifying the issue within the repository. Must be a positive integer (GitHub issue numbers start at 1).",
+-            "examples": [
+-              123,
+-              42
+-            ],
+-            "minimum": 1,
+-            "title": "Issue Number",
+-            "type": "integer"
+-          },
+-          "owner": {
+-            "description": "The username of the account or the organization name that owns the repository. This field is not case sensitive.",
+-            "examples": [
+-              "octocat",
+-              "my-company"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This field is not case sensitive.",
+-            "examples": [
+-              "hello-world",
+-              "my-internal-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "issue_number"
+-        ],
+-        "title": "AddAssigneesToAnIssueRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds one or more email addresses (which will be initially unverified) to the authenticated user's GitHub account; use this to associate new emails, noting an email verified for another account will error, while an existing email for the current user is accepted.",
+-      "name": "GITHUB_ADD_EMAIL_ADDRESS_FOR_AUTHENTICATED_USER",
+-      "parameters": {
+-        "description": "Request model for GitHub POST /user/emails. Requires a JSON array of emails.",
+-        "properties": {
+-          "emails": {
+-            "description": "Array of email addresses to add to the authenticated user account. Must contain at least one email address.",
+-            "items": {
+-              "type": "string"
+-            },
+-            "minItems": 1,
+-            "title": "Emails",
+-            "type": "array"
+-          }
+-        },
+-        "required": [
+-          "emails"
+-        ],
+-        "title": "AddEmailAddressForAuthenticatedUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to add a custom field to a user-owned GitHub Projects V2 project. Use when you need to add fields like status, priority, or custom data to organize project items.",
+-      "name": "GITHUB_ADD_FIELD_TO_USER_PROJECT",
+-      "parameters": {
+-        "properties": {
+-          "data_type": {
+-            "description": "The data type of the field. Use 'single_select' for dropdown fields, 'iteration' for sprint fields, or other types for simple fields.",
+-            "enum": [
+-              "text",
+-              "single_select",
+-              "number",
+-              "date",
+-              "iteration"
+-            ],
+-            "title": "Data Type",
+-            "type": "string"
+-          },
+-          "iteration_configuration": {
+-            "additionalProperties": false,
+-            "description": "Configuration for iteration fields.",
+-            "properties": {
+-              "duration": {
+-                "description": "The duration of the iteration in days.",
+-                "examples": [
+-                  7,
+-                  14
+-                ],
+-                "minimum": 1,
+-                "title": "Duration",
+-                "type": "integer"
+-              },
+-              "start_day": {
+-                "description": "The day of the week when the iteration starts (1=Monday, 7=Sunday).",
+-                "examples": [
+-                  1,
+-                  5
+-                ],
+-                "maximum": 7,
+-                "minimum": 1,
+-                "title": "Start Day",
+-                "type": "integer"
+-              }
+-            },
+-            "required": [
+-              "duration",
+-              "start_day"
+-            ],
+-            "title": "IterationConfiguration",
+-            "type": "object"
+-          },
+-          "name": {
+-            "description": "The name of the field to create.",
+-            "examples": [
+-              "Status",
+-              "Priority",
+-              "Sprint"
+-            ],
+-            "title": "Name",
+-            "type": "string"
+-          },
+-          "project_number": {
+-            "description": "The project's number.",
+-            "examples": [
+-              1,
+-              22
+-            ],
+-            "minimum": 1,
+-            "title": "Project Number",
+-            "type": "integer"
+-          },
+-          "single_select_options": {
+-            "description": "Options for single select fields. Required when data_type is 'single_select'.",
+-            "items": {
+-              "description": "Option for single select field.",
+-              "properties": {
+-                "color": {
+-                  "description": "The color for the option (e.g., 'red', 'blue', 'green').",
+-                  "examples": [
+-                    "red",
+-                    "blue",
+-                    "green"
+-                  ],
+-                  "title": "Color",
+-                  "type": "string"
+-                },
+-                "description": {
+-                  "description": "A description for the option.",
+-                  "examples": [
+-                    "Tasks that are not started yet"
+-                  ],
+-                  "title": "Description",
+-                  "type": "string"
+-                },
+-                "name": {
+-                  "description": "The name of the option.",
+-                  "examples": [
+-                    "To Do",
+-                    "In Progress",
+-                    "Done"
+-                  ],
+-                  "title": "Name",
+-                  "type": "string"
+-                }
+-              },
+-              "required": [
+-                "name"
+-              ],
+-              "title": "SingleSelectOption",
+-              "type": "object"
+-            },
+-            "title": "Single Select Options",
+-            "type": "array"
+-          },
+-          "username": {
+-            "description": "The handle for the GitHub user account.",
+-            "examples": [
+-              "octocat",
+-              "composio-dev"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "username",
+-          "project_number",
+-          "name",
+-          "data_type"
+-        ],
+-        "title": "AddFieldToUserProjectRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to add an issue or pull request to a user-owned GitHub project. Use when you need to add existing repository items to a project board.",
+-      "name": "GITHUB_ADD_ITEM_TO_USER_PROJECT",
+-      "parameters": {
+-        "properties": {
+-          "id": {
+-            "description": "The unique identifier of the issue or pull request to add to the project. Required if owner, repo, and number are not provided.",
+-            "title": "Id",
+-            "type": "integer"
+-          },
+-          "number": {
+-            "description": "The issue or pull request number. Required with owner and repo if id is not provided.",
+-            "title": "Number",
+-            "type": "integer"
+-          },
+-          "owner": {
+-            "description": "The repository owner login. Required with repo and number if id is not provided.",
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "project_number": {
+-            "description": "The project's number.",
+-            "examples": [
+-              1,
+-              22
+-            ],
+-            "title": "Project Number",
+-            "type": "integer"
+-          },
+-          "repo": {
+-            "description": "The repository name. Required with owner and number if id is not provided.",
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "type": {
+-            "description": "The type of item to add to the project. Must be either Issue or PullRequest.",
+-            "enum": [
+-              "Issue",
+-              "PullRequest"
+-            ],
+-            "title": "Type",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The handle for the GitHub user account.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "username",
+-          "project_number",
+-          "type"
+-        ],
+-        "title": "AddItemToUserProjectRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds labels (provided in the request body) to a repository issue; labels that do not already exist are created.",
+-      "name": "GITHUB_ADD_LABELS_TO_AN_ISSUE",
+-      "parameters": {
+-        "description": "Specifies the repository issue to which labels will be added.",
+-        "properties": {
+-          "issue_number": {
+-            "description": "Positive integer that uniquely identifies the issue within the repository. Must be >= 1.",
+-            "examples": [
+-              42,
+-              101
+-            ],
+-            "minimum": 1,
+-            "title": "Issue Number",
+-            "type": "integer"
+-          },
+-          "labels": {
+-            "description": "Array of label names to add to the issue. Labels that don't exist will be created automatically.",
+-            "examples": [
+-              [
+-                "bug",
+-                "enhancement"
+-              ],
+-              [
+-                "documentation",
+-                "help wanted"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Labels",
+-            "type": "array"
+-          },
+-          "owner": {
+-            "description": "Username or organization name owning the repository (case-insensitive).",
+-            "examples": [
+-              "octocat",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "Repository name, without the `.git` extension (case-insensitive).",
+-            "examples": [
+-              "Spoon-Knife",
+-              "my-awesome-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "issue_number",
+-          "labels"
+-        ],
+-        "title": "AddLabelsToAnIssueRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds new custom labels to an existing self-hosted runner for an organization; existing labels are not removed, and duplicates are not added.",
+-      "name": "GITHUB_ADD_ORG_RUNNER_LABELS",
+-      "parameters": {
+-        "description": "Request schema for adding custom labels to a self-hosted runner for an organization.",
+-        "properties": {
+-          "labels": {
+-            "description": "A list of custom label names to add to the self-hosted runner. Previously applied labels are not removed.",
+-            "examples": [
+-              [
+-                "new-label",
+-                "gpu-runner"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Labels",
+-            "type": "array"
+-          },
+-          "org": {
+-            "description": "The organization's name (case-insensitive).",
+-            "examples": [
+-              "my-org-name"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "runner_id": {
+-            "description": "Unique identifier of the self-hosted runner.",
+-            "examples": [
+-              12345
+-            ],
+-            "title": "Runner Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "runner_id",
+-          "labels"
+-        ],
+-        "title": "AddOrgRunnerLabelsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a GitHub user to a team or updates their role (member or maintainer), inviting them to the organization if not already a member; idempotent, returning current details if no change is made.",
+-      "name": "GITHUB_ADD_OR_UPDATE_TEAM_MEMBERSHIP_FOR_USER",
+-      "parameters": {
+-        "description": "Request schema for `AddOrUpdateTeamMembershipForUser`",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the GitHub organization. This name is not case-sensitive.",
+-            "examples": [
+-              "github-org",
+-              "octo-corp"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "role": {
+-            "default": "member",
+-            "description": "The role to assign to the user within the team. A 'maintainer' has broader permissions than a 'member', such as managing team members and settings.",
+-            "enum": [
+-              "member",
+-              "maintainer"
+-            ],
+-            "examples": [
+-              "member",
+-              "maintainer"
+-            ],
+-            "title": "Role",
+-            "type": "string"
+-          },
+-          "team_slug": {
+-            "description": "The slug (URL-friendly version) of the team's name. Must be lowercase with hyphens instead of spaces (e.g., 'my-team' not 'My Team'). Spaces will be automatically converted to hyphens and text will be lowercased.",
+-            "examples": [
+-              "justice-league",
+-              "developers",
+-              "product-team"
+-            ],
+-            "title": "Team Slug",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub username of the user to add or whose membership to update.",
+-            "examples": [
+-              "octocat",
+-              "mona-lisa-fixed"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "team_slug",
+-          "username"
+-        ],
+-        "title": "AddOrUpdateTeamMembershipForUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a classic project to a team or updates the team's permission on it. This endpoint grants or updates permissions for a team on a specific classic project (not Projects V2). The authenticated user must have admin permissions for the project. Both the team and project must belong to the same organization. Requirements: - The project must be a classic project (not GitHub Projects V2) - The authenticated user must have admin permissions on the project - The team and project must be in the same organization - Requires 'admin:org' scope for the authentication token Returns HTTP 204 No Content on success, 403 if project is not an org project, or 404 if the organization, team, or project is not found.",
+-      "name": "GITHUB_ADD_OR_UPDATE_TEAM_PROJECT_PERMISSIONS",
+-      "parameters": {
+-        "description": "Grants or updates a team's permissions for a specific classic project (not Projects V2).\n\nNote: This endpoint works with GitHub's classic Projects feature. The project\nmust be a classic project (not Projects V2), and both the team and project must\nbelong to the same organization. The authenticated user needs admin permissions\non the project.",
+-        "properties": {
+-          "org": {
+-            "description": "The organization name (login) that owns both the team and the classic project. Case-insensitive.",
+-            "examples": [
+-              "octo-org",
+-              "my-company"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "permission": {
+-            "description": "Permission level to grant the team: 'read' (view only), 'write' (view and edit), or 'admin' (full control including settings). If omitted, uses the team's default permission.",
+-            "enum": [
+-              "read",
+-              "write",
+-              "admin"
+-            ],
+-            "examples": [
+-              "read",
+-              "write",
+-              "admin"
+-            ],
+-            "title": "PermissionEnm",
+-            "type": "string"
+-          },
+-          "project_id": {
+-            "description": "The unique numeric ID of the classic project. This is NOT the project number displayed in the UI.",
+-            "examples": [
+-              1002604,
+-              12345678
+-            ],
+-            "title": "Project Id",
+-            "type": "integer"
+-          },
+-          "team_slug": {
+-            "description": "The team's URL-friendly slug identifier within the organization. Found in the team's URL path.",
+-            "examples": [
+-              "justice-league",
+-              "engineering",
+-              "frontend-team"
+-            ],
+-            "title": "Team Slug",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "team_slug",
+-          "project_id"
+-        ],
+-        "title": "AddOrUpdateTeamProjectPermissionsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Sets or updates a team's permission level for a repository within an organization; the team must be a member of the organization.",
+-      "name": "GITHUB_ADD_OR_UPDATE_TEAM_REPOSITORY_PERMISSIONS",
+-      "parameters": {
+-        "description": "Request schema for `AddOrUpdateTeamRepositoryPermissions`",
+-        "properties": {
+-          "org": {
+-            "description": "Organization name where the team exists (case-insensitive). This is the organization that owns the team, not necessarily the repository owner.",
+-            "examples": [
+-              "octo-org",
+-              "github"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "Account owner of the repository (case-insensitive). This is the user or organization that owns the repository. In most cases, this should match the 'org' parameter value.",
+-            "examples": [
+-              "octocat",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "permission": {
+-            "anyOf": [
+-              {
+-                "enum": [
+-                  "pull",
+-                  "triage",
+-                  "push",
+-                  "maintain",
+-                  "admin"
+-                ],
+-                "type": "string"
+-              },
+-              {
+-                "type": "string"
+-              }
+-            ],
+-            "default": "push",
+-            "description": "Permission level to grant the team. Valid values: 'pull' (read-only), 'triage' (manage issues/PRs), 'push' (read/write), 'maintain' (manage repo settings plus push), 'admin' (full control). Custom repository role names are also supported if defined by the organization.",
+-            "examples": [
+-              "admin",
+-              "push",
+-              "maintain",
+-              "pull",
+-              "triage"
+-            ],
+-            "title": "Permission"
+-          },
+-          "repo": {
+-            "description": "Repository name, without the `.git` extension (case-insensitive).",
+-            "examples": [
+-              "hello-world",
+-              "my-awesome-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "team_slug": {
+-            "description": "The team's slug (URL-friendly name).",
+-            "examples": [
+-              "justice-league",
+-              "developers"
+-            ],
+-            "title": "Team Slug",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "team_slug",
+-          "owner",
+-          "repo"
+-        ],
+-        "title": "AddOrUpdateTeamRepositoryPermissionsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a specified GitHub user as a collaborator to an existing organization project with a given permission level. Note: This endpoint is for organization projects (classic). You must be an organization owner or a project admin to add a collaborator. Classic projects are being deprecated in favor of the new Projects experience.",
+-      "name": "GITHUB_ADD_PROJECT_COLLABORATOR",
+-      "parameters": {
+-        "description": "Request to add a collaborator to an organization project.",
+-        "properties": {
+-          "permission": {
+-            "default": "write",
+-            "description": "Permission level for the collaborator on the project.",
+-            "enum": [
+-              "read",
+-              "write",
+-              "admin"
+-            ],
+-            "examples": [
+-              "read",
+-              "write",
+-              "admin"
+-            ],
+-            "title": "Permission",
+-            "type": "string"
+-          },
+-          "project_id": {
+-            "description": "The unique identifier of the organization project.",
+-            "examples": [
+-              "12345"
+-            ],
+-            "title": "Project Id",
+-            "type": "integer"
+-          },
+-          "username": {
+-            "description": "The GitHub username of the user to be added as a collaborator.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "project_id",
+-          "username"
+-        ],
+-        "title": "AddProjectCollaboratorRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a repository to a GitHub App installation, granting the app access; requires authenticated user to have admin rights for the repository and access to the installation.",
+-      "name": "GITHUB_ADD_REPOSITORY_TO_APP_INSTALLATION",
+-      "parameters": {
+-        "description": "Request to add a repository to a GitHub App installation for the authenticated user.",
+-        "properties": {
+-          "installation_id": {
+-            "description": "The unique identifier of the GitHub App installation to which the repository will be added. This installation must be accessible to the authenticated user.",
+-            "examples": [
+-              "1234567",
+-              "8765432"
+-            ],
+-            "title": "Installation Id",
+-            "type": "integer"
+-          },
+-          "repository_id": {
+-            "description": "The unique identifier of the repository to add to the installation. The authenticated user must have admin permissions for this repository.",
+-            "examples": [
+-              "9876543",
+-              "2345678"
+-            ],
+-            "title": "Repository Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "installation_id",
+-          "repository_id"
+-        ],
+-        "title": "AddRepositoryToAppInstallationRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a repository to an existing organization-level GitHub Actions secret that is configured for 'selected' repository access.",
+-      "name": "GITHUB_ADD_REPO_TO_ORG_SECRET_WITH_SELECTED_ACCESS",
+-      "parameters": {
+-        "description": "Request schema for adding a repository to an organization secret with 'selected' access type.",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the GitHub organization. This field is not case-sensitive.",
+-            "examples": [
+-              "MyOrganization",
+-              "Octo-Org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "repository_id": {
+-            "description": "The unique identifier of the repository to be granted access to the organization secret.",
+-            "examples": [
+-              123456789,
+-              987654321
+-            ],
+-            "title": "Repository Id",
+-            "type": "integer"
+-          },
+-          "secret_name": {
+-            "description": "The name of the organization secret to which the repository will be added.",
+-            "examples": [
+-              "MY_API_KEY",
+-              "DATABASE_PASSWORD"
+-            ],
+-            "title": "Secret Name",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "secret_name",
+-          "repository_id"
+-        ],
+-        "title": "AddRepoToOrgSecretWithSelectedAccessRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Grants an existing repository access to an existing organization-level Dependabot secret when the secret's visibility is set to 'selected'; the repository must belong to the organization, and the call succeeds without change if access already exists.",
+-      "name": "GITHUB_ADD_REPO_TO_ORG_SECRET_WITH_SELECTED_VISIBILITY",
+-      "parameters": {
+-        "description": "Request schema for assigning a repository to an organization's Dependabot secret.",
+-        "properties": {
+-          "org": {
+-            "description": "The organization's unique handle/name (case-insensitive).",
+-            "examples": [
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "repository_id": {
+-            "description": "Unique ID of the repository to be granted access to the secret.",
+-            "examples": [
+-              1296269
+-            ],
+-            "title": "Repository Id",
+-            "type": "integer"
+-          },
+-          "secret_name": {
+-            "description": "Name of the Dependabot secret; must be alphanumeric or underscore, no spaces (lowercase auto-converts to uppercase).",
+-            "examples": [
+-              "MY_SECRET_TOKEN",
+-              "ARTIFACTORY_PASSWORD"
+-            ],
+-            "title": "Secret Name",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "secret_name",
+-          "repository_id"
+-        ],
+-        "title": "AddRepoToOrgSecretWithSelectedVisibilityRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds and appends custom labels to a self-hosted repository runner, which must be registered and active.",
+-      "name": "GITHUB_ADD_RUNNER_LABELS",
+-      "parameters": {
+-        "description": "Request schema for `AddCustomLabelsToASelfHostedRunnerForARepository`",
+-        "properties": {
+-          "labels": {
+-            "description": "Custom label names to add. Appended to existing labels. Names are case-insensitive. Empty list means no changes.",
+-            "examples": [
+-              "prod",
+-              "linux-x64",
+-              "gpu-enabled"
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Labels",
+-            "type": "array"
+-          },
+-          "owner": {
+-            "description": "Username or organization name of the repository owner. Case-insensitive.",
+-            "examples": [
+-              "octocat",
+-              "MyOrganization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "Name of the repository, without the `.git` extension. Case-insensitive.",
+-            "examples": [
+-              "hello-world",
+-              "my-awesome-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "runner_id": {
+-            "description": "Unique ID of the self-hosted runner.",
+-            "examples": [
+-              123,
+-              456
+-            ],
+-            "title": "Runner Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "runner_id",
+-          "labels"
+-        ],
+-        "title": "AddRunnerLabelsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds a repository to an organization secret's access list when the secret's visibility is 'selected'; this operation is idempotent.",
+-      "name": "GITHUB_ADD_SELECTED_REPOSITORY_TO_ORGANIZATION_SECRET",
+-      "parameters": {
+-        "description": "Request schema for `AddSelectedRepositoryToOrganizationSecret`",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the organization. This name is not case sensitive.",
+-            "examples": [
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "repository_id": {
+-            "description": "The unique identifier of the repository to add to the secret's access list.",
+-            "examples": [
+-              1296269
+-            ],
+-            "title": "Repository Id",
+-            "type": "integer"
+-          },
+-          "secret_name": {
+-            "description": "The name of the secret. Secret names can only contain alphanumeric characters ([A-Z], [a-z], [0-9]) or underscores (_). Spaces are not allowed. Secret names cannot start with GITHUB_ and must be less than 255 characters.",
+-            "examples": [
+-              "MY_API_KEY"
+-            ],
+-            "title": "Secret Name",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "secret_name",
+-          "repository_id"
+-        ],
+-        "title": "AddSelectedRepositoryToOrganizationSecretRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Grants a repository access to an organization-level GitHub Actions variable, if that variable's visibility is set to 'selected_repositories'.",
+-      "name": "GITHUB_ADD_SELECTED_REPOSITORY_TO_ORGANIZATION_VARIABLE",
+-      "parameters": {
+-        "description": "Input for adding a selected repository to an organization variable's access list.",
+-        "properties": {
+-          "name": {
+-            "description": "Name of the existing organization-level GitHub Actions variable.",
+-            "examples": [
+-              "CI_DEPLOY_KEY",
+-              "SHARED_SECRET_VALUE"
+-            ],
+-            "title": "Name",
+-            "type": "string"
+-          },
+-          "org": {
+-            "description": "Name of the GitHub organization (case-insensitive).",
+-            "examples": [
+-              "octo-org",
+-              "my-company"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "repository_id": {
+-            "description": "Unique identifier of the repository to grant access.",
+-            "examples": [
+-              "1296269",
+-              "543210"
+-            ],
+-            "title": "Repository Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "name",
+-          "repository_id"
+-        ],
+-        "title": "AddSelectedRepositoryToOrganizationVariableRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Grants a specified repository access to an authenticated user's existing Codespaces secret, enabling Codespaces created for that repository to use the secret.",
+-      "name": "GITHUB_ADD_SELECTED_REPOSITORY_TO_USER_SECRET",
+-      "parameters": {
+-        "description": "Request schema for `AddSelectedRepositoryToUserSecret`",
+-        "properties": {
+-          "repository_id": {
+-            "description": "The unique identifier of the repository to be granted access to the specified user-level Codespaces secret.",
+-            "examples": [
+-              1296269,
+-              490940582
+-            ],
+-            "title": "Repository Id",
+-            "type": "integer"
+-          },
+-          "secret_name": {
+-            "description": "Name of the user-level Codespaces secret to which repository access is added; this secret must already exist for the authenticated user.",
+-            "examples": [
+-              "GH_TOKEN_MY_USER",
+-              "PERSONAL_API_KEY"
+-            ],
+-            "title": "Secret Name",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "secret_name",
+-          "repository_id"
+-        ],
+-        "title": "AddSelectedRepositoryToUserSecretRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds one or more social media links (which must be valid, full URLs for platforms supported by GitHub) to the authenticated user's public GitHub profile.",
+-      "name": "GITHUB_ADD_SOCIAL_ACCOUNTS_FOR_AUTHENTICATED_USER",
+-      "parameters": {
+-        "description": "Specifies the social media accounts to add for the authenticated user.",
+-        "properties": {
+-          "account_urls": {
+-            "description": "Full URLs for social media profiles to add to the user's GitHub profile; these will be displayed publicly.",
+-            "examples": [
+-              "https://twitter.com/github",
+-              "https://www.linkedin.com/in/github/",
+-              "https://mastodon.social/@github"
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Account Urls",
+-            "type": "array"
+-          }
+-        },
+-        "required": [
+-          "account_urls"
+-        ],
+-        "title": "AddSocialAccountsForAuthenticatedUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds status check contexts to a protected branch's required status checks. This action appends new status check contexts to the existing list of required status checks for a protected branch. The branch must already have branch protection enabled with status checks configured. Note: The 'contexts' parameter is deprecated by GitHub in favor of 'checks' array. For new implementations, consider using update_status_check_protection with the 'checks' parameter instead.",
+-      "name": "GITHUB_ADD_STATUS_CHECK_CONTEXTS",
+-      "parameters": {
+-        "description": "Request model for adding status check contexts to a protected branch.",
+-        "properties": {
+-          "branch": {
+-            "description": "The name of the branch to which status check contexts will be added. Branch names cannot contain wildcard characters. To use wildcard characters in branch names, refer to the GraphQL API.",
+-            "examples": [
+-              "main",
+-              "develop"
+-            ],
+-            "title": "Branch",
+-            "type": "string"
+-          },
+-          "contexts": {
+-            "description": "The status check contexts to add to the protected branch. These are the names of CI/CD jobs or other checks that must pass before merging. Can be provided as a single string or a list of strings. Examples: 'ci/test', 'linter', 'continuous-integration/travis-ci'.",
+-            "examples": [
+-              [
+-                "ci/test",
+-                "linter"
+-              ],
+-              [
+-                "continuous-integration/travis-ci"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Contexts",
+-            "type": "array"
+-          },
+-          "owner": {
+-            "description": "The account owner of the repository. This name is not case sensitive.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This name is not case sensitive.",
+-            "examples": [
+-              "Hello-World"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "branch",
+-          "contexts"
+-        ],
+-        "title": "AddStatusCheckContextsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to add a sub-issue to a parent GitHub issue using GraphQL. Use when you need to establish a parent-child relationship between issues. Requires the 'sub_issues' GraphQL feature to be enabled.",
+-      "name": "GITHUB_ADD_SUB_ISSUE",
+-      "parameters": {
+-        "description": "Request schema for adding a sub-issue to a parent issue",
+-        "properties": {
+-          "client_mutation_id": {
+-            "description": "A unique identifier for the client performing the mutation. Used to ensure idempotency of mutations.",
+-            "examples": [
+-              "mutation-12345",
+-              "add-sub-issue-abc"
+-            ],
+-            "title": "Client Mutation Id",
+-            "type": "string"
+-          },
+-          "issue_id": {
+-            "description": "The global node ID of the parent issue (e.g., 'I_kwDOABCDEFGH'). This is the GraphQL global identifier returned by GitHub's API.",
+-            "examples": [
+-              "I_kwDOABCDEFGH",
+-              "I_kwDOA1B2C3D4"
+-            ],
+-            "title": "Issue Id",
+-            "type": "string"
+-          },
+-          "replace_parent": {
+-            "description": "If true, replaces the existing parent issue if the sub-issue already has one. If false or omitted, the mutation will fail if the sub-issue already has a parent.",
+-            "title": "Replace Parent",
+-            "type": "boolean"
+-          },
+-          "sub_issue_id": {
+-            "description": "The global node ID of the sub-issue to link to the parent issue. Either sub_issue_id or sub_issue_url must be provided.",
+-            "examples": [
+-              "I_kwDOIJKLMNOP",
+-              "I_kwDOE5F6G7H8"
+-            ],
+-            "title": "Sub Issue Id",
+-            "type": "string"
+-          },
+-          "sub_issue_url": {
+-            "description": "The URL of the sub-issue to link to the parent issue. Either sub_issue_id or sub_issue_url must be provided.",
+-            "examples": [
+-              "https://github.com/owner/repo/issues/123"
+-            ],
+-            "title": "Sub Issue Url",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "issue_id"
+-        ],
+-        "title": "AddSubIssueRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds teams to the list of teams with push access to a protected branch. This action grants additional teams push access to a protected branch. Unlike 'Set team access restrictions' (PUT), this action adds to the existing list rather than replacing it entirely. Prerequisites: - The repository must be owned by an organization (not a personal account) - The branch must have protection rules enabled - The branch protection must have restrictions configured - The teams must exist in the organization and have repository access",
+-      "name": "GITHUB_ADD_TEAM_ACCESS_RESTRICTIONS",
+-      "parameters": {
+-        "description": "Request schema for adding teams to a protected branch's access restrictions.\n\nNote: This action only works for organization-owned repositories. Team access\nrestrictions are not available for personal repositories.",
+-        "properties": {
+-          "branch": {
+-            "description": "The name of the protected branch to add team restrictions to. The branch must already have branch protection enabled with restrictions configured. Wildcard characters are not supported. For wildcard branch protection, use the GitHub GraphQL API.",
+-            "examples": [
+-              "main",
+-              "develop",
+-              "release"
+-            ],
+-            "title": "Branch",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The organization name that owns the repository. Team access restrictions only work for organization-owned repositories, not personal repositories. This value is not case-sensitive.",
+-            "examples": [
+-              "my-org",
+-              "github"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This value is not case-sensitive.",
+-            "examples": [
+-              "my-project",
+-              "Hello-World"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "teams": {
+-            "description": "The list of team slugs to add push access to the protected branch. A team slug is the URL-friendly version of the team name (lowercase, hyphens instead of spaces). The teams must already have access to the repository. This adds teams to the existing list (does not replace the entire list).",
+-            "examples": [
+-              [
+-                "developers"
+-              ],
+-              [
+-                "maintainers",
+-                "release-team"
+-              ],
+-              [
+-                "core-team"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Teams",
+-            "type": "array"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "branch",
+-          "teams"
+-        ],
+-        "title": "AddTeamAccessRestrictionsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds users to the list of people allowed to push to a protected branch in an organization repository. Important notes: - This action only works on organization-owned repositories (not personal repos) - The branch must already have protection rules with restrictions enabled - Users must have write access to the repository to be added - The combined total of users, apps, and teams is limited to 100 items",
+-      "name": "GITHUB_ADD_USER_ACCESS_RESTRICTIONS",
+-      "parameters": {
+-        "description": "Request schema for adding user access restrictions to a protected branch.\nThis action is only available for organization-owned repositories.",
+-        "properties": {
+-          "branch": {
+-            "description": "The name of the branch. Cannot contain wildcard characters. To use wildcard characters in branch names, refer to the GitHub GraphQL API documentation.",
+-            "examples": [
+-              "main",
+-              "develop"
+-            ],
+-            "title": "Branch",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The account owner of the repository (must be an organization for user restrictions). This name is not case-sensitive.",
+-            "examples": [
+-              "octocat-org",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This name is not case-sensitive.",
+-            "examples": [
+-              "Spoon-Knife",
+-              "my-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "users": {
+-            "description": "The list of user logins to grant push access to the protected branch. Users must have write access to the repository. An empty list will remove all user restrictions.",
+-            "examples": [
+-              [
+-                "octocat",
+-                "hubot"
+-              ],
+-              [
+-                "developer1"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Users",
+-            "type": "array"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "branch",
+-          "users"
+-        ],
+-        "title": "AddUserAccessRestrictionsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Adds organization members to the list of users granted Codespaces access billed to the organization. IMPORTANT: This endpoint requires the organization's Codespaces billing access to be set to 'selected_members' mode. If not already configured, use the GITHUB_MANAGE_ACCESS_CONTROL_FOR_ORGANIZATION_CODESPACES action first to set visibility to 'selected_members'.",
+-      "name": "GITHUB_ADD_USERS_TO_CODESPACES_ACCESS_FOR_ORGANIZATION",
+-      "parameters": {
+-        "description": "Request schema for `AddUsersToCodespacesAccessForOrganization`",
+-        "properties": {
+-          "org": {
+-            "description": "Organization's name (case-insensitive).",
+-            "examples": [
+-              "github",
+-              "my-organization"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "selected_usernames": {
+-            "description": "Usernames of organization members to be granted Codespaces access billed to the organization. These users must be members of the specified organization.",
+-            "examples": [
+-              [
+-                "octocat",
+-                "hubot"
+-              ],
+-              [
+-                "another-user",
+-                "dev-user"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Selected Usernames",
+-            "type": "array"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "selected_usernames"
+-        ],
+-        "title": "AddUsersToCodespacesAccessForOrganizationRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Retrieves a map of all top-level GitHub REST API resource URLs and their templates.",
+-      "name": "GITHUB_API_ROOT",
+-      "parameters": {
+-        "description": "Request schema for retrieving the root endpoint details of the GitHub REST API.",
+-        "properties": {},
+-        "title": "GithubApiRootRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Approves a workflow run from a forked repository's pull request; call this when such a run requires manual approval due to workflow configuration.",
+-      "name": "GITHUB_APPROVE_WORKFLOW_RUN_FOR_FORK_PULL_REQUEST",
+-      "parameters": {
+-        "description": "Request schema for `ApproveWorkflowRunForForkPullRequest`",
+-        "properties": {
+-          "owner": {
+-            "description": "The account owner of the repository. The name is not case sensitive.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository without the `.git` extension. The name is not case sensitive. ",
+-            "examples": [
+-              "Hello-World"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "run_id": {
+-            "description": "The unique identifier of the workflow run requiring approval.",
+-            "examples": [
+-              12345
+-            ],
+-            "title": "Run Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "run_id"
+-        ],
+-        "title": "ApproveWorkflowRunForForkPullRequestRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Assigns an existing organization-level role (identified by `role_id`) to a team (identified by `team_slug`) within a GitHub organization (`org`), provided the organization, team, and role already exist.",
+-      "name": "GITHUB_ASSIGN_ORGANIZATION_ROLE_TO_TEAM",
+-      "parameters": {
+-        "description": "Request schema for `AssignOrganizationRoleToTeam`",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the GitHub organization. This field is case-insensitive.",
+-            "examples": [
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "role_id": {
+-            "description": "Unique identifier of the organization role to assign to the team (obtainable by listing organization roles).",
+-            "examples": [
+-              123,
+-              456
+-            ],
+-            "title": "Role Id",
+-            "type": "integer"
+-          },
+-          "team_slug": {
+-            "description": "The slug (URL-friendly version) of the team's name.",
+-            "examples": [
+-              "justice-league"
+-            ],
+-            "title": "Team Slug",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "team_slug",
+-          "role_id"
+-        ],
+-        "title": "AssignOrganizationRoleToTeamRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Assigns a specific organization role to a user who is a member or an outside collaborator in a GitHub organization, using a valid role ID.",
+-      "name": "GITHUB_ASSIGN_ORGANIZATION_ROLE_TO_USER",
+-      "parameters": {
+-        "description": "Request schema for `AssignOrganizationRoleToUser`",
+-        "properties": {
+-          "org": {
+-            "description": "The organization's name. This is not case-sensitive.",
+-            "examples": [
+-              "github",
+-              "acme-corp"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "role_id": {
+-            "description": "The unique integer identifier for the organization role. This ID can be obtained by listing the organization's roles.",
+-            "examples": [
+-              1,
+-              42,
+-              101
+-            ],
+-            "title": "Role Id",
+-            "type": "integer"
+-          },
+-          "username": {
+-            "description": "The GitHub username of the user to whom the role will be assigned.",
+-            "examples": [
+-              "octocat",
+-              "githubuser123"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "username",
+-          "role_id"
+-        ],
+-        "title": "AssignOrganizationRoleToUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "List Docker packages with migration conflicts for the authenticated user. This endpoint lists all Docker packages owned by the authenticated user that encountered namespace conflicts during the Docker-to-GitHub Container Registry (GHCR) migration. Conflicts occur when a package with the same name exists in both the legacy Docker registry and GHCR. IMPORTANT: The Docker registry for GitHub Packages was deprecated on Feb 24, 2025. This endpoint may return a 400 error with message 'Package migration for docker is no longer supported' as the migration period has ended. In this case, the action returns an informative response instead of failing. Use case: Identifying packages that require manual migration to GHCR. Required scope: read:packages (for OAuth and personal access tokens).",
+-      "name": "GITHUB_AUTH_USER_DOCKER_CONFLICT_PACKAGES_LIST",
+-      "parameters": {
+-        "description": "Request model for listing Docker migration conflicting packages.\n\nNo parameters are required for this endpoint.",
+-        "properties": {},
+-        "title": "AuthUserDockerConflictPackagesListRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Blocks an existing individual GitHub user (not an organization or your own account), preventing them from interacting with your account and repositories.",
+-      "name": "GITHUB_BLOCK_USER",
+-      "parameters": {
+-        "description": "Identifies the GitHub user to block by their username.",
+-        "properties": {
+-          "username": {
+-            "description": "The GitHub username (handle) of the user to block. Case-insensitive.",
+-            "examples": [
+-              "octocat",
+-              "torvalds"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "username"
+-        ],
+-        "title": "BlockUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Blocks a GitHub user from an organization, preventing their contributions, collaboration, and forking of the organization's repositories. Requires admin or 'Blocking users' organization permission (write access).",
+-      "name": "GITHUB_BLOCK_USER_FROM_ORGANIZATION",
+-      "parameters": {
+-        "description": "Input data for blocking a user from an organization.",
+-        "properties": {
+-          "org": {
+-            "description": "The organization name (case-insensitive). You must have admin or 'Blocking users' permission in this organization.",
+-            "examples": [
+-              "github",
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub username (handle) of the account to block from the organization.",
+-            "examples": [
+-              "octocat",
+-              "someuser"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "username"
+-        ],
+-        "title": "BlockUserFromOrganizationRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Cancels an existing, ongoing or queued GitHub Pages deployment for a repository using its `pages_deployment_id`.",
+-      "name": "GITHUB_CANCEL_GITHUB_PAGES_DEPLOYMENT",
+-      "parameters": {
+-        "description": "Request schema for `CancelGithubPagesDeployment`",
+-        "properties": {
+-          "owner": {
+-            "description": "Username or organization that owns the repository. Not case-sensitive.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "pages_deployment_id": {
+-            "description": "Unique numerical ID of the GitHub Pages deployment (not the commit SHA).",
+-            "examples": [
+-              123456789
+-            ],
+-            "title": "Pages Deployment Id",
+-            "type": "integer"
+-          },
+-          "repo": {
+-            "description": "Repository name, excluding the `.git` extension. Not case-sensitive.",
+-            "examples": [
+-              "Hello-World"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "pages_deployment_id"
+-        ],
+-        "title": "CancelGithubPagesDeploymentRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to cancel an active GitHub sponsorship using GraphQL. Use when you need to terminate a sponsorship relationship between a sponsor and a sponsorable entity. Either sponsor ID/login and sponsorable ID/login must be provided.",
+-      "name": "GITHUB_CANCEL_SPONSORSHIP",
+-      "parameters": {
+-        "description": "Request schema for canceling an active GitHub sponsorship",
+-        "properties": {
+-          "client_mutation_id": {
+-            "description": "A unique identifier for the client performing the mutation. Used to ensure idempotency of mutations.",
+-            "examples": [
+-              "cancel-sponsorship-12345",
+-              "mutation-abc"
+-            ],
+-            "title": "Client Mutation Id",
+-            "type": "string"
+-          },
+-          "sponsor_id": {
+-            "description": "The global node ID of the user or organization acting as sponsor (e.g., 'U_kgDOABCDEF'). Required if sponsor_login is not provided.",
+-            "examples": [
+-              "U_kgDOABCDEF",
+-              "O_kgDOGHIJKL"
+-            ],
+-            "title": "Sponsor Id",
+-            "type": "string"
+-          },
+-          "sponsor_login": {
+-            "description": "The username of the sponsoring user or organization. Required if sponsor_id is not provided.",
+-            "examples": [
+-              "github",
+-              "octocat"
+-            ],
+-            "title": "Sponsor Login",
+-            "type": "string"
+-          },
+-          "sponsorable_id": {
+-            "description": "The global node ID of the user or organization receiving the sponsorship (e.g., 'U_kgDOMNOPQR'). Required if sponsorable_login is not provided.",
+-            "examples": [
+-              "U_kgDOMNOPQR",
+-              "O_kgDOSTUVWX"
+-            ],
+-            "title": "Sponsorable Id",
+-            "type": "string"
+-          },
+-          "sponsorable_login": {
+-            "description": "The username of the sponsored user or organization. Required if sponsorable_id is not provided.",
+-            "examples": [
+-              "octocat",
+-              "rails"
+-            ],
+-            "title": "Sponsorable Login",
+-            "type": "string"
+-          }
+-        },
+-        "title": "CancelSponsorshipRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Cancels a workflow run in a GitHub repository if it is in a cancellable state (e.g., 'in_progress' or 'queued'). Returns 202 Accepted on success.",
+-      "name": "GITHUB_CANCEL_WORKFLOW_RUN",
+-      "parameters": {
+-        "description": "Request schema for `CancelWorkflowRun`",
+-        "properties": {
+-          "owner": {
+-            "description": "The account owner of the repository (not case-sensitive).",
+-            "examples": [
+-              "octocat",
+-              "github"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension (not case-sensitive).",
+-            "examples": [
+-              "Hello-World",
+-              "linguist"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "run_id": {
+-            "description": "Unique identifier of the workflow run.",
+-            "examples": [
+-              123456789
+-            ],
+-            "title": "Run Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "run_id"
+-        ],
+-        "title": "CancelWorkflowRunRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a gist is starred by the authenticated user. Returns `is_starred: true` if the gist is starred (HTTP 204), or `is_starred: false` if not starred (HTTP 404). Use this to verify star status before starring/unstarring a gist.",
+-      "name": "GITHUB_CHECK_IF_GIST_IS_STARRED",
+-      "parameters": {
+-        "description": "Request schema for `CheckIfGistIsStarred`",
+-        "properties": {
+-          "gist_id": {
+-            "description": "The unique identifier (ID) of the gist to check. Can be found in the URL of the gist (e.g., 'https://gist.github.com/{user}/{gist_id}').",
+-            "examples": [
+-              "6104628abc0786a41abb273430ac0590",
+-              "aa5a315d61ae9438b18d"
+-            ],
+-            "title": "Gist Id",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "gist_id"
+-        ],
+-        "title": "CheckIfGistIsStarredRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a specified GitHub pull request has been merged, indicated by a 204 HTTP status (merged) or 404 (not merged/found).",
+-      "name": "GITHUB_CHECK_IF_PULL_REQUEST_HAS_BEEN_MERGED",
+-      "parameters": {
+-        "description": "Request schema for `CheckIfPullRequestHasBeenMerged`",
+-        "properties": {
+-          "owner": {
+-            "description": "The account owner of the repository (not case sensitive).",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "pull_number": {
+-            "description": "The number that identifies the pull request.",
+-            "examples": [
+-              "1347"
+-            ],
+-            "title": "Pull Number",
+-            "type": "integer"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension (not case sensitive).",
+-            "examples": [
+-              "Spoon-Knife"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "pull_number"
+-        ],
+-        "title": "CheckIfPullRequestHasBeenMergedRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Verifies if a GitHub user can be assigned to issues in a repository; assignability is confirmed by an HTTP 204 (No Content) response, resulting in an empty 'data' field in the response.",
+-      "name": "GITHUB_CHECK_IF_USER_CAN_BE_ASSIGNED",
+-      "parameters": {
+-        "description": "Request schema for checking if a user can be assigned to issues in a repository.",
+-        "properties": {
+-          "assignee": {
+-            "description": "The GitHub username of the user to check for assignability. This name is not case sensitive.",
+-            "examples": [
+-              "hubot",
+-              "monalisa"
+-            ],
+-            "title": "Assignee",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The account owner of the repository (e.g., a GitHub username or organization name). This name is not case sensitive.",
+-            "examples": [
+-              "octocat",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This name is not case sensitive.",
+-            "examples": [
+-              "Spoon-Knife",
+-              "my-awesome-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "assignee"
+-        ],
+-        "title": "CheckIfUserCanBeAssignedRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a specified GitHub user can be assigned to a given issue within a repository.",
+-      "name": "GITHUB_CHECK_IF_USER_CAN_BE_ASSIGNED_TO_ISSUE",
+-      "parameters": {
+-        "description": "Request schema for `CheckIfUserCanBeAssignedToIssue`",
+-        "properties": {
+-          "assignee": {
+-            "description": "The GitHub username of the user to check for assignment permissions.",
+-            "examples": [
+-              "hubot"
+-            ],
+-            "title": "Assignee",
+-            "type": "string"
+-          },
+-          "issue_number": {
+-            "description": "The unique number identifying the issue within the repository.",
+-            "examples": [
+-              "1347"
+-            ],
+-            "title": "Issue Number",
+-            "type": "integer"
+-          },
+-          "owner": {
+-            "description": "The username of the account owning the repository. This field is not case-sensitive.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+-            "examples": [
+-              "Spoon-Knife"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "issue_number",
+-          "assignee"
+-        ],
+-        "title": "CheckIfUserCanBeAssignedToIssueRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a GitHub user `username` follows `target_user`; returns a 204 HTTP status if true, 404 if not or if users are invalid.",
+-      "name": "GITHUB_CHECK_IF_USER_FOLLOWS_ANOTHER_USER",
+-      "parameters": {
+-        "description": "Request schema for checking if one GitHub user follows another.",
+-        "properties": {
+-          "target_user": {
+-            "description": "The GitHub username of the user to verify if they are followed by the `username`.",
+-            "examples": [
+-              "mercury-tools-bot",
+-              "github"
+-            ],
+-            "title": "Target User",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub username of the user to check.",
+-            "examples": [
+-              "octocat",
+-              "torvalds"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "username",
+-          "target_user"
+-        ],
+-        "title": "CheckIfUserFollowsAnotherUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if the specified GitHub user is blocked by the authenticated user; a 204 No Content response indicates the user is blocked, while a 404 Not Found indicates they are not.",
+-      "name": "GITHUB_CHECK_IF_USER_IS_BLOCKED_BY_AUTHENTICATED_USER",
+-      "parameters": {
+-        "description": "Request to check if a user is blocked by the authenticated user.",
+-        "properties": {
+-          "username": {
+-            "description": "The GitHub username (handle) of the user.",
+-            "examples": [
+-              "octocat",
+-              "torvalds"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "username"
+-        ],
+-        "title": "CheckIfUserIsBlockedByAuthenticatedUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a GitHub user is blocked by an organization. Returns is_blocked=True if the user is blocked (HTTP 204), or is_blocked=False if not blocked (HTTP 404). Requires 'Blocking users' organization permission (read access).",
+-      "name": "GITHUB_CHECK_IF_USER_IS_BLOCKED_BY_ORGANIZATION",
+-      "parameters": {
+-        "description": "Request schema for `CheckIfUserIsBlockedByOrganization`",
+-        "properties": {
+-          "org": {
+-            "description": "The organization name (case-insensitive). Must be an organization where you have 'Blocking users' permission (read access).",
+-            "examples": [
+-              "github",
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub username (handle) to check if blocked by the organization.",
+-            "examples": [
+-              "octocat",
+-              "mona-lisa"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "username"
+-        ],
+-        "title": "CheckIfUserIsBlockedByOrganizationRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a user is a collaborator on a specified GitHub repository, returning a 204 status if they are, or a 404 status if they are not or if the repository/user does not exist.",
+-      "name": "GITHUB_CHECK_IF_USER_IS_REPOSITORY_COLLABORATOR",
+-      "parameters": {
+-        "description": "Request schema for `CheckIfUserIsRepositoryCollaborator`",
+-        "properties": {
+-          "owner": {
+-            "description": "The account owner of the repository, typically a GitHub username or an organization name. This name is not case sensitive.",
+-            "examples": [
+-              "octocat",
+-              "my-github-org"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This name is not case sensitive.",
+-            "examples": [
+-              "Spoon-Knife",
+-              "my-project-repo"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub username of the user whose collaborator status is being checked. This name is not case sensitive.",
+-            "examples": [
+-              "gh-user123",
+-              "another-dev"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "username"
+-        ],
+-        "title": "CheckIfUserIsRepositoryCollaboratorRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if the authenticated GitHub user follows a target GitHub user. Returns a structured response with is_following=True when following (HTTP 204), or is_following=False when not following (HTTP 404).",
+-      "name": "GITHUB_CHECK_PERSON_FOLLOWED_BY_AUTH_USER",
+-      "parameters": {
+-        "description": "Input model for the action that checks if the authenticated user follows another GitHub user.",
+-        "properties": {
+-          "username": {
+-            "description": "The GitHub username (e.g., 'octocat') of the person to check. This is the user's handle on GitHub.",
+-            "examples": [
+-              "octocat",
+-              "torvalds"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "username"
+-        ],
+-        "title": "CheckPersonFollowedByAuthUserRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if private vulnerability reporting is enabled for the specified repository.",
+-      "name": "GITHUB_CHECK_PRIVATE_VULNERABILITY_REPORTING_STATUS",
+-      "parameters": {
+-        "description": "Request schema for `CheckPrivateVulnerabilityReportingStatus`",
+-        "properties": {
+-          "owner": {
+-            "description": "The username or organization name that owns the repository. This field is not case-sensitive.",
+-            "examples": [
+-              "octocat",
+-              "github"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+-            "examples": [
+-              "hello-world",
+-              "linguist"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo"
+-        ],
+-        "title": "CheckPrivateVulnerabilityReportingStatusRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to check if a user is a public member of an organization. Use when you need to verify public organization membership status.",
+-      "name": "GITHUB_CHECK_PUBLIC_ORGANIZATION_MEMBERSHIP_FOR_USER",
+-      "parameters": {
+-        "description": "Request schema for checking public organization membership for a user.",
+-        "properties": {
+-          "org": {
+-            "description": "The organization name. The name is not case sensitive.",
+-            "examples": [
+-              "github",
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The handle for the GitHub user account.",
+-            "examples": [
+-              "octocat",
+-              "aashah"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "username"
+-        ],
+-        "title": "CheckPublicOrgMembershipRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a team has 'read', 'write', or 'admin' permissions for an organization's specific classic project, returning the project's details if access is confirmed.",
+-      "name": "GITHUB_CHECK_TEAM_PERMISSIONS_FOR_A_PROJECT",
+-      "parameters": {
+-        "description": "Request schema for `CheckTeamPermissionsForAProject`",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the organization. This is case-insensitive.",
+-            "examples": [
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "project_id": {
+-            "description": "The unique identifier of the project (classic).",
+-            "examples": [
+-              1002604
+-            ],
+-            "title": "Project Id",
+-            "type": "integer"
+-          },
+-          "team_slug": {
+-            "description": "The slug (short name) of the team.",
+-            "examples": [
+-              "justice-league"
+-            ],
+-            "title": "Team Slug",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "team_slug",
+-          "project_id"
+-        ],
+-        "title": "CheckTeamPermissionsForAProjectRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks a team's permissions for a specific repository within an organization, including permissions inherited from parent teams.",
+-      "name": "GITHUB_CHECK_TEAM_PERMISSIONS_FOR_A_REPOSITORY",
+-      "parameters": {
+-        "description": "Defines the request parameters for checking a team's permissions for a repository.",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the organization. This field is not case-sensitive.",
+-            "examples": [
+-              "octo-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The organization that owns the repository. For this GitHub API endpoint, this value must be the same as the `org` parameter. This field is not case-sensitive.",
+-            "examples": [
+-              "octo-org"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+-            "examples": [
+-              "hello-world",
+-              "octo-repo"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "team_slug": {
+-            "description": "The URL-friendly slug for the team name. It is unique within the organization and typically all lowercase with hyphens instead of spaces.",
+-            "examples": [
+-              "justice-league",
+-              "awesome-developers"
+-            ],
+-            "title": "Team Slug",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "team_slug",
+-          "owner",
+-          "repo"
+-        ],
+-        "title": "CheckTeamPermissionsForARepositoryRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Checks if a GitHub App or OAuth access_token is valid for the specified client_id and retrieves its details, typically to verify its active status and grants. NOTE: This endpoint requires Basic Authentication using the OAuth App's client_id as username and client_secret as password. The access_token parameter must be an OAuth token issued by the specified OAuth App.",
+-      "name": "GITHUB_CHECK_TOKEN",
+-      "parameters": {
+-        "description": "Request schema for validating a GitHub App or OAuth token.",
+-        "properties": {
+-          "access_token": {
+-            "description": "The OAuth access token issued by your OAuth App that you want to validate. Returns 404 if the token is invalid or not issued by this client_id.",
+-            "examples": [
+-              "gho_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0"
+-            ],
+-            "title": "Access Token",
+-            "type": "string"
+-          },
+-          "client_id": {
+-            "description": "The unique client ID of your GitHub OAuth App (must match the app that issued the token being checked).",
+-            "examples": [
+-              "Iv1.1234567890abcdef"
+-            ],
+-            "title": "Client Id",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "client_id",
+-          "access_token"
+-        ],
+-        "title": "CheckTokenRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to clear the value of a field for an item in a GitHub Project V2. Use when you need to remove or reset a field value (text, number, date, assignees, labels, single-select, iteration, or milestone fields).",
+-      "name": "GITHUB_CLEAR_PROJECT_V2_ITEM_FIELD_VALUE",
+-      "parameters": {
+-        "description": "Request parameters for clearing a field value in a GitHub Project V2 item.\n\nprojectId: The ID of the Project.\nitemId: The ID of the item to update.\nfieldId: The ID of the field to clear.",
+-        "properties": {
+-          "fieldId": {
+-            "description": "The global node ID of the field to clear (e.g., 'PVTSSF_lAHOCNqc1s4BN3oqzg8vTnA'). Currently supports text, number, date, assignees, labels, single-select, iteration and milestone fields.",
+-            "examples": [
+-              "PVTSSF_lAHOCNqc1s4BN3oqzg8vTnA"
+-            ],
+-            "title": "Field Id",
+-            "type": "string"
+-          },
+-          "itemId": {
+-            "description": "The global node ID of the project item to update (e.g., 'PVTI_lAHOCNqc1s4BN3oqzgldG_w'). This identifies the specific item within the project whose field value will be cleared.",
+-            "examples": [
+-              "PVTI_lAHOCNqc1s4BN3oqzgldG_w"
+-            ],
+-            "title": "Item Id",
+-            "type": "string"
+-          },
+-          "projectId": {
+-            "description": "The global node ID of the Project (e.g., 'PVT_kwHOCNqc1s4BN3oq'). This identifies the project containing the item.",
+-            "examples": [
+-              "PVT_kwHOCNqc1s4BN3oq"
+-            ],
+-            "title": "Project Id",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "projectId",
+-          "itemId",
+-          "fieldId"
+-        ],
+-        "title": "ClearProjectV2ItemFieldValueRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Deletes GitHub Actions caches from a repository matching a specific `key` and an optional Git `ref`, used to manage storage or clear outdated/corrupted caches; the action succeeds even if no matching caches are found to delete.",
+-      "name": "GITHUB_CLEAR_REPOSITORY_CACHE_BY_KEY",
+-      "parameters": {
+-        "description": "Request schema for the `ClearRepositoryCacheByKey` action, defining parameters to identify and delete GitHub Actions caches.",
+-        "properties": {
+-          "key": {
+-            "description": "The exact cache key used to identify specific caches for deletion. This key is often dynamically generated in workflows using expressions (e.g., `${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}`).",
+-            "examples": [
+-              "Linux-npm-6a99d79959699e7aa7597179767626e089597a38",
+-              "Windows-pip-cache-mybranch-py39",
+-              "macOS-gems-custom-key-v1"
+-            ],
+-            "title": "Key",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The account owner of the repository. The name is not case sensitive.",
+-            "examples": [
+-              "octocat",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "ref": {
+-            "description": "The full Git reference for narrowing down the cache deletion. For example, to target caches for a specific branch, use `refs/heads/<branch_name>`. To target caches for a pull request, use `refs/pull/<pull_number>/merge`. If omitted, caches matching the key across all refs are considered.",
+-            "examples": [
+-              "refs/heads/main",
+-              "refs/pull/123/merge",
+-              "refs/tags/v1.0.0"
+-            ],
+-            "title": "Ref",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository without the `.git` extension. The name is not case sensitive.",
+-            "examples": [
+-              "hello-world",
+-              "my-awesome-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "key"
+-        ],
+-        "title": "ClearRepositoryCacheByKeyRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Removes all custom labels from a self-hosted runner for an organization; default labels (e.g., 'self-hosted', 'linux', 'x64') will remain.",
+-      "name": "GITHUB_CLEAR_SELF_HOSTED_RUNNER_ORG_LABELS",
+-      "parameters": {
+-        "description": "Request schema for `ClearSelfHostedRunnerOrgLabels`",
+-        "properties": {
+-          "org": {
+-            "description": "The name of the GitHub organization that owns the self-hosted runner (case-insensitive).",
+-            "examples": [
+-              "octo-org",
+-              "my-company"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "runner_id": {
+-            "description": "Unique numeric identifier of the self-hosted runner. Can be obtained from listing runners for the organization.",
+-            "examples": [
+-              123,
+-              456
+-            ],
+-            "title": "Runner Id",
+-            "type": "integer"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "runner_id"
+-        ],
+-        "title": "ClearSelfHostedRunnerOrgLabelsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Tool to atomically create, update, or delete multiple files in a GitHub repository as a single commit. Uses Git Data APIs to avoid SHA mismatch conflicts that occur with the Contents API when multiple files are modified in parallel. Use when you need to make multi-file changes reliably. BRANCH CREATION: When committing to a new branch (e.g., 'fix/my-fix' or 'feature/new-feature'), you MUST provide 'base_branch' (typically 'main' or 'master') to create the branch from. If the branch already exists, base_branch is not needed. This action handles race conditions automatically: if the branch is updated by another commit between fetching the HEAD and updating the reference (resulting in a 422 'not a fast forward' error), the action will retry by refetching the HEAD and rebasing changes. Use max_retries to control this behavior.",
+-      "name": "GITHUB_COMMIT_MULTIPLE_FILES",
+-      "parameters": {
+-        "properties": {
+-          "author": {
+-            "additionalProperties": false,
+-            "description": "Git author or committer information.",
+-            "properties": {
+-              "date": {
+-                "description": "ISO 8601 timestamp for the commit (optional, defaults to current time)",
+-                "examples": [
+-                  "2024-01-15T10:30:00Z"
+-                ],
+-                "title": "Date",
+-                "type": "string"
+-              },
+-              "email": {
+-                "description": "Email address of the author or committer",
+-                "examples": [
+-                  "john@example.com",
+-                  "jane@example.com"
+-                ],
+-                "title": "Email",
+-                "type": "string"
+-              },
+-              "name": {
+-                "description": "Name of the author or committer",
+-                "examples": [
+-                  "John Doe",
+-                  "Jane Smith"
+-                ],
+-                "title": "Name",
+-                "type": "string"
+-              }
+-            },
+-            "required": [
+-              "name",
+-              "email"
+-            ],
+-            "title": "AuthorCommitter",
+-            "type": "object"
+-          },
+-          "base_branch": {
+-            "description": "REQUIRED when committing to a new branch that doesn't exist yet. Specifies the existing branch to create the new branch from (e.g., 'main' or 'master'). Not needed if 'branch' already exists in the repository.",
+-            "examples": [
+-              "main",
+-              "master",
+-              "develop"
+-            ],
+-            "title": "Base Branch",
+-            "type": "string"
+-          },
+-          "branch": {
+-            "description": "Target branch name to commit to. If this branch doesn't exist, you MUST provide 'base_branch' to create it. For new feature branches (e.g., 'fix/my-fix', 'feature/new-feature'), always set base_branch='main' (or your default branch).",
+-            "examples": [
+-              "main",
+-              "develop",
+-              "feature/new-feature"
+-            ],
+-            "title": "Branch",
+-            "type": "string"
+-          },
+-          "committer": {
+-            "additionalProperties": false,
+-            "description": "Git author or committer information.",
+-            "properties": {
+-              "date": {
+-                "description": "ISO 8601 timestamp for the commit (optional, defaults to current time)",
+-                "examples": [
+-                  "2024-01-15T10:30:00Z"
+-                ],
+-                "title": "Date",
+-                "type": "string"
+-              },
+-              "email": {
+-                "description": "Email address of the author or committer",
+-                "examples": [
+-                  "john@example.com",
+-                  "jane@example.com"
+-                ],
+-                "title": "Email",
+-                "type": "string"
+-              },
+-              "name": {
+-                "description": "Name of the author or committer",
+-                "examples": [
+-                  "John Doe",
+-                  "Jane Smith"
+-                ],
+-                "title": "Name",
+-                "type": "string"
+-              }
+-            },
+-            "required": [
+-              "name",
+-              "email"
+-            ],
+-            "title": "AuthorCommitter",
+-            "type": "object"
+-          },
+-          "deletes": {
+-            "description": "List of file paths to delete from the repository. Files must exist in the repository; attempting to delete non-existent files will result in an error. Ensure paths are exact with no leading/trailing whitespace.",
+-            "examples": [
+-              [
+-                "old-file.txt",
+-                "deprecated/module.py"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Deletes",
+-            "type": "array"
+-          },
+-          "force": {
+-            "default": false,
+-            "description": "Force update the branch reference. WARNING: Use with caution as this can overwrite commits. Only use this when you intentionally want to overwrite the branch history.",
+-            "title": "Force",
+-            "type": "boolean"
+-          },
+-          "max_retries": {
+-            "default": 3,
+-            "description": "Maximum number of retries when encountering race conditions (422 'not a fast forward' errors). The action will refetch the HEAD and rebase changes on each retry. Set to 0 to disable retries.",
+-            "maximum": 10,
+-            "minimum": 0,
+-            "title": "Max Retries",
+-            "type": "integer"
+-          },
+-          "message": {
+-            "description": "Commit message describing the changes",
+-            "examples": [
+-              "Add new features",
+-              "Update documentation",
+-              "Fix bugs in authentication"
+-            ],
+-            "title": "Message",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "Repository owner (username or organization name)",
+-            "examples": [
+-              "octocat",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "Repository name (without .git extension)",
+-            "examples": [
+-              "hello-world",
+-              "my-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          },
+-          "upserts": {
+-            "description": "List of files to create or update. Each entry requires path, content, and optional encoding (utf-8 or base64)",
+-            "examples": [
+-              [
+-                {
+-                  "content": "# Hello",
+-                  "encoding": "utf-8",
+-                  "path": "README.md"
+-                }
+-              ]
+-            ],
+-            "items": {
+-              "description": "Represents a file to create or update.",
+-              "properties": {
+-                "content": {
+-                  "description": "File content as a string",
+-                  "examples": [
+-                    "print('Hello, World!')",
+-                    "# My Project\n\nWelcome!"
+-                  ],
+-                  "title": "Content",
+-                  "type": "string"
+-                },
+-                "encoding": {
+-                  "default": "utf-8",
+-                  "description": "Content encoding: 'utf-8' for text files or 'base64' for binary files",
+-                  "enum": [
+-                    "utf-8",
+-                    "base64"
+-                  ],
+-                  "examples": [
+-                    "utf-8",
+-                    "base64"
+-                  ],
+-                  "title": "Encoding",
+-                  "type": "string"
+-                },
+-                "path": {
+-                  "description": "File path in the repository (e.g., 'src/main.py' or 'docs/readme.md')",
+-                  "examples": [
+-                    "src/main.py",
+-                    "README.md",
+-                    "docs/guide.md"
+-                  ],
+-                  "title": "Path",
+-                  "type": "string"
+-                }
+-              },
+-              "required": [
+-                "path",
+-                "content"
+-              ],
+-              "title": "FileUpsert",
+-              "type": "object"
+-            },
+-            "title": "Upserts",
+-            "type": "array"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "branch",
+-          "message"
+-        ],
+-        "title": "CommitMultipleFilesRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Compares two commit points (commits, branches, tags, or SHAs) within a repository or across forks, using `BASE...HEAD` or `OWNER:REF...OWNER:REF` format for the `basehead` parameter.",
+-      "name": "GITHUB_COMPARE_TWO_COMMITS",
+-      "parameters": {
+-        "description": "Request schema for `CompareTwoCommits` action. Specifies the repository and the two commit points (base and head) to compare.",
+-        "properties": {
+-          "basehead": {
+-            "description": "A string specifying the base and head references to compare, in the format `BASE...HEAD`. `BASE` and `HEAD` can be branch names (e.g., `main...develop`), tag names (e.g., `v1.0.0...v1.1.0`), or commit SHAs (abbreviated or full 40-character format). Both abbreviated and full SHAs are accepted; full 40-character SHAs are recommended for reliability in large repositories. Both references must exist in the specified repository. To compare branches across forks in the same network, use the format `OWNER:REF...OWNER:REF` (e.g., `octocat:main...another-user:main`). Do NOT pass GitHub URLs - only plain reference strings like 'main...develop' are accepted.",
+-            "examples": [
+-              "main...develop",
+-              "v1.0.0...v1.1.0",
+-              "0e9c6b6...5f8d3a0",
+-              "553c2077f0edc3d5dc5d17262f6aa498e69d6f8e...7fd1a60b01f91b314f59955a4e4d4e80d8edf11d",
+-              "octocat:main...my-fork-user:main"
+-            ],
+-            "title": "Basehead",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The username or organization name that owns the repository. This field is not case-sensitive.",
+-            "examples": [
+-              "octocat",
+-              "my-organization"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "page": {
+-            "default": 1,
+-            "description": "Page number of the results to fetch, for pagination when the number of differences (commits or files) is large.",
+-            "examples": [
+-              "1",
+-              "2"
+-            ],
+-            "title": "Page",
+-            "type": "integer"
+-          },
+-          "per_page": {
+-            "default": 30,
+-            "description": "Number of results (e.g., files or commits) to return per page, with a maximum of 100, for pagination.",
+-            "examples": [
+-              "30",
+-              "100"
+-            ],
+-            "title": "Per Page",
+-            "type": "integer"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the `.git` extension. This field is not case-sensitive.",
+-            "examples": [
+-              "Spoon-Knife",
+-              "my-project"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "basehead"
+-        ],
+-        "title": "CompareTwoCommitsRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Generates a JIT configuration for a GitHub organization's new self-hosted runner to run a single job then unregister; requires admin:org scope and the runner_group_id must exist in the organization.",
+-      "name": "GITHUB_CONFIGURE_JIT_RUNNER_FOR_ORG",
+-      "parameters": {
+-        "description": "Parameters to generate a just-in-time (JIT) runner configuration for a GitHub organization.",
+-        "properties": {
+-          "labels": {
+-            "description": "Custom labels to assign to the new self-hosted runner, used by GitHub Actions to route jobs. **Minimum items**: 1. **Maximum items**: 100.",
+-            "examples": [
+-              [
+-                "linux",
+-                "x64",
+-                "gpu"
+-              ],
+-              [
+-                "windows-latest",
+-                "my-custom-label"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "maxItems": 100,
+-            "minItems": 1,
+-            "title": "Labels",
+-            "type": "array"
+-          },
+-          "name": {
+-            "description": "Desired name for the new self-hosted runner, visible in the GitHub UI.",
+-            "examples": [
+-              "my-jit-runner-linux",
+-              "temp-builder-1"
+-            ],
+-            "title": "Name",
+-            "type": "string"
+-          },
+-          "org": {
+-            "description": "Name of the GitHub organization (case-insensitive).",
+-            "examples": [
+-              "my-organization",
+-              "github"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "runner_group_id": {
+-            "description": "ID of the runner group to assign the new self-hosted runner. Must exist in the organization. You can get runner group IDs by calling the 'List self-hosted runner groups for an organization' endpoint (GET /orgs/{org}/actions/runner-groups).",
+-            "examples": [
+-              1,
+-              42
+-            ],
+-            "title": "Runner Group Id",
+-            "type": "integer"
+-          },
+-          "work_folder": {
+-            "default": "_work",
+-            "description": "Path to the working directory on the runner machine where jobs will execute, relative to the runner's installation directory.",
+-            "examples": [
+-              "_work",
+-              "custom_work_dir"
+-            ],
+-            "title": "Work Folder",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "name",
+-          "runner_group_id",
+-          "labels"
+-        ],
+-        "title": "ConfigureJitRunnerForOrgRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Sets or updates the OIDC subject claim customization template for an existing GitHub organization by specifying which claims (e.g., 'repo', 'actor') form the OIDC token's subject (`sub`). This action customizes which claim keys are included in the OIDC subject claim for the specified organization. It allows for fine-tuning the content of the subject claim based on organizational needs.",
+-      "name": "GITHUB_CONFIGURE_OIDC_SUBJECT_CLAIM_TEMPLATE",
+-      "parameters": {
+-        "description": "Request schema for `ConfigureOidcSubjectClaimTemplate`.",
+-        "properties": {
+-          "include_claim_keys": {
+-            "description": "Array of unique strings, each a valid claim key (e.g., 'repo', 'actor'; alphanumeric/underscores only), to include in the OIDC subject claim (`sub`).",
+-            "examples": [
+-              [
+-                "repo",
+-                "context",
+-                "actor"
+-              ],
+-              [
+-                "workflow",
+-                "ref",
+-                "repository_owner"
+-              ]
+-            ],
+-            "items": {
+-              "type": "string"
+-            },
+-            "title": "Include Claim Keys",
+-            "type": "array"
+-          },
+-          "org": {
+-            "description": "The GitHub organization name (case-insensitive).",
+-            "examples": [
+-              "my-github-org"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "include_claim_keys"
+-        ],
+-        "title": "ConfigureOidcSubjectClaimTemplateRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Converts an existing organization member, who is not an owner, to an outside collaborator, restricting their access to explicitly granted repositories.",
+-      "name": "GITHUB_CONVERT_ORG_MEMBER_TO_OUTSIDE_COLLABORATOR",
+-      "parameters": {
+-        "description": "Request schema for `ConvertOrgMemberToOutsideCollaborator`",
+-        "properties": {
+-          "async": {
+-            "default": false,
+-            "description": "If true, performs the conversion asynchronously (API returns a 202 status when the job is successfully queued).",
+-            "title": "Async",
+-            "type": "boolean"
+-          },
+-          "org": {
+-            "description": "The organization name (case-insensitive).",
+-            "examples": [
+-              "octo-org",
+-              "my-company-gh"
+-            ],
+-            "title": "Org",
+-            "type": "string"
+-          },
+-          "username": {
+-            "description": "The GitHub username of the member to convert.",
+-            "examples": [
+-              "octocat",
+-              "user-to-convert"
+-            ],
+-            "title": "Username",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "org",
+-          "username"
+-        ],
+-        "title": "ConvertOrgMemberToOutsideCollaboratorRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  },
+-  {
+-    "function": {
+-      "description": "Creates a Git blob in a repository, requiring content and encoding ('utf-8' or 'base64'). Requires write access to the repository.",
+-      "name": "GITHUB_CREATE_A_BLOB",
+-      "parameters": {
+-        "description": "Defines the request parameters for creating a new Git blob.",
+-        "properties": {
+-          "content": {
+-            "description": "The content to be stored in the new blob.",
+-            "examples": [
+-              "This is the raw content of the file.",
+-              "SGVsbG8gV29ybGQ=\\n"
+-            ],
+-            "title": "Content",
+-            "type": "string"
+-          },
+-          "encoding": {
+-            "default": "utf-8",
+-            "description": "The encoding for the 'content'; \"utf-8\" or \"base64\".",
+-            "examples": [
+-              "utf-8",
+-              "base64"
+-            ],
+-            "title": "Encoding",
+-            "type": "string"
+-          },
+-          "owner": {
+-            "description": "The username or organization name that owns the repository. This field is not case-sensitive. You must have write access to the repository.",
+-            "examples": [
+-              "octocat"
+-            ],
+-            "title": "Owner",
+-            "type": "string"
+-          },
+-          "repo": {
+-            "description": "The name of the repository, without the '.git' extension. This field is not case-sensitive. The repository must exist and you must have write access to it.",
+-            "examples": [
+-              "Hello-World"
+-            ],
+-            "title": "Repo",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "owner",
+-          "repo",
+-          "content"
+-        ],
+-        "title": "CreateABlobRequest",
+-        "type": "object"
+-      }
+-    },
+-    "type": "function"
+-  }
+-]
++[all rows: type="function"]
++[json table: 60 rows × 3 cols · blank=absent key · faithful reshape — all rows and values preserved]
++| function.name | function.description | function.… |
++| --- | --- | --- |
++| GITHUB_ABORT_REPOSITORY_MIGRATION | Tool to abort a repository migration that is queued or in progress. Use when you need to cancel an ongoing migration operation. | {"parameters":{"description":"Request parameters for aborting a repository migration.","properties":{"clientMutationId":{"description":"A unique identifier for the client performing the mutation. This can be used to track the mutation in logs or for idempotency purposes.","examples":["mutation-12345","abort-migration-xyz"],"title":"Client Mutation Id","type":"string"},"migrationId":{"description":"The ID of the repository migration to abort. This is the migration ID returned when a migration was queued (e.g., 'RM_kgDOABCDEF').","examples":["RM_kgDOABCDEF","RM_kgDOGw8pTA"],"title":"Migration Id","type":"string"}},"required":["migrationId"],"title":"AbortRepositoryMigrationRequest","type":"object"}} |
++| GITHUB_ACCEPT_REPOSITORY_INVITATION | Accepts a PENDING repository invitation that has been issued to the authenticated user. | {"parameters":{"description":"Request schema for accepting a repository invitation.","properties":{"invitation_id":{"description":"Unique identifier of the repository invitation sent TO the authenticated user. Get this ID by listing your pending invitations using the 'List repository invitations for the authenticated user' action.","minimum":1,"title":"Invitation Id","type":"integer"}},"required":["invitation_id"],"title":"AcceptRepositoryInvitationRequest","type":"object"}} |
++| GITHUB_ADD_APP_ACCESS_RESTRICTIONS | Adds GitHub Apps to the list of apps allowed to push to a protected branch. The branch must already have protection rules with restrictions enabled. This endpoint only works for organization repositories, not personal repositories. Apps must be installed on the repository with 'contents' write permissions. | {"parameters":{"description":"Request schema defining the target repository and branch for applying app access restrictions.","properties":{"apps":{"description":"The list of GitHub App slugs with push access to grant. Apps must be installed on the repository and have 'contents' write permissions. The app slug is the URL-friendly name of the GitHub App (e.g., 'github-actions', 'dependabot').","examples":[["github-actions","dependabot"]],"items":{"type":"string"},"title":"Apps","type":"array"},"branch":{"description":"The name of the branch to which restrictions will be applied. Wildcard characters (e.g., '*') are not allowed in the branch name when using this REST API endpoint. For operations involving wildcard branch names, consult the GitHub GraphQL API.","examples":["main"],"title":"Branch","type":"string"},"owner":{"description":"The organization name that owns the repository. This field is not case-sensitive. Note: This endpoint only works for organization-owned repositories.","examples":["my-org"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This field is not case-sensitive.","examples":["hello-world"],"title":"Repo","type":"string"}},"required":["owner","repo","branch","apps"],"title":"AddAppAccessRestrictionsRequest","type":"object"}} |
++| GITHUB_ADD_A_REPOSITORY_COLLABORATOR | Adds a GitHub user as a repository collaborator, or updates their permission if already a collaborator; `permission` applies to organization-owned repositories (personal ones default to 'push' and ignore this field), and an invitation may be created or permissions updated directly. | {"parameters":{"description":"Request schema for adding a collaborator to a GitHub repository.","properties":{"owner":{"description":"The account owner of the repository. This name is not case sensitive.","title":"Owner","type":"string"},"permission":{"default":"push","description":"Permission level for the collaborator. For organization-owned repositories, valid values are `pull` (read-only), `triage` (manage issues/PRs), `push` (read/write), `maintain` (manage most settings), `admin` (full control), or a custom repository role name if defined by the owning organization. This parameter is ignored for personal repositories, which grant `push` access.","examples":["pull","triage","push","maintain","admin","custom_role_name"],"title":"Permission","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This name is not case sensitive.","title":"Repo","type":"string"},"username":{"description":"The GitHub handle for the user account to add as a collaborator. Cannot be the same as the repository owner, as owners are automatically collaborators.","title":"Username","type":"string"}},"required":["owner","repo","username"],"title":"AddARepositoryCollaboratorRequest","type":"object"}} |
++| GITHUB_ADD_ASSIGNEES_TO_AN_ISSUE | Adds assignees to a GitHub issue. This action only adds users - it does not remove existing assignees. Changes are silently ignored if the authenticated user lacks push access to the repository. | {"parameters":{"description":"Request model for adding assignees to a GitHub issue.","properties":{"assignees":{"description":"A list of GitHub usernames to add as assignees to the issue. Up to 10 assignees total can be on an issue. NOTE: This endpoint ADDS assignees - it does not replace existing ones. Users already assigned are kept. To remove assignees, use the 'remove_assignees_from_an_issue' action instead. The authenticated user must have push access to the repository; otherwise changes are silently ignored.","examples":[["octocat","hubot"],["dev-user1"]],"items":{"type":"string"},"title":"Assignees","type":"array"},"issue_number":{"description":"The unique number identifying the issue within the repository. Must be a positive integer (GitHub issue numbers start at 1).","examples":[123,42],"minimum":1,"title":"Issue Number","type":"integer"},"owner":{"description":"The username of the account or the organization name that owns the repository. This field is not case sensitive.","examples":["octocat","my-company"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This field is not case sensitive.","examples":["hello-world","my-internal-project"],"title":"Repo","type":"string"}},"required":["owner","repo","issue_number"],"title":"AddAssigneesToAnIssueRequest","type":"object"}} |
++| GITHUB_ADD_EMAIL_ADDRESS_FOR_AUTHENTICATED_USER | Adds one or more email addresses (which will be initially unverified) to the authenticated user's GitHub account; use this to associate new emails, noting an email verified for another account will error, while an existing email for the current user is accepted. | {"parameters":{"description":"Request model for GitHub POST /user/emails. Requires a JSON array of emails.","properties":{"emails":{"description":"Array of email addresses to add to the authenticated user account. Must contain at least one email address.","items":{"type":"string"},"minItems":1,"title":"Emails","type":"array"}},"required":["emails"],"title":"AddEmailAddressForAuthenticatedUserRequest","type":"object"}} |
++| GITHUB_ADD_FIELD_TO_USER_PROJECT | Tool to add a custom field to a user-owned GitHub Projects V2 project. Use when you need to add fields like status, priority, or custom data to organize project items. | {"parameters":{"properties":{"data_type":{"description":"The data type of the field. Use 'single_select' for dropdown fields, 'iteration' for sprint fields, or other types for simple fields.","enum":["text","single_select","number","date","iteration"],"title":"Data Type","type":"string"},"iteration_configuration":{"additionalProperties":false,"description":"Configuration for iteration fields.","properties":{"duration":{"description":"The duration of the iteration in days.","examples":[7,14],"minimum":1,"title":"Duration","type":"integer"},"start_day":{"description":"The day of the week when the iteration starts (1=Monday, 7=Sunday).","examples":[1,5],"maximum":7,"minimum":1,"title":"Start Day","type":"integer"}},"required":["duration","start_day"],"title":"IterationConfiguration","type":"object"},"name":{"description":"The name of the field to create.","examples":["Status","Priority","Sprint"],"title":"Name","type":"string"},"project_number":{"description":"The project's number.","examples":[1,22],"minimum":1,"title":"Project Number","type":"integer"},"single_select_options":{"description":"Options for single select fields. Required when data_type is 'single_select'.","items":{"description":"Option for single select field.","properties":{"color":{"description":"The color for the option (e.g., 'red', 'blue', 'green').","examples":["red","blue","green"],"title":"Color","type":"string"},"description":{"description":"A description for the option.","examples":["Tasks that are not started yet"],"title":"Description","type":"string"},"name":{"description":"The name of the option.","examples":["To Do","In Progress","Done"],"title":"Name","type":"string"}},"required":["name"],"title":"SingleSelectOption","type":"object"},"title":"Single Select Options","type":"array"},"username":{"description":"The handle for the GitHub user account.","examples":["octocat","composio-dev"],"title":"Username","type":"string"}},"required":["username","project_number","name","data_type"],"title":"AddFieldToUserProjectRequest","type":"object"}} |
++| GITHUB_ADD_ITEM_TO_USER_PROJECT | Tool to add an issue or pull request to a user-owned GitHub project. Use when you need to add existing repository items to a project board. | {"parameters":{"properties":{"id":{"description":"The unique identifier of the issue or pull request to add to the project. Required if owner, repo, and number are not provided.","title":"Id","type":"integer"},"number":{"description":"The issue or pull request number. Required with owner and repo if id is not provided.","title":"Number","type":"integer"},"owner":{"description":"The repository owner login. Required with repo and number if id is not provided.","title":"Owner","type":"string"},"project_number":{"description":"The project's number.","examples":[1,22],"title":"Project Number","type":"integer"},"repo":{"description":"The repository name. Required with owner and number if id is not provided.","title":"Repo","type":"string"},"type":{"description":"The type of item to add to the project. Must be either Issue or PullRequest.","enum":["Issue","PullRequest"],"title":"Type","type":"string"},"username":{"description":"The handle for the GitHub user account.","examples":["octocat"],"title":"Username","type":"string"}},"required":["username","project_number","type"],"title":"AddItemToUserProjectRequest","type":"object"}} |
++| GITHUB_ADD_LABELS_TO_AN_ISSUE | Adds labels (provided in the request body) to a repository issue; labels that do not already exist are created. | {"parameters":{"description":"Specifies the repository issue to which labels will be added.","properties":{"issue_number":{"description":"Positive integer that uniquely identifies the issue within the repository. Must be >= 1.","examples":[42,101],"minimum":1,"title":"Issue Number","type":"integer"},"labels":{"description":"Array of label names to add to the issue. Labels that don't exist will be created automatically.","examples":[["bug","enhancement"],["documentation","help wanted"]],"items":{"type":"string"},"title":"Labels","type":"array"},"owner":{"description":"Username or organization name owning the repository (case-insensitive).","examples":["octocat","my-organization"],"title":"Owner","type":"string"},"repo":{"description":"Repository name, without the `.git` extension (case-insensitive).","examples":["Spoon-Knife","my-awesome-project"],"title":"Repo","type":"string"}},"required":["owner","repo","issue_number","labels"],"title":"AddLabelsToAnIssueRequest","type":"object"}} |
++| GITHUB_ADD_ORG_RUNNER_LABELS | Adds new custom labels to an existing self-hosted runner for an organization; existing labels are not removed, and duplicates are not added. | {"parameters":{"description":"Request schema for adding custom labels to a self-hosted runner for an organization.","properties":{"labels":{"description":"A list of custom label names to add to the self-hosted runner. Previously applied labels are not removed.","examples":[["new-label","gpu-runner"]],"items":{"type":"string"},"title":"Labels","type":"array"},"org":{"description":"The organization's name (case-insensitive).","examples":["my-org-name"],"title":"Org","type":"string"},"runner_id":{"description":"Unique identifier of the self-hosted runner.","examples":[12345],"title":"Runner Id","type":"integer"}},"required":["org","runner_id","labels"],"title":"AddOrgRunnerLabelsRequest","type":"object"}} |
++| GITHUB_ADD_OR_UPDATE_TEAM_MEMBERSHIP_FOR_USER | Adds a GitHub user to a team or updates their role (member or maintainer), inviting them to the organization if not already a member; idempotent, returning current details if no change is made. | {"parameters":{"description":"Request schema for `AddOrUpdateTeamMembershipForUser`","properties":{"org":{"description":"The name of the GitHub organization. This name is not case-sensitive.","examples":["github-org","octo-corp"],"title":"Org","type":"string"},"role":{"default":"member","description":"The role to assign to the user within the team. A 'maintainer' has broader permissions than a 'member', such as managing team members and settings.","enum":["member","maintainer"],"examples":["member","maintainer"],"title":"Role","type":"string"},"team_slug":{"description":"The slug (URL-friendly version) of the team's name. Must be lowercase with hyphens instead of spaces (e.g., 'my-team' not 'My Team'). Spaces will be automatically converted to hyphens and text will be lowercased.","examples":["justice-league","developers","product-team"],"title":"Team Slug","type":"string"},"username":{"description":"The GitHub username of the user to add or whose membership to update.","examples":["octocat","mona-lisa-fixed"],"title":"Username","type":"string"}},"required":["org","team_slug","username"],"title":"AddOrUpdateTeamMembershipForUserRequest","type":"object"}} |
++| GITHUB_ADD_OR_UPDATE_TEAM_PROJECT_PERMISSIONS | Adds a classic project to a team or updates the team's permission on it. This endpoint grants or updates permissions for a team on a specific classic project (not Projects V2). The authenticated user must have admin permissions for the project. Both the team and project must belong to the same organization. Requirements: - The project must be a classic project (not GitHub Projects V2) - The authenticated user must have admin permissions on the project - The team and project must be in the same organization - Requires 'admin:org' scope for the authentication token Returns HTTP 204 No Content on success, 403 if project is not an org project, or 404 if the organization, team, or project is not found. | {"parameters":{"description":"Grants or updates a team's permissions for a specific classic project (not Projects V2).\\n\\nNote: This endpoint works with GitHub's classic Projects feature. The project\\nmust be a classic project (not Projects V2), and both the team and project must\\nbelong to the same organization. The authenticated user needs admin permissions\\non the project.","properties":{"org":{"description":"The organization name (login) that owns both the team and the classic project. Case-insensitive.","examples":["octo-org","my-company"],"title":"Org","type":"string"},"permission":{"description":"Permission level to grant the team: 'read' (view only), 'write' (view and edit), or 'admin' (full control including settings). If omitted, uses the team's default permission.","enum":["read","write","admin"],"examples":["read","write","admin"],"title":"PermissionEnm","type":"string"},"project_id":{"description":"The unique numeric ID of the classic project. This is NOT the project number displayed in the UI.","examples":[1002604,12345678],"title":"Project Id","type":"integer"},"team_slug":{"description":"The team's URL-friendly slug identifier within the organization. Found in the team's URL path.","examples":["justice-league","engineering","frontend-team"],"title":"Team Slug","type":"string"}},"required":["org","team_slug","project_id"],"title":"AddOrUpdateTeamProjectPermissionsRequest","type":"object"}} |
++| GITHUB_ADD_OR_UPDATE_TEAM_REPOSITORY_PERMISSIONS | Sets or updates a team's permission level for a repository within an organization; the team must be a member of the organization. | {"parameters":{"description":"Request schema for `AddOrUpdateTeamRepositoryPermissions`","properties":{"org":{"description":"Organization name where the team exists (case-insensitive). This is the organization that owns the team, not necessarily the repository owner.","examples":["octo-org","github"],"title":"Org","type":"string"},"owner":{"description":"Account owner of the repository (case-insensitive). This is the user or organization that owns the repository. In most cases, this should match the 'org' parameter value.","examples":["octocat","my-organization"],"title":"Owner","type":"string"},"permission":{"anyOf":[{"enum":["pull","triage","push","maintain","admin"],"type":"string"},{"type":"string"}],"default":"push","description":"Permission level to grant the team. Valid values: 'pull' (read-only), 'triage' (manage issues/PRs), 'push' (read/write), 'maintain' (manage repo settings plus push), 'admin' (full control). Custom repository role names are also supported if defined by the organization.","examples":["admin","push","maintain","pull","triage"],"title":"Permission"},"repo":{"description":"Repository name, without the `.git` extension (case-insensitive).","examples":["hello-world","my-awesome-project"],"title":"Repo","type":"string"},"team_slug":{"description":"The team's slug (URL-friendly name).","examples":["justice-league","developers"],"title":"Team Slug","type":"string"}},"required":["org","team_slug","owner","repo"],"title":"AddOrUpdateTeamRepositoryPermissionsRequest","type":"object"}} |
++| GITHUB_ADD_PROJECT_COLLABORATOR | Adds a specified GitHub user as a collaborator to an existing organization project with a given permission level. Note: This endpoint is for organization projects (classic). You must be an organization owner or a project admin to add a collaborator. Classic projects are being deprecated in favor of the new Projects experience. | {"parameters":{"description":"Request to add a collaborator to an organization project.","properties":{"permission":{"default":"write","description":"Permission level for the collaborator on the project.","enum":["read","write","admin"],"examples":["read","write","admin"],"title":"Permission","type":"string"},"project_id":{"description":"The unique identifier of the organization project.","examples":["12345"],"title":"Project Id","type":"integer"},"username":{"description":"The GitHub username of the user to be added as a collaborator.","examples":["octocat"],"title":"Username","type":"string"}},"required":["project_id","username"],"title":"AddProjectCollaboratorRequest","type":"object"}} |
++| GITHUB_ADD_REPOSITORY_TO_APP_INSTALLATION | Adds a repository to a GitHub App installation, granting the app access; requires authenticated user to have admin rights for the repository and access to the installation. | {"parameters":{"description":"Request to add a repository to a GitHub App installation for the authenticated user.","properties":{"installation_id":{"description":"The unique identifier of the GitHub App installation to which the repository will be added. This installation must be accessible to the authenticated user.","examples":["1234567","8765432"],"title":"Installation Id","type":"integer"},"repository_id":{"description":"The unique identifier of the repository to add to the installation. The authenticated user must have admin permissions for this repository.","examples":["9876543","2345678"],"title":"Repository Id","type":"integer"}},"required":["installation_id","repository_id"],"title":"AddRepositoryToAppInstallationRequest","type":"object"}} |
++| GITHUB_ADD_REPO_TO_ORG_SECRET_WITH_SELECTED_ACCESS | Adds a repository to an existing organization-level GitHub Actions secret that is configured for 'selected' repository access. | {"parameters":{"description":"Request schema for adding a repository to an organization secret with 'selected' access type.","properties":{"org":{"description":"The name of the GitHub organization. This field is not case-sensitive.","examples":["MyOrganization","Octo-Org"],"title":"Org","type":"string"},"repository_id":{"description":"The unique identifier of the repository to be granted access to the organization secret.","examples":[123456789,987654321],"title":"Repository Id","type":"integer"},"secret_name":{"description":"The name of the organization secret to which the repository will be added.","examples":["MY_API_KEY","DATABASE_PASSWORD"],"title":"Secret Name","type":"string"}},"required":["org","secret_name","repository_id"],"title":"AddRepoToOrgSecretWithSelectedAccessRequest","type":"object"}} |
++| GITHUB_ADD_REPO_TO_ORG_SECRET_WITH_SELECTED_VISIBILITY | Grants an existing repository access to an existing organization-level Dependabot secret when the secret's visibility is set to 'selected'; the repository must belong to the organization, and the call succeeds without change if access already exists. | {"parameters":{"description":"Request schema for assigning a repository to an organization's Dependabot secret.","properties":{"org":{"description":"The organization's unique handle/name (case-insensitive).","examples":["octo-org"],"title":"Org","type":"string"},"repository_id":{"description":"Unique ID of the repository to be granted access to the secret.","examples":[1296269],"title":"Repository Id","type":"integer"},"secret_name":{"description":"Name of the Dependabot secret; must be alphanumeric or underscore, no spaces (lowercase auto-converts to uppercase).","examples":["MY_SECRET_TOKEN","ARTIFACTORY_PASSWORD"],"title":"Secret Name","type":"string"}},"required":["org","secret_name","repository_id"],"title":"AddRepoToOrgSecretWithSelectedVisibilityRequest","type":"object"}} |
++| GITHUB_ADD_RUNNER_LABELS | Adds and appends custom labels to a self-hosted repository runner, which must be registered and active. | {"parameters":{"description":"Request schema for `AddCustomLabelsToASelfHostedRunnerForARepository`","properties":{"labels":{"description":"Custom label names to add. Appended to existing labels. Names are case-insensitive. Empty list means no changes.","examples":["prod","linux-x64","gpu-enabled"],"items":{"type":"string"},"title":"Labels","type":"array"},"owner":{"description":"Username or organization name of the repository owner. Case-insensitive.","examples":["octocat","MyOrganization"],"title":"Owner","type":"string"},"repo":{"description":"Name of the repository, without the `.git` extension. Case-insensitive.","examples":["hello-world","my-awesome-project"],"title":"Repo","type":"string"},"runner_id":{"description":"Unique ID of the self-hosted runner.","examples":[123,456],"title":"Runner Id","type":"integer"}},"required":["owner","repo","runner_id","labels"],"title":"AddRunnerLabelsRequest","type":"object"}} |
++| GITHUB_ADD_SELECTED_REPOSITORY_TO_ORGANIZATION_SECRET | Adds a repository to an organization secret's access list when the secret's visibility is 'selected'; this operation is idempotent. | {"parameters":{"description":"Request schema for `AddSelectedRepositoryToOrganizationSecret`","properties":{"org":{"description":"The name of the organization. This name is not case sensitive.","examples":["octo-org"],"title":"Org","type":"string"},"repository_id":{"description":"The unique identifier of the repository to add to the secret's access list.","examples":[1296269],"title":"Repository Id","type":"integer"},"secret_name":{"description":"The name of the secret. Secret names can only contain alphanumeric characters ([A-Z], [a-z], [0-9]) or underscores (_). Spaces are not allowed. Secret names cannot start with GITHUB_ and must be less than 255 characters.","examples":["MY_API_KEY"],"title":"Secret Name","type":"string"}},"required":["org","secret_name","repository_id"],"title":"AddSelectedRepositoryToOrganizationSecretRequest","type":"object"}} |
++| GITHUB_ADD_SELECTED_REPOSITORY_TO_ORGANIZATION_VARIABLE | Grants a repository access to an organization-level GitHub Actions variable, if that variable's visibility is set to 'selected_repositories'. | {"parameters":{"description":"Input for adding a selected repository to an organization variable's access list.","properties":{"name":{"description":"Name of the existing organization-level GitHub Actions variable.","examples":["CI_DEPLOY_KEY","SHARED_SECRET_VALUE"],"title":"Name","type":"string"},"org":{"description":"Name of the GitHub organization (case-insensitive).","examples":["octo-org","my-company"],"title":"Org","type":"string"},"repository_id":{"description":"Unique identifier of the repository to grant access.","examples":["1296269","543210"],"title":"Repository Id","type":"integer"}},"required":["org","name","repository_id"],"title":"AddSelectedRepositoryToOrganizationVariableRequest","type":"object"}} |
++| GITHUB_ADD_SELECTED_REPOSITORY_TO_USER_SECRET | Grants a specified repository access to an authenticated user's existing Codespaces secret, enabling Codespaces created for that repository to use the secret. | {"parameters":{"description":"Request schema for `AddSelectedRepositoryToUserSecret`","properties":{"repository_id":{"description":"The unique identifier of the repository to be granted access to the specified user-level Codespaces secret.","examples":[1296269,490940582],"title":"Repository Id","type":"integer"},"secret_name":{"description":"Name of the user-level Codespaces secret to which repository access is added; this secret must already exist for the authenticated user.","examples":["GH_TOKEN_MY_USER","PERSONAL_API_KEY"],"title":"Secret Name","type":"string"}},"required":["secret_name","repository_id"],"title":"AddSelectedRepositoryToUserSecretRequest","type":"object"}} |
++| GITHUB_ADD_SOCIAL_ACCOUNTS_FOR_AUTHENTICATED_USER | Adds one or more social media links (which must be valid, full URLs for platforms supported by GitHub) to the authenticated user's public GitHub profile. | {"parameters":{"description":"Specifies the social media accounts to add for the authenticated user.","properties":{"account_urls":{"description":"Full URLs for social media profiles to add to the user's GitHub profile; these will be displayed publicly.","examples":["https://twitter.com/github","https://www.linkedin.com/in/github/","https://mastodon.social/@github"],"items":{"type":"string"},"title":"Account Urls","type":"array"}},"required":["account_urls"],"title":"AddSocialAccountsForAuthenticatedUserRequest","type":"object"}} |
++| GITHUB_ADD_STATUS_CHECK_CONTEXTS | Adds status check contexts to a protected branch's required status checks. This action appends new status check contexts to the existing list of required status checks for a protected branch. The branch must already have branch protection enabled with status checks configured. Note: The 'contexts' parameter is deprecated by GitHub in favor of 'checks' array. For new implementations, consider using update_status_check_protection with the 'checks' parameter instead. | {"parameters":{"description":"Request model for adding status check contexts to a protected branch.","properties":{"branch":{"description":"The name of the branch to which status check contexts will be added. Branch names cannot contain wildcard characters. To use wildcard characters in branch names, refer to the GraphQL API.","examples":["main","develop"],"title":"Branch","type":"string"},"contexts":{"description":"The status check contexts to add to the protected branch. These are the names of CI/CD jobs or other checks that must pass before merging. Can be provided as a single string or a list of strings. Examples: 'ci/test', 'linter', 'continuous-integration/travis-ci'.","examples":[["ci/test","linter"],["continuous-integration/travis-ci"]],"items":{"type":"string"},"title":"Contexts","type":"array"},"owner":{"description":"The account owner of the repository. This name is not case sensitive.","examples":["octocat"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This name is not case sensitive.","examples":["Hello-World"],"title":"Repo","type":"string"}},"required":["owner","repo","branch","contexts"],"title":"AddStatusCheckContextsRequest","type":"object"}} |
++| GITHUB_ADD_SUB_ISSUE | Tool to add a sub-issue to a parent GitHub issue using GraphQL. Use when you need to establish a parent-child relationship between issues. Requires the 'sub_issues' GraphQL feature to be enabled. | {"parameters":{"description":"Request schema for adding a sub-issue to a parent issue","properties":{"client_mutation_id":{"description":"A unique identifier for the client performing the mutation. Used to ensure idempotency of mutations.","examples":["mutation-12345","add-sub-issue-abc"],"title":"Client Mutation Id","type":"string"},"issue_id":{"description":"The global node ID of the parent issue (e.g., 'I_kwDOABCDEFGH'). This is the GraphQL global identifier returned by GitHub's API.","examples":["I_kwDOABCDEFGH","I_kwDOA1B2C3D4"],"title":"Issue Id","type":"string"},"replace_parent":{"description":"If true, replaces the existing parent issue if the sub-issue already has one. If false or omitted, the mutation will fail if the sub-issue already has a parent.","title":"Replace Parent","type":"boolean"},"sub_issue_id":{"description":"The global node ID of the sub-issue to link to the parent issue. Either sub_issue_id or sub_issue_url must be provided.","examples":["I_kwDOIJKLMNOP","I_kwDOE5F6G7H8"],"title":"Sub Issue Id","type":"string"},"sub_issue_url":{"description":"The URL of the sub-issue to link to the parent issue. Either sub_issue_id or sub_issue_url must be provided.","examples":["https://github.com/owner/repo/issues/123"],"title":"Sub Issue Url","type":"string"}},"required":["issue_id"],"title":"AddSubIssueRequest","type":"object"}} |
++| GITHUB_ADD_TEAM_ACCESS_RESTRICTIONS | Adds teams to the list of teams with push access to a protected branch. This action grants additional teams push access to a protected branch. Unlike 'Set team access restrictions' (PUT), this action adds to the existing list rather than replacing it entirely. Prerequisites: - The repository must be owned by an organization (not a personal account) - The branch must have protection rules enabled - The branch protection must have restrictions configured - The teams must exist in the organization and have repository access | {"parameters":{"description":"Request schema for adding teams to a protected branch's access restrictions.\\n\\nNote: This action only works for organization-owned repositories. Team access\\nrestrictions are not available for personal repositories.","properties":{"branch":{"description":"The name of the protected branch to add team restrictions to. The branch must already have branch protection enabled with restrictions configured. Wildcard characters are not supported. For wildcard branch protection, use the GitHub GraphQL API.","examples":["main","develop","release"],"title":"Branch","type":"string"},"owner":{"description":"The organization name that owns the repository. Team access restrictions only work for organization-owned repositories, not personal repositories. This value is not case-sensitive.","examples":["my-org","github"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This value is not case-sensitive.","examples":["my-project","Hello-World"],"title":"Repo","type":"string"},"teams":{"description":"The list of team slugs to add push access to the protected branch. A team slug is the URL-friendly version of the team name (lowercase, hyphens instead of spaces). The teams must already have access to the repository. This adds teams to the existing list (does not replace the entire list).","examples":[["developers"],["maintainers","release-team"],["core-team"]],"items":{"type":"string"},"title":"Teams","type":"array"}},"required":["owner","repo","branch","teams"],"title":"AddTeamAccessRestrictionsRequest","type":"object"}} |
++| GITHUB_ADD_USER_ACCESS_RESTRICTIONS | Adds users to the list of people allowed to push to a protected branch in an organization repository. Important notes: - This action only works on organization-owned repositories (not personal repos) - The branch must already have protection rules with restrictions enabled - Users must have write access to the repository to be added - The combined total of users, apps, and teams is limited to 100 items | {"parameters":{"description":"Request schema for adding user access restrictions to a protected branch.\\nThis action is only available for organization-owned repositories.","properties":{"branch":{"description":"The name of the branch. Cannot contain wildcard characters. To use wildcard characters in branch names, refer to the GitHub GraphQL API documentation.","examples":["main","develop"],"title":"Branch","type":"string"},"owner":{"description":"The account owner of the repository (must be an organization for user restrictions). This name is not case-sensitive.","examples":["octocat-org","my-organization"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This name is not case-sensitive.","examples":["Spoon-Knife","my-project"],"title":"Repo","type":"string"},"users":{"description":"The list of user logins to grant push access to the protected branch. Users must have write access to the repository. An empty list will remove all user restrictions.","examples":[["octocat","hubot"],["developer1"]],"items":{"type":"string"},"title":"Users","type":"array"}},"required":["owner","repo","branch","users"],"title":"AddUserAccessRestrictionsRequest","type":"object"}} |
++| GITHUB_ADD_USERS_TO_CODESPACES_ACCESS_FOR_ORGANIZATION | Adds organization members to the list of users granted Codespaces access billed to the organization. IMPORTANT: This endpoint requires the organization's Codespaces billing access to be set to 'selected_members' mode. If not already configured, use the GITHUB_MANAGE_ACCESS_CONTROL_FOR_ORGANIZATION_CODESPACES action first to set visibility to 'selected_members'. | {"parameters":{"description":"Request schema for `AddUsersToCodespacesAccessForOrganization`","properties":{"org":{"description":"Organization's name (case-insensitive).","examples":["github","my-organization"],"title":"Org","type":"string"},"selected_usernames":{"description":"Usernames of organization members to be granted Codespaces access billed to the organization. These users must be members of the specified organization.","examples":[["octocat","hubot"],["another-user","dev-user"]],"items":{"type":"string"},"title":"Selected Usernames","type":"array"}},"required":["org","selected_usernames"],"title":"AddUsersToCodespacesAccessForOrganizationRequest","type":"object"}} |
++| GITHUB_API_ROOT | Retrieves a map of all top-level GitHub REST API resource URLs and their templates. | {"parameters":{"description":"Request schema for retrieving the root endpoint details of the GitHub REST API.","properties":{},"title":"GithubApiRootRequest","type":"object"}} |
++| GITHUB_APPROVE_WORKFLOW_RUN_FOR_FORK_PULL_REQUEST | Approves a workflow run from a forked repository's pull request; call this when such a run requires manual approval due to workflow configuration. | {"parameters":{"description":"Request schema for `ApproveWorkflowRunForForkPullRequest`","properties":{"owner":{"description":"The account owner of the repository. The name is not case sensitive.","examples":["octocat"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository without the `.git` extension. The name is not case sensitive. ","examples":["Hello-World"],"title":"Repo","type":"string"},"run_id":{"description":"The unique identifier of the workflow run requiring approval.","examples":[12345],"title":"Run Id","type":"integer"}},"required":["owner","repo","run_id"],"title":"ApproveWorkflowRunForForkPullRequestRequest","type":"object"}} |
++| GITHUB_ASSIGN_ORGANIZATION_ROLE_TO_TEAM | Assigns an existing organization-level role (identified by `role_id`) to a team (identified by `team_slug`) within a GitHub organization (`org`), provided the organization, team, and role already exist. | {"parameters":{"description":"Request schema for `AssignOrganizationRoleToTeam`","properties":{"org":{"description":"The name of the GitHub organization. This field is case-insensitive.","examples":["octo-org"],"title":"Org","type":"string"},"role_id":{"description":"Unique identifier of the organization role to assign to the team (obtainable by listing organization roles).","examples":[123,456],"title":"Role Id","type":"integer"},"team_slug":{"description":"The slug (URL-friendly version) of the team's name.","examples":["justice-league"],"title":"Team Slug","type":"string"}},"required":["org","team_slug","role_id"],"title":"AssignOrganizationRoleToTeamRequest","type":"object"}} |
++| GITHUB_ASSIGN_ORGANIZATION_ROLE_TO_USER | Assigns a specific organization role to a user who is a member or an outside collaborator in a GitHub organization, using a valid role ID. | {"parameters":{"description":"Request schema for `AssignOrganizationRoleToUser`","properties":{"org":{"description":"The organization's name. This is not case-sensitive.","examples":["github","acme-corp"],"title":"Org","type":"string"},"role_id":{"description":"The unique integer identifier for the organization role. This ID can be obtained by listing the organization's roles.","examples":[1,42,101],"title":"Role Id","type":"integer"},"username":{"description":"The GitHub username of the user to whom the role will be assigned.","examples":["octocat","githubuser123"],"title":"Username","type":"string"}},"required":["org","username","role_id"],"title":"AssignOrganizationRoleToUserRequest","type":"object"}} |
++| GITHUB_AUTH_USER_DOCKER_CONFLICT_PACKAGES_LIST | List Docker packages with migration conflicts for the authenticated user. This endpoint lists all Docker packages owned by the authenticated user that encountered namespace conflicts during the Docker-to-GitHub Container Registry (GHCR) migration. Conflicts occur when a package with the same name exists in both the legacy Docker registry and GHCR. IMPORTANT: The Docker registry for GitHub Packages was deprecated on Feb 24, 2025. This endpoint may return a 400 error with message 'Package migration for docker is no longer supported' as the migration period has ended. In this case, the action returns an informative response instead of failing. Use case: Identifying packages that require manual migration to GHCR. Required scope: read:packages (for OAuth and personal access tokens). | {"parameters":{"description":"Request model for listing Docker migration conflicting packages.\\n\\nNo parameters are required for this endpoint.","properties":{},"title":"AuthUserDockerConflictPackagesListRequest","type":"object"}} |
++| GITHUB_BLOCK_USER | Blocks an existing individual GitHub user (not an organization or your own account), preventing them from interacting with your account and repositories. | {"parameters":{"description":"Identifies the GitHub user to block by their username.","properties":{"username":{"description":"The GitHub username (handle) of the user to block. Case-insensitive.","examples":["octocat","torvalds"],"title":"Username","type":"string"}},"required":["username"],"title":"BlockUserRequest","type":"object"}} |
++| GITHUB_BLOCK_USER_FROM_ORGANIZATION | Blocks a GitHub user from an organization, preventing their contributions, collaboration, and forking of the organization's repositories. Requires admin or 'Blocking users' organization permission (write access). | {"parameters":{"description":"Input data for blocking a user from an organization.","properties":{"org":{"description":"The organization name (case-insensitive). You must have admin or 'Blocking users' permission in this organization.","examples":["github","octo-org"],"title":"Org","type":"string"},"username":{"description":"The GitHub username (handle) of the account to block from the organization.","examples":["octocat","someuser"],"title":"Username","type":"string"}},"required":["org","username"],"title":"BlockUserFromOrganizationRequest","type":"object"}} |
++| GITHUB_CANCEL_GITHUB_PAGES_DEPLOYMENT | Cancels an existing, ongoing or queued GitHub Pages deployment for a repository using its `pages_deployment_id`. | {"parameters":{"description":"Request schema for `CancelGithubPagesDeployment`","properties":{"owner":{"description":"Username or organization that owns the repository. Not case-sensitive.","examples":["octocat"],"title":"Owner","type":"string"},"pages_deployment_id":{"description":"Unique numerical ID of the GitHub Pages deployment (not the commit SHA).","examples":[123456789],"title":"Pages Deployment Id","type":"integer"},"repo":{"description":"Repository name, excluding the `.git` extension. Not case-sensitive.","examples":["Hello-World"],"title":"Repo","type":"string"}},"required":["owner","repo","pages_deployment_id"],"title":"CancelGithubPagesDeploymentRequest","type":"object"}} |
++| GITHUB_CANCEL_SPONSORSHIP | Tool to cancel an active GitHub sponsorship using GraphQL. Use when you need to terminate a sponsorship relationship between a sponsor and a sponsorable entity. Either sponsor ID/login and sponsorable ID/login must be provided. | {"parameters":{"description":"Request schema for canceling an active GitHub sponsorship","properties":{"client_mutation_id":{"description":"A unique identifier for the client performing the mutation. Used to ensure idempotency of mutations.","examples":["cancel-sponsorship-12345","mutation-abc"],"title":"Client Mutation Id","type":"string"},"sponsor_id":{"description":"The global node ID of the user or organization acting as sponsor (e.g., 'U_kgDOABCDEF'). Required if sponsor_login is not provided.","examples":["U_kgDOABCDEF","O_kgDOGHIJKL"],"title":"Sponsor Id","type":"string"},"sponsor_login":{"description":"The username of the sponsoring user or organization. Required if sponsor_id is not provided.","examples":["github","octocat"],"title":"Sponsor Login","type":"string"},"sponsorable_id":{"description":"The global node ID of the user or organization receiving the sponsorship (e.g., 'U_kgDOMNOPQR'). Required if sponsorable_login is not provided.","examples":["U_kgDOMNOPQR","O_kgDOSTUVWX"],"title":"Sponsorable Id","type":"string"},"sponsorable_login":{"description":"The username of the sponsored user or organization. Required if sponsorable_id is not provided.","examples":["octocat","rails"],"title":"Sponsorable Login","type":"string"}},"title":"CancelSponsorshipRequest","type":"object"}} |
++| GITHUB_CANCEL_WORKFLOW_RUN | Cancels a workflow run in a GitHub repository if it is in a cancellable state (e.g., 'in_progress' or 'queued'). Returns 202 Accepted on success. | {"parameters":{"description":"Request schema for `CancelWorkflowRun`","properties":{"owner":{"description":"The account owner of the repository (not case-sensitive).","examples":["octocat","github"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension (not case-sensitive).","examples":["Hello-World","linguist"],"title":"Repo","type":"string"},"run_id":{"description":"Unique identifier of the workflow run.","examples":[123456789],"title":"Run Id","type":"integer"}},"required":["owner","repo","run_id"],"title":"CancelWorkflowRunRequest","type":"object"}} |
++| GITHUB_CHECK_IF_GIST_IS_STARRED | Checks if a gist is starred by the authenticated user. Returns `is_starred: true` if the gist is starred (HTTP 204), or `is_starred: false` if not starred (HTTP 404). Use this to verify star status before starring/unstarring a gist. | {"parameters":{"description":"Request schema for `CheckIfGistIsStarred`","properties":{"gist_id":{"description":"The unique identifier (ID) of the gist to check. Can be found in the URL of the gist (e.g., 'https://gist.github.com/{user}/{gist_id}').","examples":["6104628abc0786a41abb273430ac0590","aa5a315d61ae9438b18d"],"title":"Gist Id","type":"string"}},"required":["gist_id"],"title":"CheckIfGistIsStarredRequest","type":"object"}} |
++| GITHUB_CHECK_IF_PULL_REQUEST_HAS_BEEN_MERGED | Checks if a specified GitHub pull request has been merged, indicated by a 204 HTTP status (merged) or 404 (not merged/found). | {"parameters":{"description":"Request schema for `CheckIfPullRequestHasBeenMerged`","properties":{"owner":{"description":"The account owner of the repository (not case sensitive).","examples":["octocat"],"title":"Owner","type":"string"},"pull_number":{"description":"The number that identifies the pull request.","examples":["1347"],"title":"Pull Number","type":"integer"},"repo":{"description":"The name of the repository, without the `.git` extension (not case sensitive).","examples":["Spoon-Knife"],"title":"Repo","type":"string"}},"required":["owner","repo","pull_number"],"title":"CheckIfPullRequestHasBeenMergedRequest","type":"object"}} |
++| GITHUB_CHECK_IF_USER_CAN_BE_ASSIGNED | Verifies if a GitHub user can be assigned to issues in a repository; assignability is confirmed by an HTTP 204 (No Content) response, resulting in an empty 'data' field in the response. | {"parameters":{"description":"Request schema for checking if a user can be assigned to issues in a repository.","properties":{"assignee":{"description":"The GitHub username of the user to check for assignability. This name is not case sensitive.","examples":["hubot","monalisa"],"title":"Assignee","type":"string"},"owner":{"description":"The account owner of the repository (e.g., a GitHub username or organization name). This name is not case sensitive.","examples":["octocat","my-organization"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This name is not case sensitive.","examples":["Spoon-Knife","my-awesome-project"],"title":"Repo","type":"string"}},"required":["owner","repo","assignee"],"title":"CheckIfUserCanBeAssignedRequest","type":"object"}} |
++| GITHUB_CHECK_IF_USER_CAN_BE_ASSIGNED_TO_ISSUE | Checks if a specified GitHub user can be assigned to a given issue within a repository. | {"parameters":{"description":"Request schema for `CheckIfUserCanBeAssignedToIssue`","properties":{"assignee":{"description":"The GitHub username of the user to check for assignment permissions.","examples":["hubot"],"title":"Assignee","type":"string"},"issue_number":{"description":"The unique number identifying the issue within the repository.","examples":["1347"],"title":"Issue Number","type":"integer"},"owner":{"description":"The username of the account owning the repository. This field is not case-sensitive.","examples":["octocat"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This field is not case-sensitive.","examples":["Spoon-Knife"],"title":"Repo","type":"string"}},"required":["owner","repo","issue_number","assignee"],"title":"CheckIfUserCanBeAssignedToIssueRequest","type":"object"}} |
++| GITHUB_CHECK_IF_USER_FOLLOWS_ANOTHER_USER | Checks if a GitHub user `username` follows `target_user`; returns a 204 HTTP status if true, 404 if not or if users are invalid. | {"parameters":{"description":"Request schema for checking if one GitHub user follows another.","properties":{"target_user":{"description":"The GitHub username of the user to verify if they are followed by the `username`.","examples":["mercury-tools-bot","github"],"title":"Target User","type":"string"},"username":{"description":"The GitHub username of the user to check.","examples":["octocat","torvalds"],"title":"Username","type":"string"}},"required":["username","target_user"],"title":"CheckIfUserFollowsAnotherUserRequest","type":"object"}} |
++| GITHUB_CHECK_IF_USER_IS_BLOCKED_BY_AUTHENTICATED_USER | Checks if the specified GitHub user is blocked by the authenticated user; a 204 No Content response indicates the user is blocked, while a 404 Not Found indicates they are not. | {"parameters":{"description":"Request to check if a user is blocked by the authenticated user.","properties":{"username":{"description":"The GitHub username (handle) of the user.","examples":["octocat","torvalds"],"title":"Username","type":"string"}},"required":["username"],"title":"CheckIfUserIsBlockedByAuthenticatedUserRequest","type":"object"}} |
++| GITHUB_CHECK_IF_USER_IS_BLOCKED_BY_ORGANIZATION | Checks if a GitHub user is blocked by an organization. Returns is_blocked=True if the user is blocked (HTTP 204), or is_blocked=False if not blocked (HTTP 404). Requires 'Blocking users' organization permission (read access). | {"parameters":{"description":"Request schema for `CheckIfUserIsBlockedByOrganization`","properties":{"org":{"description":"The organization name (case-insensitive). Must be an organization where you have 'Blocking users' permission (read access).","examples":["github","octo-org"],"title":"Org","type":"string"},"username":{"description":"The GitHub username (handle) to check if blocked by the organization.","examples":["octocat","mona-lisa"],"title":"Username","type":"string"}},"required":["org","username"],"title":"CheckIfUserIsBlockedByOrganizationRequest","type":"object"}} |
++| GITHUB_CHECK_IF_USER_IS_REPOSITORY_COLLABORATOR | Checks if a user is a collaborator on a specified GitHub repository, returning a 204 status if they are, or a 404 status if they are not or if the repository/user does not exist. | {"parameters":{"description":"Request schema for `CheckIfUserIsRepositoryCollaborator`","properties":{"owner":{"description":"The account owner of the repository, typically a GitHub username or an organization name. This name is not case sensitive.","examples":["octocat","my-github-org"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This name is not case sensitive.","examples":["Spoon-Knife","my-project-repo"],"title":"Repo","type":"string"},"username":{"description":"The GitHub username of the user whose collaborator status is being checked. This name is not case sensitive.","examples":["gh-user123","another-dev"],"title":"Username","type":"string"}},"required":["owner","repo","username"],"title":"CheckIfUserIsRepositoryCollaboratorRequest","type":"object"}} |
++| GITHUB_CHECK_PERSON_FOLLOWED_BY_AUTH_USER | Checks if the authenticated GitHub user follows a target GitHub user. Returns a structured response with is_following=True when following (HTTP 204), or is_following=False when not following (HTTP 404). | {"parameters":{"description":"Input model for the action that checks if the authenticated user follows another GitHub user.","properties":{"username":{"description":"The GitHub username (e.g., 'octocat') of the person to check. This is the user's handle on GitHub.","examples":["octocat","torvalds"],"title":"Username","type":"string"}},"required":["username"],"title":"CheckPersonFollowedByAuthUserRequest","type":"object"}} |
++| GITHUB_CHECK_PRIVATE_VULNERABILITY_REPORTING_STATUS | Checks if private vulnerability reporting is enabled for the specified repository. | {"parameters":{"description":"Request schema for `CheckPrivateVulnerabilityReportingStatus`","properties":{"owner":{"description":"The username or organization name that owns the repository. This field is not case-sensitive.","examples":["octocat","github"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This field is not case-sensitive.","examples":["hello-world","linguist"],"title":"Repo","type":"string"}},"required":["owner","repo"],"title":"CheckPrivateVulnerabilityReportingStatusRequest","type":"object"}} |
++| GITHUB_CHECK_PUBLIC_ORGANIZATION_MEMBERSHIP_FOR_USER | Tool to check if a user is a public member of an organization. Use when you need to verify public organization membership status. | {"parameters":{"description":"Request schema for checking public organization membership for a user.","properties":{"org":{"description":"The organization name. The name is not case sensitive.","examples":["github","octo-org"],"title":"Org","type":"string"},"username":{"description":"The handle for the GitHub user account.","examples":["octocat","aashah"],"title":"Username","type":"string"}},"required":["org","username"],"title":"CheckPublicOrgMembershipRequest","type":"object"}} |
++| GITHUB_CHECK_TEAM_PERMISSIONS_FOR_A_PROJECT | Checks if a team has 'read', 'write', or 'admin' permissions for an organization's specific classic project, returning the project's details if access is confirmed. | {"parameters":{"description":"Request schema for `CheckTeamPermissionsForAProject`","properties":{"org":{"description":"The name of the organization. This is case-insensitive.","examples":["octo-org"],"title":"Org","type":"string"},"project_id":{"description":"The unique identifier of the project (classic).","examples":[1002604],"title":"Project Id","type":"integer"},"team_slug":{"description":"The slug (short name) of the team.","examples":["justice-league"],"title":"Team Slug","type":"string"}},"required":["org","team_slug","project_id"],"title":"CheckTeamPermissionsForAProjectRequest","type":"object"}} |
++| GITHUB_CHECK_TEAM_PERMISSIONS_FOR_A_REPOSITORY | Checks a team's permissions for a specific repository within an organization, including permissions inherited from parent teams. | {"parameters":{"description":"Defines the request parameters for checking a team's permissions for a repository.","properties":{"org":{"description":"The name of the organization. This field is not case-sensitive.","examples":["octo-org"],"title":"Org","type":"string"},"owner":{"description":"The organization that owns the repository. For this GitHub API endpoint, this value must be the same as the `org` parameter. This field is not case-sensitive.","examples":["octo-org"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the `.git` extension. This field is not case-sensitive.","examples":["hello-world","octo-repo"],"title":"Repo","type":"string"},"team_slug":{"description":"The URL-friendly slug for the team name. It is unique within the organization and typically all lowercase with hyphens instead of spaces.","examples":["justice-league","awesome-developers"],"title":"Team Slug","type":"string"}},"required":["org","team_slug","owner","repo"],"title":"CheckTeamPermissionsForARepositoryRequest","type":"object"}} |
++| GITHUB_CHECK_TOKEN | Checks if a GitHub App or OAuth access_token is valid for the specified client_id and retrieves its details, typically to verify its active status and grants. NOTE: This endpoint requires Basic Authentication using the OAuth App's client_id as username and client_secret as password. The access_token parameter must be an OAuth token issued by the specified OAuth App. | {"parameters":{"description":"Request schema for validating a GitHub App or OAuth token.","properties":{"access_token":{"description":"The OAuth access token issued by your OAuth App that you want to validate. Returns 404 if the token is invalid or not issued by this client_id.","examples":["gho_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0"],"title":"Access Token","type":"string"},"client_id":{"description":"The unique client ID of your GitHub OAuth App (must match the app that issued the token being checked).","examples":["Iv1.1234567890abcdef"],"title":"Client Id","type":"string"}},"required":["client_id","access_token"],"title":"CheckTokenRequest","type":"object"}} |
++| GITHUB_CLEAR_PROJECT_V2_ITEM_FIELD_VALUE | Tool to clear the value of a field for an item in a GitHub Project V2. Use when you need to remove or reset a field value (text, number, date, assignees, labels, single-select, iteration, or milestone fields). | {"parameters":{"description":"Request parameters for clearing a field value in a GitHub Project V2 item.\\n\\nprojectId: The ID of the Project.\\nitemId: The ID of the item to update.\\nfieldId: The ID of the field to clear.","properties":{"fieldId":{"description":"The global node ID of the field to clear (e.g., 'PVTSSF_lAHOCNqc1s4BN3oqzg8vTnA'). Currently supports text, number, date, assignees, labels, single-select, iteration and milestone fields.","examples":["PVTSSF_lAHOCNqc1s4BN3oqzg8vTnA"],"title":"Field Id","type":"string"},"itemId":{"description":"The global node ID of the project item to update (e.g., 'PVTI_lAHOCNqc1s4BN3oqzgldG_w'). This identifies the specific item within the project whose field value will be cleared.","examples":["PVTI_lAHOCNqc1s4BN3oqzgldG_w"],"title":"Item Id","type":"string"},"projectId":{"description":"The global node ID of the Project (e.g., 'PVT_kwHOCNqc1s4BN3oq'). This identifies the project containing the item.","examples":["PVT_kwHOCNqc1s4BN3oq"],"title":"Project Id","type":"string"}},"required":["projectId","itemId","fieldId"],"title":"ClearProjectV2ItemFieldValueRequest","type":"object"}} |
++| GITHUB_CLEAR_REPOSITORY_CACHE_BY_KEY | Deletes GitHub Actions caches from a repository matching a specific `key` and an optional Git `ref`, used to manage storage or clear outdated/corrupted caches; the action succeeds even if no matching caches are found to delete. | {"parameters":{"description":"Request schema for the `ClearRepositoryCacheByKey` action, defining parameters to identify and delete GitHub Actions caches.","properties":{"key":{"description":"The exact cache key used to identify specific caches for deletion. This key is often dynamically generated in workflows using expressions (e.g., `${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}`).","examples":["Linux-npm-6a99d79959699e7aa7597179767626e089597a38","Windows-pip-cache-mybranch-py39","macOS-gems-custom-key-v1"],"title":"Key","type":"string"},"owner":{"description":"The account owner of the repository. The name is not case sensitive.","examples":["octocat","my-organization"],"title":"Owner","type":"string"},"ref":{"description":"The full Git reference for narrowing down the cache deletion. For example, to target caches for a specific branch, use `refs/heads/<branch_name>`. To target caches for a pull request, use `refs/pull/<pull_number>/merge`. If omitted, caches matching the key across all refs are considered.","examples":["refs/heads/main","refs/pull/123/merge","refs/tags/v1.0.0"],"title":"Ref","type":"string"},"repo":{"description":"The name of the repository without the `.git` extension. The name is not case sensitive.","examples":["hello-world","my-awesome-project"],"title":"Repo","type":"string"}},"required":["owner","repo","key"],"title":"ClearRepositoryCacheByKeyRequest","type":"object"}} |
++| GITHUB_CLEAR_SELF_HOSTED_RUNNER_ORG_LABELS | Removes all custom labels from a self-hosted runner for an organization; default labels (e.g., 'self-hosted', 'linux', 'x64') will remain. | {"parameters":{"description":"Request schema for `ClearSelfHostedRunnerOrgLabels`","properties":{"org":{"description":"The name of the GitHub organization that owns the self-hosted runner (case-insensitive).","examples":["octo-org","my-company"],"title":"Org","type":"string"},"runner_id":{"description":"Unique numeric identifier of the self-hosted runner. Can be obtained from listing runners for the organization.","examples":[123,456],"title":"Runner Id","type":"integer"}},"required":["org","runner_id"],"title":"ClearSelfHostedRunnerOrgLabelsRequest","type":"object"}} |
++| GITHUB_COMMIT_MULTIPLE_FILES | Tool to atomically create, update, or delete multiple files in a GitHub repository as a single commit. Uses Git Data APIs to avoid SHA mismatch conflicts that occur with the Contents API when multiple files are modified in parallel. Use when you need to make multi-file changes reliably. BRANCH CREATION: When committing to a new branch (e.g., 'fix/my-fix' or 'feature/new-feature'), you MUST provide 'base_branch' (typically 'main' or 'master') to create the branch from. If the branch already exists, base_branch is not needed. This action handles race conditions automatically: if the branch is updated by another commit between fetching the HEAD and updating the reference (resulting in a 422 'not a fast forward' error), the action will retry by refetching the HEAD and rebasing changes. Use max_retries to control this behavior. | {"parameters":{"properties":{"author":{"additionalProperties":false,"description":"Git author or committer information.","properties":{"date":{"description":"ISO 8601 timestamp for the commit (optional, defaults to current time)","examples":["2024-01-15T10:30:00Z"],"title":"Date","type":"string"},"email":{"description":"Email address of the author or committer","examples":["john@example.com","jane@example.com"],"title":"Email","type":"string"},"name":{"description":"Name of the author or committer","examples":["John Doe","Jane Smith"],"title":"Name","type":"string"}},"required":["name","email"],"title":"AuthorCommitter","type":"object"},"base_branch":{"description":"REQUIRED when committing to a new branch that doesn't exist yet. Specifies the existing branch to create the new branch from (e.g., 'main' or 'master'). Not needed if 'branch' already exists in the repository.","examples":["main","master","develop"],"title":"Base Branch","type":"string"},"branch":{"description":"Target branch name to commit to. If this branch doesn't exist, you MUST provide 'base_branch' to create it. For new feature branches (e.g., 'fix/my-fix', 'feature/new-feature'), always set base_branch='main' (or your default branch).","examples":["main","develop","feature/new-feature"],"title":"Branch","type":"string"},"committer":{"additionalProperties":false,"description":"Git author or committer information.","properties":{"date":{"description":"ISO 8601 timestamp for the commit (optional, defaults to current time)","examples":["2024-01-15T10:30:00Z"],"title":"Date","type":"string"},"email":{"description":"Email address of the author or committer","examples":["john@example.com","jane@example.com"],"title":"Email","type":"string"},"name":{"description":"Name of the author or committer","examples":["John Doe","Jane Smith"],"title":"Name","type":"string"}},"required":["name","email"],"title":"AuthorCommitter","type":"object"},"deletes":{"description":"List of file paths to delete from the repository. Files must exist in the repository; attempting to delete non-existent files will result in an error. Ensure paths are exact with no leading/trailing whitespace.","examples":[["old-file.txt","deprecated/module.py"]],"items":{"type":"string"},"title":"Deletes","type":"array"},"force":{"default":false,"description":"Force update the branch reference. WARNING: Use with caution as this can overwrite commits. Only use this when you intentionally want to overwrite the branch history.","title":"Force","type":"boolean"},"max_retries":{"default":3,"description":"Maximum number of retries when encountering race conditions (422 'not a fast forward' errors). The action will refetch the HEAD and rebase changes on each retry. Set to 0 to disable retries.","maximum":10,"minimum":0,"title":"Max Retries","type":"integer"},"message":{"description":"Commit message describing the changes","examples":["Add new features","Update documentation","Fix bugs in authentication"],"title":"Message","type":"string"},"owner":{"description":"Repository owner (username or organization name)","examples":["octocat","my-organization"],"title":"Owner","type":"string"},"repo":{"description":"Repository name (without .git extension)","examples":["hello-world","my-project"],"title":"Repo","type":"string"},"upserts":{"description":"List of files to create or update. Each entry requires path, content, and optional encoding (utf-8 or base64)","examples":[[{"content":"# Hello","encoding":"utf-8","path":"README.md"}]],"items":{"description":"Represents a file to create or update.","properties":{"content":{"description":"File content as a string","examples":["print('Hello, World!')","# My Project\\n\\nWelcome!"],"title":"Content","type":"string"},"encoding":{"default":"utf-8","description":"Content encoding: 'utf-8' for text files or 'base64' for binary files","enum":["utf-8","base64"],"examples":["utf-8","base64"],"title":"Encoding","type":"string"},"path":{"description":"File path in the repository (e.g., 'src/main.py' or 'docs/readme.md')","examples":["src/main.py","README.md","docs/guide.md"],"title":"Path","type":"string"}},"required":["path","content"],"title":"FileUpsert","type":"object"},"title":"Upserts","type":"array"}},"required":["owner","repo","branch","message"],"title":"CommitMultipleFilesRequest","type":"object"}} |
++| GITHUB_COMPARE_TWO_COMMITS | Compares two commit points (commits, branches, tags, or SHAs) within a repository or across forks, using `BASE...HEAD` or `OWNER:REF...OWNER:REF` format for the `basehead` parameter. | {"parameters":{"description":"Request schema for `CompareTwoCommits` action. Specifies the repository and the two commit points (base and head) to compare.","properties":{"basehead":{"description":"A string specifying the base and head references to compare, in the format `BASE...HEAD`. `BASE` and `HEAD` can be branch names (e.g., `main...develop`), tag names (e.g., `v1.0.0...v1.1.0`), or commit SHAs (abbreviated or full 40-character format). Both abbreviated and full SHAs are accepted; full 40-character SHAs are recommended for reliability in large repositories. Both references must exist in the specified repository. To compare branches across forks in the same network, use the format `OWNER:REF...OWNER:REF` (e.g., `octocat:main...another-user:main`). Do NOT pass GitHub URLs - only plain reference strings like 'main...develop' are accepted.","examples":["main...develop","v1.0.0...v1.1.0","0e9c6b6...5f8d3a0","553c2077f0edc3d5dc5d17262f6aa498e69d6f8e...7fd1a60b01f91b314f59955a4e4d4e80d8edf11d","octocat:main...my-fork-user:main"],"title":"Basehead","type":"string"},"owner":{"description":"The username or organization name that owns the repository. This field is not case-sensitive.","examples":["octocat","my-organization"],"title":"Owner","type":"string"},"page":{"default":1,"description":"Page number of the results to fetch, for pagination when the number of differences (commits or files) is large.","examples":["1","2"],"title":"Page","type":"integer"},"per_page":{"default":30,"description":"Number of results (e.g., files or commits) to return per page, with a maximum of 100, for pagination.","examples":["30","100"],"title":"Per Page","type":"integer"},"repo":{"description":"The name of the repository, without the `.git` extension. This field is not case-sensitive.","examples":["Spoon-Knife","my-project"],"title":"Repo","type":"string"}},"required":["owner","repo","basehead"],"title":"CompareTwoCommitsRequest","type":"object"}} |
++| GITHUB_CONFIGURE_JIT_RUNNER_FOR_ORG | Generates a JIT configuration for a GitHub organization's new self-hosted runner to run a single job then unregister; requires admin:org scope and the runner_group_id must exist in the organization. | {"parameters":{"description":"Parameters to generate a just-in-time (JIT) runner configuration for a GitHub organization.","properties":{"labels":{"description":"Custom labels to assign to the new self-hosted runner, used by GitHub Actions to route jobs. **Minimum items**: 1. **Maximum items**: 100.","examples":[["linux","x64","gpu"],["windows-latest","my-custom-label"]],"items":{"type":"string"},"maxItems":100,"minItems":1,"title":"Labels","type":"array"},"name":{"description":"Desired name for the new self-hosted runner, visible in the GitHub UI.","examples":["my-jit-runner-linux","temp-builder-1"],"title":"Name","type":"string"},"org":{"description":"Name of the GitHub organization (case-insensitive).","examples":["my-organization","github"],"title":"Org","type":"string"},"runner_group_id":{"description":"ID of the runner group to assign the new self-hosted runner. Must exist in the organization. You can get runner group IDs by calling the 'List self-hosted runner groups for an organization' endpoint (GET /orgs/{org}/actions/runner-groups).","examples":[1,42],"title":"Runner Group Id","type":"integer"},"work_folder":{"default":"_work","description":"Path to the working directory on the runner machine where jobs will execute, relative to the runner's installation directory.","examples":["_work","custom_work_dir"],"title":"Work Folder","type":"string"}},"required":["org","name","runner_group_id","labels"],"title":"ConfigureJitRunnerForOrgRequest","type":"object"}} |
++| GITHUB_CONFIGURE_OIDC_SUBJECT_CLAIM_TEMPLATE | Sets or updates the OIDC subject claim customization template for an existing GitHub organization by specifying which claims (e.g., 'repo', 'actor') form the OIDC token's subject (`sub`). This action customizes which claim keys are included in the OIDC subject claim for the specified organization. It allows for fine-tuning the content of the subject claim based on organizational needs. | {"parameters":{"description":"Request schema for `ConfigureOidcSubjectClaimTemplate`.","properties":{"include_claim_keys":{"description":"Array of unique strings, each a valid claim key (e.g., 'repo', 'actor'; alphanumeric/underscores only), to include in the OIDC subject claim (`sub`).","examples":[["repo","context","actor"],["workflow","ref","repository_owner"]],"items":{"type":"string"},"title":"Include Claim Keys","type":"array"},"org":{"description":"The GitHub organization name (case-insensitive).","examples":["my-github-org"],"title":"Org","type":"string"}},"required":["org","include_claim_keys"],"title":"ConfigureOidcSubjectClaimTemplateRequest","type":"object"}} |
++| GITHUB_CONVERT_ORG_MEMBER_TO_OUTSIDE_COLLABORATOR | Converts an existing organization member, who is not an owner, to an outside collaborator, restricting their access to explicitly granted repositories. | {"parameters":{"description":"Request schema for `ConvertOrgMemberToOutsideCollaborator`","properties":{"async":{"default":false,"description":"If true, performs the conversion asynchronously (API returns a 202 status when the job is successfully queued).","title":"Async","type":"boolean"},"org":{"description":"The organization name (case-insensitive).","examples":["octo-org","my-company-gh"],"title":"Org","type":"string"},"username":{"description":"The GitHub username of the member to convert.","examples":["octocat","user-to-convert"],"title":"Username","type":"string"}},"required":["org","username"],"title":"ConvertOrgMemberToOutsideCollaboratorRequest","type":"object"}} |
++| GITHUB_CREATE_A_BLOB | Creates a Git blob in a repository, requiring content and encoding ('utf-8' or 'base64'). Requires write access to the repository. | {"parameters":{"description":"Defines the request parameters for creating a new Git blob.","properties":{"content":{"description":"The content to be stored in the new blob.","examples":["This is the raw content of the file.","SGVsbG8gV29ybGQ=\\\\n"],"title":"Content","type":"string"},"encoding":{"default":"utf-8","description":"The encoding for the 'content'; \\"utf-8\\" or \\"base64\\".","examples":["utf-8","base64"],"title":"Encoding","type":"string"},"owner":{"description":"The username or organization name that owns the repository. This field is not case-sensitive. You must have write access to the repository.","examples":["octocat"],"title":"Owner","type":"string"},"repo":{"description":"The name of the repository, without the '.git' extension. This field is not case-sensitive. The repository must exist and you must have write access to it.","examples":["Hello-World"],"title":"Repo","type":"string"}},"required":["owner","repo","content"],"title":"CreateABlobRequest","type":"object"}} |
+\ No newline at end of file

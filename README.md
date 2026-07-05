@@ -100,12 +100,15 @@ through untouched). Two passes are measured:
   token and the exact original is one call away. This is where logs, diffs,
   search, and source code actually compress.
 
-Two shapes show up in the table. **Faithful-reshape** categories (HTML, some
-JSON) compress the same in both passes — Pass 2 reads marginally lower only
-because the optional recovery footer adds a few dozen bytes. **Information-
-dropping** categories (logs, diffs, search, source code) are 0% in Pass 1 —
-lossless pass-through — and only compress in Pass 2, where the drops are
-recoverable.
+Three shapes show up in the table. **Faithful reshapes** (HTML→text) compress
+the same in both passes — Pass 2 reads marginally lower only because the
+optional recovery footer adds a few dozen bytes. **Information-dropping**
+categories (logs, diffs, search, source code) are 0% in Pass 1 — lossless
+pass-through — and only compress in Pass 2, where the drops are recoverable.
+**JSON is a hybrid:** Pass 1 renders the full markdown table (every row and
+value, lossless — the "markdown trick"), and Pass 2 additionally samples the
+long middle away behind retrieval tokens, so JSON compresses in *both* passes,
+more with CCR.
 
 `Applied` counts the cases where compression actually fired — the rest pass
 through because they are too small or a shape the compressor declines.
@@ -113,16 +116,16 @@ through because they are too small or a shape the compressor declines.
 <!-- bench:table -->
 | Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 75.6% | 0.182 ms |
-| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 12.8% | 76.6% | 0.457 ms |
-| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 3.4% | 30.8% | 0.589 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 0.0% | 35.3% | 1.616 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 0.0% | 69.6% | 0.116 ms |
-| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 0.0% | 85.9% | 1.737 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 0.0% | 31.5% | 1.026 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 0.0% | 68.9% | 0.269 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 0.0% | 26.6% | 0.862 ms |
-| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 0.0% | 57.7% | 4.656 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 75.6% | 0.174 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 17.7% | 35.3% | 1.618 ms |
+| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 12.8% | 76.6% | 0.443 ms |
+| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 3.4% | 30.8% | 0.567 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 0.0% | 69.6% | 0.085 ms |
+| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 0.0% | 85.9% | 1.254 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 0.0% | 31.5% | 0.944 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 0.0% | 68.9% | 0.268 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 0.0% | 26.6% | 0.795 ms |
+| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 0.0% | 57.7% | 4.502 ms |
 | [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
 
 Across the whole corpus TinyJuice cut 15.4 MB of content down to

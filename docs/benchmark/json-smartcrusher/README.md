@@ -2,7 +2,7 @@
 
 Real OpenHuman JSON snapshots: tool catalogs, API responses, schemas, package metadata, Lottie payloads, and config files. TinyJuice now chooses the smallest useful JSON representation before CCR, using Markdown tables only when they beat minified JSON.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. For faithful-reshape categories the two passes are identical (Pass 2 is marginally lower only for the recovery footer); for information-dropping categories Pass 1 is 0% and all the compression happens in Pass 2. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. Faithful reshapes (HTML->text) are identical in both passes (Pass 2 is marginally lower only for the recovery footer); pure information-dropping categories are 0% in Pass 1 and compress only in Pass 2; JSON is a hybrid — Pass 1 renders the full lossless markdown table (all rows), and Pass 2 additionally samples the middle away behind retrieval tokens. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,14 +10,14 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | 890.8 KB -> 16.0 KB (-98%) | 0.0%<br>[output](cases/02-notion-tools-array/output-noccr.md) - [diff](cases/02-notion-tools-array/compression-noccr.diff) | 98.2%<br>[output](cases/02-notion-tools-array/output.md) - [diff](cases/02-notion-tools-array/compression.diff) | 9.683 ms |
-| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | 106.7 KB -> 13.8 KB (-87%) | 0.0%<br>[output](cases/03-slack-tools-array/output-noccr.md) - [diff](cases/03-slack-tools-array/compression-noccr.diff) | 87.0%<br>[output](cases/03-slack-tools-array/output.md) - [diff](cases/03-slack-tools-array/compression.diff) | 3.258 ms |
-| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | 110.9 KB -> 15.1 KB (-86%) | 0.0%<br>[output](cases/01-github-tools-array/output-noccr.md) - [diff](cases/01-github-tools-array/compression-noccr.diff) | 86.3%<br>[output](cases/01-github-tools-array/output.md) - [diff](cases/01-github-tools-array/compression.diff) | 2.095 ms |
-| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | 48.6 KB -> 8.9 KB (-82%) | 0.0%<br>[output](cases/07-app-schema-object/output-noccr.md) - [diff](cases/07-app-schema-object/compression-noccr.diff) | 81.5%<br>[output](cases/07-app-schema-object/output.md) - [diff](cases/07-app-schema-object/compression.diff) | 0.886 ms |
-| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | 62.0 KB -> 62.0 KB (-0%) | 0.0%<br>[output](cases/10-cargo-metadata/output-noccr.md) - [diff](cases/10-cargo-metadata/compression-noccr.diff) | 0.0%<br>[output](cases/10-cargo-metadata/output.md) - [diff](cases/10-cargo-metadata/compression.diff) | 0.171 ms |
-| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | 9.4 KB -> 9.4 KB (-0%) | 0.0%<br>[output](cases/09-package-manifest/output-noccr.md) - [diff](cases/09-package-manifest/compression-noccr.diff) | 0.0%<br>[output](cases/09-package-manifest/output.md) - [diff](cases/09-package-manifest/compression.diff) | 0.031 ms |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | 890.8 KB -> 16.0 KB (-98%) | 61.1%<br>[output](cases/02-notion-tools-array/output-noccr.md) - [diff](cases/02-notion-tools-array/compression-noccr.diff) | 98.2%<br>[output](cases/02-notion-tools-array/output.md) - [diff](cases/02-notion-tools-array/compression.diff) | 10.288 ms |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | 106.7 KB -> 13.8 KB (-87%) | 32.1%<br>[output](cases/03-slack-tools-array/output-noccr.md) - [diff](cases/03-slack-tools-array/compression-noccr.diff) | 87.0%<br>[output](cases/03-slack-tools-array/output.md) - [diff](cases/03-slack-tools-array/compression.diff) | 2.010 ms |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | 110.9 KB -> 15.1 KB (-86%) | 34.8%<br>[output](cases/01-github-tools-array/output-noccr.md) - [diff](cases/01-github-tools-array/compression-noccr.diff) | 86.3%<br>[output](cases/01-github-tools-array/output.md) - [diff](cases/01-github-tools-array/compression.diff) | 2.853 ms |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | 48.6 KB -> 8.9 KB (-82%) | 48.7%<br>[output](cases/07-app-schema-object/output-noccr.md) - [diff](cases/07-app-schema-object/compression-noccr.diff) | 81.5%<br>[output](cases/07-app-schema-object/output.md) - [diff](cases/07-app-schema-object/compression.diff) | 0.816 ms |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | 62.0 KB -> 62.0 KB (-0%) | 0.0%<br>[output](cases/10-cargo-metadata/output-noccr.md) - [diff](cases/10-cargo-metadata/compression-noccr.diff) | 0.0%<br>[output](cases/10-cargo-metadata/output.md) - [diff](cases/10-cargo-metadata/compression.diff) | 0.144 ms |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | 9.4 KB -> 9.4 KB (-0%) | 0.0%<br>[output](cases/09-package-manifest/output-noccr.md) - [diff](cases/09-package-manifest/compression-noccr.diff) | 0.0%<br>[output](cases/09-package-manifest/output.md) - [diff](cases/09-package-manifest/compression.diff) | 0.030 ms |
 | `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | 16.8 KB -> 16.8 KB (-0%) | 0.0%<br>[output](cases/08-lottie-animation/output-noccr.md) - [diff](cases/08-lottie-animation/compression-noccr.diff) | 0.0%<br>[output](cases/08-lottie-animation/output.md) - [diff](cases/08-lottie-animation/compression.diff) | 0.031 ms |
-| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | 2.4 KB -> 2.4 KB (-0%) | 0.0%<br>[output](cases/06-tauri-capabilities-schema/output-noccr.md) - [diff](cases/06-tauri-capabilities-schema/compression-noccr.diff) | 0.0%<br>[output](cases/06-tauri-capabilities-schema/output.md) - [diff](cases/06-tauri-capabilities-schema/compression.diff) | 0.006 ms |
+| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | 2.4 KB -> 2.4 KB (-0%) | 0.0%<br>[output](cases/06-tauri-capabilities-schema/output-noccr.md) - [diff](cases/06-tauri-capabilities-schema/compression-noccr.diff) | 0.0%<br>[output](cases/06-tauri-capabilities-schema/output.md) - [diff](cases/06-tauri-capabilities-schema/compression.diff) | 0.010 ms |
 | `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | 201 B -> 201 B (-0%) | 0.0%<br>[output](cases/05-polymarket-events-list/output-noccr.md) - [diff](cases/05-polymarket-events-list/compression-noccr.diff) | 0.0%<br>[output](cases/05-polymarket-events-list/output.md) - [diff](cases/05-polymarket-events-list/compression.diff) | 0.000 ms |
 | `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | 313 B -> 313 B (-0%) | 0.0%<br>[output](cases/04-polymarket-markets-list/output-noccr.md) - [diff](cases/04-polymarket-markets-list/compression-noccr.diff) | 0.0%<br>[output](cases/04-polymarket-markets-list/output.md) - [diff](cases/04-polymarket-markets-list/compression.diff) | 0.000 ms |
 
@@ -117,93 +117,93 @@ Output excerpt:
 
 ```
 
-### `03-slack-tools-array`
+### `07-app-schema-object`
 
-- [Full input](cases/03-slack-tools-array/input.json)
-- [Output with CCR](cases/03-slack-tools-array/output.md) - [diff](cases/03-slack-tools-array/compression.diff)
-- [Output without CCR](cases/03-slack-tools-array/output-noccr.md) - [diff](cases/03-slack-tools-array/compression-noccr.diff)
+- [Full input](cases/07-app-schema-object/input.json)
+- [Output with CCR](cases/07-app-schema-object/output.md) - [diff](cases/07-app-schema-object/compression.diff)
+- [Output without CCR](cases/07-app-schema-object/output-noccr.md) - [diff](cases/07-app-schema-object/compression-noccr.diff)
 
 Input excerpt:
 
 ```json
-[
-  {
-    "function": {
-      "description": "Registers new participants added to a Slack call.",
-      "name": "SLACK_ADD_CALL_PARTICIPANTS",
-      "parameters": {
-        "description": "Request schema for `AddCallParticipants`",
-        "properties": {
-          "id": {
-            "description": "ID of the call returned by the add method.",
-            "examples": [
-              "R0123456789"
-            ],
-            "title": "Id",
-            "type": "string"
-          },
-          "users": {
-            "description": "The list of users to add as participants in the call. users is a JSON array (formatted as a string) containing information for each user. Each element must include a `slack_id`. For example: `...
-            "examples": [
-              "[{\"slack_id\": \"U1H77\"}]",
-              "[{\"slack_id\": \"U2ABC123\"}]",
-              "[{\"slack_id\": \"U1H77\"}, {\"slack_id\": \"U2ABC123\"}]"
-            ],
-            "title": "Users",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "users"
-        ],
-        "title": "AddCallParticipantsRequest",
-        "type": "object"
-      }
+{
+  "methods": [
+    {
+      "description": "Liveness probe for the core JSON-RPC server.",
+      "function": "ping",
+      "inputs": [],
+      "method": "core.ping",
+      "namespace": "core",
+      "outputs": [
+        {
+          "comment": "Always true when the server is reachable.",
+          "name": "ok",
+          "required": true,
+          "ty": "Bool"
+        }
+      ]
     },
-    "type": "function"
+    {
+      "description": "Lists all JSON-RPC methods and their input/output schemas.",
+      "function": "rpc_schema_dump",
+      "inputs": [],
+      "method": "core.rpc_schema_dump",
+      "namespace": "core",
+      "outputs": [
+        {
+          "comment": "All JSON-RPC method schemas available to clients.",
+          "name": "methods",
+          "required": true,
+          "ty": {
+            "Array": {
+              "Object": {
+                "fields": [
+                  {
+                    "comment": "Fully-qualified JSON-RPC method name.",
+                    "name": "method",
+                    "required": true,
 
 ```
 
 Output excerpt:
 
 ```markdown
-[all rows: type="function"]
-[json table: 60 rows × 3 cols · blank=absent key · exact original via retrieve footer]
-| function.name | function.description | function.… |
-| --- | --- | --- |
-| SLACK_ADD_CALL_PARTICIPANTS | Registers new participants added to a Slack call. | {"parameters":{"description":"Request schema for `AddCallParticipants`","properties":{"id":{"description":"ID of the call returned by th...
-| SLACK_ADD_EMOJI | Adds a custom emoji to a Slack workspace given a unique name and an image URL; subject to workspace emoji limits. | {"parameters":{"description":"Request schema for `AddEmoji`","properties":{"name":{"...
-| SLACK_ADD_EMOJI_ALIAS | Adds an alias for an existing custom emoji in a Slack Enterprise Grid organization. | {"parameters":{"description":"Request schema for `AddEmojiAlias`","properties":{"alias_for":{"description":"...
-| SLACK_ADD_ENTERPRISE_USER_TO_WORKSPACE | Adds an Enterprise user to a workspace. Use when you need to assign an existing Enterprise Grid user to a specific workspace with optional guest restrictions. | {"parameters":{"...
-| SLACK_ADD_REACTION_TO_AN_ITEM | Adds a specified emoji reaction to an existing message in a Slack channel, identified by its timestamp; does not remove or retrieve reactions. | {"parameters":{"description":"Request sch...
-| SLACK_ADD_REMOTE_FILE | Adds a reference to an external file (e.g., Google Drive, Dropbox) to Slack for discovery and sharing, requiring a unique `external_id` and an `external_url` accessible by Slack. | {"parameters"...
-| SLACK_ADD_STAR | Stars a channel, file, file comment, or a specific message in Slack. | {"parameters":{"description":"Request schema for the `stars.add` API method. Used to add a star to a channel, file, file comment, ...
-| SLACK_ADMIN_CONVERSATIONS_SEARCH | Tool to search for public or private channels in an Enterprise organization. Use when you need to find channels by name, type, or other criteria within an Enterprise Grid workspace. |...
-| SLACK_API_TEST | Tool to check API calling code by testing connectivity and authentication to the Slack API. Use when you need to verify that API credentials are valid and the connection is working properly. | {"parame...
-| SLACK_ARCHIVE_CONVERSATION | Archives a Slack conversation by its ID, rendering it read-only and hidden while retaining history, ideal for cleaning up inactive channels; be aware that some channels (like #general or ce...
-| SLACK_ASSISTANT_SEARCH_CONTEXT | Search across Slack messages, files, channels, and users using Real-time Search API. BEFORE USING: Call SLACK_ASSISTANT_SEARCH_INFO to check workspace capabilities. - If is_ai_search_en...
-| SLACK_ASSISTANT_SEARCH_INFO | Check if semantic (AI-powered) search is available on the Slack workspace. Returns whether natural language queries will trigger semantic search in assistant.search.context calls. | {"para...
-| SLACK_CLOSE_DM | Closes a Slack direct message (DM) or multi-person direct message (MPDM) channel, removing it from the user's sidebar without deleting history; this action affects only the calling user's view. | {"par...
-| SLACK_CONVERT_CHANNEL_TO_PRIVATE | Convert a public Slack channel to private using the Admin API. This is an Enterprise Grid only feature and requires an org-installed user token with admin.conversations:write scope. |...
-| SLACK_CREATE_A_REMINDER | Creates a Slack reminder with specified text and time; time accepts Unix timestamps, seconds from now, or natural language (e.g., 'in 15 minutes', 'every Thursday at 2pm'). | {"parameters":{"d...
-| SLACK_CREATE_CANVAS | Creates a new Slack Canvas with the specified title and optional content. | {"parameters":{"properties":{"channel_id":{"description":"Optional channel ID (e.g., 'C1234567890'). If provided, the ca...
-| SLACK_CREATE_CHANNEL | Initiates a public or private channel-based conversation in a Slack workspace. Immediately creates the channel; invoke only after explicit user confirmation. | {"parameters":{"description":"Reque...
-| SLACK_CREATE_CHANNEL_BASED_CONVERSATION | Creates a new public or private Slack channel with a unique name; the channel can be org-wide, or team-specific if `team_id` is given (required if `org_wide` is false or not pr...
-| SLACK_CREATE_ENTERPRISE_TEAM | Tool to create an Enterprise team in Slack. Use when you need to create a new team (workspace) within an Enterprise Grid organization. Requires admin.teams:write scope. | {"parameters":{"...
-| SLACK_CREATE_USER_GROUP | Creates a new User Group (often referred to as a subteam) in a Slack workspace. | {"parameters":{"description":"Request schema for `CreateUserGroup`","properties":{"additional_channels":{"desc...
-[... 18 row(s) omitted ... ⟦tj:94f26625b66ac8a673ad3b365d4d916c⟧]
-| SLACK_FETCH_ITEM_REACTIONS | Fetches reactions for a Slack message, file, or file comment. Exactly one identifier path must be provided: `channel`+`timestamp`, `file`, or `file_comment`. Mixing identifiers (e.g., provi...
-[... 11 row(s) omitted ... ⟦tj:c4a2ec691ab74e8cfeb5a08bd7c3272e⟧]
-| SLACK_GET_CHANNEL_CONVERSATION_PREFERENCES | Retrieves conversation preferences (e.g., who can post, who can thread) for a specified channel, primarily for use within Slack Enterprise Grid environments. | {"parameters"...
-| SLACK_GET_REMINDER | Retrieves detailed information for an existing Slack reminder specified by its ID; this is a read-only operation. | {"parameters":{"description":"Request schema for `GetReminder` action. Specifies ...
-| SLACK_GET_REMOTE_FILE | Retrieve information about a remote file added to Slack via the files.remote API. Does not work for standard Slack-hosted file uploads. | {"parameters":{"description":"Request schema for `GetRem...
-| SLACK_GET_TEAM_PROFILE | Retrieves all profile field definitions for a Slack team, optionally filtered by visibility, to understand the team's profile structure. | {"parameters":{"description":"Request schema to fetch ...
-| SLACK_GET_USER_DND_STATUS | Retrieves a user's current Do Not Disturb status. | {"parameters":{"description":"Request schema for `GetUserDndStatus`","properties":{"team_id":{"description":"The workspace ID (team_id) to...
-| SLACK_GET_USER_PRESENCE | Retrieves a Slack user's current real-time presence (e.g., 'active', 'away') to determine their availability, noting this action does not provide historical data or status reasons. | {"paramet...
-| SLACK_GET_WORKSPACE_CONNECTIONS_FOR_CHANNEL | Tool to get all workspaces a channel is connected to within an Enterprise org. Use when you need to determine which workspaces have access to a specific public or private c...
-| SLACK_GET_WORKSPACE_SETTINGS | Retrieves detailed settings for a specific Slack workspace, primarily for administrators in an Enterprise Grid organization to view or audit workspace configurations. | {"parameters":{"de...
-| SLACK_INVITE_USERS_TO_A_SLACK_CHANNEL | Invites users to an existing Slack channel using their valid Slack User IDs. Response is always HTTP 200; inspect `ok`, `error`, and `errors` fields to confirm users were added. ...
+[json table: methods — 69 rows × 6 cols · blank=absent key · exact original via retrieve footer]
+| description | function | inputs | method | namespace | outputs |
+| --- | --- | --- | --- | --- | --- |
+| Liveness probe for the core JSON-RPC server. | ping | [] | core.ping | core | [{"comment":"Always true when the server is reachable.","name":"ok","required":true,"ty":"Bool"}] |
+| Lists all JSON-RPC methods and their input/output schemas. | rpc_schema_dump | [] | core.rpc_schema_dump | core | [{"comment":"All JSON-RPC method schemas available to clients.","name":"methods","required":true,"ty":{"...
+| Returns the core binary version. | version | [] | core.version | core | [{"comment":"Semantic version string for the running core binary.","name":"version","required":true,"ty":"String"}] |
+| Run one-shot agent chat with optional model overrides. | chat | [{"comment":"User message.","name":"message","required":true,"ty":"String"},{"comment":"Optional model override.","name":"model_override","required":false...
+| Run one-shot lightweight provider chat. | chat_simple | [{"comment":"User message.","name":"message","required":true,"ty":"String"},{"comment":"Optional model override.","name":"model_override","required":false,"ty":{"...
+| Terminate REPL session. | repl_session_end | [{"comment":"REPL session id.","name":"session_id","required":true,"ty":"String"}] | openhuman.agent_repl_session_end | agent | [{"comment":"Session end result.","name":"res...
+| Clear REPL session history. | repl_session_reset | [{"comment":"REPL session id.","name":"session_id","required":true,"ty":"String"}] | openhuman.agent_repl_session_reset | agent | [{"comment":"Session reset result.","...
+| Create a persistent REPL agent session. | repl_session_start | [{"comment":"Optional session id.","name":"session_id","required":false,"ty":{"Option":"String"}},{"comment":"Optional model override.","name":"model_overr...
+| Return core runtime URL and status for agent calls. | server_status | [] | openhuman.agent_server_status | agent | [{"comment":"Agent server status payload.","name":"status","required":true,"ty":"Json"}] |
+| Remove stored app session credentials. | clear_session | [] | openhuman.auth_clear_session | auth | [{"comment":"Session clear result payload.","name":"result","required":true,"ty":"Json"}] |
+| Consume login handoff token and return session JWT. | consume_login_token | [{"comment":"One-time login token.","name":"loginToken","required":true,"ty":"String"}] | openhuman.auth_consume_login_token | auth | [{"comme...
+| Read stored app session token. | get_session_token | [] | openhuman.auth_get_session_token | auth | [{"comment":"Session token payload.","name":"token","required":true,"ty":"Json"}] |
+| Get current auth/session state. | get_state | [] | openhuman.auth_get_state | auth | [{"comment":"Current auth state response.","name":"state","required":true,"ty":"Json"}] |
+| List stored provider credentials. | list_provider_credentials | [{"comment":"Optional provider filter.","name":"provider","required":false,"ty":{"Option":"String"}}] | openhuman.auth_list_provider_credentials | auth | ...
+| Create OAuth connect URL for provider. | oauth_connect | [{"comment":"Provider id.","name":"provider","required":true,"ty":"String"},{"comment":"Optional skill id.","name":"skillId","required":false,"ty":{"Option":"Str...
+| Fetch integration handoff tokens. | oauth_fetch_integration_tokens | [{"comment":"Integration id.","name":"integrationId","required":true,"ty":"String"},{"comment":"Encryption key.","name":"key","required":true,"ty":"S...
+| List OAuth integrations for current session. | oauth_list_integrations | [] | openhuman.auth_oauth_list_integrations | auth | [{"comment":"OAuth integration list.","name":"integrations","required":true,"ty":"Json"}] |
+| Revoke OAuth integration. | oauth_revoke_integration | [{"comment":"Integration id.","name":"integrationId","required":true,"ty":"String"}] | openhuman.auth_oauth_revoke_integration | auth | [{"comment":"Integration re...
+| Remove provider credentials for a profile. | remove_provider_credentials | [{"comment":"Provider id.","name":"provider","required":true,"ty":"String"},{"comment":"Optional profile name.","name":"profile","required":fal...
+| Store provider credentials for a profile. | store_provider_credentials | [{"comment":"Provider id.","name":"provider","required":true,"ty":"String"},{"comment":"Optional profile name.","name":"profile","required":false...
+[... 39 row(s) omitted ... ⟦tj:73f36bc4da58298cfeb98d74b7bd4d9d⟧]
+| Read recent vision summaries. | vision_recent | [{"comment":"Maximum number of summaries.","name":"limit","required":false,"ty":{"Option":"U64"}}] | openhuman.screen_intelligence_vision_recent | screen_intelligence | [...
+| Manage desktop service lifecycle. | install | [] | openhuman.service_install | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
+| Manage desktop service lifecycle. | start | [] | openhuman.service_start | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
+| Manage desktop service lifecycle. | status | [] | openhuman.service_status | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
+| Manage desktop service lifecycle. | stop | [] | openhuman.service_stop | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
+| Manage desktop service lifecycle. | uninstall | [] | openhuman.service_uninstall | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
+| Skill runtime socket manager bridge. | connect | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_connect | socket | [{"comment":"Socket response paylo...
+| Skill runtime socket manager bridge. | disconnect | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_disconnect | socket | [{"comment":"Socket response...
+| Skill runtime socket manager bridge. | emit | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_emit | socket | [{"comment":"Socket response payload.","...
+| Skill runtime socket manager bridge. | state | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_state | socket | [{"comment":"Socket response payload."...
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
 
 ```
 
@@ -297,93 +297,93 @@ Output excerpt:
 
 ```
 
-### `07-app-schema-object`
+### `03-slack-tools-array`
 
-- [Full input](cases/07-app-schema-object/input.json)
-- [Output with CCR](cases/07-app-schema-object/output.md) - [diff](cases/07-app-schema-object/compression.diff)
-- [Output without CCR](cases/07-app-schema-object/output-noccr.md) - [diff](cases/07-app-schema-object/compression-noccr.diff)
+- [Full input](cases/03-slack-tools-array/input.json)
+- [Output with CCR](cases/03-slack-tools-array/output.md) - [diff](cases/03-slack-tools-array/compression.diff)
+- [Output without CCR](cases/03-slack-tools-array/output-noccr.md) - [diff](cases/03-slack-tools-array/compression-noccr.diff)
 
 Input excerpt:
 
 ```json
-{
-  "methods": [
-    {
-      "description": "Liveness probe for the core JSON-RPC server.",
-      "function": "ping",
-      "inputs": [],
-      "method": "core.ping",
-      "namespace": "core",
-      "outputs": [
-        {
-          "comment": "Always true when the server is reachable.",
-          "name": "ok",
-          "required": true,
-          "ty": "Bool"
-        }
-      ]
+[
+  {
+    "function": {
+      "description": "Registers new participants added to a Slack call.",
+      "name": "SLACK_ADD_CALL_PARTICIPANTS",
+      "parameters": {
+        "description": "Request schema for `AddCallParticipants`",
+        "properties": {
+          "id": {
+            "description": "ID of the call returned by the add method.",
+            "examples": [
+              "R0123456789"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "users": {
+            "description": "The list of users to add as participants in the call. users is a JSON array (formatted as a string) containing information for each user. Each element must include a `slack_id`. For example: `...
+            "examples": [
+              "[{\"slack_id\": \"U1H77\"}]",
+              "[{\"slack_id\": \"U2ABC123\"}]",
+              "[{\"slack_id\": \"U1H77\"}, {\"slack_id\": \"U2ABC123\"}]"
+            ],
+            "title": "Users",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "users"
+        ],
+        "title": "AddCallParticipantsRequest",
+        "type": "object"
+      }
     },
-    {
-      "description": "Lists all JSON-RPC methods and their input/output schemas.",
-      "function": "rpc_schema_dump",
-      "inputs": [],
-      "method": "core.rpc_schema_dump",
-      "namespace": "core",
-      "outputs": [
-        {
-          "comment": "All JSON-RPC method schemas available to clients.",
-          "name": "methods",
-          "required": true,
-          "ty": {
-            "Array": {
-              "Object": {
-                "fields": [
-                  {
-                    "comment": "Fully-qualified JSON-RPC method name.",
-                    "name": "method",
-                    "required": true,
+    "type": "function"
 
 ```
 
 Output excerpt:
 
 ```markdown
-[json table: methods — 69 rows × 6 cols · blank=absent key · exact original via retrieve footer]
-| description | function | inputs | method | namespace | outputs |
-| --- | --- | --- | --- | --- | --- |
-| Liveness probe for the core JSON-RPC server. | ping | [] | core.ping | core | [{"comment":"Always true when the server is reachable.","name":"ok","required":true,"ty":"Bool"}] |
-| Lists all JSON-RPC methods and their input/output schemas. | rpc_schema_dump | [] | core.rpc_schema_dump | core | [{"comment":"All JSON-RPC method schemas available to clients.","name":"methods","required":true,"ty":{"...
-| Returns the core binary version. | version | [] | core.version | core | [{"comment":"Semantic version string for the running core binary.","name":"version","required":true,"ty":"String"}] |
-| Run one-shot agent chat with optional model overrides. | chat | [{"comment":"User message.","name":"message","required":true,"ty":"String"},{"comment":"Optional model override.","name":"model_override","required":false...
-| Run one-shot lightweight provider chat. | chat_simple | [{"comment":"User message.","name":"message","required":true,"ty":"String"},{"comment":"Optional model override.","name":"model_override","required":false,"ty":{"...
-| Terminate REPL session. | repl_session_end | [{"comment":"REPL session id.","name":"session_id","required":true,"ty":"String"}] | openhuman.agent_repl_session_end | agent | [{"comment":"Session end result.","name":"res...
-| Clear REPL session history. | repl_session_reset | [{"comment":"REPL session id.","name":"session_id","required":true,"ty":"String"}] | openhuman.agent_repl_session_reset | agent | [{"comment":"Session reset result.","...
-| Create a persistent REPL agent session. | repl_session_start | [{"comment":"Optional session id.","name":"session_id","required":false,"ty":{"Option":"String"}},{"comment":"Optional model override.","name":"model_overr...
-| Return core runtime URL and status for agent calls. | server_status | [] | openhuman.agent_server_status | agent | [{"comment":"Agent server status payload.","name":"status","required":true,"ty":"Json"}] |
-| Remove stored app session credentials. | clear_session | [] | openhuman.auth_clear_session | auth | [{"comment":"Session clear result payload.","name":"result","required":true,"ty":"Json"}] |
-| Consume login handoff token and return session JWT. | consume_login_token | [{"comment":"One-time login token.","name":"loginToken","required":true,"ty":"String"}] | openhuman.auth_consume_login_token | auth | [{"comme...
-| Read stored app session token. | get_session_token | [] | openhuman.auth_get_session_token | auth | [{"comment":"Session token payload.","name":"token","required":true,"ty":"Json"}] |
-| Get current auth/session state. | get_state | [] | openhuman.auth_get_state | auth | [{"comment":"Current auth state response.","name":"state","required":true,"ty":"Json"}] |
-| List stored provider credentials. | list_provider_credentials | [{"comment":"Optional provider filter.","name":"provider","required":false,"ty":{"Option":"String"}}] | openhuman.auth_list_provider_credentials | auth | ...
-| Create OAuth connect URL for provider. | oauth_connect | [{"comment":"Provider id.","name":"provider","required":true,"ty":"String"},{"comment":"Optional skill id.","name":"skillId","required":false,"ty":{"Option":"Str...
-| Fetch integration handoff tokens. | oauth_fetch_integration_tokens | [{"comment":"Integration id.","name":"integrationId","required":true,"ty":"String"},{"comment":"Encryption key.","name":"key","required":true,"ty":"S...
-| List OAuth integrations for current session. | oauth_list_integrations | [] | openhuman.auth_oauth_list_integrations | auth | [{"comment":"OAuth integration list.","name":"integrations","required":true,"ty":"Json"}] |
-| Revoke OAuth integration. | oauth_revoke_integration | [{"comment":"Integration id.","name":"integrationId","required":true,"ty":"String"}] | openhuman.auth_oauth_revoke_integration | auth | [{"comment":"Integration re...
-| Remove provider credentials for a profile. | remove_provider_credentials | [{"comment":"Provider id.","name":"provider","required":true,"ty":"String"},{"comment":"Optional profile name.","name":"profile","required":fal...
-| Store provider credentials for a profile. | store_provider_credentials | [{"comment":"Provider id.","name":"provider","required":true,"ty":"String"},{"comment":"Optional profile name.","name":"profile","required":false...
-[... 39 row(s) omitted ... ⟦tj:73f36bc4da58298cfeb98d74b7bd4d9d⟧]
-| Read recent vision summaries. | vision_recent | [{"comment":"Maximum number of summaries.","name":"limit","required":false,"ty":{"Option":"U64"}}] | openhuman.screen_intelligence_vision_recent | screen_intelligence | [...
-| Manage desktop service lifecycle. | install | [] | openhuman.service_install | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
-| Manage desktop service lifecycle. | start | [] | openhuman.service_start | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
-| Manage desktop service lifecycle. | status | [] | openhuman.service_status | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
-| Manage desktop service lifecycle. | stop | [] | openhuman.service_stop | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
-| Manage desktop service lifecycle. | uninstall | [] | openhuman.service_uninstall | service | [{"comment":"Service status payload.","name":"status","required":true,"ty":{"Ref":"ServiceStatus"}}] |
-| Skill runtime socket manager bridge. | connect | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_connect | socket | [{"comment":"Socket response paylo...
-| Skill runtime socket manager bridge. | disconnect | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_disconnect | socket | [{"comment":"Socket response...
-| Skill runtime socket manager bridge. | emit | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_emit | socket | [{"comment":"Socket response payload.","...
-| Skill runtime socket manager bridge. | state | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_state | socket | [{"comment":"Socket response payload."...
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
-
+[all rows: type="function"]
+[json table: 60 rows × 3 cols · blank=absent key · exact original via retrieve footer]
+| function.name | function.description | function.… |
+| --- | --- | --- |
+| SLACK_ADD_CALL_PARTICIPANTS | Registers new participants added to a Slack call. | {"parameters":{"description":"Request schema for `AddCallParticipants`","properties":{"id":{"description":"ID of the call returned by th...
+| SLACK_ADD_EMOJI | Adds a custom emoji to a Slack workspace given a unique name and an image URL; subject to workspace emoji limits. | {"parameters":{"description":"Request schema for `AddEmoji`","properties":{"name":{"...
+| SLACK_ADD_EMOJI_ALIAS | Adds an alias for an existing custom emoji in a Slack Enterprise Grid organization. | {"parameters":{"description":"Request schema for `AddEmojiAlias`","properties":{"alias_for":{"description":"...
+| SLACK_ADD_ENTERPRISE_USER_TO_WORKSPACE | Adds an Enterprise user to a workspace. Use when you need to assign an existing Enterprise Grid user to a specific workspace with optional guest restrictions. | {"parameters":{"...
+| SLACK_ADD_REACTION_TO_AN_ITEM | Adds a specified emoji reaction to an existing message in a Slack channel, identified by its timestamp; does not remove or retrieve reactions. | {"parameters":{"description":"Request sch...
+| SLACK_ADD_REMOTE_FILE | Adds a reference to an external file (e.g., Google Drive, Dropbox) to Slack for discovery and sharing, requiring a unique `external_id` and an `external_url` accessible by Slack. | {"parameters"...
+| SLACK_ADD_STAR | Stars a channel, file, file comment, or a specific message in Slack. | {"parameters":{"description":"Request schema for the `stars.add` API method. Used to add a star to a channel, file, file comment, ...
+| SLACK_ADMIN_CONVERSATIONS_SEARCH | Tool to search for public or private channels in an Enterprise organization. Use when you need to find channels by name, type, or other criteria within an Enterprise Grid workspace. |...
+| SLACK_API_TEST | Tool to check API calling code by testing connectivity and authentication to the Slack API. Use when you need to verify that API credentials are valid and the connection is working properly. | {"parame...
+| SLACK_ARCHIVE_CONVERSATION | Archives a Slack conversation by its ID, rendering it read-only and hidden while retaining history, ideal for cleaning up inactive channels; be aware that some channels (like #general or ce...
+| SLACK_ASSISTANT_SEARCH_CONTEXT | Search across Slack messages, files, channels, and users using Real-time Search API. BEFORE USING: Call SLACK_ASSISTANT_SEARCH_INFO to check workspace capabilities. - If is_ai_search_en...
+| SLACK_ASSISTANT_SEARCH_INFO | Check if semantic (AI-powered) search is available on the Slack workspace. Returns whether natural language queries will trigger semantic search in assistant.search.context calls. | {"para...
+| SLACK_CLOSE_DM | Closes a Slack direct message (DM) or multi-person direct message (MPDM) channel, removing it from the user's sidebar without deleting history; this action affects only the calling user's view. | {"par...
+| SLACK_CONVERT_CHANNEL_TO_PRIVATE | Convert a public Slack channel to private using the Admin API. This is an Enterprise Grid only feature and requires an org-installed user token with admin.conversations:write scope. |...
+| SLACK_CREATE_A_REMINDER | Creates a Slack reminder with specified text and time; time accepts Unix timestamps, seconds from now, or natural language (e.g., 'in 15 minutes', 'every Thursday at 2pm'). | {"parameters":{"d...
+| SLACK_CREATE_CANVAS | Creates a new Slack Canvas with the specified title and optional content. | {"parameters":{"properties":{"channel_id":{"description":"Optional channel ID (e.g., 'C1234567890'). If provided, the ca...
+| SLACK_CREATE_CHANNEL | Initiates a public or private channel-based conversation in a Slack workspace. Immediately creates the channel; invoke only after explicit user confirmation. | {"parameters":{"description":"Reque...
+| SLACK_CREATE_CHANNEL_BASED_CONVERSATION | Creates a new public or private Slack channel with a unique name; the channel can be org-wide, or team-specific if `team_id` is given (required if `org_wide` is false or not pr...
+| SLACK_CREATE_ENTERPRISE_TEAM | Tool to create an Enterprise team in Slack. Use when you need to create a new team (workspace) within an Enterprise Grid organization. Requires admin.teams:write scope. | {"parameters":{"...
+| SLACK_CREATE_USER_GROUP | Creates a new User Group (often referred to as a subteam) in a Slack workspace. | {"parameters":{"description":"Request schema for `CreateUserGroup`","properties":{"additional_channels":{"desc...
+[... 18 row(s) omitted ... ⟦tj:94f26625b66ac8a673ad3b365d4d916c⟧]
+| SLACK_FETCH_ITEM_REACTIONS | Fetches reactions for a Slack message, file, or file comment. Exactly one identifier path must be provided: `channel`+`timestamp`, `file`, or `file_comment`. Mixing identifiers (e.g., provi...
+[... 11 row(s) omitted ... ⟦tj:c4a2ec691ab74e8cfeb5a08bd7c3272e⟧]
+| SLACK_GET_CHANNEL_CONVERSATION_PREFERENCES | Retrieves conversation preferences (e.g., who can post, who can thread) for a specified channel, primarily for use within Slack Enterprise Grid environments. | {"parameters"...
+| SLACK_GET_REMINDER | Retrieves detailed information for an existing Slack reminder specified by its ID; this is a read-only operation. | {"parameters":{"description":"Request schema for `GetReminder` action. Specifies ...
+| SLACK_GET_REMOTE_FILE | Retrieve information about a remote file added to Slack via the files.remote API. Does not work for standard Slack-hosted file uploads. | {"parameters":{"description":"Request schema for `GetRem...
+| SLACK_GET_TEAM_PROFILE | Retrieves all profile field definitions for a Slack team, optionally filtered by visibility, to understand the team's profile structure. | {"parameters":{"description":"Request schema to fetch ...
+| SLACK_GET_USER_DND_STATUS | Retrieves a user's current Do Not Disturb status. | {"parameters":{"description":"Request schema for `GetUserDndStatus`","properties":{"team_id":{"description":"The workspace ID (team_id) to...
+| SLACK_GET_USER_PRESENCE | Retrieves a Slack user's current real-time presence (e.g., 'active', 'away') to determine their availability, noting this action does not provide historical data or status reasons. | {"paramet...
+| SLACK_GET_WORKSPACE_CONNECTIONS_FOR_CHANNEL | Tool to get all workspaces a channel is connected to within an Enterprise org. Use when you need to determine which workspaces have access to a specific public or private c...
+| SLACK_GET_WORKSPACE_SETTINGS | Retrieves detailed settings for a specific Slack workspace, primarily for administrators in an Enterprise Grid organization to view or audit workspace configurations. | {"parameters":{"de...
+| SLACK_INVITE_USERS_TO_A_SLACK_CHANNEL | Invites users to an existing Slack channel using their valid Slack User IDs. Response is always HTTP 200; inspect `ok`, `error`, and `errors` fields to confirm users were added. ...
 
 ```
 
