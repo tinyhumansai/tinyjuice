@@ -3,8 +3,8 @@
 //! These exercise the same path OpenHuman's `ToolOutputMiddleware` uses:
 //! `compact_tool_output_with_policy` → router → compressor → CCR offload →
 //! recovery footer → `cache::retrieve` roundtrip. They pin the plan-level
-//! acceptance criteria: `off` and recovery-tool output are exact passthrough,
-//! `light` declines lossy compaction, `full` compacts recoverably.
+//! acceptance criteria: `off`, recovery-tool output, and exact file reads are
+//! passthrough; `light` declines lossy compaction; `full` compacts recoverably.
 
 mod common;
 
@@ -95,8 +95,8 @@ async fn full_profile_compacts_and_original_is_recoverable() {
     common::install_test_config();
     let payload = big_json_rows();
     let (text, stats) = compact_tool_output_with_policy(
-        "read_file",
-        Some(&json!({ "path": "services.json" })),
+        "http_request",
+        Some(&json!({ "url": "https://example.test/services" })),
         &payload,
         Some(0),
         AgentTokenjuiceCompression::Full,
@@ -119,6 +119,23 @@ async fn full_profile_compacts_and_original_is_recoverable() {
     let original = cache::retrieve(&tokens[0])
         .expect("footer-referenced token must be retrievable at emission time");
     assert_eq!(original, payload, "CCR roundtrip must restore the original");
+}
+
+#[tokio::test]
+async fn file_read_is_exact_by_default_even_in_full_profile() {
+    common::install_test_config();
+    let payload = big_json_rows();
+    let (text, stats) = compact_tool_output_with_policy(
+        "read_file",
+        Some(&json!({ "path": "services.json" })),
+        &payload,
+        Some(0),
+        AgentTokenjuiceCompression::Full,
+    )
+    .await;
+
+    assert_eq!(text, payload, "default file reads must remain exact");
+    assert!(!stats.applied);
 }
 
 #[tokio::test]

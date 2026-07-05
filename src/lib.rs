@@ -33,6 +33,7 @@ pub use compress::{
 pub use compressor::{
     CompressionInput, CompressionOutput, CompressionReport, Compressor, PassthroughCompressor,
 };
+pub use compressors::code::stub_code;
 pub use compressors::web_extract::{
     reduce_web_extract, reduce_web_extract_batch_with_store, reduce_web_extract_with_store,
     replace_inline_base64_images,
@@ -61,8 +62,9 @@ pub use tool_integration::{
     configure, current_options, install_config,
 };
 pub use types::{
-    AgentTokenjuiceCompression, CompactResult, CompressInput, CompressOptions, CompressOutput,
-    CompressedOutput, CompressorKind, ContentHint, ContentKind, ReduceOptions, ToolExecutionInput,
+    AgentTokenjuiceCompression, CodeElision, CodeStubOutput, CompactResult, CompressInput,
+    CompressOptions, CompressOutput, CompressedOutput, CompressorKind, ContentHint, ContentKind,
+    LineRange, ParseStatus, ReadIntent, ReduceOptions, StubMode, SymbolSummary, ToolExecutionInput,
     WebExtractBatchInput, WebExtractFormat, WebExtractOptions, WebExtractReduceInput,
     WebExtractReduction,
 };

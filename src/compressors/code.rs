@@ -16,7 +16,10 @@ use async_trait::async_trait;
 use std::fmt::Write as _;
 
 use super::Compressor;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::types::{
+    CodeElision, CodeStubOutput, CompressInput, CompressOptions, CompressOutput, CompressorKind,
+    LineRange, ParseStatus, ReadIntent, StubMode, SymbolSummary,
+};
 
 /// Bodies with more than this many collapsed lines get a placeholder; shorter
 /// ones are kept verbatim (collapsing tiny bodies isn't worth the marker).
@@ -38,6 +41,19 @@ impl Compressor for CodeCompressor {
         input: &CompressInput<'_>,
         _opts: &CompressOptions,
     ) -> Option<CompressOutput> {
+        if let ReadIntent::Stub(mode) = &input.hint.read_intent {
+            let stub = stub_code(
+                input.content,
+                input.hint.extension.as_deref(),
+                mode,
+                input.original_bytes,
+            );
+            if stub.text.len() < input.content.len() {
+                return Some(CompressOutput::lossy(stub.text, CompressorKind::Code));
+            }
+            return None;
+        }
+
         // Prefer the AST path when a grammar matches the file's language; fall
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
@@ -113,6 +129,281 @@ pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
     Some(CompressOutput::lossy(out, CompressorKind::Code))
 }
 
+/// Build a structural source-code stub with elision metadata.
+///
+/// Hosts call this directly for explicit stub reads. Exact reads should not use
+/// this path.
+pub fn stub_code(
+    content: &str,
+    extension: Option<&str>,
+    mode: &StubMode,
+    max_bytes: usize,
+) -> CodeStubOutput {
+    #[cfg(feature = "tokenjuice-treesitter")]
+    if let Some(ext) = extension
+        && let Some(out) = treesitter::stub(content, ext, mode)
+    {
+        return enforce_stub_budget(out, max_bytes);
+    }
+
+    enforce_stub_budget(stub_heuristic(content, mode), max_bytes)
+}
+
+#[derive(Debug, Clone)]
+struct StubBody {
+    body_start: usize,
+    body_end: usize,
+    body_range: LineRange,
+    symbol: SymbolSummary,
+}
+
+fn should_expand_body(mode: &StubMode, body: &StubBody) -> bool {
+    match mode {
+        StubMode::SignaturesOnly | StubMode::PublicApi => false,
+        StubMode::MatchedSymbols(symbols) => symbols.iter().any(|s| {
+            let wanted = s.trim();
+            !wanted.is_empty() && wanted == body.symbol.name
+        }),
+        StubMode::ExpandAroundLines(ranges) => ranges
+            .iter()
+            .copied()
+            .any(|range| range.intersects(body.body_range)),
+    }
+}
+
+fn placeholder_for_body(content: &str, body: &StubBody) -> String {
+    let body_text = &content[body.body_start..body.body_end];
+    let lines = body.body_range.end.saturating_sub(body.body_range.start) + 1;
+    if body_text.trim_start().starts_with('{') {
+        format!(
+            "{{ /* ... lines {}-{} elided ({lines} line(s)) ... */ }}",
+            body.body_range.start, body.body_range.end
+        )
+    } else {
+        format!(
+            "...  # lines {}-{} elided ({lines} line(s))",
+            body.body_range.start, body.body_range.end
+        )
+    }
+}
+
+fn build_stub_from_bodies(
+    content: &str,
+    bodies: Vec<StubBody>,
+    mode: &StubMode,
+    parse_status: ParseStatus,
+) -> CodeStubOutput {
+    let mut out = String::with_capacity(content.len() / 2 + 128);
+    let mut cursor = 0usize;
+    let mut symbols = Vec::new();
+    let mut elisions = Vec::new();
+
+    for body in bodies {
+        if body.body_start < cursor {
+            continue;
+        }
+        symbols.push(body.symbol.clone());
+        out.push_str(&content[cursor..body.body_start]);
+        let body_text = &content[body.body_start..body.body_end];
+        let body_lines = body_text.lines().count();
+        if body_lines < MIN_BODY_LINES_TO_COLLAPSE || should_expand_body(mode, &body) {
+            out.push_str(body_text);
+        } else {
+            out.push_str(&placeholder_for_body(content, &body));
+            elisions.push(CodeElision {
+                start_line: body.body_range.start,
+                end_line: body.body_range.end,
+                reason: format!("body_stub:{:?}", mode),
+            });
+        }
+        cursor = body.body_end;
+    }
+    out.push_str(&content[cursor..]);
+
+    CodeStubOutput {
+        text: out.trim_end().to_string(),
+        symbols,
+        elisions,
+        parse_status,
+    }
+}
+
+fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
+    let mut out = String::with_capacity(content.len() / 2 + 128);
+    let mut depth: i32 = 0;
+    let mut collapsed: Vec<(usize, &str)> = Vec::new();
+    let mut elisions = Vec::new();
+    let mut symbols = Vec::new();
+
+    let flush =
+        |out: &mut String, collapsed: &mut Vec<(usize, &str)>, elisions: &mut Vec<CodeElision>| {
+            if collapsed.is_empty() {
+                return;
+            }
+            if collapsed.len() >= MIN_BODY_LINES_TO_COLLAPSE {
+                let start = collapsed.first().map(|(n, _)| *n).unwrap_or(1);
+                let end = collapsed.last().map(|(n, _)| *n).unwrap_or(start);
+                let _ = writeln!(
+                    out,
+                    "    {{ /* ... lines {start}-{end} elided ({} line(s)) ... */ }}",
+                    collapsed.len()
+                );
+                elisions.push(CodeElision {
+                    start_line: start,
+                    end_line: end,
+                    reason: format!("heuristic_body_stub:{:?}", mode),
+                });
+            } else {
+                for (_, line) in collapsed.iter() {
+                    let _ = writeln!(out, "{line}");
+                }
+            }
+            collapsed.clear();
+        };
+
+    for (idx, line) in content.lines().enumerate() {
+        let line_no = idx + 1;
+        let (opens, closes) = brace_delta(line);
+        let start_depth = depth;
+        let force_keep = KEEP_MARKERS.iter().any(|m| line.contains(m));
+
+        if start_depth == 0 || force_keep {
+            flush(&mut out, &mut collapsed, &mut elisions);
+            if let Some(symbol) = symbol_from_signature(line, line_no, line_no, "heuristic") {
+                symbols.push(symbol);
+            }
+            let _ = writeln!(out, "{line}");
+        } else {
+            collapsed.push((line_no, line));
+        }
+        depth += opens - closes;
+        if depth < 0 {
+            depth = 0;
+        }
+    }
+    flush(&mut out, &mut collapsed, &mut elisions);
+
+    CodeStubOutput {
+        text: out.trim_end().to_string(),
+        symbols,
+        elisions,
+        parse_status: ParseStatus::HeuristicFallback,
+    }
+}
+
+fn enforce_stub_budget(mut stub: CodeStubOutput, max_bytes: usize) -> CodeStubOutput {
+    if max_bytes == 0 || stub.text.len() <= max_bytes {
+        return stub;
+    }
+
+    let marker = "\n[TOKENJUICE CODE STUB TRUNCATED]\n";
+    let budget = max_bytes.saturating_sub(marker.len()).max(marker.len());
+    let mut out = String::new();
+    let mut kept_lines = 0usize;
+    for line in stub.text.lines() {
+        let addition = line.len() + 1;
+        if out.len() + addition + marker.len() > budget {
+            break;
+        }
+        out.push_str(line);
+        out.push('\n');
+        kept_lines += 1;
+    }
+    out.push_str(marker);
+    let total_lines = stub.text.lines().count();
+    if kept_lines < total_lines {
+        stub.elisions.push(CodeElision {
+            start_line: kept_lines.saturating_add(1),
+            end_line: total_lines,
+            reason: "stub_budget".to_string(),
+        });
+    }
+    stub.text = out.trim_end().to_string();
+    stub
+}
+
+fn symbol_from_signature(
+    signature: &str,
+    start_line: usize,
+    end_line: usize,
+    fallback_kind: &str,
+) -> Option<SymbolSummary> {
+    let trimmed = signature.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let patterns = [
+        ("fn ", "function"),
+        ("function ", "function"),
+        ("def ", "function"),
+        ("class ", "class"),
+        ("struct ", "struct"),
+        ("enum ", "enum"),
+        ("trait ", "trait"),
+        ("interface ", "interface"),
+        ("impl ", "impl"),
+        ("const ", "const"),
+        ("let ", "binding"),
+        ("var ", "binding"),
+    ];
+    let lower = trimmed.to_ascii_lowercase();
+    for (needle, kind) in patterns {
+        if let Some(idx) = lower.find(needle) {
+            let rest = &trimmed[idx + needle.len()..];
+            let name = rest
+                .trim_start()
+                .trim_start_matches("r#")
+                .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '$'))
+                .next()
+                .unwrap_or_default();
+            if !name.is_empty() {
+                return Some(SymbolSummary {
+                    name: name.to_string(),
+                    kind: kind.to_string(),
+                    start_line,
+                    end_line,
+                    public: is_public_signature(trimmed),
+                });
+            }
+        }
+    }
+
+    if fallback_kind != "heuristic" {
+        Some(SymbolSummary {
+            name: fallback_kind.to_string(),
+            kind: fallback_kind.to_string(),
+            start_line,
+            end_line,
+            public: is_public_signature(trimmed),
+        })
+    } else {
+        None
+    }
+}
+
+fn is_public_signature(signature: &str) -> bool {
+    let trimmed = signature.trim_start();
+    trimmed.starts_with("pub ")
+        || trimmed.starts_with("pub(")
+        || trimmed.starts_with("export ")
+        || trimmed.starts_with("public ")
+}
+
+fn line_starts(content: &str) -> Vec<usize> {
+    let mut starts = vec![0usize];
+    for (idx, byte) in content.bytes().enumerate() {
+        if byte == b'\n' {
+            starts.push(idx + 1);
+        }
+    }
+    starts
+}
+
+fn byte_to_line(starts: &[usize], byte: usize) -> usize {
+    starts.partition_point(|start| *start <= byte).max(1)
+}
+
 /// Count `{`/`}` (and `(`/`)`) on a line, ignoring those inside string/char
 /// literals and line comments — a cheap approximation good enough for the
 /// depth heuristic.
@@ -149,7 +440,11 @@ fn brace_delta(line: &str) -> (i32, i32) {
 /// imports, type declarations and struct/enum fields exactly.
 #[cfg(feature = "tokenjuice-treesitter")]
 mod treesitter {
-    use super::{CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE};
+    use super::{
+        CompressOutput, CompressorKind, LineRange, MIN_BODY_LINES_TO_COLLAPSE, ParseStatus,
+        StubBody, StubMode, SymbolSummary, build_stub_from_bodies, byte_to_line, line_starts,
+        symbol_from_signature,
+    };
     use tree_sitter::{Node, Parser};
 
     /// Pick the grammar for a file extension. Returns the language plus whether
@@ -241,6 +536,33 @@ mod treesitter {
         Some(CompressOutput::lossy(out, CompressorKind::Code))
     }
 
+    pub fn stub(content: &str, ext: &str, mode: &StubMode) -> Option<super::CodeStubOutput> {
+        let (language, _braced) = language_for(ext)?;
+        let mut parser = Parser::new();
+        parser.set_language(&language).ok()?;
+        let tree = parser.parse(content, None)?;
+        if tree.root_node().has_error() {
+            return None;
+        }
+
+        let src = content.as_bytes();
+        let starts = line_starts(content);
+        let mut bodies = Vec::new();
+        collect_stub_bodies(tree.root_node(), content, src, &starts, &mut bodies);
+        bodies.sort_by_key(|body| body.body_start);
+        bodies.dedup_by_key(|body| (body.body_start, body.body_end));
+        if bodies.is_empty() {
+            return None;
+        }
+
+        Some(build_stub_from_bodies(
+            content,
+            bodies,
+            mode,
+            ParseStatus::TreeSitter,
+        ))
+    }
+
     /// Recursively collect the byte-ranges of function/method bodies.
     fn collect_bodies(node: Node, src: &[u8], out: &mut Vec<(usize, usize)>) {
         if BODY_PARENTS.contains(&node.kind())
@@ -255,6 +577,51 @@ mod treesitter {
         for child in node.children(&mut cursor) {
             collect_bodies(child, src, out);
         }
+    }
+
+    fn collect_stub_bodies(
+        node: Node,
+        content: &str,
+        src: &[u8],
+        starts: &[usize],
+        out: &mut Vec<StubBody>,
+    ) {
+        if BODY_PARENTS.contains(&node.kind())
+            && let Some(body) = node.child_by_field_name("body")
+        {
+            let body_start = body.start_byte();
+            let body_end = body.end_byte();
+            let start_line = byte_to_line(starts, body_start);
+            let end_line = byte_to_line(starts, body_end.saturating_sub(1));
+            let symbol = symbol_for_node(content, node, body, starts);
+            out.push(StubBody {
+                body_start,
+                body_end,
+                body_range: LineRange::new(start_line, end_line),
+                symbol,
+            });
+            let _ = src;
+            return;
+        }
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            collect_stub_bodies(child, content, src, starts, out);
+        }
+    }
+
+    fn symbol_for_node(content: &str, node: Node, body: Node, starts: &[usize]) -> SymbolSummary {
+        let signature = &content[node.start_byte()..body.start_byte()];
+        let start_line = byte_to_line(starts, node.start_byte());
+        let end_line = byte_to_line(starts, body.start_byte());
+        symbol_from_signature(signature, start_line, end_line, node.kind()).unwrap_or_else(|| {
+            SymbolSummary {
+                name: node.kind().to_string(),
+                kind: node.kind().to_string(),
+                start_line,
+                end_line,
+                public: false,
+            }
+        })
     }
 }
 
@@ -353,5 +720,64 @@ mod tests {
         src.push_str("}\n");
         let out = compress_heuristic(&src).expect("compresses");
         assert!(out.text.contains("TODO"), "marker line kept:\n{}", out.text);
+    }
+
+    #[test]
+    fn stub_code_reports_elisions_and_symbols() {
+        let mut src = String::from("use std::fmt;\n\npub fn visible() {\n");
+        for i in 0..20 {
+            src.push_str(&format!("    println!(\"{i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("rs"), &StubMode::SignaturesOnly, usize::MAX);
+
+        assert_eq!(out.parse_status, ParseStatus::TreeSitter);
+        assert!(out.text.contains("pub fn visible()"));
+        assert!(out.text.contains("lines"));
+        assert!(!out.text.contains("println!(\"10\")"));
+        assert_eq!(out.symbols[0].name, "visible");
+        assert!(out.symbols[0].public);
+        assert_eq!(out.elisions.len(), 1);
+        assert!(out.elisions[0].start_line <= out.elisions[0].end_line);
+    }
+
+    #[test]
+    fn stub_code_expands_matched_symbol() {
+        let mut src = String::from("pub fn visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"visible {i}\");\n"));
+        }
+        src.push_str("}\n\nfn hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"hidden {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(
+            &src,
+            Some("rs"),
+            &StubMode::MatchedSymbols(vec!["visible".to_string()]),
+            usize::MAX,
+        );
+
+        assert!(out.text.contains("visible 9"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.elisions.len(), 1);
+    }
+
+    #[test]
+    fn stub_code_reports_heuristic_fallback_for_unknown_language() {
+        let mut src = String::from("function f() {\n");
+        for i in 0..12 {
+            src.push_str(&format!("  call({i});\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("unknown"), &StubMode::SignaturesOnly, usize::MAX);
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(!out.elisions.is_empty());
+        assert!(out.text.contains("lines"));
     }
 }

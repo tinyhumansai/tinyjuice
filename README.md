@@ -96,6 +96,11 @@ preserves ordinary markdown image URLs, and stores omitted middle content in CCR
 before emitting a head/tail truncation footer. If CCR cannot retain the full
 cleaned page, the reducer returns the cleaned page without lossy truncation.
 
+Source-code file reads are exact by default. Hosts that intentionally want a
+structural view can call `stub_code` with a `StubMode`; the returned
+`CodeStubOutput` includes symbols, elided line ranges, and whether tree-sitter
+or the heuristic fallback produced the stub.
+
 Run the local analytics interface:
 
 ```sh

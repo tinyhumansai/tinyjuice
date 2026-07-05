@@ -120,6 +120,16 @@ pub async fn route_with_store_report(
 
     let kind = detect_content_kind(content, input.hint);
     let bloat_estimate = estimate_bloat(content, kind);
+    if is_exact_file_read(input.hint) {
+        let res = CompressedOutput::passthrough(content.to_string(), kind);
+        let report = PipelineReport::passthrough(
+            kind,
+            original_bytes,
+            PipelineSkipReason::Other("exact_file_read"),
+        )
+        .with_bloat_estimate(bloat_estimate);
+        return (res, report);
+    }
     let shell_policy_decision = apply_shell_compaction_policy(
         &crate::types::ToolExecutionInput {
             tool_name: input
@@ -307,6 +317,14 @@ pub fn detect_only(content: &str, hint: &ContentHint) -> ContentKind {
     detect_content_kind(content, hint)
 }
 
+fn is_exact_file_read(hint: &ContentHint) -> bool {
+    matches!(hint.read_intent, crate::types::ReadIntent::Exact)
+        && hint
+            .source_tool
+            .as_deref()
+            .is_some_and(|tool| matches!(tool, "file_read" | "read_file" | "fs_read"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -462,6 +480,29 @@ mod tests {
         assert_eq!(
             report.skip_reason,
             Some(PipelineSkipReason::Other("skip_file_content"))
+        );
+    }
+
+    #[tokio::test]
+    async fn file_read_hint_is_exact_by_default_even_with_code_extension() {
+        let content = (0..120)
+            .map(|i| format!("pub fn generated_{i}() {{ println!(\"{i}\"); }}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let hint = ContentHint {
+            source_tool: Some("file_read".to_owned()),
+            extension: Some("rs".to_owned()),
+            ..Default::default()
+        };
+        let store = cache::MemoryCcrStore::new(10, 1_000_000);
+        let (res, report) =
+            compress_content_with_store_report(&content, Some(hint), &opts(), &store).await;
+
+        assert!(!res.applied);
+        assert_eq!(res.text, content);
+        assert_eq!(
+            report.skip_reason,
+            Some(PipelineSkipReason::Other("exact_file_read"))
         );
     }
 

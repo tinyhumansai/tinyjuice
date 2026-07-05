@@ -393,6 +393,89 @@ pub struct ContentHint {
     pub query: Option<String>,
     /// Hard override — when set, detection returns this kind verbatim.
     pub explicit: Option<ContentKind>,
+    /// Whether file-read content must remain exact or may be reduced to a code
+    /// stub. Defaults to exact; hosts must opt into stubbing explicitly.
+    pub read_intent: ReadIntent,
+}
+
+/// Caller intent for read-like sources.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum ReadIntent {
+    /// Preserve bytes exactly. This is the default for file reads.
+    #[default]
+    Exact,
+    /// Return a structural source-code stub.
+    Stub(StubMode),
+}
+
+/// Source-code stub mode.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "kind", content = "value")]
+pub enum StubMode {
+    #[default]
+    SignaturesOnly,
+    PublicApi,
+    MatchedSymbols(Vec<String>),
+    ExpandAroundLines(Vec<LineRange>),
+}
+
+/// One-based inclusive line range.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LineRange {
+    pub start: usize,
+    pub end: usize,
+}
+
+impl LineRange {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self {
+            start: start.max(1),
+            end: end.max(start.max(1)),
+        }
+    }
+
+    pub fn intersects(self, other: Self) -> bool {
+        self.start <= other.end && other.start <= self.end
+    }
+}
+
+/// Parser path used for a source-code stub.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ParseStatus {
+    TreeSitter,
+    HeuristicFallback,
+}
+
+/// Symbol surfaced in a source-code stub.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SymbolSummary {
+    pub name: String,
+    pub kind: String,
+    pub start_line: usize,
+    pub end_line: usize,
+    pub public: bool,
+}
+
+/// Source range omitted from a stub.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CodeElision {
+    pub start_line: usize,
+    pub end_line: usize,
+    pub reason: String,
+}
+
+/// Structured source-code stub result.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CodeStubOutput {
+    pub text: String,
+    pub symbols: Vec<SymbolSummary>,
+    pub elisions: Vec<CodeElision>,
+    pub parse_status: ParseStatus,
 }
 
 // ---------------------------------------------------------------------------
