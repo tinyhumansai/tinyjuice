@@ -624,6 +624,46 @@ mod tests {
     }
 
     #[test]
+    fn rare_lowercase_fail_line_survives_pipe_delimited_noise() {
+        // HealthApp/logcat shape: `ts|component|pid|message`, no level tokens,
+        // and a rare failure line using bare lowercase `fail`. It must survive
+        // as a warning exemplar instead of being swallowed into an omitted gap.
+        let mut s = String::new();
+        for i in 0..300 {
+            let _ = writeln!(
+                s,
+                "20171223-22:19:{:02}:{:03}|HiH_HiHealthDataInsertStore|30002312|saveStatData() type ={},time = 1513958400000,statClient = 2,who is 1",
+                i % 60,
+                i % 1000,
+                40000 + i
+            );
+        }
+        let _ = writeln!(
+            s,
+            "20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003"
+        );
+        for i in 0..100 {
+            let _ = writeln!(
+                s,
+                "20171223-22:20:{:02}:{:03}|HiH_DataStatManager|30002312|new date =20171223, type={},7163.0,old=6983.0",
+                i % 60,
+                i % 1000,
+                40000 + i
+            );
+        }
+        let _ = writeln!(
+            s,
+            "20171223-22:21:00:381|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40005"
+        );
+        let out = compress_signal(&s, false).expect("compresses").text;
+        assert!(
+            out.contains("saveOneDetailData fail"),
+            "rare lowercase fail line must survive: {out}"
+        );
+        assert!(out.len() < s.len(), "must shrink");
+    }
+
+    #[test]
     fn round_trips_losslessly_with_ccr() {
         // Every omitted region is recoverable through its marker token.
         let mut s = String::new();

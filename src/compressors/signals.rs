@@ -26,8 +26,11 @@ const ERROR_KEYWORDS: &[&str] = &[
     "error:",
 ];
 
-/// Keywords that mark a warning. Lower weight than errors.
-const WARNING_KEYWORDS: &[&str] = &["warning", "warn:", "[warn]", "deprecated"];
+/// Keywords that mark a warning. Lower weight than errors. Bare `fail` (Android
+/// logcat / HealthApp style: `saveOneDetailData fail ...`) counts as at least a
+/// warning — the severity fallback matches it at word boundaries only, and an
+/// explicit level token (e.g. a leading `INFO`) still overrides it.
+const WARNING_KEYWORDS: &[&str] = &["warning", "warn:", "[warn]", "deprecated", "fail"];
 
 /// Keywords that bump importance regardless of severity.
 const IMPORTANCE_KEYWORDS: &[&str] = &[
@@ -231,6 +234,21 @@ mod tests {
             severity("connection (error) while dialing"),
             Severity::Error
         );
+    }
+
+    #[test]
+    fn bare_fail_is_at_least_warning() {
+        // HealthApp/logcat style line: no level token, lowercase `fail`.
+        assert_eq!(
+            severity(
+                "20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003"
+            ),
+            Severity::Warning
+        );
+        // Word boundary: `failover` is not a failure signal.
+        assert_eq!(severity("switched to failover replica"), Severity::Other);
+        // An explicit level still wins over the keyword.
+        assert_eq!(severity("INFO retry ok after fail"), Severity::Other);
     }
 
     #[test]
