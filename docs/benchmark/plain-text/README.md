@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-pr-manager-lite-md-` | [input](cases/01-pr-manager-lite-md-/full-input.txt) | [output](cases/01-pr-manager-lite-md-/full-output.txt) | 9.6 KB | 9.6 KB | 0.0% | 0.000 ms | n/a |
-| `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/full-input.txt) | [output](cases/02-pr-manager-md-/full-output.txt) | 13.6 KB | 13.6 KB | 0.0% | 0.000 ms | n/a |
-| `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/full-input.txt) | [output](cases/03-ship-and-babysit-md-/full-output.txt) | 4.4 KB | 4.4 KB | 0.0% | 0.000 ms | n/a |
-| `04-architectobot-md-` | [input](cases/04-architectobot-md-/full-input.txt) | [output](cases/04-architectobot-md-/full-output.txt) | 4.4 KB | 4.4 KB | 0.0% | 0.000 ms | n/a |
-| `05-build-agent-md-` | [input](cases/05-build-agent-md-/full-input.txt) | [output](cases/05-build-agent-md-/full-output.txt) | 2.0 KB | 2.0 KB | 0.0% | 0.000 ms | n/a |
-| `06-codecrusher-md-` | [input](cases/06-codecrusher-md-/full-input.txt) | [output](cases/06-codecrusher-md-/full-output.txt) | 5.5 KB | 5.5 KB | 0.0% | 0.000 ms | n/a |
-| `07-deploy-agent-md-` | [input](cases/07-deploy-agent-md-/full-input.txt) | [output](cases/07-deploy-agent-md-/full-output.txt) | 4.5 KB | 4.5 KB | 0.0% | 0.000 ms | n/a |
-| `08-designguru-md-` | [input](cases/08-designguru-md-/full-input.txt) | [output](cases/08-designguru-md-/full-output.txt) | 7.7 KB | 7.7 KB | 0.0% | 0.000 ms | n/a |
-| `09-dev-agent-md-` | [input](cases/09-dev-agent-md-/full-input.txt) | [output](cases/09-dev-agent-md-/full-output.txt) | 2.0 KB | 2.0 KB | 0.0% | 0.000 ms | n/a |
-| `10-memory-keeper-md-` | [input](cases/10-memory-keeper-md-/full-input.txt) | [output](cases/10-memory-keeper-md-/full-output.txt) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
+| `01-pr-manager-lite-md-` | [input](cases/01-pr-manager-lite-md-/input.md) | [output](cases/01-pr-manager-lite-md-/output.md) | 9.6 KB | 9.6 KB | 0.0% | 0.000 ms | n/a |
+| `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/input.md) | [output](cases/02-pr-manager-md-/output.md) | 13.6 KB | 13.6 KB | 0.0% | 0.000 ms | n/a |
+| `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/input.md) | [output](cases/03-ship-and-babysit-md-/output.md) | 4.4 KB | 4.4 KB | 0.0% | 0.000 ms | n/a |
+| `04-architectobot-md-` | [input](cases/04-architectobot-md-/input.md) | [output](cases/04-architectobot-md-/output.md) | 4.4 KB | 4.4 KB | 0.0% | 0.000 ms | n/a |
+| `05-build-agent-md-` | [input](cases/05-build-agent-md-/input.md) | [output](cases/05-build-agent-md-/output.md) | 2.0 KB | 2.0 KB | 0.0% | 0.000 ms | n/a |
+| `06-codecrusher-md-` | [input](cases/06-codecrusher-md-/input.md) | [output](cases/06-codecrusher-md-/output.md) | 5.5 KB | 5.5 KB | 0.0% | 0.000 ms | n/a |
+| `07-deploy-agent-md-` | [input](cases/07-deploy-agent-md-/input.md) | [output](cases/07-deploy-agent-md-/output.md) | 4.5 KB | 4.5 KB | 0.0% | 0.000 ms | n/a |
+| `08-designguru-md-` | [input](cases/08-designguru-md-/input.md) | [output](cases/08-designguru-md-/output.md) | 7.7 KB | 7.7 KB | 0.0% | 0.000 ms | n/a |
+| `09-dev-agent-md-` | [input](cases/09-dev-agent-md-/input.md) | [output](cases/09-dev-agent-md-/output.md) | 2.0 KB | 2.0 KB | 0.0% | 0.000 ms | n/a |
+| `10-memory-keeper-md-` | [input](cases/10-memory-keeper-md-/input.md) | [output](cases/10-memory-keeper-md-/output.md) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 
@@ -27,8 +27,8 @@ Plain text is the control group. With ML text compression off, the router declin
 
 ### `01-pr-manager-lite-md-`
 
-- [Full input](cases/01-pr-manager-lite-md-/full-input.txt)
-- [Full output](cases/01-pr-manager-lite-md-/full-output.txt)
+- [Full input](cases/01-pr-manager-lite-md-/input.md)
+- [Full output](cases/01-pr-manager-lite-md-/output.md)
 
 Input excerpt:
 
@@ -116,8 +116,8 @@ The caller (typically the `preem` zsh helper) has already:
 
 ### `02-pr-manager-md-`
 
-- [Full input](cases/02-pr-manager-md-/full-input.txt)
-- [Full output](cases/02-pr-manager-md-/full-output.txt)
+- [Full input](cases/02-pr-manager-md-/input.md)
+- [Full output](cases/02-pr-manager-md-/output.md)
 
 Input excerpt:
 
@@ -205,8 +205,8 @@ Run:
 
 ### `03-ship-and-babysit-md-`
 
-- [Full input](cases/03-ship-and-babysit-md-/full-input.txt)
-- [Full output](cases/03-ship-and-babysit-md-/full-output.txt)
+- [Full input](cases/03-ship-and-babysit-md-/input.md)
+- [Full output](cases/03-ship-and-babysit-md-/output.md)
 
 Input excerpt:
 
@@ -294,8 +294,8 @@ If `origin` resolves to `tinyhumansai`, stop and ask the user to add a fork remo
 
 ### `04-architectobot-md-`
 
-- [Full input](cases/04-architectobot-md-/full-input.txt)
-- [Full output](cases/04-architectobot-md-/full-output.txt)
+- [Full input](cases/04-architectobot-md-/input.md)
+- [Full output](cases/04-architectobot-md-/output.md)
 
 Input excerpt:
 
@@ -383,8 +383,8 @@ I'm ArchitectoBot, your friendly neighborhood project architect who turns comple
 
 ### `05-build-agent-md-`
 
-- [Full input](cases/05-build-agent-md-/full-input.txt)
-- [Full output](cases/05-build-agent-md-/full-output.txt)
+- [Full input](cases/05-build-agent-md-/input.md)
+- [Full output](cases/05-build-agent-md-/output.md)
 
 Input excerpt:
 
@@ -472,8 +472,8 @@ npm run tauri build -- --target x86_64-unknown-linux-gnu
 
 ### `06-codecrusher-md-`
 
-- [Full input](cases/06-codecrusher-md-/full-input.txt)
-- [Full output](cases/06-codecrusher-md-/full-output.txt)
+- [Full input](cases/06-codecrusher-md-/input.md)
+- [Full output](cases/06-codecrusher-md-/output.md)
 
 Input excerpt:
 
@@ -561,8 +561,8 @@ I'm CodeCrusher, the code-slinging developer who turns architectural blueprints 
 
 ### `07-deploy-agent-md-`
 
-- [Full input](cases/07-deploy-agent-md-/full-input.txt)
-- [Full output](cases/07-deploy-agent-md-/full-output.txt)
+- [Full input](cases/07-deploy-agent-md-/input.md)
+- [Full output](cases/07-deploy-agent-md-/output.md)
 
 Input excerpt:
 
@@ -650,8 +650,8 @@ Outputs:
 
 ### `08-designguru-md-`
 
-- [Full input](cases/08-designguru-md-/full-input.txt)
-- [Full output](cases/08-designguru-md-/full-output.txt)
+- [Full input](cases/08-designguru-md-/input.md)
+- [Full output](cases/08-designguru-md-/output.md)
 
 Input excerpt:
 
@@ -739,8 +739,8 @@ I'm DesignGuru, your friendly design wizard who transforms boring interfaces int
 
 ### `09-dev-agent-md-`
 
-- [Full input](cases/09-dev-agent-md-/full-input.txt)
-- [Full output](cases/09-dev-agent-md-/full-output.txt)
+- [Full input](cases/09-dev-agent-md-/input.md)
+- [Full output](cases/09-dev-agent-md-/output.md)
 
 Input excerpt:
 
@@ -828,8 +828,8 @@ import './MyComponent.css';
 
 ### `10-memory-keeper-md-`
 
-- [Full input](cases/10-memory-keeper-md-/full-input.txt)
-- [Full output](cases/10-memory-keeper-md-/full-output.txt)
+- [Full input](cases/10-memory-keeper-md-/input.md)
+- [Full output](cases/10-memory-keeper-md-/output.md)
 
 Input excerpt:
 

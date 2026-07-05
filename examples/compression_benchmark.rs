@@ -64,8 +64,48 @@ fn sample_payload(doc_dir: &str, fallback: String) -> String {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("docs/benchmark")
         .join(doc_dir)
-        .join("full-input.txt");
-    std::fs::read_to_string(&path).unwrap_or(fallback)
+        .join(input_artifact_name(doc_dir));
+    std::fs::read_to_string(&path)
+        .or_else(|_| {
+            std::fs::read_to_string(
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("docs/benchmark")
+                    .join(doc_dir)
+                    .join("full-input.txt"),
+            )
+        })
+        .unwrap_or(fallback)
+}
+
+fn category_name(doc_dir: &str) -> &str {
+    doc_dir.split('/').next().unwrap_or(doc_dir)
+}
+
+fn input_artifact_name(doc_dir: &str) -> &'static str {
+    match category_name(doc_dir) {
+        "json-smartcrusher" => "input.json",
+        "test-failure-log" => "input.log",
+        "service-log" => "input.log",
+        "search-results" => "input.rg",
+        "unified-diff" => "input.diff",
+        "html-status-report" if doc_dir.contains("-rss-") => "input.xml",
+        "html-status-report" => "input.html",
+        "rust-source" => "input.rs",
+        "plain-text" => "input.md",
+        _ => "input.txt",
+    }
+}
+
+fn output_artifact_name(doc_dir: &str) -> &'static str {
+    match category_name(doc_dir) {
+        "test-failure-log" => "output.log",
+        "service-log" => "output.log",
+        "search-results" => "output.rg",
+        "unified-diff" => "output.diff",
+        "rust-source" => "output.rs",
+        "plain-text" => "output.md",
+        _ => "output.txt",
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -266,12 +306,14 @@ async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOption
         let dir = root.join(&case.doc_dir);
         std::fs::create_dir_all(&dir)
             .unwrap_or_else(|e| panic!("cannot create {}: {e}", dir.display()));
-        let input_path = dir.join("full-input.txt");
-        let output_path = dir.join("full-output.txt");
+        let input_path = dir.join(input_artifact_name(&case.doc_dir));
+        let output_path = dir.join(output_artifact_name(&case.doc_dir));
         std::fs::write(&input_path, &case.payload)
             .unwrap_or_else(|e| panic!("cannot write {}: {e}", input_path.display()));
         std::fs::write(&output_path, &result.text)
             .unwrap_or_else(|e| panic!("cannot write {}: {e}", output_path.display()));
+        let _ = std::fs::remove_file(dir.join("full-input.txt"));
+        let _ = std::fs::remove_file(dir.join("full-output.txt"));
         eprintln!(
             "wrote {} and {}",
             input_path.display(),
@@ -337,11 +379,14 @@ fn category_case_dirs(category: &str) -> Vec<String> {
         .flat_map(|entries| entries.filter_map(Result::ok))
         .filter_map(|entry| {
             let path = entry.path();
-            if path.join("full-input.txt").is_file() {
-                entry
-                    .file_name()
-                    .to_str()
-                    .map(|name| format!("{category}/cases/{name}"))
+            let doc_dir = entry
+                .file_name()
+                .to_str()
+                .map(|name| format!("{category}/cases/{name}"))?;
+            if path.join(input_artifact_name(&doc_dir)).is_file()
+                || path.join("full-input.txt").is_file()
+            {
+                Some(doc_dir)
             } else {
                 None
             }

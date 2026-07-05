@@ -78,6 +78,35 @@ category_summary() {
 }
 
 input_lang() {
+  local input_name
+  input_name="$(input_file_name "$1" "${2:-}")"
+  lang_for_file "$input_name" "$1" "${2:-}"
+}
+
+output_lang() {
+  local output_name
+  output_name="$(output_file_name "$1")"
+  lang_for_file "$output_name" "$1" ""
+}
+
+lang_for_file() {
+  local file_name="$1"
+  local category="$2"
+  local doc_dir="${3:-}"
+
+  case "$file_name" in
+    *.diff|*.patch) echo "diff" ;;
+    *.json) echo "json" ;;
+    *.rs) echo "rust" ;;
+    *.md) echo "markdown" ;;
+    *.xml) echo "xml" ;;
+    *.html|*.htm) echo "html" ;;
+    *.log|*.rg|*.txt) echo "text" ;;
+    *) fallback_lang "$category" "$doc_dir" ;;
+  esac
+}
+
+fallback_lang() {
   if [[ "${2:-}" == *rss-* ]]; then
     echo "xml"
     return
@@ -93,12 +122,36 @@ input_lang() {
   esac
 }
 
-output_lang() {
-  case "$1" in
-    unified-diff) echo "diff" ;;
-    rust-source) echo "rust" ;;
-    plain-text) echo "markdown" ;;
-    *) echo "text" ;;
+input_file_name() {
+  local category="$1"
+  local doc_dir="${2:-}"
+  case "$category" in
+    json-smartcrusher) echo "input.json" ;;
+    test-failure-log|service-log) echo "input.log" ;;
+    search-results) echo "input.rg" ;;
+    unified-diff) echo "input.diff" ;;
+    html-status-report)
+      if [[ "$doc_dir" == *rss-* ]]; then
+        echo "input.xml"
+      else
+        echo "input.html"
+      fi
+      ;;
+    rust-source) echo "input.rs" ;;
+    plain-text) echo "input.md" ;;
+    *) echo "input.txt" ;;
+  esac
+}
+
+output_file_name() {
+  local category="$1"
+  case "$category" in
+    test-failure-log|service-log) echo "output.log" ;;
+    search-results) echo "output.rg" ;;
+    unified-diff) echo "output.diff" ;;
+    rust-source) echo "output.rs" ;;
+    plain-text) echo "output.md" ;;
+    *) echo "output.txt" ;;
   esac
 }
 
@@ -120,6 +173,9 @@ for category in "${categories[@]}"; do
     printf '# %s\n\n' "$title"
     printf '%s\n\n' "$(category_summary "$category")"
     printf 'Each row links to the full raw input and the exact compacted output used by the benchmark.\n\n'
+    if [[ "$category" == "unified-diff" ]]; then
+      printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
+    fi
     printf '## Cases\n\n'
     printf '| Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |\n'
     printf '| --- | --- | --- | ---: | ---: | ---: | ---: | --- |\n'
@@ -139,10 +195,14 @@ for category in "${categories[@]}"; do
     ' "$json_report" | while IFS=$'\t' read -r doc_dir original compacted reduction latency ccr; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
-      printf '| `%s` | [input](%s/full-input.txt) | [output](%s/full-output.txt) | %s | %s | %.1f%% | %.3f ms | %s |\n' \
+      input_name="$(input_file_name "$category" "$doc_dir")"
+      output_name="$(output_file_name "$category")"
+      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | %s | %s | %.1f%% | %.3f ms | %s |\n' \
         "$case_name" \
         "$rel_dir" \
+        "$input_name" \
         "$rel_dir" \
+        "$output_name" \
         "$(format_bytes "$original")" \
         "$(format_bytes "$compacted")" \
         "$reduction" \
@@ -186,11 +246,13 @@ for category in "${categories[@]}"; do
     ' "$json_report" | while IFS= read -r doc_dir; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
-      input_file="$bench_root/$doc_dir/full-input.txt"
-      output_file="$bench_root/$doc_dir/full-output.txt"
+      input_name="$(input_file_name "$category" "$doc_dir")"
+      output_name="$(output_file_name "$category")"
+      input_file="$bench_root/$doc_dir/$input_name"
+      output_file="$bench_root/$doc_dir/$output_name"
       printf '### `%s`\n\n' "$case_name"
-      printf -- '- [Full input](%s/full-input.txt)\n' "$rel_dir"
-      printf -- '- [Full output](%s/full-output.txt)\n\n' "$rel_dir"
+      printf -- '- [Full input](%s/%s)\n' "$rel_dir" "$input_name"
+      printf -- '- [Full output](%s/%s)\n\n' "$rel_dir" "$output_name"
       printf 'Input excerpt:\n\n'
       printf '```%s\n' "$(input_lang "$category" "$doc_dir")"
       snippet "$input_file"
