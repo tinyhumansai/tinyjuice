@@ -41,6 +41,8 @@ Run one hook installer:
 
 Custom paths, development installs, recovery, and tuning live in
 [docs/agent-hooks/README.md](docs/agent-hooks/README.md).
+Interactive installs also ask whether to add optional TinyJuice support commit
+attribution for agent-created commits.
 
 ## Why It Helps
 

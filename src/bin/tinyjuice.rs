@@ -1,6 +1,6 @@
 use std::env;
 use std::fs;
-use std::io::{self, Read};
+use std::io::{self, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::str::FromStr;
@@ -10,6 +10,25 @@ use tinyjuice::{
     SdkCompressOptions, TinyJuiceHost, compress_host_hook_payload, compress_request,
     host_install_specs, host_template, request_from_json_value,
 };
+
+const SUPPORT_GIT_TRAILER: &str = "Co-Authored-By: TinyJuice <tinyjuice@tinyhumans.ai>";
+const CODEX_SUPPORT_ATTRIBUTION: &str = "TinyJuice <tinyjuice@tinyhumans.ai>";
+const CLAUDE_DEFAULT_COMMIT_ATTRIBUTION: &str =
+    "Co-Authored-By: Claude Code <noreply@anthropic.com>";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SupportGitSignatureChoice {
+    Prompt,
+    Yes,
+    No,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SupportGitSignatureResult {
+    path: PathBuf,
+    backup_path: Option<PathBuf>,
+    changed: bool,
+}
 
 fn main() -> ExitCode {
     match run() {
@@ -144,6 +163,7 @@ fn install_or_update_command(
     let mut binary = "tinyjuice".to_string();
     let mut path = None;
     let mut host = None;
+    let mut support_git_signature = SupportGitSignatureChoice::Prompt;
     let mut index = 0;
     while index < args.len() {
         match args[index].as_str() {
@@ -167,6 +187,20 @@ fn install_or_update_command(
             }
             value if value.starts_with("--path=") => {
                 path = Some(PathBuf::from(&value["--path=".len()..]));
+                index += 1;
+            }
+            "--support-git-signature"
+            | "--yes-git-signature"
+            | "--support-git-attribution"
+            | "--yes-git-attribution" => {
+                support_git_signature = SupportGitSignatureChoice::Yes;
+                index += 1;
+            }
+            "--no-support-git-signature"
+            | "--no-git-signature"
+            | "--no-support-git-attribution"
+            | "--no-git-attribution" => {
+                support_git_signature = SupportGitSignatureChoice::No;
                 index += 1;
             }
             "--help" | "-h" => {
@@ -197,6 +231,25 @@ fn install_or_update_command(
             .map(|path| format!(" (backup: {})", path.display()))
             .unwrap_or_default()
     );
+    if should_install_support_git_signature(host, support_git_signature)? {
+        let result = install_support_git_signature(host, &install_path)?;
+        if result.changed {
+            println!(
+                "added TinyJuice support Git attribution at {}{}",
+                result.path.display(),
+                result
+                    .backup_path
+                    .as_ref()
+                    .map(|path| format!(" (backup: {})", path.display()))
+                    .unwrap_or_default()
+            );
+        } else {
+            println!(
+                "TinyJuice support Git attribution already present at {}",
+                result.path.display()
+            );
+        }
+    }
     Ok(())
 }
 
@@ -257,6 +310,215 @@ fn ensure_hook_host_supported(action: &str, host: TinyJuiceHost) -> Result<(), S
         Ok(())
     } else {
         Err(format!("{action} is not implemented for {}", host.id()))
+    }
+}
+
+fn should_install_support_git_signature(
+    host: TinyJuiceHost,
+    choice: SupportGitSignatureChoice,
+) -> Result<bool, String> {
+    match choice {
+        SupportGitSignatureChoice::Yes => Ok(true),
+        SupportGitSignatureChoice::No => Ok(false),
+        SupportGitSignatureChoice::Prompt => prompt_support_git_signature(host),
+    }
+}
+
+fn prompt_support_git_signature(host: TinyJuiceHost) -> Result<bool, String> {
+    if !io::stdin().is_terminal() {
+        eprintln!(
+            "skipped TinyJuice support Git attribution prompt for {} because stdin is not interactive; pass --support-git-signature to opt in",
+            host.id()
+        );
+        return Ok(false);
+    }
+    eprint!(
+        "Add TinyJuice support Git attribution for {} commits as {SUPPORT_GIT_TRAILER}? [Y/n] ",
+        host.label()
+    );
+    io::stderr().flush().map_err(|error| error.to_string())?;
+    let mut answer = String::new();
+    io::stdin()
+        .read_line(&mut answer)
+        .map_err(|error| error.to_string())?;
+    match answer.trim().to_ascii_lowercase().as_str() {
+        "" | "y" | "yes" => Ok(true),
+        "n" | "no" => Ok(false),
+        _ => {
+            eprintln!("unrecognized answer; leaving Git attribution unchanged");
+            Ok(false)
+        }
+    }
+}
+
+fn install_support_git_signature(
+    host: TinyJuiceHost,
+    hook_path: &Path,
+) -> Result<SupportGitSignatureResult, String> {
+    match host {
+        TinyJuiceHost::Codex => install_codex_support_git_signature(&default_codex_config_path()),
+        TinyJuiceHost::ClaudeCode => install_claude_support_git_signature(hook_path),
+        TinyJuiceHost::GenericJson | TinyJuiceHost::OpenHuman | TinyJuiceHost::RustHarness => Err(
+            format!("Git attribution is not implemented for {}", host.id()),
+        ),
+    }
+}
+
+fn default_codex_config_path() -> PathBuf {
+    env::var("CODEX_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| home_dir().join(".codex"))
+        .join("config.toml")
+}
+
+fn install_codex_support_git_signature(path: &Path) -> Result<SupportGitSignatureResult, String> {
+    let existing = match fs::read_to_string(path) {
+        Ok(existing) => Some(existing),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error.to_string()),
+    };
+    let content = existing.as_deref().unwrap_or_default();
+    let with_attribution =
+        set_toml_top_level_string(content, "commit_attribution", CODEX_SUPPORT_ATTRIBUTION);
+    let updated = set_toml_table_bool(&with_attribution, "features", "codex_git_commit", true);
+    if updated == content {
+        return Ok(SupportGitSignatureResult {
+            path: path.to_path_buf(),
+            backup_path: None,
+            changed: false,
+        });
+    }
+    write_text_with_backup(path, existing.as_deref(), &updated)?;
+    Ok(SupportGitSignatureResult {
+        path: path.to_path_buf(),
+        backup_path: existing.as_ref().map(|_| path.with_extension("bak")),
+        changed: true,
+    })
+}
+
+fn install_claude_support_git_signature(path: &Path) -> Result<SupportGitSignatureResult, String> {
+    let existing = match fs::read_to_string(path) {
+        Ok(existing) => Some(existing),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error.to_string()),
+    };
+    let mut config = existing
+        .as_deref()
+        .and_then(|content| serde_json::from_str(content).ok())
+        .unwrap_or_else(|| Value::Object(Map::new()));
+    let attribution = ensure_object_field(&mut config, "attribution")?;
+    let current = attribution
+        .get("commit")
+        .and_then(Value::as_str)
+        .unwrap_or(CLAUDE_DEFAULT_COMMIT_ATTRIBUTION);
+    if current.contains(SUPPORT_GIT_TRAILER) {
+        return Ok(SupportGitSignatureResult {
+            path: path.to_path_buf(),
+            backup_path: None,
+            changed: false,
+        });
+    }
+    let updated_commit = if current.trim().is_empty() {
+        SUPPORT_GIT_TRAILER.to_string()
+    } else {
+        format!("{}\n{}", current.trim_end(), SUPPORT_GIT_TRAILER)
+    };
+    attribution.insert("commit".to_string(), Value::String(updated_commit));
+    let updated = format!(
+        "{}\n",
+        serde_json::to_string_pretty(&config).map_err(|error| error.to_string())?
+    );
+    write_text_with_backup(path, existing.as_deref(), &updated)?;
+    Ok(SupportGitSignatureResult {
+        path: path.to_path_buf(),
+        backup_path: existing.as_ref().map(|_| path.with_extension("bak")),
+        changed: true,
+    })
+}
+
+fn write_text_with_backup(
+    path: &Path,
+    existing: Option<&str>,
+    updated: &str,
+) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    }
+    if let Some(existing) = existing {
+        fs::write(path.with_extension("bak"), existing).map_err(|error| error.to_string())?;
+    }
+    let temp_path = path.with_extension("tmp");
+    fs::write(&temp_path, updated).map_err(|error| error.to_string())?;
+    fs::rename(&temp_path, path).map_err(|error| error.to_string())
+}
+
+fn set_toml_top_level_string(input: &str, key: &str, value: &str) -> String {
+    let mut lines = input.lines().map(str::to_string).collect::<Vec<_>>();
+    let table_start = lines
+        .iter()
+        .position(|line| line.trim_start().starts_with('['))
+        .unwrap_or(lines.len());
+    let rendered = format!(r#"{key} = "{value}""#);
+    for line in lines.iter_mut().take(table_start) {
+        if toml_line_has_key(line, key) {
+            *line = rendered;
+            return finish_toml_lines(lines);
+        }
+    }
+    lines.insert(table_start, rendered);
+    finish_toml_lines(lines)
+}
+
+fn set_toml_table_bool(input: &str, table: &str, key: &str, value: bool) -> String {
+    let mut lines = input.lines().map(str::to_string).collect::<Vec<_>>();
+    let rendered = format!("{key} = {value}");
+    let mut in_table = false;
+    let mut table_found = false;
+    let mut insert_at = None;
+    for (index, line) in lines.iter_mut().enumerate() {
+        if let Some(section) = toml_section_name(line) {
+            if in_table {
+                insert_at = Some(index);
+                break;
+            }
+            in_table = section == table;
+            table_found |= in_table;
+            continue;
+        }
+        if in_table && toml_line_has_key(line, key) {
+            *line = rendered;
+            return finish_toml_lines(lines);
+        }
+    }
+    if table_found {
+        lines.insert(insert_at.unwrap_or(lines.len()), rendered);
+    } else {
+        if !lines.is_empty() && !lines.last().is_some_and(|line| line.trim().is_empty()) {
+            lines.push(String::new());
+        }
+        lines.push(format!("[{table}]"));
+        lines.push(rendered);
+    }
+    finish_toml_lines(lines)
+}
+
+fn toml_line_has_key(line: &str, key: &str) -> bool {
+    let trimmed = line.trim_start();
+    trimmed
+        .strip_prefix(key)
+        .is_some_and(|rest| rest.trim_start().starts_with('='))
+}
+
+fn toml_section_name(line: &str) -> Option<&str> {
+    let trimmed = line.trim();
+    trimmed.strip_prefix('[')?.strip_suffix(']')
+}
+
+fn finish_toml_lines(lines: Vec<String>) -> String {
+    if lines.is_empty() {
+        String::new()
+    } else {
+        format!("{}\n", lines.join("\n"))
     }
 }
 
@@ -572,8 +834,8 @@ fn print_usage() {
   tinyjuice reduce-json [--host HOST] [payload.json|-]
   tinyjuice codex-post-tool-use
   tinyjuice claude-code-post-tool-use
-  tinyjuice install HOST [--path PATH] [--binary PATH]
-  tinyjuice update HOST [--path PATH] [--binary PATH]
+  tinyjuice install HOST [--path PATH] [--binary PATH] [--support-git-signature|--no-support-git-signature]
+  tinyjuice update HOST [--path PATH] [--binary PATH] [--support-git-signature|--no-support-git-signature]
   tinyjuice uninstall HOST [--path PATH]
   tinyjuice retrieve TOKEN
   tinyjuice hosts
@@ -711,5 +973,120 @@ mod tests {
         assert!(!removed);
         assert!(backup.is_none());
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn toml_top_level_string_is_inserted_before_first_table() {
+        let updated = set_toml_top_level_string(
+            "[features]\nfoo = true\n",
+            "commit_attribution",
+            CODEX_SUPPORT_ATTRIBUTION,
+        );
+
+        assert_eq!(
+            updated,
+            "commit_attribution = \"TinyJuice <tinyjuice@tinyhumans.ai>\"\n[features]\nfoo = true\n"
+        );
+    }
+
+    #[test]
+    fn toml_table_bool_is_created_or_replaced() {
+        let created = set_toml_table_bool(
+            "commit_attribution = \"TinyJuice <tinyjuice@tinyhumans.ai>\"\n",
+            "features",
+            "codex_git_commit",
+            true,
+        );
+        assert_eq!(
+            created,
+            "commit_attribution = \"TinyJuice <tinyjuice@tinyhumans.ai>\"\n\n[features]\ncodex_git_commit = true\n"
+        );
+
+        let replaced = set_toml_table_bool(
+            "[features]\ncodex_git_commit = false\nother = true\n",
+            "features",
+            "codex_git_commit",
+            true,
+        );
+        assert_eq!(
+            replaced,
+            "[features]\ncodex_git_commit = true\nother = true\n"
+        );
+    }
+
+    #[test]
+    fn codex_support_git_signature_writes_config_and_backup() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("config.toml");
+        fs::write(&path, "[features]\nother = true\n").expect("write");
+
+        let result = install_codex_support_git_signature(&path).expect("install attribution");
+
+        assert!(result.changed);
+        assert!(result.backup_path.expect("backup").exists());
+        let updated = fs::read_to_string(path).expect("read");
+        assert!(updated.contains("commit_attribution = \"TinyJuice <tinyjuice@tinyhumans.ai>\""));
+        assert!(updated.contains("[features]\n"));
+        assert!(updated.contains("other = true\n"));
+        assert!(updated.contains("codex_git_commit = true\n"));
+    }
+
+    #[test]
+    fn codex_support_git_signature_is_noop_when_present() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("config.toml");
+        fs::write(
+            &path,
+            "commit_attribution = \"TinyJuice <tinyjuice@tinyhumans.ai>\"\n\n[features]\ncodex_git_commit = true\n",
+        )
+        .expect("write");
+
+        let result = install_codex_support_git_signature(&path).expect("install attribution");
+
+        assert!(!result.changed);
+        assert!(result.backup_path.is_none());
+        assert!(!path.with_extension("bak").exists());
+    }
+
+    #[test]
+    fn claude_support_git_signature_appends_to_existing_attribution() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("settings.json");
+        fs::write(
+            &path,
+            r#"{"attribution":{"commit":"Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"},"hooks":{}}"#,
+        )
+        .expect("write");
+
+        let result = install_claude_support_git_signature(&path).expect("install attribution");
+
+        assert!(result.changed);
+        assert!(result.backup_path.expect("backup").exists());
+        let updated: Value =
+            serde_json::from_str(&fs::read_to_string(path).expect("read")).expect("json");
+        assert_eq!(
+            updated["attribution"]["commit"].as_str(),
+            Some(
+                "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>\nCo-Authored-By: TinyJuice <tinyjuice@tinyhumans.ai>"
+            )
+        );
+        assert!(updated.get("hooks").is_some());
+    }
+
+    #[test]
+    fn claude_support_git_signature_is_noop_when_present() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("settings.json");
+        fs::write(
+            &path,
+            r#"{"attribution":{"commit":"Co-Authored-By: TinyJuice <tinyjuice@tinyhumans.ai>"}}"#,
+        )
+        .expect("write");
+
+        let result = install_claude_support_git_signature(&path).expect("install attribution");
+
+        assert!(!result.changed);
+        assert!(result.backup_path.is_none());
+        assert!(!path.with_extension("bak").exists());
     }
 }

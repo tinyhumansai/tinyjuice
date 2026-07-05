@@ -48,6 +48,24 @@ Install the Claude Code hook:
 tinyjuice install claude-code
 ```
 
+During interactive `install` and `update`, TinyJuice asks whether to add a
+TinyJuice support attribution to agent-created commits. The prompt defaults to
+yes and adds:
+
+```text
+Co-Authored-By: TinyJuice <tinyjuice@tinyhumans.ai>
+```
+
+This is commit attribution, not cryptographic Git signing, and it only updates
+the selected agent's config. Codex uses `~/.codex/config.toml`; Claude Code uses
+the same `~/.claude/settings.json` file as the hook installer. Non-interactive
+installs leave attribution unchanged unless explicitly opted in:
+
+```sh
+tinyjuice install codex --support-git-signature
+tinyjuice install claude-code --no-support-git-signature
+```
+
 Refresh an existing hook after upgrading TinyJuice or changing the binary path:
 
 ```sh
@@ -77,6 +95,7 @@ Both installers:
 - write a `.bak` file next to the edited JSON file
 - set a small rotating TinyJuice/OpenHuman `statusMessage` for the host working indicator
 - expect `tinyjuice` to be on `PATH` unless `--binary` is supplied
+- ask before adding optional TinyJuice support commit attribution when run interactively
 
 `update` uses the same merge logic as `install`, so it is safe to run repeatedly.
 `uninstall` removes only TinyJuice hook entries for the selected host and is a
