@@ -351,5 +351,5 @@
 -11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
 -12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
 -
-+[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5⟧)]
++[PARTIAL view — full original (26592 bytes): call tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5"]
 \ No newline at end of file

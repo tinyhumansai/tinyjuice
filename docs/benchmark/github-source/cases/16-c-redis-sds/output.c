@@ -629,4 +629,4 @@ int sdsTest(int argc, char **argv, int flags) {
 #endif
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (49821 bytes) is available by calling tinyjuice_retrieve with token "f234153cb7247e00d915428e74785132" (marker ⟦tj:f234153cb7247e00d915428e74785132⟧)]
+[PARTIAL view — full original (49821 bytes): call tinyjuice_retrieve with token "f234153cb7247e00d915428e74785132"]

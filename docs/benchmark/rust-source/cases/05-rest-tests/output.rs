@@ -473,4 +473,4 @@ async fn authed_json_patch_404_with_base_path_prefix_does_not_report() {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (26444 bytes) is available by calling tinyjuice_retrieve with token "95995e04f0b34dd67d20cf9ecfdfe4e3" (marker ⟦tj:95995e04f0b34dd67d20cf9ecfdfe4e3⟧)]
+[PARTIAL view — full original (26444 bytes): call tinyjuice_retrieve with token "95995e04f0b34dd67d20cf9ecfdfe4e3"]

@@ -63,4 +63,4 @@ func (s *Server) Run(ctx context.Context, addr string) error {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (8797 bytes) is available by calling tinyjuice_retrieve with token "a026fdde6edca482012585a0fb2be7da" (marker ⟦tj:a026fdde6edca482012585a0fb2be7da⟧)]
+[PARTIAL view — full original (8797 bytes): call tinyjuice_retrieve with token "a026fdde6edca482012585a0fb2be7da"]

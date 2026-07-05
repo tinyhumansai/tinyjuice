@@ -1,0 +1,241 @@
+--- input/input.rg
++++ output/output-noccr.rg
+@@ -1,3 +1,4 @@
++[search: 500 match(es) across 118 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
+ <OPENHUMAN_ROOT>/src/main.rs:139:            // suppression lives at the `install_workflow_from_url_with_home`
+ <OPENHUMAN_ROOT>/CONTRIBUTING.md:15:- [Git Workflow](#git-workflow)
+ <OPENHUMAN_ROOT>/CONTRIBUTING.md:105:- **Windows 10 WSL + classic X11 forwarding** is unsupported for the desktop app. The Tauri/CEF stack can hang, render blank windows, or crash before useful app logs are available. Use native Windows development, or Windows 11 WSLg if you need a Linux GUI workflow. OpenHuman logs a startup warning when it detects WSL with `DISPLAY` set but no `WAYLAND_DISPLAY`/WSLg markers.
+@@ -7,20 +8,13 @@
+ <OPENHUMAN_ROOT>/CONTRIBUTING.md:250:└── CLAUDE.md               # Additional contributor and workflow guidance
+ <OPENHUMAN_ROOT>/CONTRIBUTING.md:259:## Git Workflow
+ <OPENHUMAN_ROOT>/CONTRIBUTING.md:287:4. Update docs with code whenever behavior, commands, or contributor workflow changes.
+-<OPENHUMAN_ROOT>/CONTRIBUTING.md:289:### Workflow sanity checklist
++[+1 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING.md]
+ <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:213:        // Workflow
+ <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:215:            DomainEvent::WorkflowLoaded {
+ <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:219:            "workflow",
+ <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:222:            DomainEvent::WorkflowStopped {
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:225:            "workflow",
+ <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:228:            DomainEvent::WorkflowStartFailed {
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:232:            "workflow",
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:235:            DomainEvent::WorkflowExecuted {
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:243:            "workflow",
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:590:fn workflows_changed_domain_and_name() {
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:591:    let event = DomainEvent::WorkflowsChanged {
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:594:    assert_eq!(event.domain(), "workflow");
+-<OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:595:    assert_eq!(event.variant_name(), "WorkflowsChanged");
++[+8 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs]
+ <OPENHUMAN_ROOT>/src/core/observability.rs:2764:/// `install_workflow_from_url_with_home` fetches a user/catalog-supplied
+ <OPENHUMAN_ROOT>/AGENTS.md:66:**CI build topology**: full-suite E2E is **build-once-then-fanout** on all three OSes — `build-{linux,macos,windows}-full` compile/bundle the app once and upload it as a per-run workflow artifact, and the shard jobs (`e2e-*-full`) `needs:` that job and download it instead of each shard rebuilding on a cold cache (`.github/workflows/e2e-reusable.yml`). Linux desktop packaging (`build-desktop.yml`) does a **single** `cargo tauri build`: libcef.so is resolved from the restored CEF cache (or a targeted `cargo build -p cef-dll-sys` prewarm on a cold cache) rather than a throwaway `--no-bundle` full build. The root core crate and the Tauri shell are still **separate Cargo worlds** (two `Cargo.lock`, two `target/`); converging them into one workspace is tracked as follow-up in #3877.
+ <OPENHUMAN_ROOT>/AGENTS.md:88:PRs need **≥ 80% coverage on changed lines** via `diff-cover` over Vitest + `cargo-llvm-cov` lcov. Enforced by the coverage jobs (`frontend-coverage`/`rust-core-coverage`/`rust-tauri-coverage`/`coverage-gate`) in `.github/workflows/ci-lite.yml`.
+@@ -46,12 +40,8 @@
+ <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1336:            | Self::WorkflowStopped { .. }
+ <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1337:            | Self::WorkflowStartFailed { .. }
+ <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1338:            | Self::WorkflowExecuted { .. }
+-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1339:            | Self::WorkflowsChanged { .. } => "workflow",
+-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1495:            Self::WorkflowLoaded { .. } => "WorkflowLoaded",
+-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1496:            Self::WorkflowStopped { .. } => "WorkflowStopped",
+ <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1497:            Self::WorkflowStartFailed { .. } => "WorkflowStartFailed",
+-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1498:            Self::WorkflowExecuted { .. } => "WorkflowExecuted",
+-<OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1499:            Self::WorkflowsChanged { .. } => "WorkflowsChanged",
++[+5 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events.rs]
+ <OPENHUMAN_ROOT>/plan.md:20:   most of `scripts/__tests__/`, and the Pester Windows-install test are invoked by no workflow.
+ <OPENHUMAN_ROOT>/plan.md:139:### P1 — core workflows
+ <OPENHUMAN_ROOT>/plan.md:197:**Holes found (verified by exhaustive grep of package.json + workflows):**
+@@ -78,8 +68,7 @@
+ <OPENHUMAN_ROOT>/src/core/all.rs:548:        "flows" => Some("Create, store, and run automation workflows."),
+ <OPENHUMAN_ROOT>/src/core/all.rs:574:        "workflows" => Some("Discovered workflows (WORKFLOW.md/SKILL.md bundles) and their resources."),
+ <OPENHUMAN_ROOT>/src/core/all.rs:600:            "Durable agent and workflow run state, child lineage, events, telemetry, and checkpoint references.",
+-<OPENHUMAN_ROOT>/src/core/all.rs:605:        "workflow_run" => Some(
+-<OPENHUMAN_ROOT>/src/core/all.rs:606:            "Durable dynamic workflow runs — declarative multi-agent definitions and the read surface over persisted runs.",
++[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/all.rs]
+ <OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1858:                // Prune legacy bundled skills (dev-workflow / github-issue-crusher
+ <OPENHUMAN_ROOT>/src/core/jsonrpc.rs:1862:                crate::openhuman::workflows::registry::prune_legacy_default_workflows(
+ <OPENHUMAN_ROOT>/src/core/jsonrpc.rs:2263:        // workflows still dispatch when no realtime channel is configured or
+@@ -125,65 +114,19 @@
+ <OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:194:- `tools/traits.rs:15` — `ToolScope::AgentOnly` is a dead variant; `ToolCategory::Workflow` is pinned to wire `"skill"` (documented tech-debt to resolve before porting the type).
+ <OPENHUMAN_ROOT>/docs/tinyagents-port-plan.md:197:- `user_filter.rs:168-188` — `skill_manage` and `workflow_manage` families carry identical `rust_names` (deliberate alias, duplication footgun); `web_search` → `"web_search_tool"` name mapping is drift-prone against the `search` domain.
+ <OPENHUMAN_ROOT>/vendor/tinychannels/SECURITY.md:43:- unsafe workflows caused by downstream applications granting broad authority
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:4:> **Scope**: finish integrating the vendored `vendor/tinyflows/` workflow engine (our n8n/Zapier module) into the Rust core and the desktop UI, and close the feature gaps that separate it from a real n8n-class product.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:15:Host-agnostic library crate on the `tinyagents` state-graph runtime. Pipeline: `WorkflowGraph → migrate → validate → compile → engine::run`.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:19:| Node kinds (12) | ✅ `trigger, agent, tool_call, http_request, code, condition, switch, merge, split_out, transform, output_parser, sub_workflow`                          |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:28:| Triggers        | ⚠️ **declarative only** — `manual, schedule, webhook, app_event, form, execute_by_workflow, chat_message, evaluation, system`; the _host_ must fire them |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:34:- **Domain** `flows::` (~3,700 lines + tests): `types.rs` (`Flow` wraps `WorkflowGraph` + `enabled`/`require_approval`/`last_status`; `FlowRun`, `FlowRunStep`, `FlowRunTrigger::{Rpc,Schedule,AppEvent,Resume}`), `store.rs` (SQLite incl. `flow_state` kv), `ops.rs` (validate/migrate + full run/resume under `TrustedAutomation → Workflow` origin, 600 s timeout), `schemas.rs`, `tools.rs` (`ProposeWorkflowTool` — validate-only, never persists), `bus.rs` (`FlowTriggerSubscriber`).
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:49:| G6  | Unfired trigger kinds: `chat_message`, `form`, `execute_by_workflow` (as a _trigger_), `evaluation`, `system` have no host dispatcher                                                                                                                         | `flows/bus.rs`                                                              |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:53:Shipped: `/flows` nav tab (FlowsPage list: enable toggle, Run, last status), `/flows/:id` **read-only** canvas (`@xyflow/react` v12, custom nodes, minimap), `FlowRunsDrawer` + `FlowRunInspectorDrawer` (2 s polling via `useFlowRunPoller`), chat `WorkflowProposalCard` (agent `propose_workflow` → user "Save & enable" is the **only** creation path), `FlowApprovalCard` HITL notifications. All components have co-located Vitest coverage; i18n namespaces `flows.*`/`flowRuns.*`/`notifications.flow.*` exist across locales.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:59:| U1  | **No canvas editing** — `nodesDraggable/Connectable/elementsSelectable: false`; `xyflowToWorkflowGraph` in `graphAdapter.ts` is dead code awaiting the editor ("B5b.2+") | `components/flows/canvas/FlowCanvas.tsx` |
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:61:| U3  | **No authoring entry** — "New workflow" navigates to `/chat` with a TODO; empty-state copy promises canvas creation that doesn't exist                                   | `pages/FlowsPage.tsx`                    |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:68:The repo has **three** "workflow" systems. This plan touches only the first:
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:71:2. `workflows::` / `openhuman.workflows_*` — WORKFLOW.md/SKILL.md bundle discovery/install (separate product surface under `/skills`). **Slated for decommission** — it is essentially the skills feature wearing the "workflows" name; see Phase 8. Retiring it frees the "Workflows" branding for tinyflows (the `/flows` nav tab already reads "Workflows").
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:72:3. `rlm::` — Rhai `.ragsh` language workflows (`docs/plans/rlm-workflows/`), positioned in `gitbooks/features/orchestration.md` as the _next_ layer on the same substrate. tinyflows remains the shipping visual/typed product; rlm does not replace it.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:91:| Error workflow / retry per node                       | ✅ on_error/retry/backoff                                                    | —                 |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:92:| Sub-workflows                                         | ✅ `sub_workflow` node (inline graph); _by-id_ reference missing             | Phase 4           |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:94:| Import/export workflow JSON, n8n import               | Missing (feasible: model is deliberately n8n-shaped)                         | Phase 4           |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:98:| Versioning of workflow definitions                    | ✅ schema_version + type_version + migrate                                   | —                 |
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:101:Our structural advantages to preserve: the agent can _author_ workflows conversationally (`propose_workflow` → proposal card → single human "Save & enable" persistence gate), everything runs under the security policy/approval-gate substrate, and secrets never enter the engine (opaque `connection_ref`).
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:111:Every workflow is, at run time, a **unique tinyagents state graph**: `compile()` wraps the `WorkflowGraph`, and the engine lowers it per run into a tinyagents graph (nodes → graph nodes, output ports → conditional edges, fan-in → waiting edges); run state (`MergeReducer` over a single JSON value), durable checkpointing, HITL interrupts, and the event journal are all tinyagents primitives, keyed per run by `thread_id`/`run_id`. So the health of the tinyagents pin is the health of the whole feature.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:151:Full taxonomy, the generic event-dispatcher design, and the **cron → workflows migration** live in the companion doc **[triggers.md](triggers.md)**. Summary:
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:156:- **Cron unification**: legacy `JobType::Shell`/`Agent` cron jobs become one-node scheduled flows (dual-write bridge, then backfill migration); cron remains only as the internal tick engine. "Everything automated is a workflow."
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:180:- **3a. Edit mode in `FlowCanvas`**: flip the readonly defaults behind an `editable` prop; enable drag (persist `position`), connect (port-aware: derive valid source/target handles from node kind — reuse `graphAdapter` port logic), delete nodes/edges, and a node palette (12 kinds with the existing emoji/accent metadata). Wire the already-written `xyflowToWorkflowGraph` as the save path → `flows_update`.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:182:- **3c. Validation UX**: new RPC `openhuman.flows_validate(graph)` (thin wrapper over `ops::validate_and_migrate_graph`, same path `propose_workflow` uses) → inline canvas errors (missing trigger, cycle, invalid config on node X) before save.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:186:**Deliverable**: create/edit a workflow entirely on the canvas; watch it execute live.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:190:- **4a. "New workflow"**: replace the `/chat` TODO with a chooser — _Start from scratch_ (blank canvas with a trigger node), _Describe it_ (interim: prefill chat composer → `propose_workflow`; superseded by the Phase 5 in-place prompt bar), _From template_.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:191:- **4b. Sub-workflow by id**: extend `sub_workflow`/`execute_by_workflow` to reference a saved `flow_id` (engine currently only inlines a child graph) — engine change upstreamed to `vendor/tinyflows` + host resolver in `caps`/ops.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:192:- **4c. Templates**: ship 5–10 curated `WorkflowGraph` JSONs (bundled resources, like agent prompts): e.g. "Daily digest to channel", "Webhook → agent triage → notify", "Scheduled scrape → transform → memory". Gallery UI on FlowsPage empty state.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:193:- **4d. Import/export**: export flow JSON; import with `migrate()` + validate. **n8n importer** (host-side, best-effort): map n8n workflow JSON → `WorkflowGraph` for the overlapping vocabulary (IF→condition, Switch, Merge, SplitOut, HTTP Request, Code, Schedule/Webhook triggers; `={{...}}` → `=` jq where trivially translatable); unmapped nodes land as annotated placeholder nodes rather than failing the import.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:194:- **4e. Proposal card upgrade**: "Open in canvas" action on `WorkflowProposalCard` (review/edit before Save & enable) — keeps the single persistence gate.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:196:### Phase 5 — Prompt-first authoring: the Workflow Builder agent
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:198:The product stance ("the agent builds it, you approve it") gets a first-class surface: users prompt **from the Workflows UI itself** — not by wandering into `/chat` — and a dedicated, tool-scoped agent designs and iterates on the graph in place. This is the differentiator over n8n, so it deserves its own phase rather than being a bullet under 4a.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:200:**5a. A dedicated `workflow-builder` agent definition.**
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:204:- New builtin definition `workflow-builder` (Worker tier): system prompt specialized for workflow design — knows the 12 node kinds, `=`/jq expression semantics, port/edge rules, trigger kinds and which ones are live, error-handling config (`on_error`/`retry`), and the "propose, never persist" invariant. Prompt ships in `src/openhuman/agent/prompts/` like the other bundled prompts.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:206:- Reachable two ways: (1) directly from the Flows UI prompt surface (5c), spawned with the flow/draft as context; (2) by delegation from the main agent via the existing delegation tools (`agent/tools/delegate_to_personality.rs`, archetype/skill delegation in `agent_orchestration::tools`) so "set up a workflow that…" in normal chat routes to the specialist automatically.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:212:| `propose_workflow` | ✅ exists | Validate a full graph + emit proposal payload (unchanged invariant: never persists) |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:213:| `revise_workflow` | new | Take the current draft graph + an instruction diff → emit an updated proposal; enables iterative refinement instead of regenerate-from-scratch |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:214:| `list_workflows` / `get_workflow` | new (read-only) | Inspect existing flows so the agent can reference, clone, or avoid duplicating them |
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:215:| `get_workflow_run` | new (read-only) | Read a failed run's steps so the agent can debug/repair a workflow from an error report |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:218:| `dry_run_workflow` | new | Execute the *draft* graph against mock/sandboxed capabilities (`tinyflows` `mock` feature or capped real caps with `requires_approval` forced on) and return step results — lets the agent self-verify before proposing |
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:220:All read-only tools return `PermissionLevel::None`; `dry_run_workflow` is gated by autonomy tier since `code`/`http_request` nodes could execute.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:224:- **FlowsPage prompt bar**: a "Describe a workflow…" composer at the top of `/flows` (and as the empty-state hero). Submitting spawns a `workflow-builder` turn in a dedicated thread; the resulting proposal renders inline (reuse `WorkflowProposalCard`) with **Open in canvas** and **Save & enable**.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:225:- **Canvas copilot panel**: on `/flows/:id` (and on drafts), a side panel chat bound to the same agent with the current graph injected as context. Each agent proposal updates a **draft overlay** on the canvas (diff-style: added nodes highlighted, removed ones ghosted) — accept/reject applies it to the local draft from Phase 3d. This is `revise_workflow` in a loop: "add a Slack notification on failure", "make the schedule weekdays only", "split this into a sub-workflow".
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:226:- **Repair entry point**: from a failed run in `FlowRunInspectorDrawer`, "Fix with agent" opens the copilot with the run's failing step context preloaded (`get_workflow_run`).
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:227:- Plumbing reuses the existing chat runtime (`ChatRuntimeProvider` already parses `propose_workflow` outputs into `pendingWorkflowProposalsByThread`); the new work is thread scoping per draft/flow, the canvas diff overlay, and routing turns to the `workflow-builder` definition instead of the main agent.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:233:- `dry_run_workflow` output is labeled as sandbox output in the UI so users don't mistake it for a live run.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:250:3. Sub-workflow by reference (4b) — config `workflow_id` alternative to inline `workflow`.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:254:### Phase 8 — Decommission the legacy `workflows::` bundle domain
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:256:The `workflows::` domain (WORKFLOW.md/SKILL.md bundle discovery/install, RPC `openhuman.workflows_*`) predates tinyflows and is functionally the **skills** feature under a different name. Keeping two things called "workflows" confuses users, agents, and contributors alike. Plan: fold what's unique into `skills`, delete the rest, and hand the name to tinyflows.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:258:- **Audit consumers first**: `agent/tools/run_workflow.rs` (agent tool that runs WORKFLOW.md bundles — decide: retire, or repoint to `flows_run`/skills), the `/skills` UI surfaces (`WorkflowsTab`, `CreateWorkflowForm`, `WorkflowRunnerBody`, `WorkflowNew.tsx`, `WorkflowsRun.tsx`, `DevWorkflowPanel`, `workflowsApi.ts`), `about_app`, gitbooks, and the rlm plan's references to `run_workflow` as a composition surface.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:260:- **Deprecate then delete**: mark `openhuman.workflows_*` deprecated for one release (RPC responses carry a deprecation notice), then remove `src/openhuman/workflows/`, its controllers from `src/core/all.rs`, the frontend clients/pages, and the `/workflows/new`//`workflows/run` routes (bare `/workflows` already redirects to `/settings/automations`).
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:261:- **Not in scope**: `openhuman.workflow_run_*` (`agent_orchestration`'s declarative run ledger) is a different system and untouched here — though its name should also be revisited once "Workflows" ≡ tinyflows.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:262:- **Naming end-state**: one user-facing concept — **Workflows = tinyflows graphs** at `/flows`; skills are skills.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:270:Backend: ☐ Composio trigger-subscription lifecycle (auto-provision on enable) · ☐ trigger catalog RPC · ☐ loud validation warning for unfired trigger kinds · ☐ raw-webhook dispatch (deferred backlog) · ☐ `flows_cancel_run` · ☐ resume-with-rejection/deny · ☐ live `RunObserver` + incremental step persistence · ☐ `FlowRunProgress` socket events · ☐ `flows_validate` RPC · ☐ `flows_list_connections` · ☐ Composio connected-account resolution · ☐ HTTP credential resolution · ☐ toolkit allow-list fix · ☐ `chat_message` trigger dispatch · ☐ sub-workflow by id · ☐ parked-run TTL sweep · ☐ JSON-RPC E2E suite.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:272:Frontend: ☐ editable canvas (drag/connect/palette/delete) · ☐ node config panels · ☐ trigger config UI (cron builder, webhook URL display, app-event picker) · ☐ credentials picker · ☐ new-workflow chooser · ☐ template gallery · ☐ import/export + n8n import · ☐ live canvas run overlay (socket) · ☐ approval deny (real) · ☐ "Open in canvas" from proposal card · ☐ WDIO E2E spec.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:274:Agent authoring: ☐ `workflow-builder` builtin `AgentDefinition` + specialized prompt · ☐ `revise_workflow` tool · ☐ read-only `list_workflows`/`get_workflow`/`get_workflow_run` tools · ☐ `list_flow_connections` tool · ☐ `search_tool_catalog` tool · ☐ `dry_run_workflow` (sandboxed) · ☐ delegation routing from main agent · ☐ FlowsPage prompt bar · ☐ canvas copilot panel with draft diff overlay · ☐ "Fix with agent" from failed runs.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:276:Engine (upstream): ☐ agent sub-ports · ☐ output_parser validation · ☐ `workflow_id` sub-workflows · ☐ docs truth-up · ☐ cancellation.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:278:Decommission: ☐ `run_workflow` tool disposition · ☐ bundle semantics folded into `skills` · ☐ `workflows_*` RPC deprecation release · ☐ delete `src/openhuman/workflows/` + frontend pages/clients · ☐ docs/about_app rename sweep.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:300:3. **Editable canvas vs. agent-first authoring** — product stance so far is "the agent builds it, you approve it" (`gitbooks/features/workflows.md`). Phase 5 makes that stance first-class in the Flows UI itself (prompt bar + canvas copilot); the Phase 3 hand-editing canvas is the escape hatch, not the headline. Keep the prompt-first path primary in onboarding copy so the two don't compete.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:302:5. **Submodule cadence** — engine changes (Phase 7) must land in the tinyflows repo and re-vendor; keep host-side workarounds (e.g. by-id sub-workflow resolution in caps) so UI phases aren't blocked on vendor releases.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md:304:**Per-repo conventions that apply to all phases**: new RPCs go through domain `schemas.rs` + controller registry (no `dispatch.rs` branches); ≥80 % diff coverage gate; verbose `[flows]`-prefixed debug logging on every new path; i18n keys added to `en.ts` **and all 13 locales**; update `src/openhuman/about_app/` and `gitbooks/features/workflows.md` as features land.
++[+47 more match(es) in <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/README.md]
+ <OPENHUMAN_ROOT>/vendor/tinychannels/CONTRIBUTING.md:68:Feature requests should explain the channel workflow they unlock, the public
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:1:# Trigger taxonomy & the cron → workflows unification
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:3:> Companion to [README.md](README.md) (the tinyflows completion POA). This doc answers two questions: **what kinds of triggers can this platform offer**, and **how do we migrate cron so that "everything automated is a workflow"**.
+@@ -197,11 +140,7 @@
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:93:### 2.11 Workflow-to-workflow (`execute_by_workflow`, `evaluation`)
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:95:- `execute_by_workflow`: fired when another flow's `sub_workflow`/by-id call targets this flow (README Phase 4b) — enables composition and shared "library" flows.
+ <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:96:- `evaluation`: reserved for eval-harness runs of a flow (regression-test a workflow against recorded inputs); pairs with `dry_run_workflow` (README Phase 5b).
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:111:## 4. Cron → workflows migration
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:113:Today `cron` runs three job types (`cron/types.rs::JobType`): `Shell`, `Agent`, and `Flow` (already just a tick-publisher for flows). The inversion: **cron stops being a product surface and becomes the schedule service for workflows.**
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:126:**M4 — Surface consolidation.** Settings → Automations lists flows only; cron internals (`scheduler.rs`, jobs table) remain as the tick engine for `JobType::Flow`, which becomes the *only* job type. The `cron_*` tool family shrinks to a thin alias the agent can still call, documented as "creates a scheduled workflow".
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:128:**What cron keeps**: the single tokio scheduler loop, persistence of next-fire times, catch-up semantics, `scheduler_gate`. That's infrastructure — workflows are the product on top of it.
+-<OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md:138:5. `execute_by_workflow` (with Phase 4b sub-workflow-by-id), `evaluation` last.
++[+5 more match(es) in <OPENHUMAN_ROOT>/docs/plans/tinyflows-integration/triggers.md]
+ <OPENHUMAN_ROOT>/gitbooks/guides/doctor-assistant.md:10:**Goal:** tailor OpenHuman for a clinician's workflow: a persona that speaks the part, memory scoped to the right sources, and privacy settings appropriate for sensitive information.
+ <OPENHUMAN_ROOT>/gitbooks/guides/doctor-assistant.md:58:Add only the integrations relevant to the workflow (e.g. a reference/notes source), and **not** anything carrying data you're not cleared to process. Every integration is a separate, revocable OAuth grant.
+ <OPENHUMAN_ROOT>/vendor/tinychannels/README.md:10: <a href="https://github.com/tinyhumansai/tinychannels/actions/workflows/ci.yml"><img src="https://github.com/tinyhumansai/tinychannels/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+@@ -237,19 +176,7 @@
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:582:   * Thread-scoped candidate workflow proposed by the `propose_workflow` agent
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:584:   * on `WorkflowProposalCard`. Unlike `pendingApprovalByThread` /
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:590:  pendingWorkflowProposalsByThread: Record<string, WorkflowProposal>;
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:657:  pendingWorkflowProposalsByThread: {},
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:864:  if (!['subagent', 'worker_thread', 'workflow_child', 'team_member'].includes(run.kind)) {
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1173:    setWorkflowProposalForThread: (
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1175:      action: PayloadAction<{ threadId: string; proposal: WorkflowProposal }>
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1177:      state.pendingWorkflowProposalsByThread[action.payload.threadId] = action.payload.proposal;
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1179:    clearWorkflowProposalForThread: (state, action: PayloadAction<{ threadId: string }>) => {
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1180:      delete state.pendingWorkflowProposalsByThread[action.payload.threadId];
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1377:      delete state.pendingWorkflowProposalsByThread[action.payload.threadId];
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1399:      state.pendingWorkflowProposalsByThread = {};
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1520:      // Same for a workflow proposal (B4) — it's a client-only "should the
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1523:      delete state.pendingWorkflowProposalsByThread[threadId];
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1633:  setWorkflowProposalForThread,
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts:1634:  clearWorkflowProposalForThread,
++[+13 more match(es) in <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.ts]
+ <OPENHUMAN_ROOT>/docs/plans/rlm-workflows/phase-5-hardening.md:61:  `ToolAdapter` for inner calls; add coarse start/finish workflow events for
+ <OPENHUMAN_ROOT>/docs/plans/rlm-workflows/README.md:1:# RLM — Language-Based Workflows (Rhai/`.ragsh`) Integration Plan
+ <OPENHUMAN_ROOT>/docs/plans/rlm-workflows/README.md:6:OpenHuman Rust core, so the orchestrator agent can *write its own workflow
+@@ -321,10 +248,7 @@
+ <OPENHUMAN_ROOT>/gitbooks/features/workflows.md:33:* **Manual**: a Run button on the Workflows page or the `flows_run` RPC.
+ <OPENHUMAN_ROOT>/gitbooks/features/workflows.md:40:Every flow run executes under a dedicated trust origin (`TrustedAutomation → Workflow`). The reasoning: the flow's *actions* (which tools it calls, which URLs it hits) are static graph configuration you approved at save time. The runtime trigger payload (a webhook body, an inbound event) stays **untrusted**: it can feed arguments into those pre-declared actions, but it can never introduce a new action.
+ <OPENHUMAN_ROOT>/gitbooks/features/workflows.md:48:* **`/flows`**: the Workflows hub, showing every flow with its enabled toggle, last-run status (`completed` / `pending approval` / `failed`), and a Run button.
+-<OPENHUMAN_ROOT>/gitbooks/features/workflows.md:49:* **`/flows/:id`**: a read-only **canvas view** of the workflow graph, rendered as nodes and edges so you can see exactly what you approved.
+-<OPENHUMAN_ROOT>/gitbooks/features/workflows.md:59:* [Triggers](integrations/triggers.md): the live app events that fire `app_event` workflows.
+-<OPENHUMAN_ROOT>/gitbooks/features/workflows.md:61:* [Cron & Scheduling](native-tools/cron.md): one-shot and recurring agent jobs (workflows are the structured, multi-step upgrade).
+-<OPENHUMAN_ROOT>/gitbooks/features/workflows.md:62:* [Subconscious Loop](subconscious.md): the background awareness layer that complements event-driven workflows.
++[+4 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/workflows.md]
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:31:- protect custom workflow tags before ML compression
+ <OPENHUMAN_ROOT>/gitbooks/SUMMARY.md:38:* [Workflows](features/workflows.md)
+ <OPENHUMAN_ROOT>/scripts/test-ci-local.sh:2:# Test the package-and-publish workflow locally using `act`.
+@@ -350,19 +274,8 @@
+ <OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:56:Required GitHub settings for this model (repo **Settings → Rules**): `main` requires the `PR CI Gate` status check on PRs; `release` requires PRs for non-bypass actors with the `CI Full Gate` status check required (it runs on PRs targeting release); the release GitHub App's identity sits on the bypass list of both rulesets so the promote/release workflows can push directly.
+ <OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:58:## Workflows: staging vs. production
+ <OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:60:Two first-class GitHub Actions workflows, one per environment. Pick by intent rather than toggling a flag. Both run from the `release` branch only.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:62:| Workflow                                                | Branch    | Bumps   | Tags pushed                | Concurrency group       | Use when                                                              |
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:64:| [`release-staging.yml`](../../.github/workflows/release-staging.yml) | `release` | `patch` only | `v<version>-staging`        | `release-staging`       | Cutting a staging build for QA. Runs frequently; narrow semver moves. |
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:65:| [`release-production.yml`](../../.github/workflows/release-production.yml) | `release` | `patch` / `minor` / `major` (`release_type` input) | `v<version>`                | `release-production`    | Shipping a production release from validated `release` HEAD (or a pinned `commit_sha`). |
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:67:The matrix build / sign / Sentry-DIF / artifact-upload pipeline used by both flows lives in [`.github/workflows/build-desktop.yml`](../../.github/workflows/build-desktop.yml) as a `workflow_call` reusable workflow. The two top-level workflows above own ref resolution, version bumping, tagging, and publish/cleanup; the build itself is shared.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:71:Android releases are handled by the separate [`.github/workflows/android-compile.yml`](../../.github/workflows/android-compile.yml) workflow, which builds a release Android App Bundle (`.aab`), signs it with the Play upload key, and uploads it to Google Play when publishing is enabled. The workflow keeps the unsigned and signed AABs as Actions artifacts for audit/debugging.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:73:Manual Android uploads use the same workflow:
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:101:1. Run **Release (Staging)** via `workflow_dispatch` from `release` (optionally pinning a release-reachable `commit_sha`; `create_tag = false` bumps + commits without tagging or building).
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:102:2. The workflow bumps `patch` on `release`, commits `chore(staging): vX.Y.Z [skip ci]`, pushes, and creates an immutable `vX.Y.Z-staging` tag at that commit.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:107:There is no separate `staging` branch — staging cuts and production releases both live on `release`. The two are distinguished only by tag suffix (`-staging` vs none) and by which workflow created the tag.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:111:1. Run **Release Production** via `workflow_dispatch` with the desired `release_type` (`patch` / `minor` / `major`), from `release` HEAD or a pinned release-reachable `commit_sha`.
+ <OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:118:- **Collisions.** Both workflows fail fast if the target tag already exists locally or on `origin`. Resolve by deleting the stale tag (org maintainers only) or bumping past it.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:121:- **Who can delete tags.** Same write-access as `main`. Workflow-driven cleanup deletes run with the workflow's token via `actions/github-script` (the GitHub App token is only used by `prepare-build` for the bump commit + tag push); manual deletes (`git push --delete origin <tag>`) require equivalent maintainer permissions.
+-<OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md:133:1. Create an environment named **`Release-Approval`** (exact name: the workflow references it verbatim).
++[+12 more match(es) in <OPENHUMAN_ROOT>/gitbooks/developing/release-policy.md]
+ <OPENHUMAN_ROOT>/gitbooks/developing/architecture/agent-harness.md:36:> - the **workflow phase engine** fans each phase's agents out on the graph
+ <OPENHUMAN_ROOT>/gitbooks/developing/architecture/agent-harness.md:37:>   (`with_max_concurrency`), keeping the durable `WorkflowRun` ledger as the resume
+ <OPENHUMAN_ROOT>/gitbooks/developing/architecture/agent-harness.md:57:- **`repl` feature enabled for language workflows; `.rag` expressive language unused.** OpenHuman still drives *graphs* from Rust (`GraphBuilder`), not the declarative `.rag` language. But the `repl` feature (the imperative Rhai `.ragsh` session runtime) is enabled to power the `rlm` language-workflow tool ([`openhuman::rlm`](../../../src/openhuman/rlm/README.md), see "Language workflows (`rlm`)" below).
+@@ -451,50 +364,12 @@
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3647:        "openhuman.workflow_run_list_definitions",
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3651:    let defs_outer = assert_no_jsonrpc_error(&defs, "workflow_run_list_definitions");
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3665:    // Seed a durable workflow run, then list + get it.
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3666:    openhuman_core::openhuman::session_db::run_ledger::upsert_workflow_run(
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3668:        openhuman_core::openhuman::session_db::run_ledger::WorkflowRunUpsert {
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3675:            status: openhuman_core::openhuman::session_db::run_ledger::WorkflowRunStatus::Running,
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3681:    .expect("seed workflow run");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3686:        "openhuman.workflow_run_list",
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3690:    let list_outer = assert_no_jsonrpc_error(&list, "workflow_run_list");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3707:        "openhuman.workflow_run_get",
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3711:    let get_outer = assert_no_jsonrpc_error(&get, "workflow_run_get");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:3714:            .get("workflowRun")
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:8683:/// End-to-end coverage for `openhuman.workflows_uninstall`.
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:8723:        "openhuman.workflows_uninstall",
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:8727:    let ok_result = assert_no_jsonrpc_error(&ok, "workflows_uninstall success");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:8756:        "openhuman.workflows_uninstall",
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:8777:        "openhuman.workflows_uninstall",
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:10118:    fn parse_tool_output(result: openhuman_core::openhuman::workflows::types::ToolResult) -> Value {
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12142:/// Full lifecycle over JSON-RPC for the `workflows` namespace:
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12143:/// create → list → read → phase → uninstall. Workflows are scaffolded under
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12144:/// the user-scope root (`$HOME/.openhuman/workflows/<slug>/`), which the temp
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12147:async fn json_rpc_workflows_lifecycle_round_trip() {
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12166:    // 1. Create a user-scope workflow.
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12170:        "openhuman.workflows_create",
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12178:    let create_result = assert_no_jsonrpc_error(&create, "workflows_create");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12180:        .get("workflow")
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12181:        .expect("workflow in create result");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12182:    // `id` is the on-disk slug (WorkflowSummary maps dir_name → id). The
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12187:    // 2. List reflects the new workflow.
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12188:    let list = post_json_rpc(&rpc_base, 9202, "openhuman.workflows_list", json!({})).await;
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12189:    let list_result = assert_no_jsonrpc_error(&list, "workflows_list");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12190:    let workflows = list_result
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12191:        .get("workflows")
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12193:        .expect("workflows array in list result");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12194:    assert_eq!(workflows.len(), 1, "exactly one workflow after create");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12196:        workflows[0].get("id").and_then(Value::as_str),
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12199:    // when_to_use is surfaced via `workflows_describe` (step 3), not the list summary.
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12201:    // 3. Describe returns the workflow's display name, when-to-use, and inputs.
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12205:        "openhuman.workflows_describe",
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12206:        json!({ "workflow_id": "bug-triage" }),
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12209:    let describe_result = assert_no_jsonrpc_error(&describe, "workflows_describe");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12226:        "describe returns an inputs array (empty for a bare workflow)"
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12233:        "openhuman.workflows_uninstall",
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12237:    let uninstall_result = assert_no_jsonrpc_error(&uninstall, "workflows_uninstall");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12244:    let after = post_json_rpc(&rpc_base, 9206, "openhuman.workflows_list", json!({})).await;
+ <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12245:    let after_result = assert_no_jsonrpc_error(&after, "workflows_list");
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12248:            .get("workflows")
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12250:            .expect("workflows array")
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12252:        "no workflows after uninstall"
+-<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:12262:// HTTP JSON-RPC (distinct from the legacy markdown `workflows_*` namespace
++[+39 more match(es) in <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs]
+\ No newline at end of file

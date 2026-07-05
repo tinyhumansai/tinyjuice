@@ -2,47 +2,47 @@
 
 Real log files from public GitHub repositories: the loghub corpus (HDFS, Hadoop, Spark, Zookeeper, BGL, HPC, Thunderbird, Windows, Linux, Android, HealthApp, Apache, Proxifier, OpenSSH, OpenStack, macOS), Elastic example datasets (Apache/nginx access logs, auth.log), and CrowdSec parser test fixtures (WAF, Traefik, Authelia, GitLab, Suricata). Sources and licenses in ATTRIBUTION.md.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `15-openstack` | [input](cases/15-openstack/input.log) | [output](cases/15-openstack/output.log) | [diff](cases/15-openstack/compression.diff) | 595.1 KB -> 906 B (-100%) | 99.9% | 99.8% | 2.697 ms |
-| `01-hdfs` | [input](cases/01-hdfs/input.log) | [output](cases/01-hdfs/output.log) | [diff](cases/01-hdfs/compression.diff) | 287.8 KB -> 470 B (-100%) | 99.9% | 99.8% | 1.731 ms |
-| `17-apache-access` | [input](cases/17-apache-access/input.log) | [output](cases/17-apache-access/output.log) | [diff](cases/17-apache-access/compression.diff) | 578.0 KB -> 1.7 KB (-100%) | 99.7% | 99.7% | 15.479 ms |
-| `11-healthapp` | [input](cases/11-healthapp/input.log) | [output](cases/11-healthapp/output.log) | [diff](cases/11-healthapp/compression.diff) | 187.5 KB -> 1.1 KB (-99%) | 99.5% | 99.3% | 4.878 ms |
-| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | [output](cases/34-jvm-gc/output.log) | [diff](cases/34-jvm-gc/compression.diff) | 235.6 KB -> 1.9 KB (-99%) | 99.4% | 99.1% | 10.334 ms |
-| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | [output](cases/04-zookeeper/output.log) | [diff](cases/04-zookeeper/compression.diff) | 279.9 KB -> 4.6 KB (-98%) | 98.5% | 98.3% | 4.126 ms |
-| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | [output](cases/30-laravel-app/output.log) | [diff](cases/30-laravel-app/compression.diff) | 104.5 KB -> 3.8 KB (-96%) | 96.8% | 96.2% | 3.072 ms |
-| `09-linux` | [input](cases/09-linux/input.log) | [output](cases/09-linux/output.log) | [diff](cases/09-linux/compression.diff) | 216.5 KB -> 11.2 KB (-95%) | 95.0% | 94.7% | 6.056 ms |
-| `19-auth-log` | [input](cases/19-auth-log/input.log) | [output](cases/19-auth-log/output.log) | [diff](cases/19-auth-log/compression.diff) | 282.2 KB -> 16.4 KB (-94%) | 94.6% | 94.1% | 7.716 ms |
-| `12-apache-error` | [input](cases/12-apache-error/input.log) | [output](cases/12-apache-error/output.log) | [diff](cases/12-apache-error/compression.diff) | 171.2 KB -> 10.6 KB (-94%) | 94.2% | 93.7% | 2.529 ms |
-| `06-hpc` | [input](cases/06-hpc/input.log) | [output](cases/06-hpc/output.log) | [diff](cases/06-hpc/compression.diff) | 151.2 KB -> 9.6 KB (-94%) | 94.1% | 93.6% | 4.858 ms |
-| `05-bgl` | [input](cases/05-bgl/input.log) | [output](cases/05-bgl/output.log) | [diff](cases/05-bgl/compression.diff) | 317.1 KB -> 20.2 KB (-94%) | 94.0% | 93.6% | 2.940 ms |
-| `13-proxifier` | [input](cases/13-proxifier/input.log) | [output](cases/13-proxifier/output.log) | [diff](cases/13-proxifier/compression.diff) | 237.0 KB -> 15.5 KB (-93%) | 93.7% | 93.4% | 6.821 ms |
-| `16-mac` | [input](cases/16-mac/input.log) | [output](cases/16-mac/output.log) | [diff](cases/16-mac/compression.diff) | 319.4 KB -> 24.3 KB (-92%) | 92.9% | 92.4% | 9.772 ms |
-| `14-openssh` | [input](cases/14-openssh/input.log) | [output](cases/14-openssh/output.log) | [diff](cases/14-openssh/compression.diff) | 225.2 KB -> 18.1 KB (-92%) | 92.4% | 91.9% | 6.704 ms |
-| `08-windows` | [input](cases/08-windows/input.log) | [output](cases/08-windows/output.log) | [diff](cases/08-windows/compression.diff) | 285.4 KB -> 28.2 KB (-90%) | 90.5% | 90.1% | 6.472 ms |
-| `02-hadoop` | [input](cases/02-hadoop/input.log) | [output](cases/02-hadoop/output.log) | [diff](cases/02-hadoop/compression.diff) | 384.9 KB -> 38.1 KB (-90%) | 90.4% | 90.1% | 4.254 ms |
-| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | [output](cases/07-thunderbird/output.log) | [diff](cases/07-thunderbird/compression.diff) | 325.2 KB -> 32.3 KB (-90%) | 90.2% | 90.0% | 7.588 ms |
-| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | [output](cases/20-caddy-coraza-waf/output.log) | [diff](cases/20-caddy-coraza-waf/compression.diff) | 427.0 KB -> 53.7 KB (-87%) | 87.5% | 87.4% | 10.108 ms |
-| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | [output](cases/33-postfix-mail/output.log) | [diff](cases/33-postfix-mail/compression.diff) | 16.3 KB -> 3.8 KB (-76%) | 79.3% | 75.2% | 0.516 ms |
-| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | [output](cases/23-authelia-bf/output.log) | [diff](cases/23-authelia-bf/compression.diff) | 82.7 KB -> 68.4 KB (-17%) | 17.6% | 17.1% | 0.834 ms |
-| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | [output](cases/29-spark-eventlog/output.log) | [diff](cases/29-spark-eventlog/compression.diff) | 412.7 KB -> 353.5 KB (-14%) | 14.4% | 14.3% | 5.043 ms |
-| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | [output](cases/32-w3c-iis/output.log) | [diff](cases/32-w3c-iis/compression.diff) | 47.4 KB -> 47.4 KB (-0%) | 0.0% | 0.0% | 0.810 ms |
-| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | [output](cases/31-zeek-http/output.log) | [diff](cases/31-zeek-http/compression.diff) | 71.2 KB -> 71.2 KB (-0%) | 0.0% | 0.0% | 1.395 ms |
-| `27-suricata-eve` | [input](cases/27-suricata-eve/input.log) | [output](cases/27-suricata-eve/output.log) | [diff](cases/27-suricata-eve/compression.diff) | 19.4 KB -> 19.4 KB (-0%) | 0.0% | 0.0% | 0.002 ms |
-| `26-gitlab-bf` | [input](cases/26-gitlab-bf/input.log) | [output](cases/26-gitlab-bf/output.log) | [diff](cases/26-gitlab-bf/compression.diff) | 40.7 KB -> 40.7 KB (-0%) | 0.0% | 0.0% | 0.004 ms |
-| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | [output](cases/25-sshesame-honeypot/output.log) | [diff](cases/25-sshesame-honeypot/compression.diff) | 42.1 KB -> 42.1 KB (-0%) | 0.0% | 0.0% | 1.012 ms |
-| `24-http-dos` | [input](cases/24-http-dos/input.log) | [output](cases/24-http-dos/output.log) | [diff](cases/24-http-dos/compression.diff) | 73.0 KB -> 73.0 KB (-0%) | 0.0% | 0.0% | 1.121 ms |
-| `22-traefik-http` | [input](cases/22-traefik-http/input.log) | [output](cases/22-traefik-http/output.log) | [diff](cases/22-traefik-http/compression.diff) | 116.4 KB -> 116.4 KB (-0%) | 0.0% | 0.0% | 0.010 ms |
-| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | [output](cases/21-traefik-flood/output.log) | [diff](cases/21-traefik-flood/compression.diff) | 133.6 KB -> 133.6 KB (-0%) | 0.0% | 0.0% | 0.195 ms |
-| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | [output](cases/18-nginx-access/output.log) | [diff](cases/18-nginx-access/compression.diff) | 337.5 KB -> 337.5 KB (-0%) | 0.0% | 0.0% | 6.190 ms |
-| `10-android` | [input](cases/10-android/input.log) | [output](cases/10-android/output.log) | [diff](cases/10-android/compression.diff) | 279.1 KB -> 279.1 KB (-0%) | 0.0% | 0.0% | 5.807 ms |
-| `03-spark` | [input](cases/03-spark/input.log) | [output](cases/03-spark/output.log) | [diff](cases/03-spark/compression.diff) | 196.3 KB -> 196.3 KB (-0%) | 0.0% | 0.0% | 0.317 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `15-openstack` | [input](cases/15-openstack/input.log) | 595.1 KB -> 906 B (-100%) | 99.9%<br>[output](cases/15-openstack/output-noccr.log) - [diff](cases/15-openstack/compression-noccr.diff) | 99.8%<br>[output](cases/15-openstack/output.log) - [diff](cases/15-openstack/compression.diff) | 2.719 ms |
+| `01-hdfs` | [input](cases/01-hdfs/input.log) | 287.8 KB -> 470 B (-100%) | 99.9%<br>[output](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff) | 99.8%<br>[output](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff) | 1.827 ms |
+| `17-apache-access` | [input](cases/17-apache-access/input.log) | 578.0 KB -> 1.7 KB (-100%) | 99.7%<br>[output](cases/17-apache-access/output-noccr.log) - [diff](cases/17-apache-access/compression-noccr.diff) | 99.7%<br>[output](cases/17-apache-access/output.log) - [diff](cases/17-apache-access/compression.diff) | 15.859 ms |
+| `11-healthapp` | [input](cases/11-healthapp/input.log) | 187.5 KB -> 1.1 KB (-99%) | 99.5%<br>[output](cases/11-healthapp/output-noccr.log) - [diff](cases/11-healthapp/compression-noccr.diff) | 99.4%<br>[output](cases/11-healthapp/output.log) - [diff](cases/11-healthapp/compression.diff) | 4.896 ms |
+| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | 235.6 KB -> 1.9 KB (-99%) | 99.4%<br>[output](cases/34-jvm-gc/output-noccr.log) - [diff](cases/34-jvm-gc/compression-noccr.diff) | 99.2%<br>[output](cases/34-jvm-gc/output.log) - [diff](cases/34-jvm-gc/compression.diff) | 10.196 ms |
+| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | 279.9 KB -> 4.6 KB (-98%) | 98.5%<br>[output](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff) | 98.3%<br>[output](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff) | 4.113 ms |
+| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | 104.5 KB -> 3.8 KB (-96%) | 96.8%<br>[output](cases/30-laravel-app/output-noccr.log) - [diff](cases/30-laravel-app/compression-noccr.diff) | 96.3%<br>[output](cases/30-laravel-app/output.log) - [diff](cases/30-laravel-app/compression.diff) | 3.144 ms |
+| `09-linux` | [input](cases/09-linux/input.log) | 216.5 KB -> 11.2 KB (-95%) | 95.0%<br>[output](cases/09-linux/output-noccr.log) - [diff](cases/09-linux/compression-noccr.diff) | 94.8%<br>[output](cases/09-linux/output.log) - [diff](cases/09-linux/compression.diff) | 6.235 ms |
+| `19-auth-log` | [input](cases/19-auth-log/input.log) | 282.2 KB -> 16.4 KB (-94%) | 94.6%<br>[output](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff) | 94.2%<br>[output](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff) | 7.736 ms |
+| `12-apache-error` | [input](cases/12-apache-error/input.log) | 171.2 KB -> 10.6 KB (-94%) | 94.2%<br>[output](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff) | 93.8%<br>[output](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff) | 2.596 ms |
+| `06-hpc` | [input](cases/06-hpc/input.log) | 151.2 KB -> 9.6 KB (-94%) | 94.1%<br>[output](cases/06-hpc/output-noccr.log) - [diff](cases/06-hpc/compression-noccr.diff) | 93.6%<br>[output](cases/06-hpc/output.log) - [diff](cases/06-hpc/compression.diff) | 5.194 ms |
+| `05-bgl` | [input](cases/05-bgl/input.log) | 317.1 KB -> 20.2 KB (-94%) | 94.0%<br>[output](cases/05-bgl/output-noccr.log) - [diff](cases/05-bgl/compression-noccr.diff) | 93.6%<br>[output](cases/05-bgl/output.log) - [diff](cases/05-bgl/compression.diff) | 3.037 ms |
+| `13-proxifier` | [input](cases/13-proxifier/input.log) | 237.0 KB -> 15.5 KB (-93%) | 93.7%<br>[output](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff) | 93.4%<br>[output](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff) | 7.001 ms |
+| `16-mac` | [input](cases/16-mac/input.log) | 319.4 KB -> 24.3 KB (-92%) | 92.9%<br>[output](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff) | 92.4%<br>[output](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff) | 9.996 ms |
+| `14-openssh` | [input](cases/14-openssh/input.log) | 225.2 KB -> 18.1 KB (-92%) | 92.4%<br>[output](cases/14-openssh/output-noccr.log) - [diff](cases/14-openssh/compression-noccr.diff) | 92.0%<br>[output](cases/14-openssh/output.log) - [diff](cases/14-openssh/compression.diff) | 7.034 ms |
+| `08-windows` | [input](cases/08-windows/input.log) | 285.4 KB -> 28.2 KB (-90%) | 90.5%<br>[output](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff) | 90.1%<br>[output](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff) | 6.643 ms |
+| `02-hadoop` | [input](cases/02-hadoop/input.log) | 384.9 KB -> 38.1 KB (-90%) | 90.4%<br>[output](cases/02-hadoop/output-noccr.log) - [diff](cases/02-hadoop/compression-noccr.diff) | 90.1%<br>[output](cases/02-hadoop/output.log) - [diff](cases/02-hadoop/compression.diff) | 4.410 ms |
+| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | 325.2 KB -> 32.3 KB (-90%) | 90.2%<br>[output](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff) | 90.0%<br>[output](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff) | 7.985 ms |
+| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | 427.0 KB -> 53.7 KB (-87%) | 87.5%<br>[output](cases/20-caddy-coraza-waf/output-noccr.log) - [diff](cases/20-caddy-coraza-waf/compression-noccr.diff) | 87.4%<br>[output](cases/20-caddy-coraza-waf/output.log) - [diff](cases/20-caddy-coraza-waf/compression.diff) | 10.195 ms |
+| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | 16.3 KB -> 3.8 KB (-76%) | 79.3%<br>[output](cases/33-postfix-mail/output-noccr.log) - [diff](cases/33-postfix-mail/compression-noccr.diff) | 75.8%<br>[output](cases/33-postfix-mail/output.log) - [diff](cases/33-postfix-mail/compression.diff) | 0.537 ms |
+| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | 82.7 KB -> 68.4 KB (-17%) | 17.6%<br>[output](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff) | 17.2%<br>[output](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff) | 0.842 ms |
+| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | 412.7 KB -> 353.5 KB (-14%) | 14.4%<br>[output](cases/29-spark-eventlog/output-noccr.log) - [diff](cases/29-spark-eventlog/compression-noccr.diff) | 14.3%<br>[output](cases/29-spark-eventlog/output.log) - [diff](cases/29-spark-eventlog/compression.diff) | 5.169 ms |
+| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | 47.4 KB -> 47.4 KB (-0%) | 0.0%<br>[output](cases/32-w3c-iis/output-noccr.log) - [diff](cases/32-w3c-iis/compression-noccr.diff) | 0.0%<br>[output](cases/32-w3c-iis/output.log) - [diff](cases/32-w3c-iis/compression.diff) | 0.781 ms |
+| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | 71.2 KB -> 71.2 KB (-0%) | 0.0%<br>[output](cases/31-zeek-http/output-noccr.log) - [diff](cases/31-zeek-http/compression-noccr.diff) | 0.0%<br>[output](cases/31-zeek-http/output.log) - [diff](cases/31-zeek-http/compression.diff) | 1.364 ms |
+| `27-suricata-eve` | [input](cases/27-suricata-eve/input.log) | 19.4 KB -> 19.4 KB (-0%) | 0.0%<br>[output](cases/27-suricata-eve/output-noccr.log) - [diff](cases/27-suricata-eve/compression-noccr.diff) | 0.0%<br>[output](cases/27-suricata-eve/output.log) - [diff](cases/27-suricata-eve/compression.diff) | 0.002 ms |
+| `26-gitlab-bf` | [input](cases/26-gitlab-bf/input.log) | 40.7 KB -> 40.7 KB (-0%) | 0.0%<br>[output](cases/26-gitlab-bf/output-noccr.log) - [diff](cases/26-gitlab-bf/compression-noccr.diff) | 0.0%<br>[output](cases/26-gitlab-bf/output.log) - [diff](cases/26-gitlab-bf/compression.diff) | 0.004 ms |
+| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | 42.1 KB -> 42.1 KB (-0%) | 0.0%<br>[output](cases/25-sshesame-honeypot/output-noccr.log) - [diff](cases/25-sshesame-honeypot/compression-noccr.diff) | 0.0%<br>[output](cases/25-sshesame-honeypot/output.log) - [diff](cases/25-sshesame-honeypot/compression.diff) | 1.019 ms |
+| `24-http-dos` | [input](cases/24-http-dos/input.log) | 73.0 KB -> 73.0 KB (-0%) | 0.0%<br>[output](cases/24-http-dos/output-noccr.log) - [diff](cases/24-http-dos/compression-noccr.diff) | 0.0%<br>[output](cases/24-http-dos/output.log) - [diff](cases/24-http-dos/compression.diff) | 1.158 ms |
+| `22-traefik-http` | [input](cases/22-traefik-http/input.log) | 116.4 KB -> 116.4 KB (-0%) | 0.0%<br>[output](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff) | 0.0%<br>[output](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff) | 0.010 ms |
+| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | 133.6 KB -> 133.6 KB (-0%) | 0.0%<br>[output](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff) | 0.0%<br>[output](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff) | 0.198 ms |
+| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | 337.5 KB -> 337.5 KB (-0%) | 0.0%<br>[output](cases/18-nginx-access/output-noccr.log) - [diff](cases/18-nginx-access/compression-noccr.diff) | 0.0%<br>[output](cases/18-nginx-access/output.log) - [diff](cases/18-nginx-access/compression.diff) | 6.229 ms |
+| `10-android` | [input](cases/10-android/input.log) | 279.1 KB -> 279.1 KB (-0%) | 0.0%<br>[output](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff) | 0.0%<br>[output](cases/10-android/output.log) - [diff](cases/10-android/compression.diff) | 5.929 ms |
+| `03-spark` | [input](cases/03-spark/input.log) | 196.3 KB -> 196.3 KB (-0%) | 0.0%<br>[output](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff) | 0.0%<br>[output](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff) | 0.314 ms |
 
 ## What TinyJuice Is Doing
 
@@ -53,8 +53,8 @@ The signal-based log path keeps errors, warnings, stack frames, and summaries an
 ### `01-hdfs`
 
 - [Full input](cases/01-hdfs/input.log)
-- [Full output](cases/01-hdfs/output.log)
-- [Input vs output diff](cases/01-hdfs/compression.diff)
+- [Output with CCR](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff)
+- [Output without CCR](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff)
 
 Input excerpt:
 
@@ -107,15 +107,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (287848 bytes) is available by calling tinyjuice_retrieve with token "7c967000980c086ed55fa6544ba4f05f" (marker ⟦tj:7c967000980c086ed55fa6544ba4f05f⟧)]
+[PARTIAL view — full original (287848 bytes): call tinyjuice_retrieve with token "7c967000980c086ed55fa6544ba4f05f"]
 
 ```
 
 ### `15-openstack`
 
 - [Full input](cases/15-openstack/input.log)
-- [Full output](cases/15-openstack/output.log)
-- [Input vs output diff](cases/15-openstack/compression.diff)
+- [Output with CCR](cases/15-openstack/output.log) - [diff](cases/15-openstack/compression.diff)
+- [Output without CCR](cases/15-openstack/output-noccr.log) - [diff](cases/15-openstack/compression-noccr.diff)
 
 Input excerpt:
 
@@ -170,15 +170,15 @@ nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:09:41.850 2931 WARNING nova
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (595119 bytes) is available by calling tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5" (marker ⟦tj:025a1bc64ff5b2ef4a4bda6c4ad5c5c5⟧)]
+[PARTIAL view — full original (595119 bytes): call tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5"]
 
 ```
 
 ### `17-apache-access`
 
 - [Full input](cases/17-apache-access/input.log)
-- [Full output](cases/17-apache-access/output.log)
-- [Input vs output diff](cases/17-apache-access/compression.diff)
+- [Output with CCR](cases/17-apache-access/output.log) - [diff](cases/17-apache-access/compression.diff)
+- [Output without CCR](cases/17-apache-access/output-noccr.log) - [diff](cases/17-apache-access/compression-noccr.diff)
 
 Input excerpt:
 
@@ -235,15 +235,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (577981 bytes) is available by calling tinyjuice_retrieve with token "4bdb559eee69e9cd66b1271b4079d3bf" (marker ⟦tj:4bdb559eee69e9cd66b1271b4079d3bf⟧)]
+[PARTIAL view — full original (577981 bytes): call tinyjuice_retrieve with token "4bdb559eee69e9cd66b1271b4079d3bf"]
 
 ```
 
 ### `11-healthapp`
 
 - [Full input](cases/11-healthapp/input.log)
-- [Full output](cases/11-healthapp/output.log)
-- [Input vs output diff](cases/11-healthapp/compression.diff)
+- [Output with CCR](cases/11-healthapp/output.log) - [diff](cases/11-healthapp/compression.diff)
+- [Output without CCR](cases/11-healthapp/output-noccr.log) - [diff](cases/11-healthapp/compression-noccr.diff)
 
 Input excerpt:
 
@@ -303,15 +303,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (187456 bytes) is available by calling tinyjuice_retrieve with token "95ec36322f5db1e6faaab764c568b670" (marker ⟦tj:95ec36322f5db1e6faaab764c568b670⟧)]
+[PARTIAL view — full original (187456 bytes): call tinyjuice_retrieve with token "95ec36322f5db1e6faaab764c568b670"]
 
 ```
 
 ### `34-jvm-gc`
 
 - [Full input](cases/34-jvm-gc/input.log)
-- [Full output](cases/34-jvm-gc/output.log)
-- [Input vs output diff](cases/34-jvm-gc/compression.diff)
+- [Output with CCR](cases/34-jvm-gc/output.log) - [diff](cases/34-jvm-gc/compression.diff)
+- [Output without CCR](cases/34-jvm-gc/output-noccr.log) - [diff](cases/34-jvm-gc/compression-noccr.diff)
 
 Input excerpt:
 
@@ -392,15 +392,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (235561 bytes) is available by calling tinyjuice_retrieve with token "d8744977a631986bd19845f464437fa3" (marker ⟦tj:d8744977a631986bd19845f464437fa3⟧)]
+[PARTIAL view — full original (235561 bytes): call tinyjuice_retrieve with token "d8744977a631986bd19845f464437fa3"]
 
 ```
 
 ### `04-zookeeper`
 
 - [Full input](cases/04-zookeeper/input.log)
-- [Full output](cases/04-zookeeper/output.log)
-- [Input vs output diff](cases/04-zookeeper/compression.diff)
+- [Output with CCR](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff)
+- [Output without CCR](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff)
 
 Input excerpt:
 
@@ -482,15 +482,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (279891 bytes) is available by calling tinyjuice_retrieve with token "e40e0af5ef9eb6e4097200f260b9d1f6" (marker ⟦tj:e40e0af5ef9eb6e4097200f260b9d1f6⟧)]
+[PARTIAL view — full original (279891 bytes): call tinyjuice_retrieve with token "e40e0af5ef9eb6e4097200f260b9d1f6"]
 
 ```
 
 ### `30-laravel-app`
 
 - [Full input](cases/30-laravel-app/input.log)
-- [Full output](cases/30-laravel-app/output.log)
-- [Input vs output diff](cases/30-laravel-app/compression.diff)
+- [Output with CCR](cases/30-laravel-app/output.log) - [diff](cases/30-laravel-app/compression.diff)
+- [Output without CCR](cases/30-laravel-app/output-noccr.log) - [diff](cases/30-laravel-app/compression-noccr.diff)
 
 Input excerpt:
 
@@ -579,8 +579,8 @@ Stack trace:
 ### `09-linux`
 
 - [Full input](cases/09-linux/input.log)
-- [Full output](cases/09-linux/output.log)
-- [Input vs output diff](cases/09-linux/compression.diff)
+- [Output with CCR](cases/09-linux/output.log) - [diff](cases/09-linux/compression.diff)
+- [Output without CCR](cases/09-linux/output-noccr.log) - [diff](cases/09-linux/compression-noccr.diff)
 
 Input excerpt:
 
@@ -669,8 +669,8 @@ Jun 15 12:12:34 combo sshd(pam_unix)[23403]: authentication failure; logname= ui
 ### `19-auth-log`
 
 - [Full input](cases/19-auth-log/input.log)
-- [Full output](cases/19-auth-log/output.log)
-- [Input vs output diff](cases/19-auth-log/compression.diff)
+- [Output with CCR](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff)
+- [Output without CCR](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff)
 
 Input excerpt:
 
@@ -759,8 +759,8 @@ Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: Disconnecting: Too many authenticat
 ### `12-apache-error`
 
 - [Full input](cases/12-apache-error/input.log)
-- [Full output](cases/12-apache-error/output.log)
-- [Input vs output diff](cases/12-apache-error/compression.diff)
+- [Output with CCR](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff)
+- [Output without CCR](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff)
 
 Input excerpt:
 
@@ -849,8 +849,8 @@ Output excerpt:
 ### `06-hpc`
 
 - [Full input](cases/06-hpc/input.log)
-- [Full output](cases/06-hpc/output.log)
-- [Input vs output diff](cases/06-hpc/compression.diff)
+- [Output with CCR](cases/06-hpc/output.log) - [diff](cases/06-hpc/compression.diff)
+- [Output without CCR](cases/06-hpc/output-noccr.log) - [diff](cases/06-hpc/compression-noccr.diff)
 
 Input excerpt:
 
@@ -939,8 +939,8 @@ Output excerpt:
 ### `05-bgl`
 
 - [Full input](cases/05-bgl/input.log)
-- [Full output](cases/05-bgl/output.log)
-- [Input vs output diff](cases/05-bgl/compression.diff)
+- [Output with CCR](cases/05-bgl/output.log) - [diff](cases/05-bgl/compression.diff)
+- [Output without CCR](cases/05-bgl/output-noccr.log) - [diff](cases/05-bgl/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1029,8 +1029,8 @@ KERNDTLB 1118539141 2005.06.11 R30-M0-N9-C:J16-U01 2005-06-11-18.19.01.277745 R3
 ### `13-proxifier`
 
 - [Full input](cases/13-proxifier/input.log)
-- [Full output](cases/13-proxifier/output.log)
-- [Input vs output diff](cases/13-proxifier/compression.diff)
+- [Output with CCR](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff)
+- [Output without CCR](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1119,8 +1119,8 @@ Output excerpt:
 ### `16-mac`
 
 - [Full input](cases/16-mac/input.log)
-- [Full output](cases/16-mac/output.log)
-- [Input vs output diff](cases/16-mac/compression.diff)
+- [Output with CCR](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff)
+- [Output without CCR](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1209,8 +1209,8 @@ Jul  1 12:26:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fm
 ### `14-openssh`
 
 - [Full input](cases/14-openssh/input.log)
-- [Full output](cases/14-openssh/output.log)
-- [Input vs output diff](cases/14-openssh/compression.diff)
+- [Output with CCR](cases/14-openssh/output.log) - [diff](cases/14-openssh/compression.diff)
+- [Output without CCR](cases/14-openssh/output-noccr.log) - [diff](cases/14-openssh/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1299,8 +1299,8 @@ Dec 10 07:27:52 LabSZ sshd[24235]: Received disconnect from 112.95.230.3: 11: By
 ### `08-windows`
 
 - [Full input](cases/08-windows/input.log)
-- [Full output](cases/08-windows/output.log)
-- [Input vs output diff](cases/08-windows/compression.diff)
+- [Output with CCR](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff)
+- [Output without CCR](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1389,8 +1389,8 @@ Output excerpt:
 ### `02-hadoop`
 
 - [Full input](cases/02-hadoop/input.log)
-- [Full output](cases/02-hadoop/output.log)
-- [Input vs output diff](cases/02-hadoop/compression.diff)
+- [Output with CCR](cases/02-hadoop/output.log) - [diff](cases/02-hadoop/compression.diff)
+- [Output without CCR](cases/02-hadoop/output-noccr.log) - [diff](cases/02-hadoop/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1479,8 +1479,8 @@ Output excerpt:
 ### `07-thunderbird`
 
 - [Full input](cases/07-thunderbird/input.log)
-- [Full output](cases/07-thunderbird/output.log)
-- [Input vs output diff](cases/07-thunderbird/compression.diff)
+- [Output with CCR](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff)
+- [Output without CCR](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1569,8 +1569,8 @@ Output excerpt:
 ### `20-caddy-coraza-waf`
 
 - [Full input](cases/20-caddy-coraza-waf/input.log)
-- [Full output](cases/20-caddy-coraza-waf/output.log)
-- [Input vs output diff](cases/20-caddy-coraza-waf/compression.diff)
+- [Output with CCR](cases/20-caddy-coraza-waf/output.log) - [diff](cases/20-caddy-coraza-waf/compression.diff)
+- [Output without CCR](cases/20-caddy-coraza-waf/output-noccr.log) - [diff](cases/20-caddy-coraza-waf/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1659,8 +1659,8 @@ Output excerpt:
 ### `33-postfix-mail`
 
 - [Full input](cases/33-postfix-mail/input.log)
-- [Full output](cases/33-postfix-mail/output.log)
-- [Input vs output diff](cases/33-postfix-mail/compression.diff)
+- [Output with CCR](cases/33-postfix-mail/output.log) - [diff](cases/33-postfix-mail/compression.diff)
+- [Output without CCR](cases/33-postfix-mail/output-noccr.log) - [diff](cases/33-postfix-mail/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1749,8 +1749,8 @@ Feb  3 08:29:28 mail postfix/smtpd[21022]: warning: unknown[1.1.1.1]: SASL LOGIN
 ### `23-authelia-bf`
 
 - [Full input](cases/23-authelia-bf/input.log)
-- [Full output](cases/23-authelia-bf/output.log)
-- [Input vs output diff](cases/23-authelia-bf/compression.diff)
+- [Output with CCR](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff)
+- [Output without CCR](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1839,8 +1839,8 @@ time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authenticatio
 ### `29-spark-eventlog`
 
 - [Full input](cases/29-spark-eventlog/input.log)
-- [Full output](cases/29-spark-eventlog/output.log)
-- [Input vs output diff](cases/29-spark-eventlog/compression.diff)
+- [Output with CCR](cases/29-spark-eventlog/output.log) - [diff](cases/29-spark-eventlog/compression.diff)
+- [Output without CCR](cases/29-spark-eventlog/output-noccr.log) - [diff](cases/29-spark-eventlog/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1929,8 +1929,8 @@ Output excerpt:
 ### `32-w3c-iis`
 
 - [Full input](cases/32-w3c-iis/input.log)
-- [Full output](cases/32-w3c-iis/output.log)
-- [Input vs output diff](cases/32-w3c-iis/compression.diff)
+- [Output with CCR](cases/32-w3c-iis/output.log) - [diff](cases/32-w3c-iis/compression.diff)
+- [Output without CCR](cases/32-w3c-iis/output-noccr.log) - [diff](cases/32-w3c-iis/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2019,8 +2019,8 @@ Output excerpt:
 ### `31-zeek-http`
 
 - [Full input](cases/31-zeek-http/input.log)
-- [Full output](cases/31-zeek-http/output.log)
-- [Input vs output diff](cases/31-zeek-http/compression.diff)
+- [Output with CCR](cases/31-zeek-http/output.log) - [diff](cases/31-zeek-http/compression.diff)
+- [Output without CCR](cases/31-zeek-http/output-noccr.log) - [diff](cases/31-zeek-http/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2109,8 +2109,8 @@ Output excerpt:
 ### `27-suricata-eve`
 
 - [Full input](cases/27-suricata-eve/input.log)
-- [Full output](cases/27-suricata-eve/output.log)
-- [Input vs output diff](cases/27-suricata-eve/compression.diff)
+- [Output with CCR](cases/27-suricata-eve/output.log) - [diff](cases/27-suricata-eve/compression.diff)
+- [Output without CCR](cases/27-suricata-eve/output-noccr.log) - [diff](cases/27-suricata-eve/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2143,8 +2143,8 @@ Output excerpt:
 ### `26-gitlab-bf`
 
 - [Full input](cases/26-gitlab-bf/input.log)
-- [Full output](cases/26-gitlab-bf/output.log)
-- [Input vs output diff](cases/26-gitlab-bf/compression.diff)
+- [Output with CCR](cases/26-gitlab-bf/output.log) - [diff](cases/26-gitlab-bf/compression.diff)
+- [Output without CCR](cases/26-gitlab-bf/output-noccr.log) - [diff](cases/26-gitlab-bf/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2197,8 +2197,8 @@ Output excerpt:
 ### `25-sshesame-honeypot`
 
 - [Full input](cases/25-sshesame-honeypot/input.log)
-- [Full output](cases/25-sshesame-honeypot/output.log)
-- [Input vs output diff](cases/25-sshesame-honeypot/compression.diff)
+- [Output with CCR](cases/25-sshesame-honeypot/output.log) - [diff](cases/25-sshesame-honeypot/compression.diff)
+- [Output without CCR](cases/25-sshesame-honeypot/output-noccr.log) - [diff](cases/25-sshesame-honeypot/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2287,8 +2287,8 @@ Output excerpt:
 ### `24-http-dos`
 
 - [Full input](cases/24-http-dos/input.log)
-- [Full output](cases/24-http-dos/output.log)
-- [Input vs output diff](cases/24-http-dos/compression.diff)
+- [Output with CCR](cases/24-http-dos/output.log) - [diff](cases/24-http-dos/compression.diff)
+- [Output without CCR](cases/24-http-dos/output-noccr.log) - [diff](cases/24-http-dos/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2377,8 +2377,8 @@ Output excerpt:
 ### `22-traefik-http`
 
 - [Full input](cases/22-traefik-http/input.log)
-- [Full output](cases/22-traefik-http/output.log)
-- [Input vs output diff](cases/22-traefik-http/compression.diff)
+- [Output with CCR](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff)
+- [Output without CCR](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2467,8 +2467,8 @@ Output excerpt:
 ### `21-traefik-flood`
 
 - [Full input](cases/21-traefik-flood/input.log)
-- [Full output](cases/21-traefik-flood/output.log)
-- [Input vs output diff](cases/21-traefik-flood/compression.diff)
+- [Output with CCR](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff)
+- [Output without CCR](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2557,8 +2557,8 @@ time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:3
 ### `18-nginx-access`
 
 - [Full input](cases/18-nginx-access/input.log)
-- [Full output](cases/18-nginx-access/output.log)
-- [Input vs output diff](cases/18-nginx-access/compression.diff)
+- [Output with CCR](cases/18-nginx-access/output.log) - [diff](cases/18-nginx-access/compression.diff)
+- [Output without CCR](cases/18-nginx-access/output-noccr.log) - [diff](cases/18-nginx-access/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2647,8 +2647,8 @@ Output excerpt:
 ### `10-android`
 
 - [Full input](cases/10-android/input.log)
-- [Full output](cases/10-android/output.log)
-- [Input vs output diff](cases/10-android/compression.diff)
+- [Output with CCR](cases/10-android/output.log) - [diff](cases/10-android/compression.diff)
+- [Output without CCR](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2737,8 +2737,8 @@ Output excerpt:
 ### `03-spark`
 
 - [Full input](cases/03-spark/input.log)
-- [Full output](cases/03-spark/output.log)
-- [Input vs output diff](cases/03-spark/compression.diff)
+- [Output with CCR](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff)
+- [Output without CCR](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff)
 
 Input excerpt:
 

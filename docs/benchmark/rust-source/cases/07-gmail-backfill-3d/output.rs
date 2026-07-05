@@ -365,4 +365,4 @@ fn extract_envelope(data: &Value) -> (Vec<Value>, Option<String>) {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (17440 bytes) is available by calling tinyjuice_retrieve with token "de327d088c33663aff65f51429a1108e" (marker ⟦tj:de327d088c33663aff65f51429a1108e⟧)]
+[PARTIAL view — full original (17440 bytes): call tinyjuice_retrieve with token "de327d088c33663aff65f51429a1108e"]

@@ -2,24 +2,24 @@
 
 Real ripgrep result sets from an OpenHuman checkout. TinyJuice groups matches by file, keeps top hits, and records omitted match counts.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | [diff](cases/09-rg-provider/compression.diff) | 59.8 KB -> 18.2 KB (-70%) | 70.5% | 69.2% | 0.886 ms |
-| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | [diff](cases/05-rg-agent/compression.diff) | 62.2 KB -> 19.9 KB (-68%) | 68.8% | 67.8% | 0.867 ms |
-| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | [diff](cases/04-rg-openhuman/compression.diff) | 65.1 KB -> 30.5 KB (-53%) | 54.3% | 52.9% | 1.044 ms |
-| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | [diff](cases/06-rg-memory/compression.diff) | 70.0 KB -> 44.1 KB (-37%) | 38.7% | 37.3% | 0.909 ms |
-| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | [diff](cases/07-rg-workflow/compression.diff) | 95.5 KB -> 70.3 KB (-26%) | 27.4% | 26.6% | 1.174 ms |
-| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | [diff](cases/10-rg-subconscious/compression.diff) | 79.6 KB -> 63.2 KB (-21%) | 21.5% | 20.6% | 0.640 ms |
-| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | [diff](cases/08-rg-tinyplace/compression.diff) | 76.0 KB -> 62.0 KB (-18%) | 19.4% | 18.4% | 0.654 ms |
-| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | [diff](cases/01-rg-tokenjuice/compression.diff) | 71.4 KB -> 61.9 KB (-13%) | 14.4% | 13.3% | 0.602 ms |
-| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | [diff](cases/02-rg-compression/compression.diff) | 73.4 KB -> 67.7 KB (-8%) | 8.4% | 7.5% | 0.435 ms |
-| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | [diff](cases/03-rg-retrieve/compression.diff) | 1.9 MB -> 1.9 MB (-0%) | 0.3% | 0.2% | 1.990 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | 59.8 KB -> 18.2 KB (-70%) | 70.5%<br>[output](cases/09-rg-provider/output-noccr.rg) - [diff](cases/09-rg-provider/compression-noccr.diff) | 69.4%<br>[output](cases/09-rg-provider/output.rg) - [diff](cases/09-rg-provider/compression.diff) | 0.923 ms |
+| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | 62.2 KB -> 19.9 KB (-68%) | 68.8%<br>[output](cases/05-rg-agent/output-noccr.rg) - [diff](cases/05-rg-agent/compression-noccr.diff) | 67.9%<br>[output](cases/05-rg-agent/output.rg) - [diff](cases/05-rg-agent/compression.diff) | 0.891 ms |
+| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | 65.1 KB -> 30.5 KB (-53%) | 54.3%<br>[output](cases/04-rg-openhuman/output-noccr.rg) - [diff](cases/04-rg-openhuman/compression-noccr.diff) | 53.1%<br>[output](cases/04-rg-openhuman/output.rg) - [diff](cases/04-rg-openhuman/compression.diff) | 1.062 ms |
+| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | 70.0 KB -> 44.1 KB (-37%) | 38.7%<br>[output](cases/06-rg-memory/output-noccr.rg) - [diff](cases/06-rg-memory/compression-noccr.diff) | 37.5%<br>[output](cases/06-rg-memory/output.rg) - [diff](cases/06-rg-memory/compression.diff) | 0.949 ms |
+| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | 95.5 KB -> 70.3 KB (-26%) | 27.4%<br>[output](cases/07-rg-workflow/output-noccr.rg) - [diff](cases/07-rg-workflow/compression-noccr.diff) | 26.7%<br>[output](cases/07-rg-workflow/output.rg) - [diff](cases/07-rg-workflow/compression.diff) | 1.215 ms |
+| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | 79.6 KB -> 63.2 KB (-21%) | 21.5%<br>[output](cases/10-rg-subconscious/output-noccr.rg) - [diff](cases/10-rg-subconscious/compression-noccr.diff) | 20.7%<br>[output](cases/10-rg-subconscious/output.rg) - [diff](cases/10-rg-subconscious/compression.diff) | 0.658 ms |
+| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | 76.0 KB -> 62.0 KB (-18%) | 19.4%<br>[output](cases/08-rg-tinyplace/output-noccr.rg) - [diff](cases/08-rg-tinyplace/compression-noccr.diff) | 18.5%<br>[output](cases/08-rg-tinyplace/output.rg) - [diff](cases/08-rg-tinyplace/compression.diff) | 0.660 ms |
+| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | 71.4 KB -> 61.9 KB (-13%) | 14.4%<br>[output](cases/01-rg-tokenjuice/output-noccr.rg) - [diff](cases/01-rg-tokenjuice/compression-noccr.diff) | 13.4%<br>[output](cases/01-rg-tokenjuice/output.rg) - [diff](cases/01-rg-tokenjuice/compression.diff) | 0.600 ms |
+| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | 73.4 KB -> 67.7 KB (-8%) | 8.4%<br>[output](cases/02-rg-compression/output-noccr.rg) - [diff](cases/02-rg-compression/compression-noccr.diff) | 7.7%<br>[output](cases/02-rg-compression/output.rg) - [diff](cases/02-rg-compression/compression.diff) | 0.436 ms |
+| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | 1.9 MB -> 1.9 MB (-0%) | 0.3%<br>[output](cases/03-rg-retrieve/output-noccr.rg) - [diff](cases/03-rg-retrieve/compression-noccr.diff) | 0.2%<br>[output](cases/03-rg-retrieve/output.rg) - [diff](cases/03-rg-retrieve/compression.diff) | 2.062 ms |
 
 ## What TinyJuice Is Doing
 
@@ -30,8 +30,8 @@ Search results are parsed as file/line/body records. TinyJuice groups by file, k
 ### `09-rg-provider`
 
 - [Full input](cases/09-rg-provider/input.rg)
-- [Full output](cases/09-rg-provider/output.rg)
-- [Input vs output diff](cases/09-rg-provider/compression.diff)
+- [Output with CCR](cases/09-rg-provider/output.rg) - [diff](cases/09-rg-provider/compression.diff)
+- [Output without CCR](cases/09-rg-provider/output-noccr.rg) - [diff](cases/09-rg-provider/compression-noccr.diff)
 
 Input excerpt:
 
@@ -120,8 +120,8 @@ Output excerpt:
 ### `05-rg-agent`
 
 - [Full input](cases/05-rg-agent/input.rg)
-- [Full output](cases/05-rg-agent/output.rg)
-- [Input vs output diff](cases/05-rg-agent/compression.diff)
+- [Output with CCR](cases/05-rg-agent/output.rg) - [diff](cases/05-rg-agent/compression.diff)
+- [Output without CCR](cases/05-rg-agent/output-noccr.rg) - [diff](cases/05-rg-agent/compression-noccr.diff)
 
 Input excerpt:
 
@@ -210,8 +210,8 @@ Output excerpt:
 ### `04-rg-openhuman`
 
 - [Full input](cases/04-rg-openhuman/input.rg)
-- [Full output](cases/04-rg-openhuman/output.rg)
-- [Input vs output diff](cases/04-rg-openhuman/compression.diff)
+- [Output with CCR](cases/04-rg-openhuman/output.rg) - [diff](cases/04-rg-openhuman/compression.diff)
+- [Output without CCR](cases/04-rg-openhuman/output-noccr.rg) - [diff](cases/04-rg-openhuman/compression-noccr.diff)
 
 Input excerpt:
 
@@ -300,8 +300,8 @@ Output excerpt:
 ### `06-rg-memory`
 
 - [Full input](cases/06-rg-memory/input.rg)
-- [Full output](cases/06-rg-memory/output.rg)
-- [Input vs output diff](cases/06-rg-memory/compression.diff)
+- [Output with CCR](cases/06-rg-memory/output.rg) - [diff](cases/06-rg-memory/compression.diff)
+- [Output without CCR](cases/06-rg-memory/output-noccr.rg) - [diff](cases/06-rg-memory/compression-noccr.diff)
 
 Input excerpt:
 
@@ -390,8 +390,8 @@ Output excerpt:
 ### `07-rg-workflow`
 
 - [Full input](cases/07-rg-workflow/input.rg)
-- [Full output](cases/07-rg-workflow/output.rg)
-- [Input vs output diff](cases/07-rg-workflow/compression.diff)
+- [Output with CCR](cases/07-rg-workflow/output.rg) - [diff](cases/07-rg-workflow/compression.diff)
+- [Output without CCR](cases/07-rg-workflow/output-noccr.rg) - [diff](cases/07-rg-workflow/compression-noccr.diff)
 
 Input excerpt:
 
@@ -480,8 +480,8 @@ Output excerpt:
 ### `10-rg-subconscious`
 
 - [Full input](cases/10-rg-subconscious/input.rg)
-- [Full output](cases/10-rg-subconscious/output.rg)
-- [Input vs output diff](cases/10-rg-subconscious/compression.diff)
+- [Output with CCR](cases/10-rg-subconscious/output.rg) - [diff](cases/10-rg-subconscious/compression.diff)
+- [Output without CCR](cases/10-rg-subconscious/output-noccr.rg) - [diff](cases/10-rg-subconscious/compression-noccr.diff)
 
 Input excerpt:
 
@@ -570,8 +570,8 @@ Output excerpt:
 ### `08-rg-tinyplace`
 
 - [Full input](cases/08-rg-tinyplace/input.rg)
-- [Full output](cases/08-rg-tinyplace/output.rg)
-- [Input vs output diff](cases/08-rg-tinyplace/compression.diff)
+- [Output with CCR](cases/08-rg-tinyplace/output.rg) - [diff](cases/08-rg-tinyplace/compression.diff)
+- [Output without CCR](cases/08-rg-tinyplace/output-noccr.rg) - [diff](cases/08-rg-tinyplace/compression-noccr.diff)
 
 Input excerpt:
 
@@ -660,8 +660,8 @@ Output excerpt:
 ### `01-rg-tokenjuice`
 
 - [Full input](cases/01-rg-tokenjuice/input.rg)
-- [Full output](cases/01-rg-tokenjuice/output.rg)
-- [Input vs output diff](cases/01-rg-tokenjuice/compression.diff)
+- [Output with CCR](cases/01-rg-tokenjuice/output.rg) - [diff](cases/01-rg-tokenjuice/compression.diff)
+- [Output without CCR](cases/01-rg-tokenjuice/output-noccr.rg) - [diff](cases/01-rg-tokenjuice/compression-noccr.diff)
 
 Input excerpt:
 
@@ -750,8 +750,8 @@ Output excerpt:
 ### `02-rg-compression`
 
 - [Full input](cases/02-rg-compression/input.rg)
-- [Full output](cases/02-rg-compression/output.rg)
-- [Input vs output diff](cases/02-rg-compression/compression.diff)
+- [Output with CCR](cases/02-rg-compression/output.rg) - [diff](cases/02-rg-compression/compression.diff)
+- [Output without CCR](cases/02-rg-compression/output-noccr.rg) - [diff](cases/02-rg-compression/compression-noccr.diff)
 
 Input excerpt:
 
@@ -840,8 +840,8 @@ Output excerpt:
 ### `03-rg-retrieve`
 
 - [Full input](cases/03-rg-retrieve/input.rg)
-- [Full output](cases/03-rg-retrieve/output.rg)
-- [Input vs output diff](cases/03-rg-retrieve/compression.diff)
+- [Output with CCR](cases/03-rg-retrieve/output.rg) - [diff](cases/03-rg-retrieve/compression.diff)
+- [Output without CCR](cases/03-rg-retrieve/output-noccr.rg) - [diff](cases/03-rg-retrieve/compression-noccr.diff)
 
 Input excerpt:
 

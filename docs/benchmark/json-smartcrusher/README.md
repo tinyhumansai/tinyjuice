@@ -2,24 +2,24 @@
 
 Real OpenHuman JSON snapshots: tool catalogs, API responses, schemas, package metadata, Lottie payloads, and config files. TinyJuice now chooses the smallest useful JSON representation before CCR, using Markdown tables only when they beat minified JSON.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | [diff](cases/02-notion-tools-array/compression.diff) | 890.8 KB -> 16.0 KB (-98%) | 98.2% | 98.2% | 10.224 ms |
-| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | [diff](cases/03-slack-tools-array/compression.diff) | 106.7 KB -> 13.8 KB (-87%) | 87.3% | 86.9% | 1.926 ms |
-| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | [diff](cases/01-github-tools-array/compression.diff) | 110.9 KB -> 15.1 KB (-86%) | 86.6% | 86.2% | 2.970 ms |
-| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | [diff](cases/07-app-schema-object/compression.diff) | 48.6 KB -> 8.9 KB (-82%) | 82.1% | 81.3% | 0.758 ms |
-| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | [diff](cases/10-cargo-metadata/compression.diff) | 62.0 KB -> 62.0 KB (-0%) | 0.0% | 0.0% | 0.144 ms |
-| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | [diff](cases/09-package-manifest/compression.diff) | 9.4 KB -> 9.4 KB (-0%) | 0.0% | 0.0% | 0.030 ms |
-| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | [diff](cases/08-lottie-animation/compression.diff) | 16.8 KB -> 16.8 KB (-0%) | 0.0% | 0.0% | 0.029 ms |
-| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | [diff](cases/06-tauri-capabilities-schema/compression.diff) | 2.4 KB -> 2.4 KB (-0%) | 0.0% | 0.0% | 0.005 ms |
-| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | [diff](cases/05-polymarket-events-list/compression.diff) | 201 B -> 201 B (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | [diff](cases/04-polymarket-markets-list/compression.diff) | 313 B -> 313 B (-0%) | 0.0% | 0.0% | 0.000 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | 890.8 KB -> 16.0 KB (-98%) | 98.2%<br>[output](cases/02-notion-tools-array/output-noccr.md) - [diff](cases/02-notion-tools-array/compression-noccr.diff) | 98.2%<br>[output](cases/02-notion-tools-array/output.md) - [diff](cases/02-notion-tools-array/compression.diff) | 9.293 ms |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | 106.7 KB -> 13.8 KB (-87%) | 87.3%<br>[output](cases/03-slack-tools-array/output-noccr.md) - [diff](cases/03-slack-tools-array/compression-noccr.diff) | 87.0%<br>[output](cases/03-slack-tools-array/output.md) - [diff](cases/03-slack-tools-array/compression.diff) | 1.960 ms |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | 110.9 KB -> 15.1 KB (-86%) | 86.6%<br>[output](cases/01-github-tools-array/output-noccr.md) - [diff](cases/01-github-tools-array/compression-noccr.diff) | 86.3%<br>[output](cases/01-github-tools-array/output.md) - [diff](cases/01-github-tools-array/compression.diff) | 1.983 ms |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | 48.6 KB -> 8.9 KB (-82%) | 82.1%<br>[output](cases/07-app-schema-object/output-noccr.md) - [diff](cases/07-app-schema-object/compression-noccr.diff) | 81.5%<br>[output](cases/07-app-schema-object/output.md) - [diff](cases/07-app-schema-object/compression.diff) | 0.826 ms |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | 62.0 KB -> 62.0 KB (-0%) | 0.0%<br>[output](cases/10-cargo-metadata/output-noccr.md) - [diff](cases/10-cargo-metadata/compression-noccr.diff) | 0.0%<br>[output](cases/10-cargo-metadata/output.md) - [diff](cases/10-cargo-metadata/compression.diff) | 0.152 ms |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | 9.4 KB -> 9.4 KB (-0%) | 0.0%<br>[output](cases/09-package-manifest/output-noccr.md) - [diff](cases/09-package-manifest/compression-noccr.diff) | 0.0%<br>[output](cases/09-package-manifest/output.md) - [diff](cases/09-package-manifest/compression.diff) | 0.031 ms |
+| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | 16.8 KB -> 16.8 KB (-0%) | 0.0%<br>[output](cases/08-lottie-animation/output-noccr.md) - [diff](cases/08-lottie-animation/compression-noccr.diff) | 0.0%<br>[output](cases/08-lottie-animation/output.md) - [diff](cases/08-lottie-animation/compression.diff) | 0.030 ms |
+| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | 2.4 KB -> 2.4 KB (-0%) | 0.0%<br>[output](cases/06-tauri-capabilities-schema/output-noccr.md) - [diff](cases/06-tauri-capabilities-schema/compression-noccr.diff) | 0.0%<br>[output](cases/06-tauri-capabilities-schema/output.md) - [diff](cases/06-tauri-capabilities-schema/compression.diff) | 0.005 ms |
+| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | 201 B -> 201 B (-0%) | 0.0%<br>[output](cases/05-polymarket-events-list/output-noccr.md) - [diff](cases/05-polymarket-events-list/compression-noccr.diff) | 0.0%<br>[output](cases/05-polymarket-events-list/output.md) - [diff](cases/05-polymarket-events-list/compression.diff) | 0.000 ms |
+| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | 313 B -> 313 B (-0%) | 0.0%<br>[output](cases/04-polymarket-markets-list/output-noccr.md) - [diff](cases/04-polymarket-markets-list/compression-noccr.diff) | 0.0%<br>[output](cases/04-polymarket-markets-list/output.md) - [diff](cases/04-polymarket-markets-list/compression.diff) | 0.000 ms |
 
 ## What TinyJuice Is Doing
 
@@ -30,8 +30,8 @@ TinyJuice parses JSON before choosing a representation. Homogeneous object array
 ### `02-notion-tools-array`
 
 - [Full input](cases/02-notion-tools-array/input.json)
-- [Full output](cases/02-notion-tools-array/output.md)
-- [Input vs output diff](cases/02-notion-tools-array/compression.diff)
+- [Output with CCR](cases/02-notion-tools-array/output.md) - [diff](cases/02-notion-tools-array/compression.diff)
+- [Output without CCR](cases/02-notion-tools-array/output-noccr.md) - [diff](cases/02-notion-tools-array/compression-noccr.diff)
 
 Input excerpt:
 
@@ -120,8 +120,8 @@ Output excerpt:
 ### `03-slack-tools-array`
 
 - [Full input](cases/03-slack-tools-array/input.json)
-- [Full output](cases/03-slack-tools-array/output.md)
-- [Input vs output diff](cases/03-slack-tools-array/compression.diff)
+- [Output with CCR](cases/03-slack-tools-array/output.md) - [diff](cases/03-slack-tools-array/compression.diff)
+- [Output without CCR](cases/03-slack-tools-array/output-noccr.md) - [diff](cases/03-slack-tools-array/compression-noccr.diff)
 
 Input excerpt:
 
@@ -210,8 +210,8 @@ Output excerpt:
 ### `01-github-tools-array`
 
 - [Full input](cases/01-github-tools-array/input.json)
-- [Full output](cases/01-github-tools-array/output.md)
-- [Input vs output diff](cases/01-github-tools-array/compression.diff)
+- [Output with CCR](cases/01-github-tools-array/output.md) - [diff](cases/01-github-tools-array/compression.diff)
+- [Output without CCR](cases/01-github-tools-array/output-noccr.md) - [diff](cases/01-github-tools-array/compression-noccr.diff)
 
 Input excerpt:
 
@@ -300,8 +300,8 @@ Output excerpt:
 ### `07-app-schema-object`
 
 - [Full input](cases/07-app-schema-object/input.json)
-- [Full output](cases/07-app-schema-object/output.md)
-- [Input vs output diff](cases/07-app-schema-object/compression.diff)
+- [Output with CCR](cases/07-app-schema-object/output.md) - [diff](cases/07-app-schema-object/compression.diff)
+- [Output without CCR](cases/07-app-schema-object/output-noccr.md) - [diff](cases/07-app-schema-object/compression-noccr.diff)
 
 Input excerpt:
 
@@ -390,8 +390,8 @@ Output excerpt:
 ### `10-cargo-metadata`
 
 - [Full input](cases/10-cargo-metadata/input.json)
-- [Full output](cases/10-cargo-metadata/output.md)
-- [Input vs output diff](cases/10-cargo-metadata/compression.diff)
+- [Output with CCR](cases/10-cargo-metadata/output.md) - [diff](cases/10-cargo-metadata/compression.diff)
+- [Output without CCR](cases/10-cargo-metadata/output-noccr.md) - [diff](cases/10-cargo-metadata/compression-noccr.diff)
 
 Input excerpt:
 
@@ -410,8 +410,8 @@ Output excerpt:
 ### `09-package-manifest`
 
 - [Full input](cases/09-package-manifest/input.json)
-- [Full output](cases/09-package-manifest/output.md)
-- [Input vs output diff](cases/09-package-manifest/compression.diff)
+- [Output with CCR](cases/09-package-manifest/output.md) - [diff](cases/09-package-manifest/compression.diff)
+- [Output without CCR](cases/09-package-manifest/output-noccr.md) - [diff](cases/09-package-manifest/compression-noccr.diff)
 
 Input excerpt:
 
@@ -500,8 +500,8 @@ Output excerpt:
 ### `08-lottie-animation`
 
 - [Full input](cases/08-lottie-animation/input.json)
-- [Full output](cases/08-lottie-animation/output.md)
-- [Input vs output diff](cases/08-lottie-animation/compression.diff)
+- [Output with CCR](cases/08-lottie-animation/output.md) - [diff](cases/08-lottie-animation/compression.diff)
+- [Output without CCR](cases/08-lottie-animation/output-noccr.md) - [diff](cases/08-lottie-animation/compression-noccr.diff)
 
 Input excerpt:
 
@@ -590,8 +590,8 @@ Output excerpt:
 ### `06-tauri-capabilities-schema`
 
 - [Full input](cases/06-tauri-capabilities-schema/input.json)
-- [Full output](cases/06-tauri-capabilities-schema/output.md)
-- [Input vs output diff](cases/06-tauri-capabilities-schema/compression.diff)
+- [Output with CCR](cases/06-tauri-capabilities-schema/output.md) - [diff](cases/06-tauri-capabilities-schema/compression.diff)
+- [Output without CCR](cases/06-tauri-capabilities-schema/output-noccr.md) - [diff](cases/06-tauri-capabilities-schema/compression-noccr.diff)
 
 Input excerpt:
 
@@ -680,8 +680,8 @@ Output excerpt:
 ### `05-polymarket-events-list`
 
 - [Full input](cases/05-polymarket-events-list/input.json)
-- [Full output](cases/05-polymarket-events-list/output.md)
-- [Input vs output diff](cases/05-polymarket-events-list/compression.diff)
+- [Output with CCR](cases/05-polymarket-events-list/output.md) - [diff](cases/05-polymarket-events-list/compression.diff)
+- [Output without CCR](cases/05-polymarket-events-list/output-noccr.md) - [diff](cases/05-polymarket-events-list/compression-noccr.diff)
 
 Input excerpt:
 
@@ -722,8 +722,8 @@ Output excerpt:
 ### `04-polymarket-markets-list`
 
 - [Full input](cases/04-polymarket-markets-list/input.json)
-- [Full output](cases/04-polymarket-markets-list/output.md)
-- [Input vs output diff](cases/04-polymarket-markets-list/compression.diff)
+- [Output with CCR](cases/04-polymarket-markets-list/output.md) - [diff](cases/04-polymarket-markets-list/compression.diff)
+- [Output without CCR](cases/04-polymarket-markets-list/output-noccr.md) - [diff](cases/04-polymarket-markets-list/compression-noccr.diff)
 
 Input excerpt:
 

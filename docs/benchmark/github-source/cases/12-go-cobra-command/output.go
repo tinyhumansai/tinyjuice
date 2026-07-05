@@ -1035,4 +1035,4 @@ func commandNameMatches(s string, t string) bool {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (55213 bytes) is available by calling tinyjuice_retrieve with token "59a0d770bb4e2e52e24e8107551f2e2e" (marker ⟦tj:59a0d770bb4e2e52e24e8107551f2e2e⟧)]
+[PARTIAL view — full original (55213 bytes): call tinyjuice_retrieve with token "59a0d770bb4e2e52e24e8107551f2e2e"]

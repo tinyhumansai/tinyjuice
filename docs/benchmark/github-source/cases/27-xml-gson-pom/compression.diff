@@ -866,5 +866,5 @@
 +
 +sign
 +
-+[compacted tool output — this is a PARTIAL view; the full original (26017 bytes) is available by calling tinyjuice_retrieve with token "8acb1f3b72a6f026916ac0735bad9aab" (marker ⟦tj:8acb1f3b72a6f026916ac0735bad9aab⟧)]
++[PARTIAL view — full original (26017 bytes): call tinyjuice_retrieve with token "8acb1f3b72a6f026916ac0735bad9aab"]
 \ No newline at end of file

@@ -95,4 +95,4 @@ export class ApiClient extends EventEmitter {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (17114 bytes) is available by calling tinyjuice_retrieve with token "f69eac7f33def4b2779de4e545ed50eb" (marker ⟦tj:f69eac7f33def4b2779de4e545ed50eb⟧)]
+[PARTIAL view — full original (17114 bytes): call tinyjuice_retrieve with token "f69eac7f33def4b2779de4e545ed50eb"]

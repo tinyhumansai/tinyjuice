@@ -2788,5 +2788,5 @@
 +| SLACK_INVITE_USER_TO_CHANNEL | Invites users to a specified Slack channel; this action is restricted to Enterprise Grid workspaces and requires the authenticated user to be a member of the target channel. | {"parameters":{"description":"Request schema for `InviteUserToChannel`","properties":{"channel_id":{"description":"The ID of the public or private Slack channel to which users will be invited.","examples":["C1234567890","C061X2Z7W9S"],"titl… |
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (106677 bytes) is available by calling tinyjuice_retrieve with token "af0d8da8ed1cd44f67463128faa85d3e" (marker ⟦tj:af0d8da8ed1cd44f67463128faa85d3e⟧)]
++[PARTIAL view — full original (106677 bytes): call tinyjuice_retrieve with token "af0d8da8ed1cd44f67463128faa85d3e"]
 \ No newline at end of file

@@ -406,4 +406,4 @@ func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 func methodNotAllowedHandler() http.Handler { return http.HandlerFunc(methodNotAllowed) }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (17782 bytes) is available by calling tinyjuice_retrieve with token "9fe967437d9bc37d9dfa8e3e7f742bd9" (marker ⟦tj:9fe967437d9bc37d9dfa8e3e7f742bd9⟧)]
+[PARTIAL view — full original (17782 bytes): call tinyjuice_retrieve with token "9fe967437d9bc37d9dfa8e3e7f742bd9"]

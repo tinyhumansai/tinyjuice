@@ -1021,4 +1021,4 @@ open class OkHttpClient internal constructor(
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (44011 bytes) is available by calling tinyjuice_retrieve with token "7c57469526804a4708f841ee010533f8" (marker ⟦tj:7c57469526804a4708f841ee010533f8⟧)]
+[PARTIAL view — full original (44011 bytes): call tinyjuice_retrieve with token "7c57469526804a4708f841ee010533f8"]

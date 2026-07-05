@@ -435,4 +435,4 @@
 <OPENHUMAN_ROOT>/src/openhuman/harness_init/registry.rs:160:        label: "TokenJuice ML compressor (torch)",
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (71423 bytes) is available by calling tinyjuice_retrieve with token "256e5d7fc313b1f608c415c7979c0c84" (marker ⟦tj:256e5d7fc313b1f608c415c7979c0c84⟧)]
+[PARTIAL view — full original (71423 bytes): call tinyjuice_retrieve with token "256e5d7fc313b1f608c415c7979c0c84"]

@@ -2,20 +2,20 @@
 
 Representative TypeScript, Python, C++, Go, and Rust sources plus an XML document. The language-agnostic code compressor collapses deep bodies across all of them (tree-sitter grammars refine Rust/TS/Python), and XML routes through the readable-text extractor.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `02-py-etl-pipeline` | [input](cases/02-py-etl-pipeline/input.py) | [output](cases/02-py-etl-pipeline/output.py) | [diff](cases/02-py-etl-pipeline/compression.diff) | 11.9 KB -> 2.1 KB (-82%) | 85.4% | 80.8% | 0.847 ms |
-| `05-rs-lexer` | [input](cases/05-rs-lexer/input.rs) | [output](cases/05-rs-lexer/output.rs) | [diff](cases/05-rs-lexer/compression.diff) | 9.3 KB -> 2.0 KB (-79%) | 82.7% | 76.9% | 0.622 ms |
-| `06-xml-maven-pom` | [input](cases/06-xml-maven-pom/input.xml) | [output](cases/06-xml-maven-pom/output.txt) | [diff](cases/06-xml-maven-pom/compression.diff) | 14.2 KB -> 3.3 KB (-77%) | 76.8% | 75.3% | 0.073 ms |
-| `04-go-http-server` | [input](cases/04-go-http-server/input.go) | [output](cases/04-go-http-server/output.go) | [diff](cases/04-go-http-server/compression.diff) | 8.8 KB -> 2.2 KB (-76%) | 79.7% | 73.5% | 0.054 ms |
-| `01-ts-api-client` | [input](cases/01-ts-api-client/input.ts) | [output](cases/01-ts-api-client/output.ts) | [diff](cases/01-ts-api-client/compression.diff) | 17.1 KB -> 4.2 KB (-75%) | 78.7% | 74.6% | 1.017 ms |
-| `03-cpp-geometry-engine` | [input](cases/03-cpp-geometry-engine/input.cpp) | [output](cases/03-cpp-geometry-engine/output.cpp) | [diff](cases/03-cpp-geometry-engine/compression.diff) | 12.5 KB -> 3.2 KB (-74%) | 79.2% | 73.3% | 0.063 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `02-py-etl-pipeline` | [input](cases/02-py-etl-pipeline/input.py) | 11.9 KB -> 2.1 KB (-82%) | 85.4%<br>[output](cases/02-py-etl-pipeline/output-noccr.py) - [diff](cases/02-py-etl-pipeline/compression-noccr.diff) | 81.6%<br>[output](cases/02-py-etl-pipeline/output.py) - [diff](cases/02-py-etl-pipeline/compression.diff) | 0.837 ms |
+| `05-rs-lexer` | [input](cases/05-rs-lexer/input.rs) | 9.3 KB -> 2.0 KB (-79%) | 82.7%<br>[output](cases/05-rs-lexer/output-noccr.rs) - [diff](cases/05-rs-lexer/compression-noccr.diff) | 77.9%<br>[output](cases/05-rs-lexer/output.rs) - [diff](cases/05-rs-lexer/compression.diff) | 0.617 ms |
+| `06-xml-maven-pom` | [input](cases/06-xml-maven-pom/input.xml) | 14.2 KB -> 3.3 KB (-77%) | 76.8%<br>[output](cases/06-xml-maven-pom/output-noccr.txt) - [diff](cases/06-xml-maven-pom/compression-noccr.diff) | 76.0%<br>[output](cases/06-xml-maven-pom/output.txt) - [diff](cases/06-xml-maven-pom/compression.diff) | 0.073 ms |
+| `04-go-http-server` | [input](cases/04-go-http-server/input.go) | 8.8 KB -> 2.2 KB (-76%) | 79.7%<br>[output](cases/04-go-http-server/output-noccr.go) - [diff](cases/04-go-http-server/compression-noccr.diff) | 74.7%<br>[output](cases/04-go-http-server/output.go) - [diff](cases/04-go-http-server/compression.diff) | 0.054 ms |
+| `01-ts-api-client` | [input](cases/01-ts-api-client/input.ts) | 17.1 KB -> 4.2 KB (-75%) | 78.7%<br>[output](cases/01-ts-api-client/output-noccr.ts) - [diff](cases/01-ts-api-client/compression-noccr.diff) | 75.2%<br>[output](cases/01-ts-api-client/output.ts) - [diff](cases/01-ts-api-client/compression.diff) | 1.082 ms |
+| `03-cpp-geometry-engine` | [input](cases/03-cpp-geometry-engine/input.cpp) | 12.5 KB -> 3.2 KB (-74%) | 79.2%<br>[output](cases/03-cpp-geometry-engine/output-noccr.cpp) - [diff](cases/03-cpp-geometry-engine/compression-noccr.diff) | 74.1%<br>[output](cases/03-cpp-geometry-engine/output.cpp) - [diff](cases/03-cpp-geometry-engine/compression.diff) | 0.063 ms |
 
 ## What TinyJuice Is Doing
 
@@ -26,8 +26,8 @@ The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compr
 ### `02-py-etl-pipeline`
 
 - [Full input](cases/02-py-etl-pipeline/input.py)
-- [Full output](cases/02-py-etl-pipeline/output.py)
-- [Input vs output diff](cases/02-py-etl-pipeline/compression.diff)
+- [Output with CCR](cases/02-py-etl-pipeline/output.py) - [diff](cases/02-py-etl-pipeline/compression.diff)
+- [Output without CCR](cases/02-py-etl-pipeline/output-noccr.py) - [diff](cases/02-py-etl-pipeline/compression-noccr.diff)
 
 Input excerpt:
 
@@ -116,8 +116,8 @@ def transform_records(path: Path, batch_size: int = 500) -> Iterator[Record]:
 ### `05-rs-lexer`
 
 - [Full input](cases/05-rs-lexer/input.rs)
-- [Full output](cases/05-rs-lexer/output.rs)
-- [Input vs output diff](cases/05-rs-lexer/compression.diff)
+- [Output with CCR](cases/05-rs-lexer/output.rs) - [diff](cases/05-rs-lexer/compression.diff)
+- [Output without CCR](cases/05-rs-lexer/output-noccr.rs) - [diff](cases/05-rs-lexer/compression-noccr.diff)
 
 Input excerpt:
 
@@ -206,8 +206,8 @@ impl<'a> Lexer<'a> {
 ### `04-go-http-server`
 
 - [Full input](cases/04-go-http-server/input.go)
-- [Full output](cases/04-go-http-server/output.go)
-- [Input vs output diff](cases/04-go-http-server/compression.diff)
+- [Output with CCR](cases/04-go-http-server/output.go) - [diff](cases/04-go-http-server/compression.diff)
+- [Output without CCR](cases/04-go-http-server/output-noccr.go) - [diff](cases/04-go-http-server/compression-noccr.diff)
 
 Input excerpt:
 
@@ -296,8 +296,8 @@ func (s *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 ### `03-cpp-geometry-engine`
 
 - [Full input](cases/03-cpp-geometry-engine/input.cpp)
-- [Full output](cases/03-cpp-geometry-engine/output.cpp)
-- [Input vs output diff](cases/03-cpp-geometry-engine/compression.diff)
+- [Output with CCR](cases/03-cpp-geometry-engine/output.cpp) - [diff](cases/03-cpp-geometry-engine/compression.diff)
+- [Output without CCR](cases/03-cpp-geometry-engine/output-noccr.cpp) - [diff](cases/03-cpp-geometry-engine/compression-noccr.diff)
 
 Input excerpt:
 
@@ -386,8 +386,8 @@ public:
 ### `01-ts-api-client`
 
 - [Full input](cases/01-ts-api-client/input.ts)
-- [Full output](cases/01-ts-api-client/output.ts)
-- [Input vs output diff](cases/01-ts-api-client/compression.diff)
+- [Output with CCR](cases/01-ts-api-client/output.ts) - [diff](cases/01-ts-api-client/compression.diff)
+- [Output without CCR](cases/01-ts-api-client/output-noccr.ts) - [diff](cases/01-ts-api-client/compression-noccr.diff)
 
 Input excerpt:
 
@@ -476,8 +476,8 @@ export async function postJson<T>(url: string, opts: RequestOptions = { method: 
 ### `06-xml-maven-pom`
 
 - [Full input](cases/06-xml-maven-pom/input.xml)
-- [Full output](cases/06-xml-maven-pom/output.txt)
-- [Input vs output diff](cases/06-xml-maven-pom/compression.diff)
+- [Output with CCR](cases/06-xml-maven-pom/output.txt) - [diff](cases/06-xml-maven-pom/compression.diff)
+- [Output without CCR](cases/06-xml-maven-pom/output-noccr.txt) - [diff](cases/06-xml-maven-pom/compression-noccr.diff)
 
 Input excerpt:
 

@@ -21,4 +21,4 @@ Error: expect(element).not.toBeInTheDocument()
    Start at  23:49:42
    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
-[compacted tool output — this is a PARTIAL view; the full original (5554 bytes) is available by calling tinyjuice_retrieve with token "6662f8a36798fc5c20e4a63b3b70c5fe" (marker ⟦tj:6662f8a36798fc5c20e4a63b3b70c5fe⟧)]
+[PARTIAL view — full original (5554 bytes): call tinyjuice_retrieve with token "6662f8a36798fc5c20e4a63b3b70c5fe"]

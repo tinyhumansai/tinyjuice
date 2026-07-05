@@ -1,0 +1,2510 @@
+diff --git a/src/openhuman/credentials/http_creds.rs b/src/openhuman/credentials/http_creds.rs
+new file mode 100644
+index 000000000..96f0a088b
+--- /dev/null
++++ b/src/openhuman/credentials/http_creds.rs
+@@ -0,0 +1,519 @@
++//! Named HTTP credentials for `http_request` flow nodes.
++//!
++//! A flow's `http_request` node can carry a `connection_ref` of the shape
++//! `"http_cred:<name>"`. This module is the host-side store those names resolve
++//! against: each record is an **injection template** (bearer token, HTTP basic
++//! user:pass, or a raw custom header) whose secret material is encrypted at
++//! rest with the same [`SecretStore`](crate::openhuman::keyring::SecretStore)
++//! (ChaCha20-Poly1305) the auth-profile store uses.
++//!
++//! **Security contract:** the secret value NEVER leaves this module except as
++//! the header it is injected into, server-side, inside
++//! `tinyflows::caps::OpenHumanHttp::request`. It is never returned to the UI,
++//! handed to the flow engine/graph, or logged. List/summary shapes carry only
++//! the name + scheme + non-secret template fields ([`HttpCredentialSummary`]).
++
++use std::collections::BTreeMap;
++use std::fs;
++use std::path::{Path, PathBuf};
++
++use anyhow::{Context, Result};
++use base64::engine::Engine as _;
++use chrono::{DateTime, Utc};
++use serde::{Deserialize, Serialize};
++
++use crate::openhuman::config::Config;
++use crate::openhuman::keyring::SecretStore;
++
++const STORE_FILENAME: &str = "http-credentials.json";
++const CURRENT_SCHEMA_VERSION: u32 = 1;
++
++/// How a credential is presented on the outbound request.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
++#[serde(rename_all = "kebab-case")]
++pub enum HttpCredentialScheme {
++    /// `Authorization: Bearer <secret>`.
++    Bearer,
++    /// `Authorization: Basic base64(<username>:<secret>)`.
++    Basic,
++    /// A raw custom header: `<header_name>: <secret>` (e.g. `X-API-Key`).
++    Header,
++}
++
++impl HttpCredentialScheme {
++    pub fn as_str(self) -> &'static str {
++        match self {
++            HttpCredentialScheme::Bearer => "bearer",
++            HttpCredentialScheme::Basic => "basic",
++            HttpCredentialScheme::Header => "header",
++        }
++    }
++}
++
++/// A resolved HTTP credential, secret in the clear in memory. Produced only by
++/// [`HttpCredentialsStore::get`] and consumed only by the server-side injector.
++#[derive(Debug, Clone)]
++pub struct HttpCredential {
++    pub name: String,
++    pub scheme: HttpCredentialScheme,
++    /// Header name for the [`HttpCredentialScheme::Header`] scheme (e.g.
++    /// `X-API-Key`). Ignored for bearer/basic.
++    pub header_name: Option<String>,
++    /// Username for the [`HttpCredentialScheme::Basic`] scheme. Ignored
++    /// otherwise. Not itself a secret, but stored alongside the secret.
++    pub username: Option<String>,
++    /// The secret material: bearer token, basic password, or raw header value.
++    pub secret: String,
++    pub created_at: DateTime<Utc>,
++    pub updated_at: DateTime<Utc>,
++}
++
++impl HttpCredential {
++    pub fn bearer(name: impl Into<String>, token: impl Into<String>) -> Self {
++        let now = Utc::now();
++        Self {
++            name: name.into(),
++            scheme: HttpCredentialScheme::Bearer,
++            header_name: None,
++            username: None,
++            secret: token.into(),
++            created_at: now,
++            updated_at: now,
++        }
++    }
++
++    pub fn basic(
++        name: impl Into<String>,
++        username: impl Into<String>,
++        password: impl Into<String>,
++    ) -> Self {
++        let now = Utc::now();
++        Self {
++            name: name.into(),
++            scheme: HttpCredentialScheme::Basic,
++            header_name: None,
++            username: Some(username.into()),
++            secret: password.into(),
++            created_at: now,
++            updated_at: now,
++        }
++    }
++
++    pub fn header(
++        name: impl Into<String>,
++        header_name: impl Into<String>,
++        value: impl Into<String>,
++    ) -> Self {
++        let now = Utc::now();
++        Self {
++            name: name.into(),
++            scheme: HttpCredentialScheme::Header,
++            header_name: Some(header_name.into()),
++            username: None,
++            secret: value.into(),
++            created_at: now,
++            updated_at: now,
++        }
++    }
++
++    /// The `(header_name, header_value)` pair to inject onto the outbound
++    /// request. **The returned value contains the secret** — callers must merge
++    /// it into the request server-side and must never log or echo it.
++    pub fn to_header(&self) -> Result<(String, String)> {
++        match self.scheme {
++            HttpCredentialScheme::Bearer => {
++                anyhow::ensure!(
++                    !self.secret.trim().is_empty(),
++                    "http_cred '{}': bearer token is empty",
++                    self.name
++                );
++                Ok((
++                    "Authorization".to_string(),
++                    format!("Bearer {}", self.secret),
++                ))
++            }
++            HttpCredentialScheme::Basic => {
++                let username = self.username.as_deref().unwrap_or_default();
++                let encoded = base64::engine::general_purpose::STANDARD
++                    .encode(format!("{username}:{}", self.secret));
++                Ok(("Authorization".to_string(), format!("Basic {encoded}")))
++            }
++            HttpCredentialScheme::Header => {
++                let header_name = self
++                    .header_name
++                    .as_deref()
++                    .map(str::trim)
++                    .filter(|h| !h.is_empty())
++                    .with_context(|| {
++                        format!(
++                            "http_cred '{}': header scheme requires a non-empty header_name",
++                            self.name
++                        )
++                    })?;
++                anyhow::ensure!(
++                    !self.secret.trim().is_empty(),
++                    "http_cred '{}': header value is empty",
++                    self.name
++                );
++                Ok((header_name.to_string(), self.secret.clone()))
++            }
++        }
++    }
++}
++
++/// Secret-free description of a stored credential — safe to return to the UI /
++/// list surfaces (e.g. a future `flows_list_connections`).
++#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
++#[serde(rename_all = "camelCase")]
++pub struct HttpCredentialSummary {
++    pub name: String,
++    pub scheme: String,
++    pub header_name: Option<String>,
++    pub username: Option<String>,
++    pub updated_at: String,
++}
++
++/// On-disk record. `secret` is stored as `enc2:<hex>` ciphertext (or plaintext
++/// when `secrets.encrypt = false`, matching the auth-profile store's behavior).
++#[derive(Debug, Clone, Serialize, Deserialize)]
++struct PersistedHttpCredential {
++    scheme: String,
++    #[serde(default)]
++    header_name: Option<String>,
++    #[serde(default)]
++    username: Option<String>,
++    /// Encrypted secret material.
++    secret: String,
++    created_at: String,
++    updated_at: String,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++struct PersistedHttpCredentials {
++    schema_version: u32,
++    updated_at: String,
++    credentials: BTreeMap<String, PersistedHttpCredential>,
++}
++
++impl Default for PersistedHttpCredentials {
++    fn default() -> Self {
++        Self {
++            schema_version: CURRENT_SCHEMA_VERSION,
++            updated_at: Utc::now().to_rfc3339(),
++            credentials: BTreeMap::new(),
++        }
++    }
++}
++
++/// Encrypted-at-rest store of named HTTP credentials.
++#[derive(Debug, Clone)]
++pub struct HttpCredentialsStore {
++    path: PathBuf,
++    secret_store: SecretStore,
++}
++
++impl HttpCredentialsStore {
++    pub fn from_config(config: &Config) -> Self {
++        let state_dir = super::state_dir_from_config(config);
++        Self::new(&state_dir, config.secrets.encrypt)
++    }
++
++    pub fn new(state_dir: &Path, encrypt_secrets: bool) -> Self {
++        Self {
++            path: state_dir.join(STORE_FILENAME),
++            secret_store: SecretStore::new(state_dir, encrypt_secrets),
++        }
++    }
++
++    /// Normalize a credential name into the stable storage key. Names are
++    /// case-insensitive and trimmed so `http_cred:Stripe ` and `stripe` resolve
++    /// to the same record.
++    fn normalize_name(name: &str) -> String {
++        name.trim().to_ascii_lowercase()
++    }
++
++    /// List all stored credentials as secret-free summaries.
++    pub fn list(&self) -> Result<Vec<HttpCredentialSummary>> {
++        let persisted = self.read_persisted()?;
++        Ok(persisted
++            .credentials
++            .into_iter()
++            .map(|(name, rec)| HttpCredentialSummary {
++                name,
++                scheme: rec.scheme,
++                header_name: rec.header_name,
++                username: rec.username,
++                updated_at: rec.updated_at,
++            })
++            .collect())
++    }
++
++    /// Resolve a credential name to its secret-bearing record, decrypting the
++    /// secret. Returns `Ok(None)` when no such credential exists.
++    pub fn get(&self, name: &str) -> Result<Option<HttpCredential>> {
++        let key = Self::normalize_name(name);
++        let persisted = self.read_persisted()?;
++        let Some(rec) = persisted.credentials.get(&key) else {
++            log::debug!(target: "credentials", "[credentials] http_cred get miss name={key}");
++            return Ok(None);
++        };
++
++        let scheme = parse_scheme(&rec.scheme).with_context(|| {
++            format!("http_cred '{key}' has unrecognized scheme {:?}", rec.scheme)
++        })?;
++        let secret = self
++            .secret_store
++            .decrypt(&rec.secret)
++            .with_context(|| format!("failed to decrypt http_cred '{key}' secret"))?;
++
++        log::debug!(
++            target: "credentials",
++            "[credentials] http_cred get hit name={key} scheme={}",
++            scheme.as_str()
++        );
++        Ok(Some(HttpCredential {
++            name: key,
++            scheme,
++            header_name: rec.header_name.clone(),
++            username: rec.username.clone(),
++            secret,
++            created_at: parse_dt(&rec.created_at),
++            updated_at: parse_dt(&rec.updated_at),
++        }))
++    }
++
++    /// Insert or replace a credential, encrypting its secret at rest.
++    pub fn upsert(&self, cred: &HttpCredential) -> Result<()> {
++        let key = Self::normalize_name(&cred.name);
++        anyhow::ensure!(!key.is_empty(), "http_cred name cannot be empty");
++
++        let mut persisted = self.read_persisted()?;
++        let encrypted = self
++            .secret_store
++            .encrypt(&cred.secret)
++            .context("failed to encrypt http_cred secret")?;
++
++        let created_at = persisted
++            .credentials
++            .get(&key)
++            .map(|r| r.created_at.clone())
++            .unwrap_or_else(|| cred.created_at.to_rfc3339());
++
++        persisted.credentials.insert(
++            key.clone(),
++            PersistedHttpCredential {
++                scheme: cred.scheme.as_str().to_string(),
++                header_name: cred.header_name.clone(),
++                username: cred.username.clone(),
++                secret: encrypted,
++                created_at,
++                updated_at: Utc::now().to_rfc3339(),
++            },
++        );
++        persisted.updated_at = Utc::now().to_rfc3339();
++        self.write_persisted(&persisted)?;
++        log::info!(
++            target: "credentials",
++            "[credentials] http_cred upserted name={key} scheme={} (secret redacted)",
++            cred.scheme.as_str()
++        );
++        Ok(())
++    }
++
++    /// Remove a credential by name. Returns whether a record was removed.
++    pub fn remove(&self, name: &str) -> Result<bool> {
++        let key = Self::normalize_name(name);
++        let mut persisted = self.read_persisted()?;
++        let removed = persisted.credentials.remove(&key).is_some();
++        if removed {
++            persisted.updated_at = Utc::now().to_rfc3339();
++            self.write_persisted(&persisted)?;
++            log::info!(target: "credentials", "[credentials] http_cred removed name={key}");
++        }
++        Ok(removed)
++    }
++
++    fn read_persisted(&self) -> Result<PersistedHttpCredentials> {
++        if !self.path.exists() {
++            return Ok(PersistedHttpCredentials::default());
++        }
++        let bytes = fs::read(&self.path).with_context(|| {
++            format!(
++                "failed to read http-credentials store at {}",
++                self.path.display()
++            )
++        })?;
++        if bytes.is_empty() {
++            return Ok(PersistedHttpCredentials::default());
++        }
++        serde_json::from_slice(&bytes).with_context(|| {
++            format!(
++                "http-credentials store at {} is not valid JSON",
++                self.path.display()
++            )
++        })
++    }
++
++    fn write_persisted(&self, persisted: &PersistedHttpCredentials) -> Result<()> {
++        if let Some(parent) = self.path.parent() {
++            fs::create_dir_all(parent).with_context(|| {
++                format!(
++                    "failed to create http-credentials dir at {}",
++                    parent.display()
++                )
++            })?;
++        }
++        let json = serde_json::to_vec_pretty(persisted)
++            .context("failed to serialize http-credentials store")?;
++        // Atomic publish: write to a unique tmp then rename over the store so a
++        // concurrent reader never observes a torn file.
++        let tmp_name = format!(
++            "{STORE_FILENAME}.tmp.{}.{}",
++            std::process::id(),
++            Utc::now().timestamp_nanos_opt().unwrap_or_default()
++        );
++        let tmp_path = self.path.with_file_name(tmp_name);
++        fs::write(&tmp_path, &json)
++            .with_context(|| format!("failed to write {}", tmp_path.display()))?;
++        if let Err(e) = fs::rename(&tmp_path, &self.path) {
++            let _ = fs::remove_file(&tmp_path);
++            return Err(e).with_context(|| {
++                format!(
++                    "failed to replace http-credentials store at {}",
++                    self.path.display()
++                )
++            });
++        }
++        Ok(())
++    }
++}
++
++fn parse_scheme(raw: &str) -> Option<HttpCredentialScheme> {
++    match raw.trim().to_ascii_lowercase().as_str() {
++        "bearer" => Some(HttpCredentialScheme::Bearer),
++        "basic" => Some(HttpCredentialScheme::Basic),
++        "header" => Some(HttpCredentialScheme::Header),
++        _ => None,
++    }
++}
++
++fn parse_dt(raw: &str) -> DateTime<Utc> {
++    DateTime::parse_from_rfc3339(raw)
++        .map(|dt| dt.with_timezone(&Utc))
++        .unwrap_or_else(|_| Utc::now())
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn temp_store() -> (tempfile::TempDir, HttpCredentialsStore) {
++        let dir = tempfile::tempdir().expect("tempdir");
++        // encrypt=true exercises the ChaCha20-Poly1305 at-rest path.
++        let store = HttpCredentialsStore::new(dir.path(), true);
++        (dir, store)
++    }
++
++    #[test]
++    fn bearer_to_header_is_authorization_bearer() {
++        let cred = HttpCredential::bearer("stripe", "sk_live_abc123");
++        let (name, value) = cred.to_header().unwrap();
++        assert_eq!(name, "Authorization");
++        assert_eq!(value, "Bearer sk_live_abc123");
++    }
++
++    #[test]
++    fn basic_to_header_is_base64_user_pass() {
++        let cred = HttpCredential::basic("acme", "alice", "hunter2");
++        let (name, value) = cred.to_header().unwrap();
++        assert_eq!(name, "Authorization");
++        // base64("alice:hunter2")
++        let expected = base64::engine::general_purpose::STANDARD.encode("alice:hunter2");
++        assert_eq!(value, format!("Basic {expected}"));
++    }
++
++    #[test]
++    fn header_scheme_uses_custom_header_name() {
++        let cred = HttpCredential::header("apikey", "X-API-Key", "topsecret");
++        let (name, value) = cred.to_header().unwrap();
++        assert_eq!(name, "X-API-Key");
++        assert_eq!(value, "topsecret");
++    }
++
++    #[test]
++    fn header_scheme_without_header_name_errors() {
++        let mut cred = HttpCredential::header("apikey", "X-API-Key", "topsecret");
++        cred.header_name = None;
++        assert!(cred.to_header().is_err());
++    }
++
++    #[test]
++    fn roundtrip_encrypts_secret_at_rest() {
++        let (dir, store) = temp_store();
++        let secret = "sk_live_super_secret_value";
++        store
++            .upsert(&HttpCredential::bearer("stripe", secret))
++            .unwrap();
++
++        // The on-disk file must NOT contain the plaintext secret.
++        let raw = std::fs::read_to_string(dir.path().join(STORE_FILENAME)).unwrap();
++        assert!(
++            !raw.contains(secret),
++            "plaintext secret leaked into on-disk store: {raw}"
++        );
++        assert!(raw.contains("enc2:"), "secret was not encrypted: {raw}");
++
++        // But get() decrypts it back.
++        let got = store.get("stripe").unwrap().expect("credential present");
++        assert_eq!(got.secret, secret);
++        assert_eq!(got.scheme, HttpCredentialScheme::Bearer);
++    }
++
++    #[test]
++    fn name_resolution_is_case_insensitive_and_trimmed() {
++        let (_dir, store) = temp_store();
++        store
++            .upsert(&HttpCredential::bearer("Stripe", "tok"))
++            .unwrap();
++        assert!(store.get("  STRIPE ").unwrap().is_some());
++        assert!(store.get("stripe").unwrap().is_some());
++    }
++
++    #[test]
++    fn list_never_exposes_secrets() {
++        let (_dir, store) = temp_store();
++        store
++            .upsert(&HttpCredential::header("apikey", "X-API-Key", "topsecret"))
++            .unwrap();
++        let summaries = store.list().unwrap();
++        assert_eq!(summaries.len(), 1);
++        let s = &summaries[0];
++        assert_eq!(s.name, "apikey");
++        assert_eq!(s.scheme, "header");
++        assert_eq!(s.header_name.as_deref(), Some("X-API-Key"));
++        // The summary type has no secret field at all — assert via serialization
++        // that "topsecret" never appears.
++        let json = serde_json::to_string(&summaries).unwrap();
++        assert!(
++            !json.contains("topsecret"),
++            "secret leaked into summary: {json}"
++        );
++    }
++
++    #[test]
++    fn get_unknown_name_returns_none() {
++        let (_dir, store) = temp_store();
++        assert!(store.get("does-not-exist").unwrap().is_none());
++    }
++
++    #[test]
++    fn remove_deletes_record() {
++        let (_dir, store) = temp_store();
++        store
++            .upsert(&HttpCredential::bearer("stripe", "tok"))
++            .unwrap();
++        assert!(store.remove("stripe").unwrap());
++        assert!(store.get("stripe").unwrap().is_none());
++        assert!(!store.remove("stripe").unwrap());
++    }
++}
+diff --git a/src/openhuman/credentials/mod.rs b/src/openhuman/credentials/mod.rs
+index ce625c81a..4b507cc51 100644
+--- a/src/openhuman/credentials/mod.rs
++++ b/src/openhuman/credentials/mod.rs
+@@ -1,28 +1,32 @@
+ //! Credential management for app session and provider auth profiles.
+ 
+ pub mod bus;
+ pub mod cli;
+ mod core;
++pub mod http_creds;
+ pub mod ops;
+ pub mod profiles;
+ pub mod responses;
+[... 7 context line(s) omitted ...]
+     BackendOAuthClient, ConnectResponse, IntegrationSummary, IntegrationTokensHandoff,
+ };
+ pub use core::*;
++pub use http_creds::{
++    HttpCredential, HttpCredentialScheme, HttpCredentialSummary, HttpCredentialsStore,
++};
+ pub use ops as rpc;
+ pub use ops::*;
+ // Direct-mode (BYO Composio API key) credential helpers.
+[... 4 context line(s) omitted ...]
+     all_controller_schemas as all_credentials_controller_schemas,
+     all_registered_controllers as all_credentials_registered_controllers,
+ };
+diff --git a/src/openhuman/flows/mod.rs b/src/openhuman/flows/mod.rs
+index d70743a04..95d4b799b 100644
+--- a/src/openhuman/flows/mod.rs
++++ b/src/openhuman/flows/mod.rs
+@@ -1,32 +1,32 @@
+ //! The `flows::` domain: saved automation workflows (tinyflows graphs) —
+ //! create/get/list/update/delete/enable/run, backed by SQLite. Mirrors
+ //! `src/openhuman/cron/`'s module shape.
+[... 25 context line(s) omitted ...]
+ // lives in the sibling `tinyflows` domain and persists each finished step onto
+ // the `flow_runs` row through this function as the run executes.
+ pub use store::{kv_get, kv_set, upsert_flow_run_step};
+-pub use types::{Flow, FlowRun, FlowRunStep, FlowRunTrigger, FlowValidation};
++pub use types::{Flow, FlowConnection, FlowRun, FlowRunStep, FlowRunTrigger, FlowValidation};
+diff --git a/src/openhuman/flows/ops.rs b/src/openhuman/flows/ops.rs
+index e289125b2..36596bc51 100644
+--- a/src/openhuman/flows/ops.rs
++++ b/src/openhuman/flows/ops.rs
+@@ -1,115 +1,154 @@
+ //! Business logic for the `flows::` domain: validate-on-save CRUD plus the
+ //! end-to-end `flows_run` / `flows_resume` path. Delegated to from
+ //! `schemas.rs`'s `handle_*` RPC/CLI handlers, mirroring
+[... 10 context line(s) omitted ...]
+ use crate::openhuman::flows::bus;
+ use crate::openhuman::flows::run_registry;
+ use crate::openhuman::flows::store;
+-use crate::openhuman::flows::types::{FlowRunStep, FlowRunTrigger};
++use crate::openhuman::flows::types::{FlowConnection, FlowRunStep, FlowRunTrigger};
+ use crate::openhuman::flows::{Flow, FlowRun};
+ use crate::rpc::RpcOutcome;
+ 
+[... 12 context line(s) omitted ...]
+ /// this is a dedicated flows-side TTL, not a reuse of the approval store's.
+ const FLOW_PARKED_TTL_SECS: i64 = 600;
+ 
++// ─────────────────────────────────────────────────────────────────────────────
++// Phase 2 — autonomy-tier gating of acting flow nodes
++// ─────────────────────────────────────────────────────────────────────────────
++//
++// A `flows_run` / `flows_resume` executes under a `TrustedAutomation { Workflow }`
++// origin (see `workflow_origin` below), but the *acting power* of a run is still
++// bounded by the user's `[autonomy]` tier — the same `SecurityPolicy`
++// (`src/openhuman/security/`) the agent tool-loop honors, built via
++// `SecurityPolicy::from_config(&config.autonomy, …)` inside
++// `tinyflows::caps::build_capabilities`.
++//
++// Before an acting node dispatches, its capability adapter
++// (`src/openhuman/tinyflows/caps.rs::enforce_node_tier_gate`) maps the node to a
++// `CommandClass` and consults `SecurityPolicy::gate_decision`. `Block` refuses
++// outright (`[policy-blocked]` error, no dispatch); `Prompt`/`Allow` fall through
++// to the process-global `ApprovalGate`, which performs the human round-trip for
++// `Prompt` exactly as the agent tool-loop does. Node → class → per-tier decision:
++//
++//   Flow node        CommandClass   read-only     supervised    full
++//   ────────────     ────────────   ──────────    ──────────    ──────────
++//   http_request     Network        BLOCK         Prompt        Prompt
++//   code             Write          BLOCK         Prompt        Allow
++//   tool_call        (curation +    (curated +    Prompt        Prompt/Allow¹
++//                     ApprovalGate)   scope gate)
++//   agent (llm)      — (no acting side effect; not tier-gated, only the
++//                        inference/privacy chokepoint applies)
++//   state (kv)       — (host-internal flow KV; not an outbound act)
++//
++//   ¹ tool_call routes through the deny-by-default curation/scope gate plus the
++//     ApprovalGate rather than `gate_decision`; a Network-class Composio action
++//     still prompts under supervised/full and the curation gate is the hard
++//     allowlist. See `caps.rs::OpenHumanTools`.
++//
++// `Network` is never `Allow` in any tier (always `Prompt` when not blocked), so
++// even a full-tier http_request node prompts unless a pre-declared trust root /
++// `auto_approve` short-circuits the ApprovalGate — matching `curl`/`shell`.
++// `Write` (code) is `Allow` under full, so trusted automations run sandboxed
++// code unattended; read-only blocks both outright.
++
+ /// Runs a raw graph JSON value through `tinyflows::migrate::migrate` (upgrade
+ /// an older-schema definition to current), deserializes it, and rejects a
+ /// structurally invalid graph via `tinyflows::validate::validate` — so a bad
+[... 74 context line(s) omitted ...]
+     if trigger_kind_fires(&kind) {
+         return Vec::new();
+     }
+@@ -132,160 +171,335 @@ pub(crate) fn graph_trigger_warnings(graph: &WorkflowGraph) -> Vec<String> {
+ pub fn flows_validate(graph_json: Value) -> RpcOutcome<crate::openhuman::flows::FlowValidation> {
+     use crate::openhuman::flows::FlowValidation;
+     tracing::debug!(target: "flows", "[flows] flows_validate: validating candidate graph");
+[... 74 context line(s) omitted ...]
+     Ok(RpcOutcome::single_log(flows, "flows listed"))
+ }
+ 
++/// Lists the connection sources a flow node's `connection_ref` can attach to:
++/// Composio connected accounts (`kind = "composio"`) and stored HTTP
++/// credentials (`kind = "http"`). This is the picker source for the Workflows
++/// UI (and the agent's flow-authoring surface) — it returns ids + display
++/// labels + kind ONLY, never any secret material.
++///
++/// The two sources are aggregated independently and are individually
++/// fault-tolerant: a transient Composio backend/network failure (or an
++/// unconfigured Direct-mode key) yields zero Composio entries but still returns
++/// the HTTP credential half, and vice-versa. A failure in one source never
++/// fails the whole picker.
++pub async fn flows_list_connections(
++    config: &Config,
++) -> Result<RpcOutcome<Vec<FlowConnection>>, String> {
++    tracing::debug!(
++        "[flows] rpc flows_list_connections: aggregating composio + http_cred picker sources"
++    );
++    let mut logs = Vec::new();
++
++    // 1. Composio connected accounts. Direct mode without a configured key
++    //    already short-circuits to an empty list (a valid setup state, not an
++    //    error); a backend outage returns Err — tolerate it so the picker still
++    //    surfaces HTTP credentials.
++    let composio_conns =
++        match crate::openhuman::composio::ops::composio_list_connections(config).await {
++            Ok(outcome) => {
++                tracing::debug!(
++                    count = outcome.value.connections.len(),
++                    "[flows] flows_list_connections: composio source returned connections"
++                );
++                outcome.value.connections
++            }
++            Err(e) => {
++                tracing::warn!(
++                    error = %e,
++                    "[flows] flows_list_connections: composio source unavailable — \
++                     returning http_cred entries only"
++                );
++                logs.push(format!(
++                    "flows_list_connections: composio source unavailable ({e})"
++                ));
++                Vec::new()
++            }
++        };
++
++    // 2. Named HTTP credentials — secret-free summaries (the store never hands
++    //    out secret material here; injection happens server-side in
++    //    `tinyflows::caps::OpenHumanHttp`).
++    let http_creds =
++        match crate::openhuman::credentials::HttpCredentialsStore::from_config(config).list() {
++            Ok(list) => {
++                tracing::debug!(
++                    count = list.len(),
++                    "[flows] flows_list_connections: http_cred store returned summaries"
++                );
++                list
++            }
++            Err(e) => {
++                tracing::warn!(
++                    error = %e,
++                    "[flows] flows_list_connections: http_cred store read failed — \
++                     returning composio entries only"
++                );
++                logs.push(format!(
++                    "flows_list_connections: http_cred store unavailable ({e})"
++                ));
++                Vec::new()
++            }
++        };
++
++    let connections = build_flow_connections(composio_conns, http_creds);
++    tracing::debug!(
++        total = connections.len(),
++        "[flows] flows_list_connections: aggregated picker sources"
++    );
++    logs.push(format!(
++        "flows_list_connections: {} connection(s)",
++        connections.len()
++    ));
++    Ok(RpcOutcome::new(connections, logs))
++}
++
++/// Fold Composio connected accounts + named HTTP credentials into the flat,
++/// secret-free [`FlowConnection`] picker list. Only ACTIVE Composio connections
++/// are surfaced — a pending/expired OAuth account cannot execute a tool, so it
++/// would be a dead pick. Pure (no I/O) so the aggregation shape is
++/// unit-testable without a live backend.
++fn build_flow_connections(
++    composio: Vec<crate::openhuman::composio::ComposioConnection>,
++    http: Vec<crate::openhuman::credentials::HttpCredentialSummary>,
++) -> Vec<FlowConnection> {
++    let mut out = Vec::with_capacity(composio.len() + http.len());
++    for conn in composio {
++        if !conn.is_active() {
++            tracing::debug!(
++                toolkit = %conn.toolkit,
++                connection_id = %conn.id,
++                status = %conn.status,
++                "[flows] flows_list_connections: skipping non-active composio connection"
++            );
++            continue;
++        }
++        let toolkit = conn.normalized_toolkit();
++        out.push(FlowConnection {
++            // Exactly the shape `tinyflows::caps::composio_connection_id` parses.
++            connection_ref: format!("composio:{}:{}", toolkit, conn.id),
++            kind: "composio".to_string(),
++            display: composio_connection_display(&toolkit, &conn),
++            toolkit: Some(toolkit),
++            scheme: None,
++        });
++    }
++    for cred in http {
++        out.push(FlowConnection {
++            // Exactly the shape `tinyflows::caps::http_cred_name` parses.
++            connection_ref: format!("http_cred:{}", cred.name),
++            kind: "http".to_string(),
++            display: http_credential_display(&cred),
++            toolkit: None,
++            scheme: Some(cred.scheme),
++        });
++    }
++    out
++}
++
++/// Human-readable picker label for a Composio connected account, e.g.
++/// `"Gmail · user@example.com"`. Prefers email, then workspace/team, then
++/// handle; falls back to the title-cased toolkit alone when no identity is
++/// cached. The identity fields are display metadata (already surfaced by
++/// `composio_list_connections`), never secret material.
++fn composio_connection_display(
++    toolkit: &str,
++    conn: &crate::openhuman::composio::ComposioConnection,
++) -> String {
++    let title = title_case_toolkit(toolkit);
++    let identity = conn
++        .account_email
++        .as_deref()
++        .or(conn.workspace.as_deref())
++        .or(conn.username.as_deref())
++        .map(str::trim)
++        .filter(|s| !s.is_empty());
++    match identity {
++        Some(id) => format!("{title} · {id}"),
++        None => title,
++    }
++}
++
++/// Human-readable picker label for a named HTTP credential, e.g.
++/// `"stripe (bearer)"`. Only the (non-secret) name + scheme — never the value.
++fn http_credential_display(cred: &crate::openhuman::credentials::HttpCredentialSummary) -> String {
++    format!("{} ({})", cred.name, cred.scheme)
++}
++
++/// Title-case a toolkit slug for display: `"gmail"` → `"Gmail"`,
++/// `"google_calendar"` → `"Google Calendar"`. Best-effort cosmetic only.
++fn title_case_toolkit(toolkit: &str) -> String {
++    let trimmed = toolkit.trim();
++    if trimmed.is_empty() {
++        return String::new();
++    }
++    trimmed
++        .split(|c| c == '_' || c == '-' || c == ' ')
++        .filter(|w| !w.is_empty())
++        .map(|word| {
++            let mut chars = word.chars();
++            match chars.next() {
++                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
++                None => String::new(),
++            }
++        })
++        .collect::<Vec<_>>()
++        .join(" ")
++}
++
+ /// Updates a flow's name, graph, and/or `require_approval` toggle.
+ /// Re-validates the graph (whether newly supplied or the existing one)
+ /// before persisting, same as `flows_create`.
+[... 74 context line(s) omitted ...]
+         json!({ "id": id, "removed": true }),
+         vec![format!("flow removed: {id}")],
+     ))
+diff --git a/src/openhuman/flows/ops_tests.rs b/src/openhuman/flows/ops_tests.rs
+index 47c2bd619..b9506ccea 100644
+--- a/src/openhuman/flows/ops_tests.rs
++++ b/src/openhuman/flows/ops_tests.rs
+@@ -1280,80 +1280,223 @@ fn flows_validate_warns_on_unfired_webhook_trigger() {
+ #[test]
+ fn flows_validate_does_not_warn_on_schedule_trigger() {
+     let outcome = flows_validate(schedule_trigger_graph("0 9 * * *"));
+[... 74 context line(s) omitted ...]
+         enabled.logs
+     );
+ }
++
++// ── flows_list_connections (picker source) ──────────────────────────────
++
++use crate::openhuman::composio::ComposioConnection;
++use crate::openhuman::credentials::{HttpCredential, HttpCredentialSummary, HttpCredentialsStore};
++
++fn composio_conn(id: &str, toolkit: &str, status: &str, email: Option<&str>) -> ComposioConnection {
++    ComposioConnection {
++        id: id.to_string(),
++        toolkit: toolkit.to_string(),
++        status: status.to_string(),
++        created_at: None,
++        account_email: email.map(str::to_string),
++        workspace: None,
++        username: None,
++    }
++}
++
++fn http_summary(name: &str, scheme: &str) -> HttpCredentialSummary {
++    HttpCredentialSummary {
++        name: name.to_string(),
++        scheme: scheme.to_string(),
++        header_name: None,
++        username: None,
++        updated_at: "2026-01-01T00:00:00Z".to_string(),
++    }
++}
++
++#[test]
++fn build_flow_connections_emits_parseable_refs_for_both_kinds() {
++    let composio = vec![composio_conn(
++        "ca_abc",
++        "Gmail",
++        "ACTIVE",
++        Some("user@example.com"),
++    )];
++    let http = vec![http_summary("stripe", "bearer")];
++
++    let out = build_flow_connections(composio, http);
++    assert_eq!(out.len(), 2);
++
++    let gmail = &out[0];
++    assert_eq!(gmail.kind, "composio");
++    // Toolkit is normalized (lowercased) and the ref round-trips through the
++    // exact parser the caps seam uses on execution.
++    assert_eq!(gmail.connection_ref, "composio:gmail:ca_abc");
++    assert_eq!(
++        crate::openhuman::tinyflows::caps::composio_connection_id(&gmail.connection_ref),
++        Some("ca_abc")
++    );
++    assert_eq!(gmail.toolkit.as_deref(), Some("gmail"));
++    assert_eq!(gmail.display, "Gmail · user@example.com");
++    assert!(gmail.scheme.is_none());
++
++    let stripe = &out[1];
++    assert_eq!(stripe.kind, "http");
++    assert_eq!(stripe.connection_ref, "http_cred:stripe");
++    assert_eq!(
++        crate::openhuman::tinyflows::caps::http_cred_name(&stripe.connection_ref),
++        Some("stripe")
++    );
++    assert_eq!(stripe.scheme.as_deref(), Some("bearer"));
++    assert_eq!(stripe.display, "stripe (bearer)");
++    assert!(stripe.toolkit.is_none());
++}
++
++#[test]
++fn build_flow_connections_skips_non_active_composio_accounts() {
++    let composio = vec![
++        composio_conn("ca_ok", "notion", "ACTIVE", None),
++        composio_conn("ca_pending", "slack", "PENDING", None),
++    ];
++    let out = build_flow_connections(composio, Vec::new());
++    assert_eq!(out.len(), 1, "only the ACTIVE connection is surfaced");
++    assert_eq!(out[0].connection_ref, "composio:notion:ca_ok");
++    // No cached identity → title-cased toolkit alone.
++    assert_eq!(out[0].display, "Notion");
++}
++
++#[test]
++fn build_flow_connections_never_carries_secret_fields() {
++    let out = build_flow_connections(
++        vec![composio_conn("ca_abc", "gmail", "ACTIVE", Some("u@x.io"))],
++        vec![http_summary("stripe", "header")],
++    );
++    let json = serde_json::to_string(&out).unwrap();
++    // The serialized picker payload must expose only ref/kind/display/toolkit/
++    // scheme — no secret-bearing key names at all.
++    for banned in [
++        "secret", "token", "password", "\"key\"", "apiKey", "api_key",
++    ] {
++        assert!(
++            !json
++                .to_ascii_lowercase()
++                .contains(&banned.to_ascii_lowercase()),
++            "serialized FlowConnection leaked a secret-bearing field ({banned}): {json}"
++        );
++    }
++}
++
++#[test]
++fn title_case_toolkit_handles_underscores_and_dashes() {
++    assert_eq!(title_case_toolkit("gmail"), "Gmail");
++    assert_eq!(title_case_toolkit("google_calendar"), "Google Calendar");
++    assert_eq!(title_case_toolkit("google-sheets"), "Google Sheets");
++    assert_eq!(title_case_toolkit(""), "");
++}
++
++#[tokio::test]
++async fn flows_list_connections_aggregates_http_creds_and_tolerates_composio() {
++    let tmp = TempDir::new().unwrap();
++    let mut config = test_config(&tmp);
++    // Force Direct mode with no key so the composio source short-circuits to an
++    // empty list offline (no network) — proving the aggregation still returns
++    // the HTTP-credential half.
++    config.composio.mode = crate::openhuman::config::schema::COMPOSIO_MODE_DIRECT.to_string();
++    // Secrets in the clear at rest for the test (mirrors the E2E config).
++    config.secrets.encrypt = false;
++
++    // Seed one HTTP credential through the same store the op reads.
++    let store = HttpCredentialsStore::from_config(&config);
++    store
++        .upsert(&HttpCredential::bearer("stripe", "sk_live_seed_secret"))
++        .unwrap();
++
++    let outcome = flows_list_connections(&config).await.unwrap();
++    let refs: Vec<_> = outcome
++        .value
++        .iter()
++        .map(|c| c.connection_ref.as_str())
++        .collect();
++    assert!(
++        refs.contains(&"http_cred:stripe"),
++        "http_cred must be surfaced: {refs:?}"
++    );
++
++    // The secret must never appear anywhere in the RPC payload.
++    let json = serde_json::to_string(&outcome.value).unwrap();
++    assert!(
++        !json.contains("sk_live_seed_secret"),
++        "secret leaked into flows_list_connections payload: {json}"
++    );
++}
+diff --git a/src/openhuman/flows/schemas.rs b/src/openhuman/flows/schemas.rs
+index 62b3b945c..ca896db1b 100644
+--- a/src/openhuman/flows/schemas.rs
++++ b/src/openhuman/flows/schemas.rs
+@@ -1,294 +1,360 @@
+ //! RPC/CLI controller surface for the `flows::` domain. Mirrors
+ //! `src/openhuman/cron/schemas.rs`'s shape exactly: `schemas(function)` builds
+ //! one `ControllerSchema`, `all_controller_schemas()`/
+[... 61 context line(s) omitted ...]
+     ]
+ }
+ 
++/// Field schema for one `FlowConnection` element of `flows_list_connections`'s
++/// output. Kept in one place so the schema mirrors
++/// `flows::types::FlowConnection` exactly — and documents that no secret field
++/// exists on the wire.
++fn flow_connection_fields() -> Vec<FieldSchema> {
++    vec![
++        FieldSchema {
++            name: "connection_ref",
++            ty: TypeSchema::String,
++            comment: "Ready-to-use `connection_ref` to stamp onto a node: \
++                      `composio:<toolkit>:<connection_id>` or `http_cred:<name>`.",
++            required: true,
++        },
++        FieldSchema {
++            name: "kind",
++            ty: TypeSchema::String,
++            comment: "Source kind: `composio` | `http`.",
++            required: true,
++        },
++        FieldSchema {
++            name: "display",
++            ty: TypeSchema::String,
++            comment: "Human-readable picker label (e.g. `Gmail · user@example.com`). \
++                      Never secret material.",
++            required: true,
++        },
++        FieldSchema {
++            name: "toolkit",
++            ty: TypeSchema::Option(Box::new(TypeSchema::String)),
++            comment: "Composio toolkit slug (kind `composio` only).",
++            required: false,
++        },
++        FieldSchema {
++            name: "scheme",
++            ty: TypeSchema::Option(Box::new(TypeSchema::String)),
++            comment: "HTTP credential injection scheme (kind `http` only): \
++                      `bearer` | `basic` | `header`.",
++            required: false,
++        },
++    ]
++}
++
+ pub fn all_controller_schemas() -> Vec<ControllerSchema> {
+     vec![
+         schemas("create"),
+         schemas("validate"),
+         schemas("get"),
+         schemas("list"),
++        schemas("list_connections"),
+         schemas("update"),
+         schemas("delete"),
+         schemas("set_enabled"),
+[... 23 context line(s) omitted ...]
+             schema: schemas("list"),
+             handler: handle_list,
+         },
++        RegisteredController {
++            schema: schemas("list_connections"),
++            handler: handle_list_connections,
++        },
+         RegisteredController {
+             schema: schemas("update"),
+             handler: handle_update,
+[... 106 context line(s) omitted ...]
+                 required: true,
+             }],
+         },
++        "list_connections" => ControllerSchema {
++            namespace: "flows",
++            function: "list_connections",
++            description: "List the connection sources a flow node's `connection_ref` can attach \
++                          to: Composio connected accounts (kind `composio`) and stored HTTP \
++                          credentials (kind `http`). Returns ids + display labels + kind ONLY — \
++                          never any secret material (OAuth/bearer tokens, passwords, and API \
++                          keys stay server-side and are injected only at execution time).",
++            inputs: vec![],
++            outputs: vec![FieldSchema {
++                name: "connections",
++                ty: TypeSchema::Array(Box::new(TypeSchema::Object {
++                    fields: flow_connection_fields(),
++                })),
++                comment: "Resolvable connections for the flows picker (composio + http), \
++                          secret-free.",
++                required: true,
++            }],
++        },
+         "update" => ControllerSchema {
+             namespace: "flows",
+             function: "update",
+[... 74 context line(s) omitted ...]
+             ],
+             outputs: vec![FieldSchema {
+                 name: "result",
+@@ -399,332 +465,376 @@ pub fn schemas(function: &str) -> ControllerSchema {
+             outputs: vec![FieldSchema {
+                 name: "runs",
+                 ty: TypeSchema::Array(Box::new(TypeSchema::Ref("FlowRun"))),
+[... 74 context line(s) omitted ...]
+     })
+ }
+ 
++fn handle_list_connections(_params: Map<String, Value>) -> ControllerFuture {
++    Box::pin(async move {
++        let config = config_rpc::load_config_with_timeout().await?;
++        to_json(ops::flows_list_connections(&config).await?)
++    })
++}
++
+ fn handle_update(params: Map<String, Value>) -> ControllerFuture {
+     Box::pin(async move {
+         let config = config_rpc::load_config_with_timeout().await?;
+[... 132 context line(s) omitted ...]
+                 "validate",
+                 "get",
+                 "list",
++                "list_connections",
+                 "update",
+                 "delete",
+                 "set_enabled",
+[... 9 context line(s) omitted ...]
+     #[test]
+     fn all_registered_controllers_has_handler_per_schema() {
+         let controllers = all_registered_controllers();
+-        assert_eq!(controllers.len(), 12);
++        assert_eq!(controllers.len(), 13);
+         let names: Vec<_> = controllers.iter().map(|c| c.schema.function).collect();
+         assert_eq!(
+             names,
+             vec![
+                 "create",
+                 "validate",
+                 "get",
+                 "list",
++                "list_connections",
+                 "update",
+                 "delete",
+                 "set_enabled",
+[... 6 context line(s) omitted ...]
+         );
+     }
+ 
++    #[test]
++    fn schemas_list_connections_has_no_inputs_and_secret_free_outputs() {
++        let s = schemas("list_connections");
++        assert_eq!(s.namespace, "flows");
++        assert!(s.inputs.is_empty());
++        // The only output is the `connections` array.
++        assert_eq!(s.outputs.len(), 1);
++        assert_eq!(s.outputs[0].name, "connections");
++        // No field on a FlowConnection element may resemble secret material.
++        if let TypeSchema::Array(inner) = &s.outputs[0].ty {
++            if let TypeSchema::Object { fields } = inner.as_ref() {
++                let names: Vec<_> = fields.iter().map(|f| f.name).collect();
++                assert_eq!(
++                    names,
++                    vec!["connection_ref", "kind", "display", "toolkit", "scheme"]
++                );
++                for f in fields {
++                    let n = f.name.to_ascii_lowercase();
++                    assert!(
++                        !n.contains("secret")
++                            && !n.contains("token")
++                            && !n.contains("password")
++                            && !n.contains("key"),
++                        "flow_connection field '{}' looks secret-bearing",
++                        f.name
++                    );
++                }
++            } else {
++                panic!("connections element type is not an Object");
++            }
++        } else {
++            panic!("connections output is not an Array");
++        }
++    }
++
+     #[test]
+     fn schemas_create_requires_name_and_graph() {
+         let s = schemas("create");
+[... 72 context line(s) omitted ...]
+         assert!(err.contains("missing required param 'id'"));
+     }
+ }
+diff --git a/src/openhuman/flows/types.rs b/src/openhuman/flows/types.rs
+index 1702f4eb8..32adfbd0a 100644
+--- a/src/openhuman/flows/types.rs
++++ b/src/openhuman/flows/types.rs
+@@ -44,160 +44,196 @@ impl FlowRunTrigger {
+ /// migration; `errors` carries the single structural error when it does not.
+ /// `warnings` is orthogonal to validity — a `valid` graph can still carry
+ /// warnings (it saves and enables fine, it just won't behave as an author
+[... 74 context line(s) omitted ...]
+     pub duration_ms: Option<u64>,
+ }
+ 
++/// A resolvable connection the flows UI / agent picker can attach to a node's
++/// `connection_ref`. Aggregated by `openhuman.flows_list_connections` from two
++/// host-side sources:
++///
++/// - **Composio connected accounts** (`kind = "composio"`) — each active OAuth
++///   integration instance, emitted as a ready-to-use
++///   `"composio:<toolkit>:<connection_id>"` ref (the exact shape
++///   `tinyflows::caps::composio_connection_id` parses back on execution).
++/// - **Named HTTP credentials** (`kind = "http"`) — each stored injection
++///   template, emitted as `"http_cred:<name>"` (the shape
++///   `tinyflows::caps::http_cred_name` parses).
++///
++/// **Security contract:** carries only non-secret identity — the
++/// `connection_ref` string plus a display label (and toolkit/scheme hints).
++/// It NEVER carries secret material (OAuth tokens, bearer tokens, passwords,
++/// API keys). Those stay server-side and are injected only inside the
++/// `tinyflows::caps` adapters at execution time.
++#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
++pub struct FlowConnection {
++    /// The ready-to-use `connection_ref` value to stamp onto a node:
++    /// `"composio:<toolkit>:<connection_id>"` or `"http_cred:<name>"`.
++    pub connection_ref: String,
++    /// Source kind: `"composio"` | `"http"`.
++    pub kind: String,
++    /// Human-readable label for the picker, e.g. `"Gmail · user@example.com"`
++    /// or `"stripe (bearer)"`. Never contains secret material.
++    pub display: String,
++    /// Composio toolkit slug (`kind = "composio"` only), e.g. `"gmail"`.
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub toolkit: Option<String>,
++    /// HTTP credential injection scheme (`kind = "http"` only):
++    /// `"bearer"` | `"basic"` | `"header"`. Not a secret.
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub scheme: Option<String>,
++}
++
+ /// A persisted record of one `flows_run` / `flows_resume` invocation, for the
+ /// B3 run-history inspector. Written by `flows::store` from `flows::ops`.
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+[... 74 context line(s) omitted ...]
+     fn flow_require_approval_defaults_false_when_omitted_from_json() {
+         // Legacy/serialized JSON authored before the field existed must still
+         // deserialize (SQLite rows are migrated via `add_column_if_missing`,
+diff --git a/src/openhuman/tinyflows/caps.rs b/src/openhuman/tinyflows/caps.rs
+index 4781802da..0e3181575 100644
+--- a/src/openhuman/tinyflows/caps.rs
++++ b/src/openhuman/tinyflows/caps.rs
+@@ -1,693 +1,1594 @@
+ //! The capability seam: five adapters implementing `tinyflows::caps` traits
+ //! over real OpenHuman services.
+ //!
+[... 22 context line(s) omitted ...]
+     create_composio_client, direct_execute, ComposioClientKind,
+ };
+ use crate::openhuman::config::{Config, HttpRequestConfig};
++use crate::openhuman::credentials::{HttpCredential, HttpCredentialsStore};
+ use crate::openhuman::flows;
+ use crate::openhuman::inference::provider::{
+     create_chat_provider, ChatMessage, ChatRequest, UsageInfo,
+ };
+ use crate::openhuman::sandbox::{execute_in_sandbox, resolve_sandbox_policy};
+-use crate::openhuman::security::SecurityPolicy;
++use crate::openhuman::security::{
++    CommandClass, GateDecision, SecurityPolicy, POLICY_BLOCKED_MARKER,
++};
+ use crate::openhuman::tools::traits::Tool as _;
+ use crate::openhuman::tools::HttpRequestTool;
+ 
+[... 15 context line(s) omitted ...]
+     }
+ }
+ 
++/// Hard autonomy-tier gate for an *acting* flow node (Phase 2).
++///
++/// A flow run scopes a `TrustedAutomation { Workflow }` origin, but the acting
++/// power of a run is still bounded by the user's `[autonomy]` tier — the same
++/// [`SecurityPolicy`] the agent tool-loop honors (`SecurityPolicy::from_config`
++/// off the `[autonomy]` block). Before an `http_request` (Network-class) or
++/// `code` (Write-class) node dispatches, we consult
++/// [`SecurityPolicy::gate_decision`] for that node's [`CommandClass`] and refuse
++/// outright when the tier `Block`s it — mirroring how `curl`/`shell` acting
++/// tools gate (`policy.gate_decision(CommandClass::Network)`), so a read-only
++/// run can never reach the network or run arbitrary code.
++///
++/// `Allow`/`Prompt` return `Ok(decision)`: this function only enforces the
++/// non-negotiable `Block` floor itself. The caller uses the returned
++/// [`GateDecision`] to drive [`gate_call_for_tier`] immediately after, which is
++/// what actually performs the `Prompt` round-trip (see that function's doc for
++/// why this is not automatic — a saved workflow's own `require_approval` flag
++/// would otherwise silently override the tier's `Prompt` decision). The error
++/// is prefixed with [`POLICY_BLOCKED_MARKER`] so the harness's repeated-failure
++/// middleware recognizes it as a permanent, don't-retry refusal.
++fn enforce_node_tier_gate(
++    security: &SecurityPolicy,
++    class: CommandClass,
++    node: &str,
++) -> Result<GateDecision> {
++    let decision = security.gate_decision(class);
++    tracing::debug!(
++        target: "flows",
++        node,
++        ?class,
++        ?decision,
++        tier = ?security.autonomy,
++        "[flows] node tier gate: evaluating autonomy-tier decision"
++    );
++    if decision == GateDecision::Block {
++        tracing::warn!(
++            target: "flows",
++            node,
++            ?class,
++            tier = ?security.autonomy,
++            "[flows] node tier gate: BLOCKED by autonomy tier — refusing before dispatch"
++        );
++        return Err(EngineError::Capability(format!(
++            "{POLICY_BLOCKED_MARKER} flows {node} node is not permitted under the current \
++             autonomy tier ({:?}): {class:?}-class actions are blocked. Raise the [autonomy] \
++             tier to run this node.",
++            security.autonomy
++        )));
++    }
++    Ok(decision)
++}
++
++/// Dispatches to the process-global [`ApprovalGate`](crate::openhuman::approval::ApprovalGate),
++/// escalating a `Prompt`-tier decision into a forced human-in-the-loop round
++/// trip regardless of the running flow's own `require_approval` toggle.
++///
++/// **Why this is needed (Codex P1 finding):** `ApprovalGate::intercept_audited`
++/// branches on the scoped [`AgentTurnOrigin`](crate::openhuman::agent::turn_origin::AgentTurnOrigin) —
++/// for a `TrustedAutomation { source: Workflow { require_approval: false }, .. }`
++/// origin (the default for every saved flow unless the author opts in) it
++/// returns `Allow` unconditionally, the same pre-declared-trust-root shortcut a
++/// user-authorized cron job gets. That shortcut is correct when the node's
++/// autonomy-tier decision was itself `Allow`, but it silently defeats a
++/// Supervised-tier `Prompt` decision: without this escalation, a Supervised
++/// user's `http_request`/`code` node would run unattended purely because the
++/// flow's `require_approval` defaults to `false` — the tier's "ask me" was
++/// never actually enforced.
++///
++/// When `tier_decision` is [`GateDecision::Prompt`] and the current origin is a
++/// `Workflow { require_approval: false }` trust root, this scopes a *for this
++/// call only* `Workflow { require_approval: true }` origin around
++/// `intercept_audited`, forcing the real parking/HITL flow. `GateDecision::Allow`
++/// (and any other origin shape) passes through unchanged — existing behavior.
++async fn gate_call_for_tier(
++    tier_decision: GateDecision,
++    tool_name: &str,
++    action_summary: &str,
++    args_redacted: Value,
++) -> (crate::openhuman::approval::GateOutcome, Option<String>) {
++    use crate::openhuman::agent::turn_origin;
++
++    let Some(gate) = crate::openhuman::approval::ApprovalGate::try_global() else {
++        return (crate::openhuman::approval::GateOutcome::Allow, None);
++    };
++
++    match escalated_origin_for_prompt(tier_decision, turn_origin::current()) {
++        Some(escalated) => {
++            tracing::debug!(
++                target: "flows",
++                tool_name,
++                "[flows] node tier gate: tier decision is Prompt — escalating this dispatch to a \
++                 forced approval round-trip regardless of the flow's require_approval toggle"
++            );
++            turn_origin::with_origin(
++                escalated,
++                gate.intercept_audited(tool_name, action_summary, args_redacted),
++            )
++            .await
++        }
++        None => {
++            gate.intercept_audited(tool_name, action_summary, args_redacted)
++                .await
++        }
++    }
++}
++
++/// Pure decision core of [`gate_call_for_tier`]: when `tier_decision` is
++/// [`GateDecision::Prompt`] and `origin` is a `Workflow { require_approval:
++/// false }` trust root, returns a clone of that origin with `require_approval`
++/// flipped to `true` (the forced escalation). Otherwise returns `None` — the
++/// caller then dispatches through the unmodified origin, matching prior
++/// behavior. Split out as a free function over plain values (no gate, no
++/// task-local read) so the escalation policy is unit-testable without a live
++/// `ApprovalGate`.
++fn escalated_origin_for_prompt(
++    tier_decision: GateDecision,
++    origin: Option<crate::openhuman::agent::turn_origin::AgentTurnOrigin>,
++) -> Option<crate::openhuman::agent::turn_origin::AgentTurnOrigin> {
++    use crate::openhuman::agent::turn_origin::{AgentTurnOrigin, TrustedAutomationSource};
++
++    if tier_decision != GateDecision::Prompt {
++        return None;
++    }
++    match origin {
++        Some(AgentTurnOrigin::TrustedAutomation {
++            job_id,
++            source:
++                TrustedAutomationSource::Workflow {
++                    require_approval: false,
++                },
++        }) => Some(AgentTurnOrigin::TrustedAutomation {
++            job_id,
++            source: TrustedAutomationSource::Workflow {
++                require_approval: true,
++            },
++        }),
++        _ => None,
++    }
++}
++
+ /// [`LlmProvider`] adapter over OpenHuman's inference stack
+ /// (`src/openhuman/inference/provider/`).
+ ///
+[... 131 context line(s) omitted ...]
+ /// - otherwise, apply the same per-user read/write/admin scope preference
+ ///   the agent loop uses (`UserScopePref::allows`).
+ ///
+-/// // TODO(0.3): this hard-rejects any *real* Composio toolkit that simply
+-/// // isn't in the static `catalog_for_toolkit` map yet (there is no
+-/// // host-side, offline way to ask "is this actually a valid Composio
+-/// // toolkit/action" beyond the curated catalogs OpenHuman ships). That's
+-/// // an accepted trade-off for a genuine allowlist rather than a residual
+-/// // gap to silently work around — extending `catalog_for_toolkit` (or, if
+-/// // a live catalog lookup becomes available, consulting it here) is how a
+-/// // newly-supported toolkit gets flow tool-call support.
+-async fn is_curated_flow_tool(slug: &str) -> bool {
++/// // (0.3) The former hard-reject of any *real* Composio toolkit not in the
++/// // static `catalog_for_toolkit` map is now lifted for toolkits the user has
++/// // actually connected: when a slug's toolkit has no static curated catalog,
++/// // the gate consults the user's **live connected-toolkit set** (from the
++/// // composio domain) and allows the call iff the user holds an ACTIVE
++/// // connection for that toolkit. A genuinely-unknown/made-up toolkit is never
++/// // connected, so it still rejects. Toolkits OpenHuman *does* ship a static
++/// // catalog for keep their stricter curated-action + per-user scope gating
++/// // unchanged (a connected-but-uncurated action on a cataloged toolkit is
++/// // still rejected — the catalog is the tighter allowlist there).
++///
++/// Returns whether `slug` may be invoked as a flow `tool_call`, given (only when
++/// needed) the user's live connected-toolkit slug set.
++///
++/// Split out from [`is_curated_flow_tool`] as a pure function so the two decision
++/// paths are unit-testable without a live Composio backend: `connected_toolkits`
++/// is `None` when the toolkit has a static catalog (the connected set is never
++/// consulted then) or when the connected set could not be fetched (fail-closed).
++async fn flow_tool_allowed(slug: &str, connected_toolkits: Option<&[String]>) -> bool {
+     use crate::openhuman::memory_sync::composio::providers::{
+         catalog_for_toolkit, find_curated, get_provider, load_user_scope_or_default,
+         toolkit_from_slug,
+     };
+ 
+     let Some(toolkit) = toolkit_from_slug(slug) else {
++        tracing::debug!(target: "flows", %slug, "[flows] tool_call curation: reject — slug has no extractable toolkit prefix");
+         return false;
+     };
+-    let catalog = get_provider(&toolkit)
++
++    // Path A: a toolkit OpenHuman ships a static curated catalog for keeps its
++    // strict curated-action + per-user scope gating (unchanged from B2).
++    if let Some(catalog) = get_provider(&toolkit)
+         .and_then(|p| p.curated_tools())
+-        .or_else(|| catalog_for_toolkit(&toolkit));
+-    let Some(catalog) = catalog else {
+-        return false;
++        .or_else(|| catalog_for_toolkit(&toolkit))
++    {
++        let Some(curated) = find_curated(catalog, slug) else {
++            tracing::debug!(target: "flows", %slug, %toolkit, "[flows] tool_call curation: reject — slug is not a curated action of this toolkit");
++            return false;
++        };
++        let pref = load_user_scope_or_default(&toolkit).await;
++        let allowed = pref.allows(curated.scope);
++        tracing::debug!(target: "flows", %slug, %toolkit, allowed, "[flows] tool_call curation: static curated catalog decision");
++        return allowed;
++    }
++
++    // Path B (0.3): no static catalog — allow iff the user has a live ACTIVE
++    // Composio connection for this toolkit. Made-up toolkits are never connected.
++    match connected_toolkits {
++        Some(toolkits) => {
++            let connected = toolkits.iter().any(|t| t.eq_ignore_ascii_case(&toolkit));
++            tracing::debug!(target: "flows", %slug, %toolkit, connected, "[flows] tool_call curation: live connected-toolkit allowlist decision");
++            connected
++        }
++        None => {
++            tracing::warn!(target: "flows", %slug, %toolkit, "[flows] tool_call curation: reject — no static catalog and the connected-toolkit set was unavailable (fail-closed)");
++            false
++        }
++    }
++}
++
++/// Whether `slug`'s toolkit lacks a static curated catalog, i.e. the curation
++/// decision must consult the user's live connected-toolkit set. Kept cheap and
++/// offline (a static `match`) so the common cataloged-toolkit path never pays
++/// for a connected-set fetch.
++fn slug_needs_connected_set(slug: &str) -> bool {
++    use crate::openhuman::memory_sync::composio::providers::{
++        catalog_for_toolkit, get_provider, toolkit_from_slug,
+     };
+-    let Some(curated) = find_curated(catalog, slug) else {
+-        return false;
++    match toolkit_from_slug(slug) {
++        Some(toolkit) => get_provider(&toolkit)
++            .and_then(|p| p.curated_tools())
++            .or_else(|| catalog_for_toolkit(&toolkit))
++            .is_none(),
++        None => false,
++    }
++}
++
++/// The user's live set of ACTIVE-connected Composio toolkit slugs (lowercased),
++/// or `None` when the backend is unreachable and no cached snapshot exists.
++///
++/// Uses [`fetch_connected_integrations_status`] so a transient backend failure
++/// (`Unavailable`) is distinguished from "confirmed zero connections" — on
++/// `Unavailable` we fall back to the last-known (even expired) cache rather than
++/// collapse the allowlist to empty, and only return `None` when there is truly
++/// nothing to go on (the caller then fails closed).
++async fn connected_toolkit_slugs(config: &Config) -> Option<Vec<String>> {
++    use crate::openhuman::composio::{
++        cached_active_integrations_including_expired, fetch_connected_integrations_status,
++        FetchConnectedIntegrationsStatus,
++    };
++
++    let integrations = match fetch_connected_integrations_status(config).await {
++        FetchConnectedIntegrationsStatus::Authoritative(v) => v,
++        FetchConnectedIntegrationsStatus::Unavailable => {
++            match cached_active_integrations_including_expired(config) {
++                Some(v) => {
++                    tracing::warn!(target: "flows", "[flows] connected-toolkit lookup: backend unavailable — using last-known (possibly stale) cached connections for the tool_call allowlist");
++                    v
++                }
++                None => {
++                    tracing::warn!(target: "flows", "[flows] connected-toolkit lookup: backend unavailable and no cached snapshot — connected-toolkit allowlist is empty this call");
++                    return None;
++                }
++            }
++        }
+     };
+-    let pref = load_user_scope_or_default(&toolkit).await;
+-    pref.allows(curated.scope)
++
++    Some(
++        integrations
++            .into_iter()
++            .filter(|i| i.connected)
++            .map(|i| i.toolkit.to_ascii_lowercase())
++            .collect(),
++    )
++}
++
++/// Deny-by-default curation gate for a flow `tool_call` slug (see
++/// [`flow_tool_allowed`] for the decision matrix). Fetches the user's live
++/// connected-toolkit set only when the slug's toolkit has no static catalog.
++async fn is_curated_flow_tool(config: &Config, slug: &str) -> bool {
++    let connected = if slug_needs_connected_set(slug) {
++        connected_toolkit_slugs(config).await
++    } else {
++        None
++    };
++    flow_tool_allowed(slug, connected.as_deref()).await
++}
++
++/// Finds the connected account a Composio `connection_id` refers to within a
++/// live connected-integrations snapshot, returning `(toolkit, display_label)`.
++/// UI-safe: the label is the pre-derived [`IntegrationConnection::label`], never
++/// a raw account-identity field. Pure over the snapshot so it is unit-testable.
++fn resolve_account<'a>(
++    integrations: &'a [crate::openhuman::composio::ConnectedIntegration],
++    connection_id: &str,
++) -> Option<(&'a str, Option<&'a str>)> {
++    integrations.iter().find_map(|integ| {
++        integ
++            .connections
++            .iter()
++            .find(|c| c.connection_id == connection_id)
++            .map(|c| (integ.toolkit.as_str(), c.label.as_deref()))
++    })
++}
++
++/// Resolves a Composio `connection_id` to the specific connected account it
++/// targets, for logging "which account was used". Best-effort: `None` when the
++/// id isn't found in the user's live connected accounts (stale cache / foreign
++/// id) or the backend is unreachable.
++async fn resolve_composio_account(
++    config: &Config,
++    connection_id: &str,
++) -> Option<(String, Option<String>)> {
++    let integrations = crate::openhuman::composio::fetch_connected_integrations(config).await;
++    resolve_account(&integrations, connection_id)
++        .map(|(toolkit, label)| (toolkit.to_string(), label.map(str::to_string)))
+ }
+ 
+ /// [`ToolInvoker`] adapter over Composio (`src/openhuman/composio/client.rs`).
+[... 52 context line(s) omitted ...]
+         // doc for why this differs from the general agent tool-call path).
+         // Runs before anything else — a rejected slug never reaches the
+         // composio client at all.
+-        if !is_curated_flow_tool(slug).await {
++        if !is_curated_flow_tool(&self.config, slug).await {
+             tracing::warn!(
+                 target: "flows",
+                 %slug,
+[... 28 context line(s) omitted ...]
+         let args_opt = if args.is_null() { None } else { Some(args) };
+         let connection_id = conn.and_then(composio_connection_id);
+ 
++        // Resolve the connection_ref to the SPECIFIC connected account it names,
++        // so we can log which account executes and validate it against the
++        // user's live connected set. Ambient-session fallback is used ONLY when
++        // no connection_ref was supplied.
++        let resolved_account = match connection_id {
++            Some(id) => Some((id, resolve_composio_account(&self.config, id).await)),
++            None => None,
++        };
++
+         tracing::debug!(
+             target: "flows",
+             %slug,
+[... 4 context line(s) omitted ...]
+ 
+         let response = match kind {
+             ComposioClientKind::Backend(client) => {
+-                if connection_id.is_some() {
+-                    tracing::warn!(
+-                        target: "flows",
+-                        %slug,
+-                        "[flows] tool_call: connection_ref set but backend mode has no per-call \
+-                         account-scoping path yet — using the ambient session account \
+-                         (documented stub, see caps.rs's OpenHumanTools doc)"
+-                    );
++                if let Some((id, resolved)) = &resolved_account {
++                    match resolved {
++                        Some((toolkit, label)) => tracing::warn!(
++                            target: "flows",
++                            %slug,
++                            connection_id = %id,
++                            %toolkit,
++                            account = label.as_deref().unwrap_or("<unlabeled>"),
++                            "[flows] tool_call: connection_ref resolves to a specific account, but \
++                             backend mode has no per-call account-scoping path yet — using the \
++                             ambient session account instead (documented stub, see caps.rs's \
++                             OpenHumanTools doc)"
++                        ),
++                        None => tracing::warn!(
++                            target: "flows",
++                            %slug,
++                            connection_id = %id,
++                            "[flows] tool_call: connection_ref set but backend mode has no per-call \
++                             account-scoping path yet — using the ambient session account \
++                             (documented stub, see caps.rs's OpenHumanTools doc)"
++                        ),
++                    }
+                 }
+                 client
+                     .execute_tool(slug, args_opt)
+                     .await
+                     .map_err(|e| EngineError::Capability(e.to_string()))
+             }
+-            ComposioClientKind::Direct(tool) => direct_execute(
+-                &tool,
+-                slug,
+-                args_opt,
+-                &self.config.composio.entity_id,
+-                connection_id,
+-            )
+-            .await
+-            .map_err(|e| EngineError::Capability(e.to_string())),
++            ComposioClientKind::Direct(tool) => {
++                match &resolved_account {
++                    Some((id, Some((toolkit, label)))) => tracing::info!(
++                        target: "flows",
++                        %slug,
++                        connection_id = %id,
++                        %toolkit,
++                        account = label.as_deref().unwrap_or("<unlabeled>"),
++                        "[flows] tool_call: executing against the resolved connected account"
++                    ),
++                    Some((id, None)) => tracing::warn!(
++                        target: "flows",
++                        %slug,
++                        connection_id = %id,
++                        "[flows] tool_call: connection_ref connection_id not found among the user's \
++                         live connected accounts (stale cache or foreign id) — forwarding to \
++                         Composio Direct mode as-is"
++                    ),
++                    None => tracing::debug!(
++                        target: "flows",
++                        %slug,
++                        "[flows] tool_call: no connection_ref — using the ambient signed-in account"
++                    ),
++                }
++                direct_execute(
++                    &tool,
++                    slug,
++                    args_opt,
++                    &self.config.composio.entity_id,
++                    connection_id,
++                )
++                .await
++                .map_err(|e| EngineError::Capability(e.to_string()))
++            }
+         };
+ 
+         if let Some(id) = audit_id {
+[... 21 context line(s) omitted ...]
+ ///
+ /// **B2:** also routes through the OpenHuman `ApprovalGate` before dispatch
+ /// (same rationale/shape as [`OpenHumanTools::invoke`] — closes the Codex P1
+-/// finding that flow HTTP nodes bypassed the Network approval gate). A
+-/// `"http_cred:<name>"` `connection_ref` is parsed but there is no HTTP
+-/// credential store to resolve it against yet (documented stub, see
+-/// `http_cred_name`) — the request proceeds without injecting stored
+-/// credentials.
++/// finding that flow HTTP nodes bypassed the Network approval gate).
++///
++/// **Phase 2 — `http_cred:<name>` resolution:** a `"http_cred:<name>"`
++/// `connection_ref` is now resolved against the credentials domain's
++/// [`HttpCredentialsStore`] (encrypted-at-rest bearer/basic/header templates).
++/// The resolved auth header is injected **server-side** into the outbound
++/// request — after the approval gate has already computed its redacted audit
++/// summary — so the secret is never surfaced to the approval UI, the flow
++/// engine/graph, the node's output, or the logs (only the header *name* and
++/// scheme are logged; the value is redacted). A `connection_ref` that names an
++/// **unknown** credential fails the request closed (`EngineError::Capability`)
++/// rather than silently sending it unauthenticated.
+ pub struct OpenHumanHttp {
+     pub security: Arc<SecurityPolicy>,
+     pub http_config: HttpRequestConfig,
++    pub http_creds: Arc<HttpCredentialsStore>,
+ }
+ 
+-#[async_trait]
+-impl HttpClient for OpenHumanHttp {
+-    async fn request(&self, request: Value, conn: Option<&str>) -> Result<Value> {
+-        const TOOL_NAME: &str = "flows_http_request";
++/// Resolves an optional HTTP `connection_ref` to the stored credential to
++/// inject. Split out as a free function (over the store, not `&self`) so the
++/// resolve/fail-closed policy is unit-testable without constructing a full
++/// [`OpenHumanHttp`] adapter.
++///
++/// - `None` conn, or a `connection_ref` whose prefix isn't `http_cred:` →
++///   `Ok(None)` (no credential to inject; a non-`http_cred:` prefix is logged
++///   and ignored, matching the pre-Phase-2 behavior).
++/// - a `http_cred:<name>` naming a **known** credential → `Ok(Some(cred))`
++///   (secret-bearing — the caller injects it server-side, never logs it).
++/// - a `http_cred:<name>` naming an **unknown** credential, a malformed
++///   (empty/whitespace-only) name, or a store error → `Err` — the request
++///   must fail closed, never proceed unauthenticated. Distinguishing "no
++///   `http_cred:` prefix at all" from "`http_cred:` prefix with a malformed
++///   name" matters: [`http_cred_name`] collapses both to `None`, which would
++///   otherwise let a typo'd or data-derived empty ref (e.g. `"http_cred:"`)
++///   silently fall through to an unauthenticated request (Codex P2 finding).
++fn resolve_http_credential(
++    store: &HttpCredentialsStore,
++    conn: Option<&str>,
++) -> Result<Option<HttpCredential>> {
++    let Some(conn) = conn else {
++        return Ok(None);
++    };
++    if conn.strip_prefix("http_cred:").is_none() {
++        tracing::debug!(target: "flows", %conn, "[flows] http conn: unrecognized connection_ref prefix (expected `http_cred:<name>`) — ignoring");
++        return Ok(None);
++    }
++    let Some(name) = http_cred_name(conn) else {
++        tracing::warn!(
++            target: "flows",
++            %conn,
++            "[flows] http_request: connection_ref has the `http_cred:` prefix but no credential \
++             name — failing the request closed rather than sending it unauthenticated"
++        );
++        return Err(EngineError::Capability(format!(
++            "http_request connection_ref has a malformed http_cred name: {conn:?}"
++        )));
++    };
+ 
+-        let mut audit_id: Option<String> = None;
+-        if let Some(gate) = crate::openhuman::approval::ApprovalGate::try_global() {
+-            let summary = crate::openhuman::approval::summarize_action(TOOL_NAME, &request);
+-            let redacted = crate::openhuman::approval::redact_args(&request);
+-            let (outcome, request_id) = gate.intercept_audited(TOOL_NAME, &summary, redacted).await;
+-            match outcome {
+-                crate::openhuman::approval::GateOutcome::Deny { reason } => {
+-                    return Err(EngineError::Capability(reason));
+-                }
+-                crate::openhuman::approval::GateOutcome::Allow => audit_id = request_id,
+-            }
++    match store.get(name) {
++        Ok(Some(cred)) => {
++            tracing::debug!(
++                target: "flows",
++                cred = %name,
++                scheme = cred.scheme.as_str(),
++                "[flows] http_request: resolved http_cred (secret redacted)"
++            );
++            Ok(Some(cred))
+         }
+-
+-        if let Some(name) = conn.and_then(http_cred_name) {
++        Ok(None) => {
+             tracing::warn!(
+                 target: "flows",
+                 cred = %name,
+-                "[flows] http_request: connection_ref names an http_cred secret, but no HTTP \
+-                 credential store exists yet — proceeding WITHOUT injecting stored credentials \
+-                 (documented stub, see caps.rs's OpenHumanHttp doc)"
++                "[flows] http_request: connection_ref names an unknown http_cred — failing the \
++                 request closed rather than sending it unauthenticated"
+             );
+-        } else if let Some(c) = conn {
+-            tracing::debug!(target: "flows", conn = %c, "[flows] http conn: unrecognized connection_ref prefix (expected `http_cred:<name>`) — ignoring");
++            Err(EngineError::Capability(format!(
++                "http_request connection_ref names an unknown http_cred: {name}"
++            )))
++        }
++        Err(e) => {
++            tracing::error!(
++                target: "flows",
++                cred = %name,
++                error = %e,
++                "[flows] http_request: failed to resolve http_cred from the store"
++            );
++            Err(EngineError::Capability(format!(
++                "failed to resolve http_cred '{name}': {e}"
++            )))
++        }
++    }
++}
++
++/// Merges a resolved credential's auth header into the outbound `request`'s
++/// `headers` object (creating it when absent), returning the header **name**
++/// that was injected for redacted logging. The header value carries the secret
++/// and is placed only into the request handed to `HttpRequestTool` — it is
++/// never logged or returned. An explicit stored credential wins over any inline
++/// same-named header the flow author set.
++fn inject_http_credential(request: &mut Value, cred: &HttpCredential) -> Result<String> {
++    let (header_name, header_value) = cred
++        .to_header()
++        .map_err(|e| EngineError::Capability(e.to_string()))?;
++
++    let obj = request.as_object_mut().ok_or_else(|| {
++        EngineError::Capability("http_request config must be a JSON object".to_string())
++    })?;
++    let headers_entry = obj
++        .entry("headers")
++        .or_insert_with(|| Value::Object(serde_json::Map::new()));
++    // A flow author may leave `headers` unset (null) — coerce to an object so
++    // the credential still injects. A non-object, non-null `headers` is a
++    // malformed config we refuse rather than silently drop the credential.
++    if headers_entry.is_null() {
++        *headers_entry = Value::Object(serde_json::Map::new());
++    }
++    let headers_obj = headers_entry.as_object_mut().ok_or_else(|| {
++        EngineError::Capability("http_request `headers` must be a JSON object".to_string())
++    })?;
++    headers_obj.insert(header_name.clone(), Value::String(header_value));
++
++    tracing::info!(
++        target: "flows",
++        cred = %cred.name,
++        scheme = cred.scheme.as_str(),
++        header = %header_name,
++        "[flows] http_request: injected stored credential header (value redacted)"
++    );
++    Ok(header_name)
++}
++
++#[async_trait]
++impl HttpClient for OpenHumanHttp {
++    async fn request(&self, mut request: Value, conn: Option<&str>) -> Result<Value> {
++        const TOOL_NAME: &str = "flows_http_request";
++
++        // Autonomy-tier gate (Phase 2): an http_request node reaches the network,
++        // so it is Network-class. A read-only run `Block`s here and never
++        // dispatches; Supervised/Full fall through to the ApprovalGate below.
++        // `gate_call_for_tier` is what actually performs the `Prompt` round-trip
++        // — it escalates a Supervised `Prompt` decision into a forced approval
++        // regardless of the flow's own `require_approval` toggle (Codex P1).
++        let tier_decision =
++            enforce_node_tier_gate(&self.security, CommandClass::Network, "http_request")?;
++
++        // The approval gate summarizes/redacts the request BEFORE any credential
++        // is injected, so a stored secret never lands in the approval UI or
++        // audit trail. Injection happens strictly after this point.
++        let summary = crate::openhuman::approval::summarize_action(TOOL_NAME, &request);
++        let redacted = crate::openhuman::approval::redact_args(&request);
++        let (outcome, audit_id) =
++            gate_call_for_tier(tier_decision, TOOL_NAME, &summary, redacted).await;
++        if let crate::openhuman::approval::GateOutcome::Deny { reason } = outcome {
++            return Err(EngineError::Capability(reason));
++        }
++
++        // Resolve `http_cred:<name>` to a stored credential and inject its auth
++        // header server-side. An unknown name fails the request closed (see
++        // `resolve_http_credential`) — we never send it unauthenticated.
++        if let Some(cred) = resolve_http_credential(&self.http_creds, conn)? {
++            inject_http_credential(&mut request, &cred)?;
+         }
+ 
+         let tool = HttpRequestTool::new(
+[... 62 context line(s) omitted ...]
+ /// Requires `node`/`python3` on the `PATH` the sandbox backend runs under;
+ /// there is no managed toolchain wiring here (unlike `node_exec`'s
+ /// `NodeBootstrap`).
++///
++/// **Phase 2 — autonomy-tier gating:** a `code` node runs arbitrary user code
++/// in a sandbox, so it is treated as [`CommandClass::Write`] (state-changing but
++/// sandbox-bounded — not inherently catastrophic). Before dispatch it consults
++/// [`enforce_node_tier_gate`]: a read-only run `Block`s and never executes; a
++/// Supervised run then routes through the `ApprovalGate` (Write ⇒ `Prompt`); a
++/// Full run executes silently. This closes the prior gap where the code node had
++/// no policy check and no approval gate at all.
+ pub struct OpenHumanCode {
+     pub config: Arc<Config>,
++    pub security: Arc<SecurityPolicy>,
+ }
+ 
+ const CODE_RUN_TIMEOUT_SECS: u64 = 60;
+ 
+ #[async_trait]
+ impl CodeRunner for OpenHumanCode {
+     async fn run(&self, language: CodeLanguage, source: &str, input: Value) -> Result<Value> {
++        // Autonomy-tier gate (Phase 2): sandboxed arbitrary-code execution is
++        // Write-class. A read-only run `Block`s here and never spawns anything;
++        // Supervised/Full fall through to the ApprovalGate below.
++        let tier_decision = enforce_node_tier_gate(&self.security, CommandClass::Write, "code")?;
++
++        // Approval gate (mirrors OpenHumanTools/OpenHumanHttp): `gate_call_for_tier`
++        // is what turns a Supervised-tier `Prompt` decision into a real human
++        // round-trip before any code runs — escalating past the flow's own
++        // `require_approval` toggle when the tier itself says "ask me" (Codex P1).
++        // A Deny short-circuits. The audit summary is computed on a redacted view
++        // of the request, never the raw source secrets, matching the other
++        // acting adapters.
++        let action = json!({ "language": format!("{language:?}"), "source": source });
++        let summary = crate::openhuman::approval::summarize_action("flows_code", &action);
++        let redacted = crate::openhuman::approval::redact_args(&action);
++        let (gate_outcome, audit_id) =
++            gate_call_for_tier(tier_decision, "flows_code", &summary, redacted).await;
++        if let crate::openhuman::approval::GateOutcome::Deny { reason } = gate_outcome {
++            return Err(EngineError::Capability(reason));
++        }
++
++        let outcome: Result<Value> = async {
+         let policy = resolve_sandbox_policy(
+             SandboxMode::Sandboxed,
+             &self.config.action_dir,
+[... 79 context line(s) omitted ...]
+ 
+         serde_json::from_str(result.stdout.trim())
+             .map_err(|e| EngineError::Capability(format!("code output was not valid JSON: {e}")))
++        }
++        .await;
++
++        // Close out the approval audit with the run's success/failure (mirrors
++        // OpenHumanTools/OpenHumanHttp).
++        if let Some(id) = audit_id {
++            if let Some(gate) = crate::openhuman::approval::ApprovalGate::try_global() {
++                let exec = if outcome.is_ok() {
++                    crate::openhuman::approval::ExecutionOutcome::Success
++                } else {
++                    crate::openhuman::approval::ExecutionOutcome::Failure
++                };
++                gate.record_execution(
++                    &id,
++                    exec,
++                    outcome.as_ref().err().map(ToString::to_string).as_deref(),
++                );
++            }
++        }
++
++        outcome
+     }
+ }
+ 
+[... 69 context line(s) omitted ...]
+         &config.action_dir,
+     ));
+     let http_config = config.http_request.clone();
++    let http_creds = Arc::new(HttpCredentialsStore::from_config(&config));
+ 
+     Capabilities {
+         llm: Arc::new(OpenHumanLlm {
+[... 3 context line(s) omitted ...]
+             config: config.clone(),
+         }),
+         http: Arc::new(OpenHumanHttp {
+-            security,
++            security: security.clone(),
+             http_config,
++            http_creds,
+         }),
+         code: Arc::new(OpenHumanCode {
+             config: config.clone(),
++            security,
+         }),
+         state: Arc::new(FlowStateStore {
+             config,
+[... 25 context line(s) omitted ...]
+             .with_context(|| format!("Failed to open flows checkpointer: {}", db_path.display()))?,
+     ))
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::openhuman::agent::prompts::types::IntegrationConnection;
++    use crate::openhuman::composio::ConnectedIntegration;
++
++    fn integration(
++        toolkit: &str,
++        connected: bool,
++        connections: Vec<IntegrationConnection>,
++    ) -> ConnectedIntegration {
++        ConnectedIntegration {
++            toolkit: toolkit.to_string(),
++            description: String::new(),
++            tools: Vec::new(),
++            gated_tools: Vec::new(),
++            connected,
++            connections,
++            non_active_status: None,
++        }
++    }
++
++    fn connection(id: &str, label: Option<&str>, is_default: bool) -> IntegrationConnection {
++        IntegrationConnection {
++            connection_id: id.to_string(),
++            label: label.map(str::to_string),
++            is_default,
++        }
++    }
++
++    /// A `composio:<toolkit>:<connection_id>` ref parses to its id and that id
++    /// resolves to the SPECIFIC connected account (toolkit + display label) —
++    /// not the toolkit's default connection.
++    #[test]
++    fn connection_ref_resolves_to_the_chosen_account() {
++        let integrations = vec![integration(
++            "gmail",
++            true,
++            vec![
++                connection("conn_work", Some("work@example.com"), true),
++                connection("conn_home", Some("home@example.com"), false),
++            ],
++        )];
++
++        let id = composio_connection_id("composio:gmail:conn_home")
++            .expect("well-formed composio connection_ref should parse");
++        assert_eq!(id, "conn_home");
++
++        let (toolkit, label) =
++            resolve_account(&integrations, id).expect("id should resolve to a connected account");
++        assert_eq!(toolkit, "gmail");
++        // The non-default account was chosen — resolution is by id, not default.
++        assert_eq!(label, Some("home@example.com"));
++
++        // An id the user does not hold resolves to nothing (best-effort log path).
++        assert!(resolve_account(&integrations, "conn_unknown").is_none());
++    }
++
++    /// A made-up toolkit that OpenHuman ships no static catalog for and the user
++    /// has NOT connected still rejects — even when the connected set is present
++    /// but simply doesn't contain it.
++    #[tokio::test]
++    async fn unknown_toolkit_still_rejects() {
++        use crate::openhuman::memory_sync::composio::providers::{
++            catalog_for_toolkit, get_provider,
++        };
++        // Precondition: `flowstestkit` is genuinely uncatalogued, so the decision
++        // flows through the connected-set path (not the static curated path).
++        assert!(catalog_for_toolkit("flowstestkit").is_none());
++        assert!(get_provider("flowstestkit").is_none());
++
++        // No connected set at all → fail-closed reject.
++        assert!(!flow_tool_allowed("FLOWSTESTKIT_DO_THING", None).await);
++        // Connected set present but does not include this toolkit → reject.
++        assert!(!flow_tool_allowed("FLOWSTESTKIT_DO_THING", Some(&["gmail".to_string()])).await);
++        // A blank slug is always rejected.
++        assert!(!flow_tool_allowed("", Some(&["flowstestkit".to_string()])).await);
++    }
++
++    /// A real Composio toolkit OpenHuman ships no static catalog for now PASSES
++    /// once the user has an ACTIVE connection for it (the TODO(0.3) fix) — the
++    /// exact same slug that rejects above.
++    #[tokio::test]
++    async fn connected_uncatalogued_toolkit_now_passes() {
++        use crate::openhuman::memory_sync::composio::providers::{
++            catalog_for_toolkit, get_provider,
++        };
++        assert!(catalog_for_toolkit("flowstestkit").is_none());
++        assert!(get_provider("flowstestkit").is_none());
++
++        assert!(
++            flow_tool_allowed("FLOWSTESTKIT_DO_THING", Some(&["flowstestkit".to_string()])).await
++        );
++        // Case-insensitive match on the toolkit slug.
++        assert!(
++            flow_tool_allowed("FLOWSTESTKIT_DO_THING", Some(&["FlowsTestKit".to_string()])).await
++        );
++    }
++
++    fn http_cred_store() -> (tempfile::TempDir, HttpCredentialsStore) {
++        let dir = tempfile::tempdir().expect("tempdir");
++        // encrypt=true exercises the ChaCha20-Poly1305 at-rest path.
++        let store = HttpCredentialsStore::new(dir.path(), true);
++        (dir, store)
++    }
++
++    /// A `http_cred:<name>` ref resolves to the stored bearer credential and
++    /// injects `Authorization: Bearer <token>` onto the outbound request.
++    #[test]
++    fn http_cred_resolves_and_injects_bearer_header() {
++        let (_dir, store) = http_cred_store();
++        store
++            .upsert(&HttpCredential::bearer("stripe", "sk_live_secret"))
++            .unwrap();
++
++        let cred = resolve_http_credential(&store, Some("http_cred:stripe"))
++            .expect("resolve ok")
++            .expect("credential present");
++
++        let mut request = json!({ "method": "GET", "url": "https://api.example.com" });
++        let header = inject_http_credential(&mut request, &cred).unwrap();
++        assert_eq!(header, "Authorization");
++        assert_eq!(
++            request["headers"]["Authorization"],
++            json!("Bearer sk_live_secret")
++        );
++    }
++
++    /// A custom-header credential injects under its own header name while
++    /// preserving any headers the flow author already set.
++    #[test]
++    fn http_cred_injection_preserves_existing_headers() {
++        let (_dir, store) = http_cred_store();
++        store
++            .upsert(&HttpCredential::header("apikey", "X-API-Key", "topsecret"))
++            .unwrap();
++        let cred = resolve_http_credential(&store, Some("http_cred:apikey"))
++            .unwrap()
++            .unwrap();
++
++        let mut request = json!({
++            "method": "POST",
++            "url": "https://api.example.com",
++            "headers": { "Content-Type": "application/json" }
++        });
++        inject_http_credential(&mut request, &cred).unwrap();
++        assert_eq!(
++            request["headers"]["Content-Type"],
++            json!("application/json")
++        );
++        assert_eq!(request["headers"]["X-API-Key"], json!("topsecret"));
++    }
++
++    /// A basic credential injects `Authorization: Basic ...` even when the flow
++    /// author set no `headers` object at all.
++    #[test]
++    fn http_cred_injects_basic_into_absent_headers() {
++        let (_dir, store) = http_cred_store();
++        store
++            .upsert(&HttpCredential::basic("acme", "alice", "pw"))
++            .unwrap();
++        let cred = resolve_http_credential(&store, Some("http_cred:acme"))
++            .unwrap()
++            .unwrap();
++
++        let mut request = json!({ "method": "GET", "url": "https://x.example.com" });
++        inject_http_credential(&mut request, &cred).unwrap();
++        let value = request["headers"]["Authorization"]
++            .as_str()
++            .expect("Authorization header injected");
++        assert!(
++            value.starts_with("Basic "),
++            "unexpected basic header: {value}"
++        );
++    }
++
++    /// A `http_cred:<name>` naming a credential that does not exist FAILS the
++    /// request closed — it must never proceed silently unauthenticated.
++    #[test]
++    fn unknown_http_cred_fails_closed() {
++        let (_dir, store) = http_cred_store();
++        let result = resolve_http_credential(&store, Some("http_cred:ghost"));
++        assert!(result.is_err(), "unknown http_cred must fail closed");
++    }
++
++    /// A malformed `http_cred:` ref (empty or whitespace-only name) must fail
++    /// closed the same as an unknown credential name — it must never be
++    /// treated as "no connection_ref" and silently sent unauthenticated
++    /// (Codex P2 finding).
++    #[test]
++    fn malformed_http_cred_name_fails_closed() {
++        let (_dir, store) = http_cred_store();
++        assert!(
++            resolve_http_credential(&store, Some("http_cred:")).is_err(),
++            "an empty http_cred name must fail closed, not fall through as no-op"
++        );
++        assert!(
++            resolve_http_credential(&store, Some("http_cred:   ")).is_err(),
++            "a whitespace-only http_cred name must fail closed, not fall through as no-op"
++        );
++    }
++
++    /// No `connection_ref`, or a non-`http_cred:` prefix, injects nothing and
++    /// is not an error.
++    #[test]
++    fn no_http_cred_ref_injects_nothing() {
++        let (_dir, store) = http_cred_store();
++        assert!(resolve_http_credential(&store, None).unwrap().is_none());
++        assert!(
++            resolve_http_credential(&store, Some("composio:gmail:conn_1"))
++                .unwrap()
++                .is_none()
++        );
++    }
++
++    /// The secret is server-side-only: the approval-gate redaction (computed on
++    /// the pre-injection request) never contains it, and after injection it
++    /// lives ONLY in the outbound `Authorization` header.
++    #[test]
++    fn injected_secret_never_reaches_the_audit_redaction() {
++        let (_dir, store) = http_cred_store();
++        let secret = "sk_live_never_log_me";
++        store
++            .upsert(&HttpCredential::bearer("stripe", secret))
++            .unwrap();
++        let cred = resolve_http_credential(&store, Some("http_cred:stripe"))
++            .unwrap()
++            .unwrap();
++
++        let mut request = json!({ "method": "GET", "url": "https://api.example.com" });
++        // Pre-injection redaction — what the approval UI / audit trail sees.
++        let redacted = crate::openhuman::approval::redact_args(&request);
++        assert!(!serde_json::to_string(&redacted).unwrap().contains(secret));
++
++        inject_http_credential(&mut request, &cred).unwrap();
++        assert_eq!(
++            request["headers"]["Authorization"],
++            json!(format!("Bearer {secret}"))
++        );
++    }
++
++    // ── Phase 2: autonomy-tier gating of acting nodes ──────────────────────
++
++    fn policy(level: crate::openhuman::security::AutonomyLevel) -> SecurityPolicy {
++        SecurityPolicy {
++            autonomy: level,
++            ..SecurityPolicy::default()
++        }
++    }
++
++    /// The tier gate an `http_request` (Network-class) node calls: BLOCKED under
++    /// a read-only tier, and passed through (to the ApprovalGate) under
++    /// supervised/full.
++    #[test]
++    fn http_request_node_tier_gate_blocks_readonly_allows_higher() {
++        use crate::openhuman::security::AutonomyLevel;
++
++        let err = enforce_node_tier_gate(
++            &policy(AutonomyLevel::ReadOnly),
++            CommandClass::Network,
++            "http_request",
++        )
++        .expect_err("read-only must block a Network-class http_request node");
++        if let EngineError::Capability(msg) = err {
++            assert!(
++                msg.contains(POLICY_BLOCKED_MARKER),
++                "read-only block must carry the policy-blocked marker: {msg}"
++            );
++        } else {
++            panic!("expected EngineError::Capability for a blocked node");
++        }
++
++        // Supervised/full do not hard-block — they fall through to the
++        // ApprovalGate (which performs the Prompt round-trip).
++        assert!(enforce_node_tier_gate(
++            &policy(AutonomyLevel::Supervised),
++            CommandClass::Network,
++            "http_request"
++        )
++        .is_ok());
++        assert!(enforce_node_tier_gate(
++            &policy(AutonomyLevel::Full),
++            CommandClass::Network,
++            "http_request"
++        )
++        .is_ok());
++    }
++
++    /// The tier gate a `code` (Write-class) node calls: BLOCKED under read-only,
++    /// allowed under full, prompt-able (not blocked) under supervised.
++    #[test]
++    fn code_node_tier_gate_blocks_readonly_allows_full() {
++        use crate::openhuman::security::AutonomyLevel;
++
++        assert!(enforce_node_tier_gate(
++            &policy(AutonomyLevel::ReadOnly),
++            CommandClass::Write,
++            "code"
++        )
++        .is_err());
++        assert!(enforce_node_tier_gate(
++            &policy(AutonomyLevel::Supervised),
++            CommandClass::Write,
++            "code"
++        )
++        .is_ok());
++        assert!(
++            enforce_node_tier_gate(&policy(AutonomyLevel::Full), CommandClass::Write, "code")
++                .is_ok()
++        );
++    }
++
++    /// End-to-end at the adapter: an `http_request` node under a read-only tier
++    /// is refused BEFORE any network egress (the tier gate fires ahead of the
++    /// approval gate, credential resolution, and dispatch).
++    #[tokio::test]
++    async fn http_adapter_blocks_under_readonly_tier() {
++        use crate::openhuman::security::AutonomyLevel;
++
++        let (_dir, creds) = http_cred_store();
++        let http = OpenHumanHttp {
++            security: Arc::new(policy(AutonomyLevel::ReadOnly)),
++            http_config: HttpRequestConfig::default(),
++            http_creds: Arc::new(creds),
++        };
++
++        let request = json!({ "method": "GET", "url": "https://example.com" });
++        let err = http
++            .request(request, None)
++            .await
++            .expect_err("read-only http_request node must be blocked");
++        if let EngineError::Capability(msg) = err {
++            assert!(
++                msg.contains(POLICY_BLOCKED_MARKER),
++                "expected a policy-blocked refusal, got: {msg}"
++            );
++        } else {
++            panic!("expected EngineError::Capability");
++        }
++    }
++
++    // ── Codex P1: Prompt-tier decisions must escalate past a workflow's own
++    // require_approval=false default, never silently auto-allow ────────────
++
++    use crate::openhuman::agent::turn_origin::{AgentTurnOrigin, TrustedAutomationSource};
++
++    fn workflow_origin(job_id: &str, require_approval: bool) -> AgentTurnOrigin {
++        AgentTurnOrigin::TrustedAutomation {
++            job_id: job_id.to_string(),
++            source: TrustedAutomationSource::Workflow { require_approval },
++        }
++    }
++
++    /// A `Prompt` tier decision on a default (`require_approval: false`)
++    /// workflow trust root escalates to `require_approval: true` — the forced
++    /// human-in-the-loop round trip that closes the Codex P1 finding.
++    #[test]
++    fn prompt_decision_escalates_default_workflow_origin() {
++        let escalated = escalated_origin_for_prompt(
++            GateDecision::Prompt,
++            Some(workflow_origin("flow-1", false)),
++        )
++        .expect("a Prompt decision on require_approval=false must escalate");
++        assert!(matches!(
++            escalated,
++            AgentTurnOrigin::TrustedAutomation {
++                source: TrustedAutomationSource::Workflow {
++                    require_approval: true
++                },
++                ..
++            }
++        ));
++    }
++
++    /// A flow that already opted into `require_approval: true` needs no
++    /// escalation — it's already forced through the parking flow.
++    #[test]
++    fn prompt_decision_does_not_re_escalate_already_gated_workflow() {
++        assert!(escalated_origin_for_prompt(
++            GateDecision::Prompt,
++            Some(workflow_origin("flow-1", true))
++        )
++        .is_none());
++    }
++
++    /// An `Allow` tier decision never escalates, regardless of the workflow's
++    /// `require_approval` toggle — Full-tier runs keep running unattended.
++    #[test]
++    fn allow_decision_never_escalates() {
++        assert!(escalated_origin_for_prompt(
++            GateDecision::Allow,
++            Some(workflow_origin("flow-1", false))
++        )
++        .is_none());
++    }
++
++    /// No scoped origin (or a non-Workflow origin) never escalates — there is
++    /// nothing to force through the workflow-specific parking flow.
++    #[test]
++    fn prompt_decision_does_not_escalate_without_a_workflow_origin() {
++        assert!(escalated_origin_for_prompt(GateDecision::Prompt, None).is_none());
++    }
++}
+diff --git a/src/openhuman/tinyflows/tests.rs b/src/openhuman/tinyflows/tests.rs
+index c57f47061..8c1c2e8aa 100644
+--- a/src/openhuman/tinyflows/tests.rs
++++ b/src/openhuman/tinyflows/tests.rs
+@@ -13,274 +13,282 @@
+ //!   rejection both surface as `EngineError::Capability` (proving the adapter
+ //!   correctly propagates `HttpRequestTool`'s real security behavior), and
+ //! - the engine smoke test drives `trigger -> http_request` against a
+[... 74 context line(s) omitted ...]
+             allowed_domains,
+             ..Default::default()
+         },
++        http_creds: Arc::new(
++            crate::openhuman::credentials::HttpCredentialsStore::from_config(&config),
++        ),
+     }
+ }
+ 
+[... 107 context line(s) omitted ...]
+ async fn code_adapter_javascript_passthrough_round_trips_json() {
+     let tmp = TempDir::new().unwrap();
+     let config = test_config(&tmp);
+-    let runner = OpenHumanCode { config };
++    let security = Arc::new(SecurityPolicy::from_config(
++        &config.autonomy,
++        &config.workspace_dir,
++        &config.action_dir,
++    ));
++    let runner = OpenHumanCode { config, security };
+ 
+     let input = json!([{ "json": { "n": 7 } }]);
+     let result = runner
+[... 74 context line(s) omitted ...]
+     assert!(
+         err.to_string().contains("tool not permitted"),
+         "expected a curation rejection message, got: {err}"
+diff --git a/tests/json_rpc_e2e.rs b/tests/json_rpc_e2e.rs
+index 548c13ace..1ce3a645d 100644
+--- a/tests/json_rpc_e2e.rs
++++ b/tests/json_rpc_e2e.rs
+@@ -12653,160 +12653,222 @@ async fn json_rpc_flows_validate_reports_warnings_and_errors() {
+             .and_then(Value::as_array)
+             .expect("errors")
+             .is_empty(),
+[... 74 context line(s) omitted ...]
+     rpc_join.abort();
+ }
+ 
++/// `openhuman.flows_list_connections` (PHASE 2): the connection picker source.
++/// Aggregates Composio connected accounts + stored HTTP credentials into a flat
++/// list of `connection_ref` + display + kind — and NEVER any secret material.
++///
++/// We seed one named HTTP credential (a bearer token) through the same
++/// host-side store the RPC reads, then assert the RPC surfaces it as
++/// `http_cred:<name>` with `kind = "http"` and that the token value never
++/// appears anywhere in the RPC payload. The Composio half is exercised for
++/// fault-tolerance: the mock upstream has no connected-accounts route, so the
++/// Composio source fails and is tolerated (the RPC still returns the HTTP half
++/// rather than erroring).
++#[tokio::test]
++async fn json_rpc_flows_list_connections_aggregates_secret_free() {
++    let _env_lock = json_rpc_e2e_env_lock();
++    let (rpc_base, _tmp, api_join, rpc_join, _guards) = boot_flows_rpc_env().await;
++
++    // Seed an HTTP credential through the same encrypted-at-rest store the op
++    // reads (config resolves under the guarded HOME set by boot_flows_rpc_env).
++    let seed_config = openhuman_core::openhuman::config::load_config_with_timeout()
++        .await
++        .expect("load config to seed http_cred");
++    const SECRET: &str = "sk_live_flows_list_connections_seed";
++    openhuman_core::openhuman::credentials::HttpCredentialsStore::from_config(&seed_config)
++        .upsert(&openhuman_core::openhuman::credentials::HttpCredential::bearer("stripe", SECRET))
++        .expect("seed http_cred");
++
++    let resp = post_json_rpc(
++        &rpc_base,
++        9330,
++        "openhuman.flows_list_connections",
++        json!({}),
++    )
++    .await;
++    let raw = assert_no_jsonrpc_error(&resp, "flows_list_connections");
++
++    // The seeded secret must never appear anywhere in the RPC response.
++    let raw_str = raw.to_string();
++    assert!(
++        !raw_str.contains(SECRET),
++        "secret leaked into flows_list_connections payload: {raw_str}"
++    );
++
++    let connections = peel_logs_envelope(raw)
++        .as_array()
++        .expect("connections is an array")
++        .clone();
++
++    let stripe = connections
++        .iter()
++        .find(|c| c.get("connection_ref").and_then(Value::as_str) == Some("http_cred:stripe"))
++        .expect("seeded http_cred surfaced in picker");
++    assert_eq!(stripe.get("kind").and_then(Value::as_str), Some("http"));
++    assert_eq!(stripe.get("scheme").and_then(Value::as_str), Some("bearer"));
++    assert!(
++        stripe.get("display").and_then(Value::as_str).is_some(),
++        "http_cred entry must carry a display label"
++    );
++
++    api_join.abort();
++    rpc_join.abort();
++}
++
+ /// Task 4 / #3090: when a web-chat request is sent with
+ /// `speak_reply: true`, `run_chat_task` should drive the agent's final text
+ /// through `voice::reply_speech::synthesize_reply` after the turn completes.
+[... 74 context line(s) omitted ...]
+     )
+     .await;
+     let web_chat_result = assert_no_jsonrpc_error(&web_chat, "channel_web_chat");

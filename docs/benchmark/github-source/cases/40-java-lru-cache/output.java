@@ -188,4 +188,4 @@ public class LRUCache<K, V> {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (6665 bytes) is available by calling tinyjuice_retrieve with token "297a09e22043249ecebe054941693b12" (marker ⟦tj:297a09e22043249ecebe054941693b12⟧)]
+[PARTIAL view — full original (6665 bytes): call tinyjuice_retrieve with token "297a09e22043249ecebe054941693b12"]

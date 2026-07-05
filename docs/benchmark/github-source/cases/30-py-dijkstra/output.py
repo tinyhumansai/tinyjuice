@@ -177,4 +177,4 @@ if __name__ == "__main__":
 # Total cost of path:  21
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (14647 bytes) is available by calling tinyjuice_retrieve with token "96e231f5562b5d93c73ae777b452257e" (marker ⟦tj:96e231f5562b5d93c73ae777b452257e⟧)]
+[PARTIAL view — full original (14647 bytes): call tinyjuice_retrieve with token "96e231f5562b5d93c73ae777b452257e"]

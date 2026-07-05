@@ -70,4 +70,4 @@ impl fmt::Display for Token {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (9304 bytes) is available by calling tinyjuice_retrieve with token "6eb91cf87fac07d371febfef2c2e7b77" (marker ⟦tj:6eb91cf87fac07d371febfef2c2e7b77⟧)]
+[PARTIAL view — full original (9304 bytes): call tinyjuice_retrieve with token "6eb91cf87fac07d371febfef2c2e7b77"]

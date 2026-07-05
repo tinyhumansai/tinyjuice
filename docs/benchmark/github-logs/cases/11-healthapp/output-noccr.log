@@ -1,0 +1,10 @@
+[... 721 line(s) omitted ...]
+20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003  [×2]
+[... 7 line(s) omitted ...]
+20171223-22:19:58:411|HiH_HiHealthBinder|30002312|insertHiHealthData() bulkSaveDetailHiHealthData fail errorCode = 4,errorMessage = ERR_DATA_INSERT 
+20171223-22:19:58:411|HiH_HiHealthBinder|30002312|insertHiHealthData() end totalTime = 45
+20171223-22:19:58:411|Step_LSC|30002312|uploadStaticsToDB() onResult  type = 4 obj=true
+20171223-22:19:58:411|Step_LSC|30002312|uploadStaticsToDB failed message=true
+20171223-22:19:58:413|HiH_HiSyncControl|30002312|checkInsertStatus stepSum or calorieSum is enough
+20171223-22:19:58:413|HiH_HiAppUtil|30002312|getBinderPackageName packageName = com.huawei.health
+[... 1265 line(s) omitted ...]

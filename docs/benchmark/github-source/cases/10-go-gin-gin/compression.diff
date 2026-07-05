@@ -514,5 +514,5 @@
 -	http.Redirect(c.Writer, req, rURL, code)
 -	c.writermem.WriteHeaderNow()
 -}
-+[compacted tool output — this is a PARTIAL view; the full original (23812 bytes) is available by calling tinyjuice_retrieve with token "b396db448f7ac685ae9384a0a6bc9712" (marker ⟦tj:b396db448f7ac685ae9384a0a6bc9712⟧)]
++[PARTIAL view — full original (23812 bytes): call tinyjuice_retrieve with token "b396db448f7ac685ae9384a0a6bc9712"]
 \ No newline at end of file

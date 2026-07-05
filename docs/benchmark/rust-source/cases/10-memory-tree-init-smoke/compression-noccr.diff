@@ -1,0 +1,9 @@
+--- input/input.rs
++++ output/output-noccr.rs
+@@ -107,4 +107,4 @@
+     } else {
+         ExitCode::SUCCESS
+     }
+-}
++}
+\ No newline at end of file

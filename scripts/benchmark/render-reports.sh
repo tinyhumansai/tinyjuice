@@ -189,6 +189,14 @@ input_file_name() {
   esac
 }
 
+# Pass-1 (no-CCR) artifact for a category/case: the output name with a
+# `-noccr` stem suffix (`output.log` -> `output-noccr.log`).
+no_ccr_file_name() {
+  local name
+  name="$(output_file_name "$1" "${2:-}")"
+  echo "${name%.*}-noccr.${name##*.}"
+}
+
 output_file_name() {
   local category="$1"
   case "$category" in
@@ -242,14 +250,14 @@ for category in "${categories[@]}"; do
   {
     printf '# %s\n\n' "$title"
     printf '%s\n\n' "$(category_summary "$category")"
-    printf 'Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0%% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.\n\n'
+    printf 'Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0%% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.\n\n'
     if [[ "$category" == "unified-diff" ]]; then
       printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
     fi
     printf '## Cases\n\n'
-    printf 'Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.\n\n'
-    printf '| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |\n'
-    printf '| --- | --- | --- | --- | ---: | ---: | ---: | ---: |\n'
+    printf 'Every case links to the raw input; each pass column carries its percentage plus that pass'"'"'s exact output and a unified diff against the input.\n\n'
+    printf '| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |\n'
+    printf '| --- | --- | ---: | ---: | ---: | ---: |\n'
 
     jq -r --arg category "$category" '
       [.cases[] | select(.docDir | startswith($category + "/cases/"))]
@@ -271,27 +279,39 @@ for category in "${categories[@]}"; do
       rel_dir="${doc_dir#"$category/"}"
       input_name="$(input_file_name "$category" "$doc_dir")"
       output_name="$(output_file_name "$category" "$doc_dir")"
+      noccr_name="$(no_ccr_file_name "$category" "$doc_dir")"
       input_file="$bench_root/$doc_dir/$input_name"
       output_file="$bench_root/$doc_dir/$output_name"
-      # Render a unified diff between input and compacted output so the
+      noccr_file="$bench_root/$doc_dir/$noccr_name"
+      # Render unified diffs between the input and each pass's output so the
       # removed noise / kept signal is reviewable at a glance.
       diff -u \
         -L "input/$input_name" \
         -L "output/$output_name" \
         "$input_file" "$output_file" \
         >"$bench_root/$doc_dir/compression.diff" || true
-      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | [diff](%s/compression.diff) | %s -> %s (-%.0f%%) | %.1f%% | %.1f%% | %.3f ms |\n' \
+      pass1_links="—"
+      if [[ -f "$noccr_file" ]]; then
+        diff -u \
+          -L "input/$input_name" \
+          -L "output/$noccr_name" \
+          "$input_file" "$noccr_file" \
+          >"$bench_root/$doc_dir/compression-noccr.diff" || true
+        pass1_links="[output]($rel_dir/$noccr_name) - [diff]($rel_dir/compression-noccr.diff)"
+      fi
+      printf '| `%s` | [input](%s/%s) | %s -> %s (-%.0f%%) | %.1f%%<br>%s | %.1f%%<br>[output](%s/%s) - [diff](%s/compression.diff) | %.3f ms |\n' \
         "$case_name" \
         "$rel_dir" \
         "$input_name" \
-        "$rel_dir" \
-        "$output_name" \
-        "$rel_dir" \
         "$(format_bytes "$original")" \
         "$(format_bytes "$algo_bytes")" \
         "$algo_pct" \
         "$pass1" \
+        "$pass1_links" \
         "$pass2" \
+        "$rel_dir" \
+        "$output_name" \
+        "$rel_dir" \
         "$latency"
     done
 
@@ -348,8 +368,12 @@ for category in "${categories[@]}"; do
       output_file="$bench_root/$doc_dir/$output_name"
       printf '### `%s`\n\n' "$case_name"
       printf -- '- [Full input](%s/%s)\n' "$rel_dir" "$input_name"
-      printf -- '- [Full output](%s/%s)\n' "$rel_dir" "$output_name"
-      printf -- '- [Input vs output diff](%s/compression.diff)\n\n' "$rel_dir"
+      printf -- '- [Output with CCR](%s/%s) - [diff](%s/compression.diff)\n' "$rel_dir" "$output_name" "$rel_dir"
+      noccr_name="$(no_ccr_file_name "$category" "$doc_dir")"
+      if [[ -f "$bench_root/$doc_dir/$noccr_name" ]]; then
+        printf -- '- [Output without CCR](%s/%s) - [diff](%s/compression-noccr.diff)\n' "$rel_dir" "$noccr_name" "$rel_dir"
+      fi
+      printf '\n'
       printf 'Input excerpt:\n\n'
       printf '```%s\n' "$(input_lang "$category" "$doc_dir")"
       snippet "$input_file"

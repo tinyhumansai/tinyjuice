@@ -2413,4 +2413,4 @@ void Curl_data_priority_clear_state(struct Curl_easy *data)
 #endif /* defined(USE_HTTP2) || defined(USE_HTTP3) */
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (120525 bytes) is available by calling tinyjuice_retrieve with token "c8d3f33a41d4b3ee01d6a355d08e45d1" (marker ⟦tj:c8d3f33a41d4b3ee01d6a355d08e45d1⟧)]
+[PARTIAL view — full original (120525 bytes): call tinyjuice_retrieve with token "c8d3f33a41d4b3ee01d6a355d08e45d1"]

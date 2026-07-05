@@ -90,4 +90,4 @@ private:
 }  // namespace engine
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (12459 bytes) is available by calling tinyjuice_retrieve with token "15c9570ffda64222c869e8018649feaa" (marker ⟦tj:15c9570ffda64222c869e8018649feaa⟧)]
+[PARTIAL view — full original (12459 bytes): call tinyjuice_retrieve with token "15c9570ffda64222c869e8018649feaa"]

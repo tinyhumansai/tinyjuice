@@ -401,4 +401,4 @@
 <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/hooks/respond-batch.mjs:106:          TINYPLACE_ACTIVE_WALLET: wallet,
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (76032 bytes) is available by calling tinyjuice_retrieve with token "6442f7183b24a21bc1d886a436f2497d" (marker ⟦tj:6442f7183b24a21bc1d886a436f2497d⟧)]
+[PARTIAL view — full original (76032 bytes): call tinyjuice_retrieve with token "6442f7183b24a21bc1d886a436f2497d"]

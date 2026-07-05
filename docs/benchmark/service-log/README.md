@@ -2,24 +2,24 @@
 
 Real OpenHuman runtime crash-log slices, with live Docker OpenHuman logs used first when a container is available. The log compressor keeps incident signals and collapses repeated low-value lines.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | [output](cases/08-openhuman-crash-slice-8/output.log) | [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 41.0 KB -> 916 B (-98%) | 98.2% | 97.2% | 0.917 ms |
-| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | [output](cases/06-openhuman-crash-slice-6/output.log) | [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 41.0 KB -> 987 B (-98%) | 98.1% | 97.1% | 0.916 ms |
-| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | [output](cases/07-openhuman-crash-slice-7/output.log) | [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 40.9 KB -> 987 B (-98%) | 98.1% | 97.1% | 0.941 ms |
-| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | [output](cases/09-openhuman-crash-slice-9/output.log) | [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 38.1 KB -> 1.3 KB (-97%) | 97.3% | 96.0% | 0.928 ms |
-| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | [output](cases/03-openhuman-crash-slice-3/output.log) | [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 45.9 KB -> 2.1 KB (-95%) | 96.0% | 95.0% | 1.067 ms |
-| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | [output](cases/01-openhuman-crash-slice-1/output.log) | [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 26.6 KB -> 1.4 KB (-95%) | 95.6% | 93.8% | 0.940 ms |
-| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | [output](cases/04-openhuman-crash-slice-4/output.log) | [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 47.0 KB -> 3.2 KB (-93%) | 93.8% | 92.7% | 1.060 ms |
-| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | [output](cases/02-openhuman-crash-slice-2/output.log) | [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 29.7 KB -> 2.1 KB (-93%) | 93.9% | 92.3% | 0.878 ms |
-| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | [output](cases/05-openhuman-crash-slice-5/output.log) | [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 44.5 KB -> 3.2 KB (-93%) | 93.5% | 92.3% | 1.019 ms |
-| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | [output](cases/10-openhuman-crash-slice-10/output.log) | [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 493.4 KB -> 479.4 KB (-3%) | 2.9% | 2.8% | 3.487 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | 41.0 KB -> 916 B (-98%) | 98.2%<br>[output](cases/08-openhuman-crash-slice-8/output-noccr.log) - [diff](cases/08-openhuman-crash-slice-8/compression-noccr.diff) | 97.5%<br>[output](cases/08-openhuman-crash-slice-8/output.log) - [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 0.910 ms |
+| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | 41.0 KB -> 987 B (-98%) | 98.1%<br>[output](cases/06-openhuman-crash-slice-6/output-noccr.log) - [diff](cases/06-openhuman-crash-slice-6/compression-noccr.diff) | 97.3%<br>[output](cases/06-openhuman-crash-slice-6/output.log) - [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 0.921 ms |
+| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | 40.9 KB -> 987 B (-98%) | 98.1%<br>[output](cases/07-openhuman-crash-slice-7/output-noccr.log) - [diff](cases/07-openhuman-crash-slice-7/compression-noccr.diff) | 97.3%<br>[output](cases/07-openhuman-crash-slice-7/output.log) - [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 0.941 ms |
+| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | 38.1 KB -> 1.3 KB (-97%) | 97.3%<br>[output](cases/09-openhuman-crash-slice-9/output-noccr.log) - [diff](cases/09-openhuman-crash-slice-9/compression-noccr.diff) | 96.3%<br>[output](cases/09-openhuman-crash-slice-9/output.log) - [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 0.909 ms |
+| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | 45.9 KB -> 2.1 KB (-95%) | 96.0%<br>[output](cases/03-openhuman-crash-slice-3/output-noccr.log) - [diff](cases/03-openhuman-crash-slice-3/compression-noccr.diff) | 95.2%<br>[output](cases/03-openhuman-crash-slice-3/output.log) - [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 1.091 ms |
+| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | 26.6 KB -> 1.4 KB (-95%) | 95.6%<br>[output](cases/01-openhuman-crash-slice-1/output-noccr.log) - [diff](cases/01-openhuman-crash-slice-1/compression-noccr.diff) | 94.2%<br>[output](cases/01-openhuman-crash-slice-1/output.log) - [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 0.963 ms |
+| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | 47.0 KB -> 3.2 KB (-93%) | 93.8%<br>[output](cases/04-openhuman-crash-slice-4/output-noccr.log) - [diff](cases/04-openhuman-crash-slice-4/compression-noccr.diff) | 92.9%<br>[output](cases/04-openhuman-crash-slice-4/output.log) - [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 1.087 ms |
+| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | 29.7 KB -> 2.1 KB (-93%) | 93.9%<br>[output](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff) | 92.6%<br>[output](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 0.956 ms |
+| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | 44.5 KB -> 3.2 KB (-93%) | 93.5%<br>[output](cases/05-openhuman-crash-slice-5/output-noccr.log) - [diff](cases/05-openhuman-crash-slice-5/compression-noccr.diff) | 92.5%<br>[output](cases/05-openhuman-crash-slice-5/output.log) - [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 1.040 ms |
+| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | 493.4 KB -> 479.4 KB (-3%) | 2.9%<br>[output](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff) | 2.8%<br>[output](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 3.609 ms |
 
 ## What TinyJuice Is Doing
 
@@ -30,8 +30,8 @@ The log path scores lines by signal. Errors, warnings, exception metadata, stack
 ### `08-openhuman-crash-slice-8`
 
 - [Full input](cases/08-openhuman-crash-slice-8/input.log)
-- [Full output](cases/08-openhuman-crash-slice-8/output.log)
-- [Input vs output diff](cases/08-openhuman-crash-slice-8/compression.diff)
+- [Output with CCR](cases/08-openhuman-crash-slice-8/output.log) - [diff](cases/08-openhuman-crash-slice-8/compression.diff)
+- [Output without CCR](cases/08-openhuman-crash-slice-8/output-noccr.log) - [diff](cases/08-openhuman-crash-slice-8/compression-noccr.diff)
 
 Input excerpt:
 
@@ -87,15 +87,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (40969 bytes) is available by calling tinyjuice_retrieve with token "7aa04dead4a225a1cf760c5752e89302" (marker ⟦tj:7aa04dead4a225a1cf760c5752e89302⟧)]
+[PARTIAL view — full original (40969 bytes): call tinyjuice_retrieve with token "7aa04dead4a225a1cf760c5752e89302"]
 
 ```
 
 ### `06-openhuman-crash-slice-6`
 
 - [Full input](cases/06-openhuman-crash-slice-6/input.log)
-- [Full output](cases/06-openhuman-crash-slice-6/output.log)
-- [Input vs output diff](cases/06-openhuman-crash-slice-6/compression.diff)
+- [Output with CCR](cases/06-openhuman-crash-slice-6/output.log) - [diff](cases/06-openhuman-crash-slice-6/compression.diff)
+- [Output without CCR](cases/06-openhuman-crash-slice-6/output-noccr.log) - [diff](cases/06-openhuman-crash-slice-6/compression-noccr.diff)
 
 Input excerpt:
 
@@ -152,15 +152,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (41041 bytes) is available by calling tinyjuice_retrieve with token "2ad9146dc43ecec3eaadc280722eb802" (marker ⟦tj:2ad9146dc43ecec3eaadc280722eb802⟧)]
+[PARTIAL view — full original (41041 bytes): call tinyjuice_retrieve with token "2ad9146dc43ecec3eaadc280722eb802"]
 
 ```
 
 ### `07-openhuman-crash-slice-7`
 
 - [Full input](cases/07-openhuman-crash-slice-7/input.log)
-- [Full output](cases/07-openhuman-crash-slice-7/output.log)
-- [Input vs output diff](cases/07-openhuman-crash-slice-7/compression.diff)
+- [Output with CCR](cases/07-openhuman-crash-slice-7/output.log) - [diff](cases/07-openhuman-crash-slice-7/compression.diff)
+- [Output without CCR](cases/07-openhuman-crash-slice-7/output-noccr.log) - [diff](cases/07-openhuman-crash-slice-7/compression-noccr.diff)
 
 Input excerpt:
 
@@ -217,15 +217,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (40864 bytes) is available by calling tinyjuice_retrieve with token "86568fb7c4af4732716fbb38d5d077dc" (marker ⟦tj:86568fb7c4af4732716fbb38d5d077dc⟧)]
+[PARTIAL view — full original (40864 bytes): call tinyjuice_retrieve with token "86568fb7c4af4732716fbb38d5d077dc"]
 
 ```
 
 ### `09-openhuman-crash-slice-9`
 
 - [Full input](cases/09-openhuman-crash-slice-9/input.log)
-- [Full output](cases/09-openhuman-crash-slice-9/output.log)
-- [Input vs output diff](cases/09-openhuman-crash-slice-9/compression.diff)
+- [Output with CCR](cases/09-openhuman-crash-slice-9/output.log) - [diff](cases/09-openhuman-crash-slice-9/compression.diff)
+- [Output without CCR](cases/09-openhuman-crash-slice-9/output-noccr.log) - [diff](cases/09-openhuman-crash-slice-9/compression-noccr.diff)
 
 Input excerpt:
 
@@ -288,15 +288,15 @@ Binary Images:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (38092 bytes) is available by calling tinyjuice_retrieve with token "6f9fb0f1edabd33489a2e8931a812b81" (marker ⟦tj:6f9fb0f1edabd33489a2e8931a812b81⟧)]
+[PARTIAL view — full original (38092 bytes): call tinyjuice_retrieve with token "6f9fb0f1edabd33489a2e8931a812b81"]
 
 ```
 
 ### `03-openhuman-crash-slice-3`
 
 - [Full input](cases/03-openhuman-crash-slice-3/input.log)
-- [Full output](cases/03-openhuman-crash-slice-3/output.log)
-- [Input vs output diff](cases/03-openhuman-crash-slice-3/compression.diff)
+- [Output with CCR](cases/03-openhuman-crash-slice-3/output.log) - [diff](cases/03-openhuman-crash-slice-3/compression.diff)
+- [Output without CCR](cases/03-openhuman-crash-slice-3/output-noccr.log) - [diff](cases/03-openhuman-crash-slice-3/compression-noccr.diff)
 
 Input excerpt:
 
@@ -362,15 +362,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (45921 bytes) is available by calling tinyjuice_retrieve with token "30afbaeb44296119cf1f6a9da564a843" (marker ⟦tj:30afbaeb44296119cf1f6a9da564a843⟧)]
+[PARTIAL view — full original (45921 bytes): call tinyjuice_retrieve with token "30afbaeb44296119cf1f6a9da564a843"]
 
 ```
 
 ### `01-openhuman-crash-slice-1`
 
 - [Full input](cases/01-openhuman-crash-slice-1/input.log)
-- [Full output](cases/01-openhuman-crash-slice-1/output.log)
-- [Input vs output diff](cases/01-openhuman-crash-slice-1/compression.diff)
+- [Output with CCR](cases/01-openhuman-crash-slice-1/output.log) - [diff](cases/01-openhuman-crash-slice-1/compression.diff)
+- [Output without CCR](cases/01-openhuman-crash-slice-1/output-noccr.log) - [diff](cases/01-openhuman-crash-slice-1/compression-noccr.diff)
 
 Input excerpt:
 
@@ -438,15 +438,15 @@ Terminating Process: exc handler [90825]
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5⟧)]
+[PARTIAL view — full original (26592 bytes): call tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5"]
 
 ```
 
 ### `02-openhuman-crash-slice-2`
 
 - [Full input](cases/02-openhuman-crash-slice-2/input.log)
-- [Full output](cases/02-openhuman-crash-slice-2/output.log)
-- [Input vs output diff](cases/02-openhuman-crash-slice-2/compression.diff)
+- [Output with CCR](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff)
+- [Output without CCR](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff)
 
 Input excerpt:
 
@@ -512,15 +512,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (29717 bytes) is available by calling tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09" (marker ⟦tj:b2a16dcca94e32f601f4c27a80236f09⟧)]
+[PARTIAL view — full original (29717 bytes): call tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09"]
 
 ```
 
 ### `04-openhuman-crash-slice-4`
 
 - [Full input](cases/04-openhuman-crash-slice-4/input.log)
-- [Full output](cases/04-openhuman-crash-slice-4/output.log)
-- [Input vs output diff](cases/04-openhuman-crash-slice-4/compression.diff)
+- [Output with CCR](cases/04-openhuman-crash-slice-4/output.log) - [diff](cases/04-openhuman-crash-slice-4/compression.diff)
+- [Output without CCR](cases/04-openhuman-crash-slice-4/output-noccr.log) - [diff](cases/04-openhuman-crash-slice-4/compression-noccr.diff)
 
 Input excerpt:
 
@@ -595,15 +595,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (46952 bytes) is available by calling tinyjuice_retrieve with token "68101d9a95ec3ff37b0d77c3cbc60a20" (marker ⟦tj:68101d9a95ec3ff37b0d77c3cbc60a20⟧)]
+[PARTIAL view — full original (46952 bytes): call tinyjuice_retrieve with token "68101d9a95ec3ff37b0d77c3cbc60a20"]
 
 ```
 
 ### `05-openhuman-crash-slice-5`
 
 - [Full input](cases/05-openhuman-crash-slice-5/input.log)
-- [Full output](cases/05-openhuman-crash-slice-5/output.log)
-- [Input vs output diff](cases/05-openhuman-crash-slice-5/compression.diff)
+- [Output with CCR](cases/05-openhuman-crash-slice-5/output.log) - [diff](cases/05-openhuman-crash-slice-5/compression.diff)
+- [Output without CCR](cases/05-openhuman-crash-slice-5/output-noccr.log) - [diff](cases/05-openhuman-crash-slice-5/compression-noccr.diff)
 
 Input excerpt:
 
@@ -678,15 +678,15 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (44535 bytes) is available by calling tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6" (marker ⟦tj:e4ac41e578f1d783c441d7b17c420ad6⟧)]
+[PARTIAL view — full original (44535 bytes): call tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6"]
 
 ```
 
 ### `10-openhuman-crash-slice-10`
 
 - [Full input](cases/10-openhuman-crash-slice-10/input.log)
-- [Full output](cases/10-openhuman-crash-slice-10/output.log)
-- [Input vs output diff](cases/10-openhuman-crash-slice-10/compression.diff)
+- [Output with CCR](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff)
+- [Output without CCR](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff)
 
 Input excerpt:
 
@@ -748,7 +748,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (493358 bytes) is available by calling tinyjuice_retrieve with token "23c47ce58e1cf696d3aa8b0f9e9e54ce" (marker ⟦tj:23c47ce58e1cf696d3aa8b0f9e9e54ce⟧)]
+[PARTIAL view — full original (493358 bytes): call tinyjuice_retrieve with token "23c47ce58e1cf696d3aa8b0f9e9e54ce"]
 
 ```
 

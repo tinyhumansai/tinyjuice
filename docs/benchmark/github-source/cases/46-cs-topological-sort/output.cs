@@ -224,4 +224,4 @@ public class TopologicalSort<T> where T : IComparable<T>
     }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (14419 bytes) is available by calling tinyjuice_retrieve with token "5dc7491667a2d80f9805a7947293b5f7" (marker ⟦tj:5dc7491667a2d80f9805a7947293b5f7⟧)]
+[PARTIAL view — full original (14419 bytes): call tinyjuice_retrieve with token "5dc7491667a2d80f9805a7947293b5f7"]

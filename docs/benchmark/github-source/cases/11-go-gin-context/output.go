@@ -1011,4 +1011,4 @@ func (c *Context) Value(key any) any {
 	return c.Request.Context().Value(key)
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (38997 bytes) is available by calling tinyjuice_retrieve with token "6b4d7e0478a20e6ab2757ea20026c3c2" (marker ⟦tj:6b4d7e0478a20e6ab2757ea20026c3c2⟧)]
+[PARTIAL view — full original (38997 bytes): call tinyjuice_retrieve with token "6b4d7e0478a20e6ab2757ea20026c3c2"]

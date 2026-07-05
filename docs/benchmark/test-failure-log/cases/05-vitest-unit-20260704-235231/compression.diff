@@ -21,5 +21,5 @@
     Start at  23:52:32
     Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
  
-+[compacted tool output — this is a PARTIAL view; the full original (970 bytes) is available by calling tinyjuice_retrieve with token "ddb0cfd662fa34d5f4bba410ef1e402f" (marker ⟦tj:ddb0cfd662fa34d5f4bba410ef1e402f⟧)]
++[PARTIAL view — full original (970 bytes): call tinyjuice_retrieve with token "ddb0cfd662fa34d5f4bba410ef1e402f"]
 \ No newline at end of file

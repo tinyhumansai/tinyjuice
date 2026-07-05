@@ -384,4 +384,4 @@ fn unix_seconds() -> u64 {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (34749 bytes) is available by calling tinyjuice_retrieve with token "b3185402b63f34b01c54e265656b05e2" (marker ⟦tj:b3185402b63f34b01c54e265656b05e2⟧)]
+[PARTIAL view — full original (34749 bytes): call tinyjuice_retrieve with token "b3185402b63f34b01c54e265656b05e2"]

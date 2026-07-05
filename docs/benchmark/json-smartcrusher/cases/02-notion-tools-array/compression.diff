@@ -17610,5 +17610,5 @@
 +| NOTION_UPSERT_ROW_DATABASE | Tool to upsert rows in a Notion database by querying for existing rows and creating or updating them. Use when you need to sync data to Notion without creating duplicates. Each item is matched by a filter, then either created (if no match) … | {"parameters":{"description":"Request model for upserting rows in a Notion database.","properties":{"data_source_id":{"description":"UUID of the Notion data source (preferred). Required if database_id is not provided.","examples":["f47ac10b… |
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (890786 bytes) is available by calling tinyjuice_retrieve with token "916277b86aa1b80326ff4b5c3ff772a1" (marker ⟦tj:916277b86aa1b80326ff4b5c3ff772a1⟧)]
++[PARTIAL view — full original (890786 bytes): call tinyjuice_retrieve with token "916277b86aa1b80326ff4b5c3ff772a1"]
 \ No newline at end of file

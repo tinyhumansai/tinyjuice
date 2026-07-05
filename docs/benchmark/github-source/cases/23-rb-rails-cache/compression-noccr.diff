@@ -1,0 +1,9 @@
+--- input/input.rb
++++ output/output-noccr.rb
+@@ -1106,4 +1106,4 @@
+       end
+     end
+   end
+-end
++end
+\ No newline at end of file

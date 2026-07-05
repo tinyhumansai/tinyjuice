@@ -1945,5 +1945,5 @@
 +| Skill runtime socket manager bridge. | state | [{"comment":"Socket request payload.","name":"payload","required":false,"ty":{"Option":"Json"}}] | openhuman.socket_state | socket | [{"comment":"Socket response payload.","name":"result","required":true,"ty":"Json"}] |
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (48570 bytes) is available by calling tinyjuice_retrieve with token "50c9c1eb3c3568978cae7a475d2761cb" (marker ⟦tj:50c9c1eb3c3568978cae7a475d2761cb⟧)]
++[PARTIAL view — full original (48570 bytes): call tinyjuice_retrieve with token "50c9c1eb3c3568978cae7a475d2761cb"]
 \ No newline at end of file

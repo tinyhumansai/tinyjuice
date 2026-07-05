@@ -119,5 +119,5 @@
  <OPENHUMAN_ROOT>/src/openhuman/context/manager.rs:61:    /// now runs in the tinyagents graph (`ContextCompressionMiddleware` +
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (73390 bytes) is available by calling tinyjuice_retrieve with token "14bae01cdf38971fdc3b2b031db85b74" (marker ⟦tj:14bae01cdf38971fdc3b2b031db85b74⟧)]
++[PARTIAL view — full original (73390 bytes): call tinyjuice_retrieve with token "14bae01cdf38971fdc3b2b031db85b74"]
 \ No newline at end of file

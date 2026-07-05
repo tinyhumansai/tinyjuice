@@ -357,5 +357,5 @@
 -21  OpenHuman                     	       0x101bc1330 openhuman_core::openhuman::agent::harness::subagent_runner::ops::run_typed_mode::_$u7b$$u7b$closure$u7d$$u7d$::h8a1568c6bf09af7f + 35348
 -22  OpenHuman                     	       0x101baed1c openhuman_core::openhuman::agent::harness::subagent_runner::ops::run_subagent::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::hfe0424709769fc2d + 480
 -23  OpenHuman                     	       0x10384cda8 _$LT$tokio..task..task_local..TaskLocalFuture$LT$T$C$F$GT$$u20$as$u20$core..future..future..Future$GT$::poll::_$u7b$$u7b$closure$u7d$$u7d$::h5e27fb18ce0e100f + 168
-+[compacted tool output — this is a PARTIAL view; the full original (45921 bytes) is available by calling tinyjuice_retrieve with token "30afbaeb44296119cf1f6a9da564a843" (marker ⟦tj:30afbaeb44296119cf1f6a9da564a843⟧)]
++[PARTIAL view — full original (45921 bytes): call tinyjuice_retrieve with token "30afbaeb44296119cf1f6a9da564a843"]
 \ No newline at end of file

@@ -1,0 +1,28 @@
+--- input/input.js
++++ output/output-noccr.js
+@@ -207,22 +207,11 @@
+ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+   /*eslint func-names:0*/
+ 
+-  function generateHTTPMethod(isForm) {
+-    return function httpMethod(url, data, config) {
+-      return this.request(mergeConfig(config || {}, {
+-        method,
+-        headers: isForm ? {
+-          'Content-Type': 'multipart/form-data'
+-        } : {},
+-        url,
+-        data
+-      }));
+-    };
+-  }
++  function generateHTTPMethod(isForm) { … 12 line(s) … }
+ 
+   Axios.prototype[method] = generateHTTPMethod();
+ 
+   Axios.prototype[method + 'Form'] = generateHTTPMethod(true);
+ });
+ 
+-export default Axios;
++export default Axios;
+\ No newline at end of file

@@ -1,0 +1,326 @@
+diff --git a/src/openhuman/memory_store/chunks/store.rs b/src/openhuman/memory_store/chunks/store.rs
+index 61b4d12fb..7237cd6e9 100644
+--- a/src/openhuman/memory_store/chunks/store.rs
++++ b/src/openhuman/memory_store/chunks/store.rs
+@@ -1,122 +1,120 @@
+ //! SQLite-backed persistence for ingested chunks (Phase 1 / issue #707).
+ //!
+ //! The store lives at `<workspace>/memory_tree/chunks.db`. Schema is applied
+[... 19 context line(s) omitted ...]
+ //! init failures for 30 s so a broken install does not busy-loop.
+ 
+ use anyhow::{Context, Result};
+-use chrono::{DateTime, TimeZone, Utc};
++use chrono::Utc;
+ use rusqlite::{params, Connection, OptionalExtension, Transaction};
+ use std::collections::{HashMap, HashSet};
+ #[cfg(test)]
+ use std::sync::Arc;
+ use std::time::Duration;
+ 
+ use crate::openhuman::config::Config;
+ use crate::openhuman::memory::util::redact::{self, redact as redact_value};
+-use crate::openhuman::memory_store::chunks::types::{Chunk, Metadata, SourceKind, SourceRef};
++use crate::openhuman::memory_store::chunks::types::{Chunk, SourceKind};
+ use crate::openhuman::memory_store::content::StagedChunk;
+ use crate::openhuman::tinycortex::memory_config_from;
+ 
+ const DB_DIR: &str = "memory_tree";
+ const DB_FILE: &str = "chunks.db";
+-const DEFAULT_LIST_LIMIT: usize = 100;
+-const MAX_LIST_LIMIT: usize = 10_000;
+ // 15s gives the busy-handler enough headroom that transient write-lock
+ // contention (4 job workers + scheduler + ingest producers all writing the
+ // same `memory_tree/chunks.db`) is absorbed inside rusqlite instead of
+[... 74 context line(s) omitted ...]
+     PRIMARY KEY (chunk_id, model_signature)
+ );
+ 
+@@ -492,334 +490,177 @@ pub(crate) fn upsert_staged_chunks_tx(
+             path_scope = excluded.path_scope,
+             source_ref = excluded.source_ref,
+             owner = excluded.owner,
+[... 74 context line(s) omitted ...]
+     tinycortex::memory::chunks::get_chunk(&engine_config(config), id)
+ }
+ 
+-/// Defensive cap for batched `IN (?,?,…)` reads.
+-///
+-/// SQLite's compile-time limit on bound parameters in a single statement
+-/// (`SQLITE_MAX_VARIABLE_NUMBER`) has been **32 766** since 3.32 (2020),
+-/// so 500 leaves a ~65× safety margin. The current call-site
+-/// (`memory_tree::retrieval::fetch::fetch_leaves`) is capped at 20 ids,
+-/// so the chunked loop runs exactly once today. The window exists so
+-/// future call-sites passing larger id lists do not blow up against a
+-/// host with a lower compile-time SQLite cap (older builds, custom
+-/// embeddings, etc.).
+-///
+-/// Volume is **not** reduced: all input ids in → all matching rows out.
+-/// The loop only splits the SQL; the merged `HashMap` is byte-identical
+-/// to what one giant query would return.
+-const MAX_FETCH_BATCH: usize = 500;
+-
+-/// Batched read of full chunk rows by id.
+-///
+-/// Contract mirror of looping [`get_chunk`] per id, but in
+-/// `O(ceil(n / MAX_FETCH_BATCH))` SQLite round-trips instead of `O(n)`.
+-/// The returned map contains only ids that exist in `mem_tree_chunks`;
+-/// missing ids are silently absent (same as `get_chunk` returning
+-/// `Ok(None)`). Callers that depend on input order must iterate their
+-/// own id slice and look each id up in the map.
+-///
+-/// Reuses [`row_to_chunk`] so decoding stays bit-identical to the
+-/// per-row helper — no risk of decoder drift.
++/// Batched read of full chunk rows by id — delegates to the crate.
+ pub fn get_chunks_batch(config: &Config, chunk_ids: &[String]) -> Result<HashMap<String, Chunk>> {
+-    if chunk_ids.is_empty() {
+-        return Ok(HashMap::new());
+-    }
+-    log::debug!(
+-        "[memory::chunk_store] get_chunks_batch: n={} windows={}",
+-        chunk_ids.len(),
+-        chunk_ids.len().div_ceil(MAX_FETCH_BATCH)
+-    );
+-    with_connection(config, |conn| {
+-        let mut out: HashMap<String, Chunk> = HashMap::with_capacity(chunk_ids.len());
+-        for window in chunk_ids.chunks(MAX_FETCH_BATCH) {
+-            // Build the placeholder list `?1, ?2, …, ?n` matching the
+-            // window length; rusqlite assigns positional binds 1..n in
+-            // the order the values are passed.
+-            let placeholders = (1..=window.len())
+-                .map(|i| format!("?{i}"))
+-                .collect::<Vec<_>>()
+-                .join(",");
+-            let sql = format!(
+-                "SELECT id, source_kind, source_id, path_scope, source_ref, owner,
+-                        timestamp_ms, time_range_start_ms, time_range_end_ms,
+-                        tags_json, content, token_count, seq_in_source, created_at_ms
+-                   FROM mem_tree_chunks WHERE id IN ({placeholders})"
+-            );
+-            let mut stmt = conn.prepare(&sql).context("prepare get_chunks_batch")?;
+-            let params: Vec<&dyn rusqlite::ToSql> =
+-                window.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+-            let rows = stmt
+-                .query_map(params.as_slice(), row_to_chunk)
+-                .context("query get_chunks_batch")?;
+-            for row in rows {
+-                let chunk = row.context("decode get_chunks_batch row")?;
+-                out.insert(chunk.id.clone(), chunk);
+-            }
+-        }
+-        log::debug!(
+-            "[memory::chunk_store] get_chunks_batch: matched {}/{} ids",
+-            out.len(),
+-            chunk_ids.len()
+-        );
+-        Ok(out)
+-    })
++    tinycortex::memory::chunks::get_chunks_batch(&engine_config(config), chunk_ids)
+ }
+ 
+-/// Query parameters for [`list_chunks`]. All fields are optional filters —
+-/// callers pass `ListChunksQuery::default()` to get recent-across-everything.
+-#[derive(Debug, Default, Clone)]
+-pub struct ListChunksQuery {
+-    pub source_kind: Option<SourceKind>,
+-    pub source_id: Option<String>,
+-    pub owner: Option<String>,
+-    /// Inclusive lower bound on `timestamp` (milliseconds since epoch).
+-    pub since_ms: Option<i64>,
+-    /// Inclusive upper bound on `timestamp` (milliseconds since epoch).
+-    pub until_ms: Option<i64>,
+-    /// Max rows to return (default 100 when `None`).
+-    pub limit: Option<usize>,
+-    /// Per-profile memory-source allowlist. When `Some`, memory-source chunks
+-    /// (those tagged `memory_sources`) whose source identifier is not in the set
+-    /// are dropped *before* the row limit is applied, so a disallowed-source
+-    /// prefix can't starve permitted rows. Non-source chunks always pass. `None`
+-    /// = unrestricted (the default for every non-agent caller).
+-    pub source_scope: Option<std::collections::HashSet<String>>,
+-    /// When `true`, rows the admission gate rejected (`lifecycle_status =
+-    /// 'dropped'`) are excluded. Default `false` preserves the all-rows
+-    /// behaviour every existing caller relies on; retrieval paths that must not
+-    /// surface filtered-out junk (e.g. `cover_window`) opt in.
+-    pub exclude_dropped: bool,
+-}
++/// Query parameters for [`list_chunks`], re-exported from the crate (identical
++/// fields incl. the `source_scope` allowlist + `exclude_dropped`).
++pub use tinycortex::memory::chunks::ListChunksQuery;
+ 
+ /// List chunks matching the provided filters, ordered by `timestamp` DESC.
++///
++/// Delegates to the crate, which preserves the `source_scope` allowlist gate
++/// (byte-identical `chunk_source_allowed_in` + `extract_mem_src_id`) — the
++/// security-critical per-profile enforcement, pinned by
++/// `store_tests::list_chunks_source_scope_filters_before_limit`.
+ pub fn list_chunks(config: &Config, query: &ListChunksQuery) -> Result<Vec<Chunk>> {
+-    with_connection(config, |conn| {
+-        let mut sql = String::from(
+-            "SELECT id, source_kind, source_id, path_scope, source_ref, owner,
+-                    timestamp_ms, time_range_start_ms, time_range_end_ms,
+-                    tags_json, content, token_count, seq_in_source, created_at_ms
+-               FROM mem_tree_chunks WHERE 1=1",
+-        );
+-        let mut bound: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+-
+-        if let Some(kind) = query.source_kind {
+-            sql.push_str(" AND source_kind = ?");
+-            bound.push(Box::new(kind.as_str().to_string()));
+-        }
+-        if let Some(ref source_id) = query.source_id {
+-            sql.push_str(" AND source_id = ?");
+-            bound.push(Box::new(source_id.clone()));
+-        }
+-        if let Some(ref owner) = query.owner {
+-            sql.push_str(" AND owner = ?");
+-            bound.push(Box::new(owner.clone()));
+-        }
+-        if let Some(since_ms) = query.since_ms {
+-            sql.push_str(" AND timestamp_ms >= ?");
+-            bound.push(Box::new(since_ms));
+-        }
+-        if let Some(until_ms) = query.until_ms {
+-            sql.push_str(" AND timestamp_ms <= ?");
+-            bound.push(Box::new(until_ms));
+-        }
+-        if query.exclude_dropped {
+-            sql.push_str(" AND lifecycle_status != ?");
+-            bound.push(Box::new(CHUNK_STATUS_DROPPED.to_string()));
+-        }
+-        let requested_limit = normalized_limit(query.limit);
+-        // When a profile source-scope is active, fetch a wider candidate set and
+-        // apply the gate in Rust *before* truncating, so a disallowed-source
+-        // prefix can't push permitted rows past the requested limit. Otherwise
+-        // the SQL LIMIT alone is correct and cheap.
+-        let sql_limit = if query.source_scope.is_some() {
+-            MAX_LIST_LIMIT as i64
+-        } else {
+-            requested_limit
+-        };
+-        sql.push_str(" ORDER BY timestamp_ms DESC, seq_in_source ASC LIMIT ?");
+-        bound.push(Box::new(sql_limit));
+-
+-        let mut stmt = conn.prepare(&sql)?;
+-        let param_refs: Vec<&dyn rusqlite::ToSql> = bound
+-            .iter()
+-            .map(|b| b.as_ref() as &dyn rusqlite::ToSql)
+-            .collect();
+-        let mut rows = stmt
+-            .query_map(param_refs.as_slice(), row_to_chunk)?
+-            .collect::<rusqlite::Result<Vec<_>>>()
+-            .context("Failed to collect chunks")?;
+-        if let Some(ref allowed) = query.source_scope {
+-            let before = rows.len();
+-            rows.retain(|c| {
+-                crate::openhuman::memory::source_scope::chunk_source_allowed_in(
+-                    allowed,
+-                    &c.metadata.tags,
+-                    &c.metadata.source_id,
+-                )
+-            });
+-            if rows.len() != before {
+-                log::debug!(
+-                    "[profiles] list_chunks source-scope filter: {before} -> {} row(s)",
+-                    rows.len()
+-                );
+-            }
+-            rows.truncate(requested_limit as usize);
+-        }
+-        Ok(rows)
+-    })
++    tinycortex::memory::chunks::list_chunks(&engine_config(config), query)
+ }
+ 
+ /// Count total chunks in the store (useful for tests / diagnostics).
+[... 74 context line(s) omitted ...]
+     if changed == 0 {
+         log::warn!(
+             "[memory::chunk_store] lifecycle update affected 0 rows chunk_id={} status={}",
+@@ -1246,207 +1087,141 @@ pub fn delete_orphaned_source_tree(
+                     "[memory::chunk_store] delete_orphaned_source_tree: source_id_hash={} has no source-scoped tree (gates_cleared={}); shared/collection trees left intact",
+                     redact_value(source_id),
+                     gate_ids.len(),
+[... 74 context line(s) omitted ...]
+     }
+ }
+ 
+-fn row_to_chunk(row: &rusqlite::Row<'_>) -> rusqlite::Result<Chunk> {
+-    let id: String = row.get(0)?;
+-    let source_kind_s: String = row.get(1)?;
+-    let source_id: String = row.get(2)?;
+-    let path_scope: Option<String> = row.get(3)?;
+-    let source_ref: Option<String> = row.get(4)?;
+-    let owner: String = row.get(5)?;
+-    let ts_ms: i64 = row.get(6)?;
+-    let trs_ms: i64 = row.get(7)?;
+-    let tre_ms: i64 = row.get(8)?;
+-    let tags_json: String = row.get(9)?;
+-    let content: String = row.get(10)?;
+-    let token_count: i64 = row.get(11)?;
+-    let seq: i64 = row.get(12)?;
+-    let created_ms: i64 = row.get(13)?;
+-
+-    let source_kind = SourceKind::parse(&source_kind_s).map_err(|e| {
+-        rusqlite::Error::FromSqlConversionFailure(1, rusqlite::types::Type::Text, e.into())
+-    })?;
+-    let timestamp = ms_to_utc(ts_ms)?;
+-    let time_range = (ms_to_utc(trs_ms)?, ms_to_utc(tre_ms)?);
+-    let created_at = ms_to_utc(created_ms)?;
+-    let tags: Vec<String> = serde_json::from_str(&tags_json).map_err(|e| {
+-        rusqlite::Error::FromSqlConversionFailure(8, rusqlite::types::Type::Text, Box::new(e))
+-    })?;
+-
+-    Ok(Chunk {
+-        id,
+-        content,
+-        metadata: Metadata {
+-            source_kind,
+-            source_id,
+-            owner,
+-            timestamp,
+-            time_range,
+-            tags,
+-            source_ref: source_ref.map(SourceRef::new),
+-            path_scope,
+-        },
+-        token_count: token_count.max(0) as u32,
+-        seq_in_source: seq.max(0) as u32,
+-        created_at,
+-        // partial_message is not stored in SQLite — it's a transient chunker
+-        // signal. Chunks read back from DB always get false (the column doesn't
+-        // exist; callers that need this flag hold the Chunk in memory).
+-        partial_message: false,
+-    })
+-}
+-
+-fn ms_to_utc(ms: i64) -> rusqlite::Result<DateTime<Utc>> {
+-    Utc.timestamp_millis_opt(ms).single().ok_or_else(|| {
+-        rusqlite::Error::FromSqlConversionFailure(
+-            0,
+-            rusqlite::types::Type::Integer,
+-            format!("invalid timestamp ms {ms}").into(),
+-        )
+-    })
+-}
+-
+ #[path = "connection.rs"]
+ mod connection;
+ pub(crate) use connection::recover_corrupt_db;
+[... 19 context line(s) omitted ...]
+     list_summaries_with_content_path, set_chunk_raw_refs, set_chunk_raw_refs_tx, RawRef,
+ };
+ 
+-fn normalized_limit(requested: Option<usize>) -> i64 {
+-    let clamped = requested
+-        .unwrap_or(DEFAULT_LIST_LIMIT)
+-        .clamp(1, MAX_LIST_LIMIT);
+-    i64::try_from(clamped).unwrap_or(MAX_LIST_LIMIT as i64)
+-}
+-
+ /// Idempotent `ALTER TABLE ADD COLUMN` — treats an existing column as success.
+ fn add_column_if_missing(conn: &Connection, table: &str, name: &str, sql_type: &str) -> Result<()> {
+     match conn.execute(
+[... 30 context line(s) omitted ...]
+ #[cfg(test)]
+ #[path = "store_tests.rs"]
+ mod tests;

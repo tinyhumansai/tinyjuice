@@ -307,4 +307,4 @@ index 798d2b0..a5126a5 100755
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (39862 bytes) is available by calling tinyjuice_retrieve with token "102054b82fb3a4497c6d2ea9bf0b2816" (marker ⟦tj:102054b82fb3a4497c6d2ea9bf0b2816⟧)]
+[PARTIAL view — full original (39862 bytes): call tinyjuice_retrieve with token "102054b82fb3a4497c6d2ea9bf0b2816"]

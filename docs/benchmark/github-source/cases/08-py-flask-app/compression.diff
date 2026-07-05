@@ -686,5 +686,5 @@
          return self.wsgi_app(environ, start_response)
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (60143 bytes) is available by calling tinyjuice_retrieve with token "efe961e9c223dbbae24c4d50d7c3a4d6" (marker ⟦tj:efe961e9c223dbbae24c4d50d7c3a4d6⟧)]
++[PARTIAL view — full original (60143 bytes): call tinyjuice_retrieve with token "efe961e9c223dbbae24c4d50d7c3a4d6"]
 \ No newline at end of file

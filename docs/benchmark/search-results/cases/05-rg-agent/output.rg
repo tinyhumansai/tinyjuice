@@ -133,4 +133,4 @@
 [+2 more match(es) in <OPENHUMAN_ROOT>/README.md ⟦tj:7be320ba6847129bcbe9223eb5358b18⟧]
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (62231 bytes) is available by calling tinyjuice_retrieve with token "737e6f05ce724e2b934b01e3874a3332" (marker ⟦tj:737e6f05ce724e2b934b01e3874a3332⟧)]
+[PARTIAL view — full original (62231 bytes): call tinyjuice_retrieve with token "737e6f05ce724e2b934b01e3874a3332"]

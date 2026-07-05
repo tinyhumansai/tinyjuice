@@ -354,5 +354,5 @@
 -7   OpenHuman                     	       0x1052682e4 tokio::loom::std::parking_lot::Condvar::wait_timeout::h222f196a0b832f05 + 48
 -8   OpenHuman                     	       0x1052b5b28 tokio::runtime::blocking::pool::Inner::run::h01e32a9f9b2701bd + 664
 -9   OpenHuman                     	       0x1052b6974 tokio::runtime::blocking::pool::Spawner::spawn_thread::_$u7b$$u7b$closure$u7d$$u7d$::h6de928fa040b7fb7 + 144
-+[compacted tool output — this is a PARTIAL view; the full original (40864 bytes) is available by calling tinyjuice_retrieve with token "86568fb7c4af4732716fbb38d5d077dc" (marker ⟦tj:86568fb7c4af4732716fbb38d5d077dc⟧)]
++[PARTIAL view — full original (40864 bytes): call tinyjuice_retrieve with token "86568fb7c4af4732716fbb38d5d077dc"]
 \ No newline at end of file

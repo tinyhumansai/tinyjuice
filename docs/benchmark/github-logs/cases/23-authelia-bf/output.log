@@ -124,4 +124,4 @@ time="2022-02-16T12:24:19+02:00" level=error msg="Unsuccessful TOTP authenticati
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (82668 bytes) is available by calling tinyjuice_retrieve with token "fd5b95737b66c5e69f3945b5bebd5f26" (marker ⟦tj:fd5b95737b66c5e69f3945b5bebd5f26⟧)]
+[PARTIAL view — full original (82668 bytes): call tinyjuice_retrieve with token "fd5b95737b66c5e69f3945b5bebd5f26"]

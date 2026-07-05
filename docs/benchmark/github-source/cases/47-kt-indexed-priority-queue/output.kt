@@ -198,4 +198,4 @@ class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) 
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (7042 bytes) is available by calling tinyjuice_retrieve with token "37deb2d94e0ce17d38d563cf95df9d35" (marker ⟦tj:37deb2d94e0ce17d38d563cf95df9d35⟧)]
+[PARTIAL view — full original (7042 bytes): call tinyjuice_retrieve with token "37deb2d94e0ce17d38d563cf95df9d35"]

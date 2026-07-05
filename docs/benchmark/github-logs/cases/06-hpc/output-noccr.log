@@ -1,0 +1,109 @@
+[Template: <*> <*> unix.hw state_change.unavailable <*> 1 Component State Change: Component <*> is in the unavailable state <*>] (12 lines)
+[Template: <*> <*> action start <*> 1 <*> (command <*>] (141 lines)
+[Template: <*> <*> boot_cmd success <*> 1 Command has completed successfully] (10 lines)
+[... 170 line(s) omitted ...]
+128520 3491 boot_cmd new 1111855423 1 Targeting domains:node-D2 and nodes:node-[64-95] child of command 3488
+276415 3709 boot_cmd new 1119845316 1 Targeting domains:node-D2 and nodes:node-84
+51338 node-3 node psu 1106496000 1 psu failure\ ambient=28
+191898 node-238 node psu 1131240275 1 psu failure\ ambient=28
+236618 node-104 node psu 1132434391 1 psu failure\ ambient=28
+341834 node-118 node psu 1140312091 1 psu failure\ ambient=28
+347972 node-118 node psu 1140430530 1 psu failure\ ambient=31
+147394 Interconnect-0N00 switch_module temphigh 1129812510 1 Temperature (41C) exceeds warning threshold  [×2]
+147494 Interconnect-0N00 switch_module temphigh 1129813980 1 Temperature (41C) exceeds warning threshold
+[Template: <*> <*> clusterfilesystem clusterfilesystem.no_server <*> 1 ClusterFileSystem: There is no server for ServerFileSystem domain <*>] (30 lines)
+[... 30 line(s) omitted ...]
+286151 node-D0 clusterfilesystem clusterfilesystem.no_server 1134669644 1 ClusterFileSystem: There is no server for ServerFileSystem domain storage531
+327002 node-D0 clusterfilesystem clusterfilesystem.no_server 1140098601 1 ClusterFileSystem: There is no server for ServerFileSystem domain storage321
+365140 node-69 unix.hw net.niff.down 1085075228 1 NIFF: node node-69 detected a failed network connection on network 5.5.224.0 via interface alt0
+401608 node-162 unix.hw net.niff.down 1142550442 1 NIFF: node node-162 detected a failed network connection on network 5.5.224.0 via interface alt0
+180537 node-D0 clusterfilesystem fdmn.panic 1131228351 1 ServerFileSystem: An ServerFileSystem domain panic has occurred on storage442
+268543 Interconnect-0N00 switch_module fan 1119372267 1 Fan speeds ( 3552 3534 3375 **** 3515 3479 )
+268265 Interconnect-0N00 switch_module fan 1119290224 1 Fan speeds ( 3552 3534 3375 **** 3515 3479 )
+[Template: <*> Interconnect-0N00 switch_module fan <*> 1 Fan speeds ( <*> <*> <*> <*> <*> <*> )] (86 lines)
+[... 86 line(s) omitted ...]
+441254 Interconnect-0N00 switch_module fan 1143979871 1 Fan speeds ( 3534 3534 3375 **** 3497 3479 )
+441208 Interconnect-0N00 switch_module fan 1143979502 1 Fan speeds ( 3534 3534 3375 **** 3497 3479 )
+130987 3504 boot_cmd abort 1111858191 1 Command has been aborted
+27385 Interconnect-0N02 switch_module control 1101771720 1 power/control problem
+30700 Interconnect-1T00 switch_module bcast-error 1076189965 1 Link error  [×9]
+115576 Interconnect-1T00 switch_module bcast-error 1077793578 1 Link error
+115153 Interconnect-0T00 switch_module bcast-error 1077757190 1 Link error
+259323 Interconnect-1T00 switch_module bcast-error 1079076297 1 Link error
+285855 Interconnect-1T00 switch_module bcast-error 1080298218 1 Link in reset  [×2]
+285823 Interconnect-0T00 switch_module bcast-error 1080292236 1 Link error
+289491 Interconnect-0T00 switch_module bcast-error 1080825593 1 Link error
+288385 Interconnect-0T00 switch_module bcast-error 1080668603 1 Link error
+295965 Interconnect-1T00 switch_module bcast-error 1081534663 1 Link error
+293098 Interconnect-1T00 switch_module bcast-error 1081296321 1 Link error
+303852 Interconnect-1T00 switch_module bcast-error 1082033409 1 Link in reset
+323647 Interconnect-1T00 switch_module bcast-error 1083198788 1 Link ok
+26281 Interconnect-0T00 switch_module bcast-error 1124878893 1 Link error on broadcast tree Interconnect-0T00:00:2:1
+407973 Interconnect-1T00 switch_module bcast-error 1142703109 1 Link error on broadcast tree Interconnect-1T00:00:3:6
+408176 Interconnect-1T00 switch_module bcast-error 1142743438 1 Link error on broadcast tree Interconnect-1T00:00:2:0
+408221 Interconnect-1T00 switch_module bcast-error 1142752287 1 Link error on broadcast tree Interconnect-1T00:00:2:0
+191911 node-D4 clusterfilesystem fdmn.full 1077949575 1 ServerFileSystem: ServerFileSystem domain root14_local is full
+280513 node-D0 clusterfilesystem fdmn.full 1079715693 1 ServerFileSystem: ServerFileSystem domain root10_local is full
+[... 388 line(s) omitted ...]
+2556843 gige5 gige temperature 1072878243 1 warning  [×205]
+[Template: <*> <*> <*> temperature <*> 1 <*>] (6 lines)
+[... 6 line(s) omitted ...]
+2562656 gige7 gige temperature 1073561505 1 normal
+2561340 gige7 gige temperature 1073394404 1 normal
+2561239 gige4 gige temperature 1073375350 1 critical  [×20]
+2566893 gige7 gige temperature 1074020818 1 normal
+2565183 gige7 gige temperature 1073933218 1 normal
+[Template: <*> <*> <*> temperature <*> 1 <*>] (707 lines)
+[... 707 line(s) omitted ...]
+480082 gige7 gige temperature 1146100398 1 critical
+479981 gige4 gige temperature 1146058156 1 warning
+2560209 Interconnect-1N01 switch_module error 1073192214 1 Link ok  [×12]
+2558342 Interconnect-1N01 switch_module error 1073114649 1 Link ok
+2558132 Interconnect-1N01 switch_module error 1073080543 1 Link ok
+2558082 Interconnect-1N01 switch_module error 1073073636 1 Link ok
+2557405 Interconnect-1T01 switch_module error 1072965457 1 Link error  [×2]
+2557080 Interconnect-1N01 switch_module error 1072913499 1 Link error  [×2]
+2556365 Interconnect-1N01 switch_module error 1072790564 1 Link in reset  [×7]
+2550228 Interconnect-1N01 switch_module error 1072442018 1 Link ok
+2553872 Interconnect-0N03 switch_module error 1072642871 1 Link ok
+[... 12 line(s) omitted ...]
+2565131 Interconnect-1N01 switch_module error 1073923347 1 Link in reset
+2565070 Interconnect-1N01 switch_module error 1073911806 1 Link in reset
+2569061 Interconnect-0N03 switch_module error 1074120426 1 Linkerror event interval expired  [×353]
+2569549 Interconnect-0N03 switch_module error 1074121227 1 Linkerror event interval expired
+2570021 node-5 action error 1074121927 1 risBoot (command 1903) Error: Timed out while waiting for SRM prompt: <ABORT code completed>
+2570091 Interconnect-0N01 switch_module error 1074122028 1 Linkerror event interval expired
+2570813 Interconnect-1N01 switch_module error 1074123216 1 Linkerror event interval expired
+[Template: <*> <*> switch_module error <*> 1 Linkerror event interval expired] (59 lines)
+[... 59 line(s) omitted ...]
+2612089 Interconnect-1N01 switch_module error 1074510127 1 Linkerror event interval expired
+2590181 Interconnect-0N00 switch_module error 1074261994 1 Linkerror event interval expired
+2591699 Interconnect-1T03 switch_module error 1074268486 1 Linkerror event interval expired  [×41]
+2595669 Interconnect-1N01 switch_module error 1074287600 1 Linkerror event interval expired
+2597578 Interconnect-1N02 switch_module error 1074290494 1 Linkerror event interval expired
+[Template: <*> <*> switch_module error <*> 1 Linkerror event interval expired] (14 lines)
+[... 14 line(s) omitted ...]
+3496 Interconnect-1N03 switch_module error 1075629657 1 Linkerror event interval expired
+28360 Interconnect-1N00 switch_module error 1076182055 1 Linkerror event interval expired
+27373 node-55 action error 1076176599 1 boot (command 2092) Error: HALT asserted\  cannot continue
+27185 Interconnect-1N00 switch_module error 1076173770 1 Linkerror event interval expired
+26955 Interconnect-1N01 switch_module error 1076161132 1 Linkerror event interval expired
+[Template: <*> <*> switch_module error <*> <*> Linkerror event interval expired] (294 lines)
+[... 294 line(s) omitted ...]
+426750 Interconnect-1N00 switch_module error 1095346268 1 Linkerror event interval expired
+434433 Interconnect-0N00 switch_module error 1095798699 1 Linkerror event interval expired
+72725 3398 boot_cmd error 1108648264 1 Failed subcommands 3406
+114402 Interconnect-1N00 switch_module error 1111072635 1 Linkerror event interval expired
+112502 Interconnect-1N00 switch_module error 1111072142 1 Linkerror event interval expired
+[Template: <*> <*> switch_module error <*> 1 Linkerror event interval expired] (8 lines)
+[... 8 line(s) omitted ...]
+165338 Interconnect-0N00 switch_module error 1114095980 1 Linkerror event interval expired
+177431 Interconnect-1N00 switch_module error 1114545444 1 Linkerror event interval expired
+207120 Interconnect-0N02 switch_module error 1116534650 1 link errors remain current  [×20]
+285082 Interconnect-0N02 switch_module error 1120712655 1 link errors remain current
+66621 Interconnect-1T01 switch_module error 1127018764 1 link errors remain current  [×36]
+74687 Interconnect-1T01 switch_module error 1127530580 1 link errors remain current
+73130 Interconnect-1T01 switch_module error 1127205865 1 link errors remain current
+[Template: <*> <*> switch_module error <*> 1 link errors remain current] (51 lines)
+[Template: <*> <*> unix.hw net.niff.up <*> 1 NIFF: node <*> has detected an available network connection on network <*> via interface <*>] (91 lines)
+[... 142 line(s) omitted ...]

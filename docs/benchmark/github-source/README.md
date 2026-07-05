@@ -2,61 +2,61 @@
 
 Real source files fetched from popular public GitHub repositories (vscode, django, flask, requests, gin, cobra, leveldb, redis, curl, tokio, ripgrep, gson, guava, okhttp, rails, laravel, swift-argument-parser, Newtonsoft.Json, Maven POMs). Sources and licenses are listed in ATTRIBUTION.md.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `27-xml-gson-pom` | [input](cases/27-xml-gson-pom/input.xml) | [output](cases/27-xml-gson-pom/output.txt) | [diff](cases/27-xml-gson-pom/compression.diff) | 26.0 KB -> 4.3 KB (-84%) | 83.5% | 82.7% | 0.083 ms |
-| `28-xml-maven-pom` | [input](cases/28-xml-maven-pom/input.xml) | [output](cases/28-xml-maven-pom/output.txt) | [diff](cases/28-xml-maven-pom/compression.diff) | 29.0 KB -> 7.3 KB (-75%) | 74.8% | 74.0% | 0.124 ms |
-| `14-cpp-leveldb-dbimpl` | [input](cases/14-cpp-leveldb-dbimpl/input.cpp) | [output](cases/14-cpp-leveldb-dbimpl/output.cpp) | [diff](cases/14-cpp-leveldb-dbimpl/compression.diff) | 49.1 KB -> 14.6 KB (-70%) | 73.7% | 70.4% | 0.365 ms |
-| `30-py-dijkstra` | [input](cases/30-py-dijkstra/input.py) | [output](cases/30-py-dijkstra/output.py) | [diff](cases/30-py-dijkstra/compression.diff) | 14.6 KB -> 5.4 KB (-63%) | 67.9% | 61.8% | 0.521 ms |
-| `33-rs-floyd-warshall` | [input](cases/33-rs-floyd-warshall/input.rs) | [output](cases/33-rs-floyd-warshall/output.rs) | [diff](cases/33-rs-floyd-warshall/compression.diff) | 6.3 KB -> 2.4 KB (-62%) | 66.7% | 59.3% | 0.381 ms |
-| `15-cpp-leveldb-versionset` | [input](cases/15-cpp-leveldb-versionset/input.cpp) | [output](cases/15-cpp-leveldb-versionset/output.cpp) | [diff](cases/15-cpp-leveldb-versionset/compression.diff) | 51.4 KB -> 21.7 KB (-58%) | 61.9% | 57.9% | 0.386 ms |
-| `41-java-bellman-ford` | [input](cases/41-java-bellman-ford/input.java) | [output](cases/41-java-bellman-ford/output.java) | [diff](cases/41-java-bellman-ford/compression.diff) | 6.1 KB -> 2.6 KB (-58%) | 61.8% | 54.7% | 0.033 ms |
-| `29-py-red-black-tree` | [input](cases/29-py-red-black-tree/input.py) | [output](cases/29-py-red-black-tree/output.py) | [diff](cases/29-py-red-black-tree/compression.diff) | 25.5 KB -> 10.9 KB (-57%) | 61.8% | 56.9% | 1.358 ms |
-| `16-c-redis-sds` | [input](cases/16-c-redis-sds/input.c) | [output](cases/16-c-redis-sds/output.c) | [diff](cases/16-c-redis-sds/compression.diff) | 49.8 KB -> 23.1 KB (-54%) | 56.2% | 53.6% | 0.329 ms |
-| `25-swift-argparser-argumentset` | [input](cases/25-swift-argparser-argumentset/input.swift) | [output](cases/25-swift-argparser-argumentset/output.swift) | [diff](cases/25-swift-argparser-argumentset/compression.diff) | 21.7 KB -> 10.1 KB (-54%) | 56.7% | 53.0% | 0.130 ms |
-| `36-cpp-a-star-search` | [input](cases/36-cpp-a-star-search/input.cpp) | [output](cases/36-cpp-a-star-search/output.cpp) | [diff](cases/36-cpp-a-star-search/compression.diff) | 26.5 KB -> 12.6 KB (-53%) | 55.2% | 52.1% | 0.140 ms |
-| `10-go-gin-gin` | [input](cases/10-go-gin-gin/input.go) | [output](cases/10-go-gin-gin/output.go) | [diff](cases/10-go-gin-gin/compression.diff) | 23.8 KB -> 13.6 KB (-43%) | 47.4% | 42.7% | 0.174 ms |
-| `09-py-requests-sessions` | [input](cases/09-py-requests-sessions/input.py) | [output](cases/09-py-requests-sessions/output.py) | [diff](cases/09-py-requests-sessions/compression.diff) | 30.5 KB -> 17.3 KB (-43%) | 46.3% | 42.7% | 1.145 ms |
-| `12-go-cobra-command` | [input](cases/12-go-cobra-command/input.go) | [output](cases/12-go-cobra-command/output.go) | [diff](cases/12-go-cobra-command/compression.diff) | 55.2 KB -> 32.3 KB (-41%) | 45.3% | 41.7% | 0.404 ms |
-| `17-c-curl-url` | [input](cases/17-c-curl-url/input.c) | [output](cases/17-c-curl-url/output.c) | [diff](cases/17-c-curl-url/compression.diff) | 120.5 KB -> 73.4 KB (-39%) | 41.5% | 39.3% | 0.770 ms |
-| `26-cs-newtonsoft-serializer` | [input](cases/26-cs-newtonsoft-serializer/input.cs) | [output](cases/26-cs-newtonsoft-serializer/output.cs) | [diff](cases/26-cs-newtonsoft-serializer/compression.diff) | 50.8 KB -> 31.1 KB (-39%) | 41.2% | 38.7% | 0.241 ms |
-| `35-go-segment-tree` | [input](cases/35-go-segment-tree/input.go) | [output](cases/35-go-segment-tree/output.go) | [diff](cases/35-go-segment-tree/compression.diff) | 4.5 KB -> 2.8 KB (-38%) | 45.6% | 33.5% | 0.027 ms |
-| `42-js-kruskal-mst` | [input](cases/42-js-kruskal-mst/input.js) | [output](cases/42-js-kruskal-mst/output.js) | [diff](cases/42-js-kruskal-mst/compression.diff) | 3.1 KB -> 1.9 KB (-37%) | 46.2% | 31.1% | 0.157 ms |
-| `03-ts-vscode-uri` | [input](cases/03-ts-vscode-uri/input.ts) | [output](cases/03-ts-vscode-uri/output.ts) | [diff](cases/03-ts-vscode-uri/compression.diff) | 22.6 KB -> 14.3 KB (-37%) | 40.5% | 36.2% | 1.019 ms |
-| `19-rs-ripgrep-walk` | [input](cases/19-rs-ripgrep-walk/input.rs) | [output](cases/19-rs-ripgrep-walk/output.rs) | [diff](cases/19-rs-ripgrep-walk/compression.diff) | 77.9 KB -> 50.5 KB (-35%) | 37.9% | 35.4% | 3.444 ms |
-| `31-rs-huffman-encoding` | [input](cases/31-rs-huffman-encoding/input.rs) | [output](cases/31-rs-huffman-encoding/output.rs) | [diff](cases/31-rs-huffman-encoding/compression.diff) | 16.3 KB -> 10.7 KB (-34%) | 38.4% | 33.6% | 0.753 ms |
-| `37-cpp-random-pivot-quicksort` | [input](cases/37-cpp-random-pivot-quicksort/input.cpp) | [output](cases/37-cpp-random-pivot-quicksort/output.cpp) | [diff](cases/37-cpp-random-pivot-quicksort/compression.diff) | 11.9 KB -> 8.2 KB (-31%) | 34.9% | 29.7% | 0.059 ms |
-| `39-ts-binary-search-tree` | [input](cases/39-ts-binary-search-tree/input.ts) | [output](cases/39-ts-binary-search-tree/output.ts) | [diff](cases/39-ts-binary-search-tree/compression.diff) | 5.2 KB -> 3.7 KB (-30%) | 38.5% | 26.5% | 0.201 ms |
-| `08-py-flask-app` | [input](cases/08-py-flask-app/input.py) | [output](cases/08-py-flask-app/output.py) | [diff](cases/08-py-flask-app/compression.diff) | 60.1 KB -> 42.1 KB (-30%) | 32.0% | 29.9% | 1.744 ms |
-| `34-go-avl-tree` | [input](cases/34-go-avl-tree/input.go) | [output](cases/34-go-avl-tree/output.go) | [diff](cases/34-go-avl-tree/compression.diff) | 7.7 KB -> 5.5 KB (-29%) | 34.6% | 27.0% | 0.059 ms |
-| `07-py-django-paginator` | [input](cases/07-py-django-paginator/input.py) | [output](cases/07-py-django-paginator/output.py) | [diff](cases/07-py-django-paginator/compression.diff) | 7.9 KB -> 5.6 KB (-29%) | 33.5% | 26.6% | 0.383 ms |
-| `46-cs-topological-sort` | [input](cases/46-cs-topological-sort/input.cs) | [output](cases/46-cs-topological-sort/output.cs) | [diff](cases/46-cs-topological-sort/compression.diff) | 14.4 KB -> 10.7 KB (-26%) | 28.9% | 24.6% | 0.060 ms |
-| `06-py-django-request` | [input](cases/06-py-django-request/input.py) | [output](cases/06-py-django-request/output.py) | [diff](cases/06-py-django-request/compression.diff) | 25.8 KB -> 19.6 KB (-24%) | 26.3% | 23.1% | 1.239 ms |
-| `24-php-laravel-container` | [input](cases/24-php-laravel-container/input.php) | [output](cases/24-php-laravel-container/output.php) | [diff](cases/24-php-laravel-container/compression.diff) | 41.0 KB -> 31.7 KB (-23%) | 25.2% | 22.6% | 0.210 ms |
-| `13-go-mux-mux` | [input](cases/13-go-mux-mux/input.go) | [output](cases/13-go-mux-mux/output.go) | [diff](cases/13-go-mux-mux/compression.diff) | 17.8 KB -> 13.8 KB (-22%) | 26.1% | 21.6% | 0.095 ms |
-| `45-php-avl-tree` | [input](cases/45-php-avl-tree/input.php) | [output](cases/45-php-avl-tree/output.php) | [diff](cases/45-php-avl-tree/compression.diff) | 10.9 KB -> 8.6 KB (-21%) | 26.0% | 19.6% | 0.064 ms |
-| `01-ts-vscode-async` | [input](cases/01-ts-vscode-async/input.ts) | [output](cases/01-ts-vscode-async/output.ts) | [diff](cases/01-ts-vscode-async/compression.diff) | 56.4 KB -> 45.4 KB (-19%) | 22.6% | 19.5% | 2.944 ms |
-| `02-ts-vscode-strings` | [input](cases/02-ts-vscode-strings/input.ts) | [output](cases/02-ts-vscode-strings/output.ts) | [diff](cases/02-ts-vscode-strings/compression.diff) | 88.4 KB -> 74.6 KB (-16%) | 17.3% | 15.6% | 2.083 ms |
-| `32-rs-knapsack` | [input](cases/32-rs-knapsack/input.rs) | [output](cases/32-rs-knapsack/output.rs) | [diff](cases/32-rs-knapsack/compression.diff) | 12.4 KB -> 10.5 KB (-16%) | 17.8% | 14.1% | 0.776 ms |
-| `40-java-lru-cache` | [input](cases/40-java-lru-cache/input.java) | [output](cases/40-java-lru-cache/output.java) | [diff](cases/40-java-lru-cache/compression.diff) | 6.7 KB -> 5.7 KB (-15%) | 20.0% | 12.4% | 0.039 ms |
-| `20-java-gson-gson` | [input](cases/20-java-gson-gson/input.java) | [output](cases/20-java-gson-gson/output.java) | [diff](cases/20-java-gson-gson/compression.diff) | 68.5 KB -> 59.0 KB (-14%) | 15.0% | 13.7% | 0.246 ms |
-| `11-go-gin-context` | [input](cases/11-go-gin-context/input.go) | [output](cases/11-go-gin-context/output.go) | [diff](cases/11-go-gin-context/compression.diff) | 39.0 KB -> 34.1 KB (-13%) | 14.9% | 12.4% | 0.193 ms |
-| `38-ts-heap` | [input](cases/38-ts-heap/input.ts) | [output](cases/38-ts-heap/output.ts) | [diff](cases/38-ts-heap/compression.diff) | 5.7 KB -> 5.0 KB (-12%) | 17.0% | 8.9% | 0.310 ms |
-| `21-java-guava-ordering` | [input](cases/21-java-guava-ordering/input.java) | [output](cases/21-java-guava-ordering/output.java) | [diff](cases/21-java-guava-ordering/compression.diff) | 40.4 KB -> 37.8 KB (-6%) | 7.7% | 5.9% | 0.139 ms |
-| `18-rs-tokio-builder` | [input](cases/18-rs-tokio-builder/input.rs) | [output](cases/18-rs-tokio-builder/output.rs) | [diff](cases/18-rs-tokio-builder/compression.diff) | 48.2 KB -> 45.6 KB (-5%) | 6.1% | 5.1% | 1.724 ms |
-| `47-kt-indexed-priority-queue` | [input](cases/47-kt-indexed-priority-queue/input.kt) | [output](cases/47-kt-indexed-priority-queue/output.kt) | [diff](cases/47-kt-indexed-priority-queue/compression.diff) | 7.0 KB -> 6.7 KB (-5%) | 8.1% | 1.9% | 0.034 ms |
-| `22-kt-okhttp-client` | [input](cases/22-kt-okhttp-client/input.kt) | [output](cases/22-kt-okhttp-client/output.kt) | [diff](cases/22-kt-okhttp-client/compression.diff) | 44.0 KB -> 41.9 KB (-5%) | 5.6% | 4.4% | 0.150 ms |
-| `43-c-trie` | [input](cases/43-c-trie/input.c) | [output](cases/43-c-trie/output.c) | [diff](cases/43-c-trie/compression.diff) | 5.2 KB -> 5.0 KB (-4%) | 7.9% | 0.4% | 0.027 ms |
-| `05-js-axios-core` | [input](cases/05-js-axios-core/input.js) | [output](cases/05-js-axios-core/output.js) | [diff](cases/05-js-axios-core/compression.diff) | 6.4 KB -> 6.3 KB (-1%) | 3.8% | 0.0% | 0.293 ms |
-| `44-rb-avl-tree` | [input](cases/44-rb-avl-tree/input.rb) | [output](cases/44-rb-avl-tree/output.rb) | [diff](cases/44-rb-avl-tree/compression.diff) | 7.5 KB -> 7.5 KB (-0%) | 0.1% | 0.0% | 0.033 ms |
-| `04-js-express-application` | [input](cases/04-js-express-application/input.js) | [output](cases/04-js-express-application/output.js) | [diff](cases/04-js-express-application/compression.diff) | 14.6 KB -> 14.6 KB (-0%) | 0.0% | 0.0% | 0.719 ms |
-| `23-rb-rails-cache` | [input](cases/23-rb-rails-cache/input.rb) | [output](cases/23-rb-rails-cache/output.rb) | [diff](cases/23-rb-rails-cache/compression.diff) | 42.6 KB -> 42.6 KB (-0%) | 0.0% | 0.0% | 0.148 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `27-xml-gson-pom` | [input](cases/27-xml-gson-pom/input.xml) | 26.0 KB -> 4.3 KB (-84%) | 83.5%<br>[output](cases/27-xml-gson-pom/output-noccr.txt) - [diff](cases/27-xml-gson-pom/compression-noccr.diff) | 83.1%<br>[output](cases/27-xml-gson-pom/output.txt) - [diff](cases/27-xml-gson-pom/compression.diff) | 0.092 ms |
+| `28-xml-maven-pom` | [input](cases/28-xml-maven-pom/input.xml) | 29.0 KB -> 7.3 KB (-75%) | 74.8%<br>[output](cases/28-xml-maven-pom/output-noccr.txt) - [diff](cases/28-xml-maven-pom/compression-noccr.diff) | 74.4%<br>[output](cases/28-xml-maven-pom/output.txt) - [diff](cases/28-xml-maven-pom/compression.diff) | 0.134 ms |
+| `14-cpp-leveldb-dbimpl` | [input](cases/14-cpp-leveldb-dbimpl/input.cpp) | 49.1 KB -> 14.6 KB (-70%) | 73.7%<br>[output](cases/14-cpp-leveldb-dbimpl/output-noccr.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression-noccr.diff) | 70.6%<br>[output](cases/14-cpp-leveldb-dbimpl/output.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression.diff) | 0.391 ms |
+| `30-py-dijkstra` | [input](cases/30-py-dijkstra/input.py) | 14.6 KB -> 5.4 KB (-63%) | 67.9%<br>[output](cases/30-py-dijkstra/output-noccr.py) - [diff](cases/30-py-dijkstra/compression-noccr.diff) | 62.5%<br>[output](cases/30-py-dijkstra/output.py) - [diff](cases/30-py-dijkstra/compression.diff) | 0.563 ms |
+| `33-rs-floyd-warshall` | [input](cases/33-rs-floyd-warshall/input.rs) | 6.3 KB -> 2.4 KB (-62%) | 66.7%<br>[output](cases/33-rs-floyd-warshall/output-noccr.rs) - [diff](cases/33-rs-floyd-warshall/compression-noccr.diff) | 60.8%<br>[output](cases/33-rs-floyd-warshall/output.rs) - [diff](cases/33-rs-floyd-warshall/compression.diff) | 0.388 ms |
+| `15-cpp-leveldb-versionset` | [input](cases/15-cpp-leveldb-versionset/input.cpp) | 51.4 KB -> 21.7 KB (-58%) | 61.9%<br>[output](cases/15-cpp-leveldb-versionset/output-noccr.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression-noccr.diff) | 58.1%<br>[output](cases/15-cpp-leveldb-versionset/output.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression.diff) | 0.419 ms |
+| `41-java-bellman-ford` | [input](cases/41-java-bellman-ford/input.java) | 6.1 KB -> 2.6 KB (-58%) | 61.8%<br>[output](cases/41-java-bellman-ford/output-noccr.java) - [diff](cases/41-java-bellman-ford/compression-noccr.diff) | 56.4%<br>[output](cases/41-java-bellman-ford/output.java) - [diff](cases/41-java-bellman-ford/compression.diff) | 0.038 ms |
+| `29-py-red-black-tree` | [input](cases/29-py-red-black-tree/input.py) | 25.5 KB -> 10.9 KB (-57%) | 61.8%<br>[output](cases/29-py-red-black-tree/output-noccr.py) - [diff](cases/29-py-red-black-tree/compression-noccr.diff) | 57.2%<br>[output](cases/29-py-red-black-tree/output.py) - [diff](cases/29-py-red-black-tree/compression.diff) | 1.354 ms |
+| `16-c-redis-sds` | [input](cases/16-c-redis-sds/input.c) | 49.8 KB -> 23.1 KB (-54%) | 56.2%<br>[output](cases/16-c-redis-sds/output-noccr.c) - [diff](cases/16-c-redis-sds/compression-noccr.diff) | 53.8%<br>[output](cases/16-c-redis-sds/output.c) - [diff](cases/16-c-redis-sds/compression.diff) | 0.314 ms |
+| `25-swift-argparser-argumentset` | [input](cases/25-swift-argparser-argumentset/input.swift) | 21.7 KB -> 10.1 KB (-54%) | 56.7%<br>[output](cases/25-swift-argparser-argumentset/output-noccr.swift) - [diff](cases/25-swift-argparser-argumentset/compression-noccr.diff) | 53.4%<br>[output](cases/25-swift-argparser-argumentset/output.swift) - [diff](cases/25-swift-argparser-argumentset/compression.diff) | 0.142 ms |
+| `36-cpp-a-star-search` | [input](cases/36-cpp-a-star-search/input.cpp) | 26.5 KB -> 12.6 KB (-53%) | 55.2%<br>[output](cases/36-cpp-a-star-search/output-noccr.cpp) - [diff](cases/36-cpp-a-star-search/compression-noccr.diff) | 52.5%<br>[output](cases/36-cpp-a-star-search/output.cpp) - [diff](cases/36-cpp-a-star-search/compression.diff) | 0.149 ms |
+| `10-go-gin-gin` | [input](cases/10-go-gin-gin/input.go) | 23.8 KB -> 13.6 KB (-43%) | 47.4%<br>[output](cases/10-go-gin-gin/output-noccr.go) - [diff](cases/10-go-gin-gin/compression-noccr.diff) | 43.2%<br>[output](cases/10-go-gin-gin/output.go) - [diff](cases/10-go-gin-gin/compression.diff) | 0.166 ms |
+| `09-py-requests-sessions` | [input](cases/09-py-requests-sessions/input.py) | 30.5 KB -> 17.3 KB (-43%) | 46.3%<br>[output](cases/09-py-requests-sessions/output-noccr.py) - [diff](cases/09-py-requests-sessions/compression-noccr.diff) | 43.0%<br>[output](cases/09-py-requests-sessions/output.py) - [diff](cases/09-py-requests-sessions/compression.diff) | 1.132 ms |
+| `12-go-cobra-command` | [input](cases/12-go-cobra-command/input.go) | 55.2 KB -> 32.3 KB (-41%) | 45.3%<br>[output](cases/12-go-cobra-command/output-noccr.go) - [diff](cases/12-go-cobra-command/compression-noccr.diff) | 41.8%<br>[output](cases/12-go-cobra-command/output.go) - [diff](cases/12-go-cobra-command/compression.diff) | 0.401 ms |
+| `17-c-curl-url` | [input](cases/17-c-curl-url/input.c) | 120.5 KB -> 73.4 KB (-39%) | 41.5%<br>[output](cases/17-c-curl-url/output-noccr.c) - [diff](cases/17-c-curl-url/compression-noccr.diff) | 39.4%<br>[output](cases/17-c-curl-url/output.c) - [diff](cases/17-c-curl-url/compression.diff) | 0.816 ms |
+| `26-cs-newtonsoft-serializer` | [input](cases/26-cs-newtonsoft-serializer/input.cs) | 50.8 KB -> 31.1 KB (-39%) | 41.2%<br>[output](cases/26-cs-newtonsoft-serializer/output-noccr.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression-noccr.diff) | 38.9%<br>[output](cases/26-cs-newtonsoft-serializer/output.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression.diff) | 0.256 ms |
+| `35-go-segment-tree` | [input](cases/35-go-segment-tree/input.go) | 4.5 KB -> 2.8 KB (-38%) | 45.6%<br>[output](cases/35-go-segment-tree/output-noccr.go) - [diff](cases/35-go-segment-tree/compression-noccr.diff) | 35.8%<br>[output](cases/35-go-segment-tree/output.go) - [diff](cases/35-go-segment-tree/compression.diff) | 0.028 ms |
+| `42-js-kruskal-mst` | [input](cases/42-js-kruskal-mst/input.js) | 3.1 KB -> 1.9 KB (-37%) | 46.2%<br>[output](cases/42-js-kruskal-mst/output-noccr.js) - [diff](cases/42-js-kruskal-mst/compression-noccr.diff) | 34.3%<br>[output](cases/42-js-kruskal-mst/output.js) - [diff](cases/42-js-kruskal-mst/compression.diff) | 0.165 ms |
+| `03-ts-vscode-uri` | [input](cases/03-ts-vscode-uri/input.ts) | 22.6 KB -> 14.3 KB (-37%) | 40.5%<br>[output](cases/03-ts-vscode-uri/output-noccr.ts) - [diff](cases/03-ts-vscode-uri/compression-noccr.diff) | 36.7%<br>[output](cases/03-ts-vscode-uri/output.ts) - [diff](cases/03-ts-vscode-uri/compression.diff) | 1.110 ms |
+| `19-rs-ripgrep-walk` | [input](cases/19-rs-ripgrep-walk/input.rs) | 77.9 KB -> 50.5 KB (-35%) | 37.9%<br>[output](cases/19-rs-ripgrep-walk/output-noccr.rs) - [diff](cases/19-rs-ripgrep-walk/compression-noccr.diff) | 35.5%<br>[output](cases/19-rs-ripgrep-walk/output.rs) - [diff](cases/19-rs-ripgrep-walk/compression.diff) | 3.479 ms |
+| `31-rs-huffman-encoding` | [input](cases/31-rs-huffman-encoding/input.rs) | 16.3 KB -> 10.7 KB (-34%) | 38.4%<br>[output](cases/31-rs-huffman-encoding/output-noccr.rs) - [diff](cases/31-rs-huffman-encoding/compression-noccr.diff) | 34.2%<br>[output](cases/31-rs-huffman-encoding/output.rs) - [diff](cases/31-rs-huffman-encoding/compression.diff) | 0.770 ms |
+| `37-cpp-random-pivot-quicksort` | [input](cases/37-cpp-random-pivot-quicksort/input.cpp) | 11.9 KB -> 8.2 KB (-31%) | 34.9%<br>[output](cases/37-cpp-random-pivot-quicksort/output-noccr.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression-noccr.diff) | 30.5%<br>[output](cases/37-cpp-random-pivot-quicksort/output.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression.diff) | 0.063 ms |
+| `39-ts-binary-search-tree` | [input](cases/39-ts-binary-search-tree/input.ts) | 5.2 KB -> 3.7 KB (-30%) | 38.5%<br>[output](cases/39-ts-binary-search-tree/output-noccr.ts) - [diff](cases/39-ts-binary-search-tree/compression-noccr.diff) | 28.5%<br>[output](cases/39-ts-binary-search-tree/output.ts) - [diff](cases/39-ts-binary-search-tree/compression.diff) | 0.214 ms |
+| `08-py-flask-app` | [input](cases/08-py-flask-app/input.py) | 60.1 KB -> 42.1 KB (-30%) | 32.0%<br>[output](cases/08-py-flask-app/output-noccr.py) - [diff](cases/08-py-flask-app/compression-noccr.diff) | 30.0%<br>[output](cases/08-py-flask-app/output.py) - [diff](cases/08-py-flask-app/compression.diff) | 1.736 ms |
+| `34-go-avl-tree` | [input](cases/34-go-avl-tree/input.go) | 7.7 KB -> 5.5 KB (-29%) | 34.6%<br>[output](cases/34-go-avl-tree/output-noccr.go) - [diff](cases/34-go-avl-tree/compression-noccr.diff) | 28.3%<br>[output](cases/34-go-avl-tree/output.go) - [diff](cases/34-go-avl-tree/compression.diff) | 0.060 ms |
+| `07-py-django-paginator` | [input](cases/07-py-django-paginator/input.py) | 7.9 KB -> 5.6 KB (-29%) | 33.5%<br>[output](cases/07-py-django-paginator/output-noccr.py) - [diff](cases/07-py-django-paginator/compression-noccr.diff) | 27.9%<br>[output](cases/07-py-django-paginator/output.py) - [diff](cases/07-py-django-paginator/compression.diff) | 0.388 ms |
+| `46-cs-topological-sort` | [input](cases/46-cs-topological-sort/input.cs) | 14.4 KB -> 10.7 KB (-26%) | 28.9%<br>[output](cases/46-cs-topological-sort/output-noccr.cs) - [diff](cases/46-cs-topological-sort/compression-noccr.diff) | 25.3%<br>[output](cases/46-cs-topological-sort/output.cs) - [diff](cases/46-cs-topological-sort/compression.diff) | 0.065 ms |
+| `06-py-django-request` | [input](cases/06-py-django-request/input.py) | 25.8 KB -> 19.6 KB (-24%) | 26.3%<br>[output](cases/06-py-django-request/output-noccr.py) - [diff](cases/06-py-django-request/compression-noccr.diff) | 23.5%<br>[output](cases/06-py-django-request/output.py) - [diff](cases/06-py-django-request/compression.diff) | 1.266 ms |
+| `24-php-laravel-container` | [input](cases/24-php-laravel-container/input.php) | 41.0 KB -> 31.7 KB (-23%) | 25.2%<br>[output](cases/24-php-laravel-container/output-noccr.php) - [diff](cases/24-php-laravel-container/compression-noccr.diff) | 22.8%<br>[output](cases/24-php-laravel-container/output.php) - [diff](cases/24-php-laravel-container/compression.diff) | 0.226 ms |
+| `13-go-mux-mux` | [input](cases/13-go-mux-mux/input.go) | 17.8 KB -> 13.8 KB (-22%) | 26.1%<br>[output](cases/13-go-mux-mux/output-noccr.go) - [diff](cases/13-go-mux-mux/compression-noccr.diff) | 22.1%<br>[output](cases/13-go-mux-mux/output.go) - [diff](cases/13-go-mux-mux/compression.diff) | 0.103 ms |
+| `45-php-avl-tree` | [input](cases/45-php-avl-tree/input.php) | 10.9 KB -> 8.6 KB (-21%) | 26.0%<br>[output](cases/45-php-avl-tree/output-noccr.php) - [diff](cases/45-php-avl-tree/compression-noccr.diff) | 20.6%<br>[output](cases/45-php-avl-tree/output.php) - [diff](cases/45-php-avl-tree/compression.diff) | 0.067 ms |
+| `01-ts-vscode-async` | [input](cases/01-ts-vscode-async/input.ts) | 56.4 KB -> 45.4 KB (-19%) | 22.6%<br>[output](cases/01-ts-vscode-async/output-noccr.ts) - [diff](cases/01-ts-vscode-async/compression-noccr.diff) | 19.7%<br>[output](cases/01-ts-vscode-async/output.ts) - [diff](cases/01-ts-vscode-async/compression.diff) | 2.973 ms |
+| `02-ts-vscode-strings` | [input](cases/02-ts-vscode-strings/input.ts) | 88.4 KB -> 74.6 KB (-16%) | 17.3%<br>[output](cases/02-ts-vscode-strings/output-noccr.ts) - [diff](cases/02-ts-vscode-strings/compression-noccr.diff) | 15.7%<br>[output](cases/02-ts-vscode-strings/output.ts) - [diff](cases/02-ts-vscode-strings/compression.diff) | 2.060 ms |
+| `32-rs-knapsack` | [input](cases/32-rs-knapsack/input.rs) | 12.4 KB -> 10.5 KB (-16%) | 17.8%<br>[output](cases/32-rs-knapsack/output-noccr.rs) - [diff](cases/32-rs-knapsack/compression-noccr.diff) | 14.9%<br>[output](cases/32-rs-knapsack/output.rs) - [diff](cases/32-rs-knapsack/compression.diff) | 0.819 ms |
+| `40-java-lru-cache` | [input](cases/40-java-lru-cache/input.java) | 6.7 KB -> 5.7 KB (-15%) | 20.0%<br>[output](cases/40-java-lru-cache/output-noccr.java) - [diff](cases/40-java-lru-cache/compression-noccr.diff) | 13.9%<br>[output](cases/40-java-lru-cache/output.java) - [diff](cases/40-java-lru-cache/compression.diff) | 0.043 ms |
+| `20-java-gson-gson` | [input](cases/20-java-gson-gson/input.java) | 68.5 KB -> 59.0 KB (-14%) | 15.0%<br>[output](cases/20-java-gson-gson/output-noccr.java) - [diff](cases/20-java-gson-gson/compression-noccr.diff) | 13.8%<br>[output](cases/20-java-gson-gson/output.java) - [diff](cases/20-java-gson-gson/compression.diff) | 0.284 ms |
+| `11-go-gin-context` | [input](cases/11-go-gin-context/input.go) | 39.0 KB -> 34.1 KB (-13%) | 14.9%<br>[output](cases/11-go-gin-context/output-noccr.go) - [diff](cases/11-go-gin-context/compression-noccr.diff) | 12.6%<br>[output](cases/11-go-gin-context/output.go) - [diff](cases/11-go-gin-context/compression.diff) | 0.213 ms |
+| `38-ts-heap` | [input](cases/38-ts-heap/input.ts) | 5.7 KB -> 5.0 KB (-12%) | 17.0%<br>[output](cases/38-ts-heap/output-noccr.ts) - [diff](cases/38-ts-heap/compression-noccr.diff) | 10.6%<br>[output](cases/38-ts-heap/output.ts) - [diff](cases/38-ts-heap/compression.diff) | 0.328 ms |
+| `21-java-guava-ordering` | [input](cases/21-java-guava-ordering/input.java) | 40.4 KB -> 37.8 KB (-6%) | 7.7%<br>[output](cases/21-java-guava-ordering/output-noccr.java) - [diff](cases/21-java-guava-ordering/compression-noccr.diff) | 6.2%<br>[output](cases/21-java-guava-ordering/output.java) - [diff](cases/21-java-guava-ordering/compression.diff) | 0.143 ms |
+| `18-rs-tokio-builder` | [input](cases/18-rs-tokio-builder/input.rs) | 48.2 KB -> 45.6 KB (-5%) | 6.1%<br>[output](cases/18-rs-tokio-builder/output-noccr.rs) - [diff](cases/18-rs-tokio-builder/compression-noccr.diff) | 5.3%<br>[output](cases/18-rs-tokio-builder/output.rs) - [diff](cases/18-rs-tokio-builder/compression.diff) | 1.684 ms |
+| `47-kt-indexed-priority-queue` | [input](cases/47-kt-indexed-priority-queue/input.kt) | 7.0 KB -> 6.7 KB (-5%) | 8.1%<br>[output](cases/47-kt-indexed-priority-queue/output-noccr.kt) - [diff](cases/47-kt-indexed-priority-queue/compression-noccr.diff) | 3.4%<br>[output](cases/47-kt-indexed-priority-queue/output.kt) - [diff](cases/47-kt-indexed-priority-queue/compression.diff) | 0.037 ms |
+| `22-kt-okhttp-client` | [input](cases/22-kt-okhttp-client/input.kt) | 44.0 KB -> 41.9 KB (-5%) | 5.6%<br>[output](cases/22-kt-okhttp-client/output-noccr.kt) - [diff](cases/22-kt-okhttp-client/compression-noccr.diff) | 4.6%<br>[output](cases/22-kt-okhttp-client/output.kt) - [diff](cases/22-kt-okhttp-client/compression.diff) | 0.164 ms |
+| `43-c-trie` | [input](cases/43-c-trie/input.c) | 5.2 KB -> 5.0 KB (-4%) | 7.9%<br>[output](cases/43-c-trie/output-noccr.c) - [diff](cases/43-c-trie/compression-noccr.diff) | 2.4%<br>[output](cases/43-c-trie/output.c) - [diff](cases/43-c-trie/compression.diff) | 0.028 ms |
+| `05-js-axios-core` | [input](cases/05-js-axios-core/input.js) | 6.4 KB -> 6.3 KB (-1%) | 3.8%<br>[output](cases/05-js-axios-core/output-noccr.js) - [diff](cases/05-js-axios-core/compression-noccr.diff) | 0.0%<br>[output](cases/05-js-axios-core/output.js) - [diff](cases/05-js-axios-core/compression.diff) | 0.317 ms |
+| `44-rb-avl-tree` | [input](cases/44-rb-avl-tree/input.rb) | 7.5 KB -> 7.5 KB (-0%) | 0.1%<br>[output](cases/44-rb-avl-tree/output-noccr.rb) - [diff](cases/44-rb-avl-tree/compression-noccr.diff) | 0.0%<br>[output](cases/44-rb-avl-tree/output.rb) - [diff](cases/44-rb-avl-tree/compression.diff) | 0.035 ms |
+| `04-js-express-application` | [input](cases/04-js-express-application/input.js) | 14.6 KB -> 14.6 KB (-0%) | 0.0%<br>[output](cases/04-js-express-application/output-noccr.js) - [diff](cases/04-js-express-application/compression-noccr.diff) | 0.0%<br>[output](cases/04-js-express-application/output.js) - [diff](cases/04-js-express-application/compression.diff) | 0.717 ms |
+| `23-rb-rails-cache` | [input](cases/23-rb-rails-cache/input.rb) | 42.6 KB -> 42.6 KB (-0%) | 0.0%<br>[output](cases/23-rb-rails-cache/output-noccr.rb) - [diff](cases/23-rb-rails-cache/compression-noccr.diff) | 0.0%<br>[output](cases/23-rb-rails-cache/output.rb) - [diff](cases/23-rb-rails-cache/compression.diff) | 0.138 ms |
 
 ## What TinyJuice Is Doing
 
@@ -67,8 +67,8 @@ Real-world source compresses the same way as the synthetic corpus: signatures, i
 ### `27-xml-gson-pom`
 
 - [Full input](cases/27-xml-gson-pom/input.xml)
-- [Full output](cases/27-xml-gson-pom/output.txt)
-- [Input vs output diff](cases/27-xml-gson-pom/compression.diff)
+- [Output with CCR](cases/27-xml-gson-pom/output.txt) - [diff](cases/27-xml-gson-pom/compression.diff)
+- [Output without CCR](cases/27-xml-gson-pom/output-noccr.txt) - [diff](cases/27-xml-gson-pom/compression-noccr.diff)
 
 Input excerpt:
 
@@ -157,8 +157,8 @@ https://github.com/google/gson/issues
 ### `28-xml-maven-pom`
 
 - [Full input](cases/28-xml-maven-pom/input.xml)
-- [Full output](cases/28-xml-maven-pom/output.txt)
-- [Input vs output diff](cases/28-xml-maven-pom/compression.diff)
+- [Output with CCR](cases/28-xml-maven-pom/output.txt) - [diff](cases/28-xml-maven-pom/compression.diff)
+- [Output without CCR](cases/28-xml-maven-pom/output-noccr.txt) - [diff](cases/28-xml-maven-pom/compression-noccr.diff)
 
 Input excerpt:
 
@@ -247,8 +247,8 @@ Florencia Tarditti (PR 41)
 ### `14-cpp-leveldb-dbimpl`
 
 - [Full input](cases/14-cpp-leveldb-dbimpl/input.cpp)
-- [Full output](cases/14-cpp-leveldb-dbimpl/output.cpp)
-- [Input vs output diff](cases/14-cpp-leveldb-dbimpl/compression.diff)
+- [Output with CCR](cases/14-cpp-leveldb-dbimpl/output.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression.diff)
+- [Output without CCR](cases/14-cpp-leveldb-dbimpl/output-noccr.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression-noccr.diff)
 
 Input excerpt:
 
@@ -337,8 +337,8 @@ Output excerpt:
 ### `30-py-dijkstra`
 
 - [Full input](cases/30-py-dijkstra/input.py)
-- [Full output](cases/30-py-dijkstra/output.py)
-- [Input vs output diff](cases/30-py-dijkstra/compression.diff)
+- [Output with CCR](cases/30-py-dijkstra/output.py) - [diff](cases/30-py-dijkstra/compression.diff)
+- [Output without CCR](cases/30-py-dijkstra/output-noccr.py) - [diff](cases/30-py-dijkstra/compression-noccr.diff)
 
 Input excerpt:
 
@@ -427,8 +427,8 @@ class PriorityQueue:
 ### `33-rs-floyd-warshall`
 
 - [Full input](cases/33-rs-floyd-warshall/input.rs)
-- [Full output](cases/33-rs-floyd-warshall/output.rs)
-- [Input vs output diff](cases/33-rs-floyd-warshall/compression.diff)
+- [Output with CCR](cases/33-rs-floyd-warshall/output.rs) - [diff](cases/33-rs-floyd-warshall/compression.diff)
+- [Output without CCR](cases/33-rs-floyd-warshall/output-noccr.rs) - [diff](cases/33-rs-floyd-warshall/compression-noccr.diff)
 
 Input excerpt:
 
@@ -517,8 +517,8 @@ mod tests {
 ### `15-cpp-leveldb-versionset`
 
 - [Full input](cases/15-cpp-leveldb-versionset/input.cpp)
-- [Full output](cases/15-cpp-leveldb-versionset/output.cpp)
-- [Input vs output diff](cases/15-cpp-leveldb-versionset/compression.diff)
+- [Output with CCR](cases/15-cpp-leveldb-versionset/output.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression.diff)
+- [Output without CCR](cases/15-cpp-leveldb-versionset/output-noccr.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression-noccr.diff)
 
 Input excerpt:
 
@@ -607,8 +607,8 @@ static int64_t MaxGrandParentOverlapBytes(const Options* options) {
 ### `29-py-red-black-tree`
 
 - [Full input](cases/29-py-red-black-tree/input.py)
-- [Full output](cases/29-py-red-black-tree/output.py)
-- [Input vs output diff](cases/29-py-red-black-tree/compression.diff)
+- [Output with CCR](cases/29-py-red-black-tree/output.py) - [diff](cases/29-py-red-black-tree/compression.diff)
+- [Output without CCR](cases/29-py-red-black-tree/output-noccr.py) - [diff](cases/29-py-red-black-tree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -697,8 +697,8 @@ class RedBlackTree:
 ### `41-java-bellman-ford`
 
 - [Full input](cases/41-java-bellman-ford/input.java)
-- [Full output](cases/41-java-bellman-ford/output.java)
-- [Input vs output diff](cases/41-java-bellman-ford/compression.diff)
+- [Output with CCR](cases/41-java-bellman-ford/output.java) - [diff](cases/41-java-bellman-ford/compression.diff)
+- [Output without CCR](cases/41-java-bellman-ford/output-noccr.java) - [diff](cases/41-java-bellman-ford/compression-noccr.diff)
 
 Input excerpt:
 
@@ -787,8 +787,8 @@ class BellmanFord /*
 ### `25-swift-argparser-argumentset`
 
 - [Full input](cases/25-swift-argparser-argumentset/input.swift)
-- [Full output](cases/25-swift-argparser-argumentset/output.swift)
-- [Input vs output diff](cases/25-swift-argparser-argumentset/compression.diff)
+- [Output with CCR](cases/25-swift-argparser-argumentset/output.swift) - [diff](cases/25-swift-argparser-argumentset/compression.diff)
+- [Output without CCR](cases/25-swift-argparser-argumentset/output-noccr.swift) - [diff](cases/25-swift-argparser-argumentset/compression-noccr.diff)
 
 Input excerpt:
 
@@ -877,8 +877,8 @@ struct ArgumentSet {
 ### `16-c-redis-sds`
 
 - [Full input](cases/16-c-redis-sds/input.c)
-- [Full output](cases/16-c-redis-sds/output.c)
-- [Input vs output diff](cases/16-c-redis-sds/compression.diff)
+- [Output with CCR](cases/16-c-redis-sds/output.c) - [diff](cases/16-c-redis-sds/compression.diff)
+- [Output without CCR](cases/16-c-redis-sds/output-noccr.c) - [diff](cases/16-c-redis-sds/compression-noccr.diff)
 
 Input excerpt:
 
@@ -967,8 +967,8 @@ Output excerpt:
 ### `36-cpp-a-star-search`
 
 - [Full input](cases/36-cpp-a-star-search/input.cpp)
-- [Full output](cases/36-cpp-a-star-search/output.cpp)
-- [Input vs output diff](cases/36-cpp-a-star-search/compression.diff)
+- [Output with CCR](cases/36-cpp-a-star-search/output.cpp) - [diff](cases/36-cpp-a-star-search/compression.diff)
+- [Output without CCR](cases/36-cpp-a-star-search/output-noccr.cpp) - [diff](cases/36-cpp-a-star-search/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1057,8 +1057,8 @@ Output excerpt:
 ### `10-go-gin-gin`
 
 - [Full input](cases/10-go-gin-gin/input.go)
-- [Full output](cases/10-go-gin-gin/output.go)
-- [Input vs output diff](cases/10-go-gin-gin/compression.diff)
+- [Output with CCR](cases/10-go-gin-gin/output.go) - [diff](cases/10-go-gin-gin/compression.diff)
+- [Output without CCR](cases/10-go-gin-gin/output-noccr.go) - [diff](cases/10-go-gin-gin/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1147,8 +1147,8 @@ var regSafePrefix = regexp.MustCompile("[^a-zA-Z0-9/-]+")
 ### `09-py-requests-sessions`
 
 - [Full input](cases/09-py-requests-sessions/input.py)
-- [Full output](cases/09-py-requests-sessions/output.py)
-- [Input vs output diff](cases/09-py-requests-sessions/compression.diff)
+- [Output with CCR](cases/09-py-requests-sessions/output.py) - [diff](cases/09-py-requests-sessions/compression.diff)
+- [Output without CCR](cases/09-py-requests-sessions/output-noccr.py) - [diff](cases/09-py-requests-sessions/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1237,8 +1237,8 @@ from .models import (  # noqa: F401
 ### `42-js-kruskal-mst`
 
 - [Full input](cases/42-js-kruskal-mst/input.js)
-- [Full output](cases/42-js-kruskal-mst/output.js)
-- [Input vs output diff](cases/42-js-kruskal-mst/compression.diff)
+- [Output with CCR](cases/42-js-kruskal-mst/output.js) - [diff](cases/42-js-kruskal-mst/compression.diff)
+- [Output without CCR](cases/42-js-kruskal-mst/output-noccr.js) - [diff](cases/42-js-kruskal-mst/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1327,8 +1327,8 @@ class DisjointSetTree {
 ### `35-go-segment-tree`
 
 - [Full input](cases/35-go-segment-tree/input.go)
-- [Full output](cases/35-go-segment-tree/output.go)
-- [Input vs output diff](cases/35-go-segment-tree/compression.diff)
+- [Output with CCR](cases/35-go-segment-tree/output.go) - [diff](cases/35-go-segment-tree/compression.diff)
+- [Output without CCR](cases/35-go-segment-tree/output-noccr.go) - [diff](cases/35-go-segment-tree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1417,8 +1417,8 @@ func (s *SegmentTree) Query(node int, leftNode int, rightNode int, firstIndex in
 ### `12-go-cobra-command`
 
 - [Full input](cases/12-go-cobra-command/input.go)
-- [Full output](cases/12-go-cobra-command/output.go)
-- [Input vs output diff](cases/12-go-cobra-command/compression.diff)
+- [Output with CCR](cases/12-go-cobra-command/output.go) - [diff](cases/12-go-cobra-command/compression.diff)
+- [Output without CCR](cases/12-go-cobra-command/output-noccr.go) - [diff](cases/12-go-cobra-command/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1507,8 +1507,8 @@ const (
 ### `17-c-curl-url`
 
 - [Full input](cases/17-c-curl-url/input.c)
-- [Full output](cases/17-c-curl-url/output.c)
-- [Input vs output diff](cases/17-c-curl-url/compression.diff)
+- [Output with CCR](cases/17-c-curl-url/output.c) - [diff](cases/17-c-curl-url/compression.diff)
+- [Output without CCR](cases/17-c-curl-url/output-noccr.c) - [diff](cases/17-c-curl-url/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1597,8 +1597,8 @@ Output excerpt:
 ### `26-cs-newtonsoft-serializer`
 
 - [Full input](cases/26-cs-newtonsoft-serializer/input.cs)
-- [Full output](cases/26-cs-newtonsoft-serializer/output.cs)
-- [Input vs output diff](cases/26-cs-newtonsoft-serializer/compression.diff)
+- [Output with CCR](cases/26-cs-newtonsoft-serializer/output.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression.diff)
+- [Output without CCR](cases/26-cs-newtonsoft-serializer/output-noccr.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1687,8 +1687,8 @@ using System.Runtime.Serialization;
 ### `03-ts-vscode-uri`
 
 - [Full input](cases/03-ts-vscode-uri/input.ts)
-- [Full output](cases/03-ts-vscode-uri/output.ts)
-- [Input vs output diff](cases/03-ts-vscode-uri/compression.diff)
+- [Output with CCR](cases/03-ts-vscode-uri/output.ts) - [diff](cases/03-ts-vscode-uri/compression.diff)
+- [Output without CCR](cases/03-ts-vscode-uri/output-noccr.ts) - [diff](cases/03-ts-vscode-uri/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1777,8 +1777,8 @@ function _validateUri(ret: URI, _strict?: boolean): void {
 ### `39-ts-binary-search-tree`
 
 - [Full input](cases/39-ts-binary-search-tree/input.ts)
-- [Full output](cases/39-ts-binary-search-tree/output.ts)
-- [Input vs output diff](cases/39-ts-binary-search-tree/compression.diff)
+- [Output with CCR](cases/39-ts-binary-search-tree/output.ts) - [diff](cases/39-ts-binary-search-tree/compression.diff)
+- [Output without CCR](cases/39-ts-binary-search-tree/output-noccr.ts) - [diff](cases/39-ts-binary-search-tree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1867,8 +1867,8 @@ export class BinarySearchTree<T> {
 ### `31-rs-huffman-encoding`
 
 - [Full input](cases/31-rs-huffman-encoding/input.rs)
-- [Full output](cases/31-rs-huffman-encoding/output.rs)
-- [Input vs output diff](cases/31-rs-huffman-encoding/compression.diff)
+- [Output with CCR](cases/31-rs-huffman-encoding/output.rs) - [diff](cases/31-rs-huffman-encoding/compression.diff)
+- [Output without CCR](cases/31-rs-huffman-encoding/output-noccr.rs) - [diff](cases/31-rs-huffman-encoding/compression-noccr.diff)
 
 Input excerpt:
 
@@ -1957,8 +1957,8 @@ Output excerpt:
 ### `19-rs-ripgrep-walk`
 
 - [Full input](cases/19-rs-ripgrep-walk/input.rs)
-- [Full output](cases/19-rs-ripgrep-walk/output.rs)
-- [Input vs output diff](cases/19-rs-ripgrep-walk/compression.diff)
+- [Output with CCR](cases/19-rs-ripgrep-walk/output.rs) - [diff](cases/19-rs-ripgrep-walk/compression.diff)
+- [Output without CCR](cases/19-rs-ripgrep-walk/output-noccr.rs) - [diff](cases/19-rs-ripgrep-walk/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2047,8 +2047,8 @@ impl DirEntry {
 ### `37-cpp-random-pivot-quicksort`
 
 - [Full input](cases/37-cpp-random-pivot-quicksort/input.cpp)
-- [Full output](cases/37-cpp-random-pivot-quicksort/output.cpp)
-- [Input vs output diff](cases/37-cpp-random-pivot-quicksort/compression.diff)
+- [Output with CCR](cases/37-cpp-random-pivot-quicksort/output.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression.diff)
+- [Output without CCR](cases/37-cpp-random-pivot-quicksort/output-noccr.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2137,8 +2137,8 @@ Output excerpt:
 ### `34-go-avl-tree`
 
 - [Full input](cases/34-go-avl-tree/input.go)
-- [Full output](cases/34-go-avl-tree/output.go)
-- [Input vs output diff](cases/34-go-avl-tree/compression.diff)
+- [Output with CCR](cases/34-go-avl-tree/output.go) - [diff](cases/34-go-avl-tree/compression.diff)
+- [Output without CCR](cases/34-go-avl-tree/output-noccr.go) - [diff](cases/34-go-avl-tree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2227,8 +2227,8 @@ func (n *AVLNode[T]) Left() Node[T] {
 ### `07-py-django-paginator`
 
 - [Full input](cases/07-py-django-paginator/input.py)
-- [Full output](cases/07-py-django-paginator/output.py)
-- [Input vs output diff](cases/07-py-django-paginator/compression.diff)
+- [Output with CCR](cases/07-py-django-paginator/output.py) - [diff](cases/07-py-django-paginator/compression.diff)
+- [Output without CCR](cases/07-py-django-paginator/output-noccr.py) - [diff](cases/07-py-django-paginator/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2317,8 +2317,8 @@ class Paginator:
 ### `08-py-flask-app`
 
 - [Full input](cases/08-py-flask-app/input.py)
-- [Full output](cases/08-py-flask-app/output.py)
-- [Input vs output diff](cases/08-py-flask-app/compression.diff)
+- [Output with CCR](cases/08-py-flask-app/output.py) - [diff](cases/08-py-flask-app/compression.diff)
+- [Output without CCR](cases/08-py-flask-app/output-noccr.py) - [diff](cases/08-py-flask-app/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2407,8 +2407,8 @@ from .globals import request
 ### `46-cs-topological-sort`
 
 - [Full input](cases/46-cs-topological-sort/input.cs)
-- [Full output](cases/46-cs-topological-sort/output.cs)
-- [Input vs output diff](cases/46-cs-topological-sort/compression.diff)
+- [Output with CCR](cases/46-cs-topological-sort/output.cs) - [diff](cases/46-cs-topological-sort/compression.diff)
+- [Output without CCR](cases/46-cs-topological-sort/output-noccr.cs) - [diff](cases/46-cs-topological-sort/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2497,8 +2497,8 @@ public class TopologicalSort<T> where T : IComparable<T>
 ### `06-py-django-request`
 
 - [Full input](cases/06-py-django-request/input.py)
-- [Full output](cases/06-py-django-request/output.py)
-- [Input vs output diff](cases/06-py-django-request/compression.diff)
+- [Output with CCR](cases/06-py-django-request/output.py) - [diff](cases/06-py-django-request/compression.diff)
+- [Output without CCR](cases/06-py-django-request/output-noccr.py) - [diff](cases/06-py-django-request/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2587,8 +2587,8 @@ host_validation_re = _lazy_re_compile(
 ### `13-go-mux-mux`
 
 - [Full input](cases/13-go-mux-mux/input.go)
-- [Full output](cases/13-go-mux-mux/output.go)
-- [Input vs output diff](cases/13-go-mux-mux/compression.diff)
+- [Output with CCR](cases/13-go-mux-mux/output.go) - [diff](cases/13-go-mux-mux/compression.diff)
+- [Output without CCR](cases/13-go-mux-mux/output-noccr.go) - [diff](cases/13-go-mux-mux/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2677,8 +2677,8 @@ func NewRouter() *Router {
 ### `45-php-avl-tree`
 
 - [Full input](cases/45-php-avl-tree/input.php)
-- [Full output](cases/45-php-avl-tree/output.php)
-- [Input vs output diff](cases/45-php-avl-tree/compression.diff)
+- [Output with CCR](cases/45-php-avl-tree/output.php) - [diff](cases/45-php-avl-tree/compression.diff)
+- [Output without CCR](cases/45-php-avl-tree/output-noccr.php) - [diff](cases/45-php-avl-tree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2767,8 +2767,8 @@ class AVLTree
 ### `24-php-laravel-container`
 
 - [Full input](cases/24-php-laravel-container/input.php)
-- [Full output](cases/24-php-laravel-container/output.php)
-- [Input vs output diff](cases/24-php-laravel-container/compression.diff)
+- [Output with CCR](cases/24-php-laravel-container/output.php) - [diff](cases/24-php-laravel-container/compression.diff)
+- [Output without CCR](cases/24-php-laravel-container/output-noccr.php) - [diff](cases/24-php-laravel-container/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2857,8 +2857,8 @@ class Container implements ArrayAccess, ContainerContract
 ### `01-ts-vscode-async`
 
 - [Full input](cases/01-ts-vscode-async/input.ts)
-- [Full output](cases/01-ts-vscode-async/output.ts)
-- [Input vs output diff](cases/01-ts-vscode-async/compression.diff)
+- [Output with CCR](cases/01-ts-vscode-async/output.ts) - [diff](cases/01-ts-vscode-async/compression.diff)
+- [Output without CCR](cases/01-ts-vscode-async/output-noccr.ts) - [diff](cases/01-ts-vscode-async/compression-noccr.diff)
 
 Input excerpt:
 
@@ -2947,8 +2947,8 @@ export function raceCancellation<T>(promise: Promise<T>, token: CancellationToke
 ### `40-java-lru-cache`
 
 - [Full input](cases/40-java-lru-cache/input.java)
-- [Full output](cases/40-java-lru-cache/output.java)
-- [Input vs output diff](cases/40-java-lru-cache/compression.diff)
+- [Output with CCR](cases/40-java-lru-cache/output.java) - [diff](cases/40-java-lru-cache/compression.diff)
+- [Output without CCR](cases/40-java-lru-cache/output-noccr.java) - [diff](cases/40-java-lru-cache/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3037,8 +3037,8 @@ import java.util.Map;
 ### `32-rs-knapsack`
 
 - [Full input](cases/32-rs-knapsack/input.rs)
-- [Full output](cases/32-rs-knapsack/output.rs)
-- [Input vs output diff](cases/32-rs-knapsack/compression.diff)
+- [Output with CCR](cases/32-rs-knapsack/output.rs) - [diff](cases/32-rs-knapsack/compression.diff)
+- [Output without CCR](cases/32-rs-knapsack/output-noccr.rs) - [diff](cases/32-rs-knapsack/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3127,8 +3127,8 @@ pub struct KnapsackSolution {
 ### `02-ts-vscode-strings`
 
 - [Full input](cases/02-ts-vscode-strings/input.ts)
-- [Full output](cases/02-ts-vscode-strings/output.ts)
-- [Input vs output diff](cases/02-ts-vscode-strings/compression.diff)
+- [Output with CCR](cases/02-ts-vscode-strings/output.ts) - [diff](cases/02-ts-vscode-strings/compression.diff)
+- [Output without CCR](cases/02-ts-vscode-strings/output-noccr.ts) - [diff](cases/02-ts-vscode-strings/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3217,8 +3217,8 @@ export function format2(template: string, values: Record<string, unknown>): stri
 ### `38-ts-heap`
 
 - [Full input](cases/38-ts-heap/input.ts)
-- [Full output](cases/38-ts-heap/output.ts)
-- [Input vs output diff](cases/38-ts-heap/compression.diff)
+- [Output with CCR](cases/38-ts-heap/output.ts) - [diff](cases/38-ts-heap/compression.diff)
+- [Output without CCR](cases/38-ts-heap/output-noccr.ts) - [diff](cases/38-ts-heap/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3307,8 +3307,8 @@ export abstract class Heap<T> {
 ### `20-java-gson-gson`
 
 - [Full input](cases/20-java-gson-gson/input.java)
-- [Full output](cases/20-java-gson-gson/output.java)
-- [Input vs output diff](cases/20-java-gson-gson/compression.diff)
+- [Output with CCR](cases/20-java-gson-gson/output.java) - [diff](cases/20-java-gson-gson/compression.diff)
+- [Output without CCR](cases/20-java-gson-gson/output-noccr.java) - [diff](cases/20-java-gson-gson/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3397,8 +3397,8 @@ import com.google.gson.internal.bind.SerializationDelegatingTypeAdapter;
 ### `11-go-gin-context`
 
 - [Full input](cases/11-go-gin-context/input.go)
-- [Full output](cases/11-go-gin-context/output.go)
-- [Input vs output diff](cases/11-go-gin-context/compression.diff)
+- [Output with CCR](cases/11-go-gin-context/output.go) - [diff](cases/11-go-gin-context/compression.diff)
+- [Output without CCR](cases/11-go-gin-context/output-noccr.go) - [diff](cases/11-go-gin-context/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3487,8 +3487,8 @@ const (
 ### `47-kt-indexed-priority-queue`
 
 - [Full input](cases/47-kt-indexed-priority-queue/input.kt)
-- [Full output](cases/47-kt-indexed-priority-queue/output.kt)
-- [Input vs output diff](cases/47-kt-indexed-priority-queue/compression.diff)
+- [Output with CCR](cases/47-kt-indexed-priority-queue/output.kt) - [diff](cases/47-kt-indexed-priority-queue/compression.diff)
+- [Output without CCR](cases/47-kt-indexed-priority-queue/output-noccr.kt) - [diff](cases/47-kt-indexed-priority-queue/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3577,8 +3577,8 @@ class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) 
 ### `43-c-trie`
 
 - [Full input](cases/43-c-trie/input.c)
-- [Full output](cases/43-c-trie/output.c)
-- [Input vs output diff](cases/43-c-trie/compression.diff)
+- [Output with CCR](cases/43-c-trie/output.c) - [diff](cases/43-c-trie/compression.diff)
+- [Output without CCR](cases/43-c-trie/output-noccr.c) - [diff](cases/43-c-trie/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3667,8 +3667,8 @@ int trie_new (
 ### `21-java-guava-ordering`
 
 - [Full input](cases/21-java-guava-ordering/input.java)
-- [Full output](cases/21-java-guava-ordering/output.java)
-- [Input vs output diff](cases/21-java-guava-ordering/compression.diff)
+- [Output with CCR](cases/21-java-guava-ordering/output.java) - [diff](cases/21-java-guava-ordering/compression.diff)
+- [Output without CCR](cases/21-java-guava-ordering/output-noccr.java) - [diff](cases/21-java-guava-ordering/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3757,8 +3757,8 @@ import java.util.SortedMap;
 ### `18-rs-tokio-builder`
 
 - [Full input](cases/18-rs-tokio-builder/input.rs)
-- [Full output](cases/18-rs-tokio-builder/output.rs)
-- [Input vs output diff](cases/18-rs-tokio-builder/compression.diff)
+- [Output with CCR](cases/18-rs-tokio-builder/output.rs) - [diff](cases/18-rs-tokio-builder/compression.diff)
+- [Output without CCR](cases/18-rs-tokio-builder/output-noccr.rs) - [diff](cases/18-rs-tokio-builder/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3847,8 +3847,8 @@ use std::time::Duration;
 ### `22-kt-okhttp-client`
 
 - [Full input](cases/22-kt-okhttp-client/input.kt)
-- [Full output](cases/22-kt-okhttp-client/output.kt)
-- [Input vs output diff](cases/22-kt-okhttp-client/compression.diff)
+- [Output with CCR](cases/22-kt-okhttp-client/output.kt) - [diff](cases/22-kt-okhttp-client/compression.diff)
+- [Output without CCR](cases/22-kt-okhttp-client/output-noccr.kt) - [diff](cases/22-kt-okhttp-client/compression-noccr.diff)
 
 Input excerpt:
 
@@ -3937,8 +3937,8 @@ import okhttp3.internal.connection.RealCall
 ### `05-js-axios-core`
 
 - [Full input](cases/05-js-axios-core/input.js)
-- [Full output](cases/05-js-axios-core/output.js)
-- [Input vs output diff](cases/05-js-axios-core/compression.diff)
+- [Output with CCR](cases/05-js-axios-core/output.js) - [diff](cases/05-js-axios-core/compression.diff)
+- [Output without CCR](cases/05-js-axios-core/output-noccr.js) - [diff](cases/05-js-axios-core/compression-noccr.diff)
 
 Input excerpt:
 
@@ -4027,8 +4027,8 @@ class Axios {
 ### `44-rb-avl-tree`
 
 - [Full input](cases/44-rb-avl-tree/input.rb)
-- [Full output](cases/44-rb-avl-tree/output.rb)
-- [Input vs output diff](cases/44-rb-avl-tree/compression.diff)
+- [Output with CCR](cases/44-rb-avl-tree/output.rb) - [diff](cases/44-rb-avl-tree/compression.diff)
+- [Output without CCR](cases/44-rb-avl-tree/output-noccr.rb) - [diff](cases/44-rb-avl-tree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -4117,8 +4117,8 @@ class AvlTree
 ### `04-js-express-application`
 
 - [Full input](cases/04-js-express-application/input.js)
-- [Full output](cases/04-js-express-application/output.js)
-- [Input vs output diff](cases/04-js-express-application/compression.diff)
+- [Output with CCR](cases/04-js-express-application/output.js) - [diff](cases/04-js-express-application/compression.diff)
+- [Output without CCR](cases/04-js-express-application/output-noccr.js) - [diff](cases/04-js-express-application/compression-noccr.diff)
 
 Input excerpt:
 
@@ -4207,8 +4207,8 @@ var setPrototypeOf = require('setprototypeof')
 ### `23-rb-rails-cache`
 
 - [Full input](cases/23-rb-rails-cache/input.rb)
-- [Full output](cases/23-rb-rails-cache/output.rb)
-- [Input vs output diff](cases/23-rb-rails-cache/compression.diff)
+- [Output with CCR](cases/23-rb-rails-cache/output.rb) - [diff](cases/23-rb-rails-cache/compression.diff)
+- [Output without CCR](cases/23-rb-rails-cache/output-noccr.rb) - [diff](cases/23-rb-rails-cache/compression-noccr.diff)
 
 Input excerpt:
 

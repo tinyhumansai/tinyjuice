@@ -1,0 +1,1354 @@
+--- input/input.xml
++++ output/output-noccr.txt
+@@ -1,821 +1,541 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!--
+-Licensed to the Apache Software Foundation (ASF) under one
+-or more contributor license agreements.  See the NOTICE file
+-distributed with this work for additional information
+-regarding copyright ownership.  The ASF licenses this file
+-to you under the Apache License, Version 2.0 (the
+-"License"); you may not use this file except in compliance
+-with the License.  You may obtain a copy of the License at
++4.0.0
+ 
+-    http://www.apache.org/licenses/LICENSE-2.0
++org.apache.maven
++maven-parent
++42
+ 
+-Unless required by applicable law or agreed to in writing,
+-software distributed under the License is distributed on an
+-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+-KIND, either express or implied.  See the License for the
+-specific language governing permissions and limitations
+-under the License.
+--->
+-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+-  <modelVersion>4.0.0</modelVersion>
++maven
++3.9.7
++pom
+ 
+-  <parent>
+-    <groupId>org.apache.maven</groupId>
+-    <artifactId>maven-parent</artifactId>
+-    <version>42</version>
+-    <relativePath />
+-  </parent>
++Apache Maven
++Maven is a software build management and
++comprehension tool. Based on the concept of a project object model:
++builds, dependency management, documentation creation, site
++publication, and distribution publication are all controlled from
++the declarative file. Maven can be extended by plugins to utilise a
++number of other development tools for reporting or the build
++process.
++https://maven.apache.org/ref/${project.version}/
++2001
+ 
+-  <artifactId>maven</artifactId>
+-  <version>3.9.7</version>
+-  <packaging>pom</packaging>
++Stuart McCulloch
+ 
+-  <name>Apache Maven</name>
+-  <description>Maven is a software build management and
+-    comprehension tool. Based on the concept of a project object model:
+-    builds, dependency management, documentation creation, site
+-    publication, and distribution publication are all controlled from
+-    the declarative file. Maven can be extended by plugins to utilise a
+-    number of other development tools for reporting or the build
+-    process.</description>
+-  <url>https://maven.apache.org/ref/${project.version}/</url>
+-  <inceptionYear>2001</inceptionYear>
++Christian Schulte (MNG-2199)
+ 
+-  <contributors>
+-    <contributor>
+-      <name>Stuart McCulloch</name>
+-    </contributor>
+-    <contributor>
+-      <name>Christian Schulte (MNG-2199)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Christopher Tubbs (MNG-4226)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Konstantin Perikov (MNG-4565)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Sébastian Le Merdy (MNG-5613)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Mark Ingram (MNG-5639)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Phil Pratt-Szeliga (MNG-5645)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Florencia Tarditti (PR 41)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Anton Tanasenko</name>
+-    </contributor>
+-    <contributor>
+-      <name>Joseph Walton (MNG-5297)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Fabiano Cipriano de Oliveira (MNG-6261)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Mike Mol (MNG-6665)</name>
+-    </contributor>
+-    <contributor>
+-      <name>Martin Kanters (MNG-6665)</name>
+-    </contributor>
+-  </contributors>
++Christopher Tubbs (MNG-4226)
+ 
+-  <modules>
+-    <module>maven-plugin-api</module>
+-    <module>maven-builder-support</module>
+-    <module>maven-model</module>
+-    <module>maven-model-builder</module>
+-    <module>maven-core</module>
+-    <module>maven-settings</module>
+-    <module>maven-settings-builder</module>
+-    <module>maven-artifact</module>
+-    <module>maven-resolver-provider</module>
+-    <module>maven-repository-metadata</module>
+-    <module>maven-slf4j-provider</module>
+-    <module>maven-embedder</module>
+-    <module>maven-compat</module>
+-    <module>apache-maven</module>
+-  </modules>
++Konstantin Perikov (MNG-4565)
+ 
+-  <scm>
+-    <connection>scm:git:https://gitbox.apache.org/repos/asf/maven.git</connection>
+-    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven.git</developerConnection>
+-    <tag>maven-3.9.7</tag>
+-    <url>https://github.com/apache/maven/tree/${project.scm.tag}</url>
+-  </scm>
+-  <issueManagement>
+-    <system>jira</system>
+-    <url>https://issues.apache.org/jira/browse/MNG</url>
+-  </issueManagement>
+-  <ciManagement>
+-    <system>Jenkins</system>
+-    <url>https://ci-maven.apache.org/job/Maven/job/maven-box/job/maven/</url>
+-  </ciManagement>
+-  <distributionManagement>
+-    <site>
+-      <id>apache.website</id>
+-      <url>scm:svn:https://svn.apache.org/repos/asf/maven/website/components/${maven.site.path}</url>
+-    </site>
+-    <downloadUrl>https://maven.apache.org/download.html</downloadUrl>
+-  </distributionManagement>
++Sébastian Le Merdy (MNG-5613)
+ 
+-  <properties>
+-    <javaVersion>8</javaVersion>
+-    <classWorldsVersion>2.8.0</classWorldsVersion>
+-    <commonsCliVersion>1.7.0</commonsCliVersion>
+-    <commonsIoVersion>2.16.1</commonsIoVersion>
+-    <commonsLangVersion>3.14.0</commonsLangVersion>
+-    <junitVersion>4.13.2</junitVersion>
+-    <hamcrestVersion>2.2</hamcrestVersion>
+-    <mockitoVersion>4.11.0</mockitoVersion>
+-    <!-- plexus 2.1.1 is broken -->
+-    <plexusVersion>2.1.0</plexusVersion>
+-    <plexusInterpolationVersion>1.27</plexusInterpolationVersion>
+-    <!-- Blocked by 3.4.0+ changes, see MNG-7710, downgrade from parent 4.0.1 -->
+-    <version.plexus-utils>3.5.1</version.plexus-utils>
+-    <guiceVersion>5.1.0</guiceVersion>
+-    <guavaVersion>33.2.0-jre</guavaVersion>
+-    <guavafailureaccessVersion>1.0.2</guavafailureaccessVersion>
+-    <wagonVersion>3.5.3</wagonVersion>
+-    <securityDispatcherVersion>2.0</securityDispatcherVersion>
+-    <cipherVersion>2.0</cipherVersion>
+-    <jxpathVersion>1.3</jxpathVersion>
+-    <resolverVersion>1.9.20</resolverVersion>
+-    <slf4jVersion>1.7.36</slf4jVersion>
+-    <xmlunitVersion>2.10.0</xmlunitVersion>
+-    <powermockVersion>2.0.9</powermockVersion>
+-    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+-    <!-- Control the name of the distribution and information output by mvn -->
+-    <distributionId>apache-maven</distributionId>
+-    <distributionShortName>Maven</distributionShortName>
+-    <distributionName>Apache Maven</distributionName>
+-    <maven.site.path>ref/3-LATEST</maven.site.path>
+-    <checkstyle.violation.ignore>None</checkstyle.violation.ignore>
+-    <checkstyle.excludes>**/package-info.java</checkstyle.excludes>
+-    <project.build.outputTimestamp>2024-05-22T09:47:56Z</project.build.outputTimestamp>
+-  </properties>
++Mark Ingram (MNG-5639)
+ 
+-  <!--bootstrap-start-comment-->
+-  <dependencyManagement>
+-    <!--bootstrap-end-comment-->
+-    <dependencies>
+-      <!--  Maven Modules -->
+-      <!--bootstrap-start-comment-->
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-model</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-settings</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-settings-builder</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-plugin-api</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-embedder</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-core</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-model-builder</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-compat</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-artifact</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-resolver-provider</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-repository-metadata</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-builder-support</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven</groupId>
+-        <artifactId>maven-slf4j-provider</artifactId>
+-        <version>${project.version}</version>
+-      </dependency>
+-      <!--bootstrap-end-comment-->
+-      <!--  Plexus -->
+-      <dependency>
+-        <groupId>org.codehaus.plexus</groupId>
+-        <artifactId>plexus-utils</artifactId>
+-        <version>${version.plexus-utils}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>com.google.inject</groupId>
+-        <artifactId>guice</artifactId>
+-        <version>${guiceVersion}</version>
+-        <exclusions>
+-          <exclusion>
+-            <groupId>com.google.guava</groupId>
+-            <artifactId>guava</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <!-- This is a transitive dep of com.google.inject:guice -->
+-        <groupId>com.google.guava</groupId>
+-        <artifactId>guava</artifactId>
+-        <version>${guavaVersion}</version>
+-        <exclusions>
+-          <exclusion>
+-            <groupId>com.google.code.findbugs</groupId>
+-            <artifactId>jsr305</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>com.google.errorprone</groupId>
+-            <artifactId>error_prone_annotations</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>com.google.guava</groupId>
+-            <artifactId>failureaccess</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>com.google.guava</groupId>
+-            <artifactId>listenablefuture</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>com.google.j2objc</groupId>
+-            <artifactId>j2objc-annotations</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>org.checkerframework</groupId>
+-            <artifactId>checker-qual</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <!-- This is a transitive dep of com.google.guava:guava -->
+-        <groupId>com.google.guava</groupId>
+-        <artifactId>failureaccess</artifactId>
+-        <version>${guavafailureaccessVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.eclipse.sisu</groupId>
+-        <artifactId>org.eclipse.sisu.plexus</artifactId>
+-        <version>${version.sisu-maven-plugin}</version>
+-        <exclusions>
+-          <exclusion>
+-            <!-- Way too easy to conflict with plugins to be in Maven and leak in plugins -->
+-            <groupId>javax.enterprise</groupId>
+-            <artifactId>cdi-api</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.eclipse.sisu</groupId>
+-        <artifactId>org.eclipse.sisu.inject</artifactId>
+-        <version>${version.sisu-maven-plugin}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>javax.inject</groupId>
+-        <artifactId>javax.inject</artifactId>
+-        <version>1</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>javax.annotation</groupId>
+-        <artifactId>javax.annotation-api</artifactId>
+-        <version>1.3.2</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.codehaus.plexus</groupId>
+-        <artifactId>plexus-component-annotations</artifactId>
+-        <version>${plexusVersion}</version>
+-        <exclusions>
+-          <exclusion>
+-            <groupId>junit</groupId>
+-            <artifactId>junit</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.codehaus.plexus</groupId>
+-        <artifactId>plexus-classworlds</artifactId>
+-        <version>${classWorldsVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.codehaus.plexus</groupId>
+-        <artifactId>plexus-interpolation</artifactId>
+-        <version>${plexusInterpolationVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.shared</groupId>
+-        <artifactId>maven-shared-utils</artifactId>
+-        <version>3.4.2</version>
+-        <exclusions>
+-          <!-- We use org.apache.maven.shared.utils.logging only in Maven Core -->
+-          <exclusion>
+-            <groupId>commons-io</groupId>
+-            <artifactId>commons-io</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.fusesource.jansi</groupId>
+-        <artifactId>jansi</artifactId>
+-        <version>2.4.1</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.slf4j</groupId>
+-        <artifactId>slf4j-api</artifactId>
+-        <version>${slf4jVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.slf4j</groupId>
+-        <artifactId>slf4j-simple</artifactId>
+-        <version>${slf4jVersion}</version>
+-        <optional>true</optional>
+-      </dependency>
+-      <dependency>
+-        <groupId>ch.qos.logback</groupId>
+-        <artifactId>logback-classic</artifactId>
+-        <version>1.2.13</version>
+-        <optional>true</optional>
+-      </dependency>
+-      <!--  Wagon -->
+-      <dependency>
+-        <groupId>org.apache.maven.wagon</groupId>
+-        <artifactId>wagon-provider-api</artifactId>
+-        <version>${wagonVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.wagon</groupId>
+-        <artifactId>wagon-file</artifactId>
+-        <version>${wagonVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.wagon</groupId>
+-        <artifactId>wagon-http</artifactId>
+-        <version>${wagonVersion}</version>
+-      </dependency>
+-      <!--  Repository -->
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-api</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-spi</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-impl</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-util</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-connector-basic</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-transport-file</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-transport-http</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.maven.resolver</groupId>
+-        <artifactId>maven-resolver-transport-wagon</artifactId>
+-        <version>${resolverVersion}</version>
+-      </dependency>
+-      <!-- HttpClient: used by Wagon and Resolver-Http -->
+-      <dependency>
+-        <groupId>org.apache.httpcomponents</groupId>
+-        <artifactId>httpcore</artifactId>
+-        <version>4.4.16</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.httpcomponents</groupId>
+-        <artifactId>httpclient</artifactId>
+-        <version>4.5.14</version>
+-      </dependency>
+-      <!--  Commons -->
+-      <dependency>
+-        <groupId>commons-cli</groupId>
+-        <artifactId>commons-cli</artifactId>
+-        <version>${commonsCliVersion}</version>
+-        <exclusions>
+-          <exclusion>
+-            <groupId>commons-lang</groupId>
+-            <artifactId>commons-lang</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>commons-logging</groupId>
+-            <artifactId>commons-logging</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <groupId>commons-io</groupId>
+-        <artifactId>commons-io</artifactId>
+-        <version>${commonsIoVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>commons-jxpath</groupId>
+-        <artifactId>commons-jxpath</artifactId>
+-        <version>${jxpathVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.apache.commons</groupId>
+-        <artifactId>commons-lang3</artifactId>
+-        <version>${commonsLangVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.codehaus.plexus</groupId>
+-        <artifactId>plexus-sec-dispatcher</artifactId>
+-        <version>${securityDispatcherVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.codehaus.plexus</groupId>
+-        <artifactId>plexus-cipher</artifactId>
+-        <version>${cipherVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.mockito</groupId>
+-        <artifactId>mockito-core</artifactId>
+-        <version>${mockitoVersion}</version>
+-        <scope>test</scope>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.xmlunit</groupId>
+-        <artifactId>xmlunit-core</artifactId>
+-        <version>${xmlunitVersion}</version>
+-        <scope>test</scope>
+-        <exclusions>
+-          <exclusion>
+-            <groupId>org.hamcrest</groupId>
+-            <artifactId>hamcrest-core</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>org.hamcrest</groupId>
+-            <artifactId>hamcrest-library</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.xmlunit</groupId>
+-        <artifactId>xmlunit-matchers</artifactId>
+-        <version>${xmlunitVersion}</version>
+-        <scope>test</scope>
+-        <exclusions>
+-          <exclusion>
+-            <groupId>org.hamcrest</groupId>
+-            <artifactId>hamcrest-core</artifactId>
+-          </exclusion>
+-          <exclusion>
+-            <groupId>org.hamcrest</groupId>
+-            <artifactId>hamcrest-library</artifactId>
+-          </exclusion>
+-        </exclusions>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.powermock</groupId>
+-        <artifactId>powermock-reflect</artifactId>
+-        <version>${powermockVersion}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.hamcrest</groupId>
+-        <artifactId>hamcrest</artifactId>
+-        <version>${hamcrestVersion}</version>
+-        <scope>test</scope>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.hamcrest</groupId>
+-        <artifactId>hamcrest-core</artifactId>
+-        <version>${hamcrestVersion}</version>
+-        <scope>test</scope>
+-      </dependency>
+-      <dependency>
+-        <groupId>junit</groupId>
+-        <artifactId>junit</artifactId>
+-        <version>${junitVersion}</version>
+-        <scope>test</scope>
+-      </dependency>
+-    </dependencies>
+-    <!--bootstrap-start-comment-->
+-  </dependencyManagement>
+-  <!--bootstrap-end-comment-->
+-  <!--bootstrap-start-comment-->
+-  <dependencies>
+-    <dependency>
+-      <groupId>org.hamcrest</groupId>
+-      <artifactId>hamcrest</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>junit</groupId>
+-      <artifactId>junit</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-  </dependencies>
+-  <!--bootstrap-end-comment-->
++Phil Pratt-Szeliga (MNG-5645)
+ 
+-  <build>
+-    <pluginManagement>
+-      <plugins>
+-        <plugin>
+-          <groupId>org.codehaus.plexus</groupId>
+-          <artifactId>plexus-component-metadata</artifactId>
+-          <version>${plexusVersion}</version>
+-          <executions>
+-            <execution>
+-              <goals>
+-                <goal>generate-metadata</goal>
+-                <goal>generate-test-metadata</goal>
+-              </goals>
+-            </execution>
+-          </executions>
+-        </plugin>
+-        <plugin>
+-          <groupId>org.apache.maven.plugins</groupId>
+-          <artifactId>maven-surefire-plugin</artifactId>
+-          <configuration>
+-            <argLine>-Xmx256m</argLine>
+-          </configuration>
+-        </plugin>
+-        <plugin>
+-          <groupId>org.codehaus.modello</groupId>
+-          <artifactId>modello-maven-plugin</artifactId>
+-          <executions>
+-            <execution>
+-              <id>modello-site-docs</id>
+-              <goals>
+-                <goal>xdoc</goal>
+-                <goal>xsd</goal>
+-              </goals>
+-              <phase>pre-site</phase>
+-            </execution>
+-            <execution>
+-              <id>modello</id>
+-              <goals>
+-                <goal>java</goal>
+-                <goal>xpp3-reader</goal>
+-                <goal>xpp3-writer</goal>
+-              </goals>
+-            </execution>
+-          </executions>
+-        </plugin>
+-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+-        <plugin>
+-          <groupId>org.eclipse.m2e</groupId>
+-          <artifactId>lifecycle-mapping</artifactId>
+-          <version>1.0.0</version>
+-          <configuration>
+-            <lifecycleMappingMetadata>
+-              <pluginExecutions>
+-                <pluginExecution>
+-                  <pluginExecutionFilter>
+-                    <groupId>org.apache.rat</groupId>
+-                    <artifactId>apache-rat-plugin</artifactId>
+-                    <versionRange>[0.10,)</versionRange>
+-                    <goals>
+-                      <goal>check</goal>
+-                    </goals>
+-                  </pluginExecutionFilter>
+-                  <action>
+-                    <ignore />
+-                  </action>
+-                </pluginExecution>
+-              </pluginExecutions>
+-            </lifecycleMappingMetadata>
+-          </configuration>
+-        </plugin>
+-        <plugin>
+-          <groupId>org.codehaus.mojo</groupId>
+-          <artifactId>build-helper-maven-plugin</artifactId>
+-          <version>3.6.0</version>
+-        </plugin>
+-        <plugin>
+-          <groupId>org.codehaus.mojo</groupId>
+-          <artifactId>buildnumber-maven-plugin</artifactId>
+-          <version>3.2.0</version>
+-        </plugin>
+-      </plugins>
+-    </pluginManagement>
+-    <plugins>
+-      <plugin>
+-        <groupId>org.codehaus.mojo</groupId>
+-        <artifactId>animal-sniffer-maven-plugin</artifactId>
+-        <version>1.23</version>
+-        <configuration>
+-          <signature>
+-            <groupId>org.codehaus.mojo.signature</groupId>
+-            <artifactId>java18</artifactId>
+-            <version>1.0</version>
+-          </signature>
+-        </configuration>
+-        <executions>
+-          <execution>
+-            <id>check-java-compat</id>
+-            <goals>
+-              <goal>check</goal>
+-            </goals>
+-            <phase>process-classes</phase>
+-          </execution>
+-        </executions>
+-      </plugin>
+-      <plugin>
+-        <groupId>org.apache.maven.plugins</groupId>
+-        <artifactId>maven-doap-plugin</artifactId>
+-        <version>1.2</version>
+-        <configuration>
+-          <asfExtOptions>
+-            <charter>The mission of the Apache Maven project is to create and maintain software
+-            libraries that provide a widely-used project build tool, targeting mainly Java
+-            development. Apache Maven promotes the use of dependencies via a
+-            standardized coordinate system, binary plugins, and a standard build
+-            lifecycle.</charter>
+-          </asfExtOptions>
+-        </configuration>
+-      </plugin>
+-      <plugin>
+-        <groupId>org.apache.rat</groupId>
+-        <artifactId>apache-rat-plugin</artifactId>
+-        <executions>
+-          <execution>
+-            <id>rat-check</id>
+-            <inherited>false</inherited>
+-            <configuration>
+-              <excludes>
+-                <exclude>**/.gitattributes</exclude>
+-                <exclude>src/test/resources*/**</exclude>
+-                <exclude>src/test/projects/**</exclude>
+-                <exclude>src/test/remote-repo/**</exclude>
+-                <exclude>**/*.odg</exclude>
+-                <exclude>**/*.svg</exclude>
+-                <exclude>.asf.yaml</exclude>
+-                <!--
+-                  ! Excluded the license files itself cause they do not have have a license of themselves.
+-                -->
+-                <exclude>src/main/appended-resources/licenses/EPL-1.0.txt</exclude>
+-                <exclude>src/main/appended-resources/licenses/unrecognized-aopalliance-1.0.txt</exclude>
+-                <exclude>src/main/appended-resources/licenses/unrecognized-javax.annotation-api-1.3.2.txt</exclude>
+-              </excludes>
+-            </configuration>
+-          </execution>
+-        </executions>
+-      </plugin>
+-      <plugin>
+-        <groupId>org.apache.maven.plugins</groupId>
+-        <artifactId>maven-enforcer-plugin</artifactId>
+-        <executions>
+-          <execution>
+-            <id>ensure-no-sonatype-cipher-and-sec-dispatcher</id>
+-            <goals>
+-              <goal>enforce</goal>
+-            </goals>
+-            <phase>validate</phase>
+-            <configuration>
+-              <rules>
+-                <bannedDependencies>
+-                  <excludes>
+-                    <exclude>org.sonatype.plexus:plexus-sec-dispatcher</exclude>
+-                    <exclude>org.sonatype.plexus:plexus-cipher</exclude>
+-                  </excludes>
+-                  <message>ensure no more org.sonatype.plexus:plexus-cipher and org.sonatype.plexus:plexus-sec-dispatcher.</message>
+-                </bannedDependencies>
+-              </rules>
+-              <fail>true</fail>
+-            </configuration>
+-          </execution>
+-        </executions>
+-      </plugin>
+-    </plugins>
+-  </build>
++Florencia Tarditti (PR 41)
+ 
+-  <profiles>
+-    <profile>
+-      <id>apache-release</id>
+-      <build>
+-        <plugins>
+-          <plugin>
+-            <artifactId>maven-assembly-plugin</artifactId>
+-            <executions>
+-              <execution>
+-                <id>source-release-assembly</id>
+-                <configuration>
+-                  <!-- we have a dedicated distribution module -->
+-                  <skipAssembly>true</skipAssembly>
+-                </configuration>
+-              </execution>
+-            </executions>
+-          </plugin>
+-        </plugins>
+-      </build>
+-    </profile>
+-    <profile>
+-      <id>reporting</id>
+-      <reporting>
+-        <plugins>
+-          <plugin>
+-            <groupId>org.apache.maven.plugins</groupId>
+-            <artifactId>maven-javadoc-plugin</artifactId>
+-            <configuration>
+-              <tags>
+-                <tag>
+-                  <name>provisional</name>
+-                  <placement>tf</placement>
+-                  <head>Provisional:</head>
+-                </tag>
+-              </tags>
+-            </configuration>
+-            <reportSets>
+-              <reportSet>
+-                <id>aggregate</id>
+-                <reports>
+-                  <report>aggregate</report>
+-                </reports>
+-                <inherited>false</inherited>
+-              </reportSet>
+-            </reportSets>
+-          </plugin>
+-          <plugin>
+-            <groupId>org.apache.maven.plugins</groupId>
+-            <artifactId>maven-jxr-plugin</artifactId>
+-            <reportSets>
+-              <reportSet>
+-                <id>aggregate</id>
+-                <reports>
+-                  <report>aggregate</report>
+-                </reports>
+-                <inherited>false</inherited>
+-              </reportSet>
+-            </reportSets>
+-          </plugin>
+-        </plugins>
+-      </reporting>
+-    </profile>
+-    <profile>
+-      <id>maven-repo-local</id>
+-      <activation>
+-        <property>
+-          <name>maven.repo.local</name>
+-        </property>
+-      </activation>
+-      <build>
+-        <plugins>
+-          <plugin>
+-            <groupId>org.apache.maven.plugins</groupId>
+-            <artifactId>maven-surefire-plugin</artifactId>
+-            <configuration>
+-              <systemProperties combine.children="append">
+-                <property>
+-                  <!-- Pass this through to the tests (if set!) to have them pick the right repository -->
+-                  <name>maven.repo.local</name>
+-                  <value>${maven.repo.local}</value>
+-                </property>
+-              </systemProperties>
+-            </configuration>
+-          </plugin>
+-        </plugins>
+-      </build>
+-    </profile>
+-  </profiles>
+-</project>
++Anton Tanasenko
++
++Joseph Walton (MNG-5297)
++
++Fabiano Cipriano de Oliveira (MNG-6261)
++
++Mike Mol (MNG-6665)
++
++Martin Kanters (MNG-6665)
++
++maven-plugin-api
++maven-builder-support
++maven-model
++maven-model-builder
++maven-core
++maven-settings
++maven-settings-builder
++maven-artifact
++maven-resolver-provider
++maven-repository-metadata
++maven-slf4j-provider
++maven-embedder
++maven-compat
++apache-maven
++
++scm:git:https://gitbox.apache.org/repos/asf/maven.git
++scm:git:https://gitbox.apache.org/repos/asf/maven.git
++maven-3.9.7
++https://github.com/apache/maven/tree/${project.scm.tag}
++
++jira
++https://issues.apache.org/jira/browse/MNG
++
++Jenkins
++https://ci-maven.apache.org/job/Maven/job/maven-box/job/maven/
++
++apache.website
++scm:svn:https://svn.apache.org/repos/asf/maven/website/components/${maven.site.path}
++
++https://maven.apache.org/download.html
++
++8
++2.8.0
++1.7.0
++2.16.1
++3.14.0
++4.13.2
++2.2
++4.11.0
++
++2.1.0
++1.27
++
++3.5.1
++5.1.0
++33.2.0-jre
++1.0.2
++3.5.3
++2.0
++2.0
++1.3
++1.9.20
++1.7.36
++2.10.0
++2.0.9
++true
++
++apache-maven
++Maven
++Apache Maven
++ref/3-LATEST
++None
++**/package-info.java
++2024-05-22T09:47:56Z
++
++org.apache.maven
++maven-model
++${project.version}
++
++org.apache.maven
++maven-settings
++${project.version}
++
++org.apache.maven
++maven-settings-builder
++${project.version}
++
++org.apache.maven
++maven-plugin-api
++${project.version}
++
++org.apache.maven
++maven-embedder
++${project.version}
++
++org.apache.maven
++maven-core
++${project.version}
++
++org.apache.maven
++maven-model-builder
++${project.version}
++
++org.apache.maven
++maven-compat
++${project.version}
++
++org.apache.maven
++maven-artifact
++${project.version}
++
++org.apache.maven
++maven-resolver-provider
++${project.version}
++
++org.apache.maven
++maven-repository-metadata
++${project.version}
++
++org.apache.maven
++maven-builder-support
++${project.version}
++
++org.apache.maven
++maven-slf4j-provider
++${project.version}
++
++org.codehaus.plexus
++plexus-utils
++${version.plexus-utils}
++
++com.google.inject
++guice
++${guiceVersion}
++
++com.google.guava
++guava
++
++com.google.guava
++guava
++${guavaVersion}
++
++com.google.code.findbugs
++jsr305
++
++com.google.errorprone
++error_prone_annotations
++
++com.google.guava
++failureaccess
++
++com.google.guava
++listenablefuture
++
++com.google.j2objc
++j2objc-annotations
++
++org.checkerframework
++checker-qual
++
++com.google.guava
++failureaccess
++${guavafailureaccessVersion}
++
++org.eclipse.sisu
++org.eclipse.sisu.plexus
++${version.sisu-maven-plugin}
++
++javax.enterprise
++cdi-api
++
++org.eclipse.sisu
++org.eclipse.sisu.inject
++${version.sisu-maven-plugin}
++
++javax.inject
++javax.inject
++1
++
++javax.annotation
++javax.annotation-api
++1.3.2
++
++org.codehaus.plexus
++plexus-component-annotations
++${plexusVersion}
++
++junit
++junit
++
++org.codehaus.plexus
++plexus-classworlds
++${classWorldsVersion}
++
++org.codehaus.plexus
++plexus-interpolation
++${plexusInterpolationVersion}
++
++org.apache.maven.shared
++maven-shared-utils
++3.4.2
++
++commons-io
++commons-io
++
++org.fusesource.jansi
++jansi
++2.4.1
++
++org.slf4j
++slf4j-api
++${slf4jVersion}
++
++org.slf4j
++slf4j-simple
++${slf4jVersion}
++true
++
++ch.qos.logback
++logback-classic
++1.2.13
++true
++
++org.apache.maven.wagon
++wagon-provider-api
++${wagonVersion}
++
++org.apache.maven.wagon
++wagon-file
++${wagonVersion}
++
++org.apache.maven.wagon
++wagon-http
++${wagonVersion}
++
++org.apache.maven.resolver
++maven-resolver-api
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-spi
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-impl
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-util
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-connector-basic
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-transport-file
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-transport-http
++${resolverVersion}
++
++org.apache.maven.resolver
++maven-resolver-transport-wagon
++${resolverVersion}
++
++org.apache.httpcomponents
++httpcore
++4.4.16
++
++org.apache.httpcomponents
++httpclient
++4.5.14
++
++commons-cli
++commons-cli
++${commonsCliVersion}
++
++commons-lang
++commons-lang
++
++commons-logging
++commons-logging
++
++commons-io
++commons-io
++${commonsIoVersion}
++
++commons-jxpath
++commons-jxpath
++${jxpathVersion}
++
++org.apache.commons
++commons-lang3
++${commonsLangVersion}
++
++org.codehaus.plexus
++plexus-sec-dispatcher
++${securityDispatcherVersion}
++
++org.codehaus.plexus
++plexus-cipher
++${cipherVersion}
++
++org.mockito
++mockito-core
++${mockitoVersion}
++test
++
++org.xmlunit
++xmlunit-core
++${xmlunitVersion}
++test
++
++org.hamcrest
++hamcrest-core
++
++org.hamcrest
++hamcrest-library
++
++org.xmlunit
++xmlunit-matchers
++${xmlunitVersion}
++test
++
++org.hamcrest
++hamcrest-core
++
++org.hamcrest
++hamcrest-library
++
++org.powermock
++powermock-reflect
++${powermockVersion}
++
++org.hamcrest
++hamcrest
++${hamcrestVersion}
++test
++
++org.hamcrest
++hamcrest-core
++${hamcrestVersion}
++test
++
++junit
++junit
++${junitVersion}
++test
++
++org.hamcrest
++hamcrest
++test
++
++junit
++junit
++test
++
++org.codehaus.plexus
++plexus-component-metadata
++${plexusVersion}
++
++generate-metadata
++generate-test-metadata
++
++org.apache.maven.plugins
++maven-surefire-plugin
++
++-Xmx256m
++
++org.codehaus.modello
++modello-maven-plugin
++
++modello-site-docs
++
++xdoc
++xsd
++
++pre-site
++
++modello
++
++java
++xpp3-reader
++xpp3-writer
++
++org.eclipse.m2e
++lifecycle-mapping
++1.0.0
++
++org.apache.rat
++apache-rat-plugin
++[0.10,)
++
++check
++
++org.codehaus.mojo
++build-helper-maven-plugin
++3.6.0
++
++org.codehaus.mojo
++buildnumber-maven-plugin
++3.2.0
++
++org.codehaus.mojo
++animal-sniffer-maven-plugin
++1.23
++
++org.codehaus.mojo.signature
++java18
++1.0
++
++check-java-compat
++
++check
++
++process-classes
++
++org.apache.maven.plugins
++maven-doap-plugin
++1.2
++
++The mission of the Apache Maven project is to create and maintain software
++libraries that provide a widely-used project build tool, targeting mainly Java
++development. Apache Maven promotes the use of dependencies via a
++standardized coordinate system, binary plugins, and a standard build
++lifecycle.
++
++org.apache.rat
++apache-rat-plugin
++
++rat-check
++false
++
++**/.gitattributes
++src/test/resources*/**
++src/test/projects/**
++src/test/remote-repo/**
++**/*.odg
++**/*.svg
++.asf.yaml
++
++src/main/appended-resources/licenses/EPL-1.0.txt
++src/main/appended-resources/licenses/unrecognized-aopalliance-1.0.txt
++src/main/appended-resources/licenses/unrecognized-javax.annotation-api-1.3.2.txt
++
++org.apache.maven.plugins
++maven-enforcer-plugin
++
++ensure-no-sonatype-cipher-and-sec-dispatcher
++
++enforce
++
++validate
++
++org.sonatype.plexus:plexus-sec-dispatcher
++org.sonatype.plexus:plexus-cipher
++
++ensure no more org.sonatype.plexus:plexus-cipher and org.sonatype.plexus:plexus-sec-dispatcher.
++
++true
++
++apache-release
++
++maven-assembly-plugin
++
++source-release-assembly
++
++true
++
++reporting
++
++org.apache.maven.plugins
++maven-javadoc-plugin
++
++provisional
++tf
++Provisional:
++
++aggregate
++
++aggregate
++
++false
++
++org.apache.maven.plugins
++maven-jxr-plugin
++
++aggregate
++
++aggregate
++
++false
++
++maven-repo-local
++
++maven.repo.local
++
++org.apache.maven.plugins
++maven-surefire-plugin
++
++maven.repo.local
++${maven.repo.local}
+\ No newline at end of file

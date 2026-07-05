@@ -474,5 +474,5 @@
 +[+274 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs ⟦tj:c95ad48363b5e59e911952dece07cf54⟧]
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (59774 bytes) is available by calling tinyjuice_retrieve with token "d278da3c8adb93b65703c51109c54af5" (marker ⟦tj:d278da3c8adb93b65703c51109c54af5⟧)]
++[PARTIAL view — full original (59774 bytes): call tinyjuice_retrieve with token "d278da3c8adb93b65703c51109c54af5"]
 \ No newline at end of file

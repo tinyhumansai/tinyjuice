@@ -2,26 +2,26 @@
 
 Real TinyJuice and OpenHuman patches. The diff compressor keeps file headers, hunk headers, and changed lines while collapsing long unchanged context.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | [diff](cases/02-openhuman-commit-2/compression.diff) | 63.9 KB -> 4.8 KB (-93%) | 93.8% | 92.3% | 0.160 ms |
-| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | [diff](cases/06-openhuman-commit-6/compression.diff) | 87.2 KB -> 8.0 KB (-91%) | 92.1% | 90.7% | 0.210 ms |
-| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | [diff](cases/08-openhuman-commit-8/compression.diff) | 39.4 KB -> 8.0 KB (-80%) | 81.2% | 79.2% | 0.082 ms |
-| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | [diff](cases/10-openhuman-commit-10/compression.diff) | 65.9 KB -> 14.3 KB (-78%) | 79.8% | 78.0% | 0.145 ms |
-| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | [diff](cases/07-openhuman-commit-7/compression.diff) | 25.1 KB -> 6.5 KB (-74%) | 77.5% | 74.5% | 0.063 ms |
-| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | [diff](cases/01-tinyjuice-worktree/compression.diff) | 39.9 KB -> 13.9 KB (-65%) | 67.0% | 64.8% | 0.099 ms |
-| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | [diff](cases/05-openhuman-commit-5/compression.diff) | 177.3 KB -> 63.1 KB (-64%) | 65.6% | 64.4% | 0.466 ms |
-| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | [diff](cases/03-openhuman-commit-3/compression.diff) | 192.1 KB -> 91.3 KB (-52%) | 53.3% | 52.5% | 0.605 ms |
-| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | [diff](cases/09-openhuman-commit-9/compression.diff) | 29.3 KB -> 14.8 KB (-50%) | 51.0% | 48.8% | 0.075 ms |
-| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | [diff](cases/04-openhuman-commit-4/compression.diff) | 186.4 KB -> 108.2 KB (-42%) | 42.8% | 41.9% | 0.626 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | 63.9 KB -> 4.8 KB (-93%) | 93.8%<br>[output](cases/02-openhuman-commit-2/output-noccr.diff) - [diff](cases/02-openhuman-commit-2/compression-noccr.diff) | 92.5%<br>[output](cases/02-openhuman-commit-2/output.diff) - [diff](cases/02-openhuman-commit-2/compression.diff) | 0.174 ms |
+| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | 87.2 KB -> 8.0 KB (-91%) | 92.1%<br>[output](cases/06-openhuman-commit-6/output-noccr.diff) - [diff](cases/06-openhuman-commit-6/compression-noccr.diff) | 90.8%<br>[output](cases/06-openhuman-commit-6/output.diff) - [diff](cases/06-openhuman-commit-6/compression.diff) | 0.227 ms |
+| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | 39.4 KB -> 8.0 KB (-80%) | 81.2%<br>[output](cases/08-openhuman-commit-8/output-noccr.diff) - [diff](cases/08-openhuman-commit-8/compression-noccr.diff) | 79.4%<br>[output](cases/08-openhuman-commit-8/output.diff) - [diff](cases/08-openhuman-commit-8/compression.diff) | 0.087 ms |
+| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | 65.9 KB -> 14.3 KB (-78%) | 79.8%<br>[output](cases/10-openhuman-commit-10/output-noccr.diff) - [diff](cases/10-openhuman-commit-10/compression-noccr.diff) | 78.2%<br>[output](cases/10-openhuman-commit-10/output.diff) - [diff](cases/10-openhuman-commit-10/compression.diff) | 0.161 ms |
+| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | 25.1 KB -> 6.5 KB (-74%) | 77.5%<br>[output](cases/07-openhuman-commit-7/output-noccr.diff) - [diff](cases/07-openhuman-commit-7/compression-noccr.diff) | 75.0%<br>[output](cases/07-openhuman-commit-7/output.diff) - [diff](cases/07-openhuman-commit-7/compression.diff) | 0.066 ms |
+| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | 39.9 KB -> 13.9 KB (-65%) | 67.0%<br>[output](cases/01-tinyjuice-worktree/output-noccr.diff) - [diff](cases/01-tinyjuice-worktree/compression-noccr.diff) | 65.0%<br>[output](cases/01-tinyjuice-worktree/output.diff) - [diff](cases/01-tinyjuice-worktree/compression.diff) | 0.103 ms |
+| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | 177.3 KB -> 63.1 KB (-64%) | 65.6%<br>[output](cases/05-openhuman-commit-5/output-noccr.diff) - [diff](cases/05-openhuman-commit-5/compression-noccr.diff) | 64.4%<br>[output](cases/05-openhuman-commit-5/output.diff) - [diff](cases/05-openhuman-commit-5/compression.diff) | 0.480 ms |
+| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | 192.1 KB -> 91.3 KB (-52%) | 53.3%<br>[output](cases/03-openhuman-commit-3/output-noccr.diff) - [diff](cases/03-openhuman-commit-3/compression-noccr.diff) | 52.5%<br>[output](cases/03-openhuman-commit-3/output.diff) - [diff](cases/03-openhuman-commit-3/compression.diff) | 0.645 ms |
+| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | 29.3 KB -> 14.8 KB (-50%) | 51.0%<br>[output](cases/09-openhuman-commit-9/output-noccr.diff) - [diff](cases/09-openhuman-commit-9/compression-noccr.diff) | 49.2%<br>[output](cases/09-openhuman-commit-9/output.diff) - [diff](cases/09-openhuman-commit-9/compression.diff) | 0.083 ms |
+| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | 186.4 KB -> 108.2 KB (-42%) | 42.8%<br>[output](cases/04-openhuman-commit-4/output-noccr.diff) - [diff](cases/04-openhuman-commit-4/compression-noccr.diff) | 41.9%<br>[output](cases/04-openhuman-commit-4/output.diff) - [diff](cases/04-openhuman-commit-4/compression.diff) | 0.665 ms |
 
 ## What TinyJuice Is Doing
 
@@ -32,8 +32,8 @@ Diff compression preserves review-critical structure: file headers, hunk headers
 ### `02-openhuman-commit-2`
 
 - [Full input](cases/02-openhuman-commit-2/input.diff)
-- [Full output](cases/02-openhuman-commit-2/output.diff)
-- [Input vs output diff](cases/02-openhuman-commit-2/compression.diff)
+- [Output with CCR](cases/02-openhuman-commit-2/output.diff) - [diff](cases/02-openhuman-commit-2/compression.diff)
+- [Output without CCR](cases/02-openhuman-commit-2/output-noccr.diff) - [diff](cases/02-openhuman-commit-2/compression-noccr.diff)
 
 Input excerpt:
 
@@ -122,8 +122,8 @@ index 241e0d09f..70240e869 100644
 ### `06-openhuman-commit-6`
 
 - [Full input](cases/06-openhuman-commit-6/input.diff)
-- [Full output](cases/06-openhuman-commit-6/output.diff)
-- [Input vs output diff](cases/06-openhuman-commit-6/compression.diff)
+- [Output with CCR](cases/06-openhuman-commit-6/output.diff) - [diff](cases/06-openhuman-commit-6/compression.diff)
+- [Output without CCR](cases/06-openhuman-commit-6/output-noccr.diff) - [diff](cases/06-openhuman-commit-6/compression-noccr.diff)
 
 Input excerpt:
 
@@ -212,8 +212,8 @@ index 9913ff760..3b7a830c2 100644
 ### `08-openhuman-commit-8`
 
 - [Full input](cases/08-openhuman-commit-8/input.diff)
-- [Full output](cases/08-openhuman-commit-8/output.diff)
-- [Input vs output diff](cases/08-openhuman-commit-8/compression.diff)
+- [Output with CCR](cases/08-openhuman-commit-8/output.diff) - [diff](cases/08-openhuman-commit-8/compression.diff)
+- [Output without CCR](cases/08-openhuman-commit-8/output-noccr.diff) - [diff](cases/08-openhuman-commit-8/compression-noccr.diff)
 
 Input excerpt:
 
@@ -302,8 +302,8 @@ index d649681fb..ffe82de44 100644
 ### `10-openhuman-commit-10`
 
 - [Full input](cases/10-openhuman-commit-10/input.diff)
-- [Full output](cases/10-openhuman-commit-10/output.diff)
-- [Input vs output diff](cases/10-openhuman-commit-10/compression.diff)
+- [Output with CCR](cases/10-openhuman-commit-10/output.diff) - [diff](cases/10-openhuman-commit-10/compression.diff)
+- [Output without CCR](cases/10-openhuman-commit-10/output-noccr.diff) - [diff](cases/10-openhuman-commit-10/compression-noccr.diff)
 
 Input excerpt:
 
@@ -392,8 +392,8 @@ index 928fc0968..d649681fb 100644
 ### `07-openhuman-commit-7`
 
 - [Full input](cases/07-openhuman-commit-7/input.diff)
-- [Full output](cases/07-openhuman-commit-7/output.diff)
-- [Input vs output diff](cases/07-openhuman-commit-7/compression.diff)
+- [Output with CCR](cases/07-openhuman-commit-7/output.diff) - [diff](cases/07-openhuman-commit-7/compression.diff)
+- [Output without CCR](cases/07-openhuman-commit-7/output-noccr.diff) - [diff](cases/07-openhuman-commit-7/compression-noccr.diff)
 
 Input excerpt:
 
@@ -482,8 +482,8 @@ index e24e569ce..8167f088c 100644
 ### `01-tinyjuice-worktree`
 
 - [Full input](cases/01-tinyjuice-worktree/input.diff)
-- [Full output](cases/01-tinyjuice-worktree/output.diff)
-- [Input vs output diff](cases/01-tinyjuice-worktree/compression.diff)
+- [Output with CCR](cases/01-tinyjuice-worktree/output.diff) - [diff](cases/01-tinyjuice-worktree/compression.diff)
+- [Output without CCR](cases/01-tinyjuice-worktree/output-noccr.diff) - [diff](cases/01-tinyjuice-worktree/compression-noccr.diff)
 
 Input excerpt:
 
@@ -572,8 +572,8 @@ diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.
 ### `05-openhuman-commit-5`
 
 - [Full input](cases/05-openhuman-commit-5/input.diff)
-- [Full output](cases/05-openhuman-commit-5/output.diff)
-- [Input vs output diff](cases/05-openhuman-commit-5/compression.diff)
+- [Output with CCR](cases/05-openhuman-commit-5/output.diff) - [diff](cases/05-openhuman-commit-5/compression.diff)
+- [Output without CCR](cases/05-openhuman-commit-5/output-noccr.diff) - [diff](cases/05-openhuman-commit-5/compression-noccr.diff)
 
 Input excerpt:
 
@@ -662,8 +662,8 @@ index 000000000..73fd65eb3
 ### `03-openhuman-commit-3`
 
 - [Full input](cases/03-openhuman-commit-3/input.diff)
-- [Full output](cases/03-openhuman-commit-3/output.diff)
-- [Input vs output diff](cases/03-openhuman-commit-3/compression.diff)
+- [Output with CCR](cases/03-openhuman-commit-3/output.diff) - [diff](cases/03-openhuman-commit-3/compression.diff)
+- [Output without CCR](cases/03-openhuman-commit-3/output-noccr.diff) - [diff](cases/03-openhuman-commit-3/compression-noccr.diff)
 
 Input excerpt:
 
@@ -752,8 +752,8 @@ index 3b7a830c2..79a796ff6 100644
 ### `09-openhuman-commit-9`
 
 - [Full input](cases/09-openhuman-commit-9/input.diff)
-- [Full output](cases/09-openhuman-commit-9/output.diff)
-- [Input vs output diff](cases/09-openhuman-commit-9/compression.diff)
+- [Output with CCR](cases/09-openhuman-commit-9/output.diff) - [diff](cases/09-openhuman-commit-9/compression.diff)
+- [Output without CCR](cases/09-openhuman-commit-9/output-noccr.diff) - [diff](cases/09-openhuman-commit-9/compression-noccr.diff)
 
 Input excerpt:
 
@@ -842,8 +842,8 @@ index 61b4d12fb..7237cd6e9 100644
 ### `04-openhuman-commit-4`
 
 - [Full input](cases/04-openhuman-commit-4/input.diff)
-- [Full output](cases/04-openhuman-commit-4/output.diff)
-- [Input vs output diff](cases/04-openhuman-commit-4/compression.diff)
+- [Output with CCR](cases/04-openhuman-commit-4/output.diff) - [diff](cases/04-openhuman-commit-4/compression.diff)
+- [Output without CCR](cases/04-openhuman-commit-4/output-noccr.diff) - [diff](cases/04-openhuman-commit-4/compression-noccr.diff)
 
 Input excerpt:
 

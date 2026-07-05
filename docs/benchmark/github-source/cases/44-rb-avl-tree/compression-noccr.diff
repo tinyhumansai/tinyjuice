@@ -1,0 +1,9 @@
+--- input/input.rb
++++ output/output-noccr.rb
+@@ -278,4 +278,4 @@
+   def adjust_height(node)
+     node.height = 1 + [node.left&.height || 0, node.right&.height || 0].max
+   end
+-end
++end
+\ No newline at end of file

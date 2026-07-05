@@ -139,4 +139,4 @@ APPOUT 1134357549 2005.12.11 R63-M1-N0-I:J18-U11 2005-12-11-19.19.09.737509 R63-
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (317150 bytes) is available by calling tinyjuice_retrieve with token "2a819ea540909db682005c9cf948387a" (marker ⟦tj:2a819ea540909db682005c9cf948387a⟧)]
+[PARTIAL view — full original (317150 bytes): call tinyjuice_retrieve with token "2a819ea540909db682005c9cf948387a"]

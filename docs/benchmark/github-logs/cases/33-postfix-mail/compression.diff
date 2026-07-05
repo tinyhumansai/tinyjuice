@@ -178,5 +178,5 @@
 -# filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 -# failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
 -Feb 18 09:50:05 xxx postfix/smtpd[42]: lost connection after DATA from good-host.example.com[192.0.2.10]
-+[compacted tool output — this is a PARTIAL view; the full original (16251 bytes) is available by calling tinyjuice_retrieve with token "f640b34495a33dd84b24e85f9af02bc2" (marker ⟦tj:f640b34495a33dd84b24e85f9af02bc2⟧)]
++[PARTIAL view — full original (16251 bytes): call tinyjuice_retrieve with token "f640b34495a33dd84b24e85f9af02bc2"]
 \ No newline at end of file

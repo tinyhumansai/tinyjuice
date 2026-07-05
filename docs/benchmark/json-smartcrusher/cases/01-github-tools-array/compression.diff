@@ -3067,5 +3067,5 @@
 +| GITHUB_CREATE_A_BLOB | Creates a Git blob in a repository, requiring content and encoding ('utf-8' or 'base64'). Requires write access to the repository. | {"parameters":{"description":"Defines the request parameters for creating a new Git blob.","properties":{"content":{"description":"The content to be stored in the new blob.","examples":["This is the raw content of the file.","SGVsbG8gV29ybG… |
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (110889 bytes) is available by calling tinyjuice_retrieve with token "9d71d8f9b21f43da84a9a4ca154952aa" (marker ⟦tj:9d71d8f9b21f43da84a9a4ca154952aa⟧)]
++[PARTIAL view — full original (110889 bytes): call tinyjuice_retrieve with token "9d71d8f9b21f43da84a9a4ca154952aa"]
 \ No newline at end of file

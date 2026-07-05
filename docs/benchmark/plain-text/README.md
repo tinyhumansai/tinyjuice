@@ -2,24 +2,24 @@
 
 Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `10-memory-keeper-md-` | [input](cases/10-memory-keeper-md-/input.md) | [output](cases/10-memory-keeper-md-/output.md) | [diff](cases/10-memory-keeper-md-/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `09-dev-agent-md-` | [input](cases/09-dev-agent-md-/input.md) | [output](cases/09-dev-agent-md-/output.md) | [diff](cases/09-dev-agent-md-/compression.diff) | 2.0 KB -> 2.0 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `08-designguru-md-` | [input](cases/08-designguru-md-/input.md) | [output](cases/08-designguru-md-/output.md) | [diff](cases/08-designguru-md-/compression.diff) | 7.7 KB -> 7.7 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `07-deploy-agent-md-` | [input](cases/07-deploy-agent-md-/input.md) | [output](cases/07-deploy-agent-md-/output.md) | [diff](cases/07-deploy-agent-md-/compression.diff) | 4.5 KB -> 4.5 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `06-codecrusher-md-` | [input](cases/06-codecrusher-md-/input.md) | [output](cases/06-codecrusher-md-/output.md) | [diff](cases/06-codecrusher-md-/compression.diff) | 5.5 KB -> 5.5 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `05-build-agent-md-` | [input](cases/05-build-agent-md-/input.md) | [output](cases/05-build-agent-md-/output.md) | [diff](cases/05-build-agent-md-/compression.diff) | 2.0 KB -> 2.0 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `04-architectobot-md-` | [input](cases/04-architectobot-md-/input.md) | [output](cases/04-architectobot-md-/output.md) | [diff](cases/04-architectobot-md-/compression.diff) | 4.4 KB -> 4.4 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/input.md) | [output](cases/03-ship-and-babysit-md-/output.md) | [diff](cases/03-ship-and-babysit-md-/compression.diff) | 4.4 KB -> 4.4 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/input.md) | [output](cases/02-pr-manager-md-/output.md) | [diff](cases/02-pr-manager-md-/compression.diff) | 13.6 KB -> 13.6 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `01-pr-manager-lite-md-` | [input](cases/01-pr-manager-lite-md-/input.md) | [output](cases/01-pr-manager-lite-md-/output.md) | [diff](cases/01-pr-manager-lite-md-/compression.diff) | 9.6 KB -> 9.6 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `10-memory-keeper-md-` | [input](cases/10-memory-keeper-md-/input.md) | 1.9 KB -> 1.9 KB (-0%) | 0.0%<br>[output](cases/10-memory-keeper-md-/output-noccr.md) - [diff](cases/10-memory-keeper-md-/compression-noccr.diff) | 0.0%<br>[output](cases/10-memory-keeper-md-/output.md) - [diff](cases/10-memory-keeper-md-/compression.diff) | 0.000 ms |
+| `09-dev-agent-md-` | [input](cases/09-dev-agent-md-/input.md) | 2.0 KB -> 2.0 KB (-0%) | 0.0%<br>[output](cases/09-dev-agent-md-/output-noccr.md) - [diff](cases/09-dev-agent-md-/compression-noccr.diff) | 0.0%<br>[output](cases/09-dev-agent-md-/output.md) - [diff](cases/09-dev-agent-md-/compression.diff) | 0.000 ms |
+| `08-designguru-md-` | [input](cases/08-designguru-md-/input.md) | 7.7 KB -> 7.7 KB (-0%) | 0.0%<br>[output](cases/08-designguru-md-/output-noccr.md) - [diff](cases/08-designguru-md-/compression-noccr.diff) | 0.0%<br>[output](cases/08-designguru-md-/output.md) - [diff](cases/08-designguru-md-/compression.diff) | 0.000 ms |
+| `07-deploy-agent-md-` | [input](cases/07-deploy-agent-md-/input.md) | 4.5 KB -> 4.5 KB (-0%) | 0.0%<br>[output](cases/07-deploy-agent-md-/output-noccr.md) - [diff](cases/07-deploy-agent-md-/compression-noccr.diff) | 0.0%<br>[output](cases/07-deploy-agent-md-/output.md) - [diff](cases/07-deploy-agent-md-/compression.diff) | 0.000 ms |
+| `06-codecrusher-md-` | [input](cases/06-codecrusher-md-/input.md) | 5.5 KB -> 5.5 KB (-0%) | 0.0%<br>[output](cases/06-codecrusher-md-/output-noccr.md) - [diff](cases/06-codecrusher-md-/compression-noccr.diff) | 0.0%<br>[output](cases/06-codecrusher-md-/output.md) - [diff](cases/06-codecrusher-md-/compression.diff) | 0.000 ms |
+| `05-build-agent-md-` | [input](cases/05-build-agent-md-/input.md) | 2.0 KB -> 2.0 KB (-0%) | 0.0%<br>[output](cases/05-build-agent-md-/output-noccr.md) - [diff](cases/05-build-agent-md-/compression-noccr.diff) | 0.0%<br>[output](cases/05-build-agent-md-/output.md) - [diff](cases/05-build-agent-md-/compression.diff) | 0.000 ms |
+| `04-architectobot-md-` | [input](cases/04-architectobot-md-/input.md) | 4.4 KB -> 4.4 KB (-0%) | 0.0%<br>[output](cases/04-architectobot-md-/output-noccr.md) - [diff](cases/04-architectobot-md-/compression-noccr.diff) | 0.0%<br>[output](cases/04-architectobot-md-/output.md) - [diff](cases/04-architectobot-md-/compression.diff) | 0.000 ms |
+| `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/input.md) | 4.4 KB -> 4.4 KB (-0%) | 0.0%<br>[output](cases/03-ship-and-babysit-md-/output-noccr.md) - [diff](cases/03-ship-and-babysit-md-/compression-noccr.diff) | 0.0%<br>[output](cases/03-ship-and-babysit-md-/output.md) - [diff](cases/03-ship-and-babysit-md-/compression.diff) | 0.000 ms |
+| `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/input.md) | 13.6 KB -> 13.6 KB (-0%) | 0.0%<br>[output](cases/02-pr-manager-md-/output-noccr.md) - [diff](cases/02-pr-manager-md-/compression-noccr.diff) | 0.0%<br>[output](cases/02-pr-manager-md-/output.md) - [diff](cases/02-pr-manager-md-/compression.diff) | 0.000 ms |
+| `01-pr-manager-lite-md-` | [input](cases/01-pr-manager-lite-md-/input.md) | 9.6 KB -> 9.6 KB (-0%) | 0.0%<br>[output](cases/01-pr-manager-lite-md-/output-noccr.md) - [diff](cases/01-pr-manager-lite-md-/compression-noccr.diff) | 0.0%<br>[output](cases/01-pr-manager-lite-md-/output.md) - [diff](cases/01-pr-manager-lite-md-/compression.diff) | 0.000 ms |
 
 ## What TinyJuice Is Doing
 
@@ -30,8 +30,8 @@ Plain text is the control group. With ML text compression off, the router declin
 ### `10-memory-keeper-md-`
 
 - [Full input](cases/10-memory-keeper-md-/input.md)
-- [Full output](cases/10-memory-keeper-md-/output.md)
-- [Input vs output diff](cases/10-memory-keeper-md-/compression.diff)
+- [Output with CCR](cases/10-memory-keeper-md-/output.md) - [diff](cases/10-memory-keeper-md-/compression.diff)
+- [Output without CCR](cases/10-memory-keeper-md-/output-noccr.md) - [diff](cases/10-memory-keeper-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -120,8 +120,8 @@ Scan the current conversation context and update `.claude/memory.md` with anythi
 ### `09-dev-agent-md-`
 
 - [Full input](cases/09-dev-agent-md-/input.md)
-- [Full output](cases/09-dev-agent-md-/output.md)
-- [Input vs output diff](cases/09-dev-agent-md-/compression.diff)
+- [Output with CCR](cases/09-dev-agent-md-/output.md) - [diff](cases/09-dev-agent-md-/compression.diff)
+- [Output without CCR](cases/09-dev-agent-md-/output-noccr.md) - [diff](cases/09-dev-agent-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -210,8 +210,8 @@ import './MyComponent.css';
 ### `08-designguru-md-`
 
 - [Full input](cases/08-designguru-md-/input.md)
-- [Full output](cases/08-designguru-md-/output.md)
-- [Input vs output diff](cases/08-designguru-md-/compression.diff)
+- [Output with CCR](cases/08-designguru-md-/output.md) - [diff](cases/08-designguru-md-/compression.diff)
+- [Output without CCR](cases/08-designguru-md-/output-noccr.md) - [diff](cases/08-designguru-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -300,8 +300,8 @@ I'm DesignGuru, your friendly design wizard who transforms boring interfaces int
 ### `07-deploy-agent-md-`
 
 - [Full input](cases/07-deploy-agent-md-/input.md)
-- [Full output](cases/07-deploy-agent-md-/output.md)
-- [Input vs output diff](cases/07-deploy-agent-md-/compression.diff)
+- [Output with CCR](cases/07-deploy-agent-md-/output.md) - [diff](cases/07-deploy-agent-md-/compression.diff)
+- [Output without CCR](cases/07-deploy-agent-md-/output-noccr.md) - [diff](cases/07-deploy-agent-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -390,8 +390,8 @@ Outputs:
 ### `06-codecrusher-md-`
 
 - [Full input](cases/06-codecrusher-md-/input.md)
-- [Full output](cases/06-codecrusher-md-/output.md)
-- [Input vs output diff](cases/06-codecrusher-md-/compression.diff)
+- [Output with CCR](cases/06-codecrusher-md-/output.md) - [diff](cases/06-codecrusher-md-/compression.diff)
+- [Output without CCR](cases/06-codecrusher-md-/output-noccr.md) - [diff](cases/06-codecrusher-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -480,8 +480,8 @@ I'm CodeCrusher, the code-slinging developer who turns architectural blueprints 
 ### `05-build-agent-md-`
 
 - [Full input](cases/05-build-agent-md-/input.md)
-- [Full output](cases/05-build-agent-md-/output.md)
-- [Input vs output diff](cases/05-build-agent-md-/compression.diff)
+- [Output with CCR](cases/05-build-agent-md-/output.md) - [diff](cases/05-build-agent-md-/compression.diff)
+- [Output without CCR](cases/05-build-agent-md-/output-noccr.md) - [diff](cases/05-build-agent-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -570,8 +570,8 @@ npm run tauri build -- --target x86_64-unknown-linux-gnu
 ### `04-architectobot-md-`
 
 - [Full input](cases/04-architectobot-md-/input.md)
-- [Full output](cases/04-architectobot-md-/output.md)
-- [Input vs output diff](cases/04-architectobot-md-/compression.diff)
+- [Output with CCR](cases/04-architectobot-md-/output.md) - [diff](cases/04-architectobot-md-/compression.diff)
+- [Output without CCR](cases/04-architectobot-md-/output-noccr.md) - [diff](cases/04-architectobot-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -660,8 +660,8 @@ I'm ArchitectoBot, your friendly neighborhood project architect who turns comple
 ### `03-ship-and-babysit-md-`
 
 - [Full input](cases/03-ship-and-babysit-md-/input.md)
-- [Full output](cases/03-ship-and-babysit-md-/output.md)
-- [Input vs output diff](cases/03-ship-and-babysit-md-/compression.diff)
+- [Output with CCR](cases/03-ship-and-babysit-md-/output.md) - [diff](cases/03-ship-and-babysit-md-/compression.diff)
+- [Output without CCR](cases/03-ship-and-babysit-md-/output-noccr.md) - [diff](cases/03-ship-and-babysit-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -750,8 +750,8 @@ If `origin` resolves to `tinyhumansai`, stop and ask the user to add a fork remo
 ### `02-pr-manager-md-`
 
 - [Full input](cases/02-pr-manager-md-/input.md)
-- [Full output](cases/02-pr-manager-md-/output.md)
-- [Input vs output diff](cases/02-pr-manager-md-/compression.diff)
+- [Output with CCR](cases/02-pr-manager-md-/output.md) - [diff](cases/02-pr-manager-md-/compression.diff)
+- [Output without CCR](cases/02-pr-manager-md-/output-noccr.md) - [diff](cases/02-pr-manager-md-/compression-noccr.diff)
 
 Input excerpt:
 
@@ -840,8 +840,8 @@ Run:
 ### `01-pr-manager-lite-md-`
 
 - [Full input](cases/01-pr-manager-lite-md-/input.md)
-- [Full output](cases/01-pr-manager-lite-md-/output.md)
-- [Input vs output diff](cases/01-pr-manager-lite-md-/compression.diff)
+- [Output with CCR](cases/01-pr-manager-lite-md-/output.md) - [diff](cases/01-pr-manager-lite-md-/compression.diff)
+- [Output without CCR](cases/01-pr-manager-lite-md-/output-noccr.md) - [diff](cases/01-pr-manager-lite-md-/compression-noccr.diff)
 
 Input excerpt:
 

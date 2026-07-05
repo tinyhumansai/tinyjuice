@@ -619,4 +619,4 @@ void Compaction::ReleaseInputs() {
 }  // namespace leveldb
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (51353 bytes) is available by calling tinyjuice_retrieve with token "4a3029cca815fe176d716fd86461aa65" (marker ⟦tj:4a3029cca815fe176d716fd86461aa65⟧)]
+[PARTIAL view — full original (51353 bytes): call tinyjuice_retrieve with token "4a3029cca815fe176d716fd86461aa65"]

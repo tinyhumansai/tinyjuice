@@ -1,0 +1,11 @@
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)

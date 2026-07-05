@@ -97,4 +97,4 @@ async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> R
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (8413 bytes) is available by calling tinyjuice_retrieve with token "598826d731037d2a00e9e59a518805d2" (marker ⟦tj:598826d731037d2a00e9e59a518805d2⟧)]
+[PARTIAL view — full original (8413 bytes): call tinyjuice_retrieve with token "598826d731037d2a00e9e59a518805d2"]

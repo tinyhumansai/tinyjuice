@@ -207,4 +207,4 @@ func (avl *AVL[T]) rightRotate(x *AVLNode[T]) *AVLNode[T] {
 	return y
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (7718 bytes) is available by calling tinyjuice_retrieve with token "b8ff72f42c7f56dcce67519bb8cc458f" (marker ⟦tj:b8ff72f42c7f56dcce67519bb8cc458f⟧)]
+[PARTIAL view — full original (7718 bytes): call tinyjuice_retrieve with token "b8ff72f42c7f56dcce67519bb8cc458f"]

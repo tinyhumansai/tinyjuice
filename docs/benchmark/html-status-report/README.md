@@ -2,24 +2,24 @@
 
 Real RSS feeds, noisy web pages, forum pages, and OpenHuman coverage HTML. The HTML compressor strips markup/script noise and keeps readable page text.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB -> 3.3 KB (-96%) | 96.1% | 95.8% | 0.168 ms |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB -> 385 B (-91%) | 91.3% | 86.4% | 0.015 ms |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | [diff](cases/08-openhuman-coverage-8/compression.diff) | 5.2 KB -> 471 B (-91%) | 90.9% | 86.7% | 0.018 ms |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB -> 3.7 KB (-89%) | 89.3% | 88.7% | 0.091 ms |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB -> 1.1 KB (-83%) | 83.4% | 80.0% | 0.024 ms |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | [diff](cases/10-openhuman-coverage-10/compression.diff) | 5.8 KB -> 1.0 KB (-83%) | 82.7% | 78.9% | 0.021 ms |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB -> 1.2 KB (-82%) | 81.8% | 78.5% | 0.026 ms |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB -> 5.0 KB (-80%) | 79.9% | 79.0% | 0.085 ms |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | [diff](cases/02-rss-hacker-news/compression.diff) | 15.2 KB -> 8.1 KB (-47%) | 47.0% | 45.6% | 0.053 ms |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB -> 278.4 KB (-28%) | 27.5% | 27.5% | 1.164 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | 83.9 KB -> 3.3 KB (-96%) | 96.1%<br>[output](cases/04-forum-rust-users/output-noccr.txt) - [diff](cases/04-forum-rust-users/compression-noccr.diff) | 96.0%<br>[output](cases/04-forum-rust-users/output.txt) - [diff](cases/04-forum-rust-users/compression.diff) | 0.168 ms |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | 4.4 KB -> 385 B (-91%) | 91.3%<br>[output](cases/06-openhuman-coverage-6/output-noccr.txt) - [diff](cases/06-openhuman-coverage-6/compression-noccr.diff) | 88.6%<br>[output](cases/06-openhuman-coverage-6/output.txt) - [diff](cases/06-openhuman-coverage-6/compression.diff) | 0.015 ms |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | 5.2 KB -> 471 B (-91%) | 90.9%<br>[output](cases/08-openhuman-coverage-8/output-noccr.txt) - [diff](cases/08-openhuman-coverage-8/compression-noccr.diff) | 88.7%<br>[output](cases/08-openhuman-coverage-8/output.txt) - [diff](cases/08-openhuman-coverage-8/compression.diff) | 0.017 ms |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | 34.4 KB -> 3.7 KB (-89%) | 89.3%<br>[output](cases/03-noisy-hacker-news/output-noccr.txt) - [diff](cases/03-noisy-hacker-news/compression-noccr.diff) | 89.0%<br>[output](cases/03-noisy-hacker-news/output.txt) - [diff](cases/03-noisy-hacker-news/compression.diff) | 0.098 ms |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | 6.5 KB -> 1.1 KB (-83%) | 83.4%<br>[output](cases/07-openhuman-coverage-7/output-noccr.txt) - [diff](cases/07-openhuman-coverage-7/compression-noccr.diff) | 81.6%<br>[output](cases/07-openhuman-coverage-7/output.txt) - [diff](cases/07-openhuman-coverage-7/compression.diff) | 0.023 ms |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | 5.8 KB -> 1.0 KB (-83%) | 82.7%<br>[output](cases/10-openhuman-coverage-10/output-noccr.txt) - [diff](cases/10-openhuman-coverage-10/compression-noccr.diff) | 80.7%<br>[output](cases/10-openhuman-coverage-10/output.txt) - [diff](cases/10-openhuman-coverage-10/compression.diff) | 0.020 ms |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | 6.6 KB -> 1.2 KB (-82%) | 81.8%<br>[output](cases/05-openhuman-coverage-5/output-noccr.txt) - [diff](cases/05-openhuman-coverage-5/compression-noccr.diff) | 80.1%<br>[output](cases/05-openhuman-coverage-5/output.txt) - [diff](cases/05-openhuman-coverage-5/compression.diff) | 0.024 ms |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | 24.6 KB -> 5.0 KB (-80%) | 79.9%<br>[output](cases/09-openhuman-coverage-9/output-noccr.txt) - [diff](cases/09-openhuman-coverage-9/compression-noccr.diff) | 79.4%<br>[output](cases/09-openhuman-coverage-9/output.txt) - [diff](cases/09-openhuman-coverage-9/compression.diff) | 0.083 ms |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | 15.2 KB -> 8.1 KB (-47%) | 47.0%<br>[output](cases/02-rss-hacker-news/output-noccr.txt) - [diff](cases/02-rss-hacker-news/compression-noccr.diff) | 46.3%<br>[output](cases/02-rss-hacker-news/output.txt) - [diff](cases/02-rss-hacker-news/compression.diff) | 0.055 ms |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | 384.1 KB -> 278.4 KB (-28%) | 27.5%<br>[output](cases/01-rss-rust-blog/output-noccr.txt) - [diff](cases/01-rss-rust-blog/compression-noccr.diff) | 27.5%<br>[output](cases/01-rss-rust-blog/output.txt) - [diff](cases/01-rss-rust-blog/compression.diff) | 1.213 ms |
 
 ## What TinyJuice Is Doing
 
@@ -30,8 +30,8 @@ HTML snapshots are converted into readable text. Script/style payloads and repea
 ### `04-forum-rust-users`
 
 - [Full input](cases/04-forum-rust-users/input.html)
-- [Full output](cases/04-forum-rust-users/output.txt)
-- [Input vs output diff](cases/04-forum-rust-users/compression.diff)
+- [Output with CCR](cases/04-forum-rust-users/output.txt) - [diff](cases/04-forum-rust-users/compression.diff)
+- [Output without CCR](cases/04-forum-rust-users/output-noccr.txt) - [diff](cases/04-forum-rust-users/compression-noccr.diff)
 
 Input excerpt:
 
@@ -120,8 +120,8 @@ println!()
 ### `06-openhuman-coverage-6`
 
 - [Full input](cases/06-openhuman-coverage-6/input.html)
-- [Full output](cases/06-openhuman-coverage-6/output.txt)
-- [Input vs output diff](cases/06-openhuman-coverage-6/compression.diff)
+- [Output with CCR](cases/06-openhuman-coverage-6/output.txt) - [diff](cases/06-openhuman-coverage-6/compression.diff)
+- [Output without CCR](cases/06-openhuman-coverage-6/output-noccr.txt) - [diff](cases/06-openhuman-coverage-6/compression-noccr.diff)
 
 Input excerpt:
 
@@ -210,8 +210,8 @@ GoogleIcon.tsx
 ### `08-openhuman-coverage-8`
 
 - [Full input](cases/08-openhuman-coverage-8/input.html)
-- [Full output](cases/08-openhuman-coverage-8/output.txt)
-- [Input vs output diff](cases/08-openhuman-coverage-8/compression.diff)
+- [Output with CCR](cases/08-openhuman-coverage-8/output.txt) - [diff](cases/08-openhuman-coverage-8/compression.diff)
+- [Output without CCR](cases/08-openhuman-coverage-8/output-noccr.txt) - [diff](cases/08-openhuman-coverage-8/compression-noccr.diff)
 
 Input excerpt:
 
@@ -300,8 +300,8 @@ chatSendError.ts
 ### `03-noisy-hacker-news`
 
 - [Full input](cases/03-noisy-hacker-news/input.html)
-- [Full output](cases/03-noisy-hacker-news/output.txt)
-- [Input vs output diff](cases/03-noisy-hacker-news/compression.diff)
+- [Output with CCR](cases/03-noisy-hacker-news/output.txt) - [diff](cases/03-noisy-hacker-news/compression.diff)
+- [Output without CCR](cases/03-noisy-hacker-news/output-noccr.txt) - [diff](cases/03-noisy-hacker-news/compression-noccr.diff)
 
 Input excerpt:
 
@@ -357,8 +357,8 @@ Knowledge Should Not Be Gated (formaly.io)
 ### `07-openhuman-coverage-7`
 
 - [Full input](cases/07-openhuman-coverage-7/input.html)
-- [Full output](cases/07-openhuman-coverage-7/output.txt)
-- [Input vs output diff](cases/07-openhuman-coverage-7/compression.diff)
+- [Output with CCR](cases/07-openhuman-coverage-7/output.txt) - [diff](cases/07-openhuman-coverage-7/compression.diff)
+- [Output without CCR](cases/07-openhuman-coverage-7/output-noccr.txt) - [diff](cases/07-openhuman-coverage-7/compression-noccr.diff)
 
 Input excerpt:
 
@@ -447,8 +447,8 @@ Filter:
 ### `10-openhuman-coverage-10`
 
 - [Full input](cases/10-openhuman-coverage-10/input.html)
-- [Full output](cases/10-openhuman-coverage-10/output.txt)
-- [Input vs output diff](cases/10-openhuman-coverage-10/compression.diff)
+- [Output with CCR](cases/10-openhuman-coverage-10/output.txt) - [diff](cases/10-openhuman-coverage-10/compression.diff)
+- [Output without CCR](cases/10-openhuman-coverage-10/output-noccr.txt) - [diff](cases/10-openhuman-coverage-10/compression-noccr.diff)
 
 Input excerpt:
 
@@ -537,8 +537,8 @@ Filter:
 ### `05-openhuman-coverage-5`
 
 - [Full input](cases/05-openhuman-coverage-5/input.html)
-- [Full output](cases/05-openhuman-coverage-5/output.txt)
-- [Input vs output diff](cases/05-openhuman-coverage-5/compression.diff)
+- [Output with CCR](cases/05-openhuman-coverage-5/output.txt) - [diff](cases/05-openhuman-coverage-5/compression.diff)
+- [Output without CCR](cases/05-openhuman-coverage-5/output-noccr.txt) - [diff](cases/05-openhuman-coverage-5/compression-noccr.diff)
 
 Input excerpt:
 
@@ -627,8 +627,8 @@ Filter:
 ### `09-openhuman-coverage-9`
 
 - [Full input](cases/09-openhuman-coverage-9/input.html)
-- [Full output](cases/09-openhuman-coverage-9/output.txt)
-- [Input vs output diff](cases/09-openhuman-coverage-9/compression.diff)
+- [Output with CCR](cases/09-openhuman-coverage-9/output.txt) - [diff](cases/09-openhuman-coverage-9/compression.diff)
+- [Output without CCR](cases/09-openhuman-coverage-9/output-noccr.txt) - [diff](cases/09-openhuman-coverage-9/compression-noccr.diff)
 
 Input excerpt:
 
@@ -717,8 +717,8 @@ Filter:
 ### `02-rss-hacker-news`
 
 - [Full input](cases/02-rss-hacker-news/input.xml)
-- [Full output](cases/02-rss-hacker-news/output.txt)
-- [Input vs output diff](cases/02-rss-hacker-news/compression.diff)
+- [Output with CCR](cases/02-rss-hacker-news/output.txt) - [diff](cases/02-rss-hacker-news/compression.diff)
+- [Output without CCR](cases/02-rss-hacker-news/output-noccr.txt) - [diff](cases/02-rss-hacker-news/compression-noccr.diff)
 
 Input excerpt:
 
@@ -807,8 +807,8 @@ Scientist who cleaned space toilet on work now leading Mars exploration
 ### `01-rss-rust-blog`
 
 - [Full input](cases/01-rss-rust-blog/input.xml)
-- [Full output](cases/01-rss-rust-blog/output.txt)
-- [Input vs output diff](cases/01-rss-rust-blog/compression.diff)
+- [Output with CCR](cases/01-rss-rust-blog/output.txt) - [diff](cases/01-rss-rust-blog/compression.diff)
+- [Output without CCR](cases/01-rss-rust-blog/output-noccr.txt) - [diff](cases/01-rss-rust-blog/compression-noccr.diff)
 
 Input excerpt:
 

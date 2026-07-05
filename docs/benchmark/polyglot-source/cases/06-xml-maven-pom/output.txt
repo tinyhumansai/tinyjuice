@@ -310,4 +310,4 @@ org.apache.maven.plugins
 maven-shade-plugin
 3.5.3
 
-[compacted tool output — this is a PARTIAL view; the full original (14208 bytes) is available by calling tinyjuice_retrieve with token "28971972a453344ceeebe412575f290a" (marker ⟦tj:28971972a453344ceeebe412575f290a⟧)]
+[PARTIAL view — full original (14208 bytes): call tinyjuice_retrieve with token "28971972a453344ceeebe412575f290a"]

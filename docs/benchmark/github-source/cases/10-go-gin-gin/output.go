@@ -376,4 +376,4 @@ func redirectRequest(c *Context) {
 	{ … 12 line(s) … ⟦tj:9ad853a1d85c5d4bfc75a62a27680eea⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (23812 bytes) is available by calling tinyjuice_retrieve with token "b396db448f7ac685ae9384a0a6bc9712" (marker ⟦tj:b396db448f7ac685ae9384a0a6bc9712⟧)]
+[PARTIAL view — full original (23812 bytes): call tinyjuice_retrieve with token "b396db448f7ac685ae9384a0a6bc9712"]

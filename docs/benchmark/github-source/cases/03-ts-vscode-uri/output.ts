@@ -420,4 +420,4 @@ export type UriDto<T> = { [K in keyof T]: T[K] extends URI
 	: UriDto<T[K]> };
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (22643 bytes) is available by calling tinyjuice_retrieve with token "4369ae3ad11dddac2f76c89b6e73d33c" (marker ⟦tj:4369ae3ad11dddac2f76c89b6e73d33c⟧)]
+[PARTIAL view — full original (22643 bytes): call tinyjuice_retrieve with token "4369ae3ad11dddac2f76c89b6e73d33c"]

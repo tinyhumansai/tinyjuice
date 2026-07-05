@@ -1618,4 +1618,4 @@ export class AsyncIterableSource<T> {
 //#endregion
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (56377 bytes) is available by calling tinyjuice_retrieve with token "7d8dd8ba76dfffd242a387d3226e20de" (marker ⟦tj:7d8dd8ba76dfffd242a387d3226e20de⟧)]
+[PARTIAL view — full original (56377 bytes): call tinyjuice_retrieve with token "7d8dd8ba76dfffd242a387d3226e20de"]

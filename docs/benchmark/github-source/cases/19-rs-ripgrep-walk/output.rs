@@ -1518,4 +1518,4 @@ mod tests {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (77918 bytes) is available by calling tinyjuice_retrieve with token "a7af07d3f3f774d1cfb6f3adc0d7e52b" (marker ⟦tj:a7af07d3f3f774d1cfb6f3adc0d7e52b⟧)]
+[PARTIAL view — full original (77918 bytes): call tinyjuice_retrieve with token "a7af07d3f3f774d1cfb6f3adc0d7e52b"]

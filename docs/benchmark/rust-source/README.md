@@ -2,24 +2,24 @@
 
 Real OpenHuman Rust files. The source compressor keeps imports, signatures, and top-level structure while collapsing large bodies when useful.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
-Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+Every case links to the raw input; each pass column carries its percentage plus that pass's exact output and a unified diff against the input.
 
-| Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB -> 11.3 KB (-68%) | 69.2% | 67.2% | 1.412 ms |
-| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB -> 3.9 KB (-53%) | 56.2% | 51.1% | 0.387 ms |
-| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB -> 15.7 KB (-41%) | 44.0% | 40.3% | 1.246 ms |
-| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB -> 35.0 KB (-35%) | 39.7% | 36.6% | 1.762 ms |
-| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB -> 32.6 KB (-32%) | 34.9% | 32.2% | 1.948 ms |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB -> 13.3 KB (-24%) | 26.2% | 23.2% | 0.676 ms |
-| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB -> 3.8 KB (-15%) | 20.1% | 10.4% | 0.172 ms |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB -> 3.4 KB (-0%) | 0.0% | 0.0% | 0.147 ms |
-| `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | [diff](cases/06-socket/compression.diff) | 2.0 KB -> 2.0 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | [diff](cases/03-socket/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
+| Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | 34.7 KB -> 11.3 KB (-68%) | 69.2%<br>[output](cases/08-harness-subagent-audit/output-noccr.rs) - [diff](cases/08-harness-subagent-audit/compression-noccr.diff) | 67.5%<br>[output](cases/08-harness-subagent-audit/output.rs) - [diff](cases/08-harness-subagent-audit/compression.diff) | 1.416 ms |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | 8.4 KB -> 3.9 KB (-53%) | 56.2%<br>[output](cases/09-inference-probe/output-noccr.rs) - [diff](cases/09-inference-probe/compression-noccr.diff) | 52.3%<br>[output](cases/09-inference-probe/output.rs) - [diff](cases/09-inference-probe/compression.diff) | 0.363 ms |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | 26.4 KB -> 15.7 KB (-41%) | 44.0%<br>[output](cases/05-rest-tests/output-noccr.rs) - [diff](cases/05-rest-tests/compression-noccr.diff) | 40.7%<br>[output](cases/05-rest-tests/output.rs) - [diff](cases/05-rest-tests/compression.diff) | 1.262 ms |
+| `01-config` | [input](cases/01-config/input.rs) | 53.9 KB -> 35.0 KB (-35%) | 39.7%<br>[output](cases/01-config/output-noccr.rs) - [diff](cases/01-config/compression-noccr.diff) | 36.8%<br>[output](cases/01-config/output.rs) - [diff](cases/01-config/compression.diff) | 1.728 ms |
+| `04-rest` | [input](cases/04-rest/input.rs) | 48.1 KB -> 32.6 KB (-32%) | 34.9%<br>[output](cases/04-rest/output-noccr.rs) - [diff](cases/04-rest/compression-noccr.diff) | 32.4%<br>[output](cases/04-rest/output.rs) - [diff](cases/04-rest/compression.diff) | 1.983 ms |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | 17.4 KB -> 13.3 KB (-24%) | 26.2%<br>[output](cases/07-gmail-backfill-3d/output-noccr.rs) - [diff](cases/07-gmail-backfill-3d/compression-noccr.diff) | 23.8%<br>[output](cases/07-gmail-backfill-3d/output.rs) - [diff](cases/07-gmail-backfill-3d/compression.diff) | 0.686 ms |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | 4.5 KB -> 3.8 KB (-15%) | 20.1%<br>[output](cases/02-jwt/output-noccr.rs) - [diff](cases/02-jwt/compression-noccr.diff) | 12.8%<br>[output](cases/02-jwt/output.rs) - [diff](cases/02-jwt/compression.diff) | 0.177 ms |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | 3.4 KB -> 3.4 KB (-0%) | 0.0%<br>[output](cases/10-memory-tree-init-smoke/output-noccr.rs) - [diff](cases/10-memory-tree-init-smoke/compression-noccr.diff) | 0.0%<br>[output](cases/10-memory-tree-init-smoke/output.rs) - [diff](cases/10-memory-tree-init-smoke/compression.diff) | 0.148 ms |
+| `06-socket` | [input](cases/06-socket/input.rs) | 2.0 KB -> 2.0 KB (-0%) | 0.0%<br>[output](cases/06-socket/output-noccr.rs) - [diff](cases/06-socket/compression-noccr.diff) | 0.0%<br>[output](cases/06-socket/output.rs) - [diff](cases/06-socket/compression.diff) | 0.000 ms |
+| `03-socket` | [input](cases/03-socket/input.rs) | 1.9 KB -> 1.9 KB (-0%) | 0.0%<br>[output](cases/03-socket/output-noccr.rs) - [diff](cases/03-socket/compression-noccr.diff) | 0.0%<br>[output](cases/03-socket/output.rs) - [diff](cases/03-socket/compression.diff) | 0.000 ms |
 
 ## What TinyJuice Is Doing
 
@@ -30,8 +30,8 @@ The code path keeps the navigation surface: imports, signatures, top-level items
 ### `08-harness-subagent-audit`
 
 - [Full input](cases/08-harness-subagent-audit/input.rs)
-- [Full output](cases/08-harness-subagent-audit/output.rs)
-- [Input vs output diff](cases/08-harness-subagent-audit/compression.diff)
+- [Output with CCR](cases/08-harness-subagent-audit/output.rs) - [diff](cases/08-harness-subagent-audit/compression.diff)
+- [Output without CCR](cases/08-harness-subagent-audit/output-noccr.rs) - [diff](cases/08-harness-subagent-audit/compression-noccr.diff)
 
 Input excerpt:
 
@@ -120,8 +120,8 @@ struct Args {
 ### `09-inference-probe`
 
 - [Full input](cases/09-inference-probe/input.rs)
-- [Full output](cases/09-inference-probe/output.rs)
-- [Input vs output diff](cases/09-inference-probe/compression.diff)
+- [Output with CCR](cases/09-inference-probe/output.rs) - [diff](cases/09-inference-probe/compression.diff)
+- [Output without CCR](cases/09-inference-probe/output-noccr.rs) - [diff](cases/09-inference-probe/compression-noccr.diff)
 
 Input excerpt:
 
@@ -210,8 +210,8 @@ use openhuman_core::openhuman::inference::provider::traits::{ChatMessage, ChatRe
 ### `05-rest-tests`
 
 - [Full input](cases/05-rest-tests/input.rs)
-- [Full output](cases/05-rest-tests/output.rs)
-- [Input vs output diff](cases/05-rest-tests/compression.diff)
+- [Output with CCR](cases/05-rest-tests/output.rs) - [diff](cases/05-rest-tests/compression.diff)
+- [Output without CCR](cases/05-rest-tests/output-noccr.rs) - [diff](cases/05-rest-tests/compression-noccr.diff)
 
 Input excerpt:
 
@@ -300,8 +300,8 @@ fn trims_whitespace() {
 ### `01-config`
 
 - [Full input](cases/01-config/input.rs)
-- [Full output](cases/01-config/output.rs)
-- [Input vs output diff](cases/01-config/compression.diff)
+- [Output with CCR](cases/01-config/output.rs) - [diff](cases/01-config/compression.diff)
+- [Output without CCR](cases/01-config/output-noccr.rs) - [diff](cases/01-config/compression-noccr.diff)
 
 Input excerpt:
 
@@ -390,8 +390,8 @@ Output excerpt:
 ### `04-rest`
 
 - [Full input](cases/04-rest/input.rs)
-- [Full output](cases/04-rest/output.rs)
-- [Input vs output diff](cases/04-rest/compression.diff)
+- [Output with CCR](cases/04-rest/output.rs) - [diff](cases/04-rest/compression.diff)
+- [Output without CCR](cases/04-rest/output-noccr.rs) - [diff](cases/04-rest/compression-noccr.diff)
 
 Input excerpt:
 
@@ -480,8 +480,8 @@ pub enum BackendApiError {
 ### `07-gmail-backfill-3d`
 
 - [Full input](cases/07-gmail-backfill-3d/input.rs)
-- [Full output](cases/07-gmail-backfill-3d/output.rs)
-- [Input vs output diff](cases/07-gmail-backfill-3d/compression.diff)
+- [Output with CCR](cases/07-gmail-backfill-3d/output.rs) - [diff](cases/07-gmail-backfill-3d/compression.diff)
+- [Output without CCR](cases/07-gmail-backfill-3d/output-noccr.rs) - [diff](cases/07-gmail-backfill-3d/compression-noccr.diff)
 
 Input excerpt:
 
@@ -570,8 +570,8 @@ use openhuman_core::openhuman::composio::client::{
 ### `02-jwt`
 
 - [Full input](cases/02-jwt/input.rs)
-- [Full output](cases/02-jwt/output.rs)
-- [Input vs output diff](cases/02-jwt/compression.diff)
+- [Output with CCR](cases/02-jwt/output.rs) - [diff](cases/02-jwt/compression.diff)
+- [Output without CCR](cases/02-jwt/output-noccr.rs) - [diff](cases/02-jwt/compression-noccr.diff)
 
 Input excerpt:
 
@@ -660,8 +660,8 @@ pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> {
 ### `10-memory-tree-init-smoke`
 
 - [Full input](cases/10-memory-tree-init-smoke/input.rs)
-- [Full output](cases/10-memory-tree-init-smoke/output.rs)
-- [Input vs output diff](cases/10-memory-tree-init-smoke/compression.diff)
+- [Output with CCR](cases/10-memory-tree-init-smoke/output.rs) - [diff](cases/10-memory-tree-init-smoke/compression.diff)
+- [Output without CCR](cases/10-memory-tree-init-smoke/output-noccr.rs) - [diff](cases/10-memory-tree-init-smoke/compression-noccr.diff)
 
 Input excerpt:
 
@@ -750,8 +750,8 @@ fn main() -> ExitCode {
 ### `06-socket`
 
 - [Full input](cases/06-socket/input.rs)
-- [Full output](cases/06-socket/output.rs)
-- [Input vs output diff](cases/06-socket/compression.diff)
+- [Output with CCR](cases/06-socket/output.rs) - [diff](cases/06-socket/compression.diff)
+- [Output without CCR](cases/06-socket/output-noccr.rs) - [diff](cases/06-socket/compression-noccr.diff)
 
 Input excerpt:
 
@@ -840,8 +840,8 @@ mod tests {
 ### `03-socket`
 
 - [Full input](cases/03-socket/input.rs)
-- [Full output](cases/03-socket/output.rs)
-- [Input vs output diff](cases/03-socket/compression.diff)
+- [Output with CCR](cases/03-socket/output.rs) - [diff](cases/03-socket/compression.diff)
+- [Output without CCR](cases/03-socket/output-noccr.rs) - [diff](cases/03-socket/compression-noccr.diff)
 
 Input excerpt:
 

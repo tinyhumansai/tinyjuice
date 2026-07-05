@@ -540,4 +540,4 @@ maven-surefire-plugin
 maven.repo.local
 ${maven.repo.local}
 
-[compacted tool output — this is a PARTIAL view; the full original (28981 bytes) is available by calling tinyjuice_retrieve with token "3ce5523c596b9e49ee7ed58b8c54117e" (marker ⟦tj:3ce5523c596b9e49ee7ed58b8c54117e⟧)]
+[PARTIAL view — full original (28981 bytes): call tinyjuice_retrieve with token "3ce5523c596b9e49ee7ed58b8c54117e"]

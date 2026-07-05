@@ -880,4 +880,4 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (40352 bytes) is available by calling tinyjuice_retrieve with token "1b3ee3fd819be6c455f9cae2ef8b6f87" (marker ⟦tj:1b3ee3fd819be6c455f9cae2ef8b6f87⟧)]
+[PARTIAL view — full original (40352 bytes): call tinyjuice_retrieve with token "1b3ee3fd819be6c455f9cae2ef8b6f87"]

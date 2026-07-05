@@ -1,0 +1,226 @@
+--- input/input.rg
++++ output/output-noccr.rg
+@@ -1,3 +1,4 @@
++[search: 500 match(es) across 90 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
+ <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1414:    // message so a wallet-less user's tinyplace RPC stays out of Sentry.
+ <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1436:        "tinyplace signer init: bad seed"
+ <OPENHUMAN_ROOT>/README.md:79:- **[An agent economy](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: a `@handle` on [tiny.place](https://tiny.place), Signal-encrypted agent-to-agent orchestration, x402 USDC bounties and trading. Keys never touch disk.
+@@ -29,13 +30,7 @@
+ <OPENHUMAN_ROOT>/src/core/socketio.rs:1221:    // 10. Tinyplace stream events → broadcast to all connected frontend sockets.
+ <OPENHUMAN_ROOT>/src/core/socketio.rs:1235:                        "[socketio] event_bus not initialised after {}s — tinyplace bridge giving up",
+ <OPENHUMAN_ROOT>/src/core/socketio.rs:1249:                        "[socketio] dropped {} event_bus events due to lag (tinyplace bridge)",
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1257:                crate::core::event_bus::DomainEvent::TinyPlaceStreamMessage {
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1268:                        "[socketio] broadcast tinyplace:stream_message stream_id={} kind={}",
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1272:                    let _ = io_tinyplace.emit("tinyplace:stream_message", &payload);
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1274:                crate::core::event_bus::DomainEvent::TinyPlaceStreamStatusChanged {
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1283:                        "[socketio] broadcast tinyplace:stream_status stream_id={} status={}",
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1287:                    let _ = io_tinyplace.emit("tinyplace:stream_status", &payload);
+-<OPENHUMAN_ROOT>/src/core/socketio.rs:1292:        log::debug!("[socketio] tinyplace stream bridge stopped");
++[+7 more match(es) in <OPENHUMAN_ROOT>/src/core/socketio.rs]
+ <OPENHUMAN_ROOT>/docs/README.de.md:77:- **[Eine Agenten-Ökonomie](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: ein `@handle` auf [tiny.place](https://tiny.place), Signal-verschlüsselte Agent-zu-Agent-Orchestrierung, x402-USDC-Bounties und Handel. Keys berühren nie die Festplatte.
+ <OPENHUMAN_ROOT>/docs/README.ur-pk.md:91:- **[ایک ایجنٹ معیشت](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: [tiny.place](https://tiny.place) پر ایک `@handle`، Signal-انکرپٹڈ ایجنٹ سے ایجنٹ آرکسٹریشن، x402 USDC انعامی کام اور تجارت۔ چابیاں کبھی ڈسک کو نہیں چھوتیں۔
+ <OPENHUMAN_ROOT>/docs/README.ja-JP.md:77:- **[エージェントの経済圏](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: [tiny.place](https://tiny.place) 上の `@handle`、Signal 暗号化のエージェント間オーケストレーション、x402 USDC バウンティと取引。鍵はディスクに一切触れません。
+@@ -75,9 +70,7 @@
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:58:  *Run review now* button — same `triggerTick('tinyplace')` path as 7.3.
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:64:  the tinyplace instance *output*, the Subconscious tab shows both instances'
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:82:    tinyplace card disabled state when orchestration is off; per-card Run now
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:84:  - `TinyPlaceOrchestrationTab`: steering header renders directive/empty
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:85:    states; run-review calls trigger with `tinyplace`.
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:87:  triggering the tinyplace review surfaces a directive message in the
++[+3 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md]
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:11:| tinyplace profile | observe/reflect/commit against scripted provider; idle-NONE advances cursor | 3 |
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:18:| isolation | tinyplace source-scan (no agent/toolset imports); agent.toml scan (exists) | 3 |
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:26:  generic tick skeleton, the profile table (memory / tinyplace), per-instance
+@@ -86,15 +79,8 @@
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:29:    metadata: { displayName: 'Tinyplace Agent' },
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:339:            id: 't1:subagent:s1:tinyplace_agent',
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:340:            name: 'subagent:tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:345:              agentId: 'tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:351:            id: 't1:subagent:s2:tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:352:            name: 'subagent:tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:357:              agentId: 'tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:363:            id: 't1:subagent:s3:tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:364:            name: 'subagent:tinyplace_agent',
+ <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:367:            subagent: { taskId: 's3', agentId: 'tinyplace_agent', status: 'failed', toolCalls: [] },
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:416:            name: 'subagent:tinyplace_agent',
+-<OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts:419:            subagent: { taskId: 'run-1', agentId: 'tinyplace_agent', toolCalls: [] },
++[+8 more match(es) in <OPENHUMAN_ROOT>/app/src/store/chatRuntimeSlice.test.ts]
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:14:    fn id(&self) -> &'static str; // "memory" | "tinyplace"
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:25:    /// Default impl returns "" (the tinyplace profile skips this stage).
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:44:    /// carried external content; tinyplace: always tainted).
+@@ -133,22 +119,7 @@
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:42:  test('updates status on tinyplace:stream_status event', () => {
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:43:    const { result } = renderHook(() => useTinyplaceStream('inbox'));
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:45:      emit('tinyplace:stream_status', { stream_id: 'inbox', status: 'connected' });
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:51:    const { result } = renderHook(() => useTinyplaceStream('inbox'));
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:53:      emit('tinyplace:stream_status', { stream_id: 'conversation:abc', status: 'connected' });
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:59:    const { result } = renderHook(() => useTinyplaceStream('inbox'));
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:61:      emit('tinyplace:stream_message', {
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:72:    const { result } = renderHook(() => useTinyplaceStream('inbox'));
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:74:      emit('tinyplace:stream_message', {
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:84:    const { result } = renderHook(() => useTinyplaceStream('inbox'));
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:87:        emit('tinyplace:stream_message', {
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:98:    const { result } = renderHook(() => useTinyplaceStream('inbox'));
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:100:      emit('tinyplace:stream_message', {
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:114:    const { unmount } = renderHook(() => useTinyplaceStream('inbox'));
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:116:    expect(onListeners.get('tinyplace:stream_message')?.size).toBeGreaterThan(0);
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:119:    expect(onListeners.get('tinyplace:stream_message')?.size ?? 0).toBe(0);
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:123:    const { result } = renderHook(() => useTinyplaceStream());
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:125:      emit('tinyplace:stream_message', {
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts:130:      emit('tinyplace:stream_message', {
++[+16 more match(es) in <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.test.ts]
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:5:export interface TinyplaceStreamMessage {
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:11:export interface TinyplaceStreamStatus {
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:17: * Subscribe to tinyplace WebSocket stream events via the core's Socket.IO
+@@ -161,7 +132,7 @@
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:53:    socketService.on('tinyplace:stream_message', handleMessage);
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:54:    socketService.on('tinyplace:stream_status', handleStatus);
+ <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:56:      socketService.off('tinyplace:stream_message', handleMessage);
+-<OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts:57:      socketService.off('tinyplace:stream_status', handleStatus);
++[+1 more match(es) in <OPENHUMAN_ROOT>/app/src/agentworld/hooks/useTinyplaceStream.ts]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/pnpm-workspace.yaml:9:  # plugin-tinyplace is the unified plugin (own node_modules / lockfile) — same
+ <OPENHUMAN_ROOT>/vendor/tinyplace/pnpm-workspace.yaml:11:  - "!sdk/plugin-tinyplace"
+ <OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:9:tiny.place is an **agent-to-agent (A2A) social network**: autonomous AI agents claim `@handle` identities, discover each other through an open directory, communicate over Signal-encrypted channels, form groups, and transact on-chain. The backend services (Identity Registry, Open Directory, Encrypted Relay, Payment Facilitator/Ledger) live in a **separate** repo (`../backend-tinyplace`, spec in `../backend-tinyplace/docs/spec/`); staging runs at `https://staging-api.tiny.place`.
+@@ -176,8 +147,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:70:- **TS SDK unit + staging tests:** `pnpm --filter @tinyhumansai/tinyplace test` / `test:staging`
+ <OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:89:**API client:** `website/src/common/api-client.ts` wraps the TS SDK's `TinyPlaceClient`. Base URL = `process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://staging-api.tiny.place"`. Data-fetching hooks live in `website/src/hooks/use-*.ts` and call SDK methods.
+ <OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:116:- **SDK change** → the website depends on the SDK as `workspace:*`, so rebuild it (`pnpm --filter @tinyhumansai/tinyplace build`) before the website will typecheck against new types.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:122:- The authoritative spec for intended behavior is **`gitbooks/`** (and the backend spec under `../backend-tinyplace/docs/spec/`), not the mocked UI.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md:123:- **Theme changes must be runtime-token based.** Do not add one-off color maps across components for dark/light/flavor work. Put the palette in `tailwind.css`, update `useAppStore` only for appearance state, and let `ThemeController` drive root attributes. Appearance and language controls belong on the `/settings` page, not in the header. Validate theme work with `pnpm --filter @tinyplace/website lint`, `pnpm --filter @tinyplace/website build`, and a browser/Playwright smoke that selects a Settings theme and confirms `document.documentElement.dataset.theme`, `document.documentElement.dataset.flavor`, persistence after reload, and computed body colors change.
++[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyplace/CLAUDE.md]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/xplugin-e2e.mjs:15:    TINYPLACE_SESSION_DAEMON: "off", TINYPLACE_AUTORESPOND: "off",
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/xplugin-e2e.mjs:16:    TINYPLACE_API_URL: "https://staging-api.tiny.place" } });
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/xplugin-e2e.mjs:34:const A = agent(CLAUDE_SERVER, "xp-claude-", "TINYPLACE_CLAUDE_HOME"); // sender
+@@ -236,11 +206,8 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:47:const POLL_INTERVAL_MS = Number(process.env.TINYPLACE_DAEMON_POLL_MS) || 3000;
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:48:const HEARTBEAT_MS = Number(process.env.TINYPLACE_DAEMON_HEARTBEAT_MS) || 10000;
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:49:const IDLE_MS = Number(process.env.TINYPLACE_DAEMON_IDLE_MS) || 60000;
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:53:const walletName = process.env.TINYPLACE_DAEMON_WALLET?.trim();
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:55:  console.error("agent-daemon: TINYPLACE_DAEMON_WALLET is required");
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:93:  client = new TinyPlaceClient({ baseUrl: BASE_URL, signer, encryption: { store } });
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:103:const autorespondOff = process.env.TINYPLACE_AUTORESPOND === "off";
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs:125:        env: { ...process.env, TINYPLACE_DISPATCH_ADDRESS: AGENT, TINYPLACE_DISPATCH_WALLET: walletName },
++[+4 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/agent-daemon.mjs]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/dispatch.mjs:8:// hook too — TINYPLACE_NO_AUTORESPOND (set on responders) makes it a no-op there.
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/dispatch.mjs:18:if (process.env.TINYPLACE_NO_AUTORESPOND || process.env.TINYPLACE_AUTORESPOND === "off") process.exit(0);
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/hooks/dispatch.mjs:21:const DATA_DIR = process.env.TINYPLACE_CODEX_HOME ?? join(homedir(), ".tinyplace-codex");
+@@ -275,14 +242,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:75:node bin/tinyplace-codex.mjs          # interactive TUI: pick / create / register a wallet
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:76:node bin/tinyplace-codex.mjs --wallet alice          # launch straight in as `alice`
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:77:node bin/tinyplace-codex.mjs --wallet alice -- -m gpt-5.4   # forward args to codex
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:80:The launcher writes an **isolated `CODEX_HOME`** (`~/.tinyplace-codex/codex-home/<wallet>/`)
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:81:with a generated `config.toml` (`[mcp_servers.tinyplace]` + `hooks = "hooks.json"`)
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:89:- Wallets are named local keypairs in `~/.tinyplace-codex/wallets.json` (mode `0600`).
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:100:| `TINYPLACE_API_URL` | `https://staging-api.tiny.place` | relay/backend base URL |
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:101:| `TINYPLACE_CODEX_HOME` | `~/.tinyplace-codex` | wallet store + session/queue state |
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:102:| `TINYPLACE_SESSION_DAEMON` | `on` (launcher) / `off` (bare) | durable per-agent daemon |
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:103:| `TINYPLACE_AUTORESPOND` | on | `off` disables the Stop-hook auto-responder |
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md:104:| `TINYPLACE_AUTORESPOND_MODEL` | `gpt-5.4` | model the `codex exec` responder uses |
++[+8 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/README.md]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/registry.mjs:5:// Layout: ~/.tinyplace-codex/sessions/<agent-address>/<label>.json
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/registry.mjs:17:const DATA_DIR = process.env.TINYPLACE_CODEX_HOME ?? join(homedir(), ".tinyplace-codex");
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/registry.mjs:19:const LIVE_WINDOW_MS = Number(process.env.TINYPLACE_SESSION_LIVE_MS) || 30_000;
+@@ -298,22 +258,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:117:  process.env.TINYPLACE_HARNESS_SESSION_ID?.trim() ||
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:224:// disable with TINYPLACE_AUTORESPOND=off or the `autorespond` tool.
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:226:let autorespondOff = process.env.TINYPLACE_AUTORESPOND === "off";
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:228:  return !autorespondOff && !process.env.TINYPLACE_SEND_ONLY;
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:245:        env: { ...process.env, TINYPLACE_DISPATCH_ADDRESS: address, TINYPLACE_DISPATCH_WALLET: name },
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:257:// TINYPLACE_SESSION_DAEMON=off, which reverts to per-session self-drain.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:259:  return process.env.TINYPLACE_SESSION_DAEMON === "off";
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:269:      env: { ...process.env, TINYPLACE_DAEMON_WALLET: walletName },
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:386:  const client = new TinyPlaceClient({
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:567:  // (use label:… / TINYPLACE_SESSION_LABEL), else claim the lowest free codex:n.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:569:  const requestedLabel = label?.trim() || process.env.TINYPLACE_SESSION_LABEL?.trim() || undefined;
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:576:  if (process.env.TINYPLACE_SEND_ONLY) {
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:629:  if (process.env.TINYPLACE_SEND_ONLY) {
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:710:  { name: "tinyplace", version: "0.1.0" },
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:953:      sendOnly: Boolean(process.env.TINYPLACE_SEND_ONLY?.trim()),
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:954:      apiUrlFromEnv: process.env.TINYPLACE_API_URL ?? process.env.TINYPLACE_ENDPOINT ?? null,
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:1146:    return ok({ autorespond: autorespondEnabled() ? "on" : "off", sendOnly: Boolean(process.env.TINYPLACE_SEND_ONLY) });
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:1335://   1. TINYPLACE_ACTIVE_WALLET  — set by the `tinyplace` TUI launcher (Door B),
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs:1343:  const forced = process.env.TINYPLACE_ACTIVE_WALLET?.trim();
++[+16 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/server.mjs]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/outbox.mjs:12:const STALE_CLAIM_MS = Number(process.env.TINYPLACE_OUTBOX_CLAIM_MS) || 60_000;
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/format.mjs:4:// `tinyplace.harness.session.v1`, see sdk/typescript/src/types/harness.ts) plus
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/mcp/format.mjs:20:export const SESSION_ENVELOPE_VERSION = "tinyplace.harness.session.v1";
+@@ -340,24 +285,9 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:30:import { LocalSigner } from "@tinyhumansai/tinyplace";
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:32:// bin/tinyplace-codex.mjs -> plugin root is one dir up from bin/.
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:34:const DATA_DIR = process.env.TINYPLACE_CODEX_HOME ?? join(homedir(), ".tinyplace-codex");
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:39:const API_URL = process.env.TINYPLACE_API_URL ?? "https://staging-api.tiny.place";
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:150:// Layout: ~/.tinyplace-codex/codex-home/<wallet>/{config.toml,hooks.json,auth.json→}
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:176:    `# Generated by tinyplace-codex launcher — do not edit; regenerated on launch.\n` +
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:177:    `[mcp_servers.tinyplace]\n` +
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:180:    `[mcp_servers.tinyplace.env]\n` +
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:181:    `TINYPLACE_ACTIVE_WALLET = ${toml(walletName)}\n` +
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:182:    `TINYPLACE_CODEX_HOME = ${toml(DATA_DIR)}\n` +
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:183:    `TINYPLACE_API_URL = ${toml(API_URL)}\n` +
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:184:    `TINYPLACE_SESSION_DAEMON = "on"\n`;
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:187:  // hooks.json — substitute the ${TINYPLACE_PLUGIN_ROOT} placeholder with the
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:189:  // expansion. TINYPLACE_PLUGIN_ROOT is also exported for the running session.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:191:  hooks = hooks.split("${TINYPLACE_PLUGIN_ROOT}").join(PLUGIN_DIR);
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:290:      TINYPLACE_ACTIVE_WALLET: walletName,
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:291:      TINYPLACE_CODEX_HOME: DATA_DIR,
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:292:      TINYPLACE_PLUGIN_ROOT: PLUGIN_DIR,
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:339:  // Non-interactive fast path: `tinyplace-codex --wallet alice`.
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:344:      console.error(`No wallet named '${name ?? ""}'. Run 'tinyplace-codex' with no args to create one.`);
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs:351:    console.error("tinyplace-codex: interactive menu needs a TTY. Use 'tinyplace-codex --wallet <name>' in non-interactive contexts.");
++[+16 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/bin/tinyplace-codex.mjs]
+ <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:31:/// Generic on purpose: it runs `tinyplace_agent`, which can do anything on
+ <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:33:const TINYPLACE_AUTOPILOT_JOB_NAME: &str = "tinyplace_autopilot";
+ <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:83:    if !has(TINYPLACE_AUTOPILOT_JOB_NAME) {
+@@ -370,26 +300,7 @@
+ <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:122:    tracing::info!("[cron::seed] boot seed — backfilling tinyplace_autopilot (disabled, opt-in)");
+ <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:123:    seed_tinyplace_autopilot(config)
+ <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:211:/// The job runs `tinyplace_agent` (the single tiny.place agent) autonomously.
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:212:/// It's named generically (`tinyplace_autopilot`) because the agent can do
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:216:/// `tinyplace_agent`'s prompt authorizes it to take paid/irreversible actions
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:225:fn seed_tinyplace_autopilot(config: &Config) -> Result<()> {
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:226:    tracing::debug!("[cron::seed] seed_tinyplace_autopilot start");
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:236:        "deliverable to your feed (tinyplace_post), and submit it. You are running ",
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:248:        Some(TINYPLACE_AUTOPILOT_JOB_NAME.to_string()),
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:256:        Some("tinyplace_agent".to_string()),
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:263:        "[cron::seed] seed_tinyplace_autopilot done — created disabled (opt-in)"
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:305:    fn seeds_tinyplace_autopilot_disabled_and_idempotent() {
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:313:            .filter(|j| j.name.as_deref() == Some(TINYPLACE_AUTOPILOT_JOB_NAME))
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:318:            "exactly one tinyplace_autopilot job, got {worker:?}"
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:324:            "tinyplace_autopilot must be seeded disabled (opt-in)"
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:327:        assert_eq!(worker.agent_id.as_deref(), Some("tinyplace_agent"));
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:335:                .filter(|j| j.name.as_deref() == Some(TINYPLACE_AUTOPILOT_JOB_NAME))
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:338:            "second seed must not duplicate the tinyplace_autopilot job"
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:411:        // The autonomous tiny.place job exists, disabled (opt-in), on tinyplace_agent.
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:414:            .find(|j| j.name.as_deref() == Some(TINYPLACE_AUTOPILOT_JOB_NAME))
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:415:            .expect("tinyplace_autopilot job should be seeded on boot when onboarded");
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:417:        assert_eq!(worker.agent_id.as_deref(), Some("tinyplace_agent"));
+-<OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs:425:                .filter(|j| j.name.as_deref() == Some(TINYPLACE_AUTOPILOT_JOB_NAME))
++[+20 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/cron/seed.rs]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/routing-test.mjs:7:process.env.TINYPLACE_CODEX_HOME = mkdtempSync(join(tmpdir(), "tinyplace-route-"));
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/routing-test.mjs:8:delete process.env.TINYPLACE_SESSION_LIVE_MS;
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-codex/SPIKE.md:31:  (`[mcp_servers.tinyplace]` + inline `[hooks]` or bundled `hooks.json`), launches
+@@ -460,17 +371,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:89:`$TMUX`. Disable with `TINYPLACE_FOREGROUND_RESOLVE=off`; tune the per-pane debounce with
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:90:`TINYPLACE_INJECT_COOLDOWN_MS` (default 4000). Injection is verified live on **both**
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:120:now-closed session. Tune with `TINYPLACE_SESSION_CLOSED_GRACE_MS` (default 5000).
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:129:live in ONE shared, CLI-independent store — `~/.tinyplace/wallets.json` (override with
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:130:`TINYPLACE_HOME`), read by the launcher, server, daemon, and register via `mcp/wallets.mjs`.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:132:any legacy per-harness `wallets.json` (`~/.tinyplace-claude`, `~/.tinyplace-codex`) into the
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:134:wallet is chosen, `bin/tinyplace.mjs` offers the installed harnesses (probed on PATH) when
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:135:more than one exists and `--harness` wasn't forced, then pins `TINYPLACE_HARNESS` and
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:140:Single package, its own `node_modules` (deps: `@tinyhumansai/tinyplace`,
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:147:1. Build `plugin-tinyplace` by merging the two servers → one, threading `activeAdapter()`.
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:156:## Launcher (one `bin/tinyplace`)
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:158:`bin/tinyplace.mjs` is harness-agnostic: it owns the wallet store, the arrow-key menu,
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:164:`TINYPLACE_HARNESS`) forces the adapter; otherwise it auto-detects. Adding a harness
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md:186:One `npm i @tinyhumansai/tinyplace-plugin` + `tinyplace`. It works in Codex or Claude
++[+11 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/DESIGN.md]
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/skills/tinyplace-inbox/SKILL.md:7:Requires an active agent (`/tinyplace:use`). The background listener decrypts inbound
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/skills/tinyplace-inbox/SKILL.md:17:the next inbound. See the `tinyplace-await` skill.
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/skills/tinyplace-send/SKILL.md:7:Requires an active agent (`/tinyplace:use`). Recipient may be a `@handle`, a base58
+@@ -497,4 +398,4 @@
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/hooks/respond-batch.mjs:32:const MODEL = process.env.TINYPLACE_AUTORESPOND_MODEL ?? ADAPTER.responder.defaultModel;
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/hooks/respond-batch.mjs:84:    `Then call the tinyplace \`auto_reply\` tool EXACTLY ONCE with to="${from}", body=<your reply>, in_reply_to="${inReplyTo}"${toSessionArg}. Use no other tool. Once it succeeds, stop.`,
+ <OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/hooks/respond-batch.mjs:105:          TINYPLACE_HARNESS: ADAPTER.provider, // pin the responder's own MCP to this harness
+-<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/hooks/respond-batch.mjs:106:          TINYPLACE_ACTIVE_WALLET: wallet,
++<OPENHUMAN_ROOT>/vendor/tinyplace/sdk/plugin-tinyplace/hooks/respond-batch.mjs:106:          TINYPLACE_ACTIVE_WALLET: wallet,
+\ No newline at end of file

@@ -172,4 +172,4 @@ export class PriorityQueue<T> extends MinHeap<T> {
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (5726 bytes) is available by calling tinyjuice_retrieve with token "00c5ab612cd0c92619c52f54d185463b" (marker ⟦tj:00c5ab612cd0c92619c52f54d185463b⟧)]
+[PARTIAL view — full original (5726 bytes): call tinyjuice_retrieve with token "00c5ab612cd0c92619c52f54d185463b"]

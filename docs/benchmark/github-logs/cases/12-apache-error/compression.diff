@@ -2120,5 +2120,5 @@
 +
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (171239 bytes) is available by calling tinyjuice_retrieve with token "c7efa3eb686e3a96bd2f8f4457b2a788" (marker ⟦tj:c7efa3eb686e3a96bd2f8f4457b2a788⟧)]
++[PARTIAL view — full original (171239 bytes): call tinyjuice_retrieve with token "c7efa3eb686e3a96bd2f8f4457b2a788"]
 \ No newline at end of file

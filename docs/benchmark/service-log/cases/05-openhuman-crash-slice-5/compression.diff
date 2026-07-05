@@ -357,5 +357,5 @@
 -13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
 -14  OpenHuman                     	       0x105232e84 __rust_try + 32
 -15  OpenHuman                     	       0x10522c2ac std::thread::lifecycle::spawn_unchecked::_$u7b$$u7b$closure$u7d$$u7d$::hf215137585e369ce + 224
-+[compacted tool output — this is a PARTIAL view; the full original (44535 bytes) is available by calling tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6" (marker ⟦tj:e4ac41e578f1d783c441d7b17c420ad6⟧)]
++[PARTIAL view — full original (44535 bytes): call tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6"]
 \ No newline at end of file

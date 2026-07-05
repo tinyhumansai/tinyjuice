@@ -1,0 +1,244 @@
+--- input/input.rg
++++ output/output-noccr.rg
+@@ -1,3 +1,4 @@
++[search: 500 match(es) across 88 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
+ <OPENHUMAN_ROOT>/README.md:70:- **[A subconscious](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: a background loop that diffs your world, advances your goals, and writes your morning briefing. Thinking continues after you stop typing.
+ <OPENHUMAN_ROOT>/README.md:78:- **[A split brain, always on](https://tinyhumans.gitbook.io/openhuman/features/orchestration)**: a fast reflex agent triages inbound traffic while a deep reasoning core delegates to worker fleets, steered by the subconscious.
+ <OPENHUMAN_ROOT>/src/core/jsonrpc.rs:2087:                    // Subconscious engine + heartbeat.
+@@ -22,44 +23,19 @@
+ <OPENHUMAN_ROOT>/src/core/all.rs:636:        "subconscious" => Some("Periodic local-model background awareness loop."),
+ <OPENHUMAN_ROOT>/src/core/all.rs:637:        "subconscious_triggers" => {
+ <OPENHUMAN_ROOT>/docs/README.ko.md:68:- **[잠재의식(subconscious)](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: 당신의 세계의 변화를 비교 분석하고, 목표를 진전시키고, 아침 브리핑을 작성하는 백그라운드 루프입니다. 타이핑을 멈춘 후에도 생각은 계속됩니다.
+-<OPENHUMAN_ROOT>/src/core/observability.rs:238:    /// The subconscious engine's SQLite schema init couldn't open its database
+-<OPENHUMAN_ROOT>/src/core/observability.rs:243:    ///   `subconscious/` dir or DB file isn't writable/openable (permissions,
+-<OPENHUMAN_ROOT>/src/core/observability.rs:250:    /// `subconscious::store::apply_journal_mode`, which degrades WAL to a
+-<OPENHUMAN_ROOT>/src/core/observability.rs:256:    /// Anchored to the subconscious schema/open envelope plus the SQLite
+-<OPENHUMAN_ROOT>/src/core/observability.rs:260:    SubconsciousSchemaUnavailable,
+-<OPENHUMAN_ROOT>/src/core/observability.rs:594:    if is_subconscious_schema_unavailable_message(&lower) {
+ <OPENHUMAN_ROOT>/src/core/observability.rs:595:        return Some(ExpectedErrorKind::SubconsciousSchemaUnavailable);
+ <OPENHUMAN_ROOT>/src/core/observability.rs:794:/// Match subconscious-engine SQLite schema-init failures caused by the host
+-<OPENHUMAN_ROOT>/src/core/observability.rs:796:/// `SQLITE_IOERR_SHMMAP`). Anchored to the subconscious open/DDL envelope so it
+ <OPENHUMAN_ROOT>/src/core/observability.rs:801:/// See [`ExpectedErrorKind::SubconsciousSchemaUnavailable`].
+-<OPENHUMAN_ROOT>/src/core/observability.rs:802:fn is_subconscious_schema_unavailable_message(lower: &str) -> bool {
+-<OPENHUMAN_ROOT>/src/core/observability.rs:803:    let in_subconscious_envelope = lower.contains("subconscious schema ddl")
+ <OPENHUMAN_ROOT>/src/core/observability.rs:804:        || lower.contains("failed to open subconscious db");
+-<OPENHUMAN_ROOT>/src/core/observability.rs:805:    if !in_subconscious_envelope {
+-<OPENHUMAN_ROOT>/src/core/observability.rs:1527:    // truth with the subconscious circuit breaker) so the wording can't drift.
+ <OPENHUMAN_ROOT>/src/core/observability.rs:2197:        ExpectedErrorKind::SubconsciousSchemaUnavailable => {
+-<OPENHUMAN_ROOT>/src/core/observability.rs:2198:            // Host-filesystem condition: SQLite couldn't open the subconscious
+-<OPENHUMAN_ROOT>/src/core/observability.rs:2200:            // `subconscious::store` already prevents the shared-memory variant;
+-<OPENHUMAN_ROOT>/src/core/observability.rs:2207:            // subconscious DB path (home dir / username). Mirror the
+-<OPENHUMAN_ROOT>/src/core/observability.rs:2213:                kind = "subconscious_schema_unavailable",
+ <OPENHUMAN_ROOT>/src/core/observability.rs:2214:                "[observability] {domain}.{operation} skipped expected subconscious schema DB-unavailable error"
+-<OPENHUMAN_ROOT>/src/core/observability.rs:3856:        // subconscious request (42084 tokens) exceeds the 8000 tokens-per-minute
+ <OPENHUMAN_ROOT>/src/core/observability.rs:4334:    fn classifies_subconscious_schema_unavailable_errors() {
+ <OPENHUMAN_ROOT>/src/core/observability.rs:4337:            "failed to run subconscious schema DDL: disk I/O error: Error code 4618: I/O error within the xShmMap method (trying to open a new shared-memory segment)",
+ <OPENHUMAN_ROOT>/src/core/observability.rs:4339:            "failed to run subconscious schema DDL: unable to open database file: Error code 14: Unable to open the database file",
+ <OPENHUMAN_ROOT>/src/core/observability.rs:4341:            "failed to open subconscious DB: /home/u/.openhuman/subconscious/subconscious.db: unable to open the database file",
+ <OPENHUMAN_ROOT>/src/core/observability.rs:4343:            "rpc.invoke_method failed: failed to run subconscious schema DDL: disk I/O error: Error code 4618",
+ <OPENHUMAN_ROOT>/src/core/observability.rs:4347:                Some(ExpectedErrorKind::SubconsciousSchemaUnavailable),
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4348:                "should classify subconscious schema DB-unavailable: {raw}"
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4354:    fn does_not_classify_subconscious_lock_or_unrelated_open_failures() {
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4358:            "failed to run subconscious schema DDL: database is locked",
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4359:            // Cant-open text without the subconscious envelope must not match.
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4361:            // Subconscious envelope but a non-FS error (e.g. malformed SQL) stays
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4363:            "failed to run subconscious schema DDL: near \"CREAT\": syntax error",
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4367:                Some(ExpectedErrorKind::SubconsciousSchemaUnavailable),
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4368:                "must not classify as subconscious schema unavailable: {raw}"
+-<OPENHUMAN_ROOT>/src/core/observability.rs:4376:            "failed to run subconscious schema DDL: database is locked",
+-<OPENHUMAN_ROOT>/src/core/observability.rs:6791:        // exception paths (the subconscious loop retries until `resets_at`).
++[+26 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs]
+ <OPENHUMAN_ROOT>/gitbooks/features/approval-gate.md:96:The gate is **interactive-only**. Background, triage, and cron turns carry no chat context, so there's nobody to answer a prompt. These turns are pre-authorized and pass straight through (no row, no event). Approval is only enforced for live chat turns. (The Subconscious loop has its own, separate escalation-card approval for *unsolicited* writes; see below.)
+ <OPENHUMAN_ROOT>/gitbooks/features/approval-gate.md:120:* [Subconscious Loop](subconscious.md): the background loop and its separate escalation approvals.
+ <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:1://! `openhuman subconscious` — CLI for testing and debugging the subconscious loop.
+@@ -72,30 +48,9 @@
+ <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:85:                "aggressive" => crate::openhuman::config::schema::SubconsciousMode::Aggressive,
+ <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:96:        // Ensure subconscious is enabled
+ <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:100:            if !config.heartbeat.subconscious_mode.is_enabled() {
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:101:                config.heartbeat.subconscious_mode =
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:102:                    crate::openhuman::config::schema::SubconsciousMode::Simple;
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:106:        let mode = config.heartbeat.effective_subconscious_mode();
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:108:            "[subconscious] mode={} workspace={}",
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:123:                eprintln!("[subconscious] session token found — provider available");
+ <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:126:                eprintln!("[subconscious] WARNING: no session token — cloud provider will fail");
+ <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:130:                eprintln!("[subconscious] WARNING: session token read failed: {e}");
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:136:            crate::openhuman::subconscious::provider::subconscious_provider_unavailable_reason(
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:140:            eprintln!("[subconscious] provider unavailable: {reason}");
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:146:        let engine = crate::openhuman::subconscious::memory_instance(&config);
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:148:        eprintln!("[subconscious] running tick...");
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:155:            "[subconscious] tick complete: duration={}ms response_chars={}",
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:161:            let baseline = crate::openhuman::subconscious::store::with_connection(
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:164:                    crate::openhuman::subconscious::store::get_baseline_checkpoint_id(
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:171:                Some(id) => eprintln!("[subconscious] world baseline checkpoint: {id}"),
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:172:                None => eprintln!("[subconscious] no world baseline established yet"),
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:194:        let mode = config.heartbeat.effective_subconscious_mode();
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:196:            crate::openhuman::subconscious::provider::subconscious_provider_unavailable_reason(
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:204:            crate::openhuman::subconscious::store::with_connection(&config.workspace_dir, |conn| {
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:205:                crate::openhuman::subconscious::store::get_last_tick_at(conn, "memory")
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:249:        "Usage: openhuman subconscious <command> [options]
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:252:  tick          Run a single subconscious tick (synchronous, waits for completion)
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:253:  status        Show current subconscious engine status
+-<OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:256:  --mode <simple|aggressive>   Override the subconscious mode
++[+22 more match(es) in <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs]
+ <OPENHUMAN_ROOT>/docs/README.zh-CN.md:68:- **[潜意识](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**：一个后台循环，持续比对你的世界的变化、推进你的目标，并为你撰写晨间简报。在你停止输入之后，思考仍在继续。
+ <OPENHUMAN_ROOT>/src/core/mod.rs:26:pub mod subconscious_cli;
+ <OPENHUMAN_ROOT>/gitbooks/features/notifications-and-activity.md:70:| **Background Activity** | The subconscious engine: status bar, active tasks, approval cards, and the evaluation ledger   |
+@@ -147,7 +102,7 @@
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:72:  `instances: [SubconsciousStatus]` with one row per registered kind
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:74:- `subconscious.trigger` → optional `kind` param (`"memory"` default —
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:83:Subconscious tab, steering header in the TinyPlace Orchestration tab). Not a
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:88:Update `src/openhuman/about_app/` copy: the subconscious is now described as
++[+1 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md]
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:1://! Heartbeat, cron, and subconscious mode configuration.
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:6:/// Subconscious operating mode — controls tool access and tick frequency.
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:9:pub enum SubconsciousMode {
+@@ -160,43 +115,7 @@
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:194:            subconscious_mode: SubconsciousMode::Off,
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:204:    /// Resolve the effective subconscious mode, handling backward
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:205:    /// compatibility for configs that pre-date the `subconscious_mode`
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:206:    /// field. If `subconscious_mode` is explicitly set (not Off-by-default),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:209:    pub fn effective_subconscious_mode(&self) -> SubconsciousMode {
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:210:        if self.subconscious_mode != SubconsciousMode::Off {
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:211:            return self.subconscious_mode;
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:214:            SubconsciousMode::Simple
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:216:            SubconsciousMode::Off
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:236:        assert_eq!(config.subconscious_mode, SubconsciousMode::Off);
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:252:            config.effective_subconscious_mode(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:253:            SubconsciousMode::Simple
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:260:            serde_json::to_string(&SubconsciousMode::EventDriven).unwrap(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:264:            serde_json::from_str::<SubconsciousMode>(r#""event_driven""#).unwrap(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:265:            SubconsciousMode::EventDriven
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:267:        assert!(SubconsciousMode::EventDriven.is_enabled());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:268:        assert!(SubconsciousMode::EventDriven.is_event_driven());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:269:        assert!(!SubconsciousMode::Aggressive.is_event_driven());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:270:        assert!(!SubconsciousMode::EventDriven.is_read_only());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:272:            SubconsciousMode::from_str_lossy("event_driven"),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:273:            SubconsciousMode::EventDriven
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:278:    fn subconscious_mode_serde_round_trip() {
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:280:            serde_json::to_string(&SubconsciousMode::Simple).unwrap(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:284:            serde_json::from_str::<SubconsciousMode>(r#""aggressive""#).unwrap(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:285:            SubconsciousMode::Aggressive
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:287:        assert_eq!(SubconsciousMode::default(), SubconsciousMode::Off);
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:291:    fn subconscious_mode_helpers() {
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:292:        assert!(!SubconsciousMode::Off.is_enabled());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:293:        assert!(SubconsciousMode::Simple.is_enabled());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:294:        assert!(SubconsciousMode::Aggressive.is_enabled());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:295:        assert!(SubconsciousMode::Simple.is_read_only());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:296:        assert!(!SubconsciousMode::Aggressive.is_read_only());
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:297:        assert_eq!(SubconsciousMode::Simple.default_interval_minutes(), 30);
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:298:        assert_eq!(SubconsciousMode::Aggressive.default_interval_minutes(), 5);
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:304:        assert_eq!(config.effective_subconscious_mode(), SubconsciousMode::Off);
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:309:            config.effective_subconscious_mode(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:310:            SubconsciousMode::Simple
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:313:        config.subconscious_mode = SubconsciousMode::Aggressive;
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:315:            config.effective_subconscious_mode(),
+-<OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:316:            SubconsciousMode::Aggressive
++[+37 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs]
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:1:# Subconscious factory — one reflection engine, many worlds
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:3:Redesign `src/openhuman/subconscious/` around the split-brain spec
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:4:(`state (1).md`, "Autonomous Closed-Loop LangGraph Harness"): the subconscious
+@@ -209,17 +128,7 @@
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:51:├── engine.rs            generic SubconsciousInstance: tick graph (tinyagents CompiledGraph) + scheduler shell
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:52:├── factory.rs           SubconsciousKind + make_subconscious(kind, config)
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:86:pub enum SubconsciousKind { Memory, TinyPlace }
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:88:pub fn make_subconscious(kind: SubconsciousKind, config: &Config) -> SubconsciousInstance {
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:89:    let profile: Arc<dyn SubconsciousProfile> = match kind {
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:90:        SubconsciousKind::Memory    => Arc::new(profiles::memory::MemoryProfile::new(config)),
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:91:        SubconsciousKind::TinyPlace => Arc::new(profiles::tinyplace::TinyPlaceProfile::new(config)),
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:93:    SubconsciousInstance::new(profile, config)
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:103:1. **Isolation** — the subconscious never contacts anyone. The tinyplace
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:105:   keeps the no-channel/no-outbound test (`subconscious_agent_tool_surface_has_no_channel_or_effect_tools`).
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:107:   `SubconsciousTainted` (memory: diff-driven ticks; tinyplace: always).
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:110:5. **`subconscious.status` never touches the tick mutex** — reads from SQLite.
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:119:| 1 | [phase-1-profile-and-engine.md](phase-1-profile-and-engine.md) | `SubconsciousProfile` trait, generic `SubconsciousInstance`, namespaced store |
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:125:| 7 | [phase-7-ui.md](phase-7-ui.md) | UI: both kinds visible + triggerable — instance cards in the Subconscious tab, steering header on the orchestration tab's Subconscious window |
++[+11 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md]
+ <OPENHUMAN_ROOT>/gitbooks/features/model-routing/local-ai.md:22:| **Subconscious**          | small chat model                  | `src/openhuman/subconscious/executor.rs` - background evaluation loop.                                                  |
+ <OPENHUMAN_ROOT>/gitbooks/features/model-routing/local-ai.md:71:| `local_ai.usage.subconscious`        | `false`  | Legacy preset/migration flag for the subconscious loop.                  |
+ <OPENHUMAN_ROOT>/gitbooks/features/model-routing/local-ai.md:82:The legacy `local_ai.usage.*` booleans are kept for presets and migration compatibility; they do not override the unified provider fields after migration. For deterministic routing, either set the workload provider field explicitly, or leave it unset / set it to `cloud` to force the default cloud route. The same provider-string pattern is used by `agentic_provider`, `coding_provider`, `memory_provider`, `embeddings_provider`, `heartbeat_provider`, `learning_provider`, and `subconscious_provider`.
+@@ -243,19 +152,7 @@
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:24:## 7.2 Hook (`app/src/hooks/useSubconscious.ts`)
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:31:## 7.3 Subconscious tab (`IntelligenceSubconsciousTab.tsx`)
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:44:  to the TinyPlace Orchestration tab with the Subconscious window selected.
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:45:- Shared `SubconsciousInstanceCard` component
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:46:  (`app/src/components/intelligence/SubconsciousInstanceCard.tsx`) so a third
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:51:The pinned Subconscious chat window already shows emitted directives (built
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:62:- Badge the window in the chat list ("Subconscious · steering") so the two
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:63:  meanings of "subconscious" in the product read as one system: the tab shows
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:64:  the tinyplace instance *output*, the Subconscious tab shows both instances'
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:66:- Cross-link back: the header links to the Subconscious tab for controls.
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:78:  - `subconscious.ts` client: trigger passes `kind`; status parses
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:80:  - `useSubconscious`: per-kind triggering state; instances plumbed through.
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:81:  - `IntelligenceSubconsciousTab`: renders two cards from a stubbed status;
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:86:- E2E (desktop spec, mock backend): Subconscious tab shows both cards;
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:88:  orchestration Subconscious window (mock `__admin/behavior` scripted).
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:92:Two commits minimum: (a) types/client/hook + Subconscious tab cards,
++[+13 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md]
+ <OPENHUMAN_ROOT>/src/openhuman/config/schema/orchestration.rs:70:    /// Cadence (minutes) of the `tinyplace` subconscious steering review — the
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:10:| ported | all of today's `engine_tests.rs` against `SubconsciousInstance<MemoryProfile>` | 2 |
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:13:| factory | `enabled_kinds` gating per config; `make_subconscious` per kind | 4 |
+@@ -280,20 +177,7 @@
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:92:    graph: Arc<CompiledGraph<SubconsciousState>>,   // built once at construction
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:94:    mode: SubconsciousMode,
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:114:- `SubconsciousState` (serde, like `OrchestrationState`): the `Observation`,
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:117:- The node handlers delegate 1:1 to the `SubconsciousProfile` methods — the
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:122:- Checkpointing: `SqliteCheckpointer<SubconsciousState>` at
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:123:  `<workspace>/subconscious/graph_checkpoints.db`, thread id
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:124:  `subconscious:<instance>:<tick_id>`. A tick killed mid-reflect resumes (or
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:130:  logging (keep the `[subconscious]` log lines anyway per repo logging rules).
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:132:What deliberately stays *outside* the graph, in `SubconsciousInstance`:
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:146:- provider gate (`subconscious_provider_unavailable_reason`) and the rate-cap
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:156:Today: `subconscious_state` (REAL KV: `last_tick_at`) and
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:157:`subconscious_state_text` (TEXT KV: `baseline_checkpoint_id`), one row each.
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:164:UPDATE subconscious_state      SET key = 'memory:' || key
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:165:  WHERE key IN ('last_tick_at') AND NOT EXISTS (SELECT 1 FROM subconscious_state WHERE key = 'memory:last_tick_at');
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:166:UPDATE subconscious_state_text SET key = 'memory:' || key
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:167:  WHERE key IN ('baseline_checkpoint_id') AND NOT EXISTS (SELECT 1 FROM subconscious_state_text WHERE key = 'memory:baseline_checkpoint_id');
+-<OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:178:  `SubconsciousInstance` directly:
++[+14 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md]
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:3:Goal: make the tiny.place/orchestration subconscious a first-class instance
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:25:  `create_chat_provider("subconscious")` chat, `SubconsciousTainted` origin,
+ <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:27:  (`insert_steering_directive`, supersede prior, `record_subconscious_directive`
+@@ -407,7 +291,7 @@
+ <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:393:// Full chain: human → subconscious session → REAL sub-agent → back → human.
+ <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:406:        SubconsciousMode::Aggressive,
+ <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:407:        "subconscious:orchestrator".into(),
+-<OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:419:    // session result — the full human → subconscious → sub-agent → back chain,
++[+1 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs]
+ <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:885:    config.subconscious_provider = Some("ollama:subconscious-local".into());
+ <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:900:    assert!(config.workload_uses_local("subconscious"));
+ <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:1093:            subconscious: true,
+@@ -434,11 +318,7 @@
+ <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:142:                parent_session: "subconscious:orchestrator".into(),
+ <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:151:                parent_session: "subconscious:orchestrator".into(),
+ <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:181:            openhuman_core::openhuman::subconscious::notify_user(
+-<OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:198:            openhuman_core::openhuman::subconscious::notify_user(
+-<OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:211:        "subconscious:orchestrator"
+-<OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:255:        // Capture proactive (subconscious → human) deliveries off the bus.
+-<OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:266:                    if source == "subconscious" {
+-<OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:390:        parent_session: "subconscious:orchestrator".into(),
++[+5 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs]
+ <OPENHUMAN_ROOT>/src/openhuman/credentials/bus.rs:15://!    subconscious). Idempotent — repeat events are safe.
+ <OPENHUMAN_ROOT>/src/openhuman/memory_queue/ops.rs:14:/// Read by the first-person / subconscious retrieval layer so an empty
+ <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs:455:    // the per-user path, seed the subconscious defaults and spawn the
+@@ -481,12 +361,7 @@
+ <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:435:                            "{POLICY_DENIED_MARKER} Tool '{tool_name}' rejected: subconscious turn \
+ <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1472:    async fn intercept_with_trusted_subconscious_origin_allows_without_prompt() {
+ <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1473:        // Subconscious ticks on internal-only memory are trusted automation
+-<OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1477:            job_id: "subconscious-tick".into(),
+-<OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1478:            source: TrustedAutomationSource::Subconscious,
+-<OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1489:    async fn intercept_with_subconscious_tainted_origin_denies() {
+-<OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1490:        // A subconscious tick whose memory context contains external-sync
+-<OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1495:            job_id: "subconscious-tainted".into(),
+-<OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:1496:            source: TrustedAutomationSource::SubconsciousTainted,
++[+6 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs]
+ <OPENHUMAN_ROOT>/src/openhuman/screen_intelligence/helpers.rs:213:        // baseline subconscious-trust behaviour.
+ <OPENHUMAN_ROOT>/src/openhuman/scheduler_gate/README.md:59:- **Background workers / pipelines**: `memory/schema.rs`, `memory_queue/worker.rs`, `memory_tree/tree/rpc.rs`, `memory_sync/composio/periodic.rs`, `subconscious/engine.rs`, `learning/reflection.rs`, `autocomplete/core/engine.rs`, `task_sources/route.rs`, `agent/task_dispatcher.rs`, `agent/triage/evaluator.rs`.
+ <OPENHUMAN_ROOT>/app/src/services/api/__tests__/aiSettingsApi.test.ts:98:      subconscious_provider: null,
+@@ -497,4 +372,4 @@
+ <OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:5:const USER_ID = 'pw-subconscious-triggers';
+ <OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:6:const BRAIN_SUBCONSCIOUS = '/brain?tab=subconscious';
+ <OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:12:    subconscious_mode: 'off',
+-<OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:18:  await bootAuthenticatedPage(page, USER_ID, BRAIN_SUBCONSCIOUS);
++<OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:18:  await bootAuthenticatedPage(page, USER_ID, BRAIN_SUBCONSCIOUS);
+\ No newline at end of file

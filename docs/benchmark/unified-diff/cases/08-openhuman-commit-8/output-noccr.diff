@@ -1,0 +1,187 @@
+diff --git a/app/src/pages/Conversations.tsx b/app/src/pages/Conversations.tsx
+index d649681fb..ffe82de44 100644
+--- a/app/src/pages/Conversations.tsx
++++ b/app/src/pages/Conversations.tsx
+@@ -70,164 +70,198 @@ import {
+   type ToolTimelineEntry,
+ } from '../store/chatRuntimeSlice';
+ import { useAppDispatch, useAppSelector } from '../store/hooks';
+[... 74 context line(s) omitted ...]
+ const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
+ const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
+ const debug = debugFactory('conversations');
+-const SAFE_IMAGE_DATA_URI_RE = /^data:image\/(?:png|jpe?g|gif|webp|bmp);base64,[a-z0-9+/=\s]+$/i;
++const SAFE_IMAGE_DATA_URI_RE =
++  /^data:(image\/(?:png|jpe?g|gif|webp|bmp));base64,([a-z0-9+/=\s]+)$/i;
++const EMPTY_IMAGE_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
++
++function imageDataUriToObjectUrl(src: string): string | null {
++  const match = SAFE_IMAGE_DATA_URI_RE.exec(src);
++  if (!match) return null;
++  try {
++    const mime = match[1];
++    const binary = atob(match[2].replace(/\s/g, ''));
++    const bytes = new Uint8Array(binary.length);
++    for (let i = 0; i < binary.length; i += 1) {
++      bytes[i] = binary.charCodeAt(i);
++    }
++    return URL.createObjectURL(new Blob([bytes], { type: mime }));
++  } catch {
++    return null;
++  }
++}
+ 
+-function isSafeAttachmentImageSrc(src: string): boolean {
+-  return SAFE_IMAGE_DATA_URI_RE.test(src);
++function AttachmentImage({ dataUri }: { dataUri: string }) {
++  const [objectUrl, setObjectUrl] = useState<string | null>(null);
++
++  useEffect(() => {
++    const nextUrl = imageDataUriToObjectUrl(dataUri);
++    setObjectUrl(nextUrl);
++    return () => {
++      if (nextUrl) URL.revokeObjectURL(nextUrl);
++    };
++  }, [dataUri]);
++
++  return (
++    <img
++      src={objectUrl ?? EMPTY_IMAGE_SRC}
++      alt=""
++      className="max-w-[200px] max-h-[200px] rounded-2xl object-cover"
++    />
++  );
+ }
+ 
+ interface ConversationsProps {
+[... 74 context line(s) omitted ...]
+     if (typeof message === 'string') return message;
+   }
+   return String(err);
+@@ -2253,198 +2287,193 @@ const Conversations = ({
+                                           )}>
+                                           {emoji}
+                                         </button>
+[... 74 context line(s) omitted ...]
+                                 Array.isArray(msg.extraMetadata?.attachmentDataUris)
+                                   ? (msg.extraMetadata.attachmentDataUris as string[])
+                                   : parsedContent.dataUris
+-                              ).filter(isSafeAttachmentImageSrc);
++                              ).filter(src => SAFE_IMAGE_DATA_URI_RE.test(src));
+                               const hasImages = dataUris.length > 0;
+                               // Document attachments carry no image data-URI (only
+                               // images do); surface them as filename chips from the
+[... 25 context line(s) omitted ...]
+                                   {hasImages && (
+                                     <div className="flex flex-wrap gap-1.5 justify-end">
+                                       {dataUris.map((uri, i) => (
+-                                        <img
+-                                          key={i}
+-                                          src={uri}
+-                                          alt=""
+-                                          className="max-w-[200px] max-h-[200px] rounded-2xl object-cover"
+-                                        />
++                                        <AttachmentImage key={i} dataUri={uri} />
+                                       ))}
+                                     </div>
+                                   )}
+[... 74 context line(s) omitted ...]
+                                       )}
+                                       {showTime && (
+                                         <p
+diff --git a/scripts/mock-api/routes/llm.mjs b/scripts/mock-api/routes/llm.mjs
+index ed8609646..2c69bccd0 100644
+--- a/scripts/mock-api/routes/llm.mjs
++++ b/scripts/mock-api/routes/llm.mjs
+@@ -1,93 +1,91 @@
+ import { json, setCors } from "../http.mjs";
+ import {
+   behavior,
+[... 5 context line(s) omitted ...]
+ import { buildDynamicCompletion } from "./llm/dynamic.mjs";
+ import { headerValue, pickProbeText, resolveThreadKey } from "./llm/shared.mjs";
+ 
+-const MAX_STREAM_DELAY_MS = 30_000;
+-
+ // The scripted `llmForcedResponses` FIFO models the *interactive* agent turn,
+ // which always advertises tools (the orchestrator's delegate_* tools). Ancillary
+ // completions that share the endpoint but carry no tools — thread-title/summary
+[... 74 context line(s) omitted ...]
+   });
+ }
+ 
+@@ -96,168 +94,191 @@ function sendRuleError(res, rule) {
+ // When the agent harness calls the OpenAI-compatible endpoint with
+ // `stream: true`, openhuman/providers/compatible.rs expects SSE chunks
+ // shaped like:
+[... 74 context line(s) omitted ...]
+   res.write(`data: ${JSON.stringify(payload)}\n\n`);
+ }
+ 
+-function sleep(ms) {
+-  return new Promise((resolve) => setTimeout(resolve, ms));
++function sleepDelay(ms) {
++  switch (ms) {
++    case 10:
++      return new Promise((resolve) => setTimeout(resolve, 10));
++    case 25:
++      return new Promise((resolve) => setTimeout(resolve, 25));
++    case 50:
++      return new Promise((resolve) => setTimeout(resolve, 50));
++    case 100:
++      return new Promise((resolve) => setTimeout(resolve, 100));
++    case 250:
++      return new Promise((resolve) => setTimeout(resolve, 250));
++    case 500:
++      return new Promise((resolve) => setTimeout(resolve, 500));
++    case 1000:
++      return new Promise((resolve) => setTimeout(resolve, 1000));
++    default:
++      return Promise.resolve();
++  }
+ }
+ 
+ function safeDelayMs(raw, fallback = 0) {
+   const parsed = Number(raw);
+   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+-  return Math.min(parsed, MAX_STREAM_DELAY_MS);
++  if (parsed <= 10) return 10;
++  if (parsed <= 25) return 25;
++  if (parsed <= 50) return 50;
++  if (parsed <= 100) return 100;
++  if (parsed <= 250) return 250;
++  if (parsed <= 500) return 500;
++  return 1000;
+ }
+ 
+ // Split a string into N-character windows so we can stream tool-call
+[... 74 context line(s) omitted ...]
+ 
+   if (!Array.isArray(script)) {
+     // 2. Forced queue: pop the next entry and convert it into a script.
+@@ -272,218 +293,218 @@ function handleStreamingCompletion({
+       if (Array.isArray(forced) && forced.length > 0) {
+         const next = forced.shift();
+         setMockBehavior("llmForcedResponses", JSON.stringify(forced));
+[... 74 context line(s) omitted ...]
+   for (let i = 0; i < script.length; i += 1) {
+     const entry = script[i] ?? {};
+     const delay = safeDelayMs(entry.delayMs, defaultDelayMs);
+-    if (delay > 0) await sleep(delay);
++    if (delay > 0) await sleepDelay(delay);
+ 
+     if (entry.error) {
+       writeSseEvent(res, { error: { message: String(entry.error) } });
+[... 50 context line(s) omitted ...]
+         }),
+       );
+       for (const piece of argPieces) {
+-        if (delay > 0) await sleep(delay);
++        if (delay > 0) await sleepDelay(delay);
+         writeSseEvent(
+           res,
+           sseChunkEnvelope({
+[... 74 context line(s) omitted ...]
+         name: String(tc.name ?? ""),
+         arguments:
+           typeof tc.arguments === "string"

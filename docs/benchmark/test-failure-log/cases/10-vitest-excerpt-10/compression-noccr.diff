@@ -1,0 +1,43 @@
+--- input/input.log
++++ output/output-noccr.log
+@@ -1,36 +1,11 @@
+-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+-    'globalThis.global = globalThis.global || __global_polyfill\n' +
+-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+-    'globalThis.process = globalThis.process || __process_polyfill\n'
+-}`
+-
+- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+-
+-
++exit 101
++RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+  Test Files  1 passed (1)
+       Tests  3 passed (3)
+    Start at  23:51:26
+    Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+-
+-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+-    'globalThis.global = globalThis.global || __global_polyfill\n' +
+-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+-    'globalThis.process = globalThis.process || __process_polyfill\n'
+-}`
+-
+  RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+-
+-
+  Test Files  1 passed (1)
+       Tests  3 passed (3)
+    Start at  23:51:26
+-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+-
++   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+\ No newline at end of file

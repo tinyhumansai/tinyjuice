@@ -306,4 +306,4 @@ if __name__ == "__main__":
     main()
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (25467 bytes) is available by calling tinyjuice_retrieve with token "bd143cc1e37121407c74ca03595ccd59" (marker ⟦tj:bd143cc1e37121407c74ca03595ccd59⟧)]
+[PARTIAL view — full original (25467 bytes): call tinyjuice_retrieve with token "bd143cc1e37121407c74ca03595ccd59"]

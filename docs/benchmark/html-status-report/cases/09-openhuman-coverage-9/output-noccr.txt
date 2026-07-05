@@ -1,0 +1,383 @@
+Code coverage report for src/chat/promptInjectionGuard.ts
+
+All files / src/chat promptInjectionGuard.ts
+
+53.48%
+Statements
+23/43
+
+46.34%
+Branches
+19/41
+
+75%
+Functions
+3/4
+
+53.48%
+Lines
+23/43
+
+Press n or j to go to the next uncovered block, b, p or k for the previous block.
+
+Filter:
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+
+1x
+1x
+
+1x
+
+2x
+2x
+
+22x
+
+22x
+
+2x
+2x
+
+2x
+
+2x
+
+2x
+
+2x
+2x
+2x
+
+2x
+
+2x
+
+2x
+
+2x
+8x
+
+2x
+
+2x
+2x
+
+export type PromptInjectionVerdict = 'allow' | 'block' | 'review';
+
+export interface PromptInjectionReason {
+code: string;
+message: string;
+}
+
+export interface PromptInjectionCheck {
+verdict: PromptInjectionVerdict;
+score: number;
+reasons: PromptInjectionReason[];
+}
+
+interface Rule {
+code: string;
+message: string;
+score: number;
+regex: RegExp;
+}
+
+const SPACE_RE = /\s+/g;
+const BASE64_RE = /[A-Za-z0-9+/]{24,}={0,2}/;
+
+const RULES: Rule[] = [
+{
+code: 'override.ignore_previous',
+message: 'Looks like an attempt to override existing instructions.',
+score: 0.44,
+regex:
+/(ignore|disregard|forget|bypass)\s+(all\s+)?(previous|prior|above|system)\s+(instructions|rules|constraints|prompts?)/i,
+},
+{
+code: 'override.role_hijack',
+message: 'Looks like a role or policy hijack attempt.',
+score: 0.3,
+regex: /(you\s+are\s+now|act\s+as|developer\s+mode|jailbreak|unrestricted\s+mode|dan)/i,
+},
+{
+code: 'exfiltrate.system_prompt',
+message: 'Looks like a request to reveal hidden prompts/instructions.',
+score: 0.42,
+regex:
+/(reveal|show|print|dump|leak|display)\s+((the|your)\s+)?(system|developer|hidden)\s+(prompt|instructions|rules|message)/i,
+},
+{
+code: 'exfiltrate.secrets',
+message: 'Looks like a request for sensitive credentials.',
+score: 0.42,
+regex:
+/(api\s*key|secret|token|password|private\s+key|credentials?|session\s+cookie|jwt|bearer)/i,
+},
+];
+
+function normalize(input: string): {
+lowered: string;
+collapsed: string;
+compact: string;
+hasInstructionOverride: boolean;
+hasExfiltrationIntent: boolean;
+} {
+const lowered = input.toLowerCase();
+const mapped = Array.from(lowered)
+.map(ch => {
+switch (ch) {
+case '0':
+return 'o';
+case '1':
+return 'i';
+case '3':
+return 'e';
+case '4':
+return 'a';
+case '5':
+return 's';
+case '7':
+return 't';
+case '\u200b':
+case '\u200c':
+case '\u200d':
+case '\u2060':
+case '\ufeff':
+return ' ';
+default:
+return /[a-z0-9\s]/i.test(ch) ? ch : ' ';
+}
+})
+.join('');
+
+const collapsed = mapped.trim().replace(SPACE_RE, ' ');
+const compact = collapsed.replace(/\s/g, '');
+const hasInstructionOverride =
+collapsed.includes('ignore previous instructions') ||
+collapsed.includes('ignore all previous instructions') ||
+compact.includes('ignoreallpreviousinstructions') ||
+compact.includes('ignorepreviousinstructions');
+const hasExfiltrationIntent =
+collapsed.includes('system prompt') ||
+collapsed.includes('developer instructions') ||
+collapsed.includes('hidden prompt') ||
+collapsed.includes('reveal');
+
+return { lowered, collapsed, compact, hasInstructionOverride, hasExfiltrationIntent };
+}
+
+export function checkPromptInjection(input: string): PromptInjectionCheck {
+const normalized = normalize(input);
+const reasons: PromptInjectionReason[] = [];
+let score = 0;
+
+Iif (normalized.hasInstructionOverride) {
+score += 0.46;
+reasons.push({
+code: 'override.obfuscated_instruction',
+message: 'Detected obfuscated instruction-override phrase.',
+});
+}
+Iif (normalized.hasExfiltrationIntent) {
+score += 0.24;
+reasons.push({
+code: 'exfiltration.intent',
+message: 'Detected exfiltration-focused prompt intent.',
+});
+}
+Iif (BASE64_RE.test(normalized.lowered)) {
+score += 0.08;
+reasons.push({
+code: 'obfuscation.base64_like',
+message: 'Contains base64-like obfuscated content.',
+});
+}
+
+for (const rule of RULES) {
+Iif (
+rule.regex.test(normalized.lowered) ||
+rule.regex.test(normalized.collapsed) ||
+rule.regex.test(normalized.compact)
+) {
+score += rule.score;
+reasons.push({ code: rule.code, message: rule.message });
+}
+}
+
+score = Math.min(1, score);
+const verdict: PromptInjectionVerdict =
+score >= 0.7 ? 'block' : score >= 0.45 ? 'review' : 'allow';
+return { verdict, score, reasons };
+}
+
+export function promptGuardMessage(check: PromptInjectionCheck): string {
+if (check.verdict === 'block') {
+return 'This message looks like a prompt-injection attempt and will likely be blocked by server-side security checks.';
+}
+if (check.verdict === 'review') {
+return 'This message may be unsafe and could be rejected by server-side security checks. Please rephrase.';
+}
+return '';
+}
+
+Code coverage generated by
+istanbul
+at 2026-06-18T08:12:34.290Z

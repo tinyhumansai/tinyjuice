@@ -245,4 +245,4 @@
 [+2 more match(es) in <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs ⟦tj:7ef4b92e2b9a81ad3b3ba67382a11b56⟧]
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (65126 bytes) is available by calling tinyjuice_retrieve with token "ba24059e9c7dc5ab08a24a693877be1a" (marker ⟦tj:ba24059e9c7dc5ab08a24a693877be1a⟧)]
+[PARTIAL view — full original (65126 bytes): call tinyjuice_retrieve with token "ba24059e9c7dc5ab08a24a693877be1a"]

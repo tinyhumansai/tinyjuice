@@ -6,4 +6,4 @@ nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:09:41.850 2931 WARNING nova
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (595119 bytes) is available by calling tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5" (marker ⟦tj:025a1bc64ff5b2ef4a4bda6c4ad5c5c5⟧)]
+[PARTIAL view — full original (595119 bytes): call tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5"]

@@ -1,0 +1,56 @@
+--- input/input.rs
++++ output/output-noccr.rs
+@@ -12,16 +12,7 @@
+ }
+ 
+ /// Best-effort decode of a JWT payload without verifying the signature.
+-pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> {
+-    // JWT = header.payload.signature (base64url, no padding). Only the payload
+-    // segment is needed.
+-    let payload_b64 = token.trim().split('.').nth(1)?;
+-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+-        .decode(payload_b64)
+-        .or_else(|_| base64::engine::general_purpose::URL_SAFE.decode(payload_b64))
+-        .ok()?;
+-    serde_json::from_slice(&bytes).ok()
+-}
++pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … }
+ 
+ /// Best-effort decode of a JWT's `exp` (expiry) claim into a UTC timestamp.
+ ///
+@@ -54,26 +45,10 @@
+     fn test_bearer_authorization_value() {
+         // Standard token
+         assert_eq!(bearer_authorization_value("my_token"), "Bearer my_token");
+-
+-        // Token with leading/trailing spaces
+-        assert_eq!(
+-            bearer_authorization_value("  spaced_token  "),
+-            "Bearer spaced_token"
++        { … 17 line(s) … }
+         );
++}
+ 
+-        // Empty string
+-        assert_eq!(bearer_authorization_value(""), "Bearer ");
+-
+-        // Whitespace only string
+-        assert_eq!(bearer_authorization_value("   "), "Bearer ");
+-
+-        // Token with internal spaces (should not be trimmed)
+-        assert_eq!(
+-            bearer_authorization_value("token with spaces"),
+-            "Bearer token with spaces"
+-        );
+-    }
+-
+     fn jwt_with_payload(payload_json: &str) -> String {
+         let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload_json);
+         // header + signature are irrelevant to `decode_jwt_exp` (no verification).
+@@ -112,4 +87,4 @@
+                                                  // local offline session sentinel (not a JWT) must not panic / must be None
+         assert_eq!(decode_jwt_exp("local-session-xyz"), None);
+     }
+-}
++}
+\ No newline at end of file

@@ -5,4 +5,4 @@ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
    Start at  23:51:26
    Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
 
-[compacted tool output — this is a PARTIAL view; the full original (967 bytes) is available by calling tinyjuice_retrieve with token "cfa1a1d241b616e925c4cfe672c6e5ba" (marker ⟦tj:cfa1a1d241b616e925c4cfe672c6e5ba⟧)]
+[PARTIAL view — full original (967 bytes): call tinyjuice_retrieve with token "cfa1a1d241b616e925c4cfe672c6e5ba"]

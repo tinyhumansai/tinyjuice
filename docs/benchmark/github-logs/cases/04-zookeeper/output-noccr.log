@@ -1,0 +1,32 @@
+2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200
+2015-07-29 19:04:12,394 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45307
+2015-07-29 19:04:29,071 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread  [×262 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:04:29,079 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue  [×314 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:13:17,524 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error =   [×289 first 2015-07-29, last 2015-07-29]
+[... 9 line(s) omitted ...]
+2015-07-29 19:14:07,559 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker  [×265 first 2015-07-29, last 2015-07-29]
+[... 479 line(s) omitted ...]
+2015-07-29 19:52:05,118 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×4 first 2015-07-29, last 2015-07-29]
+[... 7 line(s) omitted ...]
+2015-07-29 21:39:28,234 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.26:56952
+2015-07-29 23:44:21,576 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001] - Closed socket connection for client /10.10.34.11:49557 which had sessionid 0x14ed93111f20048
+2015-07-29 23:44:28,903 - ERROR [CommitProcessor:1:NIOServerCnxn@180] - Unexpected Exception: 
+2015-07-29 23:52:08,962 - INFO  [CommitProcessor:1:ZooKeeperServer@595] - Established session 0x14ed93111f2005b with negotiated timeout 10000 for client /10.10.34.28:52117
+2015-07-29 23:52:09,163 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.30:38562
+[... 14 line(s) omitted ...]
+2015-07-30 16:12:01,554 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.19:33442; will be dropped if server is in r-o mode  [×8 first 2015-07-30, last 2015-07-30]
+[... 12 line(s) omitted ...]
+2015-07-30 17:11:54,937 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×6 first 2015-07-30, last 2015-07-30]
+[... 4 line(s) omitted ...]
+2015-07-30 17:49:05,943 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.12:45728; will be dropped if server is in r-o mode  [×5 first 2015-07-30, last 2015-08-10]
+2015-07-30 17:55:26,200 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 2 at election address /10.10.34.12:3888  [×2 first 2015-07-30, last 2015-07-29]
+[... 5 line(s) omitted ...]
+2015-07-30 19:59:02,538 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.13:38053; will be dropped if server is in r-o mode  [×4 first 2015-07-30, last 2015-07-30]
+[... 204 line(s) omitted ...]
+2015-08-25 11:21:22,561 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 3 at election address /10.10.34.13:3888
+2015-07-29 17:42:30,405 - INFO  [QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:Environment@100] - Server environment:java.vendor=Oracle Corporation
+2015-07-29 19:03:35,413 - ERROR [LearnerHandler-/10.10.34.11:52225:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open  [×12 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:03:54,584 - ERROR [LearnerHandler-/10.10.34.11:52241:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open
+2015-07-29 19:04:30,989 - WARN  [LearnerHandler-/10.10.34.11:52264:LearnerHandler@575] - ******* GOODBYE /10.10.34.11:52264 ********
+[... 1243 line(s) omitted ...]

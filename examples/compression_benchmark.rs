@@ -182,6 +182,16 @@ fn output_artifact_name(doc_dir: &str) -> &'static str {
     }
 }
 
+/// Pass-1 artifact (compression without CCR): same extension as the pass-2
+/// output, with a `-noccr` stem suffix.
+fn no_ccr_artifact_name(doc_dir: &str) -> String {
+    let name = output_artifact_name(doc_dir);
+    match name.rsplit_once('.') {
+        Some((stem, ext)) => format!("{stem}-noccr.{ext}"),
+        None => format!("{name}-noccr"),
+    }
+}
+
 #[derive(Debug, Clone)]
 struct TaskCheck {
     label: String,
@@ -490,23 +500,30 @@ impl AlgorithmRun {
 }
 
 async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOptions) {
+    let mut no_ccr_options = options.clone();
+    no_ccr_options.ccr_enabled = false;
     for case in cases {
         let result = run_once(case, options).await;
+        let no_ccr_result = run_once(case, &no_ccr_options).await;
         let dir = root.join(&case.doc_dir);
         std::fs::create_dir_all(&dir)
             .unwrap_or_else(|e| panic!("cannot create {}: {e}", dir.display()));
         let input_path = dir.join(input_artifact_name(&case.doc_dir));
         let output_path = dir.join(output_artifact_name(&case.doc_dir));
+        let no_ccr_path = dir.join(no_ccr_artifact_name(&case.doc_dir));
         std::fs::write(&input_path, &case.payload)
             .unwrap_or_else(|e| panic!("cannot write {}: {e}", input_path.display()));
         std::fs::write(&output_path, &result.text)
             .unwrap_or_else(|e| panic!("cannot write {}: {e}", output_path.display()));
+        std::fs::write(&no_ccr_path, &no_ccr_result.text)
+            .unwrap_or_else(|e| panic!("cannot write {}: {e}", no_ccr_path.display()));
         let _ = std::fs::remove_file(dir.join("full-input.txt"));
         let _ = std::fs::remove_file(dir.join("full-output.txt"));
         eprintln!(
-            "wrote {} and {}",
+            "wrote {}, {} and {}",
             input_path.display(),
-            output_path.display()
+            output_path.display(),
+            no_ccr_path.display()
         );
     }
 }

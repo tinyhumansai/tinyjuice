@@ -240,5 +240,5 @@
 +[+39 more match(es) in <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs ⟦tj:c304757ddc4cb025b1ca47210573f803⟧]
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (95475 bytes) is available by calling tinyjuice_retrieve with token "d8c09ca8668dbfbc772e95721d115384" (marker ⟦tj:d8c09ca8668dbfbc772e95721d115384⟧)]
++[PARTIAL view — full original (95475 bytes): call tinyjuice_retrieve with token "d8c09ca8668dbfbc772e95721d115384"]
 \ No newline at end of file

@@ -155,4 +155,4 @@ Jul  8 06:11:46 calvisitor-10-105-162-124 WindowServer[184]: send_datagram_avail
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (319414 bytes) is available by calling tinyjuice_retrieve with token "d9ea495488728d8c989dc942fca3324a" (marker ⟦tj:d9ea495488728d8c989dc942fca3324a⟧)]
+[PARTIAL view — full original (319414 bytes): call tinyjuice_retrieve with token "d9ea495488728d8c989dc942fca3324a"]

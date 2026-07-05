@@ -19,4 +19,4 @@ Terminating Process: exc handler [90825]
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5⟧)]
+[PARTIAL view — full original (26592 bytes): call tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5"]

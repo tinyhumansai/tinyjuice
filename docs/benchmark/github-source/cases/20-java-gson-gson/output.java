@@ -1255,4 +1255,4 @@ public final class Gson {
     { … 9 line(s) … ⟦tj:cc5d0e3daff3e1e0d5440186875b2827⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (68459 bytes) is available by calling tinyjuice_retrieve with token "85926a85e76809458c47cfd998fbcd1c" (marker ⟦tj:85926a85e76809458c47cfd998fbcd1c⟧)]
+[PARTIAL view — full original (68459 bytes): call tinyjuice_retrieve with token "85926a85e76809458c47cfd998fbcd1c"]

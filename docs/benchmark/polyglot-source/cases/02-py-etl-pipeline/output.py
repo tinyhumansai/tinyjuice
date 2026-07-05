@@ -52,4 +52,4 @@ def checkpoint(path: Path, batch_size: int = 500) -> Iterator[Record]:
     yield Record(id=0, source=str(path), payload={})
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (11861 bytes) is available by calling tinyjuice_retrieve with token "68697958b2cb99fad47700bf48f2f036" (marker ⟦tj:68697958b2cb99fad47700bf48f2f036⟧)]
+[PARTIAL view — full original (11861 bytes): call tinyjuice_retrieve with token "68697958b2cb99fad47700bf48f2f036"]

@@ -96,4 +96,4 @@ Guidelines | FAQ | Lists | API | Security | Legal | Apply to YC | Contact
 
 Search:
 
-[compacted tool output — this is a PARTIAL view; the full original (34436 bytes) is available by calling tinyjuice_retrieve with token "8b9be1fb4c677faf4ea852367e898977" (marker ⟦tj:8b9be1fb4c677faf4ea852367e898977⟧)]
+[PARTIAL view — full original (34436 bytes): call tinyjuice_retrieve with token "8b9be1fb4c677faf4ea852367e898977"]
