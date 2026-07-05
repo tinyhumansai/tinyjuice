@@ -44,6 +44,8 @@ pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
 pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
 /// Maximum evenly-spaced middle anchors to add for large generic arrays.
 pub const MAX_SPREAD_ANCHORS: usize = 8;
+/// Maximum extra spread anchors when semantic bigrams do not saturate early.
+pub const MAX_ADAPTIVE_SPREAD_ANCHOR_BOOST: usize = 4;
 /// Maximum information-dense middle rows to anchor.
 pub const MAX_INFORMATION_DENSE_ANCHORS: usize = 8;
 /// Extra positional rows to keep when query wording asks for a side of the list.
@@ -356,7 +358,7 @@ fn spread_anchor_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<
     }
 
     let middle_len = end - start;
-    let anchor_count = (middle_len / ROW_DROP_THRESHOLD).min(MAX_SPREAD_ANCHORS);
+    let anchor_count = adaptive_spread_anchor_count(rows, start, end);
     if anchor_count == 0 {
         return Vec::new();
     }
@@ -374,6 +376,46 @@ fn spread_anchor_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<
     }
     anchors.sort_unstable();
     anchors
+}
+
+fn adaptive_spread_anchor_count(rows: &[FlatRow], start: usize, end: usize) -> usize {
+    let middle_len = end - start;
+    let base = (middle_len / ROW_DROP_THRESHOLD).min(MAX_SPREAD_ANCHORS);
+    if base == 0 {
+        return 0;
+    }
+
+    let total = cumulative_semantic_bigrams(rows, start, end);
+    if total < 16 {
+        return base;
+    }
+
+    let midpoint = start + middle_len / 2;
+    let midpoint_total = cumulative_semantic_bigrams(rows, start, midpoint);
+    if midpoint_total * 100 >= total * 70 {
+        return base;
+    }
+
+    let boost = base.clamp(1, MAX_ADAPTIVE_SPREAD_ANCHOR_BOOST);
+    (base + boost).min(MAX_SPREAD_ANCHORS)
+}
+
+fn cumulative_semantic_bigrams(rows: &[FlatRow], start: usize, end: usize) -> usize {
+    let mut seen = BTreeSet::new();
+    for row in &rows[start..end] {
+        let tokens = semantic_tokens(&row_text(row));
+        for pair in tokens.windows(2) {
+            seen.insert((pair[0].clone(), pair[1].clone()));
+        }
+    }
+    seen.len()
+}
+
+fn semantic_tokens(text: &str) -> Vec<String> {
+    tokenize(text)
+        .into_iter()
+        .filter(|token| !token.chars().any(|ch| ch.is_ascii_digit()))
+        .collect()
 }
 
 fn nearest_unseen_row(
@@ -973,6 +1015,36 @@ mod tests {
             "{}",
             c.text
         );
+    }
+
+    #[test]
+    fn adaptive_saturation_extends_spread_anchors() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let word = alpha_word(i);
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","message":"topic {word} marker alpha beta"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let expected = alpha_word(108);
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains(&expected), "{}", c.text);
+    }
+
+    fn alpha_word(mut n: usize) -> String {
+        let mut out = String::from("word");
+        loop {
+            out.push((b'a' + (n % 26) as u8) as char);
+            n /= 26;
+            if n == 0 {
+                break;
+            }
+        }
+        out
     }
 
     #[test]
