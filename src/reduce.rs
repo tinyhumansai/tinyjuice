@@ -551,8 +551,15 @@ fn apply_rule(
         });
     }
 
-    // counter_source == preKeep → sample counters before keep filtering
-    let pre_keep_lines = lines.clone();
+    // counter_source == preKeep → sample counters before keep filtering.
+    // Only clone when a rule actually needs the pre-keep snapshot.
+    let pre_keep_lines = if matches!(rule.counter_source, Some(CounterSource::PreKeep))
+        && !compiled_rule.compiled.counters.is_empty()
+    {
+        lines.clone()
+    } else {
+        Vec::new()
+    };
 
     // keepPatterns
     let has_keep = !compiled_rule.compiled.keep_patterns.is_empty();
@@ -664,8 +671,10 @@ fn apply_rule(
 // Passthrough text
 // ---------------------------------------------------------------------------
 
-fn build_passthrough_text(input: &ToolExecutionInput, raw_text: &str) -> String {
-    let normalized = trim_empty_edges(&normalize_lines(&strip_ansi(raw_text)))
+/// `stripped_raw` must already be ANSI-stripped (the caller strips once and
+/// threads the result through to avoid re-scanning large outputs).
+fn build_passthrough_text(input: &ToolExecutionInput, stripped_raw: &str) -> String {
+    let normalized = trim_empty_edges(&normalize_lines(stripped_raw))
         .join("\n")
         .trim()
         .to_owned();
@@ -726,7 +735,7 @@ fn format_inline(
 fn select_inline_text(
     classification: &ClassificationResult,
     input: &ToolExecutionInput,
-    raw_text: &str,
+    stripped_raw: &str,
     compact_text: &str,
     max_inline_chars: usize,
 ) -> String {
@@ -734,8 +743,8 @@ fn select_inline_text(
         return compact_text.to_owned();
     }
 
-    let passthrough = build_passthrough_text(input, raw_text);
-    let raw_chars = count_text_chars(&strip_ansi(raw_text));
+    let passthrough = build_passthrough_text(input, stripped_raw);
+    let raw_chars = count_text_chars(stripped_raw);
     let compact_chars = count_text_chars(compact_text);
     let passthrough_limit = if classification.family == "help" {
         max_inline_chars
@@ -770,7 +779,9 @@ pub fn reduce_execution_with_rules(
 ) -> CompactResult {
     let normalized_input = normalize_execution_input(input);
     let raw_text = build_raw_text(&normalized_input);
-    let measured_raw_chars = count_text_chars(&strip_ansi(&raw_text));
+    // Strip ANSI once; every consumer below works on the stripped text.
+    let stripped_raw = strip_ansi(&raw_text);
+    let measured_raw_chars = count_text_chars(&stripped_raw);
     let classification = classify_execution(&normalized_input, rules, opts.classifier.as_deref());
 
     log::debug!(
@@ -832,7 +843,7 @@ pub fn reduce_execution_with_rules(
     let selected = select_inline_text(
         &classification,
         &normalized_input,
-        &raw_text,
+        &stripped_raw,
         &compact_text,
         max_inline_chars,
     );

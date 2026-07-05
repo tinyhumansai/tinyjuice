@@ -52,7 +52,10 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     let original_bytes = content.len();
 
     if !opts.router_enabled || original_bytes < opts.min_bytes_to_compress {
-        let kind = detect_content_kind(content, input.hint);
+        // The kind is only a label on a passthrough — don't pay for full
+        // detection (which parses entire JSON blobs) for content that won't
+        // be compressed anyway.
+        let kind = input.hint.explicit.unwrap_or(ContentKind::PlainText);
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
 
