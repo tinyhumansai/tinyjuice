@@ -100,7 +100,7 @@ Add TinyJuice to a Rust project once published:
 
 ```toml
 [dependencies]
-tinyjuice = "0.1"
+tinyjuice = "0.2"
 ```
 
 Use the small public trait scaffold when you want a simple strategy boundary:
@@ -155,6 +155,164 @@ async fn compact_command_output(command_output: &str) {
 }
 ```
 
+## SDK and Plugin Integration
+
+TinyJuice now exposes two integration paths:
+
+- Rust hosts use the crate SDK directly.
+- Non-Rust plugins and harnesses call the `tinyjuice reduce-json` protocol.
+
+The SDK accepts a host-neutral `ToolExecutionInput` with tool name, command,
+argv, stdout/stderr or combined text, exit code, cwd, and metadata. The response
+contains the inline text plus metadata about the applied content kind,
+compressor, token estimate, byte counts, and CCR recovery token when one was
+created. Do not log the request body from adapters; tool output may contain
+prompts, credentials, or private context.
+
+### Rust SDK
+
+```rust
+use tinyjuice::{
+    AgentTokenjuiceCompression, TinyJuiceHost, TinyJuiceSdk, ToolExecutionInput,
+};
+
+async fn compact_for_harness(tool_output: String, exit_code: i32) {
+    let sdk = TinyJuiceSdk::new(TinyJuiceHost::RustHarness)
+        .with_profile(AgentTokenjuiceCompression::Full);
+
+    let response = sdk
+        .compress_tool_output(ToolExecutionInput {
+            tool_name: "shell".to_string(),
+            command: Some("cargo test".to_string()),
+            argv: Some(vec!["cargo".to_string(), "test".to_string()]),
+            combined_text: Some(tool_output),
+            exit_code: Some(exit_code),
+            ..Default::default()
+        })
+        .await;
+
+    println!("{}", response.inline_text);
+}
+```
+
+Use `TinyJuiceHost::OpenHuman` for OpenHuman adapters and
+`TinyJuiceHost::RustHarness` for standalone Rust harnesses. Hosts should map
+their own config into `CompressOptions`, choose the per-agent profile, and expose
+CCR retrieval before enabling lossy compaction in production.
+
+### JSON Protocol
+
+Build the binary locally:
+
+```sh
+cargo build --release --bin tinyjuice
+```
+
+Send a full SDK request:
+
+```json
+{
+  "host": "generic-json",
+  "profile": "full",
+  "input": {
+    "toolName": "shell",
+    "command": "cargo test",
+    "argv": ["cargo", "test"],
+    "combinedText": "large tool output...",
+    "exitCode": 0,
+    "metadata": {
+      "source": "custom-harness"
+    }
+  },
+  "options": {
+    "minBytesToCompress": 512,
+    "maxInlineChars": 1200,
+    "ccrEnabled": true
+  }
+}
+```
+
+Run it through the protocol:
+
+```sh
+tinyjuice reduce-json payload.json
+cat payload.json | tinyjuice reduce-json --host generic-json -
+```
+
+A bare `ToolExecutionInput` object is also accepted when the host, profile, and
+options can stay at defaults.
+
+### Codex and Claude Code Hooks
+
+Build or install a `tinyjuice` binary, then merge a hook into the host config:
+
+```sh
+tinyjuice install codex
+tinyjuice install claude-code
+```
+
+The Codex installer updates `~/.codex/hooks.json` with a `PostToolUse` hook for
+`Bash` tool output. When TinyJuice compacts a large result, it emits
+`hookSpecificOutput.additionalContext`, matching Codex's hook output model.
+
+The Claude Code installer updates `~/.claude/settings.json` with a `PostToolUse`
+hook for `Bash` tool output. When TinyJuice compacts a large result, it emits
+`hookSpecificOutput.updatedToolOutput`, so Claude Code sees the compacted tool
+result rather than the noisy original.
+
+Both installers:
+
+- preserve existing hooks and settings
+- replace an older TinyJuice hook for the same host
+- write a `.bak` file next to the edited JSON file
+- expect `tinyjuice` to be on `PATH` unless `--binary` is supplied
+
+Examples:
+
+```sh
+tinyjuice install codex --binary /usr/local/bin/tinyjuice
+tinyjuice install claude-code --path ~/.claude/settings.json
+```
+
+The raw hook entrypoints are also available for custom installers:
+
+```sh
+tinyjuice codex-post-tool-use
+tinyjuice claude-code-post-tool-use
+```
+
+Hook invocations use a disk-backed CCR store so recovery tokens survive the
+short-lived hook process. By default the store lives under the user's cache
+directory at `tinyjuice/ccr`; override it with:
+
+```sh
+export TINYJUICE_CCR_DIR=/path/to/tinyjuice-ccr
+```
+
+Recover a full original from a hook footer:
+
+```sh
+tinyjuice retrieve <token>
+```
+
+Useful hook tuning variables:
+
+```sh
+export TINYJUICE_MIN_BYTES_TO_COMPRESS=2048
+export TINYJUICE_MAX_INLINE_CHARS=1200
+export TINYJUICE_CCR_MIN_TOKENS=500
+export TINYJUICE_CCR_ENABLED=true
+```
+
+Templates remain available for inspection or custom packaging:
+
+```sh
+tinyjuice hosts
+tinyjuice host-template codex
+tinyjuice host-template claude-code
+tinyjuice host-template generic-json
+```
+
 ## Local Development
 
 ```sh
@@ -162,6 +320,8 @@ cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test
 cargo run --example passthrough
+cargo run --bin tinyjuice -- hosts
+cargo run --bin tinyjuice -- host-template codex
 ```
 
 Run hot-path benchmarks:
@@ -219,6 +379,7 @@ src/
   cache/             CCR offload, retrieval markers, memory/disk store
   rules/             Built-in + user + project command reduction rules
   reduce.rs          Rule-engine reduction pipeline
+  sdk.rs             Host-neutral SDK and reduce-json request/response types
   tool_integration.rs OpenHuman-style tool-output adapter
   compressor/        Small public Compressor trait scaffold
   config/            Small public CompressionConfig scaffold
