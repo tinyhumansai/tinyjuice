@@ -60,10 +60,11 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> { … 21 line(s) … }
+async fn main() -> Result<()> { … 21 line(s) … ⟦tj:f8bd0f857911dbb5d7563ec965b299a1⟧ }
 
-async fn run_harness(config: &Config, prompt: &str) -> Result<()> { … 33 line(s) … }
+async fn run_harness(config: &Config, prompt: &str) -> Result<()> { … 33 line(s) … ⟦tj:5ce916adfdaa2ca80cbce94071148b86⟧ }
 
-async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> { … 117 line(s) … }
+async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> { … 117 line(s) … ⟦tj:21548d9b2c455fc7599b2dc27489af20⟧ }
+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
 
 [compacted tool output — this is a PARTIAL view; the full original (8413 bytes) is available by calling tokenjuice_retrieve with token "598826d731037d2a00e9e59a518805d2" (marker ⟦tj:598826d731037d2a00e9e59a518805d2⟧)]

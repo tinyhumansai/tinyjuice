@@ -1,13 +1,11 @@
 --- input/input.html
 +++ output/output.txt
-@@ -1,172 +1,90 @@
-+All files / src/chat chatSendError.ts
+@@ -1,172 +1,92 @@
++Code coverage report for src/chat/chatSendError.ts
  
 -<!doctype html>
 -<html lang="en">
-+100%
-+Statements
-+2/2
++All files / src/chat chatSendError.ts
  
 -<head>
 -    <title>Code coverage report for src/chat/chatSendError.ts</title>
@@ -130,6 +128,10 @@
 -<span class="cline-any cline-neutral">&nbsp;</span>
 -<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/** Structured chat send / delivery errors (issue #219) — stable `code` for analytics and tests. */
 -&nbsp;
++100%
++Statements
++2/2
++
 +100%
 +Branches
 +0/0

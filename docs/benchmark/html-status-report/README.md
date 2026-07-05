@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB | 95.8% | 95.8% | 95.5% | 0.176 ms | true |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB | 91.3% | 91.3% | 86.4% | 0.015 ms | true |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB | 95.8% | 95.8% | 95.5% | 0.180 ms | true |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB | 91.3% | 91.3% | 86.4% | 0.016 ms | true |
 | `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | [diff](cases/08-openhuman-coverage-8/compression.diff) | 5.2 KB | 90.9% | 90.9% | 86.7% | 0.018 ms | true |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB | 89.3% | 89.3% | 88.7% | 0.108 ms | true |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB | 83.4% | 83.4% | 80.0% | 0.024 ms | true |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB | 89.3% | 89.3% | 88.7% | 0.120 ms | true |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB | 83.4% | 83.4% | 80.0% | 0.025 ms | true |
 | `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | [diff](cases/10-openhuman-coverage-10/compression.diff) | 5.8 KB | 82.7% | 82.7% | 78.9% | 0.022 ms | true |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB | 81.8% | 81.8% | 78.5% | 0.024 ms | true |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB | 79.9% | 79.9% | 79.0% | 0.110 ms | true |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB | 81.8% | 81.8% | 78.5% | 0.026 ms | true |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB | 79.9% | 79.9% | 79.0% | 0.094 ms | true |
 | `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | [diff](cases/02-rss-hacker-news/compression.diff) | 15.2 KB | 52.9% | 52.9% | 51.4% | 0.053 ms | true |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB | 27.5% | 27.5% | 27.5% | 1.287 ms | true |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB | 27.5% | 27.5% | 27.5% | 1.364 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -80,6 +80,14 @@ Output excerpt:
 ```text
 The Rust Programming Language Forum
 
+= 40rem)" rel="stylesheet" data-target="desktop" />
+
+= 40rem)" rel="stylesheet" data-target="discourse-ai_desktop" />
+= 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop" />
+= 40rem)" rel="stylesheet" data-target="poll_desktop" />
+
+The Rust Programming Language Forum
+
 General discussion of The Rust Programming Language
 
 Topic
@@ -106,14 +114,6 @@ Forum Code Formatting and Syntax Highlighting
 meta
 
 To format code in this forum you need to surround the code with three backticks (` ` `). For example, typing this...
-` ` `
-fn main() {
-println!()
-}
-` ` `
-
-...will be rendered as highlighted Rust code, like so:
-fn main() …
 
 ```
 
@@ -168,6 +168,8 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Code coverage report for src/assets/icons
+
 All files src/assets/icons
 
 0%
@@ -202,8 +204,6 @@ Lines
 
 GoogleIcon.tsx
 
-0%
-0/2
 
 ```
 
@@ -258,6 +258,8 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Code coverage report for src/chat
+
 All files src/chat
 
 55.55%
@@ -292,8 +294,6 @@ Lines
 
 chatSendError.ts
 
-100%
-2/2
 
 ```
 
@@ -315,12 +315,13 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Hacker News
 Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
 1.
-Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
+Shadcn/UI now defaults to Base UI instead of Radix (shadcn.com)
 176 points by dabinat 7 hours ago | hide | 67 comments
 2.
-If you&#x27;re a button, you have one job (aresluna.org)
+If you're a button, you have one job (aresluna.org)
 302 points by nozzlegear 10 hours ago | hide | 153 comments
 3.
 Claude Design System Prompt (github.com/trystan-sa)
@@ -350,7 +351,6 @@ Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
 Knowledge Should Not Be Gated (formaly.io)
 20 points by nezhar 4 hours ago | hide | 2 comments
 12.
-Megawatts by Microwave (computer.rip)
 
 ```
 
@@ -405,6 +405,8 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Code coverage report for src/chat/chatSendError.ts
+
 All files / src/chat chatSendError.ts
 
 100%
@@ -439,8 +441,6 @@ Filter:
 10
 11
 12
-13
-14
 
 ```
 
@@ -495,6 +495,8 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Code coverage report for src/components/AppBackground.tsx
+
 All files / src/components AppBackground.tsx
 
 0%
@@ -529,8 +531,6 @@ Filter:
 10
 11
 12
-13
-14
 
 ```
 
@@ -585,6 +585,8 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Code coverage report for src/assets/icons/GoogleIcon.tsx
+
 All files / src/assets/icons GoogleIcon.tsx
 
 0%
@@ -619,8 +621,6 @@ Filter:
 10
 11
 12
-13
-14
 
 ```
 
@@ -675,6 +675,8 @@ Input excerpt:
 Output excerpt:
 
 ```text
+Code coverage report for src/chat/promptInjectionGuard.ts
+
 All files / src/chat promptInjectionGuard.ts
 
 53.48%
@@ -709,8 +711,6 @@ Filter:
 10
 11
 12
-13
-14
 
 ```
 
@@ -765,7 +765,9 @@ Input excerpt:
 Output excerpt:
 
 ```text
-Hacker News: Front Pagehttps://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 12:36:38 +0000Article URL: https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-a...
+Hacker News: Front Page
+https://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 12:36:38 +0000
+Article URL: https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568
 
 Comments URL: https://news.ycombinator.com/item?id=48793726
 
@@ -774,6 +776,7 @@ Points: 5
 # Comments: 0
 
 ]]>Sun, 05 Jul 2026 12:29:44 +0000https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568Anon84https://news.ycombinator.com/item?id=48793726https://news.ycombinat...
+Article URL: https://yusufaytas.com/the-engineer-in-the-half-space
 
 Comments URL: https://news.ycombinator.com/item?id=48793716
 
@@ -781,7 +784,8 @@ Points: 13
 
 # Comments: 0
 
-]]>Sun, 05 Jul 2026 12:28:04 +0000https://yusufaytas.com/the-engineer-in-the-half-spaceyusufaytashttps://news.ycombinator.com/item?id=48793716https://news.ycombinator.com/item?id=48793716Article URL: https://www.bbc.com/...
+]]>Sun, 05 Jul 2026 12:28:04 +0000https://yusufaytas.com/the-engineer-in-the-half-spaceyusufaytashttps://news.ycombinator.com/item?id=48793716https://news.ycombinator.com/item?id=48793716
+Article URL: https://www.bbc.com/news/articles/c8e2j0j87reo
 
 Comments URL: https://news.ycombinator.com/item?id=48792790
 
@@ -789,18 +793,14 @@ Points: 107
 
 # Comments: 119
 
-]]>Sun, 05 Jul 2026 09:56:10 +0000https://www.bbc.com/news/articles/c8e2j0j87reosaikatsghttps://news.ycombinator.com/item?id=48792790https://news.ycombinator.com/item?id=48792790Article URL: https://www.bbc.com/news/arti...
+]]>Sun, 05 Jul 2026 09:56:10 +0000https://www.bbc.com/news/articles/c8e2j0j87reosaikatsghttps://news.ycombinator.com/item?id=48792790https://news.ycombinator.com/item?id=48792790
+Article URL: https://www.bbc.com/news/articles/cz758x04g83o
 
 Comments URL: https://news.ycombinator.com/item?id=48792780
 
 Points: 16
 
 # Comments: 4
-
-]]>Sun, 05 Jul 2026 09:55:22 +0000https://www.bbc.com/news/articles/cz758x04g83osaikatsghttps://news.ycombinator.com/item?id=48792780https://news.ycombinator.com/item?id=48792780Article URL: https://github.com/Trystan-SA...
-
-Comments URL: https://news.ycombinator.com/item?id=48792399
-
 
 ```
 
@@ -858,7 +858,9 @@ Output excerpt:
 Rust Blog
 
 https://blog.rust-lang.org/
+
 Rust Blog
+
 Empowering everyone to build reliable and efficient software.
 
 Maintained by the Rust Teams.
@@ -873,24 +875,22 @@ Announcing Rust 1.96.1
 https://blog.rust-lang.org/2026/06/30/Rust-1.96.1/
 <p>The Rust team has published a new point release of Rust, 1.96.1. Rust is a programming language that is empowering everyone to build reliable and efficient software.</p>
 <p>If you have a previous version of Rust installed via rustup, getting Rust 1.96.1 is as easy as:</p>
-<pre class&#x3D;"giallo z-code"><code data-lang&#x3D;"plain"><span class&#x3D;"giallo-l"><span>rustup update stable</span></span></code></pre>
-<p>If you don&#x27;t have it already, you can <a rel&#x3D;"external" href&#x3D;"https://www.rust-lang.org/install.html">get <code>rustup</code></a> from the appropriate page on our website.</p>
-<h2 id&#x3D;"what-s-in-1-96-1"><a class&#x3D;"anchor" href&#x3D;"#what-s-in-1-96-1" aria-hidden&#x3D;"true"></a>
-What&#x27;s in 1.96.1</h2>
+<pre class="giallo z-code"><code data-lang="plain"><span class="giallo-l"><span>rustup update stable</span></span></code></pre>
+<p>If you don't have it already, you can <a rel="external" href="https://www.rust-lang.org/install.html">get <code>rustup</code></a> from the appropriate page on our website.</p>
+<h2 id="what-s-in-1-96-1"><a class="anchor" href="#what-s-in-1-96-1" aria-hidden="true"></a>
+What's in 1.96.1</h2>
 <p>Rust 1.96.1 fixes:</p>
 <ul>
-<li><a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/cargo/pull/17131">Missing retries / timeouts in Cargo&#x27;s HTTP client</a></li>
-<li><a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/rust/pull/158214">Miscompilation in a MIR optimization</a></li>
+<li><a rel="external" href="https://github.com/rust-lang/cargo/pull/17131">Missing retries / timeouts in Cargo's HTTP client</a></li>
+<li><a rel="external" href="https://github.com/rust-lang/rust/pull/158214">Miscompilation in a MIR optimization</a></li>
 </ul>
-<p>It also <a rel&#x3D;"external" href&#x3D;"https://github.com/rust-lang/cargo/pull/17140">fixes</a> three CVEs
+<p>It also <a rel="external" href="https://github.com/rust-lang/cargo/pull/17140">fixes</a> three CVEs
 affecting libssh2 (which is compiled into Cargo):</p>
 <ul>
-<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2025-15661">CVE-2025-15661</a></li>
-<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2026-55199">CVE-2026-55199</a></li>
-<li><a rel&#x3D;"external" href&#x3D;"https://www.cve.org/CVERecord?id&#x3D;CVE-2026-55200">CVE-2026-55200</a></li>
+<li><a rel="external" href="https://www.cve.org/CVERecord?id=CVE-2025-15661">CVE-2025-15661</a></li>
+<li><a rel="external" href="https://www.cve.org/CVERecord?id=CVE-2026-55199">CVE-2026-55199</a></li>
+<li><a rel="external" href="https://www.cve.org/CVERecord?id=CVE-2026-55200">CVE-2026-55200</a></li>
 </ul>
-<h3 id&#x3D;"contributors-to-1-96-1"><a class&#x3D;"anchor" href&#x3D;"#contributors-to-1-96-1" aria-hidden&#x3D;"true"></a>
-Contributors to 1.96.1</h3>
 
 ```
 

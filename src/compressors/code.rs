@@ -16,6 +16,7 @@ use async_trait::async_trait;
 use std::fmt::Write as _;
 
 use super::Compressor;
+use crate::cache;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 /// Bodies with more than this many collapsed lines get a placeholder; shorter
@@ -36,24 +37,47 @@ impl Compressor for CodeCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        _opts: &CompressOptions,
+        opts: &CompressOptions,
     ) -> Option<CompressOutput> {
+        // Per-body retrieval tokens only make sense when the CCR store is on.
+        let per_body_tokens = opts.ccr_enabled;
         // Prefer the AST path when a grammar matches the file's language; fall
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
         #[cfg(feature = "tokenjuice-treesitter")]
         if let Some(ext) = input.hint.extension.as_deref()
-            && let Some(out) = treesitter::compress(input.content, ext)
+            && let Some(out) = treesitter::compress(input.content, ext, per_body_tokens)
         {
             return Some(out);
         }
-        compress_heuristic(input.content)
+        compress_heuristic(input.content, per_body_tokens)
+    }
+}
+
+/// One-line note appended when any collapsed body carries its own token, so
+/// the model knows the placeholders are individually expandable.
+const PER_BODY_NOTE: &str = "\n[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]";
+
+/// Offload a collapsed body to CCR and return the placeholder token text
+/// (e.g. `⟦tj:abc123⟧`), or an empty string when tokens are disabled or the
+/// body couldn't be retained.
+fn body_token(body: &str, enabled: bool) -> String {
+    if !enabled {
+        return String::new();
+    }
+    let (token, retained) = cache::offload_checked(body);
+    if retained {
+        format!(" {}", cache::format_marker(&token))
+    } else {
+        String::new()
     }
 }
 
 /// Language-agnostic brace-depth compressor. Keeps lines at depth ≤ 1, collapses
-/// deeper runs. Returns `None` if it wouldn't shrink the content.
-pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
+/// deeper runs. With `per_body_tokens`, each collapsed body is offloaded to CCR
+/// and its placeholder carries a token that retrieves exactly that body.
+/// Returns `None` if it wouldn't shrink the content.
+pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<CompressOutput> {
     let lines: Vec<&str> = content.lines().collect();
     if lines.len() < 12 {
         return None;
@@ -62,13 +86,16 @@ pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
     let mut out = String::with_capacity(content.len() / 2 + 64);
     let mut depth: i32 = 0;
     let mut collapsed: Vec<&str> = Vec::new();
+    let mut any_token = false;
 
-    let flush = |out: &mut String, collapsed: &mut Vec<&str>| {
+    let flush = |out: &mut String, collapsed: &mut Vec<&str>, any_token: &mut bool| {
         if collapsed.is_empty() {
             return;
         }
         if collapsed.len() >= MIN_BODY_LINES_TO_COLLAPSE {
-            let _ = writeln!(out, "    {{ … {} line(s) … }}", collapsed.len());
+            let token = body_token(&collapsed.join("\n"), per_body_tokens);
+            *any_token |= !token.is_empty();
+            let _ = writeln!(out, "    {{ … {} line(s) …{token} }}", collapsed.len());
         } else {
             for l in collapsed.iter() {
                 let _ = writeln!(out, "{l}");
@@ -88,7 +115,7 @@ pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
         // (e.g. small struct field lists) stay verbatim via the flush threshold,
         // so struct/enum fields survive while long function bodies collapse.
         if start_depth == 0 || force_keep {
-            flush(&mut out, &mut collapsed);
+            flush(&mut out, &mut collapsed, &mut any_token);
             let _ = writeln!(out, "{line}");
         } else {
             collapsed.push(line);
@@ -98,9 +125,12 @@ pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
             depth = 0;
         }
     }
-    flush(&mut out, &mut collapsed);
+    flush(&mut out, &mut collapsed, &mut any_token);
 
-    let out = out.trim_end().to_string();
+    let mut out = out.trim_end().to_string();
+    if any_token {
+        out.push_str(PER_BODY_NOTE);
+    }
     if out.len() >= content.len() {
         return None;
     }
@@ -169,7 +199,9 @@ fn brace_delta(line: &str) -> (i32, i32) {
 /// imports, type declarations and struct/enum fields exactly.
 #[cfg(feature = "tokenjuice-treesitter")]
 mod treesitter {
-    use super::{CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE};
+    use super::{
+        CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE, PER_BODY_NOTE, body_token,
+    };
     use tree_sitter::{Node, Parser};
 
     /// Pick the grammar for a file extension. Returns the language plus whether
@@ -202,7 +234,7 @@ mod treesitter {
         "generator_function_declaration",
     ];
 
-    pub fn compress(content: &str, ext: &str) -> Option<CompressOutput> {
+    pub fn compress(content: &str, ext: &str, per_body_tokens: bool) -> Option<CompressOutput> {
         let (language, braced) = language_for(ext)?;
         let mut parser = Parser::new();
         parser.set_language(&language).ok()?;
@@ -229,6 +261,7 @@ mod treesitter {
 
         let mut out = String::with_capacity(content.len());
         let mut cursor = 0usize;
+        let mut any_token = false;
         for (start, end) in merged {
             if start < cursor {
                 continue;
@@ -238,17 +271,24 @@ mod treesitter {
             let n_lines = body.lines().count();
             if n_lines < MIN_BODY_LINES_TO_COLLAPSE {
                 out.push_str(body);
-            } else if braced {
-                out.push_str(&format!("{{ … {n_lines} line(s) … }}"));
             } else {
-                // Python suite — keep an indented ellipsis so it still reads.
-                out.push_str(&format!("...  # {n_lines} line(s) collapsed"));
+                let token = body_token(body, per_body_tokens);
+                any_token |= !token.is_empty();
+                if braced {
+                    out.push_str(&format!("{{ … {n_lines} line(s) …{token} }}"));
+                } else {
+                    // Python suite — keep an indented ellipsis so it still reads.
+                    out.push_str(&format!("...  # {n_lines} line(s) collapsed{token}"));
+                }
             }
             cursor = end;
         }
         out.push_str(&content[cursor..]);
 
-        let out = out.trim_end().to_string();
+        let mut out = out.trim_end().to_string();
+        if any_token {
+            out.push_str(PER_BODY_NOTE);
+        }
         if out.len() >= content.len() {
             return None;
         }
@@ -293,7 +333,7 @@ mod tests {
         }
         src.push_str("        tmp_0\n}\n\n");
         src.push_str("struct Config {\n    name: String,\n    size: usize,\n}\n");
-        let out = compress_heuristic(&src).expect("compresses");
+        let out = compress_heuristic(&src, false).expect("compresses");
         assert!(out.lossy);
         assert!(
             out.text.contains("pub fn process"),
@@ -316,7 +356,7 @@ mod tests {
     #[test]
     fn short_file_passes_through() {
         let src = "fn a() {}\nfn b() {}\n";
-        assert!(compress_heuristic(src).is_none());
+        assert!(compress_heuristic(src, false).is_none());
     }
 
     #[cfg(feature = "tokenjuice-treesitter")]
@@ -331,7 +371,7 @@ mod tests {
         }
         src.push_str("    tmp_0\n}\n\n");
         src.push_str("pub struct Config {\n    pub name: String,\n    pub size: usize,\n}\n");
-        let out = treesitter::compress(&src, "rs").expect("compresses");
+        let out = treesitter::compress(&src, "rs", false).expect("compresses");
         assert!(
             out.text.contains("pub fn process(items: &[i32]) -> i32"),
             "{}",
@@ -354,7 +394,7 @@ mod tests {
             src.push_str(&format!("    x_{i} = compute(event, {i})\n"));
         }
         src.push_str("    return x_0\n");
-        let out = treesitter::compress(&src, "py").expect("compresses");
+        let out = treesitter::compress(&src, "py", false).expect("compresses");
         assert!(out.text.contains("def handler(event):"), "{}", out.text);
         assert!(out.text.contains("collapsed"), "{}", out.text);
         assert!(!out.text.contains("x_15"));
@@ -390,7 +430,7 @@ mod tests {
         }
         src.push_str("}\n\n");
         src.push_str("pub struct Cursor<'a> {\n    buf: &'a [u8],\n    pos: usize,\n}\n");
-        let out = compress_heuristic(&src).expect("compresses");
+        let out = compress_heuristic(&src, false).expect("compresses");
         // Both signatures after the first lifetime-carrying line must survive
         // at top level — depth drift used to collapse them.
         assert!(out.text.contains("pub fn lookup<'a>"), "{}", out.text);
@@ -400,6 +440,72 @@ mod tests {
             "body collapsed: {}",
             out.text
         );
+    }
+
+    #[test]
+    fn per_body_tokens_retrieve_exactly_the_collapsed_body() {
+        let mut src = String::from("use std::io;\n\n");
+        src.push_str("pub fn alpha() -> i32 {\n");
+        for i in 0..10 {
+            src.push_str(&format!("        let a_{i} = compute({i});\n"));
+        }
+        src.push_str("        a_0\n}\n\n");
+        src.push_str("pub fn beta() -> i32 {\n");
+        for i in 0..10 {
+            src.push_str(&format!("        let b_{i} = compute({i});\n"));
+        }
+        src.push_str("        b_0\n}\n");
+
+        let out = compress_heuristic(&src, true).expect("compresses");
+        let tokens = cache::parse_markers(&out.text);
+        assert_eq!(
+            tokens.len(),
+            2,
+            "one token per collapsed body: {}",
+            out.text
+        );
+        assert!(
+            out.text.contains("individually retrievable"),
+            "{}",
+            out.text
+        );
+
+        // Each token retrieves exactly its own body.
+        let first = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(first.contains("let a_5 = compute(5);"), "{first}");
+        assert!(!first.contains("b_5"), "bodies must not mix: {first}");
+        let second = cache::retrieve(&tokens[1]).expect("stored");
+        assert!(second.contains("let b_5 = compute(5);"), "{second}");
+    }
+
+    #[test]
+    fn no_tokens_when_disabled() {
+        let mut src = String::from("use std::io;\n\n");
+        src.push_str("pub fn gamma() -> i32 {\n");
+        for i in 0..12 {
+            src.push_str(&format!("        let g_{i} = compute({i});\n"));
+        }
+        src.push_str("        g_0\n}\n");
+        let out = compress_heuristic(&src, false).expect("compresses");
+        assert!(cache::parse_markers(&out.text).is_empty(), "{}", out.text);
+        assert!(!out.text.contains("individually retrievable"));
+    }
+
+    #[cfg(feature = "tokenjuice-treesitter")]
+    #[test]
+    fn treesitter_per_body_tokens_round_trip() {
+        let mut src = String::from("pub fn delta(items: &[i32]) -> i32 {\n");
+        for i in 0..12 {
+            src.push_str(&format!(
+                "    let d_{i} = items.iter().sum::<i32>() + {i};\n"
+            ));
+        }
+        src.push_str("    d_0\n}\n");
+        let out = treesitter::compress(&src, "rs", true).expect("compresses");
+        let tokens = cache::parse_markers(&out.text);
+        assert_eq!(tokens.len(), 1, "{}", out.text);
+        let body = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(body.contains("let d_7"), "{body}");
     }
 
     #[test]
@@ -413,7 +519,7 @@ mod tests {
             }
         }
         src.push_str("}\n");
-        let out = compress_heuristic(&src).expect("compresses");
+        let out = compress_heuristic(&src, false).expect("compresses");
         assert!(out.text.contains("TODO"), "marker line kept:\n{}", out.text);
     }
 }

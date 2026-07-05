@@ -1,13 +1,11 @@
 --- input/input.html
 +++ output/output.txt
-@@ -1,131 +1,59 @@
-+All files src/chat
+@@ -1,131 +1,61 @@
++Code coverage report for src/chat
  
 -<!doctype html>
 -<html lang="en">
-+55.55%
-+Statements
-+25/45
++All files src/chat
  
 -<head>
 -    <title>Code coverage report for src/chat</title>
@@ -99,9 +97,9 @@
 -	<td data-value="100" class="pct high">100%</td>
 -	<td data-value="1" class="abs high">1/1</td>
 -	</tr>
-+46.34%
-+Branches
-+19/41
++55.55%
++Statements
++25/45
  
 -<tr>
 -	<td class="file medium" data-value="promptInjectionGuard.ts"><a href="promptInjectionGuard.ts.html">promptInjectionGuard.ts</a></td>
@@ -117,9 +115,9 @@
 -	<td data-value="53.48" class="pct medium">53.48%</td>
 -	<td data-value="43" class="abs medium">23/43</td>
 -	</tr>
-+80%
-+Functions
-+4/5
++46.34%
++Branches
++19/41
  
 -</tbody>
 -</table>
@@ -143,6 +141,10 @@
 -</html>
 -    
 \ No newline at end of file
++80%
++Functions
++4/5
++
 +54.54%
 +Lines
 +24/44

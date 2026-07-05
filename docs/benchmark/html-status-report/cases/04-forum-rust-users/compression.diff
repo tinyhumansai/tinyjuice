@@ -1,6 +1,6 @@
 --- input/input.html
 +++ output/output.txt
-@@ -1,1338 +1,328 @@
+@@ -1,1338 +1,336 @@
 -<!DOCTYPE html>
 -<html lang="en">
 -  <head>
@@ -14,32 +14,33 @@
 +The Rust Programming Language Forum
  
 -<meta name="color-scheme" content="light">
-+General discussion of The Rust Programming Language
++= 40rem)" rel="stylesheet" data-target="desktop" />
  
 -<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 -<link rel="canonical" href="https://users.rust-lang.org/" />
 -<script type="application/ld+json">{"@context":"http://schema.org","@type":"WebSite","url":"https://users.rust-lang.org","name":"The Rust Programming Language Forum","potentialAction":{"@type":"SearchAction","target":"https://users.rust-lang.org/search?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 -<meta name="discourse-track-view-session-id" content="IsmpiE3mCkkkNhlXVoUGmdDDTtThfOT4">
 -<link rel="search" type="application/opensearchdescription+xml" href="https://users.rust-lang.org/opensearch.xml" title="The Rust Programming Language Forum Search">
-+Topic
++= 40rem)" rel="stylesheet" data-target="discourse-ai_desktop" />
++= 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop" />
++= 40rem)" rel="stylesheet" data-target="poll_desktop" />
  
 -    
 -    <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/color_definitions_light-default_-1_1_d5537d15356de74106d0f6f9a9d1cdbf01cec97b.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" class="light-scheme"/>
++The Rust Programming Language Forum
+ 
+-<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common"  />
++General discussion of The Rust Programming Language
+ 
+-<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/mobile_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width < 40rem)" rel="stylesheet" data-target="mobile"  />
+-<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="desktop"  />
++Topic
+ 
 +Replies
 +Views
 +Activity
  
--<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common"  />
 +Welcome to the Rust programming language users forum
- 
--<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/mobile_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width < 40rem)" rel="stylesheet" data-target="mobile"  />
--<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="desktop"  />
-+meta
- 
-+This forum is for help, discussion, and announcements related to the Rust programming language.
-+Please read our code of conduct before participating. We will remove any posts that are not respectful, constructive, and o…
- 
-+1
  
 -  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/automation_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="automation"  />
 -  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/checklist_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="checklist"  />
@@ -67,7 +68,7 @@
 -  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-ai_desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="discourse-ai_desktop"  />
 -  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-reactions_desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop"  />
 -  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/poll_desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="poll_desktop"  />
-+56124
++meta
  
 -  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_51_e5cbabed97449a77627aa2f25b57261e46866006.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="51" data-theme-name="social share"/>
 -<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_46_529f7d57eeccf16ffc2d82605c7a998a1bf5f407.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="46" data-theme-name="hide (empty) ai settings tab"/>
@@ -76,7 +77,8 @@
 -<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_1_05cdd2b04a51455ab302939c2a60ae32696b8fe4.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="1" data-theme-name="default"/>
 -  
 -  
-+June 24, 2022
++This forum is for help, discussion, and announcements related to the Rust programming language.
++Please read our code of conduct before participating. We will remove any posts that are not respectful, constructive, and o…
  
 -    
 -    
@@ -93,7 +95,7 @@
 -<meta name="twitter:title" content="The Rust Programming Language Forum" />
 -<meta property="og:description" content="General discussion of The Rust Programming Language" />
 -<meta name="twitter:description" content="General discussion of The Rust Programming Language" />
-+Forum Code Formatting and Syntax Highlighting
++1
  
 -    
 -  </head>
@@ -103,31 +105,22 @@
 -  <a href="/">The Rust Programming Language Forum</a>
 -    <p>General discussion of The Rust Programming Language</p>
 -</header>
-+meta
++56124
  
 -    <div id="main-outlet" class="wrap" role="main">
 -      
-+To format code in this forum you need to surround the code with three backticks (```). For example, typing this...
-+```
-+fn main() {
-+println!()
-+}
-+```
++June 24, 2022
  
-+...will be rendered as highlighted Rust code, like so:
-+fn main() …
++Forum Code Formatting and Syntax Highlighting
  
-+3
++meta
  
-+50332
- 
+-
 -<div class="topic-list-container" itemscope itemtype='http://schema.org/ItemList'>
 -  <meta itemprop='itemListOrder' content='http://schema.org/ItemListOrderDescending'>
-+May 7, 2020
- 
+-
 -  <table class='topic-list'>
-+Learning how to navigate/ modify tree-like structure with parsed AST SQL
- 
+-
 -    <thead>
 -      <tr>
 -        <th>Topic</th>
@@ -137,8 +130,7 @@
 -        <th>Activity</th>
 -      </tr>
 -    </thead>
-+help
- 
+-
 -    <tbody>
 -        <tr class="topic-list-item">
 -          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
@@ -194,12 +186,13 @@
 -            </div>
 -              <p class='excerpt'>
 -                To format code in this forum you need to surround the code with three backticks (```). For example, typing this... 
--```
--fn main() {
++To format code in this forum you need to surround the code with three backticks (```). For example, typing this...
+ ```
+ fn main() {
 -    println!()
--}
--```
-+1
++println!()
+ }
+ ```
  
 -...will be rendered as highlighted Rust code, like so: 
 -fn main() &hellip;
@@ -1321,27 +1314,26 @@
 -          </td>
 -        </tr>
 -    </tbody>
-+50
-+
-+July 5, 2026
++...will be rendered as highlighted Rust code, like so:
++fn main() …
  
 -  </table>
 -</div>
-+Per-read file integrity in a no_std kernel: block-level BLAKE3 instead of re-hashing the whole file
++3
  
 -  <div class="navigation" role='navigation' itemscope itemtype='http://schema.org/SiteNavigationElement'>
 -      <span itemprop='name'><b><a href='/latest?no_definitions=true&amp;page=1' rel='next' itemprop='url'>next page →</a></b></span>
 -  </div>
-+community
++50332
  
 - <!-- include_crawler_content? -->
-+10
++May 7, 2020
  
-+239
++Learning how to navigate/ modify tree-like structure with parsed AST SQL
  
-+July 5, 2026
++help
  
-+Need ideas for my narrative authoring tool
++1
  
 -    </div>
 -    <footer class="container wrap">
@@ -1371,13 +1363,29 @@
 -  </nav>
 -  <p class='powered-by-link'>Powered by <a href="https://www.discourse.org">Discourse</a>, best viewed with JavaScript enabled</p>
 -</footer>
-+help
++50
  
 -    
 -    
 -  </body>
 -  
 -</html>
++July 5, 2026
++
++Per-read file integrity in a no_std kernel: block-level BLAKE3 instead of re-hashing the whole file
++
++community
++
++10
++
++239
++
++July 5, 2026
++
++Need ideas for my narrative authoring tool
++
++help
++
 +3
 +
 +70

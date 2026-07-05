@@ -8,11 +8,11 @@ Percentages are **token reduction: higher is better** (90% means the output shra
 
 | Category | Cases | Applied | Token reduction (mean) | Avg latency | Report |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Service And Docker Logs | 10 | 10 | 86.9% | 0.193 ms | [report](service-log/README.md) |
-| HTML, RSS, And Page Snapshots | 10 | 10 | 77.5% | 0.184 ms | [report](html-status-report/README.md) |
-| Unified Diffs | 10 | 10 | 70.4% | 0.182 ms | [report](unified-diff/README.md) |
-| Rust Source | 10 | 8 | 53.7% | 0.702 ms | [report](rust-source/README.md) |
-| Search Results | 10 | 10 | 48.3% | 0.401 ms | [report](search-results/README.md) |
-| JSON SmartCrusher | 10 | 3 | 20.1% | 0.535 ms | [report](json-smartcrusher/README.md) |
-| Test Failure Logs | 10 | 2 | 15.3% | 0.041 ms | [report](test-failure-log/README.md) |
+| Service And Docker Logs | 10 | 10 | 86.9% | 0.180 ms | [report](service-log/README.md) |
+| HTML, RSS, And Page Snapshots | 10 | 10 | 77.5% | 0.192 ms | [report](html-status-report/README.md) |
+| Unified Diffs | 10 | 10 | 70.4% | 0.186 ms | [report](unified-diff/README.md) |
+| Rust Source | 10 | 8 | 50.0% | 0.741 ms | [report](rust-source/README.md) |
+| Search Results | 10 | 10 | 48.3% | 0.403 ms | [report](search-results/README.md) |
+| JSON SmartCrusher | 10 | 3 | 20.1% | 0.482 ms | [report](json-smartcrusher/README.md) |
+| Test Failure Logs | 10 | 2 | 15.3% | 0.039 ms | [report](test-failure-log/README.md) |
 | Plain Text | 10 | 0 | 0.0% | 0.000 ms | [report](plain-text/README.md) |

@@ -1,20 +1,21 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -60,176 +60,10 @@
+@@ -60,176 +60,11 @@
  }
  
  #[tokio::main]
 -async fn main() -> Result<()> {
 -    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-+async fn main() -> Result<()> { … 21 line(s) … }
++async fn main() -> Result<()> { … 21 line(s) … ⟦tj:f8bd0f857911dbb5d7563ec965b299a1⟧ }
  
 -    let args = Args::parse();
-+async fn run_harness(config: &Config, prompt: &str) -> Result<()> { … 33 line(s) … }
++async fn run_harness(config: &Config, prompt: &str) -> Result<()> { … 33 line(s) … ⟦tj:5ce916adfdaa2ca80cbce94071148b86⟧ }
  
 -    let config = Config::load_or_init()
 -        .await
 -        .context("loading user config (Config::load_or_init)")?;
-+async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> { … 117 line(s) … }
++async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> { … 117 line(s) … ⟦tj:21548d9b2c455fc7599b2dc27489af20⟧ }
++[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
  
 -    eprintln!("[probe] config.default_model = {:?}", config.default_model);
 -    eprintln!(

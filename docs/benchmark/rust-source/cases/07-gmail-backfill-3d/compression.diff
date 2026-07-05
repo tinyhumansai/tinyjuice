@@ -1,6 +1,6 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -96,402 +96,27 @@
+@@ -96,402 +96,28 @@
  }
  
  #[tokio::main]
@@ -17,8 +17,7 @@
 -        .with_target(true)
 -        .try_init()
 -        .ok();
-+async fn main() -> Result<()> { … 226 line(s) … }
- 
+-
 -    let cli = Cli::parse();
 -    if cli.days == 0 {
 -        anyhow::bail!("--days must be >= 1");
@@ -211,7 +210,8 @@
 -            sum_no_pointer,
 -            sum_missing_file,
 -        );
--
++async fn main() -> Result<()> { … 226 line(s) … ⟦tj:f94621db810d452333e63e57c2d5d61e⟧ }
+ 
 -        if mismatched > 0 || missing_file > 0 || sum_mismatched > 0 || sum_missing_file > 0 {
 -            anyhow::bail!(
 -                "Integrity check failed: \
@@ -255,7 +255,7 @@
 -    }
 -    Ok(())
 -}
-+fn wipe_memory_tree_state(config: &Config) -> Result<()> { … 18 line(s) … }
++fn wipe_memory_tree_state(config: &Config) -> Result<()> { … 18 line(s) … ⟦tj:25c2bd02a94650334fb2f36e5686e26b⟧ }
  
  /// Read all chunks from SQLite and verify on-disk SHA-256 matches `content_sha256`.
  ///
@@ -263,7 +263,7 @@
 -fn verify_all_chunk_files(config: &Config) -> Result<(usize, usize, usize, usize)> {
 -    let chunks = list_chunks(config, &ListChunksQuery::default())?;
 -    let content_root = config.memory_tree_content_root();
-+fn verify_all_chunk_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 65 line(s) … }
++fn verify_all_chunk_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 65 line(s) … ⟦tj:1f4abc58cd26c839810bda5aba1f92c9⟧ }
  
 -    let mut verified = 0usize;
 -    let mut mismatched = 0usize;
@@ -334,7 +334,7 @@
 -fn verify_all_summary_files(config: &Config) -> Result<(usize, usize, usize, usize)> {
 -    let rows_with_pointer = list_summaries_with_content_path(config)?;
 -    let content_root = config.memory_tree_content_root();
-+fn verify_all_summary_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 59 line(s) … }
++fn verify_all_summary_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 59 line(s) … ⟦tj:1e479fb2d47d722ae45efb9bfffcbd03⟧ }
  
 -    let mut verified = 0usize;
 -    let mut mismatched = 0usize;
@@ -407,7 +407,8 @@
 -    }
 -    (Vec::new(), None)
 -}
-+fn extract_envelope(data: &Value) -> (Vec<Value>, Option<String>) { … 14 line(s) … }
++fn extract_envelope(data: &Value) -> (Vec<Value>, Option<String>) { … 14 line(s) … ⟦tj:520d0f0d34eb988595c31d11c118cb02⟧ }
++[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
 +
 +[compacted tool output — this is a PARTIAL view; the full original (17440 bytes) is available by calling tokenjuice_retrieve with token "de327d088c33663aff65f51429a1108e" (marker ⟦tj:de327d088c33663aff65f51429a1108e⟧)]
 \ No newline at end of file

@@ -1,3 +1,5 @@
+Code coverage report for src/components/AppBackground.tsx
+
 All files / src/components AppBackground.tsx
 
 0%

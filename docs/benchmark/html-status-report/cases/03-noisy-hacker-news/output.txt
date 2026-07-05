@@ -1,9 +1,10 @@
+Hacker News
 Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
 1.
-Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
+Shadcn/UI now defaults to Base UI instead of Radix (shadcn.com)
 176 points by dabinat 7 hours ago | hide | 67 comments
 2.
-If you&#x27;re a button, you have one job (aresluna.org)
+If you're a button, you have one job (aresluna.org)
 302 points by nozzlegear 10 hours ago | hide | 153 comments
 3.
 Claude Design System Prompt (github.com/trystan-sa)
@@ -51,7 +52,7 @@ Programmers need to start meditating (jacob.gold)
 Better Models: Worse Tools (pocoo.org)
 193 points by leemoore 16 hours ago | hide | 66 comments
 18.
-Meta&#x27;s Un-Stable Signature (hackerfactor.com)
+Meta's Un-Stable Signature (hackerfactor.com)
 101 points by ementally 12 hours ago | hide | 15 comments
 19.
 Atomic Force Microscope high-speed video, stainless etching, bacteria, and more (youtube.com)

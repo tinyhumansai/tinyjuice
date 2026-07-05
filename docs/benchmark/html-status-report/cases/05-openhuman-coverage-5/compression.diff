@@ -1,13 +1,11 @@
 --- input/input.html
 +++ output/output.txt
-@@ -1,157 +1,78 @@
-+All files / src/assets/icons GoogleIcon.tsx
+@@ -1,157 +1,80 @@
++Code coverage report for src/assets/icons/GoogleIcon.tsx
  
 -<!doctype html>
 -<html lang="en">
-+0%
-+Statements
-+0/2
++All files / src/assets/icons GoogleIcon.tsx
  
 -<head>
 -    <title>Code coverage report for src/assets/icons/GoogleIcon.tsx</title>
@@ -139,6 +137,10 @@
 -      /&gt;
 -    &lt;/svg&gt;
 -  );
++0%
++Statements
++0/2
++
 +0%
 +Branches
 +0/1

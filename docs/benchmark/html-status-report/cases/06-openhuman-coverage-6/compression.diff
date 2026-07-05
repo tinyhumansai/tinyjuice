@@ -1,13 +1,11 @@
 --- input/input.html
 +++ output/output.txt
-@@ -1,116 +1,48 @@
-+All files src/assets/icons
+@@ -1,116 +1,50 @@
++Code coverage report for src/assets/icons
  
 -<!doctype html>
 -<html lang="en">
-+0%
-+Statements
-+0/2
++All files src/assets/icons
  
 -<head>
 -    <title>Code coverage report for src/assets/icons</title>
@@ -100,8 +98,8 @@
 -	<td data-value="2" class="abs low">0/2</td>
 -	</tr>
 +0%
-+Branches
-+0/1
++Statements
++0/2
  
 -</tbody>
 -</table>
@@ -125,6 +123,10 @@
 -</html>
 -    
 \ No newline at end of file
++0%
++Branches
++0/1
++
 +0%
 +Functions
 +0/1

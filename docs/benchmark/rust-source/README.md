@@ -10,14 +10,14 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB | 82.6% | 82.6% | 81.8% | 1.151 ms | true |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB | 76.8% | 76.8% | 76.2% | 1.239 ms | true |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB | 73.0% | 73.0% | 71.7% | 0.719 ms | true |
-| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB | 67.5% | 67.5% | 64.9% | 0.334 ms | true |
-| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB | 64.3% | 64.3% | 63.9% | 1.746 ms | true |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB | 63.3% | 63.3% | 56.8% | 0.141 ms | true |
-| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB | 56.3% | 56.3% | 55.8% | 1.530 ms | true |
-| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB | 52.7% | 52.7% | 47.8% | 0.163 ms | true |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB | 75.9% | 82.6% | 75.1% | 1.217 ms | true |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB | 74.6% | 76.8% | 73.9% | 1.341 ms | true |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB | 71.1% | 73.0% | 69.8% | 0.671 ms | true |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB | 64.5% | 67.5% | 62.0% | 0.345 ms | true |
+| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB | 61.5% | 64.3% | 61.1% | 1.846 ms | true |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB | 58.2% | 63.3% | 51.7% | 0.148 ms | true |
+| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB | 51.5% | 56.3% | 51.1% | 1.681 ms | true |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB | 42.9% | 52.7% | 38.1% | 0.165 ms | true |
 | `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | [diff](cases/06-socket/compression.diff) | 2.0 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | [diff](cases/03-socket/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
@@ -94,24 +94,24 @@ use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 
 #[test]
-fn decodes_base64url_no_pad() { … 12 line(s) … }
+fn decodes_base64url_no_pad() { … 12 line(s) … ⟦tj:ddf29b8d10b80e7e212d08535a344a6a⟧ }
 
 #[test]
-fn decodes_standard_base64() { … 6 line(s) … }
+fn decodes_standard_base64() { … 6 line(s) … ⟦tj:39e7a405158b4a2bb93f1b93a288977b⟧ }
 
 #[test]
-fn decodes_raw_32_byte_key() { … 6 line(s) … }
+fn decodes_raw_32_byte_key() { … 6 line(s) … ⟦tj:1f13f406f0fbc06a10064473ab59e0ea⟧ }
 
 #[test]
-fn trims_whitespace() { … 6 line(s) … }
+fn trims_whitespace() { … 6 line(s) … ⟦tj:8893f6a3af7a5243d8c83bb6395b541f⟧ }
 
 #[test]
-fn rejects_wrong_length() { … 4 line(s) … }
+fn rejects_wrong_length() { … 4 line(s) … ⟦tj:2a9bb9ec7d041f12b84985a6a9771a8c⟧ }
 
 use super::user_id_from_profile_payload;
 
 #[test]
-fn extracts_id_from_root() { … 9 line(s) … }
+fn extracts_id_from_root() { … 9 line(s) … ⟦tj:5773768f2eb30e66724da281b08aa272⟧ }
 
 #[test]
 
@@ -562,8 +562,8 @@ use std::sync::Arc;
 use openhuman_core::openhuman::config::Config;
 use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
 
-fn main() -> ExitCode { … 76 line(s) … }
-
+fn main() -> ExitCode { … 76 line(s) … ⟦tj:0bc2aa582a12a896dbb668373d73d51b⟧ }
+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
 
 ```
 
@@ -722,7 +722,7 @@ pub fn bearer_authorization_value(token: &str) -> String {
 }
 
 /// Best-effort decode of a JWT payload without verifying the signature.
-pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … }
+pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … ⟦tj:b821e28022db20530eaf2b6e8695b28c⟧ }
 
 /// Best-effort decode of a JWT's `exp` (expiry) claim into a UTC timestamp.
 ///
@@ -738,7 +738,7 @@ pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 lin
 /// still 401s, caught by the `flatten_authed_error` net). Returns `None` for any
 /// non-JWT / malformed / `exp`-less token, in which case expiry tracking
 /// degrades to the previous behaviour (no local precheck).
-pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … }
+pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … ⟦tj:902053cf712b0ec0319a8b4193f0b577⟧ }
 
 #[cfg(test)]
 mod tests {

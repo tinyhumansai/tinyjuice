@@ -96,27 +96,28 @@ struct Cli {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> { … 226 line(s) … }
+async fn main() -> Result<()> { … 226 line(s) … ⟦tj:f94621db810d452333e63e57c2d5d61e⟧ }
 
 /// Wipe `<workspace>/memory_tree/chunks.db` (+ wal/shm) and
 /// `<content_root>/` so the bin can re-run cleanly after a chunker
 /// change that invalidates existing chunk IDs.
 ///
 /// Logs each removed artifact at info; missing files are not an error.
-fn wipe_memory_tree_state(config: &Config) -> Result<()> { … 18 line(s) … }
+fn wipe_memory_tree_state(config: &Config) -> Result<()> { … 18 line(s) … ⟦tj:25c2bd02a94650334fb2f36e5686e26b⟧ }
 
 /// Read all chunks from SQLite and verify on-disk SHA-256 matches `content_sha256`.
 ///
 /// Returns `(verified, mismatched, no_pointer, missing_file)`.
-fn verify_all_chunk_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 65 line(s) … }
+fn verify_all_chunk_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 65 line(s) … ⟦tj:1f4abc58cd26c839810bda5aba1f92c9⟧ }
 
 /// Read all summary rows with a non-NULL `content_path` from SQLite and verify
 /// the on-disk SHA-256 matches `content_sha256`.
 ///
 /// Returns `(verified, mismatched, no_pointer, missing_file)`.
-fn verify_all_summary_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 59 line(s) … }
+fn verify_all_summary_files(config: &Config) -> Result<(usize, usize, usize, usize)> { … 59 line(s) … ⟦tj:1e479fb2d47d722ae45efb9bfffcbd03⟧ }
 
 /// Extract the `messages` array and `nextPageToken` from a Composio response.
-fn extract_envelope(data: &Value) -> (Vec<Value>, Option<String>) { … 14 line(s) … }
+fn extract_envelope(data: &Value) -> (Vec<Value>, Option<String>) { … 14 line(s) … ⟦tj:520d0f0d34eb988595c31d11c118cb02⟧ }
+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
 
 [compacted tool output — this is a PARTIAL view; the full original (17440 bytes) is available by calling tokenjuice_retrieve with token "de327d088c33663aff65f51429a1108e" (marker ⟦tj:de327d088c33663aff65f51429a1108e⟧)]

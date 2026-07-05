@@ -1,3 +1,5 @@
+Code coverage report for src/chat/promptInjectionGuard.ts
+
 All files / src/chat promptInjectionGuard.ts
 
 53.48%

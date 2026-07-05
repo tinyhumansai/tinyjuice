@@ -228,21 +228,21 @@ struct AuditCheck {
 }
 
 #[tokio::main]
-async fn main() { … 6 line(s) … }
+async fn main() { … 6 line(s) … ⟦tj:f6739d30357f59c1791d4c13543fb299⟧ }
 
-async fn run() -> Result<()> { … 143 line(s) … }
+async fn run() -> Result<()> { … 143 line(s) … ⟦tj:f13df137081bb91bcc9f6325a25030d4⟧ }
 
 async fn drain_progress(
     mut rx: mpsc::Receiver<AgentProgress>,
     stats: Arc<Mutex<ProgressStats>>,
     current_turn: Arc<AtomicUsize>,
     steer_config: Option<SteerAuditConfig>,
-) { … 261 line(s) … }
+) { … 261 line(s) … ⟦tj:8e429c38e209ddad411cb206aad246c6⟧ }
 
 async fn steer_after_spawn(
     config: SteerAuditConfig,
     spawned: SubagentSpawnedEvent,
-) -> SteerAttemptEvent { … 63 line(s) … }
+) -> SteerAttemptEvent { … 63 line(s) … ⟦tj:1a0477a7eb6f040ddd9376ab722ed82d⟧ }
 
 fn failed_steer_attempt(
     spawned: SubagentSpawnedEvent,
@@ -250,36 +250,36 @@ fn failed_steer_attempt(
     attempts: usize,
     elapsed_ms: u128,
     message_chars: usize,
-) -> SteerAttemptEvent { … 13 line(s) … }
+) -> SteerAttemptEvent { … 13 line(s) … ⟦tj:33efe977c5da3cf5f7ac4a39e0b1a9a5⟧ }
 
 fn find_session_for_task(
     store: &AuditSubagentSessionStore,
     task_key: &str,
     task_id: &str,
-) -> Result<Option<SessionSummary>> { … 9 line(s) … }
+) -> Result<Option<SessionSummary>> { … 9 line(s) … ⟦tj:b96066b1535c0d2fc4798cc2df541e16⟧ }
 
-fn argument_keys(value: &serde_json::Value) -> Vec<String> { … 6 line(s) … }
+fn argument_keys(value: &serde_json::Value) -> Vec<String> { … 6 line(s) … ⟦tj:644a651fc1fd8adca79d3be7da29de3e⟧ }
 
-fn first_turn_prompt(agent_id: &str, task_key: &str) -> String { … 9 line(s) … }
+fn first_turn_prompt(agent_id: &str, task_key: &str) -> String { … 9 line(s) … ⟦tj:ee7863b7500ce86a02b1d7a3619fa4e8⟧ }
 
-fn second_turn_prompt(agent_id: &str, task_key: &str) -> String { … 9 line(s) … }
+fn second_turn_prompt(agent_id: &str, task_key: &str) -> String { … 9 line(s) … ⟦tj:817dcbda04f880bc47ce4e773073ac24⟧ }
 
-fn default_steer_message(task_key: &str) -> String { … 5 line(s) … }
+fn default_steer_message(task_key: &str) -> String { … 5 line(s) … ⟦tj:311347120b5bd79d09cc944d97338a24⟧ }
 
 async fn poll_matching_sessions(
     store: &AuditSubagentSessionStore,
     task_key: &str,
     wait_for: Duration,
     require_completion: bool,
-) -> Result<Vec<SessionSummary>> { … 16 line(s) … }
+) -> Result<Vec<SessionSummary>> { … 16 line(s) … ⟦tj:f153a9cb30c2bad8a65b4036c45d5969⟧ }
 
 fn load_matching_sessions(
     store: &AuditSubagentSessionStore,
     task_key: &str,
-) -> Result<Vec<SessionSummary>> { … 13 line(s) … }
+) -> Result<Vec<SessionSummary>> { … 13 line(s) … ⟦tj:f9f87c3c067ba107b5464433f17baae7⟧ }
 
 impl From<DurableSubagentSession> for SessionSummary {
-    fn from(session: DurableSubagentSession) -> Self { … 17 line(s) … }
+    fn from(session: DurableSubagentSession) -> Self { … 17 line(s) … ⟦tj:57cfaeea38e18da8ee30a67c790f7c95⟧ }
 }
 
 fn evaluate_checks(
@@ -288,16 +288,17 @@ fn evaluate_checks(
     require_completion: bool,
     progress: &ProgressStats,
     sessions: &[SessionSummary],
-) -> Vec<AuditCheck> { … 104 line(s) … }
+) -> Vec<AuditCheck> { … 104 line(s) … ⟦tj:4c7e9cc72e492b7c660ec17d05c5f160⟧ }
 
 fn is_spawn_tool(tool_name: &str) -> bool {
     tool_name == "spawn_subagent" || tool_name == "spawn_async_subagent"
 }
 
-fn take_stats(stats: Arc<Mutex<ProgressStats>>) -> ProgressStats { … 6 line(s) … }
+fn take_stats(stats: Arc<Mutex<ProgressStats>>) -> ProgressStats { … 6 line(s) … ⟦tj:0726520b07128088c6dfea8f89d5dcc0⟧ }
 
-fn print_human_summary(summary: &AuditSummary) { … 66 line(s) … }
+fn print_human_summary(summary: &AuditSummary) { … 66 line(s) … ⟦tj:27871805885487def4f47431fa2c67ab⟧ }
 
-fn unix_seconds() -> u64 { … 6 line(s) … }
+fn unix_seconds() -> u64 { … 6 line(s) … ⟦tj:0376bc6d46ff51c750442ef79e4ccd2c⟧ }
+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
 
 [compacted tool output — this is a PARTIAL view; the full original (34749 bytes) is available by calling tokenjuice_retrieve with token "b3185402b63f34b01c54e265656b05e2" (marker ⟦tj:b3185402b63f34b01c54e265656b05e2⟧)]

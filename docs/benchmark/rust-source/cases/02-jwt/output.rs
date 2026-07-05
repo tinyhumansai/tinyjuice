@@ -12,7 +12,7 @@ pub fn bearer_authorization_value(token: &str) -> String {
 }
 
 /// Best-effort decode of a JWT payload without verifying the signature.
-pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … }
+pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … ⟦tj:b821e28022db20530eaf2b6e8695b28c⟧ }
 
 /// Best-effort decode of a JWT's `exp` (expiry) claim into a UTC timestamp.
 ///
@@ -28,28 +28,29 @@ pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 lin
 /// still 401s, caught by the `flatten_authed_error` net). Returns `None` for any
 /// non-JWT / malformed / `exp`-less token, in which case expiry tracking
 /// degrades to the previous behaviour (no local precheck).
-pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … }
+pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … ⟦tj:902053cf712b0ec0319a8b4193f0b577⟧ }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_bearer_authorization_value() { … 22 line(s) … }
+    fn test_bearer_authorization_value() { … 22 line(s) … ⟦tj:17462efaa4775ee4ac19ad739a19b500⟧ }
 
-    fn jwt_with_payload(payload_json: &str) -> String { … 5 line(s) … }
-
-    #[test]
-    fn decode_jwt_exp_reads_integer_exp() { … 7 line(s) … }
+    fn jwt_with_payload(payload_json: &str) -> String { … 5 line(s) … ⟦tj:e882c3db72449d94ada78c26c72c39c0⟧ }
 
     #[test]
-    fn decode_jwt_exp_reads_float_exp() { … 7 line(s) … }
+    fn decode_jwt_exp_reads_integer_exp() { … 7 line(s) … ⟦tj:ab44ea261852517b65d41aa23898dd43⟧ }
 
     #[test]
-    fn decode_jwt_exp_none_when_exp_absent() { … 4 line(s) … }
+    fn decode_jwt_exp_reads_float_exp() { … 7 line(s) … ⟦tj:6fd3bf1124fefc83f04c88deac57f289⟧ }
 
     #[test]
-    fn decode_jwt_exp_none_for_non_jwt_or_garbage() { … 7 line(s) … }
+    fn decode_jwt_exp_none_when_exp_absent() { … 4 line(s) … ⟦tj:44b40f8f4d6a909f740c603ece433104⟧ }
+
+    #[test]
+    fn decode_jwt_exp_none_for_non_jwt_or_garbage() { … 7 line(s) … ⟦tj:e31a414ef8902657500b581f87c6357b⟧ }
 }
+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
 
 [compacted tool output — this is a PARTIAL view; the full original (4490 bytes) is available by calling tokenjuice_retrieve with token "72a9fa15745dfefa792a0adf04d13794" (marker ⟦tj:72a9fa15745dfefa792a0adf04d13794⟧)]

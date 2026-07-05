@@ -1,6 +1,6 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -32,79 +32,6 @@
+@@ -32,79 +32,7 @@
  use openhuman_core::openhuman::config::Config;
  use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
  
@@ -8,7 +8,8 @@
 -    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
 -        .try_init()
 -        .ok();
-+fn main() -> ExitCode { … 76 line(s) … }
++fn main() -> ExitCode { … 76 line(s) … ⟦tj:0bc2aa582a12a896dbb668373d73d51b⟧ }
++[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
  
 -    let workspace = match std::env::var("OPENHUMAN_WORKSPACE") {
 -        Ok(v) => PathBuf::from(v),

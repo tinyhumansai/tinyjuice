@@ -1,3 +1,5 @@
+Code coverage report for src/assets/icons/GoogleIcon.tsx
+
 All files / src/assets/icons GoogleIcon.tsx
 
 0%

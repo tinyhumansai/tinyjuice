@@ -1,13 +1,11 @@
 --- input/input.html
 +++ output/output.txt
-@@ -1,145 +1,70 @@
-+All files / src/components AppBackground.tsx
+@@ -1,145 +1,72 @@
++Code coverage report for src/components/AppBackground.tsx
  
 -<!doctype html>
 -<html lang="en">
-+0%
-+Statements
-+0/1
++All files / src/components AppBackground.tsx
  
 -<head>
 -    <title>Code coverage report for src/components/AppBackground.tsx</title>
@@ -112,6 +110,10 @@
 -<span class="cline-any cline-neutral">&nbsp;</span>
 -<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import MeshGradient from './MeshGradient';
 -&nbsp;
++0%
++Statements
++0/1
++
 +0%
 +Branches
 +0/1

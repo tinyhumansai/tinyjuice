@@ -1,3 +1,5 @@
+Code coverage report for src/chat
+
 All files src/chat
 
 55.55%

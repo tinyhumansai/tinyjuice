@@ -1,3 +1,5 @@
+Code coverage report for src/assets/icons
+
 All files src/assets/icons
 
 0%

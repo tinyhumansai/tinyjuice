@@ -1,3 +1,5 @@
+Code coverage report for src/chat/chatSendError.ts
+
 All files / src/chat chatSendError.ts
 
 100%
