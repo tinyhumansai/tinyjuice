@@ -5,6 +5,7 @@
 
 mod boundary;
 mod budget;
+mod subagent;
 mod tool_digest;
 mod types;
 
@@ -15,6 +16,11 @@ pub use boundary::{
 pub use budget::{
     ConversationBudget, HeadProtection, TailBudgetSelection, effective_input_window,
     estimate_message_tokens, protected_head_end, select_tail_by_budget, threshold_tokens,
+};
+pub use subagent::{
+    EventMetadata, EvidencePolicy, EvidenceRef, Finding, OmissionReport, SubagentEvent,
+    SubagentEventRole, SubagentSummaryInput, SubagentSummaryOutput,
+    format_subagent_summary_markdown, summarize_subagent_transcript,
 };
 pub use tool_digest::{
     ToolDigestEntry, ToolDigestOptions, ToolDigestReport, digest_old_tool_results,

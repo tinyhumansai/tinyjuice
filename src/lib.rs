@@ -42,12 +42,15 @@ pub use compressors::web_extract::{
 pub use compressors::{compressor_for, generic_compressor};
 pub use config::CompressionConfig;
 pub use conversation::{
-    ChatMessage, ConversationBudget, ConversationMessage, HeadProtection, TailBudgetSelection,
-    ToolCall, ToolDigestEntry, ToolDigestOptions, ToolDigestReport, ToolResultMessage,
-    align_tail_start_for_tool_boundaries, digest_old_tool_results, effective_input_window,
-    estimate_message_tokens, latest_real_user_index, latest_visible_assistant_index,
+    ChatMessage, ConversationBudget, ConversationMessage, EventMetadata, EvidencePolicy,
+    EvidenceRef, Finding, HeadProtection, OmissionReport, SubagentEvent, SubagentEventRole,
+    SubagentSummaryInput, SubagentSummaryOutput, TailBudgetSelection, ToolCall, ToolDigestEntry,
+    ToolDigestOptions, ToolDigestReport, ToolResultMessage, align_tail_start_for_tool_boundaries,
+    digest_old_tool_results, effective_input_window, estimate_message_tokens,
+    format_subagent_summary_markdown, latest_real_user_index, latest_visible_assistant_index,
     protected_head_end, redact_sensitive_json, sanitize_orphan_tool_messages,
-    select_tail_by_budget, shrink_json_string_leaves, threshold_tokens,
+    select_tail_by_budget, shrink_json_string_leaves, summarize_subagent_transcript,
+    threshold_tokens,
 };
 pub use detect::detect_content_kind;
 pub use error::{TinyJuiceError, TinyJuiceResult};
