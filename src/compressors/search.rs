@@ -6,7 +6,8 @@
 //! full result set to CCR so the complete list is one `retrieve` away.
 //!
 //! Ranking: when the caller supplies a `query` in the [`ContentHint`], matches
-//! are scored by query-term density in the body; otherwise by body length /
+//! are scored by the shared BM25/tokenizer path so regex punctuation and exact
+//! identifiers carry through. Without a query, matches use body length /
 //! uniqueness (longer, more-distinctive lines first), with importance signals
 //! (error/TODO) always boosted. Group/file order is preserved (first-seen).
 //!
@@ -21,7 +22,7 @@ use std::fmt::Write as _;
 use super::Compressor;
 use super::signals::line_score;
 use crate::detect::parse_search_line;
-use crate::relevance::tokenize;
+use crate::relevance::{Bm25Corpus, tokenize};
 use crate::types::LineRange;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
@@ -56,42 +57,32 @@ struct Match<'a> {
     raw: &'a str,
 }
 
-/// Compress search output. `query` (when known) ranks matches by term density.
+struct ParsedMatch<'a> {
+    path: &'a str,
+    line_no: u64,
+    body: &'a str,
+    raw: &'a str,
+}
+
+/// Compress search output. `query` (when known) ranks matches by shared BM25.
 pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     // Preserve any non-match preamble/summary lines (e.g. "80 match(es)") and
     // group match lines by file in first-seen order.
     let mut preamble: Vec<&str> = Vec::new();
-    let mut files: Vec<(&str, Vec<Match<'_>>)> = Vec::new();
-    let mut match_count = 0usize;
-
-    let query_terms: Vec<String> = query
-        .map(|q| {
-            q.split_whitespace()
-                .map(|t| t.to_ascii_lowercase())
-                .filter(|t| t.len() >= 2)
-                .collect()
-        })
-        .unwrap_or_default();
+    let mut parsed_matches: Vec<ParsedMatch<'_>> = Vec::new();
 
     for line in content.lines() {
         match parse_search_line(line) {
             Some((path, line_no, body)) => {
-                match_count += 1;
-                let score = score_match(body, &query_terms);
-                let m = Match {
+                parsed_matches.push(ParsedMatch {
+                    path,
                     line_no,
                     body,
-                    score,
                     raw: line,
-                };
-                if let Some((_, v)) = files.iter_mut().find(|(p, _)| *p == path) {
-                    v.push(m);
-                } else {
-                    files.push((path, vec![m]));
-                }
+                });
             }
             None => {
-                if !line.trim().is_empty() && files.is_empty() {
+                if !line.trim().is_empty() && parsed_matches.is_empty() {
                     // Only keep preamble that appears before any match.
                     preamble.push(line);
                 }
@@ -99,8 +90,25 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
         }
     }
 
-    if match_count < MIN_MATCHES || files.is_empty() {
+    let match_count = parsed_matches.len();
+    if match_count < MIN_MATCHES || parsed_matches.is_empty() {
         return None;
+    }
+
+    let scores = score_matches(&parsed_matches, query);
+    let mut files: Vec<(&str, Vec<Match<'_>>)> = Vec::new();
+    for (parsed, score) in parsed_matches.iter().zip(scores) {
+        let m = Match {
+            line_no: parsed.line_no,
+            body: parsed.body,
+            score,
+            raw: parsed.raw,
+        };
+        if let Some((_, v)) = files.iter_mut().find(|(p, _)| *p == parsed.path) {
+            v.push(m);
+        } else {
+            files.push((parsed.path, vec![m]));
+        }
     }
 
     let mut out = String::with_capacity(content.len() / 2 + 64);
@@ -167,19 +175,35 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     Some(CompressOutput::lossy(out, CompressorKind::Search))
 }
 
-/// Score a match body. With query terms, density of those terms dominates;
-/// otherwise distinctiveness (length) with an importance bump for error/TODO.
-fn score_match(body: &str, query_terms: &[String]) -> f32 {
-    let importance = line_score(body);
-    if query_terms.is_empty() {
-        // No query: favour longer, more-distinctive lines, plus importance.
-        let len_score = (body.trim().len() as f32 / 80.0).min(1.0);
-        return importance.max(0.2 + 0.8 * len_score);
+/// Score search-result bodies. With query text, shared BM25 dominates so query
+/// syntax and exact identifiers are interpreted the same way as search-read
+/// candidate ranking. Otherwise, distinctiveness (length) plus importance
+/// signals decides ranking.
+fn score_matches(matches: &[ParsedMatch<'_>], query: Option<&str>) -> Vec<f32> {
+    if let Some(query) = query
+        && !tokenize(query).is_empty()
+    {
+        let corpus = Bm25Corpus::new(matches.iter().map(|m| m.body));
+        return corpus
+            .score_all(query)
+            .into_iter()
+            .map(|score| {
+                let importance = line_score(matches[score.index].body);
+                score.score.max(importance * 0.25)
+            })
+            .collect();
     }
-    let lower = body.to_ascii_lowercase();
-    let hits = query_terms.iter().filter(|t| lower.contains(*t)).count();
-    let density = hits as f32 / query_terms.len() as f32;
-    importance.max(density)
+
+    matches
+        .iter()
+        .map(|m| score_match_without_query(m.body))
+        .collect()
+}
+
+fn score_match_without_query(body: &str) -> f32 {
+    let importance = line_score(body);
+    let len_score = (body.trim().len() as f32 / 80.0).min(1.0);
+    importance.max(0.2 + 0.8 * len_score)
 }
 
 /// Host-provided search-read query metadata. TinyJuice only scores already
@@ -456,6 +480,28 @@ mod tests {
         assert!(
             out.contains("special needle token"),
             "ranked-in match missing:\n{out}"
+        );
+    }
+
+    #[test]
+    fn query_ranking_tokenizes_regex_identifier_context() {
+        let mut s = String::new();
+        for i in 0..50 {
+            let body = if i == 37 {
+                "fn sync_worker_v2() -> Result<()> { run_worker() }".to_string()
+            } else {
+                format!("ordinary worker helper number {i}")
+            };
+            let _ = writeln!(s, "src/x.rs:{i}:{body}");
+        }
+
+        let out = compress(&s, Some(r"sync_worker_v2\("))
+            .expect("compresses")
+            .text;
+
+        assert!(
+            out.contains("fn sync_worker_v2()"),
+            "regex-style query identifier was not ranked in:\n{out}"
         );
     }
 

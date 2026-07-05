@@ -83,8 +83,9 @@ the original bytes unchanged.
 - **Log compressor** - preserves failures, warnings, summaries, stack traces,
   command-rule outputs, and reconstructible high-context template runs while
   dropping passing noise.
-- **Search compressor** - groups grep/ripgrep output by file, ranks matches,
-  and keeps top hits with per-file and global omitted-match tallies.
+- **Search compressor** - groups grep/ripgrep output by file, ranks matches
+  with shared BM25 query context, and keeps top hits with per-file and global
+  omitted-match tallies.
 - **Diff compressor** - keeps patch structure and changed lines, collapses long
   context, and marks omitted lockfile, generated-bundle, or configured noisy
   hunks with explicit reasons.
