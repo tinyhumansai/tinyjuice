@@ -156,8 +156,10 @@ fn summarize_hunk_body(lines: &[&str]) -> (usize, usize, usize) {
 }
 
 fn is_noisy_path(diff_git_line: &str) -> bool {
-    let l = diff_git_line.to_ascii_lowercase();
-    const NOISY: &[&str] = &[
+    // Match on the parsed file basenames, not the raw line: a substring
+    // check would flag real source files like `user.mapper.ts` (".map") or
+    // `heat.map.config.js` as bundle noise and drop their hunks.
+    const NOISY_BASENAMES: &[&str] = &[
         "cargo.lock",
         "package-lock.json",
         "pnpm-lock.yaml",
@@ -165,12 +167,22 @@ fn is_noisy_path(diff_git_line: &str) -> bool {
         "composer.lock",
         "poetry.lock",
         "gemfile.lock",
-        ".min.js",
-        ".min.css",
-        ".map",
         "go.sum",
     ];
-    NOISY.iter().any(|p| l.contains(p))
+    const NOISY_SUFFIXES: &[&str] = &[".min.js", ".min.css", ".map"];
+
+    let Some(rest) = diff_git_line.strip_prefix("diff --git ") else {
+        return false;
+    };
+    rest.split_whitespace().any(|tok| {
+        let path = tok
+            .strip_prefix("a/")
+            .or_else(|| tok.strip_prefix("b/"))
+            .unwrap_or(tok)
+            .to_ascii_lowercase();
+        let basename = path.rsplit('/').next().unwrap_or(path.as_str());
+        NOISY_BASENAMES.contains(&basename) || NOISY_SUFFIXES.iter().any(|s| basename.ends_with(s))
+    })
 }
 
 #[cfg(test)]
@@ -214,5 +226,48 @@ mod tests {
     #[test]
     fn non_diff_returns_none() {
         assert!(compress("just some text\nno hunks here").is_none());
+    }
+
+    #[test]
+    fn source_files_with_map_in_name_are_not_noisy() {
+        for line in [
+            "diff --git a/src/user.mapper.ts b/src/user.mapper.ts",
+            "diff --git a/heat.map.config.js b/heat.map.config.js",
+            "diff --git a/src/routes/url.mapping.rs b/src/routes/url.mapping.rs",
+            "diff --git a/minutes.md b/minutes.md",
+        ] {
+            assert!(!is_noisy_path(line), "misclassified as noisy: {line}");
+        }
+    }
+
+    #[test]
+    fn lockfiles_and_artifacts_are_noisy() {
+        for line in [
+            "diff --git a/Cargo.lock b/Cargo.lock",
+            "diff --git a/vendor/pkg/go.sum b/vendor/pkg/go.sum",
+            "diff --git a/dist/app.min.js b/dist/app.min.js",
+            "diff --git a/dist/bundle.js.map b/dist/bundle.js.map",
+            "diff --git a/web/package-lock.json b/web/package-lock.json",
+        ] {
+            assert!(is_noisy_path(line), "should be noisy: {line}");
+        }
+    }
+
+    #[test]
+    fn source_file_hunks_survive_even_with_mapper_name() {
+        let mut s = String::from(
+            "diff --git a/src/user.mapper.ts b/src/user.mapper.ts\n@@ -1,40 +1,42 @@\n",
+        );
+        for i in 0..20 {
+            let _ = writeln!(s, " context line {i} unchanged here");
+        }
+        let _ = writeln!(s, "-export function oldMap() {{}}");
+        let _ = writeln!(s, "+export function newMap7() {{}}");
+        for i in 0..20 {
+            let _ = writeln!(s, " more context {i} unchanged");
+        }
+        let out = compress(&s).expect("compresses").text;
+        assert!(out.contains("+export function newMap7()"), "{out}");
+        assert!(!out.contains("lockfile/bundle hunk"), "{out}");
     }
 }
