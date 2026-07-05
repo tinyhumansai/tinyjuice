@@ -56,6 +56,7 @@ fn run() -> Result<(), String> {
         "update" => update_command(args),
         "uninstall" => uninstall_command(args),
         "retrieve" => retrieve_command(args),
+        "gc" => gc_command(args),
         "hosts" => {
             println!(
                 "{}",
@@ -537,6 +538,81 @@ fn retrieve_command(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
+fn gc_command(args: Vec<String>) -> Result<(), String> {
+    let mut ttl_secs = None;
+    let mut max_bytes = None;
+    let mut index = 0;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--ttl-secs" => {
+                let value = args
+                    .get(index + 1)
+                    .ok_or_else(|| "--ttl-secs requires a value".to_string())?;
+                ttl_secs = Some(parse_u64_flag("--ttl-secs", value)?);
+                index += 2;
+            }
+            value if value.starts_with("--ttl-secs=") => {
+                ttl_secs = Some(parse_u64_flag("--ttl-secs", &value["--ttl-secs=".len()..])?);
+                index += 1;
+            }
+            "--max-bytes" => {
+                let value = args
+                    .get(index + 1)
+                    .ok_or_else(|| "--max-bytes requires a value".to_string())?;
+                max_bytes = Some(parse_u64_flag("--max-bytes", value)?);
+                index += 2;
+            }
+            value if value.starts_with("--max-bytes=") => {
+                max_bytes = Some(parse_u64_flag(
+                    "--max-bytes",
+                    &value["--max-bytes=".len()..],
+                )?);
+                index += 1;
+            }
+            "--help" | "-h" => {
+                print_usage();
+                return Ok(());
+            }
+            value => return Err(format!("unknown gc flag '{value}'")),
+        }
+    }
+
+    // Fall back to the configured CLI defaults (env-overridable): 7-day TTL
+    // and the disk byte cap. A `0` for either flag disables that criterion.
+    let (_, default_max_bytes, default_ttl) = cli_cache_limits_from_env();
+    let ttl = match ttl_secs {
+        Some(0) => None,
+        Some(secs) => Some(secs),
+        None => default_ttl,
+    };
+    let budget = match max_bytes {
+        Some(0) => None,
+        Some(bytes) => Some(bytes),
+        None => Some(default_max_bytes as u64),
+    };
+
+    let root = cli_cache_root();
+    let stats =
+        tinyjuice::cache::gc_disk_dir(&root, ttl.map(std::time::Duration::from_secs), budget)
+            .map_err(|error| error.to_string())?;
+    println!(
+        "gc {}: removed {} entries, freed {} bytes, kept {} ({} bytes)",
+        root.display(),
+        stats.removed,
+        stats.freed_bytes,
+        stats.kept,
+        stats.kept_bytes
+    );
+    Ok(())
+}
+
+fn parse_u64_flag(flag: &str, value: &str) -> Result<u64, String> {
+    value
+        .trim()
+        .parse::<u64>()
+        .map_err(|_| format!("{flag} requires a non-negative integer, got '{value}'"))
+}
+
 fn host_template_command(args: Vec<String>) -> Result<(), String> {
     let mut binary = "tinyjuice".to_string();
     let mut host = None;
@@ -587,7 +663,40 @@ fn read_input(path: Option<&str>) -> Result<String, String> {
     }
 }
 
+/// Default CCR entry TTL for CLI/hook invocations: 7 days. Hook processes are
+/// fresh per tool call, so without a finite TTL nothing ever expires and the
+/// disk tier grows without bound; `tinyjuice gc` (and the amortized write-time
+/// sweep) prune against this.
+const DEFAULT_CLI_CCR_TTL_SECS: u64 = 7 * 24 * 60 * 60;
+
+/// Resolve CLI cache limits: `(max_entries, max_bytes, ttl_secs)`. Each
+/// argument is the env-provided override (`None` ⇒ built-in default). A TTL
+/// override of `0` means "no expiry".
+fn cli_cache_limits(
+    max_entries: Option<usize>,
+    max_bytes: Option<usize>,
+    ttl_secs: Option<u64>,
+) -> (usize, usize, Option<u64>) {
+    let ttl = ttl_secs.unwrap_or(DEFAULT_CLI_CCR_TTL_SECS);
+    (
+        max_entries.unwrap_or(tinyjuice::cache::DEFAULT_MAX_ENTRIES),
+        max_bytes.unwrap_or(tinyjuice::cache::DEFAULT_MAX_BYTES),
+        (ttl > 0).then_some(ttl),
+    )
+}
+
+fn cli_cache_limits_from_env() -> (usize, usize, Option<u64>) {
+    cli_cache_limits(
+        read_usize_env("TINYJUICE_CCR_MAX_ENTRIES"),
+        read_usize_env("TINYJUICE_CCR_MAX_BYTES"),
+        read_u64_env("TINYJUICE_CCR_TTL_SECS"),
+    )
+}
+
 fn configure_cli_cache() {
+    let (max_entries, max_bytes, ttl_secs) = cli_cache_limits_from_env();
+    tinyjuice::cache::configure(max_entries, max_bytes, ttl_secs);
+    tinyjuice::cache::configure_disk_cap(Some(max_bytes as u64));
     tinyjuice::cache::enable_disk_tier(cli_cache_root());
 }
 
@@ -618,6 +727,12 @@ fn read_usize_env(name: &str) -> Option<usize> {
     env::var(name)
         .ok()
         .and_then(|value| value.trim().parse::<usize>().ok())
+}
+
+fn read_u64_env(name: &str) -> Option<u64> {
+    env::var(name)
+        .ok()
+        .and_then(|value| value.trim().parse::<u64>().ok())
 }
 
 fn read_bool_env(name: &str) -> Option<bool> {
@@ -839,6 +954,7 @@ fn print_usage() {
   tinyjuice update HOST [--path PATH] [--binary PATH] [--support-git-signature|--no-support-git-signature]
   tinyjuice uninstall HOST [--path PATH]
   tinyjuice retrieve TOKEN
+  tinyjuice gc [--ttl-secs SECS] [--max-bytes BYTES]
   tinyjuice hosts
   tinyjuice host-template HOST [--binary PATH]
 
@@ -849,6 +965,27 @@ Hosts: generic-json, openhuman, codex, claude-code, rust-harness"#
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cli_cache_defaults_set_finite_ttl() {
+        let (max_entries, max_bytes, ttl) = cli_cache_limits(None, None, None);
+        assert_eq!(max_entries, tinyjuice::cache::DEFAULT_MAX_ENTRIES);
+        assert_eq!(max_bytes, tinyjuice::cache::DEFAULT_MAX_BYTES);
+        assert_eq!(
+            ttl,
+            Some(DEFAULT_CLI_CCR_TTL_SECS),
+            "hook processes are fresh per call — a finite TTL is required or disk entries never expire"
+        );
+    }
+
+    #[test]
+    fn cli_cache_limits_honor_overrides() {
+        let (max_entries, max_bytes, ttl) = cli_cache_limits(Some(10), Some(1024), Some(60));
+        assert_eq!((max_entries, max_bytes, ttl), (10, 1024, Some(60)));
+        // TTL override of 0 means "no expiry".
+        let (_, _, ttl) = cli_cache_limits(None, None, Some(0));
+        assert_eq!(ttl, None);
+    }
 
     #[test]
     fn install_merges_without_removing_existing_hooks() {

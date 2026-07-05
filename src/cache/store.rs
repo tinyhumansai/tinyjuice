@@ -16,14 +16,24 @@
 
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, VecDeque};
+use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock, RwLock};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 /// Default max originals retained (entry-count cap).
 pub const DEFAULT_MAX_ENTRIES: usize = 256;
 /// Default total-bytes cap (64 MiB) so a few huge originals can't blow memory.
 pub const DEFAULT_MAX_BYTES: usize = 64 * 1024 * 1024;
+/// Default total-bytes cap for the on-disk tier (matches the in-memory cap).
+pub const DEFAULT_DISK_MAX_BYTES: u64 = DEFAULT_MAX_BYTES as u64;
+/// Enforce the disk byte cap on every Nth disk write instead of every write.
+/// A full directory scan is O(entries); running it per offload would tax the
+/// hook hot path, so it is amortized here and available on demand via
+/// [`gc_disk_tier`] / the `tinyjuice gc` command. Worst-case overshoot between
+/// enforcement points is bounded by N × the largest single payload.
+const DISK_CAP_ENFORCE_EVERY: u64 = 128;
 /// Bytes of the SHA-256 digest used for the key (→ 32 hex chars). Wide enough
 /// that collisions are infeasible and the hash doubles as an unguessable
 /// capability token.
@@ -63,6 +73,19 @@ pub fn configure(max_entries: usize, max_bytes: usize, ttl_secs: Option<u64>) {
     l.max_entries = max_entries.max(1);
     l.max_bytes = max_bytes.max(1);
     l.ttl = ttl_secs.map(Duration::from_secs);
+}
+
+/// Total-bytes budget for the on-disk tier. `None` ⇒ unbounded (gc-only).
+fn disk_cap() -> &'static RwLock<Option<u64>> {
+    static CAP: OnceLock<RwLock<Option<u64>>> = OnceLock::new();
+    CAP.get_or_init(|| RwLock::new(Some(DEFAULT_DISK_MAX_BYTES)))
+}
+
+/// Configure the disk-tier total-bytes cap enforced (amortized) on offload.
+/// `None` disables write-time enforcement; explicit gc still applies whatever
+/// budget its caller passes.
+pub fn configure_disk_cap(max_bytes: Option<u64>) {
+    *disk_cap().write().unwrap_or_else(|p| p.into_inner()) = max_bytes;
 }
 
 /// Enable the on-disk tier rooted at `root` (e.g. `<workspace>/.tinyjuice/ccr`).
@@ -170,12 +193,22 @@ pub fn offload(content: &str) -> String {
 /// recoverable. Idempotent for identical content.
 pub fn offload_checked(content: &str) -> (String, bool) {
     let hash = short_hash(content);
-    let (max_entries, max_bytes) = {
+    let retained = offload_checked_with_hash(&hash, content);
+    (hash, retained)
+}
+
+/// Like [`offload_checked`] but takes the precomputed `short_hash(content)`
+/// so callers that already have it (e.g. the router builds the footer from the
+/// hash before deciding to store) don't pay for a second SHA-256 pass.
+/// Returns whether the original was retained (memory or disk).
+pub fn offload_checked_with_hash(hash: &str, content: &str) -> bool {
+    debug_assert_eq!(hash, short_hash(content), "hash must match content");
+    let (max_entries, max_bytes, ttl) = {
         let l = limits().read().unwrap_or_else(|p| p.into_inner());
-        (l.max_entries, l.max_bytes)
+        (l.max_entries, l.max_bytes, l.ttl)
     };
     let mem_retained = global().lock().unwrap_or_else(|p| p.into_inner()).insert(
-        hash.clone(),
+        hash.to_string(),
         content.to_string(),
         max_entries,
         max_bytes,
@@ -191,13 +224,130 @@ pub fn offload_checked(content: &str) -> (String, bool) {
         .unwrap_or_else(|p| p.into_inner())
         .clone()
     {
-        let path = root.join(&hash);
+        let path = root.join(hash);
         match std::fs::write(&path, content) {
             Ok(()) => disk_retained = true,
             Err(e) => log::debug!("[tinyjuice][ccr] disk write failed for {hash}: {e}"),
         }
+        // Amortized disk-cap enforcement: every Nth successful write, sweep the
+        // tier down to the configured budget (see DISK_CAP_ENFORCE_EVERY). The
+        // just-written entry is protected so a footer we are about to emit
+        // can't dangle.
+        if disk_retained {
+            static DISK_WRITES: AtomicU64 = AtomicU64::new(0);
+            let n = DISK_WRITES.fetch_add(1, Ordering::Relaxed) + 1;
+            if n.is_multiple_of(DISK_CAP_ENFORCE_EVERY)
+                && let Some(cap) = *disk_cap().read().unwrap_or_else(|p| p.into_inner())
+                && let Err(e) = gc_dir_protecting(&root, ttl, Some(cap), Some(hash))
+            {
+                log::debug!("[tinyjuice][ccr] disk-cap sweep failed: {e}");
+            }
+        }
     }
-    (hash, mem_retained || disk_retained)
+    mem_retained || disk_retained
+}
+
+/// Result of a disk-tier garbage-collection sweep.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct GcStats {
+    /// Entries deleted (expired or evicted for budget).
+    pub removed: usize,
+    /// Bytes reclaimed by the deletions.
+    pub freed_bytes: u64,
+    /// Entries left in place after the sweep.
+    pub kept: usize,
+    /// Bytes still held by the kept entries.
+    pub kept_bytes: u64,
+}
+
+/// Sweep the *configured* disk tier: delete entries older than `ttl` and, if
+/// the remainder exceeds `max_bytes`, evict oldest-by-mtime until under budget.
+/// No disk tier configured ⇒ `Ok(GcStats::default())`.
+pub fn gc_disk_tier(ttl: Option<Duration>, max_bytes: Option<u64>) -> io::Result<GcStats> {
+    let Some(root) = disk_root()
+        .read()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone()
+    else {
+        return Ok(GcStats::default());
+    };
+    gc_disk_dir(&root, ttl, max_bytes)
+}
+
+/// Sweep an explicit disk-tier directory (see [`gc_disk_tier`]). Only files
+/// whose names are well-formed CCR tokens are considered — anything else in
+/// the directory is left alone. A missing directory is an empty sweep.
+pub fn gc_disk_dir(
+    root: &Path,
+    ttl: Option<Duration>,
+    max_bytes: Option<u64>,
+) -> io::Result<GcStats> {
+    gc_dir_protecting(root, ttl, max_bytes, None)
+}
+
+fn gc_dir_protecting(
+    root: &Path,
+    ttl: Option<Duration>,
+    max_bytes: Option<u64>,
+    protect: Option<&str>,
+) -> io::Result<GcStats> {
+    let entries = match std::fs::read_dir(root) {
+        Ok(entries) => entries,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(GcStats::default()),
+        Err(e) => return Err(e),
+    };
+
+    let mut stats = GcStats::default();
+    // (path, bytes, mtime) for every valid CCR entry, oldest first.
+    let mut kept: Vec<(PathBuf, u64, SystemTime)> = Vec::new();
+    let now = SystemTime::now();
+    for entry in entries {
+        let entry = entry?;
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else { continue };
+        if !is_valid_token(name) {
+            continue;
+        }
+        let Ok(meta) = entry.metadata() else { continue };
+        if !meta.is_file() {
+            continue;
+        }
+        let bytes = meta.len();
+        let mtime = meta.modified().unwrap_or(now);
+        let expired = ttl.is_some_and(|ttl| {
+            now.duration_since(mtime)
+                .is_ok_and(|elapsed| elapsed >= ttl)
+        });
+        if expired && std::fs::remove_file(entry.path()).is_ok() {
+            stats.removed += 1;
+            stats.freed_bytes += bytes;
+        } else {
+            kept.push((entry.path(), bytes, mtime));
+        }
+    }
+
+    let mut total: u64 = kept.iter().map(|(_, bytes, _)| bytes).sum();
+    if let Some(cap) = max_bytes {
+        kept.sort_by_key(|(_, _, mtime)| *mtime);
+        let mut idx = 0;
+        while total > cap && idx < kept.len() {
+            let (path, bytes, _) = &kept[idx];
+            // Never evict the entry an in-flight offload just wrote — its
+            // recovery footer is about to be emitted and must not dangle.
+            let protected = protect.is_some_and(|p| path.file_name().is_some_and(|name| name == p));
+            if !protected && std::fs::remove_file(path).is_ok() {
+                stats.removed += 1;
+                stats.freed_bytes += bytes;
+                total -= bytes;
+                kept.remove(idx);
+            } else {
+                idx += 1;
+            }
+        }
+    }
+    stats.kept = kept.len();
+    stats.kept_bytes = total;
+    Ok(stats)
 }
 
 /// True if `hash` is a well-formed CCR token (exactly the generated hex digest).
@@ -455,6 +605,94 @@ mod tests {
         // Disable the tier for other tests and clean up.
         *disk_root().write().unwrap() = None;
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn offload_with_hash_round_trips() {
+        let original = "ccr precomputed-hash unique payload delta ".repeat(30);
+        let hash = short_hash(&original);
+        assert!(offload_checked_with_hash(&hash, &original));
+        assert_eq!(retrieve(&hash).as_deref(), Some(original.as_str()));
+        // Matches the hashing path exactly.
+        assert_eq!(offload_checked(&original).0, hash);
+    }
+
+    /// Write a token-named file with a back-dated mtime.
+    fn write_aged(dir: &Path, name: &str, bytes: usize, age: Duration) -> PathBuf {
+        let path = dir.join(name);
+        std::fs::write(&path, "x".repeat(bytes)).unwrap();
+        let file = std::fs::File::options().write(true).open(&path).unwrap();
+        file.set_modified(SystemTime::now() - age).unwrap();
+        path
+    }
+
+    fn token(fill: char) -> String {
+        fill.to_string().repeat(32)
+    }
+
+    #[test]
+    fn gc_removes_expired_keeps_fresh() {
+        let dir = tempfile::tempdir().unwrap();
+        let old = write_aged(dir.path(), &token('a'), 10, Duration::from_secs(600));
+        let fresh = write_aged(dir.path(), &token('b'), 20, Duration::ZERO);
+
+        let stats = gc_disk_dir(dir.path(), Some(Duration::from_secs(60)), None).unwrap();
+        assert_eq!(stats.removed, 1);
+        assert_eq!(stats.freed_bytes, 10);
+        assert_eq!(stats.kept, 1);
+        assert_eq!(stats.kept_bytes, 20);
+        assert!(!old.exists());
+        assert!(fresh.exists());
+    }
+
+    #[test]
+    fn gc_evicts_oldest_over_budget() {
+        let dir = tempfile::tempdir().unwrap();
+        let oldest = write_aged(dir.path(), &token('a'), 100, Duration::from_secs(30));
+        let middle = write_aged(dir.path(), &token('b'), 100, Duration::from_secs(20));
+        let newest = write_aged(dir.path(), &token('c'), 100, Duration::from_secs(10));
+
+        let stats = gc_disk_dir(dir.path(), None, Some(250)).unwrap();
+        assert_eq!(stats.removed, 1, "one eviction brings 300 under 250");
+        assert_eq!(stats.freed_bytes, 100);
+        assert_eq!(stats.kept, 2);
+        assert!(!oldest.exists(), "oldest-by-mtime goes first");
+        assert!(middle.exists());
+        assert!(newest.exists());
+    }
+
+    #[test]
+    fn gc_ignores_non_token_files_and_missing_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let stray = dir.path().join("README.txt");
+        std::fs::write(&stray, "not a ccr entry").unwrap();
+
+        let stats = gc_disk_dir(dir.path(), Some(Duration::ZERO), Some(0)).unwrap();
+        assert_eq!(stats, GcStats::default());
+        assert!(stray.exists(), "non-token files are never touched");
+
+        let missing = dir.path().join("does-not-exist");
+        assert_eq!(
+            gc_disk_dir(&missing, None, None).unwrap(),
+            GcStats::default()
+        );
+    }
+
+    #[test]
+    fn gc_protects_named_entry_from_budget_eviction() {
+        let dir = tempfile::tempdir().unwrap();
+        let protected_name = token('a');
+        let protected = write_aged(dir.path(), &protected_name, 100, Duration::from_secs(30));
+        let newer = write_aged(dir.path(), &token('b'), 100, Duration::from_secs(10));
+
+        let stats = gc_dir_protecting(dir.path(), None, Some(150), Some(&protected_name)).unwrap();
+        assert!(
+            protected.exists(),
+            "protected entry survives even when oldest"
+        );
+        assert!(!newer.exists(), "eviction falls through to the next-oldest");
+        assert_eq!(stats.removed, 1);
+        assert_eq!(stats.kept, 1);
     }
 
     #[test]

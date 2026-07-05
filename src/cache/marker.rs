@@ -83,26 +83,48 @@ pub fn parse_markers(text: &str) -> Vec<String> {
     }
 
     // Call-shaped and legacy forms: tinyjuice_retrieve("HASH"),
-    // tokenjuice_retrieve("HASH"), retrieve_tool_output("HASH")
-    for needle in [
-        "tinyjuice_retrieve(\"",
-        "retrieve_tool_output(\"",
-        "tokenjuice_retrieve(\"",
-        "token \"",
+    // tokenjuice_retrieve("HASH"), retrieve_tool_output("HASH"). The bare
+    // `token "` form is guarded: it only counts when one of the recovery tool
+    // names appears just before it, matching the footer wording
+    // `... calling <tool> with token "<hash>"`. Unguarded it would extract
+    // from ordinary prose like `the auth token "sk-abc"`.
+    for (needle, guarded) in [
+        ("tinyjuice_retrieve(\"", false),
+        ("retrieve_tool_output(\"", false),
+        ("tokenjuice_retrieve(\"", false),
+        ("token \"", true),
     ] {
-        let mut rest = text;
-        while let Some(start) = rest.find(needle) {
-            let after = &rest[start + needle.len()..];
-            if let Some(end) = after.find('"') {
-                push(&after[..end]);
-                rest = &after[end..];
-            } else {
+        let mut pos = 0;
+        while let Some(start) = text[pos..].find(needle) {
+            let abs = pos + start;
+            let after = &text[abs + needle.len()..];
+            let Some(end) = after.find('"') else {
                 break;
+            };
+            if !guarded || preceded_by_recovery_tool(text, abs) {
+                push(&after[..end]);
             }
+            pos = abs + needle.len() + end + 1;
         }
     }
 
     out
+}
+
+/// Chars scanned backwards from a `token "` needle looking for a recovery tool
+/// name. The footer puts only ` with ` between the tool name and the needle;
+/// this window is generous to tolerate wrapping/reflow.
+const TOKEN_NEEDLE_LOOKBACK: usize = 96;
+
+/// True if one of [`RECOVERY_TOOL_NAMES`] occurs within the lookback window
+/// ending at byte offset `at` in `text`.
+fn preceded_by_recovery_tool(text: &str, at: usize) -> bool {
+    let mut start = at.saturating_sub(TOKEN_NEEDLE_LOOKBACK);
+    while !text.is_char_boundary(start) {
+        start += 1;
+    }
+    let window = &text[start..at];
+    RECOVERY_TOOL_NAMES.iter().any(|tool| window.contains(tool))
 }
 
 #[cfg(test)]
@@ -137,5 +159,35 @@ mod tests {
         assert!(f.contains("PARTIAL view"));
         assert!(f.contains("c0ffee"));
         assert_eq!(parse_markers(&f), vec!["c0ffee"]);
+    }
+
+    #[test]
+    fn lossless_footer_round_trips() {
+        let f = recovery_footer("deadbeef", 4321, false);
+        assert!(f.contains("no data lost"));
+        assert_eq!(parse_markers(&f), vec!["deadbeef"]);
+    }
+
+    #[test]
+    fn prose_token_quotes_are_not_markers() {
+        assert!(parse_markers("the auth token \"sk-abc123\" expired").is_empty());
+        assert!(parse_markers("set your API token \"foo\" in the env").is_empty());
+    }
+
+    #[test]
+    fn token_needle_scoped_to_recovery_tools() {
+        // Footer-style wording (tool name nearby) still parses…
+        for tool in RECOVERY_TOOL_NAMES {
+            let text = format!("call {tool} with token \"abc123\" to recover");
+            assert_eq!(parse_markers(&text), vec!["abc123"], "tool {tool}");
+        }
+        // …but a tool name far away (outside the lookback window) does not
+        // legitimize an unrelated token-quote.
+        let far = format!(
+            "{} was mentioned earlier. {} Then the auth token \"sk-999\" leaked.",
+            RETRIEVE_TOOL_NAME,
+            "filler ".repeat(30)
+        );
+        assert!(parse_markers(&far).is_empty());
     }
 }

@@ -113,7 +113,7 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
         if out.text.len() + footer.len() >= original_bytes {
             return CompressedOutput::passthrough(content.to_string(), kind);
         }
-        let (token, retained) = cache::offload_checked(content);
+        let retained = cache::offload_checked_with_hash(&token, content);
         if !retained {
             // The original is too large to keep in memory (over the byte cap)
             // and the disk tier isn't on, so it can't be recovered. A lossy
