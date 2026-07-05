@@ -155,6 +155,11 @@ async fn compact_command_output(command_output: &str) {
 }
 ```
 
+Host agent layers should resolve `AgentTokenjuiceCompression::Auto` to `Full`,
+`Light`, or `Off` before calling TokenJuice. Passing unresolved `Auto` to the
+tool-output adapter leaves the output unchanged and reports
+`none/agent-profile-auto-unresolved`.
+
 ## Local Development
 
 ```sh
