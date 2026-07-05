@@ -181,18 +181,20 @@ fn rewrite_git_status_line(line: &str) -> Option<String> {
         return Some(format!("?? {}", path));
     }
 
-    // Porcelain format: two status chars + space + path
+    // Porcelain format: two status chars + space + path. A fully blank
+    // status column means the line is just indented text, not porcelain —
+    // fall through rather than fabricate an "M:" status for it.
     if let Some(caps) = regex_captures(r"^([ MADRCU?!]{2})\s+(.+)$", line) {
         let status_raw = caps[0].trim().replace('?', "??");
-        let path = caps[1].trim();
-        let code = if status_raw.is_empty() {
-            "M"
-        } else if status_raw.starts_with("??") {
-            "??"
-        } else {
-            &status_raw[..1]
-        };
-        return Some(format!("{}: {}", code, path));
+        if !status_raw.is_empty() {
+            let path = caps[1].trim();
+            let code = if status_raw.starts_with("??") {
+                "??"
+            } else {
+                &status_raw[..1]
+            };
+            return Some(format!("{}: {}", code, path));
+        }
     }
 
     Some(trimmed.to_owned())
@@ -213,10 +215,13 @@ fn rewrite_git_status_lines(lines: &[String]) -> Vec<String> {
                 section = Some("untracked");
             }
 
-            // In untracked section, indented non-action lines become "?? "
+            // In untracked section, indented non-action lines become "?? ".
+            // Real git indents untracked paths with a single tab, so any
+            // leading whitespace qualifies; hint lines like `(use "git add
+            // ...)` are handled by rewrite_git_status_line below.
             if section == Some("untracked")
-                && regex_match(r"^\s{2,}\S", line)
-                && !regex_match(r"^\s*(?:modified:|new file:|deleted:|renamed:)", line)
+                && regex_match(r"^\s+\S", line)
+                && !regex_match(r"^\s*(?:modified:|new file:|deleted:|renamed:|\()", line)
             {
                 return Some(format!("?? {}", trimmed));
             }
@@ -664,11 +669,16 @@ fn build_passthrough_text(input: &ToolExecutionInput, raw_text: &str) -> String 
         .join("\n")
         .trim()
         .to_owned();
+    // Keep a nonzero exit code visible even when the command printed nothing
+    // — the exit status is the whole signal in that case.
+    if input.exit_code.map(|c| c != 0).unwrap_or(false) {
+        if normalized.is_empty() {
+            return format!("exit {} (no output)", input.exit_code.unwrap());
+        }
+        return format!("exit {}\n{}", input.exit_code.unwrap(), normalized);
+    }
     if normalized.is_empty() {
         return "(no output)".to_owned();
-    }
-    if input.exit_code.map(|c| c != 0).unwrap_or(false) {
-        return format!("exit {}\n{}", input.exit_code.unwrap(), normalized);
     }
     normalized
 }

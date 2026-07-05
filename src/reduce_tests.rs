@@ -365,6 +365,47 @@ fn git_status_rewrites_untracked_question_marks() {
 }
 
 #[test]
+fn git_status_rewrites_untracked_single_tab_indent() {
+    // Real `git status` indents untracked paths with a single tab and
+    // includes an indented hint line, which must not become an entry.
+    let stdout = "Untracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\tfoo.txt\n\tbar/baz.rs\n";
+    let input = make_input("bash", &["git", "status"], stdout);
+    let result = run(input);
+    assert!(
+        result.inline_text.contains("?? foo.txt"),
+        "got: {}",
+        result.inline_text
+    );
+    assert!(
+        result.inline_text.contains("?? bar/baz.rs"),
+        "got: {}",
+        result.inline_text
+    );
+    assert!(
+        !result.inline_text.contains("?? (use"),
+        "hint line rewritten as untracked entry: {}",
+        result.inline_text
+    );
+}
+
+#[test]
+fn git_status_clean_tree_reports_clean_not_no_output() {
+    let stdout = "On branch main\nnothing to commit, working tree clean\n";
+    let input = make_input("bash", &["git", "status"], stdout);
+    let result = run(input);
+    assert!(
+        result.inline_text.contains("working tree clean"),
+        "got: {}",
+        result.inline_text
+    );
+    assert!(
+        !result.inline_text.contains("(no output)"),
+        "clean tree must not read as empty output: {}",
+        result.inline_text
+    );
+}
+
+#[test]
 fn git_status_on_branch_line_removed() {
     let stdout = "On branch main\nnothing to commit, working tree clean\n";
     let input = make_input("bash", &["git", "status"], stdout);
