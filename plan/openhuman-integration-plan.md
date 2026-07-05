@@ -33,8 +33,9 @@ existing surface:
   `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered.
 - `Auto` profile resolution is host-side in
   `agent/harness/definition.rs:487`: coding models resolve to `Light`,
-  everything else to `Full`. The crate's own `Auto == Full` mapping in
-  `options_for_agent()` is a silent fallback if a host forgets to resolve.
+  everything else to `Full`. TinyJuice now treats unresolved `Auto` as
+  passthrough with `none/agent-profile-auto-unresolved`, so hosts must resolve
+  it before calling the adapter.
 
 ### Known Integration Bugs (found in review)
 
@@ -115,9 +116,9 @@ Tasks:
   first, then summarizer, then TokenJuice, then caps. TokenJuice must tolerate
   receiving summarizer output rather than raw tool output.
 - Add OpenHuman-side tests for `full`, `light`, `off`, and `auto` resolution
-  (`auto` resolves in `definition.rs`, not in the crate — test the host
-  mapping, and consider removing the crate's silent `Auto == Full` fallback in
-  favor of an explicit resolution requirement).
+  (`auto` resolves in `definition.rs`, not in the crate). TinyJuice and the
+  mirrored OpenHuman copy now enforce unresolved `Auto` as an explicit
+  passthrough, covered by `auto_agent_profile_requires_host_resolution`.
 - Add tests proving recovery-tool output bypasses compaction and host caps for
   both registered tool names.
 - Add tests proving config reload updates cache and compressor settings.

@@ -105,9 +105,10 @@ compressor upgrades, P2 slices — all specified in the port plan.
   per-tool char cap → byte-cap backstop. TokenJuice may receive summarizer
   output, not raw output.
 - `AgentTokenjuiceCompression::Auto` is resolved host-side
-  (`agent/harness/definition.rs:487`: coding models → Light, else Full). The
-  crate's silent `Auto == Full` fallback in `options_for_agent()` should
-  become an explicit resolution requirement — do not rely on it.
+  (`agent/harness/definition.rs:487`: coding models → Light, else Full).
+  TinyJuice and the mirrored OpenHuman copy now treat unresolved `Auto` as
+  passthrough with `none/agent-profile-auto-unresolved`; do not pass unresolved
+  `Auto` into the TokenJuice adapter.
 - Two recovery tools are registered in OpenHuman with separate
   implementations; consolidation is a Phase 3 task in the integration plan.
 - `ml_compression_enabled` (Kompress bridge) stays default-off until tag
