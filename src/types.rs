@@ -548,12 +548,16 @@ pub struct CompressOptions {
     /// the absolute token count is modest — while trivially small inputs
     /// (below a quarter of the threshold) still skip the cache entirely.
     pub ccr_min_tokens: usize,
-    /// Allow lossy compression when CCR is not in play (disabled, below
-    /// `ccr_min_tokens`, or the original couldn't be retained). Dropped
-    /// content is still marked with explicit `[... omitted ...]` markers —
-    /// it just isn't recoverable via a retrieve footer. Set to `false` for
-    /// the strict invariant that lossy output always carries a recovery
-    /// token (the `light` profile does this).
+    /// Allow *information-dropping* compression when CCR is not in play
+    /// (disabled, below `ccr_min_tokens`, or the original couldn't be
+    /// retained). Faithful reformats (JSON tables/minify, HTML→text) are
+    /// information-preserving and always ship regardless of this flag; it only
+    /// governs compressors that drop content (logs, diffs, search, code
+    /// bodies, sampled JSON rows). Default `false`: without a recovery token
+    /// those pass through untouched rather than emit a partial view the caller
+    /// can't get back. Set `true` to allow marked-but-unrecoverable lossy
+    /// output (dropped content still carries explicit `[... omitted ...]`
+    /// markers, it just isn't retrievable).
     pub lossy_without_ccr: bool,
     /// Maximum inline character count for the generic/rule fallback path.
     pub max_inline_chars: Option<usize>,
@@ -584,7 +588,13 @@ impl Default for CompressOptions {
             min_bytes_to_compress: 2048,
             min_bytes_to_compress_log: 512,
             ccr_min_tokens: 500,
-            lossy_without_ccr: true,
+            // Without CCR, only information-preserving output ships: faithful
+            // reformats (JSON tables/minify, HTML→text) still apply, but any
+            // compressor that *drops* information (logs, diffs, search, code
+            // bodies, sampled JSON rows) passes through untouched rather than
+            // emitting an unrecoverable partial view. A host can opt back into
+            // marked-but-unrecoverable lossy output by flipping this to true.
+            lossy_without_ccr: false,
             max_inline_chars: None,
             code_target_ratio: None,
             chars_per_token: 4.0,

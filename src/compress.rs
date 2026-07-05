@@ -108,28 +108,21 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
     // CCR threshold: only offload when the input is large enough to be worth
     // caching, or when the compression is heavily lossy on a non-trivial input
     // (rationale on `CompressOptions::ccr_min_tokens`). When CCR is not in
-    // play a lossy result carries no recovery footer; whether that is
-    // acceptable is the caller's call via `lossy_without_ccr` (dropped content
-    // is still explicitly marked with omission markers — it just isn't
-    // retrievable), except for code, which is never emitted lossy without a
-    // recovery path (see `lossy_ok_without_ccr` below).
+    // play a lossy result carries no recovery footer. `out.lossy` means the
+    // compressor *dropped* information (vs. a faithful reformat like a JSON
+    // table or HTML→text, which reports `lossy=false` and always ships). So
+    // when CCR can't back it up and the caller hasn't opted into
+    // `lossy_without_ccr`, we pass the original through untouched rather than
+    // emit a partial view the caller can never recover — the same guarantee
+    // that keeps code bodies, log lines, diff context, and sampled JSON rows
+    // whole in the no-CCR path.
     let original_tokens = estimate_tokens_with(content, opts.chars_per_token);
     let compacted_body_tokens = estimate_tokens_with(&out.text, opts.chars_per_token);
     let heavy_crush = compacted_body_tokens <= original_tokens / 2
         && original_tokens as usize >= opts.ccr_min_tokens / 4;
     let ccr_for_call =
         opts.ccr_enabled && (original_tokens as usize >= opts.ccr_min_tokens || heavy_crush);
-    // Code is special. A lossy code view collapses whole function bodies, and
-    // those lines are only recoverable when CCR is on (each collapsed body
-    // carries a per-block retrieval token, offloaded regardless of the
-    // file-level footer). Truncating a log to a head/tail is a bounded, marked
-    // loss; eating the middle of a function with no way to get it back is not.
-    // So code never rides the `lossy_without_ccr` escape hatch — with CCR off
-    // it passes through verbatim rather than dropping code the caller can't
-    // recover.
-    let unrecoverable_code = kind == ContentKind::Code && !opts.ccr_enabled;
-    let lossy_ok_without_ccr = opts.lossy_without_ccr && !unrecoverable_code;
-    if out.lossy && !ccr_for_call && !lossy_ok_without_ccr {
+    if out.lossy && !ccr_for_call && !opts.lossy_without_ccr {
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
 
@@ -268,13 +261,17 @@ mod tests {
         format!("[{}]", rows.join(","))
     }
 
+    /// The opt-in escape hatch still works: a host that sets
+    /// `lossy_without_ccr = true` gets marked-but-unrecoverable lossy output
+    /// when CCR is off.
     #[tokio::test]
-    async fn lossy_compression_works_without_ccr() {
+    async fn lossy_compression_works_with_opt_in_without_ccr() {
         let mut o = opts();
         o.ccr_enabled = false;
+        o.lossy_without_ccr = true; // explicit opt-in, not the default
         let original = big_json_array();
         let res = compress_content(&original, None, &o).await;
-        assert!(res.applied, "lossy compression must apply without CCR");
+        assert!(res.applied, "opt-in lossy compression applies without CCR");
         assert!(res.text.len() < original.len());
         assert!(res.ccr_token.is_none(), "no recovery token without CCR");
         assert!(
@@ -284,15 +281,52 @@ mod tests {
         );
     }
 
+    /// The default declines *information-dropping* lossy output when CCR can't
+    /// back it up — the whole point of the lossless-without-cache guarantee.
     #[tokio::test]
-    async fn strict_mode_declines_lossy_without_ccr() {
+    async fn default_declines_lossy_without_ccr() {
         let mut o = opts();
         o.ccr_enabled = false;
-        o.lossy_without_ccr = false;
+        assert!(!o.lossy_without_ccr, "default is strict");
         let original = big_json_array();
         let res = compress_content(&original, None, &o).await;
-        assert!(!res.applied, "strict mode must decline unrecoverable lossy");
+        assert!(!res.applied, "default must decline unrecoverable lossy");
         assert_eq!(res.text, original);
+    }
+
+    /// A faithful, information-preserving reshape (HTML extraction here) is not
+    /// lossy, so it ships even with CCR off — reshaping is always allowed, only
+    /// *dropping* needs a recovery path.
+    #[tokio::test]
+    async fn faithful_reshape_ships_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(!o.lossy_without_ccr);
+        let mut html = String::from("<html><head><title>Status</title></head><body>");
+        for i in 0..80 {
+            html.push_str(&format!(
+                "<div class=\"row\"><span>service {i} is healthy</span></div>"
+            ));
+        }
+        html.push_str("</body></html>");
+        let hint = ContentHint {
+            mime: Some("text/html".into()),
+            explicit: Some(ContentKind::Html),
+            ..Default::default()
+        };
+        let res = compress_content(&html, Some(hint), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Html);
+        assert!(res.applied, "faithful reshape ships without CCR: {}", res.text);
+        assert!(!res.lossy, "extraction is information-preserving");
+        assert!(res.ccr_token.is_none(), "no recovery needed for a reshape");
+        // Every service line's text survives the reshape.
+        for i in 0..80 {
+            assert!(
+                res.text.contains(&format!("service {i} is healthy")),
+                "row {i} kept: {}",
+                res.text
+            );
+        }
     }
 
     /// A collapsible source file with many long function bodies. Big enough to
@@ -319,15 +353,18 @@ mod tests {
         }
     }
 
-    /// Code must never be cut when it can't be recovered: with CCR off, even
-    /// though `lossy_without_ccr` is on (the default), the router passes the
-    /// source through verbatim rather than dropping function bodies with no
-    /// retrieval token.
+    /// Code must never be cut when it can't be recovered: with CCR off and the
+    /// default options (`lossy_without_ccr = false`), collapsing a function
+    /// body drops information with no retrieval token, so the router passes the
+    /// source through verbatim instead.
     #[tokio::test]
     async fn code_is_not_cut_without_ccr() {
         let mut o = opts();
         o.ccr_enabled = false;
-        assert!(o.lossy_without_ccr, "escape hatch is on by default");
+        assert!(
+            !o.lossy_without_ccr,
+            "default declines info-dropping output without CCR"
+        );
         let original = big_code_file();
         let res = compress_content(&original, Some(code_hint()), &o).await;
         assert_eq!(res.content_kind, ContentKind::Code);

@@ -82,7 +82,12 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         content.len(),
         text.len()
     );
-    Some(CompressOutput::lossy(text, CompressorKind::Html))
+    // Extraction is an information-preserving reshape: every readable text node
+    // and the title survive; only non-content bodies (script/style/svg) and the
+    // markup scaffolding are dropped. Marking it a faithful reformat lets it
+    // ship without CCR (nothing recoverable is lost) instead of being declined
+    // as an unrecoverable partial view.
+    Some(CompressOutput::reformatted(text, CompressorKind::Html))
 }
 
 /// Single-pass HTML tag stripper that drops non-content bodies, honours block
@@ -457,8 +462,14 @@ mod tests {
         }
         html.push_str("</body></html>");
         let out = compress(&html).expect("compresses");
-        assert!(out.lossy);
+        // Extraction is an information-preserving reshape, not a drop: every
+        // cell's text survives, so it reports as a faithful reformat and ships
+        // without needing CCR recovery.
+        assert!(!out.lossy, "html extraction is a faithful reshape");
         assert!(out.text.len() < html.len());
         assert!(out.text.contains("cell 7"));
+        for i in 0..50 {
+            assert!(out.text.contains(&format!("cell {i}")), "cell {i} kept");
+        }
     }
 }
