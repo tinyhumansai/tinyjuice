@@ -2,22 +2,22 @@
 
 Real OpenHuman Rust files. The source compressor keeps imports, signatures, and top-level structure while collapsing large bodies when useful.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Pass 1` is the accepted result with CCR disabled. `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
 
 ## Cases
 
-| Case | Input | Output | Original | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | 26.4 KB | 0.0% | 81.8% | 1.151 ms | true |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | 34.7 KB | 0.0% | 76.2% | 1.300 ms | true |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | 17.4 KB | 0.0% | 71.7% | 0.648 ms | true |
-| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | 8.4 KB | 0.0% | 64.9% | 0.336 ms | true |
-| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | 48.1 KB | 0.0% | 63.9% | 1.790 ms | true |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | 3.4 KB | 0.0% | 56.8% | 0.139 ms | true |
-| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | 53.9 KB | 0.0% | 55.8% | 1.578 ms | true |
-| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | 4.5 KB | 0.0% | 47.8% | 0.164 ms | true |
-| `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | 2.0 KB | 0.0% | 0.0% | 0.000 ms | n/a |
-| `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | 1.9 KB | 0.0% | 0.0% | 0.000 ms | n/a |
+| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | 26.4 KB | 82.6% | 0.0% | 81.8% | 1.112 ms | true |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | 34.7 KB | 76.8% | 0.0% | 76.2% | 1.275 ms | true |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | 17.4 KB | 73.0% | 0.0% | 71.7% | 0.632 ms | true |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | 8.4 KB | 67.5% | 0.0% | 64.9% | 0.331 ms | true |
+| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | 48.1 KB | 64.3% | 0.0% | 63.9% | 1.721 ms | true |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | 3.4 KB | 63.3% | 0.0% | 56.8% | 0.139 ms | true |
+| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | 53.9 KB | 56.3% | 0.0% | 55.8% | 1.484 ms | true |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | 4.5 KB | 52.7% | 0.0% | 47.8% | 0.162 ms | true |
+| `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | 2.0 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 

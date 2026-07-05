@@ -2,22 +2,22 @@
 
 Real RSS feeds, noisy web pages, forum pages, and OpenHuman coverage HTML. The HTML compressor strips markup/script noise and keeps readable page text.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Pass 1` is the accepted result with CCR disabled. `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
 
 ## Cases
 
-| Case | Input | Output | Original | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.9 KB | 0.0% | 95.9% | 0.153 ms | true |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.4 KB | 0.0% | 88.7% | 0.101 ms | true |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 0.0% | 87.4% | 0.016 ms | true |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 0.0% | 87.3% | 0.014 ms | true |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 0.0% | 80.8% | 0.023 ms | true |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 0.0% | 79.9% | 0.020 ms | true |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 0.0% | 79.3% | 0.022 ms | true |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 0.0% | 79.2% | 0.083 ms | true |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.2 KB | 0.0% | 51.6% | 0.049 ms | true |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 0.0% | 23.0% | 1.191 ms | true |
+| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.9 KB | 96.1% | 0.0% | 95.9% | 0.154 ms | true |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 92.3% | 0.0% | 87.3% | 0.013 ms | true |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 91.6% | 0.0% | 87.4% | 0.016 ms | true |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.4 KB | 89.3% | 0.0% | 88.7% | 0.099 ms | true |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 84.2% | 0.0% | 80.8% | 0.022 ms | true |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 83.7% | 0.0% | 79.9% | 0.019 ms | true |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 82.7% | 0.0% | 79.3% | 0.022 ms | true |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 80.1% | 0.0% | 79.2% | 0.081 ms | true |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.2 KB | 53.0% | 0.0% | 51.6% | 0.048 ms | true |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 23.0% | 0.0% | 23.0% | 1.185 ms | true |
 
 ## What TinyJuice Is Doing
 

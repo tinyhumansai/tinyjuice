@@ -75,7 +75,15 @@ fn sample_payload(doc_dir: &str, fallback: String) -> String {
                     .join("full-input.txt"),
             )
         })
-        .unwrap_or(fallback)
+        .unwrap_or_else(|_| {
+            // A silent fallback would benchmark generator output while the
+            // report still claims a real fixture — make the substitution loud.
+            eprintln!(
+                "warning: fixture missing for {doc_dir} ({}); using synthetic fallback payload",
+                path.display()
+            );
+            fallback
+        })
 }
 
 fn category_name(doc_dir: &str) -> &str {
@@ -173,7 +181,9 @@ struct CaseReport {
     checks_total: usize,
     task_checks_passed: usize,
     task_checks_total: usize,
-    inline_accuracy_percent: f64,
+    /// `None` when the case defines no checks — an unverified case must not
+    /// read as 100% accurate.
+    inline_accuracy_percent: Option<f64>,
     accuracy_gate_passed: bool,
     failed_checks: Vec<String>,
     failed_task_checks: Vec<String>,
@@ -275,9 +285,9 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
     let inline_total = case.checks.len() + case.task_checks.len();
     let inline_passed = checks_passed + task_checks_passed;
     let inline_accuracy_percent = if inline_total == 0 {
-        100.0
+        None
     } else {
-        inline_passed as f64 * 100.0 / inline_total as f64
+        Some(inline_passed as f64 * 100.0 / inline_total as f64)
     };
     let recovery_gate = ccr_recoverable.unwrap_or(true);
     let accuracy_gate_passed =
@@ -500,6 +510,10 @@ fn category_case_dirs(category: &str) -> Vec<String> {
     dirs.sort();
 
     if dirs.is_empty() {
+        eprintln!(
+            "warning: no fixture cases found under docs/benchmark/{category}/cases; \
+             benchmarking a single synthetic case instead"
+        );
         vec![category.to_string()]
     } else {
         dirs
@@ -507,11 +521,12 @@ fn category_case_dirs(category: &str) -> Vec<String> {
 }
 
 fn case_slug(doc_dir: &str) -> String {
+    // Keep the NN- ordinal: stripping it collapsed distinct fixtures with the
+    // same stem (03-socket and 06-socket) into one indistinguishable id.
     doc_dir
         .rsplit('/')
         .next()
         .unwrap_or(doc_dir)
-        .trim_start_matches(|c: char| c.is_ascii_digit() || c == '-')
         .replace('-', "_")
 }
 
@@ -968,15 +983,20 @@ fn print_markdown(report: &BenchmarkReport) {
         report.options.ccr_min_tokens
     );
     println!(
-        "| case | kind | compressor | Pass 1: no CCR | Pass 2: with CCR | avg ms | signals | tasks | inline accuracy | CCR recoverable | gate |"
+        "| case | kind | compressor | algorithm | Pass 1: no CCR | Pass 2: with CCR | avg ms | signals | tasks | inline accuracy | CCR recoverable | gate |"
     );
-    println!("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |");
+    println!("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |");
     for case in &report.cases {
+        let accuracy = case
+            .inline_accuracy_percent
+            .map(|p| format!("{p:.1}%"))
+            .unwrap_or_else(|| "n/a".to_string());
         println!(
-            "| {} | {} | {} | {:.1}% | {:.1}% | {:.3} | {}/{} | {}/{} | {:.1}% | {} | {} |",
+            "| {} | {} | {} | {:.1}% | {:.1}% | {:.1}% | {:.3} | {}/{} | {}/{} | {} | {} | {} |",
             case.id,
             case.content_kind,
             case.compressor,
+            case.algorithm_token_reduction_percent,
             case.no_ccr_token_reduction_percent,
             case.token_reduction_percent,
             case.avg_latency_ms,
@@ -984,7 +1004,7 @@ fn print_markdown(report: &BenchmarkReport) {
             case.checks_total,
             case.task_checks_passed,
             case.task_checks_total,
-            case.inline_accuracy_percent,
+            accuracy,
             recovery_label(case.ccr_recoverable),
             if case.accuracy_gate_passed {
                 "pass"
@@ -993,6 +1013,8 @@ fn print_markdown(report: &BenchmarkReport) {
             }
         );
     }
+
+    print_summary(report);
 
     let failures: Vec<&CaseReport> = report
         .cases
@@ -1015,11 +1037,62 @@ fn print_markdown(report: &BenchmarkReport) {
     }
 }
 
+/// Byte-weighted (micro-average) totals plus coverage lint. Per-case means
+/// over reduction percentages over-weight small fixtures; total-in vs
+/// total-out reflects what actually reaches the context window.
+fn print_summary(report: &BenchmarkReport) {
+    let total_in: usize = report.cases.iter().map(|c| c.original_bytes).sum();
+    let algo_out: usize = report.cases.iter().map(|c| c.algorithm_bytes).sum();
+    let pass2_out: usize = report.cases.iter().map(|c| c.compacted_bytes).sum();
+    if total_in > 0 {
+        println!("\n## Byte-weighted totals (all cases)\n");
+        println!(
+            "- algorithm only: {:.1}% reduction ({} -> {} bytes)",
+            reduction_percent(ratio(algo_out, total_in)),
+            total_in,
+            algo_out
+        );
+        println!(
+            "- with CCR footer: {:.1}% reduction ({} -> {} bytes)",
+            reduction_percent(ratio(pass2_out, total_in)),
+            total_in,
+            pass2_out
+        );
+    }
+
+    let applied = report.cases.iter().filter(|c| c.applied).count();
+    println!(
+        "- compression applied on {}/{} cases",
+        applied,
+        report.cases.len()
+    );
+
+    let below_threshold: Vec<&CaseReport> = report
+        .cases
+        .iter()
+        .filter(|c| c.original_bytes < report.options.min_bytes_to_compress)
+        .collect();
+    if !below_threshold.is_empty() {
+        println!(
+            "\n## Fixture lint: {} case(s) below min_bytes_to_compress ({}B) — always pass through and dilute averages\n",
+            below_threshold.len(),
+            report.options.min_bytes_to_compress
+        );
+        for case in below_threshold {
+            println!("- {} ({} bytes)", case.id, case.original_bytes);
+        }
+    }
+}
+
 fn recovery_status(original: &str, result: &tinyjuice::CompressedOutput) -> Option<bool> {
     if !result.lossy {
         return None;
     }
-    let token = result.ccr_token.as_ref()?;
+    // A lossy result without a recovery token breaks the router's invariant
+    // (lossy ⇒ original retained); fail the gate rather than skip it.
+    let Some(token) = result.ccr_token.as_ref() else {
+        return Some(false);
+    };
     Some(cache::retrieve(token).as_deref() == Some(original))
 }
 

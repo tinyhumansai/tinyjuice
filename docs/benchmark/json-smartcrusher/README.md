@@ -2,22 +2,22 @@
 
 Real OpenHuman JSON snapshots: tool catalogs, API responses, schemas, package metadata, Lottie payloads, and config files. TinyJuice now chooses the smallest useful JSON representation before CCR, using Markdown tables only when they beat minified JSON.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Pass 1` is the accepted result with CCR disabled. `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
 
 ## Cases
 
-| Case | Input | Output | Original | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | 890.8 KB | 0.0% | 70.6% | 2.441 ms | true |
-| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | 106.7 KB | 0.0% | 63.9% | 0.389 ms | true |
-| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | 110.9 KB | 0.0% | 59.5% | 0.533 ms | true |
-| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | 62.0 KB | 0.0% | 0.0% | 0.144 ms | n/a |
-| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | 9.4 KB | 0.0% | 0.0% | 0.016 ms | n/a |
-| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | 16.8 KB | 0.0% | 0.0% | 0.027 ms | n/a |
-| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | 48.6 KB | 0.0% | 0.0% | 0.081 ms | n/a |
-| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | 2.4 KB | 0.0% | 0.0% | 0.003 ms | n/a |
-| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | 201 B | 0.0% | 0.0% | 0.000 ms | n/a |
-| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | 313 B | 0.0% | 0.0% | 0.000 ms | n/a |
+| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | 890.8 KB | 70.6% | 0.0% | 70.6% | 3.189 ms | true |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | 106.7 KB | 64.1% | 0.0% | 63.9% | 0.510 ms | true |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | 110.9 KB | 59.7% | 0.0% | 59.5% | 0.619 ms | true |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | 62.0 KB | 0.0% | 0.0% | 0.0% | 0.186 ms | n/a |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | 9.4 KB | 0.0% | 0.0% | 0.0% | 0.025 ms | n/a |
+| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | 16.8 KB | 0.0% | 0.0% | 0.0% | 0.041 ms | n/a |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | 48.6 KB | 0.0% | 0.0% | 0.0% | 0.097 ms | n/a |
+| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | 2.4 KB | 0.0% | 0.0% | 0.0% | 0.005 ms | n/a |
+| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | 201 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | 313 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 

@@ -2,22 +2,22 @@
 
 Real ripgrep result sets from an OpenHuman checkout. TinyJuice groups matches by file, keeps top hits, and records omitted match counts.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Pass 1` is the accepted result with CCR disabled. `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
 
 ## Cases
 
-| Case | Input | Output | Original | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | 59.8 KB | 0.0% | 82.6% | 0.130 ms | true |
-| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | 62.2 KB | 0.0% | 80.6% | 0.147 ms | true |
-| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | 65.1 KB | 0.0% | 76.1% | 0.140 ms | true |
-| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | 70.0 KB | 0.0% | 61.4% | 0.166 ms | true |
-| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | 95.5 KB | 0.0% | 46.8% | 0.201 ms | true |
-| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | 79.6 KB | 0.0% | 40.0% | 0.159 ms | true |
-| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | 76.0 KB | 0.0% | 37.2% | 0.178 ms | true |
-| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | 71.4 KB | 0.0% | 32.2% | 0.161 ms | true |
-| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | 73.4 KB | 0.0% | 22.4% | 0.175 ms | true |
-| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | 1.9 MB | 0.0% | 0.8% | 1.657 ms | true |
+| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | 59.8 KB | 83.0% | 0.0% | 82.6% | 0.138 ms | true |
+| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | 62.2 KB | 81.0% | 0.0% | 80.6% | 0.155 ms | true |
+| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | 65.1 KB | 76.4% | 0.0% | 76.1% | 0.155 ms | true |
+| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | 70.0 KB | 61.8% | 0.0% | 61.4% | 0.163 ms | true |
+| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | 95.5 KB | 47.0% | 0.0% | 46.8% | 0.226 ms | true |
+| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | 79.6 KB | 40.3% | 0.0% | 40.0% | 0.177 ms | true |
+| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | 76.0 KB | 37.5% | 0.0% | 37.2% | 0.166 ms | true |
+| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | 71.4 KB | 32.5% | 0.0% | 32.2% | 0.178 ms | true |
+| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | 73.4 KB | 22.7% | 0.0% | 22.4% | 0.179 ms | true |
+| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | 1.9 MB | 0.9% | 0.0% | 0.8% | 1.738 ms | true |
 
 ## What TinyJuice Is Doing
 
