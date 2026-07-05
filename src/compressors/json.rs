@@ -38,6 +38,8 @@ pub const OUTLIER_SIGMA: f64 = 2.0;
 pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
 /// Maximum exact duplicate row clusters to anchor while row-dropping.
 pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
+/// Maximum evenly-spaced middle anchors to add for large generic arrays.
+pub const MAX_SPREAD_ANCHORS: usize = 8;
 /// Do not spend unbounded parse effort on huge string cells.
 const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
@@ -201,9 +203,9 @@ pub fn analyze(content: &str) -> Option<JsonAnalysis> {
 }
 
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
-/// rows flagged as anomalous, duplicate-cluster representatives,
-/// representative discriminator buckets, or query-relevant. Returns ascending,
-/// de-duplicated indices.
+/// rows flagged as anomalous, duplicate-cluster representatives, spread
+/// anchors, representative discriminator buckets, or query-relevant. Returns
+/// ascending, de-duplicated indices.
 fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
     let n = rows.len();
     let lossy = n > ROW_DROP_THRESHOLD;
@@ -219,6 +221,9 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
         keep.insert(i);
     }
     for i in n.saturating_sub(dynamic_tail_rows(n))..n {
+        keep.insert(i);
+    }
+    for i in spread_anchor_rows(rows, &keep) {
         keep.insert(i);
     }
     for i in duplicate_cluster_representatives(rows) {
@@ -320,6 +325,62 @@ fn duplicate_cluster_representatives(rows: &[FlatRow]) -> Vec<usize> {
         .take(MAX_DUPLICATE_CLUSTER_ANCHORS)
         .map(|(first, _)| first)
         .collect()
+}
+
+fn spread_anchor_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<usize> {
+    let n = rows.len();
+    let start = dynamic_head_rows(n).min(n);
+    let end = n.saturating_sub(dynamic_tail_rows(n));
+    if start >= end {
+        return Vec::new();
+    }
+
+    let middle_len = end - start;
+    let anchor_count = (middle_len / ROW_DROP_THRESHOLD).min(MAX_SPREAD_ANCHORS);
+    if anchor_count == 0 {
+        return Vec::new();
+    }
+
+    let mut seen = existing_keep
+        .iter()
+        .filter_map(|&i| rows.get(i).map(row_text))
+        .collect::<BTreeSet<_>>();
+    let mut anchors = Vec::new();
+    for rank in 1..=anchor_count {
+        let target = start + (rank * (middle_len + 1)) / (anchor_count + 1);
+        if let Some(index) = nearest_unseen_row(rows, start, end, target, &mut seen) {
+            anchors.push(index);
+        }
+    }
+    anchors.sort_unstable();
+    anchors
+}
+
+fn nearest_unseen_row(
+    rows: &[FlatRow],
+    start: usize,
+    end: usize,
+    target: usize,
+    seen: &mut BTreeSet<String>,
+) -> Option<usize> {
+    for offset in 0.. {
+        let left = target.checked_sub(offset).filter(|&i| i >= start);
+        if let Some(i) = left
+            && seen.insert(row_text(&rows[i]))
+        {
+            return Some(i);
+        }
+
+        let right = target + offset;
+        if right < end && Some(right) != left && seen.insert(row_text(&rows[right])) {
+            return Some(right);
+        }
+
+        if left.is_none() && right >= end {
+            break;
+        }
+    }
+    None
 }
 
 #[derive(Debug, Clone)]
@@ -677,6 +738,31 @@ mod tests {
         assert!(c.lossy);
         assert!(c.text.contains("retry-batch-17"), "{}", c.text);
         assert!(c.text.contains("duplicate cluster payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn spread_anchor_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if i == 94 {
+                "deterministic spread anchor payload".to_string()
+            } else {
+                format!("ordinary payload {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(
+            c.text.contains("deterministic spread anchor payload"),
+            "{}",
+            c.text
+        );
     }
 
     #[test]
