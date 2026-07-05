@@ -34,6 +34,7 @@ pub const MAX_STACK_TRACES: usize = 3;
 pub const STACK_TRACE_MAX_LINES: usize = 20;
 pub const MAX_TOTAL_LINES: usize = 100;
 pub const TEMPLATE_MIN_RUN: usize = 8;
+pub const TEMPLATE_MIN_CONSTANT_TOKENS: usize = 3;
 
 static BUILTIN_RULES: Lazy<Vec<CompiledRule>> = Lazy::new(load_builtin_rules);
 
@@ -326,10 +327,20 @@ fn line_template(line: &str) -> Option<LineTemplate> {
         }
     }
 
-    if captures.len() < 2 || template.trim().len() < 12 {
+    if captures.len() < 2
+        || template.trim().len() < 12
+        || template_constant_tokens(&template) < TEMPLATE_MIN_CONSTANT_TOKENS
+    {
         return None;
     }
     Some(LineTemplate { template, captures })
+}
+
+fn template_constant_tokens(template: &str) -> usize {
+    template
+        .split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .count()
 }
 
 fn write_template_block(out: &mut String, template: &str, captures: &[Vec<String>]) {
@@ -555,6 +566,16 @@ mod tests {
         let mut input = String::new();
         for _ in 0..40 {
             let _ = writeln!(input, "plain repeated line without dynamic fields");
+        }
+
+        assert!(compress_templates(&input).is_none());
+    }
+
+    #[test]
+    fn template_reformat_declines_low_context_dynamic_lines() {
+        let mut input = String::new();
+        for i in 0..40 {
+            let _ = writeln!(input, "id={} value={}", 10_000 + i, 20_000 + i);
         }
 
         assert!(compress_templates(&input).is_none());

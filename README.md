@@ -81,7 +81,8 @@ the original bytes unchanged.
 - **Code compressor** - keeps imports, signatures, shallow structure, and
   important markers while collapsing deep bodies.
 - **Log compressor** - preserves failures, warnings, summaries, stack traces,
-  and command-rule outputs while dropping passing noise.
+  command-rule outputs, and reconstructible high-context template runs while
+  dropping passing noise.
 - **Search compressor** - groups grep/ripgrep output by file, ranks matches,
   and keeps top hits with per-file tallies.
 - **Diff compressor** - keeps patch structure and changed lines, collapses long
