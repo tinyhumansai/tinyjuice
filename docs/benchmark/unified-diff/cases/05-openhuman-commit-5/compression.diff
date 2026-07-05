@@ -60,7 +60,7 @@
 - use serde::Serialize;
 - 
 - use crate::openhuman::agent::progress::AgentProgress;
-+[... 56 context line(s) omitted ...]
++[... 56 context line(s) omitted ... ⟦tj:38c2a4c26442b8725b2bfbbc69afc163⟧]
   use crate::openhuman::config::schema::{AgentTracingBackend, AgentTracingConfig};
   use crate::openhuman::config::Config;
   
@@ -142,7 +142,7 @@
 -     /// is on. Gates recording tool arguments/results onto spans at collection
 -     /// time — when off, tool I/O never even reaches the in-memory span.
 -     pub capture_content: bool,
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:47fb0d0733b8b2fefb4fbb9a9f4a34bf⟧]
       /// Kind of run — exported as Langfuse trace tags (`run:<type>`) and the
       /// `run_type` metadata key. Defaults to interactive chat.
       pub run_type: RunType,
@@ -173,7 +173,7 @@
 -     /// [`crate::openhuman::approval::ApprovalChatContext`] task-local is
 -     /// scoped alongside this so the approval gate has a thread / client to
 -     /// route the prompt back to.
-+[... 23 context line(s) omitted ...]
++[... 23 context line(s) omitted ... ⟦tj:6ae5283dbdfd75daac518ddd01efb76e⟧]
       WebChat {
           thread_id: String,
           client_id: String,
@@ -309,7 +309,7 @@
 -     #[tokio::test]
 -     async fn current_returns_inner_origin_on_nested_scope() {
 -         let observed = with_origin(
-+[... 128 context line(s) omitted ...]
++[... 128 context line(s) omitted ... ⟦tj:3bbb01bb91cd1f3fc27224a76e1cca8e⟧]
               AgentTurnOrigin::WebChat {
                   thread_id: "outer".into(),
                   client_id: "c-outer".into(),
@@ -333,7 +333,7 @@
 -                 assert_eq!(source, TrustedAutomationSource::Cron);
 -             }
 -             other => panic!("expected inner TrustedAutomation, got {other:?}"),
-+[... 16 context line(s) omitted ...]
++[... 16 context line(s) omitted ... ⟦tj:0b9d26aebd6a7f61e0044bcf421b3463⟧]
           }
       }
   }
@@ -415,7 +415,7 @@
 -     /// exercising the parking flow scope BOTH task-locals — production
 -     /// callers in `channels/providers/web` do the same.
 -     fn web_origin() -> AgentTurnOrigin {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:02f8779099ab512d1e1af9e4bce78b1f⟧]
           AgentTurnOrigin::WebChat {
               thread_id: "t-test".into(),
               client_id: "c-test".into(),
@@ -460,7 +460,7 @@
 -         // The meeting → request mapping is the voice channel's lookup key.
 -         let mut tries = 0;
 -         let request_id = loop {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:53ca6fdee619c7cc60b0846532db4cd7⟧]
               if let Some(r) = gate.pending_for_meeting("meet-1") {
                   break r;
               }
@@ -579,7 +579,7 @@
 -             thread_id: "thread-42".into(),
 -             client_id: "client-1".into(),
 -         };
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:d462e143f8335b1c08e7fab11f44699b⟧]
           let origin = AgentTurnOrigin::WebChat {
               thread_id: "thread-42".into(),
               client_id: "client-1".into(),
@@ -631,7 +631,7 @@
 -             .unwrap_or_else(|e| e.into_inner());
 -         let (gate, _dir) = test_gate(); // boot-time TTL = 2s
 -         unsafe { std::env::set_var("OPENHUMAN_APPROVAL_TTL_SECS", "42") };
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:e143c3bdde372d7237122138124b7af6⟧]
           assert_eq!(
               gate.effective_ttl(),
 -             Duration::from_secs(42),
@@ -746,7 +746,7 @@
 -             thread_id: thread_id_task.clone(),
 -             client_id: client_id_task.clone(),
 -         };
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:4cc4f0857712d9c2a1592227672d6170⟧]
           let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
               thread_id: thread_id_task.clone(),
               client_id: client_id_task.clone(),
@@ -828,7 +828,7 @@
 -                 );
 -                 let classified = classify_inference_error(&err);
 -                 let classified_type = classified.error_type;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fa35982eb2bda6b747ec4f5a4d0343fc⟧]
                   let classified_type_string = classified_type.to_string();
                   if crate::openhuman::agent::error::is_max_iterations_error(&detailed) {
                       log::info!(
@@ -910,7 +910,7 @@
 -             thread_id: thread_id_task.clone(),
 -             client_id: client_id_task.clone(),
 -         };
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:da216a6690e66b67fe06305b6cc71ac1⟧]
           let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
               thread_id: thread_id_task.clone(),
               client_id: client_id_task.clone(),
@@ -992,7 +992,7 @@
 -     PARALLEL_IN_FLIGHT.lock().await.insert(
 -         request_id,
 -         ParallelEntry {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:7179bdd587533df8a7eb09ab86153f97⟧]
               thread_id: thread_id.to_string(),
               handle,
               cancel_token,
@@ -1074,7 +1074,7 @@
 -         .and_then(|u| u.get("email"))
 -         .and_then(serde_json::Value::as_str)
 -         .map(str::to_string)
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:ccb0530bcd04c05c6388faa1b1d54e61⟧]
           .or(state.user_id)
   }
   
@@ -1106,7 +1106,7 @@
 -             request_id,
 -             metadata.speak_reply,
 -             metadata.source,
-+[... 24 context line(s) omitted ...]
++[... 24 context line(s) omitted ... ⟦tj:9ca9a700b42ea43a261e37bfcaae6550⟧]
               metadata.session_id,
           );
           let mut round: u32 = 0;
@@ -1119,7 +1119,7 @@
 -             TurnStateMirror::new(turn_state_store, thread_id.clone(), request_id.clone());
 - 
 -         // #3886: opt-in structured tracing export. When enabled, fold the same
-+[... 5 context line(s) omitted ...]
++[... 5 context line(s) omitted ... ⟦tj:c08132019a17224457c709664bfda278⟧]
           // progress stream into OTel/Langfuse-style spans correlated by session
           // id (falling back to the thread id for headless/autonomous runs).
           // `None` (disabled) is zero-cost.
@@ -1177,7 +1177,7 @@
 -                 .with_channel_source(channel_source)
 -                 .with_run_type(run_type)
 -                 .with_capture_content(capture_content);
-+[... 50 context line(s) omitted ...]
++[... 50 context line(s) omitted ... ⟦tj:3ae868b2a5c0fc7c3ab3e141b908c0d1⟧]
               if let Some(agent_id) = metadata.agent_id.clone() {
                   trace_ctx = trace_ctx.with_agent_id(agent_id);
               }
@@ -1238,7 +1238,7 @@
 -                 AgentProgress::TextDelta { delta, iteration } => {
 -                     log::trace!(
 -                         "[web_channel][bridge] text_delta round={} chars={} request_id={}",
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:96461a48c84df846d6eb854727f16dc8⟧]
                           iteration,
 -                         delta.len(),
 -                         request_id,
@@ -1341,7 +1341,7 @@
 -                 }
 -                 AgentProgress::IterationStarted {
 -                     iteration,
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:5f002899539f267e696c7d2dea40c7e5⟧]
                       max_iterations,
                   } => {
                       round = iteration;
@@ -1423,7 +1423,7 @@
 -                                 "toolName": tool_name,
 -                                 "success": success,
 -                                 "outputChars": output_chars,
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:687e363966d18599153a6f60f4d630e5⟧]
                                   "elapsedMs": elapsed_ms,
                                   "iteration": iteration,
                                   "failure": failure_json,
@@ -1505,7 +1505,7 @@
 -         }
 -         // #3886: seal any spans still open after the stream closed and hand the
 -         // run's trace to the configured tracing sink. Best-effort and gated;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:de3394e66fe5444508f1acf277a02d50⟧]
           // never affects the turn outcome.
           if let Some(mut collector) = span_collector.take() {
               collector.finish(unix_epoch_ms());
@@ -1587,7 +1587,7 @@
 -         let capped = cap_wire_output(big.clone());
 -         assert!(capped.len() < big.len());
 -         assert!(capped.contains("[truncated"));
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:5c2d0ec70446d1372cceb4804623c994⟧]
           // Truncation landed on a char boundary (no replacement char / panic).
           assert!(capped.starts_with('é'));
           // The final payload (content + marker) must honor the wire cap.
@@ -1602,7 +1602,7 @@
 - //! breaker, cleanup) must call `clear_connection_cache()` at the start — or
 - //! be careful to use unique tempdirs that cannot collide with other tests.
 - //! The call is cheap (a mutex lock + HashMap clear) and harmless for tests
-+[... 7 context line(s) omitted ...]
++[... 7 context line(s) omitted ... ⟦tj:015c214753da899730c1b3a64793d64d⟧]
   //! that don't need it.
   
   use super::*;
@@ -1637,7 +1637,7 @@
 -         seq_in_source: seq,
 -         created_at: ts,
 -         partial_message: false,
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:724565e4a8658b2ce79224ae7720861b⟧]
 +         ..Default::default()
 +     };
 +     let rows = list_chunks(&cfg, &q).unwrap();
@@ -1649,7 +1649,7 @@
 +                     .map(|s| s.trim().to_string())
 +                     .filter(|s| !s.is_empty())
 +                     .collect()
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:89ec4df22795eda001efbbeeaaec9497⟧]
 +             AgentTurnOrigin::WebChat {
 +                 thread_id: "t-int".into(),
 +                 client_id: "c-int".into(),
@@ -1657,7 +1657,7 @@
 +             },
 +             tool.execute(json!({ "summary": "plan", "steps": ["one"] })),
 +         );
-+[... 7 context line(s) omitted ...]
++[... 7 context line(s) omitted ... ⟦tj:189737d5228c9cb446c3023a39075c19⟧]
 +         );
       }
   }
@@ -1669,7 +1669,7 @@
 + //! Durable event journals + status stores for tinyagents turns (issue #4249,
 + //! Workstream 05-events, 05.1).
 + //!
-+[... 41 context line(s) omitted ...]
++[... 41 context line(s) omitted ... ⟦tj:b57367cb6f7708cd8246ca24b405ecc7⟧]
 + //!
 + //! [`EventSink::with_stream_id`]: tinyagents::harness::events::EventSink::with_stream_id
   
@@ -1697,7 +1697,7 @@
 -     assert_eq!(upsert_chunks(&cfg, &[c.clone()]).unwrap(), 1);
 + use tinyagents::error::Result as TaResult;
 + use tinyagents::harness::events::{EventSink, HarnessRunStatus};
-+[... 11 context line(s) omitted ...]
++[... 11 context line(s) omitted ... ⟦tj:cb5d496dd28d751fbe104177ddc4acd8⟧]
 + /// it round-trips the crate [`FileStore`] name sanitizer.
 + const STATUS_NS: &str = "run_status";
   
@@ -1931,7 +1931,7 @@
 + /// Mints a fresh, slash-free, process-unique run id (`run.<32-hex>`), used three
 + /// ways for one turn: the [`EventSink::with_stream_id`] prefix (so persisted
 + /// `event_id`s are the restart-stable `{run_id}-evt-{offset}`), the journal
-+[... 9 context line(s) omitted ...]
++[... 9 context line(s) omitted ... ⟦tj:7796b93c494a020b31f543d3bee5cfd2⟧]
       RunId::new(format!("run.{}", uuid::Uuid::new_v4().simple()))
   }
   
@@ -1975,7 +1975,7 @@
 -         if MARKERS.iter().any(|m| upper.contains(m)) && value.trim().len() >= 8 {
 -             secrets.push(value);
 -         }
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:c270f2343479cb1b69a99daac5917bad⟧]
 +                     Ok(status) => out.push(status),
 +                     Err(err) => {
 +                         log::debug!("[journal] skipping undecodable run status key={key} err={err}")
@@ -2090,7 +2090,7 @@
 -         if let (Some(events), Some(handle)) = (&events, &handle) {
 -             events.subscribe(CapPauser::new(handle.clone(), max_iterations));
 +     let streaming = on_progress.is_some();
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:87ce12d04b39aa659b929fe9971daa26⟧]
           }
 -     }
 - 
@@ -2169,7 +2169,7 @@
 -         if let Some(queue) = run_queue.clone() {
 -             steering_forwarder::forward_steers(&queue, &handle, &steer_thread_label).await;
 -             steering_forwarder::forward_collects(&queue, &handle, &steer_thread_label).await;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:5e2c0603e4cecf3407b37539e4b5b6ad⟧]
           }
 -         ctx = ctx.with_steering(handle.clone());
 -         Some(steering_forwarder::SteeringForwarderGuard::new(
@@ -2274,7 +2274,7 @@
 -             }
 -             AgentEvent::ToolCompleted {
 -                 call_id,
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:8206e38cd0638015cfa9ab89f11ed4cf⟧]
                   tool_name,
                   input,
                   output,
@@ -2356,7 +2356,7 @@
 -             // harness served this model call from its local `ResponseCache`
 -             // without invoking the provider (deterministic internal runs only —
 -             // interactive chat never attaches a cache). Counters are additive; the
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:08cc473e8213f2fdcfd183128ee9995b⟧]
               // cost-footer DTO wiring is a follow-up (workstream 06).
               AgentEvent::CacheHit { call_id, key } => {
                   {
@@ -2372,7 +2372,7 @@
 - use std::sync::{Arc, Mutex, PoisonError};
 - 
 - use async_trait::async_trait;
-+[... 8 context line(s) omitted ...]
++[... 8 context line(s) omitted ... ⟦tj:bdfdbf8a8168e112e5cfa5b91fb23510⟧]
   use tinyagents::harness::steering::{SteeringCommand, SteeringHandle};
   use tinyagents::harness::tool::{
       SandboxMode, Tool, ToolAccess, ToolCall as TaToolCall, ToolExecutionContext, ToolPolicy,
@@ -2514,7 +2514,7 @@
 -             destructive: matches!(permission, PermissionLevel::Dangerous),
 -             external_service: external_effect,
 -             payment: false,
-+[... 134 context line(s) omitted ...]
++[... 134 context line(s) omitted ... ⟦tj:e9c7d3531ef050541bdb3a28fe066e10⟧]
           })
           .with_runtime(ToolRuntime {
               timeout_ms,
@@ -2596,7 +2596,7 @@
 -     };
 -     let (deadline, timeout_secs) =
 -         crate::openhuman::tool_timeout::resolve_tool_deadline(tool.timeout_policy(&call.arguments));
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:520b1bf0892bd56ab7380301cc90055f⟧]
       let exec = tool.execute_with_context(call.arguments.clone(), options, context);
       let outcome = match deadline {
           Some(d) => match tokio::time::timeout(d, exec).await {
@@ -2678,7 +2678,7 @@
 -         // Scope a WebChat origin alongside the chat context — the gate now
 -         // requires an origin label or it fails closed on `Unknown`.
 -         turn_origin::with_origin(
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:e74c16662637ea6422d2d8d6ce0a6f79⟧]
               AgentTurnOrigin::WebChat {
                   thread_id: "approval-raw-thread".to_string(),
                   client_id: "approval-raw-client".to_string(),
@@ -2760,7 +2760,7 @@
 -         payload(&decide, "approval_decide")
 -             .get("tool_name")
 -             .and_then(Value::as_str),
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fa416237e0bfb3bb208cef378a265fe9⟧]
           Some("tools.composio_execute")
       );
   
@@ -2842,7 +2842,7 @@
 -         config.workspace_dir.clone(),
 -     );
 -     let auto_approved = turn_origin::with_origin(
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fbb542cebcfb6dc46e3da226c7d6df55⟧]
           AgentTurnOrigin::WebChat {
               thread_id: "approval-auto-thread".to_string(),
               client_id: "approval-auto-client".to_string(),
@@ -2895,7 +2895,7 @@
 -     let gate_for_deny_task = gate.clone();
 -     let deny_task = tokio::spawn(async move {
 -         turn_origin::with_origin(
-+[... 45 context line(s) omitted ...]
++[... 45 context line(s) omitted ... ⟦tj:d527ff7e97a9b020e0f585e58784e62d⟧]
               AgentTurnOrigin::WebChat {
                   thread_id: "approval-deny-thread".to_string(),
                   client_id: "approval-deny-client".to_string(),
@@ -3015,7 +3015,7 @@
 -     assert!(decide_failure.get("error").is_some());
 - 
 -     let persist_failure = turn_origin::with_origin(
-+[... 112 context line(s) omitted ...]
++[... 112 context line(s) omitted ... ⟦tj:685e8535f83527ecc8f73117c7c66714⟧]
           AgentTurnOrigin::WebChat {
               thread_id: "approval-persist-failure-thread".to_string(),
               client_id: "approval-persist-failure-client".to_string(),
@@ -3044,7 +3044,7 @@
 -     assert!(gate
 -         .pending_for_thread("approval-persist-failure-thread")
 -         .is_none());
-+[... 21 context line(s) omitted ...]
++[... 21 context line(s) omitted ... ⟦tj:983825875dd52ddfaaea6550718cf8ca⟧]
   
       harness.rpc_join.abort();
   }
@@ -3126,11 +3126,11 @@
 -         // Scope a WebChat origin alongside the chat context — the gate now
 -         // requires an origin label or it fails closed on `Unknown`.
 -         turn_origin::with_origin(
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:e781886f83dd9caf7736f46593bf718e⟧]
               AgentTurnOrigin::WebChat {
                   thread_id: "worker-b-thread".to_string(),
                   client_id: "worker-b-client".to_string(),
-@@ -4113,80 +1462,8 @@
+@@ -4113,80 +1462,11 @@
               },
               APPROVAL_CHAT_CONTEXT.scope(
                   ApprovalChatContext {
@@ -3208,10 +3208,12 @@
 -     gate.record_execution(&audit_id, ExecutionOutcome::Success, None);
 -     assert!(
 -         gate.pending_for_thread("worker-b-thread").is_none(),
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:9b946232693bfed5111a8c4acf7cc090⟧]
           "thread mapping should be cleared after decision"
       );
-- 
+  
 +
-+[compacted tool output — this is a PARTIAL view; the full original (177347 bytes) is available by calling tokenjuice_retrieve with token "5b9f415c9b59a3244f71da31f3e780fc" (marker ⟦tj:5b9f415c9b59a3244f71da31f3e780fc⟧)]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (177347 bytes) is available by calling tinyjuice_retrieve with token "5b9f415c9b59a3244f71da31f3e780fc" (marker ⟦tj:5b9f415c9b59a3244f71da31f3e780fc⟧)]
 \ No newline at end of file

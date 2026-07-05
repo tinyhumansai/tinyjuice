@@ -11,7 +11,7 @@
 - 
 - pub use crate::api::rest::{
 -     decrypt_handoff_blob, user_id_from_auth_me_payload, user_id_from_profile_payload,
-+[... 7 context line(s) omitted ...]
++[... 7 context line(s) omitted ... ⟦tj:ae10ce7935b69ec2bbd0d18d178efcd6⟧]
       BackendOAuthClient, ConnectResponse, IntegrationSummary, IntegrationTokensHandoff,
   };
   pub use core::*;
@@ -23,7 +23,7 @@
 -     clear_composio_api_key, get_composio_api_key, store_composio_api_key, COMPOSIO_DIRECT_PROVIDER,
 - };
 - pub use schemas::{
-+[... 4 context line(s) omitted ...]
++[... 4 context line(s) omitted ... ⟦tj:dcbe7beba2d22104f268c168172c6e59⟧]
       all_controller_schemas as all_credentials_controller_schemas,
       all_registered_controllers as all_credentials_registered_controllers,
   };
@@ -56,7 +56,7 @@
 - // `flow_state` table's persistence logic.
 - // `upsert_flow_run_step` is likewise re-exported for the tinyflows seam: the
 - // live run observer (`tinyflows::observability::FlowRunObserver`, issue G2)
-+[... 25 context line(s) omitted ...]
++[... 25 context line(s) omitted ... ⟦tj:62aeb6239413aa3475e45c2b63261b92⟧]
   // lives in the sibling `tinyflows` domain and persists each finished step onto
   // the `flow_runs` row through this function as the run executes.
   pub use store::{kv_get, kv_set, upsert_flow_run_step};
@@ -74,7 +74,7 @@
 - 
 - use crate::openhuman::agent::turn_origin::{with_origin, AgentTurnOrigin, TrustedAutomationSource};
 - use crate::openhuman::config::Config;
-+[... 10 context line(s) omitted ...]
++[... 10 context line(s) omitted ... ⟦tj:c0f714641a62f52bcd977fdbb99da2ea⟧]
   use crate::openhuman::flows::bus;
   use crate::openhuman::flows::run_registry;
   use crate::openhuman::flows::store;
@@ -94,7 +94,7 @@
 - /// human never answers doesn't wedge a run — and its durable checkpoint —
 - /// forever. The two are distinct mechanisms (flow runs execute as
 - /// `TrustedAutomation { Workflow }`, which the tool-call gate lets through), so
-+[... 12 context line(s) omitted ...]
++[... 12 context line(s) omitted ... ⟦tj:8e9b17f97a017c2766994a41b77cc17d⟧]
   /// this is a dedicated flows-side TTL, not a reuse of the approval store's.
   const FLOW_PARKED_TTL_SECS: i64 = 600;
   
@@ -176,7 +176,7 @@
 -         Ok(k) => k,
 -         Err(_) => return Vec::new(),
 -     };
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:4a39af026cdefe63ebfacf10589a7b31⟧]
       if trigger_kind_fires(&kind) {
           return Vec::new();
       }
@@ -258,7 +258,7 @@
 - /// Lists every saved flow.
 - pub async fn flows_list(config: &Config) -> Result<RpcOutcome<Vec<Flow>>, String> {
 -     let flows = store::list_flows(config).map_err(|e| e.to_string())?;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:29004ca00ec5f06f226ecfcac1cb9f6f⟧]
       Ok(RpcOutcome::single_log(flows, "flows listed"))
   }
   
@@ -340,7 +340,7 @@
 -     store::remove_flow(config, id).map_err(|e| e.to_string())?;
 -     tracing::debug!(target: "flows", flow_id = %id, "[flows] flows_delete: removed");
 -     Ok(RpcOutcome::new(
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:06d37389f6b053e2e5578569f63420c8⟧]
           json!({ "id": id, "removed": true }),
           vec![format!("flow removed: {id}")],
       ))
@@ -398,7 +398,7 @@
 -             .iter()
 -             .any(|l| l.starts_with("warning:") && l.contains("webhook")),
 -         "enabling a webhook-trigger flow must surface a loud warning log, got: {:?}",
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:658444b9740659eb3a257ee00ea1929d⟧]
           enabled.logs
       );
   }
@@ -494,7 +494,7 @@
 -             comment: "Durable checkpoint thread id for this run (needed to resume).",
 -             required: true,
 -         },
-+[... 61 context line(s) omitted ...]
++[... 61 context line(s) omitted ... ⟦tj:502335ceb57e649b1cab071ad216e9ef⟧]
       ]
   }
   
@@ -525,7 +525,7 @@
 -             handler: handle_get,
 -         },
 -         RegisteredController {
-+[... 23 context line(s) omitted ...]
++[... 23 context line(s) omitted ... ⟦tj:b5a25f5d77734b5171bd0a4495db5b3f⟧]
               schema: schemas("list"),
               handler: handle_list,
           },
@@ -599,7 +599,7 @@
 -                 name: "graph",
 -                 ty: TypeSchema::Json,
 -                 comment: "A tinyflows WorkflowGraph (nodes + edges) to validate and migrate.",
-+[... 106 context line(s) omitted ...]
++[... 106 context line(s) omitted ... ⟦tj:8af98ff0b7a141150eb3640071dfe030⟧]
                   required: true,
               }],
 -             outputs: vec![
@@ -666,7 +666,7 @@
 -                     required: false,
 -                 },
 -                 require_approval_input(),
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:e3b56375ab6c0d5ff604615a7c52df7d⟧]
               ],
 -             outputs: vec![flow_output()],
 -         },
@@ -783,7 +783,7 @@
 -             .and_then(Value::as_bool)
 -             .unwrap_or(false);
 -         to_json(ops::flows_create(&config, name, graph, require_approval).await?)
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:72b4708db7c3292ae1088f58b9f4ecee⟧]
       })
   }
   
@@ -813,12 +813,10 @@
  +fn handle_list_connections(_params: Map<String, Value>) -> ControllerFuture {
  +    Box::pin(async move {
  +        let config = config_rpc::load_config_with_timeout().await?;
-@@ -1776,140 +1098,9 @@
- +}
- +
+@@ -1778,138 +1100,7 @@
   fn handle_update(params: Map<String, Value>) -> ControllerFuture {
--     Box::pin(async move {
--         let config = config_rpc::load_config_with_timeout().await?;
+      Box::pin(async move {
+          let config = config_rpc::load_config_with_timeout().await?;
 -         let id = read_required::<String>(&params, "id")?;
 -         let name = params
 -             .get("name")
@@ -870,8 +868,8 @@
 - }
 - 
 - fn handle_resume(params: Map<String, Value>) -> ControllerFuture {
-      Box::pin(async move {
-          let config = config_rpc::load_config_with_timeout().await?;
+-     Box::pin(async move {
+-         let config = config_rpc::load_config_with_timeout().await?;
 -         let id = read_required::<String>(&params, "id")?;
 -         let thread_id = read_required::<String>(&params, "thread_id")?;
 -         let approvals: Vec<String> = params
@@ -951,7 +949,7 @@
 -             names,
 -             vec![
 -                 "create",
-+[... 132 context line(s) omitted ...]
++[... 132 context line(s) omitted ... ⟦tj:023810138f22d1984bbf2cb71d9d7ded⟧]
                   "validate",
                   "get",
                   "list",
@@ -968,7 +966,7 @@
 -         );
 -     }
 - 
-+[... 9 context line(s) omitted ...]
++[... 9 context line(s) omitted ... ⟦tj:2e98aaf1a2c3cf873524b049f8412ef2⟧]
       #[test]
       fn all_registered_controllers_has_handler_per_schema() {
           let controllers = all_registered_controllers();
@@ -982,7 +980,7 @@
 -                 "list_runs",
 -                 "get_run",
 -             ]
-+[... 6 context line(s) omitted ...]
++[... 6 context line(s) omitted ... ⟦tj:4c580468c2855e18dc0abe8315e66565⟧]
           );
       }
   
@@ -1062,7 +1060,7 @@
 -     fn read_required_errors_when_missing() {
 -         let params = Map::new();
 -         let err = read_required::<String>(&params, "id").unwrap_err();
-+[... 72 context line(s) omitted ...]
++[... 72 context line(s) omitted ... ⟦tj:462352372421eb7b2dbc6245290b3b14⟧]
           assert!(err.contains("missing required param 'id'"));
       }
   }
@@ -1144,7 +1142,7 @@
 -     /// Wall-clock duration of the node's executor in milliseconds, when
 -     /// observed incrementally. `None` for a step recovered post-hoc.
 -     #[serde(default, skip_serializing_if = "Option::is_none")]
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:22baaff14f125b3a1a0e9bbe39b361c9⟧]
       pub duration_ms: Option<u64>,
   }
   
@@ -1226,7 +1224,7 @@
 -     }
 - 
 -     #[test]
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:c4697ebab74e164fa0c0dab16908c497⟧]
       fn flow_require_approval_defaults_false_when_omitted_from_json() {
           // Legacy/serialized JSON authored before the field existed must still
           // deserialize (SQLite rows are migrated via `add_column_if_missing`,
@@ -1256,7 +1254,7 @@
 - 
 - use crate::openhuman::agent::harness::definition::SandboxMode;
 - use crate::openhuman::composio::client::{
-+[... 22 context line(s) omitted ...]
++[... 22 context line(s) omitted ... ⟦tj:a0c03f118805caea0d79cf4ea229f045⟧]
       create_composio_client, direct_execute, ComposioClientKind,
   };
   use crate::openhuman::config::{Config, HttpRequestConfig};
@@ -1279,7 +1277,7 @@
 -             "reasoning_tokens": u.reasoning_tokens,
 -             "charged_amount_usd": u.charged_amount_usd,
 -         }),
-+[... 15 context line(s) omitted ...]
++[... 15 context line(s) omitted ... ⟦tj:f195eed03526e5366bb6665feab13cc2⟧]
       }
   }
   
@@ -1418,7 +1416,7 @@
 - ///   `madeupkit`, or a prefix-less slug like `noop` which `toolkit_from_slug`
 - ///   degrades to treating as its own single-segment "toolkit") → reject.
 - /// - the toolkit has a catalog but `slug` isn't one of its entries → reject.
-+[... 131 context line(s) omitted ...]
++[... 131 context line(s) omitted ... ⟦tj:e5f880f666faf3c41d995f78a6646bad⟧]
   /// - otherwise, apply the same per-user read/write/admin scope preference
   ///   the agent loop uses (`UserScopePref::allows`).
   ///
@@ -1478,7 +1476,7 @@
 - impl ToolInvoker for OpenHumanTools {
 -     async fn invoke(&self, slug: &str, args: Value, conn: Option<&str>) -> Result<Value> {
 -         // Curation + scope gate — hard allowlist (see [`is_curated_flow_tool`]'s
-+[... 52 context line(s) omitted ...]
++[... 52 context line(s) omitted ... ⟦tj:4c1a28a1d91a4ddc4874326413dc9716⟧]
           // doc for why this differs from the general agent tool-call path).
           // Runs before anything else — a rejected slug never reaches the
           // composio client at all.
@@ -1514,7 +1512,7 @@
 - 
 -         let kind = create_composio_client(&self.config)
 -             .map_err(|e| EngineError::Capability(e.to_string()))?;
-+[... 28 context line(s) omitted ...]
++[... 28 context line(s) omitted ... ⟦tj:78757f382fa6bf2d886cd5a0f865f17a⟧]
           let args_opt = if args.is_null() { None } else { Some(args) };
           let connection_id = conn.and_then(composio_connection_id);
   
@@ -1526,7 +1524,7 @@
 -             has_connection_ref = connection_id.is_some(),
 -             "[flows] tool_call: invoking composio tool"
 -         );
-+[... 4 context line(s) omitted ...]
++[... 4 context line(s) omitted ... ⟦tj:06fe4ddce852f3191ecb805f086240a2⟧]
   
           let response = match kind {
               ComposioClientKind::Backend(client) => {
@@ -1555,7 +1553,7 @@
 - /// [`HttpClient`] adapter over `HttpRequestTool`
 - /// (`src/openhuman/tools/impl/network/http_request.rs`). Allowlist + DNS-rebind
 - /// guard live inside `execute`, so this adapter gets them for free.
-+[... 21 context line(s) omitted ...]
++[... 21 context line(s) omitted ... ⟦tj:071c2e76ff73c14d97553bcf1b46e215⟧]
   ///
   /// **B2:** also routes through the OpenHuman `ApprovalGate` before dispatch
   /// (same rationale/shape as [`OpenHumanTools::invoke`] — closes the Codex P1
@@ -1625,7 +1623,7 @@
 - /// crate), matching the mock's "function body" tests
 - /// (`tinyflows::nodes::integration::code` — e.g. `"source": "return 1;"`).
 - ///
-+[... 62 context line(s) omitted ...]
++[... 62 context line(s) omitted ... ⟦tj:612e93db23ad2aeffc421e08d8e27e7a⟧]
   /// Requires `node`/`python3` on the `PATH` the sandbox backend runs under;
   /// there is no managed toolchain wiring here (unlike `node_exec`'s
   /// `NodeBootstrap`).
@@ -1636,7 +1634,7 @@
 -             &self.config.runtime,
 -             false,
 -         );
-+[... 79 context line(s) omitted ...]
++[... 79 context line(s) omitted ... ⟦tj:eaf89da8fe7c1d752f6c86c356c267ca⟧]
   
 -         // Work dir lives under `action_dir` (the sandbox workspace root). We keep
 -         // its path *relative* to `action_dir` so the run command works on every
@@ -1717,10 +1715,13 @@
           serde_json::from_str(result.stdout.trim())
               .map_err(|e| EngineError::Capability(format!("code output was not valid JSON: {e}")))
  +        }
-@@ -3404,75 +1960,7 @@
-      }
-  }
-  
+@@ -3401,78 +1957,10 @@
+ +        }
+ +
+ +        outcome
+-     }
+- }
+- 
 - /// Wraps user `source` as a function body receiving `input`, executed by Node,
 - /// printing the JSON result (or `null`) to stdout.
 - fn js_harness(source: &str) -> String {
@@ -1771,14 +1772,14 @@
 -     async fn load(&self, key: &str) -> Result<Option<Value>> {
 -         flows::kv_get(&self.config, &self.namespace, key)
 -             .map_err(|e| EngineError::Capability(e.to_string()))
--     }
+      }
 - 
 -     async fn store(&self, key: &str, value: Value) -> Result<()> {
 -         flows::kv_set(&self.config, &self.namespace, key, &value)
 -             .map_err(|e| EngineError::Capability(e.to_string()))
 -     }
-- }
-- 
+  }
+  
 - /// Builds the [`Capabilities`] bundle for one run, wiring each of the five
 - /// host-injected traits to a real OpenHuman adapter (see each adapter above for
 - /// its contract).
@@ -1790,7 +1791,7 @@
 -     let security = Arc::new(SecurityPolicy::from_config(
 -         &config.autonomy,
 -         &config.workspace_dir,
-+[... 69 context line(s) omitted ...]
++[... 69 context line(s) omitted ... ⟦tj:a39c3b6d7b1fb64d05aae97f45d83e66⟧]
           &config.action_dir,
       ));
       let http_config = config.http_request.clone();
@@ -1801,7 +1802,7 @@
 -             config: config.clone(),
 -         }),
 -         tools: Arc::new(OpenHumanTools {
-+[... 3 context line(s) omitted ...]
++[... 3 context line(s) omitted ... ⟦tj:07e3df0db1b73926bb99201d09d54e49⟧]
               config: config.clone(),
           }),
           http: Arc::new(OpenHumanHttp {
@@ -1834,7 +1835,7 @@
 -     tracing::debug!(target: "flows", db = %db_path.display(), "[flows] opening checkpointer");
 -     Ok(Arc::new(
 -         SqliteCheckpointer::<serde_json::Value>::open(&db_path)
-+[... 25 context line(s) omitted ...]
++[... 25 context line(s) omitted ... ⟦tj:10013730aebd25b08b6879265f16150e⟧]
               .with_context(|| format!("Failed to open flows checkpointer: {}", db_path.display()))?,
       ))
   }
@@ -1916,7 +1917,7 @@
 -     OpenHumanHttp {
 -         security,
 -         http_config: crate::openhuman::config::HttpRequestConfig {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:8dc9823ea5041bf9421ccc64e28ebc10⟧]
               allowed_domains,
               ..Default::default()
           },
@@ -2033,7 +2034,7 @@
 - /// installed.
 - #[tokio::test]
 - #[ignore = "requires a `node` binary on PATH"]
-+[... 107 context line(s) omitted ...]
++[... 107 context line(s) omitted ... ⟦tj:761d33581356add65acfcddae4fbd104⟧]
   async fn code_adapter_javascript_passthrough_round_trips_json() {
       let tmp = TempDir::new().unwrap();
       let config = test_config(&tmp);
@@ -2071,7 +2072,7 @@
 -         .await
 -         .expect_err("a non-curated action for a curated toolkit must be rejected");
 -     let msg = err.to_string();
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:6d69e9fa5034650b1818cbca4f968622⟧]
       assert!(
 -         msg.contains("tool not permitted"),
 -         "expected a curation rejection message, got: {msg}"
@@ -2198,11 +2199,11 @@
 -     );
 - 
 -     api_join.abort();
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:0de19b6e72dd69310faf27afece834c0⟧]
       rpc_join.abort();
   }
   
-@@ -4367,80 +2504,9 @@
+@@ -4367,80 +2504,11 @@
   /// Task 4 / #3090: when a web-chat request is sent with
   /// `speak_reply: true`, `run_chat_task` should drive the agent's final text
   /// through `voice::reply_speech::synthesize_reply` after the turn completes.
@@ -2257,7 +2258,7 @@
 -             "token": "e2e-test-jwt",
 -             "user_id": "e2e-user"
 -         }),
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:db535a55c4ec6de32ecc07e4ed8d0e18⟧]
       )
       .await;
 -     assert_no_jsonrpc_error(&store, "store_session");
@@ -2285,5 +2286,7 @@
 -     .await;
       let web_chat_result = assert_no_jsonrpc_error(&web_chat, "channel_web_chat");
 +
-+[compacted tool output — this is a PARTIAL view; the full original (186353 bytes) is available by calling tokenjuice_retrieve with token "64d5880602ab8c31680b452b6e6985a6" (marker ⟦tj:64d5880602ab8c31680b452b6e6985a6⟧)]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (186353 bytes) is available by calling tinyjuice_retrieve with token "64d5880602ab8c31680b452b6e6985a6" (marker ⟦tj:64d5880602ab8c31680b452b6e6985a6⟧)]
 \ No newline at end of file

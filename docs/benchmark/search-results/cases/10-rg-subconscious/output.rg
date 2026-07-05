@@ -20,14 +20,14 @@
 <OPENHUMAN_ROOT>/src/core/all.rs:461:    schemas.extend(crate::openhuman::subconscious::all_subconscious_controller_schemas());
 <OPENHUMAN_ROOT>/src/core/all.rs:463:        crate::openhuman::subconscious_triggers::all_subconscious_triggers_controller_schemas(),
 <OPENHUMAN_ROOT>/src/core/all.rs:615:            "Subconscious-orchestration read surface: chat windows (master/subconscious/per-session), message history, Master steering DMs, read state, and steering status.",
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/all.rs]
+[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/all.rs ⟦tj:fc69931290028502f6fc738d1dbb303e⟧]
 <OPENHUMAN_ROOT>/docs/README.ko.md:68:- **[잠재의식(subconscious)](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: 당신의 세계의 변화를 비교 분석하고, 목표를 진전시키고, 아침 브리핑을 작성하는 백그라운드 루프입니다. 타이핑을 멈춘 후에도 생각은 계속됩니다.
 <OPENHUMAN_ROOT>/src/core/observability.rs:595:        return Some(ExpectedErrorKind::SubconsciousSchemaUnavailable);
 <OPENHUMAN_ROOT>/src/core/observability.rs:794:/// Match subconscious-engine SQLite schema-init failures caused by the host
 <OPENHUMAN_ROOT>/src/core/observability.rs:801:/// See [`ExpectedErrorKind::SubconsciousSchemaUnavailable`].
 <OPENHUMAN_ROOT>/src/core/observability.rs:804:        || lower.contains("failed to open subconscious db");
 <OPENHUMAN_ROOT>/src/core/observability.rs:2197:        ExpectedErrorKind::SubconsciousSchemaUnavailable => {
-[+33 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs]
+[+33 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs ⟦tj:03a9248d60774113767b52be22fd7f25⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/approval-gate.md:96:The gate is **interactive-only**. Background, triage, and cron turns carry no chat context, so there's nobody to answer a prompt. These turns are pre-authorized and pass straight through (no row, no event). Approval is only enforced for live chat turns. (The Subconscious loop has its own, separate escalation-card approval for *unsolicited* writes; see below.)
 <OPENHUMAN_ROOT>/gitbooks/features/approval-gate.md:120:* [Subconscious Loop](subconscious.md): the background loop and its separate escalation approvals.
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:1://! `openhuman subconscious` — CLI for testing and debugging the subconscious loop.
@@ -35,7 +35,7 @@
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:5://!   openhuman subconscious status [--workspace <path>]
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:126:                eprintln!("[subconscious] WARNING: no session token — cloud provider will fail");
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:130:                eprintln!("[subconscious] WARNING: session token read failed: {e}");
-[+29 more match(es) in <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs]
+[+29 more match(es) in <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs ⟦tj:d599fdb16fbc16aaa0985be302c010b9⟧]
 <OPENHUMAN_ROOT>/docs/README.zh-CN.md:68:- **[潜意识](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**：一个后台循环，持续比对你的世界的变化、推进你的目标，并为你撰写晨间简报。在你停止输入之后，思考仍在继续。
 <OPENHUMAN_ROOT>/src/core/mod.rs:26:pub mod subconscious_cli;
 <OPENHUMAN_ROOT>/gitbooks/features/notifications-and-activity.md:70:| **Background Activity** | The subconscious engine: status bar, active tasks, approval cards, and the evaluation ledger   |
@@ -51,20 +51,20 @@
 <OPENHUMAN_ROOT>/src/openhuman/config/ops_tests.rs:1538:        subconscious_provider: Some(" provider-sub ".into()),
 <OPENHUMAN_ROOT>/src/openhuman/config/ops_tests.rs:1553:    assert_eq!(cfg.subconscious_provider.as_deref(), Some("provider-sub"));
 <OPENHUMAN_ROOT>/src/openhuman/config/ops_tests.rs:1567:        subconscious_provider: Some(" ".into()),
-[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/ops_tests.rs]
+[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/ops_tests.rs ⟦tj:bbeb785e44bacbed5624d8152c8297a9⟧]
 <OPENHUMAN_ROOT>/docs/README.ur-pk.md:82:- **[ایک لاشعور](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: ایک پس منظر لوپ جو آپ کی دنیا کا موازنہ کرتا ہے، آپ کے اہداف کو آگے بڑھاتا ہے، اور آپ کی صبح کی بریفنگ لکھتا ہے۔ آپ کے ٹائپ کرنا چھوڑنے کے بعد بھی سوچ جاری رہتی ہے۔
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs:45:    pub subconscious_provider: Option<String>,
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs:85:    pub usage_subconscious: Option<bool>,
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs:239:    if let Some(s) = update.subconscious_provider {
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs:240:        config.subconscious_provider = normalise_provider(s);
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs:418:    if let Some(v) = update.usage_subconscious {
-[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs]
+[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/ops/model.rs ⟦tj:9cc854c7c1f18e9f68436d4a87f275d5⟧]
 <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:187:| 4.2.6 | Background-activity panel (chat-header Background tasks button)    | VU+WD    | `app/src/pages/conversations/hooks/useBackgroundActivity.test.ts`, `app/src/pages/conversations/components/__tests__/BackgroundActivityRows.test.tsx`, `app/test/e2e/specs/chat-background-activity-panel.spec.ts`                                                   | ✅     | View-only panel surfacing this chat's async sub-agents + global cron jobs, subconscious/heartbeat status, and memory syncing; freshness-only "Syncing now" labeling; E2E opens the panel and asserts its sections render and close                                                                                                                                                                                                                                                                                                          |
 <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:288:| 6.3.4 | Subconscious trigger pipeline (normalize → dedupe/rate → gate → queue) | RU+RI | `src/openhuman/subconscious_triggers/`, `tests/subconscious_triggers_e2e.rs`                                                                                                                                                                                                                                                      | ✅     | Event→Trigger normalization for cron/user/composio/sub-agent, dedupe TTL + per-source rate limit, LLM gate over `agent::triage`, priority queue with overflow eviction.                                                                                                                      |
 <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:289:| 6.3.5 | Long-lived subconscious orchestrator session                           | RU    | `src/openhuman/subconscious/session.rs`, `src/openhuman/subconscious/user_thread.rs`                                                                                                                                                                                                                                              | ✅     | Persistent compressed session backed by a reserved thread; `notify_user` handoff to the user-facing thread; mode→autonomy config parity.                                                                                                                                                     |
 <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:290:| 6.3.6 | Multi-party human↔subconscious↔sub-agent conversation                  | RI    | `tests/subconscious_conversation_e2e.rs`                                                                                                                                                                                                                                                                                          | ✅     | Scripted Gate/SessionExecutor seam drives delegate→sub-agent→merge, failure/retry, interleaving, dedupe, and rate-limit scenarios through the real orchestrator.                                                                                                                             |
 <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md:291:| 6.3.7 | Full-stack trigger pipeline with mocked LLM                            | RI    | `tests/subconscious_fullstack_e2e.rs` (feature `e2e-test-support`)                                                                                                                                                                                                                                                                | ✅     | Real `GatePass`+`LongLivedSession`+`Agent`+sub-agent run against a provider-layer mock (no network); promote/drop, persistence, real `spawn_subagent`.                                                                                                                                       |
-[+1 more match(es) in <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md]
+[+1 more match(es) in <OPENHUMAN_ROOT>/docs/TEST-COVERAGE-MATRIX.md ⟦tj:11d5c0093c93ee8afb170e480fcbc10e⟧]
 <OPENHUMAN_ROOT>/docs/README.ja-JP.md:68:- **[サブコンシャス](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: あなたの世界の差分を取り、ゴールを前進させ、モーニングブリーフィングを書くバックグラウンドループです。あなたが入力をやめた後も思考は続きます。
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/loader.rs:382:        "subconscious_provider": config.subconscious_provider,
 <OPENHUMAN_ROOT>/src/openhuman/config/ops/agent.rs:522:        "subconscious_enabled": level.subconscious_enabled(),
@@ -80,19 +80,19 @@
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:13:impl SubconsciousKind {
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:23:pub fn make_subconscious(kind: SubconsciousKind, config: &Config) -> SubconsciousInstance;
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md:26:`make_subconscious` is the *only* place profiles are constructed — tests and
-[+8 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md]
+[+8 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-4-factory-registry-rpc.md ⟦tj:7a0bab9944bff2c09255e6b3e50bef29⟧]
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:1://! Heartbeat, cron, and subconscious mode configuration.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:6:/// Subconscious operating mode — controls tool access and tick frequency.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:9:pub enum SubconsciousMode {
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:10:    /// Disabled — the subconscious loop does not run.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs:26:impl SubconsciousMode {
-[+44 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs]
+[+44 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/heartbeat_cron.rs ⟦tj:4b12a51f0ea076d2b3d041546fd85496⟧]
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:1:# Subconscious factory — one reflection engine, many worlds
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:3:Redesign `src/openhuman/subconscious/` around the split-brain spec
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:4:(`state (1).md`, "Autonomous Closed-Loop LangGraph Harness"): the subconscious
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:9:instantiate a subconscious per *world*:
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md:34:| Subconscious LLM / steering | `orchestration/steering.rs` + `ops::run_orchestration_review` — **but invoked inline from `subconscious::engine::tick_inner`** |
-[+18 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md]
+[+18 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/README.md ⟦tj:0867478e135e454fe63b4a2a45983c26⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/model-routing/local-ai.md:22:| **Subconscious**          | small chat model                  | `src/openhuman/subconscious/executor.rs` - background evaluation loop.                                                  |
 <OPENHUMAN_ROOT>/gitbooks/features/model-routing/local-ai.md:71:| `local_ai.usage.subconscious`        | `false`  | Legacy preset/migration flag for the subconscious loop.                  |
 <OPENHUMAN_ROOT>/gitbooks/features/model-routing/local-ai.md:82:The legacy `local_ai.usage.*` booleans are kept for presets and migration compatibility; they do not override the unified provider fields after migration. For deterministic routing, either set the workload provider field explicitly, or leave it unset / set it to `cloud` to force the default cloud route. The same provider-string pattern is used by `agentic_provider`, `coding_provider`, `memory_provider`, `embeddings_provider`, `heartbeat_provider`, `learning_provider`, and `subconscious_provider`.
@@ -102,32 +102,32 @@
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-2-memory-profile.md:18:| `run_agent` (slim agent, `hint:subconscious`, Full autonomy, mode → iteration caps, user-message contract) | `MemoryProfile::reflect` |
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-2-memory-profile.md:37:- `reflect`: returns `Reflection::Acted { response_chars }`; the SubconsciousMode
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-2-memory-profile.md:45:`mod.rs` keeps exporting `SubconsciousEngine` (alias), `SubconsciousStatus`,
-[+2 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-2-memory-profile.md]
+[+2 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-2-memory-profile.md ⟦tj:a8d1961a7e434da10e73aef42573446a⟧]
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:1:# Phase 7 — UI: see and interact with both subconscious kinds
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:4:triggerable in the app — in the **Subconscious tab** (both kinds' health and
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:9:orchestration tab already renders the pinned Subconscious chat window
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:10:(`chat.kind === 'subconscious'` in `TinyPlaceOrchestrationTab.tsx`), which is
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md:13:## 7.1 Types + clients (`app/src/utils/tauriCommands/subconscious.ts`)
-[+20 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md]
+[+20 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-7-ui.md ⟦tj:799257382b7c189a6d0474b3fe262564⟧]
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/orchestration.rs:70:    /// Cadence (minutes) of the `tinyplace` subconscious steering review — the
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:10:| ported | all of today's `engine_tests.rs` against `SubconsciousInstance<MemoryProfile>` | 2 |
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:13:| factory | `enabled_kinds` gating per config; `make_subconscious` per kind | 4 |
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:17:| json_rpc_e2e | extend `tests/json_rpc_e2e.rs`: `subconscious.status` shape incl. `instances` | 4 |
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:25:- `src/openhuman/subconscious/README.md` — rewrite around the factory: the
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md:31:  driven by the tinyplace subconscious instance, not inlined in the memory
-[+6 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md]
+[+6 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-5-tests-and-docs.md ⟦tj:4c79d83c28542e102b7bdc1e557fbe86⟧]
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:1:# Phase 1 — `SubconsciousProfile` trait + generic instance runner
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:4:this phase the existing `SubconsciousEngine` still works exactly as today; the
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:10:/// One "world" a subconscious can be instantiated over.
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:12:pub trait SubconsciousProfile: Send + Sync {
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md:82:## 1.2 `engine.rs` — `SubconsciousInstance` (generic runner **as a tinyagents graph**)
-[+21 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md]
+[+21 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-1-profile-and-engine.md ⟦tj:89458d422a90d0276349a9b1e56c440f⟧]
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:3:Goal: make the tiny.place/orchestration subconscious a first-class instance
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:25:  `create_chat_provider("subconscious")` chat, `SubconsciousTainted` origin,
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:27:  (`insert_steering_directive`, supersede prior, `record_subconscious_directive`
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:28:  into the local Subconscious window + event publish). Returns
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md:36:- `origin`: always `SubconsciousTainted`.
-[+3 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md]
+[+3 more match(es) in <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-3-tinyplace-profile.md ⟦tj:d3bc8949a54f5d47b9706e38332c4800⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/memory-diff.md:121:* [Subconscious Loop](../subconscious.md) - the background loop that reviews new memory changes for actionable items.
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-6-tinyagents-reuse.md:3:The subconscious runner (phase 1.2) is built on `tinyagents::graph` — the same
 <OPENHUMAN_ROOT>/docs/plans/subconscious-factory/phase-6-tinyagents-reuse.md:78:| 3 | Checkpoint GC / retention | **Already exists — adopted now.** `Checkpointer` already exposes `prune(thread_id, keep_last)` and `delete_thread(thread_id)` (default trait methods + sqlite/file impls, `checkpoint/mod.rs`). No upstream PR needed. `SubconsciousInstance::run_graph` now calls `delete_thread` on the tick's unique thread after the run returns, so `graph_checkpoints.db` stays bounded (test: `completed_ticks_leave_no_checkpoint_threads`). |
@@ -137,7 +137,7 @@
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/local_ai.rs:37:            subconscious: false,
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/local_ai.rs:262:    /// **Deprecated** — read from `Config::workload_uses_local("subconscious")`.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/local_ai.rs:263:    #[deprecated(note = "Use Config::workload_uses_local(\"subconscious\")")]
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/local_ai.rs]
+[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/local_ai.rs ⟦tj:c913a195046ae5a89c0fa31cbd9b3ab8⟧]
 <OPENHUMAN_ROOT>/app/test/e2e/specs/navigation-settings-panels.spec.ts:62:    markers: ['Intelligence', 'Memory', 'Subconscious', 'Graph', 'Settings'],
 <OPENHUMAN_ROOT>/gitbooks/features/integrations/triggers.md:92:- **`escalate`** is the heavy path. When the Triage agent decides the trigger needs real work, it hands off to the Orchestrator with a self-contained task description. The orchestrator has access to your full skill surface, tools, memory, and the [Subconscious Loop](../subconscious.md) outputs. From there it might:
 <OPENHUMAN_ROOT>/gitbooks/features/integrations/triggers.md:138:* [Subconscious Loop](../subconscious.md), the background loop that uses trigger context and memory to plan ahead.
@@ -159,7 +159,7 @@
 <OPENHUMAN_ROOT>/gitbooks/features/subconscious.md:172:Lives under **Intelligence → Subconscious**.
 <OPENHUMAN_ROOT>/gitbooks/features/subconscious.md:192:The subconscious does more than housekeep. It **steers**. When your agent participates in [tiny.place orchestration sessions](tinyplace.md) (agent-to-agent collaboration), inbound traffic runs through a split-brain wake graph:
 <OPENHUMAN_ROOT>/gitbooks/features/subconscious.md:198:On its periodic tick, the subconscious reviews that compressed history and world diff and injects a short, dense **steering directive** (capped at ~900 characters, expiring after ~20 reasoning cycles) into the reasoning core's system prompt. This keeps the always-on layer aligned with *your* goals. The subconscious itself is strictly offline: it never contacts anyone and never takes external actions; ticks that reacted to external changes run **tainted**, so the approval gate refuses external-effect tools.
-[+1 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/subconscious.md]
+[+1 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/subconscious.md ⟦tj:630b7ad367d6547013cb184bedb2bde4⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/native-tools/agent-coordination.md:44:* [Subconscious Loop](../subconscious.md) - the always-on background agent thread.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/activity_level.rs:4://! cadence, heartbeat/subconscious toggles, and token budgets.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/activity_level.rs:14:/// - Heartbeat & subconscious inference (disabled / enabled)
@@ -170,7 +170,7 @@
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/types.rs:401:    pub subconscious_provider: Option<String>,
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/types.rs:612:    /// `"heartbeat"`, `"learning"`, `"subconscious"`.
 <OPENHUMAN_ROOT>/src/openhuman/config/schema/types.rs:631:            "subconscious" => self.subconscious_provider.as_deref(),
-[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/types.rs]
+[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/types.rs ⟦tj:cbe142f88b840cbb148e266beb15dcd0⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/orchestration.md:31:Inbound traffic hits a **fast reflex agent** that triages in seconds and hands a deep **reasoning core** a concise brief; the core does the multi-step work and delegates to workers. The [subconscious loop](subconscious.md) reviews compressed session history and injects steering directives, keeping the always-on layer aligned with your goals, while 20:1 compression keeps week-long sessions bounded.
 <OPENHUMAN_ROOT>/gitbooks/features/orchestration.md:52:| Always-on | None | Split-brain reflex + reasoning core, subconscious steering |
 <OPENHUMAN_ROOT>/gitbooks/features/orchestration.md:57:* [Workflows](workflows.md) · [Subconscious Loop](subconscious.md) · [tiny.place Agent Economy](tinyplace.md)
@@ -193,13 +193,13 @@
 <OPENHUMAN_ROOT>/scripts/test-subconscious-ticks.sh:23:echo "=== Subconscious Loop E2E Test ==="
 <OPENHUMAN_ROOT>/scripts/test-subconscious-ticks.sh:28:OPENHUMAN_CORE_PORT="$RPC_PORT" OPENHUMAN_CORE_TOKEN="$RPC_TOKEN" "$CORE_BIN" serve > /tmp/subconscious-test.log 2>&1 &
 <OPENHUMAN_ROOT>/scripts/test-subconscious-ticks.sh:81:echo "  PHASE 2: Subconscious Tick 1"
-[+5 more match(es) in <OPENHUMAN_ROOT>/scripts/test-subconscious-ticks.sh]
+[+5 more match(es) in <OPENHUMAN_ROOT>/scripts/test-subconscious-ticks.sh ⟦tj:966c9be4b4efdd1d485a70a84e4b66fc⟧]
 <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md:1:# Subconscious orchestration layer
 <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md:7:chat model, and runs an offline **subconscious** that reflects on how the world
 <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md:11:Design spec: [`docs/arch-subconscious.md`](../../../docs/arch-subconscious.md) and
 <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md:12:the staged plan under [`docs/plans/subconscious-orchestration/`](../../../docs/plans/subconscious-orchestration).
 <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md:100:  directive, last subconscious tick, ingest-cursor lag, and last error. Message
-[+7 more match(es) in <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md]
+[+7 more match(es) in <OPENHUMAN_ROOT>/gitbooks/developing/architecture/orchestration.md ⟦tj:c4dd5494a63baaf347354d5cd58340d7⟧]
 <OPENHUMAN_ROOT>/gitbooks/developing/README.md:64:For features still being built, the [Subconscious Loop](../features/subconscious.md) page covers the background task evaluation system end-to-end.
 <OPENHUMAN_ROOT>/vendor/tinycortex/src/memory/conversations/store_tests.rs:386:            id: "legacy-subconscious-thread".to_string(),
 <OPENHUMAN_ROOT>/vendor/tinycortex/src/memory/conversations/store_tests.rs:387:            title: "Legacy Subconscious Chat".to_string(),
@@ -216,25 +216,25 @@
 <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:27:use openhuman_core::openhuman::config::schema::SubconsciousMode;
 <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:33:use openhuman_core::openhuman::subconscious::LongLivedSession;
 <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs:34:use openhuman_core::openhuman::subconscious_triggers::{normalize, GatePass};
-[+7 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs]
+[+7 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_fullstack_e2e.rs ⟦tj:ebff7917feab8d148ef1c5781b86a7ef⟧]
 <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:885:    config.subconscious_provider = Some("ollama:subconscious-local".into());
 <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:900:    assert!(config.workload_uses_local("subconscious"));
 <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:1093:            subconscious: true,
 <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:1106:        assert!(local_ai.use_local_for_subconscious());
 <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs:2945:            "subconscious_provider": "worker-a-cloud:subconscious"
-[+1 more match(es) in <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs]
+[+1 more match(es) in <OPENHUMAN_ROOT>/tests/config_auth_app_state_connectivity_e2e.rs ⟦tj:eabd795348f74021197c23799035107d⟧]
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:5559:async fn json_rpc_subconscious_status_exposes_instances_and_trigger_takes_kind() {
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:5578:    // ── subconscious.status: legacy top-level fields + instances[] ──────────
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:5579:    let status = post_json_rpc(&rpc_base, 1101, "openhuman.subconscious_status", json!({})).await;
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:5580:    let result = assert_no_jsonrpc_error(&status, "subconscious_status");
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:5625:    let trig_result = assert_no_jsonrpc_error(&trig, "subconscious_trigger");
-[+3 more match(es) in <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs]
+[+3 more match(es) in <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs ⟦tj:3136cbb3d192ada0bf10853a5925a01b⟧]
 <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:1://! Multi-party conversation e2e: **human ↔ subconscious orchestrator ↔ sub-agent**.
 <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:8://! - **human → subconscious**: a `ChannelInboundMessage` is normalized,
 <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:10://! - **subconscious → sub-agent**: the scripted session "spawns" a sub-agent
 <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:13://! - **sub-agent → subconscious**: that conclusion is normalized, gated, and
 <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs:15://! - **subconscious → human**: the session calls the real `notify_user`,
-[+12 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs]
+[+12 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_conversation_e2e.rs ⟦tj:32c8d211f385a7e205f97eaaa594f735⟧]
 <OPENHUMAN_ROOT>/src/openhuman/credentials/bus.rs:15://!    subconscious). Idempotent — repeat events are safe.
 <OPENHUMAN_ROOT>/src/openhuman/memory_queue/ops.rs:14:/// Read by the first-person / subconscious retrieval layer so an empty
 <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs:455:    // the per-user path, seed the subconscious defaults and spawn the
@@ -242,13 +242,13 @@
 <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs:460:        tracing::warn!(error = %e, "[subconscious] post-login bootstrap failed");
 <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs:461:        logs.push(format!("subconscious bootstrap warning: {e}"));
 <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs:463:        logs.push("subconscious engine bootstrapped".to_string());
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs]
+[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/credentials/ops.rs ⟦tj:e406f0f1e876538afc543d43b1db80fd⟧]
 <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs:1://! End-to-end scenario simulation for the subconscious **trigger pipeline**.
 <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs:18://! `cargo test --test subconscious_triggers_e2e -- --nocapture`
 <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs:24:use openhuman_core::openhuman::subconscious::{
 <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs:27:use openhuman_core::openhuman::subconscious_triggers::gate::{apply_budget, map_triage_to_gate};
 <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs:28:use openhuman_core::openhuman::subconscious_triggers::{
-[+7 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs]
+[+7 more match(es) in <OPENHUMAN_ROOT>/tests/subconscious_triggers_e2e.rs ⟦tj:798a0d225f8d5bcfb7b6352b525f0a29⟧]
 <OPENHUMAN_ROOT>/src/openhuman/credentials/README.md:8:- On login: activate the user-scoped openhuman directory, purge pre-login (anonymous) conversation threads on first activation, bind memory/conversation persistence, bootstrap subconscious, and start login-gated services (local AI, voice, dictation, screen intelligence, autocomplete).
 <OPENHUMAN_ROOT>/src/openhuman/credentials/README.md:9:- On logout / session-expiry: remove the JWT, clear the active-user marker, stop login-gated services, reset subconscious, and flip the scheduler-gate signed-out override.
 <OPENHUMAN_ROOT>/src/openhuman/credentials/README.md:90:- `crate::openhuman::subconscious` — post-login bootstrap / user-switch reset.
@@ -265,7 +265,7 @@
 <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:369:        // is allowed through unchanged; tainted subconscious — a tick whose
 <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:412:                source: TrustedAutomationSource::Subconscious,
 <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs:435:                            "{POLICY_DENIED_MARKER} Tool '{tool_name}' rejected: subconscious turn \
-[+11 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs]
+[+11 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/approval/gate.rs ⟦tj:11b02cb4a67f20c6297cfd7f9b9adbf4⟧]
 <OPENHUMAN_ROOT>/src/openhuman/screen_intelligence/helpers.rs:213:        // baseline subconscious-trust behaviour.
 <OPENHUMAN_ROOT>/src/openhuman/scheduler_gate/README.md:59:- **Background workers / pipelines**: `memory/schema.rs`, `memory_queue/worker.rs`, `memory_tree/tree/rpc.rs`, `memory_sync/composio/periodic.rs`, `subconscious/engine.rs`, `learning/reflection.rs`, `autocomplete/core/engine.rs`, `task_sources/route.rs`, `agent/task_dispatcher.rs`, `agent/triage/evaluator.rs`.
 <OPENHUMAN_ROOT>/app/src/services/api/__tests__/aiSettingsApi.test.ts:98:      subconscious_provider: null,
@@ -277,5 +277,6 @@
 <OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:6:const BRAIN_SUBCONSCIOUS = '/brain?tab=subconscious';
 <OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:12:    subconscious_mode: 'off',
 <OPENHUMAN_ROOT>/app/test/playwright/specs/subconscious-triggers.spec.ts:18:  await bootAuthenticatedPage(page, USER_ID, BRAIN_SUBCONSCIOUS);
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (79575 bytes) is available by calling tokenjuice_retrieve with token "6d0a8498883ba6d19d924413808e011c" (marker ⟦tj:6d0a8498883ba6d19d924413808e011c⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (79575 bytes) is available by calling tinyjuice_retrieve with token "6d0a8498883ba6d19d924413808e011c" (marker ⟦tj:6d0a8498883ba6d19d924413808e011c⟧)]

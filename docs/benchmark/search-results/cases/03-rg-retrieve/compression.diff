@@ -13,7 +13,7 @@
 -<OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs:62:        total_chunks_retrieved: resp.hits.len(),
 -<OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs:72:        benchmark.total_chunks_retrieved,
 -<OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs:131:            total_chunks_retrieved: 5,
-+[+4 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs]
++[+4 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs ⟦tj:47c859c3851e848ac92d2679987c9629⟧]
  <OPENHUMAN_ROOT>/src/openhuman/tinyplace/schemas.rs:534:            "The listing ID to retrieve bids for.",
  <OPENHUMAN_ROOT>/src/openhuman/tinyplace/schemas.rs:1409:            "The agent whose follow stats to retrieve.",
  <OPENHUMAN_ROOT>/src/openhuman/tinyplace/schemas.rs:1495:            "The feedback item ID to retrieve.",
@@ -26,7 +26,7 @@
 -<OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:112:    let resp = fast_retrieve(
 -<OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:115:        FastRetrieveOptions::default(),
 -<OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:126:    let resp = fast_retrieve(&cfg, "anything at all", FastRetrieveOptions::default())
-+[+5 more match(es) in <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs]
++[+5 more match(es) in <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs ⟦tj:8bfbabe36d827b8b57f85ce8ece46dfd⟧]
  <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:48:**Why local memory *is* the privacy design.** Most assistants trade privacy for context, because more context means more of your raw data uploaded. OpenHuman does the heavy work (chunking, scoring, summarizing) inside the local core, so the model only ever sees what you asked it to retrieve, at the moment you ask. Locality is the privacy feature, not a setting bolted on top.
  <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:82:* [ ] Are you comfortable that model turns send *retrieved snippets*, not your whole memory?
  <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:88:| "OpenHuman uploads my whole memory to answer." | It sends only what it retrieves for that specific turn. |
@@ -43,22 +43,18 @@
 -<OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:220:            BTreeSet::from(["capture", "retrieve", "list", "dismiss"])
 -<OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:231:    fn retrieve_schema_has_query_and_tools_inputs() {
 -<OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs:232:        let schema = schemas("retrieve");
-+[+9 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs]
++[+9 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_experience/schemas.rs ⟦tj:1bb534e1854d72aef1ccef47aa0b000c⟧]
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/ops.rs:14:pub struct RetrieveParams {
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/ops.rs:58:pub async fn retrieve(params: RetrieveParams) -> Result<RpcOutcome<Vec<ExperienceHit>>, String> {
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/ops.rs:61:        .retrieve(ExperienceQuery {
-@@ -71,13 +57,12 @@
- <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/orchestrator/prompt.md:184:(`delegate_to_integrations_agent` with `toolkit: "gmail"`. Do **not** start with `retrieve_memory`; the user is asking about live inbox state.)
- <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/orchestrator/prompt.md:193:`retrieve_memory` walks the user's **already-ingested** email/chat/document history. It is historical, not a live API. Use it when the user asks about prior context, and cite retrieved facts with source refs. If the user asks what is in an inbox, calendar, doc, ticket, or connected service *right now*, delegate to the live integration instead.
- <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/orchestrator/prompt.md:197:When your answer is informed by retrieved memory, cite it with footnote markers:
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:42:6. Append marker      ⟦tj:<hash>⟧ footer so the agent can retrieve the full original
+@@ -75,9 +61,8 @@
  <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:55:5. **CCR offload.** For **lossy** compressions where the original is large enough (`ccr_min_tokens`, default ~500 tokens), the full original is stowed in the **Compress-Cache-Retrieve** store so nothing is permanently lost.
  <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:93:Lossy compression would normally mean throwing data away. TokenJuice instead **offloads** the full original into the **Compress-Cache-Retrieve (CCR)** store and leaves a breadcrumb (`vendor/tinyjuice/src/cache/`).
  <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:97:* **The marker:** compacted output ends with a footer like `[compacted tool output — PARTIAL view; full original available via tokenjuice_retrieve with token "…"]` carrying the `⟦tj:<hash>⟧` token.
- <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:98:* **Retrieval tool:** the agent calls the read-only **`tokenjuice_retrieve`** tool with that token (optionally a byte/line `range`) to pull back the full original or a slice. The token is an unguessable SHA-256 digest.
+-<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:98:* **Retrieval tool:** the agent calls the read-only **`tokenjuice_retrieve`** tool with that token (optionally a byte/line `range`) to pull back the full original or a slice. The token is an unguessable SHA-256 digest.
 -<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:134:* **RPC** (`openhuman.tokenjuice_*`): `detect`, `compress` (dry-run the pipeline), `settings_get` / `settings_update` (live partial patch), `cache_stats`, `retrieve`, `savings_stats`, `savings_reset`.
  <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:135:* **Agent tool:** `tokenjuice_retrieve` (read-only) recovers offloaded originals.
-+[+2 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md]
++[+2 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md ⟦tj:6e87f0b6bf0bc6e3921acf4de804cc05⟧]
  <OPENHUMAN_ROOT>/tests/memory_sync_round23_raw_coverage_e2e.rs:183:        "SLACK_RETRIEVE_DETAILED_USER_INFORMATION" => {
  <OPENHUMAN_ROOT>/tests/memory_sync_round23_raw_coverage_e2e.rs:310:            "SLACK_RETRIEVE_DETAILED_USER_INFORMATION",
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/README.md:9:- Retrieve and rank experiences for a given task query via lexical/tool/tag overlap scoring.
@@ -68,28 +64,27 @@
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/README.md:44:| `agent_experience.retrieve` | `query` (req), `tools[]`, `tags[]`, `agent_id?`, `entrypoint?`, `max_hits?` (default 5) | `hits: ExperienceHit[]` ranked. |
 -<OPENHUMAN_ROOT>/src/openhuman/agent_experience/README.md:69:- `put` preserves the original `created_at_ms` on update, stamps `updated_at_ms`, and redacts `task_summary` / `lesson` / `reuse_hint` / `avoid_hint` before write. Dismiss is a soft flag (`dismissed = true`), retained in `list`, filtered out of `retrieve`.
 -<OPENHUMAN_ROOT>/src/openhuman/agent_experience/README.md:84:- `src/openhuman/agent/harness/session/turn.rs` — imports from this module and `inject_agent_experience_context` to retrieve + prepend the experience block into the enriched user message before a turn runs.
-+[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_experience/README.md]
++[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_experience/README.md ⟦tj:bda8061e7696092bd65402b328406129⟧]
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/store.rs:114:    pub async fn retrieve(&self, query: ExperienceQuery) -> Result<Vec<ExperienceHit>, String> {
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/store.rs:344:    async fn retrieve_ranks_tool_and_query_matches() {
  <OPENHUMAN_ROOT>/src/openhuman/agent_experience/store.rs:368:            .retrieve(ExperienceQuery {
-@@ -182,19 +166,8 @@
- <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:4://! with a compacted view and a `retrieve_tool_output("<hash>")` sentinel,
+@@ -183,18 +167,7 @@
  <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:14:pub struct RetrieveToolOutputTool;
  <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:16:impl RetrieveToolOutputTool {
--<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:22:impl Default for RetrieveToolOutputTool {
+ <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:22:impl Default for RetrieveToolOutputTool {
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:29:impl Tool for RetrieveToolOutputTool {
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:31:        "retrieve_tool_output"
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:35:        "Retrieve the full, original text of a tool result that was compacted to \
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:37:         `retrieve_tool_output(\"a1b2c3d4e5f6\")`, call this with that hash to get \
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:48:                    "description": "The hash from a retrieve_tool_output(\"…\") marker."
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:67:                "retrieve_tool_output: missing required 'hash' argument".to_string(),
- <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:71:        match crate::openhuman::tokenjuice::cache::retrieve(hash) {
+-<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:71:        match crate::openhuman::tokenjuice::cache::retrieve(hash) {
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:74:                    "[compaction][ccr] retrieved hash={} bytes={}",
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:81:                "retrieve_tool_output: no cached original for hash '{hash}' \
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:94:    async fn retrieves_offloaded_original() {
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:97:        let tool = RetrieveToolOutputTool::new();
 -<OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs:105:        let tool = RetrieveToolOutputTool::new();
-+[+12 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs]
++[+12 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tools/impl/system/retrieve_tool_output.rs ⟦tj:7bd376e4857808b75f51d2e61c55cac5⟧]
  <OPENHUMAN_ROOT>/src/openhuman/artifacts/README.md:10:- Retrieve a single artifact by ID, returning metadata plus a computed `absolute_path` (`get_artifact` / `ai_get_artifact`).
  <OPENHUMAN_ROOT>/src/openhuman/artifacts/store.rs:230:/// Retrieve a single artifact by ID.
  <OPENHUMAN_ROOT>/src/openhuman/artifacts/tools.rs:100:/// Retrieve a single artifact's metadata plus its absolute on-disk path.
@@ -103,7 +98,7 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:332:            append_retrieved_context: retrieved,
 -<OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:334:                "agent_execution: retrieved long-term context".to_string(),
 -<OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs:440:fn retrieve_context(memory: &[MemoryRecord], query: &str) -> Vec<String> {
-+[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs]
++[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/autonomous_loop.rs ⟦tj:0f91dfd31b3e69802ae9a7b159d1ba2b⟧]
  <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:37:- Reasoning layer: `agent_execution` retrieves from long-term memory, simulates
  <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:79:- `retrieved_context`: memory traces retrieved for the current run.
  <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:98:1. retrieve historical traces before execution;
@@ -111,7 +106,7 @@
  <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:136:- `retrieve_context`: stand-in for vector DB retrieval.
 -<OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:143:calls and a real `Retriever`, while keeping the same graph topology, state
 -<OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md:150:- normal execution retrieves memory and holds a single diff below the gate
-+[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md]
++[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/examples/subconscious_loop/README.md ⟦tj:341d11d164a67847ca6c14015fbb2eec⟧]
  <OPENHUMAN_ROOT>/src/openhuman/memory_sync/composio/providers/notion/tools.rs:47:    // ── Read: query & retrieve ──────────────────────────────────────
  <OPENHUMAN_ROOT>/src/openhuman/memory_sync/composio/providers/notion/tools.rs:61:        slug: "NOTION_RETRIEVE_PAGE",
  <OPENHUMAN_ROOT>/src/openhuman/memory_sync/composio/providers/notion/tools.rs:65:        slug: "NOTION_RETRIEVE_COMMENT",
@@ -121,7 +116,7 @@
  <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:143:            function: "retrieve",
 -<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:283:fn handle_retrieve(params: Map<String, Value>) -> ControllerFuture {
 -<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:286:        match cache::retrieve(&token) {
-+[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs]
++[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs ⟦tj:6ef88e3f98fc92d24633cf26d48b9a81⟧]
  <OPENHUMAN_ROOT>/src/openhuman/memory_store/tools/mod.rs:1://! Raw search/retrieve tools surfaced to the agent harness.
  <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/stream/types.rs:117:/// [`StreamSink::drain`] to retrieve and clear all buffered chunks.
  <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:6://! JSON-RPC controllers, settings patching, retrieve tool integration, savings
@@ -144,7 +139,7 @@
 -<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:143:    async fn retrieves_line_range() {
 -<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:146:        let tool = TokenjuiceRetrieveTool::new();
 -<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:157:        let tool = TokenjuiceRetrieveTool::new();
-+[+15 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs]
++[+15 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs ⟦tj:0031ec3c9a558483e4aa917f2b4ce04f⟧]
  <OPENHUMAN_ROOT>/src/openhuman/agent_meetings/schemas.rs:389:        description: "Retrieve stored per-event join-policy overrides for a batch of calendar \
  <OPENHUMAN_ROOT>/src/openhuman/agent_meetings/store.rs:143:/// Retrieve a session by its unique ID. Returns `None` if not found.
  <OPENHUMAN_ROOT>/src/openhuman/agent_meetings/store.rs:274:/// Retrieve the join-policy override for a specific calendar event. Returns
@@ -161,7 +156,7 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:227:    /// Returns the embedding model backing this retriever.
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:232:    /// Returns the vector store backing this retriever.
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs:269:    pub async fn retrieve(&self, query: &str, top_k: usize) -> Result<Vec<ScoredDoc>> {
-+[+9 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs]
++[+9 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/mod.rs ⟦tj:83300e496fd4ed9bc915f0432c96a3e4⟧]
  <OPENHUMAN_ROOT>/src/openhuman/whatsapp_data/schemas.rs:130:                required_string("chat_id", "JID of the chat to retrieve messages for."),
  <OPENHUMAN_ROOT>/src/openhuman/agent/harness/memory_context.rs:49:    if let Ok(entries) = crate::openhuman::tinyagents::retriever::recall_through_facade(
  <OPENHUMAN_ROOT>/src/openhuman/agent/harness/memory_context.rs:84:    if let Ok(entries) = crate::openhuman::tinyagents::retriever::recall_through_facade(
@@ -175,7 +170,7 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/types.rs:259:/// retriever
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/types.rs:266:/// let hits = retriever.retrieve("cats are great", 1).await.unwrap();
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/types.rs:271:pub struct Retriever {
-+[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/types.rs]
++[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/types.rs ⟦tj:60da3d24e7e68f4adac34f9d30823d84⟧]
  <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/middleware.md:330:- `before_model`: compress old messages, retrieved context, examples, or tool
  <OPENHUMAN_ROOT>/src/openhuman/agent/harness/tool_filter.rs:121:        Verb::Read => &["read", "get", "fetch", "show", "view", "see", "retrieve"],
  <OPENHUMAN_ROOT>/src/openhuman/agent/harness/tool_filter.rs:149:            "GET", "FETCH", "SHOW", "READ", "RETRIEVE", "DESCRIBE", "CHECK",
@@ -195,7 +190,7 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:251:    let retriever = Retriever::new(
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:255:    assert_eq!(retriever.model().dimensions(), 8);
 -<OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs:256:    let _ = retriever.store();
-+[+12 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs]
++[+12 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/src/harness/embeddings/test.rs ⟦tj:6a17bcc8189233fdde8b85e06ea5203e⟧]
  <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:6:stores, retrievers, indexing records, retrieval events, and deterministic test
  <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:22:- retriever interface:
  <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:23:  <https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/retrievers.py>
@@ -219,7 +214,7 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:402:Retrievers return candidate documents. Prompt and middleware code decide how to
 -<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:405:- run one or more retrievers before a model call
 -<OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md:413:The harness must preserve provenance so model outputs can cite retrieved
-+[+18 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md]
++[+18 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/embeddings.md ⟦tj:b3d9f7768398ab297aa956394cbb5cfb⟧]
  <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/harness/context.md:139:1. drop nonessential retrieved context
  <OPENHUMAN_ROOT>/src/openhuman/agent/harness/tool_filter_tests.rs:24:             "Retrieves a specific pull request by number."),
  <OPENHUMAN_ROOT>/src/openhuman/whatsapp_data/types.rs:109:    /// JID of the chat to retrieve messages for.
@@ -234,7 +229,7 @@
 -<OPENHUMAN_ROOT>/src/openhuman/tinyagents/retriever.rs:392:        let retriever = build_retriever(Arc::new(StubProvider));
 -<OPENHUMAN_ROOT>/src/openhuman/tinyagents/retriever.rs:393:        retriever
 -<OPENHUMAN_ROOT>/src/openhuman/tinyagents/retriever.rs:401:        let hits = retriever.retrieve("cats", 1).await.expect("retrieve");
-+[+7 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tinyagents/retriever.rs]
++[+7 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tinyagents/retriever.rs ⟦tj:409c10894ad8c379192778c4d18cacdb⟧]
  <OPENHUMAN_ROOT>/src/openhuman/memory_tree/nlp/mod.rs:1://! Query-side NLP for the deterministic (E2GraphRAG) retriever.
  <OPENHUMAN_ROOT>/vendor/tinyagents/docs/modules/graph/parallel-agents-forking.md:18:- fan out over multiple tools or retrievers while reusing cached model/tool
  <OPENHUMAN_ROOT>/src/openhuman/threads/title.rs:333:            title_from_user_message("Can you retrieve my latest 5 emails and summarize them?")
@@ -251,7 +246,7 @@
 -<OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:398:            FastRetrieveOptions::default(),
 -<OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:417:        let resp = fast_retrieve(
 -<OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs:420:            FastRetrieveOptions::default(),
-+[+9 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs]
++[+9 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/memory_tree/retrieval/fast.rs ⟦tj:32d10f0a61817bd14b0f4f02af16c116⟧]
  <OPENHUMAN_ROOT>/src/openhuman/webhooks/bus.rs:79:        // Retrieve the router from the global socket manager.
  <OPENHUMAN_ROOT>/src/openhuman/keyring/backend.rs:29:    /// Retrieve a secret.  Returns `Ok(None)` when no entry exists.
  <OPENHUMAN_ROOT>/src/openhuman/webhooks/ops.rs:43:/// Retrieve the global webhook router, returning an error if the socket
@@ -282,7 +277,7 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:138:    let hits = retriever
 -<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:139:        .retrieve("kittens love to nap in the sun", 1)
 -<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs:141:        .expect("retrieve succeeds");
-+[+23 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs]
++[+23 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_embeddings.rs ⟦tj:161ab50c6728efb703018557ef9b4485⟧]
  <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_harness_provider_contracts.rs:477:            retrieved_at: "2026-06-29T00:00:00Z".into(),
  <OPENHUMAN_ROOT>/src/openhuman/composio/tools/direct.rs:716:         use query='from:me' or query='label:SENT' to retrieve sent emails, query='label:INBOX' for inbox, \
  <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs:41:  start retrieve
@@ -293,14 +288,15 @@
 -<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs:139:    assert_eq!(retrieve.kind, "subgraph");
 -<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs:140:    assert_eq!(retrieve.model.as_deref(), Some("retrieval"));
 -<OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs:141:    assert_eq!(retrieve.routing, Routing::Next("agent".to_string()));
-+[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs]
++[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_registry_binding.rs ⟦tj:f80325ee4e78af8409bc3d5ca0f1c092⟧]
  <OPENHUMAN_ROOT>/vendor/tinyagents/tests/e2e_public_api_contracts.rs:74:        .push_volatile("retrieval", vec![Message::system("retrieved context")])
  <OPENHUMAN_ROOT>/app/src-tauri/vendor/tauri-plugin-notification/dist-js/index.d.ts:324: * Retrieves the list of pending notifications.
  <OPENHUMAN_ROOT>/app/src-tauri/vendor/tauri-plugin-notification/dist-js/index.d.ts:366: * Retrieves the list of active notifications.
-@@ -498,3 +371,5 @@
+@@ -498,3 +371,6 @@
  <OPENHUMAN_ROOT>/app/src-tauri/vendor/tauri-plugin-notification/dist-js/index.cjs:197: * Retrieves the list of active notifications.
  <OPENHUMAN_ROOT>/app/src-tauri/vendor/tauri-plugin-notification/dist-js/index.cjs:284: * Retrieves the list of notification channels.
  <OPENHUMAN_ROOT>/app/src-tauri/vendor/tauri-plugin-notification/dist-js/index.js:147: * Retrieves the list of pending notifications.
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (1900451 bytes) is available by calling tokenjuice_retrieve with token "d551aa7bac196a6e8e2403371a636884" (marker ⟦tj:d551aa7bac196a6e8e2403371a636884⟧)]
++[compacted tool output — this is a PARTIAL view; the full original (1900451 bytes) is available by calling tinyjuice_retrieve with token "d551aa7bac196a6e8e2403371a636884" (marker ⟦tj:d551aa7bac196a6e8e2403371a636884⟧)]
 \ No newline at end of file

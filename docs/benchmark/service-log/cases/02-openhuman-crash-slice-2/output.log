@@ -1,11 +1,13 @@
-[... 326 line(s) omitted ...]
+[... 326 line(s) omitted ... ⟦tj:41c0df8e237b5a865c5a84ec1c556bf2⟧]
 28  OpenHuman                     	       0x10523cae4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::hd44b258fb813656b + 44
 29  OpenHuman                     	       0x1052a64b0 std::panicking::catch_unwind::do_call::h72377314c177ff75 + 64
-[... 1 line(s) omitted ...]
+[... 1 line(s) omitted ... ⟦tj:e3c14a382aa2b9c278e169961948fc41⟧]
 31  OpenHuman                     	       0x105291df0 std::panic::catch_unwind::hfd000fe64f5efc68 + 96
-[... 11 line(s) omitted ...]
+[... 11 line(s) omitted ... ⟦tj:081d124183c37af5d30eeffc7f8f5da6⟧]
 43  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
 44  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-[... 6 line(s) omitted ...]
+[... 6 line(s) omitted ... ⟦tj:ce1a656f51dfc526a938a5f6f7cb6df2⟧]
 
-[compacted tool output — this is a PARTIAL view; the full original (29717 bytes) is available by calling tokenjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09" (marker ⟦tj:b2a16dcca94e32f601f4c27a80236f09⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (29717 bytes) is available by calling tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09" (marker ⟦tj:b2a16dcca94e32f601f4c27a80236f09⟧)]

@@ -299,6 +299,6 @@ fn take_stats(stats: Arc<Mutex<ProgressStats>>) -> ProgressStats { … 6 line(s)
 fn print_human_summary(summary: &AuditSummary) { … 66 line(s) … ⟦tj:27871805885487def4f47431fa2c67ab⟧ }
 
 fn unix_seconds() -> u64 { … 6 line(s) … ⟦tj:0376bc6d46ff51c750442ef79e4ccd2c⟧ }
-[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (34749 bytes) is available by calling tokenjuice_retrieve with token "b3185402b63f34b01c54e265656b05e2" (marker ⟦tj:b3185402b63f34b01c54e265656b05e2⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (34749 bytes) is available by calling tinyjuice_retrieve with token "b3185402b63f34b01c54e265656b05e2" (marker ⟦tj:b3185402b63f34b01c54e265656b05e2⟧)]

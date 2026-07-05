@@ -12,16 +12,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | [diff](cases/02-openhuman-commit-2/compression.diff) | 63.9 KB | 93.8% | 93.8% | 93.4% | 0.143 ms | true |
-| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | [diff](cases/06-openhuman-commit-6/compression.diff) | 87.2 KB | 92.1% | 92.1% | 91.8% | 0.192 ms | true |
-| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | [diff](cases/08-openhuman-commit-8/compression.diff) | 39.4 KB | 81.2% | 81.2% | 80.7% | 0.064 ms | true |
-| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | [diff](cases/10-openhuman-commit-10/compression.diff) | 65.9 KB | 79.8% | 79.8% | 79.5% | 0.130 ms | true |
-| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | [diff](cases/07-openhuman-commit-7/compression.diff) | 25.1 KB | 77.5% | 77.5% | 76.6% | 0.050 ms | true |
-| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | [diff](cases/01-tinyjuice-worktree/compression.diff) | 39.9 KB | 67.0% | 67.0% | 66.4% | 0.066 ms | true |
-| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | [diff](cases/05-openhuman-commit-5/compression.diff) | 177.3 KB | 65.6% | 65.6% | 65.4% | 0.336 ms | true |
-| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | [diff](cases/03-openhuman-commit-3/compression.diff) | 192.1 KB | 53.3% | 53.3% | 53.2% | 0.426 ms | true |
-| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | [diff](cases/09-openhuman-commit-9/compression.diff) | 29.3 KB | 51.0% | 51.0% | 50.2% | 0.054 ms | true |
-| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | [diff](cases/04-openhuman-commit-4/compression.diff) | 186.4 KB | 42.8% | 42.8% | 42.7% | 0.400 ms | true |
+| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | [diff](cases/02-openhuman-commit-2/compression.diff) | 63.9 KB | 92.6% | 93.8% | 92.3% | 0.278 ms | true |
+| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | [diff](cases/06-openhuman-commit-6/compression.diff) | 87.2 KB | 90.9% | 92.1% | 90.7% | 0.366 ms | true |
+| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | [diff](cases/08-openhuman-commit-8/compression.diff) | 39.4 KB | 79.7% | 81.2% | 79.2% | 0.140 ms | true |
+| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | [diff](cases/10-openhuman-commit-10/compression.diff) | 65.9 KB | 78.3% | 79.8% | 78.0% | 0.242 ms | true |
+| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | [diff](cases/07-openhuman-commit-7/compression.diff) | 25.1 KB | 75.4% | 77.5% | 74.5% | 0.096 ms | true |
+| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | [diff](cases/01-tinyjuice-worktree/compression.diff) | 39.9 KB | 65.3% | 67.0% | 64.8% | 0.139 ms | true |
+| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | [diff](cases/05-openhuman-commit-5/compression.diff) | 177.3 KB | 64.5% | 65.6% | 64.4% | 0.644 ms | true |
+| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | [diff](cases/03-openhuman-commit-3/compression.diff) | 192.1 KB | 52.6% | 53.3% | 52.5% | 0.772 ms | true |
+| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | [diff](cases/09-openhuman-commit-9/compression.diff) | 29.3 KB | 49.6% | 51.0% | 48.8% | 0.099 ms | true |
+| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | [diff](cases/04-openhuman-commit-4/compression.diff) | 186.4 KB | 42.0% | 42.8% | 41.9% | 0.757 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -85,29 +85,29 @@ index 1259721a2..b44a50c40 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -74,172 +74,172 @@ dependencies = [
-[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:ce6f4c78676797834803e15739073723⟧]
 @@ -1588,161 +1588,161 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:00d25048757d5a17a61d6fccd6df453c⟧]
 @@ -1845,161 +1845,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:f85ff73e42f753fea3f39236773f8e6d⟧]
 @@ -3162,161 +3162,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:c14d65499efda6cf000f27bc21831f54⟧]
 @@ -3811,161 +3811,161 @@ checksum = "8c196769dd60fd4f363e11d948139556a344e79d451aeb2fa2fd040738ef7691"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:29f8a934e3eb10d6e56c80acce0c7e35⟧]
 @@ -5654,220 +5654,220 @@ name = "rlp-derive"
-[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:9f2551fd40bda8cc3bb3900c1095e00b⟧]
 @@ -6098,160 +6098,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-0 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-0 line(s) omitted ... ⟦tj:ec82753ea1c9c87368475214db268dcb⟧]
 @@ -6317,161 +6318,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:8565d1fe2120523103eea7326dc81da9⟧]
 @@ -6618,161 +6619,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:ace636ed3088d02b1fb197c8f4f22ccd⟧]
 @@ -6810,168 +6811,168 @@ dependencies = [
-[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:e2519ef2a9e60e9296c57e8a93997be7⟧]
 @@ -7255,192 +7256,193 @@ checksum = "121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e"
-[... lockfile/bundle hunk: +7/-6 line(s) omitted ...]
+[... lockfile/bundle hunk: +7/-6 line(s) omitted ... ⟦tj:e14e838ead5bbccab563bdda69c7662f⟧]
 @@ -8169,161 +8171,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:f9a280a8a8b8435453f20af5baa67ccf⟧]
 diff --git a/Cargo.toml b/Cargo.toml
 index 241e0d09f..70240e869 100644
 --- a/Cargo.toml
@@ -178,7 +178,7 @@ index 6f13136e7..e66dba04d 100644
                owner,
                repo,
                tag_name: tag,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc9c6cd5c26d7bb830d5b1889d4b99c0⟧]
        # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
        # [patch.crates-io] resolves Rust SDK crates from vendor/.
        - name: Init vendored Rust submodules
@@ -187,7 +187,7 @@ index 6f13136e7..e66dba04d 100644
        - name: Set up Docker Buildx
          uses: docker/setup-buildx-action@v3
        - name: Log in to GHCR
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc51e4e50212afdcbf9a7fcb1c96284e⟧]
          with:
            ref: ${{ needs.prepare-build.outputs.build_ref }}
            fetch-depth: 1
@@ -199,7 +199,7 @@ index 9913ff760..3b7a830c2 100644
            else
              echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
            fi
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:b7430b79e54801adbd57075daae97fd1⟧]
        # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
        # [patch.crates-io] resolves Rust SDK crates from vendor/.
        - name: Init vendored Rust submodules
@@ -268,7 +268,7 @@ index d649681fb..ffe82de44 100644
    type ToolTimelineEntry,
  } from '../store/chatRuntimeSlice';
  import { useAppDispatch, useAppSelector } from '../store/hooks';
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:342b6ceae4e98d57a1ffbe991683c518⟧]
  const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
  const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
  const debug = debugFactory('conversations');
@@ -358,7 +358,7 @@ index 928fc0968..d649681fb 100644
    type ToolTimelineEntry,
  } from '../store/chatRuntimeSlice';
  import { useAppDispatch, useAppSelector } from '../store/hooks';
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:342b6ceae4e98d57a1ffbe991683c518⟧]
  const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
  const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
  const debug = debugFactory('conversations');
@@ -370,7 +370,7 @@ index 928fc0968..d649681fb 100644
  
  interface ConversationsProps {
    /**
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:2225ed94dcb5ec531ae2e05e31620738⟧]
    }
    return String(err);
  }
@@ -378,7 +378,7 @@ index 928fc0968..d649681fb 100644
                                            className="flex items-center rounded-full border border-primary-200 bg-primary-100 px-1.5 text-xs leading-[1.5] shadow-sm transition-colors hover:bg-primary-200 dark:border-prim...
                                            title={t('chat.removeReaction').replace(
                                              '{emoji}',
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:1053371081e8a4ae11ff990a9a9fc36c⟧]
                            <div className="flex flex-col items-end gap-1">
                              {(() => {
                                const displayText = parsedContent.text;
@@ -460,7 +460,7 @@ index e24e569ce..8167f088c 100644
  
  import { SidebarSlotOutlet, SidebarSlotProvider } from '../../components/layout/shell/SidebarSlot';
  import agentProfileReducer from '../../store/agentProfileSlice';
-[... 4 context line(s) omitted ...]
+[... 4 context line(s) omitted ... ⟦tj:16d3db64c45b091aabf86bc78dc1af78⟧]
  
  // ── Hoisted mock state ──────────────────────────────────────────────────────
  
@@ -471,7 +471,7 @@ index e24e569ce..8167f088c 100644
  const {
    mockGetThreads,
    mockGetThreadMessages,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc77f41fbf66aae8e057b835b733e4ee⟧]
      persistReaction: vi.fn().mockResolvedValue({}),
    },
  }));
@@ -545,7 +545,7 @@ index e0d98a7..c685ec6 100644
  
  By default, the fixture suite emits metadata only. It does not print raw prompt,
  tool, or context payloads unless `--dump-samples` is explicitly requested.
-[... 39 context line(s) omitted ...]
+[... 39 context line(s) omitted ... ⟦tj:a9ade52ab13f6a7e7310388311061c28⟧]
  
  Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
  
@@ -561,7 +561,7 @@ index e0d98a7..c685ec6 100644
  Current categories cover:
  
  - JSON tool-catalog slices.
-[... 17 context line(s) omitted ...]
+[... 17 context line(s) omitted ... ⟦tj:9262f76c55796d62e2f888e9c765894e⟧]
  - [LongBench](https://arxiv.org/abs/2308.14508) is a broader long-context benchmark that can be useful once TinyJuice adds task-level answer-quality evaluation.
  
  For TinyJuice, the closest future cross-reference is not a single paper score. It is a paired report: compression metadata from this fixture runner plus downstream task accuracy on pinned tool-output corpora.
@@ -718,7 +718,7 @@ index e66dba04d..836b49c6d 100644
                owner,
                repo,
                tag_name: tag,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc9c6cd5c26d7bb830d5b1889d4b99c0⟧]
        # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
        # [patch.crates-io] resolves Rust SDK crates from vendor/.
        - name: Init vendored Rust submodules
@@ -727,7 +727,7 @@ index e66dba04d..836b49c6d 100644
        - name: Set up Docker Buildx
          uses: docker/setup-buildx-action@v3
        - name: Log in to GHCR
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc51e4e50212afdcbf9a7fcb1c96284e⟧]
          with:
            ref: ${{ needs.prepare-build.outputs.build_ref }}
            fetch-depth: 1
@@ -739,7 +739,7 @@ index 3b7a830c2..79a796ff6 100644
            else
              echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
            fi
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:b7430b79e54801adbd57075daae97fd1⟧]
        # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
        # [patch.crates-io] resolves Rust SDK crates from vendor/.
        - name: Init vendored Rust submodules
@@ -808,7 +808,7 @@ index 61b4d12fb..7237cd6e9 100644
  //! SQLite-backed persistence for ingested chunks (Phase 1 / issue #707).
  //!
  //! The store lives at `<workspace>/memory_tree/chunks.db`. Schema is applied
-[... 19 context line(s) omitted ...]
+[... 19 context line(s) omitted ... ⟦tj:210c6d02a05f20f7eb13041e3142b15b⟧]
  //! init failures for 30 s so a broken install does not busy-loop.
  
  use anyhow::{Context, Result};
@@ -834,7 +834,7 @@ index 61b4d12fb..7237cd6e9 100644
  // 15s gives the busy-handler enough headroom that transient write-lock
  // contention (4 job workers + scheduler + ingest producers all writing the
  // same `memory_tree/chunks.db`) is absorbed inside rusqlite instead of
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:2912e9b3d26bedd17ccbd4397ca5b142⟧]
      PRIMARY KEY (chunk_id, model_signature)
 
 ```

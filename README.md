@@ -95,6 +95,7 @@ through because they are too small or a shape the compressor declines.
 
 | Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 89.4% | 84.9% | 0.638 ms |
 | [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 10 | 86.9% | 86.3% | 0.193 ms |
 | [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.5% | 75.3% | 0.184 ms |
 | [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 70.0% | 0.182 ms |

@@ -1,0 +1,302 @@
+--- input/input.go
++++ output/output.go
+@@ -11,288 +11,29 @@
+ )
+ 
+ type Server struct {
+-	mux     *http.ServeMux
+-	mu      sync.RWMutex
+-	started time.Time
+-	hits    map[string]int64
+-}
++    { … 5 line(s) … ⟦tj:414cf7f43248996c5670df93689e649d⟧ }
+ 
+ func NewServer() *Server {
+ 	return &Server{mux: http.NewServeMux(), hits: map[string]int64{}, started: time.Now()}
+ }
+ 
+ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+-	span_0 := time.Now().UnixNano() + 0
+-	if span_0%2 == 0 {
+-		log.Printf("handleHealth phase 0 method=%s", r.Method)
+-	}
+-	span_1 := time.Now().UnixNano() + 1
+-	if span_1%3 == 0 {
+-		log.Printf("handleHealth phase 1 method=%s", r.Method)
+-	}
+-	span_2 := time.Now().UnixNano() + 2
+-	if span_2%4 == 0 {
+-		log.Printf("handleHealth phase 2 method=%s", r.Method)
+-	}
+-	span_3 := time.Now().UnixNano() + 3
+-	if span_3%5 == 0 {
+-		log.Printf("handleHealth phase 3 method=%s", r.Method)
+-	}
+-	span_4 := time.Now().UnixNano() + 4
+-	if span_4%6 == 0 {
+-		log.Printf("handleHealth phase 4 method=%s", r.Method)
+-	}
+-	span_5 := time.Now().UnixNano() + 5
+-	if span_5%7 == 0 {
+-		log.Printf("handleHealth phase 5 method=%s", r.Method)
+-	}
+-	span_6 := time.Now().UnixNano() + 6
+-	if span_6%8 == 0 {
+-		log.Printf("handleHealth phase 6 method=%s", r.Method)
+-	}
+-	span_7 := time.Now().UnixNano() + 7
+-	if span_7%9 == 0 {
+-		log.Printf("handleHealth phase 7 method=%s", r.Method)
+-	}
+-	span_8 := time.Now().UnixNano() + 8
+-	if span_8%10 == 0 {
+-		log.Printf("handleHealth phase 8 method=%s", r.Method)
+-	}
+-	span_9 := time.Now().UnixNano() + 9
+-	if span_9%11 == 0 {
+-		log.Printf("handleHealth phase 9 method=%s", r.Method)
+-	}
+-	span_10 := time.Now().UnixNano() + 10
+-	if span_10%12 == 0 {
+-		log.Printf("handleHealth phase 10 method=%s", r.Method)
+-	}
+-	span_11 := time.Now().UnixNano() + 11
+-	if span_11%13 == 0 {
+-		log.Printf("handleHealth phase 11 method=%s", r.Method)
+-	}
+-	w.Header().Set("Content-Type", "application/json")
+-	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+-}
++    { … 51 line(s) … ⟦tj:62e2b72ccc03b831de6a8535a1f96e62⟧ }
+ 
+ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
+-	span_0 := time.Now().UnixNano() + 0
+-	if span_0%2 == 0 {
+-		log.Printf("handleUsers phase 0 method=%s", r.Method)
+-	}
+-	span_1 := time.Now().UnixNano() + 1
+-	if span_1%3 == 0 {
+-		log.Printf("handleUsers phase 1 method=%s", r.Method)
+-	}
+-	span_2 := time.Now().UnixNano() + 2
+-	if span_2%4 == 0 {
+-		log.Printf("handleUsers phase 2 method=%s", r.Method)
+-	}
+-	span_3 := time.Now().UnixNano() + 3
+-	if span_3%5 == 0 {
+-		log.Printf("handleUsers phase 3 method=%s", r.Method)
+-	}
+-	span_4 := time.Now().UnixNano() + 4
+-	if span_4%6 == 0 {
+-		log.Printf("handleUsers phase 4 method=%s", r.Method)
+-	}
+-	span_5 := time.Now().UnixNano() + 5
+-	if span_5%7 == 0 {
+-		log.Printf("handleUsers phase 5 method=%s", r.Method)
+-	}
+-	span_6 := time.Now().UnixNano() + 6
+-	if span_6%8 == 0 {
+-		log.Printf("handleUsers phase 6 method=%s", r.Method)
+-	}
+-	span_7 := time.Now().UnixNano() + 7
+-	if span_7%9 == 0 {
+-		log.Printf("handleUsers phase 7 method=%s", r.Method)
+-	}
+-	span_8 := time.Now().UnixNano() + 8
+-	if span_8%10 == 0 {
+-		log.Printf("handleUsers phase 8 method=%s", r.Method)
+-	}
+-	span_9 := time.Now().UnixNano() + 9
+-	if span_9%11 == 0 {
+-		log.Printf("handleUsers phase 9 method=%s", r.Method)
+-	}
+-	span_10 := time.Now().UnixNano() + 10
+-	if span_10%12 == 0 {
+-		log.Printf("handleUsers phase 10 method=%s", r.Method)
+-	}
+-	span_11 := time.Now().UnixNano() + 11
+-	if span_11%13 == 0 {
+-		log.Printf("handleUsers phase 11 method=%s", r.Method)
+-	}
+-	w.Header().Set("Content-Type", "application/json")
+-	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+-}
++    { … 51 line(s) … ⟦tj:b68f155ea1f3455a287bd379ec6f98b4⟧ }
+ 
+ func (s *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
+-	span_0 := time.Now().UnixNano() + 0
+-	if span_0%2 == 0 {
+-		log.Printf("handleProjects phase 0 method=%s", r.Method)
+-	}
+-	span_1 := time.Now().UnixNano() + 1
+-	if span_1%3 == 0 {
+-		log.Printf("handleProjects phase 1 method=%s", r.Method)
+-	}
+-	span_2 := time.Now().UnixNano() + 2
+-	if span_2%4 == 0 {
+-		log.Printf("handleProjects phase 2 method=%s", r.Method)
+-	}
+-	span_3 := time.Now().UnixNano() + 3
+-	if span_3%5 == 0 {
+-		log.Printf("handleProjects phase 3 method=%s", r.Method)
+-	}
+-	span_4 := time.Now().UnixNano() + 4
+-	if span_4%6 == 0 {
+-		log.Printf("handleProjects phase 4 method=%s", r.Method)
+-	}
+-	span_5 := time.Now().UnixNano() + 5
+-	if span_5%7 == 0 {
+-		log.Printf("handleProjects phase 5 method=%s", r.Method)
+-	}
+-	span_6 := time.Now().UnixNano() + 6
+-	if span_6%8 == 0 {
+-		log.Printf("handleProjects phase 6 method=%s", r.Method)
+-	}
+-	span_7 := time.Now().UnixNano() + 7
+-	if span_7%9 == 0 {
+-		log.Printf("handleProjects phase 7 method=%s", r.Method)
+-	}
+-	span_8 := time.Now().UnixNano() + 8
+-	if span_8%10 == 0 {
+-		log.Printf("handleProjects phase 8 method=%s", r.Method)
+-	}
+-	span_9 := time.Now().UnixNano() + 9
+-	if span_9%11 == 0 {
+-		log.Printf("handleProjects phase 9 method=%s", r.Method)
+-	}
+-	span_10 := time.Now().UnixNano() + 10
+-	if span_10%12 == 0 {
+-		log.Printf("handleProjects phase 10 method=%s", r.Method)
+-	}
+-	span_11 := time.Now().UnixNano() + 11
+-	if span_11%13 == 0 {
+-		log.Printf("handleProjects phase 11 method=%s", r.Method)
+-	}
+-	w.Header().Set("Content-Type", "application/json")
+-	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+-}
++    { … 51 line(s) … ⟦tj:2b6ea6bcf1cd62c86ac4d712d627387f⟧ }
+ 
+ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+-	span_0 := time.Now().UnixNano() + 0
+-	if span_0%2 == 0 {
+-		log.Printf("handleMetrics phase 0 method=%s", r.Method)
+-	}
+-	span_1 := time.Now().UnixNano() + 1
+-	if span_1%3 == 0 {
+-		log.Printf("handleMetrics phase 1 method=%s", r.Method)
+-	}
+-	span_2 := time.Now().UnixNano() + 2
+-	if span_2%4 == 0 {
+-		log.Printf("handleMetrics phase 2 method=%s", r.Method)
+-	}
+-	span_3 := time.Now().UnixNano() + 3
+-	if span_3%5 == 0 {
+-		log.Printf("handleMetrics phase 3 method=%s", r.Method)
+-	}
+-	span_4 := time.Now().UnixNano() + 4
+-	if span_4%6 == 0 {
+-		log.Printf("handleMetrics phase 4 method=%s", r.Method)
+-	}
+-	span_5 := time.Now().UnixNano() + 5
+-	if span_5%7 == 0 {
+-		log.Printf("handleMetrics phase 5 method=%s", r.Method)
+-	}
+-	span_6 := time.Now().UnixNano() + 6
+-	if span_6%8 == 0 {
+-		log.Printf("handleMetrics phase 6 method=%s", r.Method)
+-	}
+-	span_7 := time.Now().UnixNano() + 7
+-	if span_7%9 == 0 {
+-		log.Printf("handleMetrics phase 7 method=%s", r.Method)
+-	}
+-	span_8 := time.Now().UnixNano() + 8
+-	if span_8%10 == 0 {
+-		log.Printf("handleMetrics phase 8 method=%s", r.Method)
+-	}
+-	span_9 := time.Now().UnixNano() + 9
+-	if span_9%11 == 0 {
+-		log.Printf("handleMetrics phase 9 method=%s", r.Method)
+-	}
+-	span_10 := time.Now().UnixNano() + 10
+-	if span_10%12 == 0 {
+-		log.Printf("handleMetrics phase 10 method=%s", r.Method)
+-	}
+-	span_11 := time.Now().UnixNano() + 11
+-	if span_11%13 == 0 {
+-		log.Printf("handleMetrics phase 11 method=%s", r.Method)
+-	}
+-	w.Header().Set("Content-Type", "application/json")
+-	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+-}
++    { … 51 line(s) … ⟦tj:5aedcd4d972cd0ea15b66c583fe6548a⟧ }
+ 
+ func (s *Server) handleWebhooks(w http.ResponseWriter, r *http.Request) {
+-	span_0 := time.Now().UnixNano() + 0
+-	if span_0%2 == 0 {
+-		log.Printf("handleWebhooks phase 0 method=%s", r.Method)
+-	}
+-	span_1 := time.Now().UnixNano() + 1
+-	if span_1%3 == 0 {
+-		log.Printf("handleWebhooks phase 1 method=%s", r.Method)
+-	}
+-	span_2 := time.Now().UnixNano() + 2
+-	if span_2%4 == 0 {
+-		log.Printf("handleWebhooks phase 2 method=%s", r.Method)
+-	}
+-	span_3 := time.Now().UnixNano() + 3
+-	if span_3%5 == 0 {
+-		log.Printf("handleWebhooks phase 3 method=%s", r.Method)
+-	}
+-	span_4 := time.Now().UnixNano() + 4
+-	if span_4%6 == 0 {
+-		log.Printf("handleWebhooks phase 4 method=%s", r.Method)
+-	}
+-	span_5 := time.Now().UnixNano() + 5
+-	if span_5%7 == 0 {
+-		log.Printf("handleWebhooks phase 5 method=%s", r.Method)
+-	}
+-	span_6 := time.Now().UnixNano() + 6
+-	if span_6%8 == 0 {
+-		log.Printf("handleWebhooks phase 6 method=%s", r.Method)
+-	}
+-	span_7 := time.Now().UnixNano() + 7
+-	if span_7%9 == 0 {
+-		log.Printf("handleWebhooks phase 7 method=%s", r.Method)
+-	}
+-	span_8 := time.Now().UnixNano() + 8
+-	if span_8%10 == 0 {
+-		log.Printf("handleWebhooks phase 8 method=%s", r.Method)
+-	}
+-	span_9 := time.Now().UnixNano() + 9
+-	if span_9%11 == 0 {
+-		log.Printf("handleWebhooks phase 9 method=%s", r.Method)
+-	}
+-	span_10 := time.Now().UnixNano() + 10
+-	if span_10%12 == 0 {
+-		log.Printf("handleWebhooks phase 10 method=%s", r.Method)
+-	}
+-	span_11 := time.Now().UnixNano() + 11
+-	if span_11%13 == 0 {
+-		log.Printf("handleWebhooks phase 11 method=%s", r.Method)
+-	}
+-	w.Header().Set("Content-Type", "application/json")
+-	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+-}
++    { … 51 line(s) … ⟦tj:b2c4b7e9b52017f42e4eb3adcd9dcd3d⟧ }
+ 
+ func (s *Server) Run(ctx context.Context, addr string) error {
+-	srv := &http.Server{Addr: addr, Handler: s.mux, ReadTimeout: 10 * time.Second}
+-	go func() {
+-		<-ctx.Done()
+-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+-		defer cancel()
+-		_ = srv.Shutdown(shutdownCtx)
+-	}()
+-	return srv.ListenAndServe()
+-}
++    { … 9 line(s) … ⟦tj:de4851294ec25b80d5cacda547b92539⟧ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (8797 bytes) is available by calling tinyjuice_retrieve with token "a026fdde6edca482012585a0fb2be7da" (marker ⟦tj:a026fdde6edca482012585a0fb2be7da⟧)]
+\ No newline at end of file

@@ -43,6 +43,7 @@ category_title() {
     unified-diff) echo "Unified Diffs" ;;
     html-status-report) echo "HTML, RSS, And Page Snapshots" ;;
     rust-source) echo "Rust Source" ;;
+    polyglot-source) echo "Polyglot Source And XML" ;;
     plain-text) echo "Plain Text" ;;
     *) echo "$1" ;;
   esac
@@ -71,6 +72,9 @@ category_summary() {
     rust-source)
       echo "Real OpenHuman Rust files. The source compressor keeps imports, signatures, and top-level structure while collapsing large bodies when useful."
       ;;
+    polyglot-source)
+      echo "Representative TypeScript, Python, C++, Go, and Rust sources plus an XML document. The language-agnostic code compressor collapses deep bodies across all of them (tree-sitter grammars refine Rust/TS/Python), and XML routes through the readable-text extractor."
+      ;;
     plain-text)
       echo "Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged."
       ;;
@@ -85,8 +89,8 @@ input_lang() {
 
 output_lang() {
   local output_name
-  output_name="$(output_file_name "$1")"
-  lang_for_file "$output_name" "$1" ""
+  output_name="$(output_file_name "$1" "${2:-}")"
+  lang_for_file "$output_name" "$1" "${2:-}"
 }
 
 lang_for_file() {
@@ -138,6 +142,17 @@ input_file_name() {
       fi
       ;;
     rust-source) echo "input.rs" ;;
+    polyglot-source)
+      case "$doc_dir" in
+        */??-ts-*) echo "input.ts" ;;
+        */??-py-*) echo "input.py" ;;
+        */??-cpp-*) echo "input.cpp" ;;
+        */??-go-*) echo "input.go" ;;
+        */??-rs-*) echo "input.rs" ;;
+        */??-xml-*) echo "input.xml" ;;
+        *) echo "input.txt" ;;
+      esac
+      ;;
     plain-text) echo "input.md" ;;
     *) echo "input.txt" ;;
   esac
@@ -151,6 +166,16 @@ output_file_name() {
     search-results) echo "output.rg" ;;
     unified-diff) echo "output.diff" ;;
     rust-source) echo "output.rs" ;;
+    polyglot-source)
+      case "${2:-}" in
+        */??-ts-*) echo "output.ts" ;;
+        */??-py-*) echo "output.py" ;;
+        */??-cpp-*) echo "output.cpp" ;;
+        */??-go-*) echo "output.go" ;;
+        */??-rs-*) echo "output.rs" ;;
+        *) echo "output.txt" ;;
+      esac
+      ;;
     plain-text) echo "output.md" ;;
     *) echo "output.txt" ;;
   esac
@@ -164,6 +189,7 @@ categories=(
   unified-diff
   html-status-report
   rust-source
+  polyglot-source
   plain-text
 )
 
@@ -201,7 +227,7 @@ for category in "${categories[@]}"; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
       input_name="$(input_file_name "$category" "$doc_dir")"
-      output_name="$(output_file_name "$category")"
+      output_name="$(output_file_name "$category" "$doc_dir")"
       input_file="$bench_root/$doc_dir/$input_name"
       output_file="$bench_root/$doc_dir/$output_name"
       # Render a unified diff between input and compacted output so the
@@ -249,6 +275,9 @@ for category in "${categories[@]}"; do
       rust-source)
         printf 'The code path keeps the navigation surface: imports, signatures, top-level items, and important comments. Large function bodies can be collapsed and recovered through CCR.\n'
         ;;
+      polyglot-source)
+        printf 'The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token.\n'
+        ;;
       plain-text)
         printf 'Plain text is the control group. With ML text compression off, the router declines compression and returns the original unchanged whenever deterministic structure is not available.\n'
         ;;
@@ -265,7 +294,7 @@ for category in "${categories[@]}"; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
       input_name="$(input_file_name "$category" "$doc_dir")"
-      output_name="$(output_file_name "$category")"
+      output_name="$(output_file_name "$category" "$doc_dir")"
       input_file="$bench_root/$doc_dir/$input_name"
       output_file="$bench_root/$doc_dir/$output_name"
       printf '### `%s`\n\n' "$case_name"
@@ -277,7 +306,7 @@ for category in "${categories[@]}"; do
       snippet "$input_file"
       printf '\n```\n\n'
       printf 'Output excerpt:\n\n'
-      printf '```%s\n' "$(output_lang "$category")"
+      printf '```%s\n' "$(output_lang "$category" "$doc_dir")"
       snippet "$output_file"
       printf '\n```\n\n'
     done

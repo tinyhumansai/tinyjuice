@@ -6,7 +6,7 @@ index d649681fb..ffe82de44 100644
    type ToolTimelineEntry,
  } from '../store/chatRuntimeSlice';
  import { useAppDispatch, useAppSelector } from '../store/hooks';
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:342b6ceae4e98d57a1ffbe991683c518⟧]
  const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
  const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
  const debug = debugFactory('conversations');
@@ -54,7 +54,7 @@ index d649681fb..ffe82de44 100644
  }
  
  interface ConversationsProps {
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:c144fc403de66c3b6e280f24178cebcd⟧]
      if (typeof message === 'string') return message;
    }
    return String(err);
@@ -62,7 +62,7 @@ index d649681fb..ffe82de44 100644
                                            )}>
                                            {emoji}
                                          </button>
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:5c5a489cb2ef50ffeedba2adf8acdc43⟧]
                                  Array.isArray(msg.extraMetadata?.attachmentDataUris)
                                    ? (msg.extraMetadata.attachmentDataUris as string[])
                                    : parsedContent.dataUris
@@ -71,7 +71,7 @@ index d649681fb..ffe82de44 100644
                                const hasImages = dataUris.length > 0;
                                // Document attachments carry no image data-URI (only
                                // images do); surface them as filename chips from the
-[... 25 context line(s) omitted ...]
+[... 25 context line(s) omitted ... ⟦tj:1493b1edfb94721e625df31d0a5774a1⟧]
                                    {hasImages && (
                                      <div className="flex flex-wrap gap-1.5 justify-end">
                                        {dataUris.map((uri, i) => (
@@ -85,7 +85,7 @@ index d649681fb..ffe82de44 100644
                                        ))}
                                      </div>
                                    )}
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc71d6a772fbc9a4da557cf432bb7459⟧]
                                        )}
                                        {showTime && (
                                          <p
@@ -97,7 +97,7 @@ index ed8609646..2c69bccd0 100644
  import { json, setCors } from "../http.mjs";
  import {
    behavior,
-[... 5 context line(s) omitted ...]
+[... 5 context line(s) omitted ... ⟦tj:b8627ea6edb88026571c44cfefc73df3⟧]
  import { buildDynamicCompletion } from "./llm/dynamic.mjs";
  import { headerValue, pickProbeText, resolveThreadKey } from "./llm/shared.mjs";
  
@@ -106,7 +106,7 @@ index ed8609646..2c69bccd0 100644
  // The scripted `llmForcedResponses` FIFO models the *interactive* agent turn,
  // which always advertises tools (the orchestrator's delegate_* tools). Ancillary
  // completions that share the endpoint but carry no tools — thread-title/summary
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:536cb086b606b72e62d20b5cc8e90f2c⟧]
    });
  }
  
@@ -114,7 +114,7 @@ index ed8609646..2c69bccd0 100644
  // When the agent harness calls the OpenAI-compatible endpoint with
  // `stream: true`, openhuman/providers/compatible.rs expects SSE chunks
  // shaped like:
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:66679c1b645276387b3da19e88fdcf3e⟧]
    res.write(`data: ${JSON.stringify(payload)}\n\n`);
  }
  
@@ -155,7 +155,7 @@ index ed8609646..2c69bccd0 100644
  }
  
  // Split a string into N-character windows so we can stream tool-call
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:d426196e662e43e1ad1afe69bf0f3adf⟧]
  
    if (!Array.isArray(script)) {
      // 2. Forced queue: pop the next entry and convert it into a script.
@@ -163,7 +163,7 @@ index ed8609646..2c69bccd0 100644
        if (Array.isArray(forced) && forced.length > 0) {
          const next = forced.shift();
          setMockBehavior("llmForcedResponses", JSON.stringify(forced));
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:b6ba17d83fb549b2c3ae4a9e44c05b3e⟧]
    for (let i = 0; i < script.length; i += 1) {
      const entry = script[i] ?? {};
      const delay = safeDelayMs(entry.delayMs, defaultDelayMs);
@@ -172,7 +172,7 @@ index ed8609646..2c69bccd0 100644
  
      if (entry.error) {
        writeSseEvent(res, { error: { message: String(entry.error) } });
-[... 50 context line(s) omitted ...]
+[... 50 context line(s) omitted ... ⟦tj:246242497369b50492756392e47ce914⟧]
          }),
        );
        for (const piece of argPieces) {
@@ -181,9 +181,11 @@ index ed8609646..2c69bccd0 100644
          writeSseEvent(
            res,
            sseChunkEnvelope({
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:35feea2d71ee5eb12712382cdf90edda⟧]
          name: String(tc.name ?? ""),
          arguments:
            typeof tc.arguments === "string"
 
-[compacted tool output — this is a PARTIAL view; the full original (39398 bytes) is available by calling tokenjuice_retrieve with token "4b5705d39bb0941449016cd01a76fc46" (marker ⟦tj:4b5705d39bb0941449016cd01a76fc46⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (39398 bytes) is available by calling tinyjuice_retrieve with token "4b5705d39bb0941449016cd01a76fc46" (marker ⟦tj:4b5705d39bb0941449016cd01a76fc46⟧)]

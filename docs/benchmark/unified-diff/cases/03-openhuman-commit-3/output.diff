@@ -6,7 +6,7 @@ index e66dba04d..836b49c6d 100644
                owner,
                repo,
                tag_name: tag,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc9c6cd5c26d7bb830d5b1889d4b99c0⟧]
        # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
        # [patch.crates-io] resolves Rust SDK crates from vendor/.
        - name: Init vendored Rust submodules
@@ -15,7 +15,7 @@ index e66dba04d..836b49c6d 100644
        - name: Set up Docker Buildx
          uses: docker/setup-buildx-action@v3
        - name: Log in to GHCR
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fc51e4e50212afdcbf9a7fcb1c96284e⟧]
          with:
            ref: ${{ needs.prepare-build.outputs.build_ref }}
            fetch-depth: 1
@@ -27,7 +27,7 @@ index 3b7a830c2..79a796ff6 100644
            else
              echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
            fi
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:b7430b79e54801adbd57075daae97fd1⟧]
        # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
        # [patch.crates-io] resolves Rust SDK crates from vendor/.
        - name: Init vendored Rust submodules
@@ -36,7 +36,7 @@ index 3b7a830c2..79a796ff6 100644
        - name: Set up Docker Buildx
          uses: docker/setup-buildx-action@v3
        - name: Build image (no push)
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:502201ea3a02309cff2fc728d6eff813⟧]
        always()
        && inputs.create_tag
        && needs.prepare-build.result == 'success'
@@ -48,7 +48,7 @@ index ce992e204..3f6001479 100644
  [submodule "app/src-tauri/vendor/tauri-cef"]
  	path = app/src-tauri/vendor/tauri-cef
  	url = https://github.com/tinyhumansai/tauri-cef.git
-[... 13 context line(s) omitted ...]
+[... 13 context line(s) omitted ... ⟦tj:5e554cbb7d401450814d528bd48e7f44⟧]
  [submodule "vendor/tinyjuice"]
  	path = vendor/tinyjuice
  	url = https://github.com/tinyhumansai/tinyjuice
@@ -63,21 +63,21 @@ index 7aa978e60..1259721a2 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -74,172 +74,172 @@ dependencies = [
-[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:0bd4ecb1d1fa14ebc14c2aab0a111fbd⟧]
 @@ -1588,161 +1588,161 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:6e4f40e125cec8961338af4bb87218e6⟧]
 @@ -1845,161 +1845,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:56afd6c1be4da3c0aa09657531d33482⟧]
 @@ -3162,161 +3162,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:b9bfe517de8901ded74fb5556d9bd10c⟧]
 @@ -3811,161 +3811,161 @@ checksum = "8c196769dd60fd4f363e11d948139556a344e79d451aeb2fa2fd040738ef7691"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:c4081c1eee1fab079b31309bf9bcbee0⟧]
 @@ -5654,220 +5654,220 @@ name = "rlp-derive"
-[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:061e6beb1ead6a1d1d4342777b96967e⟧]
 @@ -6317,161 +6317,161 @@ dependencies = [
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:d2d85a6c1e657982845c0ad3aa4de7c0⟧]
 @@ -6618,307 +6618,308 @@ dependencies = [
-[... lockfile/bundle hunk: +3/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +3/-2 line(s) omitted ... ⟦tj:69eef10a6f39c004517de1b4ace21948⟧]
 diff --git a/Cargo.toml b/Cargo.toml
 index cea66d3b4..241e0d09f 100644
 --- a/Cargo.toml
@@ -86,7 +86,7 @@ index cea66d3b4..241e0d09f 100644
  [package]
  name = "openhuman"
  version = "0.58.11"
-[... 71 context line(s) omitted ...]
+[... 71 context line(s) omitted ... ⟦tj:5845cf728cade54093be360293ec5171⟧]
  # aligned to the host pins (=0.40 / 0.21) so one bundled SQLite + one libgit2
  # link. Keep the version pin in lockstep with the submodule tag.
  tinycortex = "0.1"
@@ -95,7 +95,7 @@ index cea66d3b4..241e0d09f 100644
  # TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
  # behind the default `tokenjuice-treesitter` feature; disabling it falls back to
  # the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:215fe17cd99ad9da1cffa602d525bd85⟧]
  cron = "0.12"
  futures-util = "0.3"
  directories = "6"
@@ -103,7 +103,7 @@ index cea66d3b4..241e0d09f 100644
      "Win32_System_Memory",
      "Win32_System_Threading",
  ] }
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:609c7f6bd31fa8c1f049c323fe08a56d⟧]
  # version in lockstep with the `tinyagents` requirement above. After cloning:
  # `git submodule update --init vendor/tinyagents` (worktrees included).
  tinyagents = { path = "vendor/tinyagents" }
@@ -119,7 +119,7 @@ index cea66d3b4..241e0d09f 100644
  tinyplace = { path = "vendor/tinyplace/sdk/rust" }
  
  # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
-[... 34 context line(s) omitted ...]
+[... 34 context line(s) omitted ... ⟦tj:7daa2fc39749e66d690dc18e810b31f4⟧]
  #     `target/` substantially.
  [profile.dev.package."*"]
  debug = false
@@ -128,13 +128,13 @@ index d39344b86..4df2712c9 100644
 --- a/app/src-tauri/Cargo.lock
 +++ b/app/src-tauri/Cargo.lock
 @@ -128,172 +128,172 @@ dependencies = [
-[... lockfile/bundle hunk: +2/-2 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:8b9c5883bccbed6e4a9aa06f6d867f1f⟧]
 @@ -8067,161 +8067,161 @@ name = "signature"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:994468abba9625a8800f9bd963072f57⟧]
 @@ -9100,175 +9100,176 @@ dependencies = [
-[... lockfile/bundle hunk: +2/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +2/-1 line(s) omitted ... ⟦tj:52dac3cb9097f9cb71e7ca2de0f2fd07⟧]
 @@ -9708,161 +9709,161 @@ version = "0.25.1"
-[... lockfile/bundle hunk: +1/-1 line(s) omitted ...]
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:e1cda42a16282b1134e348f57e10475b⟧]
 diff --git a/app/src-tauri/Cargo.toml b/app/src-tauri/Cargo.toml
 index f5ca5599e..6fa098b29 100644
 --- a/app/src-tauri/Cargo.toml
@@ -143,7 +143,7 @@ index f5ca5599e..6fa098b29 100644
  openhuman_core = { path = "../..", package = "openhuman", default-features = false }
  tinyjuice = { version = "0.1", default-features = false }
  
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:c78dfe408469970849230538aac3e560⟧]
  # released tag) — same patch as the root Cargo world so both resolve the
  # in-tree SDK source. `git submodule update --init vendor/tinyagents` first.
  tinyagents = { path = "../../vendor/tinyagents" }
@@ -159,7 +159,7 @@ index f5ca5599e..6fa098b29 100644
  tinyplace = { path = "../../vendor/tinyplace/sdk/rust" }
  
  # CEF support lives on the `feat/cef` branch of tauri-apps/tauri. We carry our
-[... 65 context line(s) omitted ...]
+[... 65 context line(s) omitted ... ⟦tj:98b9b43e3cd8b0a890e0657a94d6c1c7⟧]
  #   * No artifact paths, features, or runtime behaviour change.
  [profile.dev.package."*"]
  debug = false
@@ -171,7 +171,7 @@ index a1ae4b270..41edc4ece 100644
  //! Channel command handling and health checks.
  
  use super::dingtalk::DingTalkChannel;
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:31aefc7ec59144f612fb801421fae5cc⟧]
      if let Some(ref sl) = config.channels_config.slack {
          channels.push((
              "Slack",
@@ -184,7 +184,7 @@ index a1ae4b270..41edc4ece 100644
              )),
          ));
      }
-[... 14 context line(s) omitted ...]
+[... 14 context line(s) omitted ... ⟦tj:6aa5306438f08fbb701cefc01b32aae4⟧]
      if let Some(ref sig) = config.channels_config.signal {
          channels.push((
              "Signal",
@@ -205,7 +205,7 @@ index a1ae4b270..41edc4ece 100644
              )),
          ));
      }
-[... 6 context line(s) omitted ...]
+[... 6 context line(s) omitted ... ⟦tj:dc503cb2a37cfe7f2032a9e248542c43⟧]
                  if wa.is_cloud_config() {
                      channels.push((
                          "WhatsApp",
@@ -221,7 +221,7 @@ index a1ae4b270..41edc4ece 100644
                          )),
                      ));
                  } else {
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:80cd90937d6e6ac6481ff249997e74de⟧]
              )),
          ));
      }
@@ -2556,7 +2556,7 @@ index 5fa0b5ad4..7dccde711 100644
      // name here. The capability block falls back to a platform-agnostic
      // "messaging bot" phrasing. Per-channel renderers that want a
      // named capabilities section can call `build_system_prompt` with
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:0989a89de00d8a786dc0c865c68d4924⟧]
      }
  
      if let Some(ref sl) = config.channels_config.slack {
@@ -2569,7 +2569,7 @@ index 5fa0b5ad4..7dccde711 100644
          )));
          // Memory-tree ingestion is handled by the Composio-backed
          // `SlackProvider`, which runs inside `composio::periodic` and
-[... 23 context line(s) omitted ...]
+[... 23 context line(s) omitted ... ⟦tj:cc8424fd5a8971b2bc1b4222640eefe3⟧]
      }
  
      if let Some(ref sig) = config.channels_config.signal {
@@ -2590,7 +2590,7 @@ index 5fa0b5ad4..7dccde711 100644
          )));
      }
  
-[... 3 context line(s) omitted ...]
+[... 3 context line(s) omitted ... ⟦tj:8c7f5f9f1b1a7769719028be34cd59cf⟧]
              "cloud" => {
                  // Cloud API mode: requires phone_number_id, access_token, verify_token
                  if wa.is_cloud_config() {
@@ -2604,7 +2604,7 @@ index 5fa0b5ad4..7dccde711 100644
                      )));
                  } else {
                      tracing::warn!("WhatsApp Cloud API configured but missing required fields (phone_number_id, access_token, verify_token)");
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:73ca93979013035ac768f8c753f93ee1⟧]
      if let Some(ref yb) = config.channels_config.yuanbao {
          let yb_cfg = resolve_yuanbao_app_secret(yb.clone(), &config);
          match YuanbaoChannel::new(yb_cfg) {
@@ -2616,7 +2616,7 @@ index 5473ff17b..ab3647bde 100644
  //! Run with: `cargo test --test subconscious_e2e -- --nocapture --ignored`
  
  use std::sync::Arc;
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:6138954ad194c4e430d34918098336d6⟧]
      config.local_ai.runtime_enabled = true;
      config.local_ai.usage.subconscious = true;
  
@@ -2636,7 +2636,7 @@ index 5473ff17b..ab3647bde 100644
      assert!(last_tick1 >= result1.tick_at);
  
      // Tick 2 with new data
-[... 20 context line(s) omitted ...]
+[... 20 context line(s) omitted ... ⟦tj:fd3d25d4ec528d5eaeb4d0f255542b13⟧]
  
      println!("\n=== E2E PASSED ===\n");
  }
@@ -2648,4 +2648,6 @@ index 000000000..c69aa8896
 @@ -0,0 +1 @@
 +Subproject commit c69aa889696a418a38d23c548c309f73606c12d3
 
-[compacted tool output — this is a PARTIAL view; the full original (192075 bytes) is available by calling tokenjuice_retrieve with token "bf74b05a01657e3ae7fa0bb02f76f163" (marker ⟦tj:bf74b05a01657e3ae7fa0bb02f76f163⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (192075 bytes) is available by calling tinyjuice_retrieve with token "bf74b05a01657e3ae7fa0bb02f76f163" (marker ⟦tj:bf74b05a01657e3ae7fa0bb02f76f163⟧)]

@@ -13,7 +13,7 @@ index e0d98a7..c685ec6 100644
  
  By default, the fixture suite emits metadata only. It does not print raw prompt,
  tool, or context payloads unless `--dump-samples` is explicitly requested.
-[... 39 context line(s) omitted ...]
+[... 39 context line(s) omitted ... ⟦tj:a9ade52ab13f6a7e7310388311061c28⟧]
  
  Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
  
@@ -29,7 +29,7 @@ index e0d98a7..c685ec6 100644
  Current categories cover:
  
  - JSON tool-catalog slices.
-[... 17 context line(s) omitted ...]
+[... 17 context line(s) omitted ... ⟦tj:9262f76c55796d62e2f888e9c765894e⟧]
  - [LongBench](https://arxiv.org/abs/2308.14508) is a broader long-context benchmark that can be useful once TinyJuice adds task-level answer-quality evaluation.
  
  For TinyJuice, the closest future cross-reference is not a single paper score. It is a paired report: compression metadata from this fixture runner plus downstream task accuracy on pinned tool-output corpora.
@@ -41,7 +41,7 @@ index b50c26d..f56c80f 100644
  //! Fixture-driven TinyJuice compression benchmark.
  //!
  //! Run with:
-[... 14 context line(s) omitted ...]
+[... 14 context line(s) omitted ... ⟦tj:b512bccc347ac586df8fb9cd1c0d8d08⟧]
  use tinyjuice::cache;
  use tinyjuice::tokens::estimate_tokens;
  use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind};
@@ -49,7 +49,7 @@ index b50c26d..f56c80f 100644
  
  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
  enum ReportFormat {
-[... 124 context line(s) omitted ...]
+[... 124 context line(s) omitted ... ⟦tj:60e8d361d0599ceba93845f6c8eb1a8b⟧]
      ccr_marker: bool,
      ccr_recoverable: Option<bool>,
      original_bytes: usize,
@@ -68,7 +68,7 @@ index b50c26d..f56c80f 100644
      compacted_bytes: usize,
      byte_ratio: f64,
      byte_reduction_percent: f64,
-[... 12 context line(s) omitted ...]
+[... 12 context line(s) omitted ... ⟦tj:c8ab23538fa5785fed77454c9df72da4⟧]
      failed_task_checks: Vec<String>,
  }
  
@@ -84,7 +84,7 @@ index b50c26d..f56c80f 100644
  fn main() {
      let args = parse_args();
      let options = CompressOptions::default();
-[... 51 context line(s) omitted ...]
+[... 51 context line(s) omitted ... ⟦tj:2b467d3192f223c32c083180cf44ae5e⟧]
          last = Some(result);
      }
      let result = last.expect("at least one benchmark iteration");
@@ -99,7 +99,7 @@ index b50c26d..f56c80f 100644
      let compacted_tokens_est = estimate_tokens(&result.text);
      let failed_checks: Vec<String> = case
          .checks
-[... 24 context line(s) omitted ...]
+[... 24 context line(s) omitted ... ⟦tj:f12cb3d49a900610fb408b45f853972c⟧]
      let accuracy_gate_passed =
          failed_checks.is_empty() && failed_task_checks.is_empty() && recovery_gate;
      let byte_ratio = ratio(result.compacted_bytes, result.original_bytes);
@@ -138,7 +138,7 @@ index b50c26d..f56c80f 100644
          compacted_bytes: result.compacted_bytes,
          byte_ratio,
          byte_reduction_percent: reduction_percent(byte_ratio),
-[... 26 context line(s) omitted ...]
+[... 26 context line(s) omitted ... ⟦tj:8ee9e85420d6cd8785d5f9431b34aab1⟧]
      tinyjuice::route(input, options).await
  }
  
@@ -205,7 +205,7 @@ index b50c26d..f56c80f 100644
  async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOptions) {
      for case in cases {
          let result = run_once(case, options).await;
-[... 150 context line(s) omitted ...]
+[... 150 context line(s) omitted ... ⟦tj:1c4406609b090d798b62f04fb03687ca⟧]
                      source_tool: Some("read_file".to_string()),
                      ..Default::default()
                  },
@@ -223,7 +223,7 @@ index b50c26d..f56c80f 100644
              },
          ));
      }
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:66ae5f69a0aafd0f443f98d8eca71373⟧]
              "rg".to_string(),
              "tokenjuice".to_string(),
              "recover".to_string(),
@@ -231,7 +231,7 @@ index b50c26d..f56c80f 100644
      out
  }
  
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:b4702c053e0485889bd09bf58f79822e⟧]
          report.options.ccr_min_tokens
      );
      println!(
@@ -254,7 +254,7 @@ index b50c26d..f56c80f 100644
              case.avg_latency_ms,
              case.checks_passed,
              case.checks_total,
-[... 57 context line(s) omitted ...]
+[... 57 context line(s) omitted ... ⟦tj:7ecba9813bd5f384fccc2b335ce567ca⟧]
  fn reduction_percent(ratio: f64) -> f64 {
      (1.0 - ratio) * 100.0
  }
@@ -266,7 +266,7 @@ index 798d2b0..a5126a5 100755
      search-results) echo "output.rg" ;;
      unified-diff) echo "output.diff" ;;
      rust-source) echo "output.rs" ;;
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:91904d2889cac9d5e4f3f841be786302⟧]
    reset_category "$category"
  done
  
@@ -300,9 +300,11 @@ index 798d2b0..a5126a5 100755
  
  echo "Writing Vitest command-log cases"
  vitest_logs=()
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:ff557f5dc05d02127ecdcdce7c71c9b5⟧]
  echo "Writing HTML/RSS/page cases"
  html_index=1
  fetch_page() {
 
-[compacted tool output — this is a PARTIAL view; the full original (39862 bytes) is available by calling tokenjuice_retrieve with token "102054b82fb3a4497c6d2ea9bf0b2816" (marker ⟦tj:102054b82fb3a4497c6d2ea9bf0b2816⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (39862 bytes) is available by calling tinyjuice_retrieve with token "102054b82fb3a4497c6d2ea9bf0b2816" (marker ⟦tj:102054b82fb3a4497c6d2ea9bf0b2816⟧)]

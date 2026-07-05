@@ -10,8 +10,8 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB | 79.5% | 79.5% | 75.4% | 0.247 ms | true |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB | 73.6% | 73.6% | 65.4% | 0.145 ms | true |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB | 79.5% | 79.5% | 75.4% | 0.361 ms | true |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB | 73.6% | 73.6% | 65.5% | 0.204 ms | true |
 | `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | [diff](cases/10-vitest-excerpt-10/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | [diff](cases/09-vitest-excerpt-9/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | [diff](cases/08-vitest-excerpt-8/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
@@ -101,7 +101,7 @@ Error: expect(element).not.toBeInTheDocument()
    Start at  23:49:42
    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
-[compacted tool output — this is a PARTIAL view; the full original (5554 bytes) is available by calling tokenjuice_retrieve with token "6662f8a36798fc5c20e4a63b3b70c5fe" (marker ⟦tj:6662f8a36798fc5c20e4a63b3b70c5fe�...
+[compacted tool output — this is a PARTIAL view; the full original (5554 bytes) is available by calling tinyjuice_retrieve with token "6662f8a36798fc5c20e4a63b3b70c5fe" (marker ⟦tj:6662f8a36798fc5c20e4a63b3b70c5fe⟧...
 
 ```
 
@@ -170,7 +170,7 @@ Error: expect(element).not.toBeInTheDocument()
    Start at  23:49:42
    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
-[compacted tool output — this is a PARTIAL view; the full original (2777 bytes) is available by calling tokenjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5" (marker ⟦tj:86eb51aa134ea50382aa89d95827b1b5�...
+[compacted tool output — this is a PARTIAL view; the full original (2777 bytes) is available by calling tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5" (marker ⟦tj:86eb51aa134ea50382aa89d95827b1b5⟧...
 
 ```
 

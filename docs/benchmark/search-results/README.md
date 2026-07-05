@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | [diff](cases/09-rg-provider/compression.diff) | 59.8 KB | 83.0% | 83.0% | 82.6% | 0.159 ms | true |
-| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | [diff](cases/05-rg-agent/compression.diff) | 62.2 KB | 81.0% | 81.0% | 80.6% | 0.187 ms | true |
-| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | [diff](cases/04-rg-openhuman/compression.diff) | 65.1 KB | 76.4% | 76.4% | 76.1% | 0.180 ms | true |
-| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | [diff](cases/06-rg-memory/compression.diff) | 70.0 KB | 61.8% | 61.8% | 61.4% | 0.188 ms | true |
-| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | [diff](cases/07-rg-workflow/compression.diff) | 95.5 KB | 47.0% | 47.0% | 46.8% | 0.255 ms | true |
-| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | [diff](cases/10-rg-subconscious/compression.diff) | 79.6 KB | 40.3% | 40.3% | 40.0% | 0.201 ms | true |
-| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | [diff](cases/08-rg-tinyplace/compression.diff) | 76.0 KB | 37.5% | 37.5% | 37.2% | 0.201 ms | true |
-| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | [diff](cases/01-rg-tokenjuice/compression.diff) | 71.4 KB | 32.5% | 32.5% | 32.2% | 0.205 ms | true |
-| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | [diff](cases/02-rg-compression/compression.diff) | 73.4 KB | 22.7% | 22.7% | 22.4% | 0.239 ms | true |
-| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | [diff](cases/03-rg-retrieve/compression.diff) | 1.9 MB | 0.9% | 0.9% | 0.8% | 2.215 ms | true |
+| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | [diff](cases/09-rg-provider/compression.diff) | 59.8 KB | 82.0% | 83.0% | 81.6% | 0.293 ms | true |
+| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | [diff](cases/05-rg-agent/compression.diff) | 62.2 KB | 80.1% | 81.0% | 79.8% | 0.316 ms | true |
+| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | [diff](cases/04-rg-openhuman/compression.diff) | 65.1 KB | 75.0% | 76.4% | 74.7% | 0.348 ms | true |
+| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | [diff](cases/06-rg-memory/compression.diff) | 70.0 KB | 60.4% | 61.8% | 60.0% | 0.345 ms | true |
+| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | [diff](cases/07-rg-workflow/compression.diff) | 95.5 KB | 46.1% | 47.0% | 45.8% | 0.462 ms | true |
+| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | [diff](cases/10-rg-subconscious/compression.diff) | 79.6 KB | 38.9% | 40.3% | 38.6% | 0.369 ms | true |
+| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | [diff](cases/08-rg-tinyplace/compression.diff) | 76.0 KB | 35.9% | 37.5% | 35.6% | 0.365 ms | true |
+| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | [diff](cases/01-rg-tokenjuice/compression.diff) | 71.4 KB | 30.7% | 32.3% | 30.4% | 0.351 ms | true |
+| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | [diff](cases/02-rg-compression/compression.diff) | 73.4 KB | 21.0% | 22.6% | 20.7% | 0.357 ms | true |
+| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | [diff](cases/03-rg-retrieve/compression.diff) | 1.9 MB | 0.8% | 0.9% | 0.8% | 3.508 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -85,31 +85,31 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/api/rest_tests.rs:339:    // Discord path — proves the helper is provider-agnostic.
 <OPENHUMAN_ROOT>/src/api/rest_tests.rs:351:        provider,
 <OPENHUMAN_ROOT>/src/api/rest_tests.rs:357:    assert_eq!(provider, "discord");
-[+5 more match(es) in <OPENHUMAN_ROOT>/src/api/rest_tests.rs]
+[+5 more match(es) in <OPENHUMAN_ROOT>/src/api/rest_tests.rs ⟦tj:4eb96a729440fd9708bba36e29516522⟧]
 <OPENHUMAN_ROOT>/src/api/config.rs:157:        let is_inference_provider = looks_like_inference_provider_endpoint(u);
 <OPENHUMAN_ROOT>/src/api/config.rs:167:            crate::openhuman::config::schema::cloud_providers::endpoint_host(u).is_some_and(|h| {
 <OPENHUMAN_ROOT>/src/api/config.rs:168:                crate::openhuman::config::schema::cloud_providers::host_is_builtin_cloud_provider(
 <OPENHUMAN_ROOT>/src/api/config.rs:176:            is_inference_provider,
 <OPENHUMAN_ROOT>/src/api/config.rs:183:        // (local model runner OR remote managed provider), OR when it is one of
-[+41 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs]
+[+41 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs ⟦tj:bd236bfd1ccf9a3f2e5172e07fe0395e⟧]
 <OPENHUMAN_ROOT>/src/api/rest.rs:18:    /// user deletes the message on the provider side (Telegram, Discord,
 <OPENHUMAN_ROOT>/src/api/rest.rs:23:    #[error("message not found on {provider}: {message_id}")]
 <OPENHUMAN_ROOT>/src/api/rest.rs:25:        /// Channel provider segment (e.g. `"telegram"`, `"discord"`).
 <OPENHUMAN_ROOT>/src/api/rest.rs:26:        provider: String,
 <OPENHUMAN_ROOT>/src/api/rest.rs:27:        /// Provider-specific message id from the URL.
-[+19 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs]
+[+19 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs ⟦tj:4757a5f49733adabb8102675b802da87⟧]
 <OPENHUMAN_ROOT>/src/main.rs:51:            // Defense-in-depth: drop transient-upstream provider failures that
 <OPENHUMAN_ROOT>/src/main.rs:58:            // `openhuman::inference::provider::ops::should_report_provider_http_failure`
 <OPENHUMAN_ROOT>/src/main.rs:61:            if openhuman_core::core::observability::is_transient_provider_http_failure(&event) {
 <OPENHUMAN_ROOT>/src/main.rs:79:            // (domain=llm_provider, failure=transport) — flaky-network
 <OPENHUMAN_ROOT>/src/main.rs:83:            if openhuman_core::core::observability::is_transient_provider_transport_failure(&event)
-[+10 more match(es) in <OPENHUMAN_ROOT>/src/main.rs]
+[+10 more match(es) in <OPENHUMAN_ROOT>/src/main.rs ⟦tj:852a8bade6774d4a423fa2c02f467ec0⟧]
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:39:use openhuman_core::openhuman::composio::providers::gmail::ingest::ingest_page_into_memory_tree;
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:40:use openhuman_core::openhuman::composio::providers::registry::{
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:41:    get_provider, init_default_providers,
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:140:    init_default_providers();
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:141:    let provider = get_provider("gmail").ok_or_else(|| {
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs]
+[+2 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs ⟦tj:25d9d4c4e4b0cad7de88f10d7f9989e0⟧]
 <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:14://!   chat provider (no harness, no real tools). Useful to isolate
 <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:28://! # Raw provider call (no harness):
 <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:35:use openhuman_core::openhuman::inference::provider::create_chat_provider;
@@ -174,7 +174,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/api/config.rs:460:/// (`/auth/me`, `/agent-integrations/…`) which then land on
 <OPENHUMAN_ROOT>/src/api/config.rs:502:/// | `https://api.tinyhumans.ai/openai/v1/…`   | `/agent-integrations/foo` | `https://api.tinyhumans.ai/agent-integrations/foo`  ← path replaced   |
 <OPENHUMAN_ROOT>/src/api/config.rs:678:             /agent-integrations/* requests don't 404 against your local LLM"
-[+10 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs]
+[+10 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs ⟦tj:8a30994e9ec0aad6c492e17640aa6fab⟧]
 <OPENHUMAN_ROOT>/src/api/rest.rs:919:    /// Signals "the agent is typing…" on a channel that supports it
 <OPENHUMAN_ROOT>/src/main.rs:111:            // the agent re-report routes through `TransientUpstreamHttp`, but the
 <OPENHUMAN_ROOT>/src/main.rs:120:            // `agent::harness::session::runtime::run_single`,
@@ -185,13 +185,13 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:33:use openhuman_core::openhuman::agent::Agent;
 <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:89:    let mut agent = Agent::from_config(config).context("Agent::from_config failed")?;
 <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:109:        .context("agent.run_single failed")?;
-[+9 more match(es) in <OPENHUMAN_ROOT>/src/bin/inference_probe.rs]
+[+9 more match(es) in <OPENHUMAN_ROOT>/src/bin/inference_probe.rs ⟦tj:f04dbcf39adf1c9406bc628b5c12bcad⟧]
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:27:    self, AuditSteerError, AuditSubagentSessionStore, DurableSubagentSession, DurableSubagentStatus,
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:91:    subagent_failed: Vec<SubagentFailedEvent>,
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:164:struct SubagentFailedEvent {
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:233:        eprintln!("[harness_subagent_audit] ERROR: {err:#}");
 <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:271:    let mut agent = Agent::from_config(&config).context("Agent::from_config failed")?;
-[+165 more match(es) in <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs]
+[+165 more match(es) in <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs ⟦tj:b8566299ecc08717d8fa36a669bfba11⟧]
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:93:/// semaphore, `GLOBAL_REGISTRY` agent.run_turn handler, `STARTED`
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:697:    let msg = r#"[composio] list_connections failed: Backend returned 500 Internal Server Error for GET https://api.tinyhumans.ai/agent-integrations/composio/connections: 40...
 <OPENHUMAN_ROOT>/src/core/event_bus/bus.rs:59:/// (e.g., an agent turn completed, a memory was stored).
@@ -200,7 +200,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:220:- For AI-authored or remote-agent PRs, also fill in the AI Authored PR Metadata section of the PR template.
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:249:├── AGENTS.md               # Coding-agent repo rules
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:303:If you are contributing through a coding agent or remote environment, include the metadata required by the PR template and the Codex PR checklist.
-[+1 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING.md]
+[+1 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING.md ⟦tj:788df4d3444c71495e023c89b05774e2⟧]
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:57:    /// An error occurred during agent processing.
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:58:    AgentError {
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:85:    /// A sub-agent failed (max iterations, provider error, missing
@@ -274,25 +274,25 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/api/config.rs:54:pub const APP_ENV_VAR: &str = "OPENHUMAN_APP_ENV";
 <OPENHUMAN_ROOT>/src/api/config.rs:59:pub const VITE_APP_ENV_VAR: &str = "VITE_OPENHUMAN_APP_ENV";
 <OPENHUMAN_ROOT>/src/api/config.rs:412:                "[api/config] api_url parse failed during OpenHuman backend classification"
-[+45 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs]
+[+45 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs ⟦tj:f0133a4b71c419789210cfdae866320e⟧]
 <OPENHUMAN_ROOT>/src/api/rest.rs:22:    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
 <OPENHUMAN_ROOT>/src/api/rest.rs:33:    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
 <OPENHUMAN_ROOT>/src/api/rest.rs:81:/// silently fall through to `report_error` (OPENHUMAN-TAURI-R7).
 <OPENHUMAN_ROOT>/src/api/rest.rs:666:            // `report_error`. Targets `OPENHUMAN-TAURI-2Y` (~454 events).
 <OPENHUMAN_ROOT>/src/api/rest.rs:686:                // without propagating a typed error. Targets OPENHUMAN-TAURI-R7.
-[+7 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs]
+[+7 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs ⟦tj:c5bf926207f515faf4e3c68b07f40a8c⟧]
 <OPENHUMAN_ROOT>/src/main.rs:58:            // `openhuman::inference::provider::ops::should_report_provider_http_failure`
 <OPENHUMAN_ROOT>/src/main.rs:61:            if openhuman_core::core::observability::is_transient_provider_http_failure(&event) {
 <OPENHUMAN_ROOT>/src/main.rs:75:            if openhuman_core::core::observability::is_backend_error_code_event(&event) {
 <OPENHUMAN_ROOT>/src/main.rs:83:            if openhuman_core::core::observability::is_transient_provider_transport_failure(&event)
 <OPENHUMAN_ROOT>/src/main.rs:129:            if openhuman_core::core::observability::is_transient_backend_api_failure(&event)
-[+37 more match(es) in <OPENHUMAN_ROOT>/src/main.rs]
+[+37 more match(es) in <OPENHUMAN_ROOT>/src/main.rs ⟦tj:b1916b4d33e65d9a8a51bce3e21521de⟧]
 <OPENHUMAN_ROOT>/src/lib.rs:1://! Core library for the OpenHuman platform.
 <OPENHUMAN_ROOT>/src/lib.rs:3://! This crate provides the central logic for the OpenHuman core binary, including:
 <OPENHUMAN_ROOT>/src/lib.rs:6://! - Domain-specific logic for the OpenHuman agent runtime.
 <OPENHUMAN_ROOT>/src/lib.rs:10:pub mod openhuman;
 <OPENHUMAN_ROOT>/src/lib.rs:13:pub use openhuman::config::DaemonConfig;
-[+4 more match(es) in <OPENHUMAN_ROOT>/src/lib.rs]
+[+4 more match(es) in <OPENHUMAN_ROOT>/src/lib.rs ⟦tj:3b7e2e9af1a5c86087d0fc97dc7d715e⟧]
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:15://! - Signed-in openhuman session JWT in the same workspace the desktop app
 
 ```
@@ -356,25 +356,25 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:39:use openhuman_core::openhuman::composio::providers::gmail::ingest::ingest_page_into_memory_tree;
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:44:use openhuman_core::openhuman::memory_queue::drain_until_idle;
 <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:45:use openhuman_core::openhuman::memory_store::chunks::store::{
-[+11 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs]
+[+11 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs ⟦tj:b9b15f4db203fc39322f272dd7fd3419⟧]
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:18://!   unconfigured — `memory/tree/ingest` soft-falls-back per call.
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:24://! export OPENHUMAN_MEMORY_EMBED_ENDPOINT=http://localhost:11434
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:25://! export OPENHUMAN_MEMORY_EMBED_MODEL=nomic-embed-text
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:26://! export OPENHUMAN_MEMORY_EXTRACT_ENDPOINT=http://localhost:11434
 <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:191:        .map_err(|e| anyhow::anyhow!("[slack_backfill] memory::global::init failed: {e}"))?;
-[+21 more match(es) in <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs]
+[+21 more match(es) in <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs ⟦tj:dde6af0e11e8601e250244103d6a5e65⟧]
 <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:1://! Manual stress smoke for the memory_tree schema-init race fix.
 <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:3://! Spins N concurrent threads racing into `memory::tree::store::with_connection`
 <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:15://!   cargo run --bin memory-tree-init-smoke -- 32
 <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:19://!   cargo run --bin memory-tree-init-smoke -- 32
 <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:33:use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
-[+1 more match(es) in <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs]
+[+1 more match(es) in <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs ⟦tj:9597d14a49e082fa6871593559678497⟧]
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:89:/// `memory::tree::jobs::start` + `composio::start_periodic_sync` +
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:224:async fn invoke_memory_init_accepts_empty_params() {
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:228:    let result = invoke_method(default_state(), "openhuman.memory_init", json!({})).await;
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:238:async fn invoke_memory_list_namespaces_rejects_unknown_param() {
 <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:241:        "openhuman.memory_list_namespaces",
-[+4 more match(es) in <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs]
+[+4 more match(es) in <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs ⟦tj:3a725e2601699a63bd2916acf29a544b⟧]
 <OPENHUMAN_ROOT>/src/core/logging.rs:518:        std::env::set_var("OPENHUMAN_LOG_FILE_CONSTRAINTS", "rpc, , agent ,memory");
 <OPENHUMAN_ROOT>/src/core/logging.rs:520:        assert_eq!(parsed, vec!["rpc", "agent", "memory"]);
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:1://! `openhuman memory` — CLI for memory ingestion, graph inspection, and debugging.
@@ -382,7 +382,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:8://!   openhuman memory ingest  <file|->  [--namespace <ns>] [--key <key>] [--title <title>] [-v]
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:9://!   openhuman memory docs    [--namespace <ns>]
 <OPENHUMAN_ROOT>/src/core/memory_cli.rs:440:    crate::openhuman::memory::global::init(config.workspace_dir).map_err(anyhow::Error::msg)
-[+41 more match(es) in <OPENHUMAN_ROOT>/src/core/memory_cli.rs]
+[+41 more match(es) in <OPENHUMAN_ROOT>/src/core/memory_cli.rs ⟦tj:6e8649052d8f5f9de5aa388cd0ab5ab0⟧]
 <OPENHUMAN_ROOT>/README.md:52:> OpenHuman is not AGI. But it is a meaningful architectural step closer, with better memory, better orchestration, and better tooling.
 
 ```
@@ -445,13 +445,13 @@ Output excerpt:
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:164:These commands cover the most common local workflows from the repository root:
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:201:If you only changed docs in a normal local workflow, `pnpm format:check` is usually the only validation you need. AI-authored or remote-agent PRs must still fill in the AI Authored PR...
 <OPENHUMAN_ROOT>/CONTRIBUTING.md:246:├── docs/                   # Internal and workflow docs
-[+4 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING.md]
+[+4 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING.md ⟦tj:7379cb13ca753d99d0cf22438a739278⟧]
 <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:213:        // Workflow
 <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:215:            DomainEvent::WorkflowLoaded {
 <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:219:            "workflow",
 <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:222:            DomainEvent::WorkflowStopped {
 <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs:228:            DomainEvent::WorkflowStartFailed {
-[+8 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs]
+[+8 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events_tests.rs ⟦tj:63b95799cc3c184d2de2ffe18426c489⟧]
 <OPENHUMAN_ROOT>/src/core/observability.rs:2764:/// `install_workflow_from_url_with_home` fetches a user/catalog-supplied
 <OPENHUMAN_ROOT>/AGENTS.md:66:**CI build topology**: full-suite E2E is **build-once-then-fanout** on all three OSes — `build-{linux,macos,windows}-full` compile/bundle the app once and upload it as a per-run workflow a...
 <OPENHUMAN_ROOT>/AGENTS.md:88:PRs need **≥ 80% coverage on changed lines** via `diff-cover` over Vitest + `cargo-llvm-cov` lcov. Enforced by the coverage jobs (`frontend-coverage`/`rust-core-coverage`/`rust-tauri-cover...
@@ -462,13 +462,13 @@ Output excerpt:
 <OPENHUMAN_ROOT>/README.md:127:Heavily inspired by n8n and Zapier, [workflows](https://tinyhumans.gitbook.io/openhuman/features/workflows) bring the same visual, trigger-driven automation to your agent, except the agent ...
 <OPENHUMAN_ROOT>/README.md:130: <img src="./gitbooks/.gitbook/assets/workflows.png" alt="OpenHuman workflow canvas">
 <OPENHUMAN_ROOT>/README.md:133:> The agent proposes the workflow; you review it on a canvas and save it.
-[+4 more match(es) in <OPENHUMAN_ROOT>/README.md]
+[+4 more match(es) in <OPENHUMAN_ROOT>/README.md ⟦tj:31745e7f42522bf5c7a815f97422d791⟧]
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:460:    /// non-trigger node settles, so the Workflows UI can show a run advancing
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:477:    WorkflowLoaded { skill_id: String, runtime: String },
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:481:    WorkflowStartFailed { skill_id: String, error: String },
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1337:            | Self::WorkflowStartFailed { .. }
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1497:            Self::WorkflowStartFailed { .. } => "WorkflowStartFailed",
-[+12 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events.rs]
+[+12 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events.rs ⟦tj:44268955613c3b46f07c5e5c1741b57b⟧]
 <OPENHUMAN_ROOT>/plan.md:20:   most of `scripts/__tests__/`, and the Pester Windows-install test are invoked by no workflow.
 <OPENHUMAN_ROOT>/plan.md:139:### P1 — core workflows
 <OPENHUMAN_ROOT>/plan.md:197:**Holes found (verified by exhaustive grep of package.json + workflows):**
@@ -550,14 +550,14 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/core/all.rs:461:    schemas.extend(crate::openhuman::subconscious::all_subconscious_controller_schemas());
 <OPENHUMAN_ROOT>/src/core/all.rs:463:        crate::openhuman::subconscious_triggers::all_subconscious_triggers_controller_schemas(),
 <OPENHUMAN_ROOT>/src/core/all.rs:615:            "Subconscious-orchestration read surface: chat windows (master/subconscious/per-session), message history, Master steering DMs, read state, and steering status.",
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/all.rs]
+[+2 more match(es) in <OPENHUMAN_ROOT>/src/core/all.rs ⟦tj:fc69931290028502f6fc738d1dbb303e⟧]
 <OPENHUMAN_ROOT>/docs/README.ko.md:68:- **[잠재의식(subconscious)](https://tinyhumans.gitbook.io/openhuman/features/subconscious)**: 당신의 세계의 변화를 비교 분석하고, 목표를 진전시키고, 아�...
 <OPENHUMAN_ROOT>/src/core/observability.rs:595:        return Some(ExpectedErrorKind::SubconsciousSchemaUnavailable);
 <OPENHUMAN_ROOT>/src/core/observability.rs:794:/// Match subconscious-engine SQLite schema-init failures caused by the host
 <OPENHUMAN_ROOT>/src/core/observability.rs:801:/// See [`ExpectedErrorKind::SubconsciousSchemaUnavailable`].
 <OPENHUMAN_ROOT>/src/core/observability.rs:804:        || lower.contains("failed to open subconscious db");
 <OPENHUMAN_ROOT>/src/core/observability.rs:2197:        ExpectedErrorKind::SubconsciousSchemaUnavailable => {
-[+33 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs]
+[+33 more match(es) in <OPENHUMAN_ROOT>/src/core/observability.rs ⟦tj:03a9248d60774113767b52be22fd7f25⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/approval-gate.md:96:The gate is **interactive-only**. Background, triage, and cron turns carry no chat context, so there's nobody to answer a prompt. These turns are pre-authorized and ...
 <OPENHUMAN_ROOT>/gitbooks/features/approval-gate.md:120:* [Subconscious Loop](subconscious.md): the background loop and its separate escalation approvals.
 <OPENHUMAN_ROOT>/src/core/subconscious_cli.rs:1://! `openhuman subconscious` — CLI for testing and debugging the subconscious loop.
@@ -629,7 +629,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1262:        /// The raw JSON message from the tinyplace server.
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1265:    /// A tinyplace WebSocket stream changed lifecycle status.
 <OPENHUMAN_ROOT>/src/core/event_bus/events.rs:1267:    TinyPlaceStreamStatusChanged {
-[+4 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events.rs]
+[+4 more match(es) in <OPENHUMAN_ROOT>/src/core/event_bus/events.rs ⟦tj:10f3eb95ea16abf36c4b3819f172cc9c⟧]
 <OPENHUMAN_ROOT>/plan.md:170:- **~20 RPC controller domains with zero E2E references** (`recall_calendar`, `tinyplace`,
 <OPENHUMAN_ROOT>/plan.md:497:  real backend-facing surface: `recall_calendar`, `tinyplace`, `redirect_links`,
 <OPENHUMAN_ROOT>/docs/README.ko.md:77:- **[에이전트 경제](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: [tiny.place](https://tiny.place)의 `@handle`, Signal로 암호화된 에이전트 간 오케...
@@ -647,7 +647,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/core/socketio.rs:1221:    // 10. Tinyplace stream events → broadcast to all connected frontend sockets.
 <OPENHUMAN_ROOT>/src/core/socketio.rs:1235:                        "[socketio] event_bus not initialised after {}s — tinyplace bridge giving up",
 <OPENHUMAN_ROOT>/src/core/socketio.rs:1249:                        "[socketio] dropped {} event_bus events due to lag (tinyplace bridge)",
-[+7 more match(es) in <OPENHUMAN_ROOT>/src/core/socketio.rs]
+[+7 more match(es) in <OPENHUMAN_ROOT>/src/core/socketio.rs ⟦tj:eecbbf5e8747b6141be7a4940c16e4e7⟧]
 <OPENHUMAN_ROOT>/docs/README.de.md:77:- **[Eine Agenten-Ökonomie](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: ein `@handle` auf [tiny.place](https://tiny.place), Signal-verschlüsselte Agent-zu-Agent-...
 <OPENHUMAN_ROOT>/docs/README.ur-pk.md:91:- **[ایک ایجنٹ معیشت](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: [tiny.place](https://tiny.place) پر ایک `@handle`، Signal-انکرپٹڈ ا...
 <OPENHUMAN_ROOT>/docs/README.ja-JP.md:77:- **[エージェントの経済圏](https://tinyhumans.gitbook.io/openhuman/features/tinyplace)**: [tiny.place](https://tiny.place) 上の `@handle`、Signal 暗号化のエー�...
@@ -713,8 +713,8 @@ Output excerpt:
 <OPENHUMAN_ROOT>/Cargo.toml:52:# config/RPC/tool/runtime adapters in `src/openhuman/tokenjuice/` and patches
 <OPENHUMAN_ROOT>/Cargo.toml:79:# TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
 <OPENHUMAN_ROOT>/Cargo.toml:80:# behind the default `tokenjuice-treesitter` feature; disabling it falls back to
-<OPENHUMAN_ROOT>/Cargo.toml:81:# the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
-[+3 more match(es) in <OPENHUMAN_ROOT>/Cargo.toml]
+<OPENHUMAN_ROOT>/Cargo.toml:330:    "tinyjuice/tokenjuice-treesitter",
+[+3 more match(es) in <OPENHUMAN_ROOT>/Cargo.toml ⟦tj:3ac438bed0c3bce658b515ad6724b1b6⟧]
 <OPENHUMAN_ROOT>/README.md:72:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: tool output compressed before it hits the model: same information, up to 80% fewer tokens. A brain thi...
 <OPENHUMAN_ROOT>/README.md:145:| **Cost**               | ⚠️ Sub + add-ons  | ⚠️ BYO models     | ⚠️ BYO models     | ✅ One sub + TokenJuice                                                                  ...
 <OPENHUMAN_ROOT>/docs/README.ko.md:70:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: 도구 출력은 모델에 닿기 전에 압축되어, 동일한 정보가 최대 80% 적은 �...
@@ -742,7 +742,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:224:        // No HTML markup: clean_tool_output runs after tokenjuice and would
 <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:302:        tokenjuice_compression: AgentTokenjuiceCompression::Auto,
 <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:364:    // the oversized-result path with payloads that survive tokenjuice's
-[+1 more match(es) in <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs]
+[+1 more match(es) in <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs ⟦tj:3a52d07fd3b17ecfcf1f560ce9214baa⟧]
 <OPENHUMAN_ROOT>/tests/agent_prompts_subagent_raw_coverage_e2e.rs:24:use openhuman_core::openhuman::tokenjuice::AgentTokenjuiceCompression;
 
 ```
@@ -817,11 +817,11 @@ Output excerpt:
 <OPENHUMAN_ROOT>/gitbooks/features/billing-and-usage.md:102:Because cost tracks **real token counts**, anything that shrinks the prompt directly lowers spend. OpenHuman's [TokenJuice token compression](token-compression....
 <OPENHUMAN_ROOT>/gitbooks/features/billing-and-usage.md:108:- [Token compression (TokenJuice)](token-compression.md)
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:3:  TokenJuice - a multi-stage compression router that compacts verbose tool
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:8:# Smart Token Compression
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:12:OpenHuman ships with **TokenJuice**, a compression router wired directly into the agent's tool-execution path. Before any tool result reaches a model, TokenJuice...
-<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:54:4. **Compression.** The compressor runs. If it declines or its output is no smaller than the input, TokenJuice falls back to the generic compressor or passes the...
-<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:84:* **Off by default.** Enable with `ml_compression_enabled = true` in `[tokenjuice]`.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:53:3. **Compressor selection.** Each kind routes to a dedicated compressor, honoring per-kind toggles (`search_enabled`, `code_enabled`, `html_enabled`, `ml_compres...
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:93:Lossy compression would normally mean throwing data away. TokenJuice instead **offloads** the full original into the **Compress-Cache-Retrieve (CCR)** store and ...
-[+6 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md]
+[+6 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md ⟦tj:5ad9c692754c7f05570d402f1f3ee671⟧]
 <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/scoring.md:109:Embeddings run on the background workers, not the ingest hot path, so a burst of new sources never blocks the UI. Trees give compression and navigation; emb...
 <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/scoring.md:118:* [Token Compression](../token-compression.md) - why keeping the tree dense matters.
 <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/memory-diff.md:101:Checkpoints are cheap to prune: `cleanup` deletes tags older than N days, but **snapshot commits are never deleted** - git history _is_ the ledger, and ...
@@ -832,8 +832,8 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/openhuman/channels/runtime/dispatch/mod.rs:128:            tokenjuice_compression: crate::openhuman::tokenjuice::AgentTokenjuiceCompression::Auto,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:14:**TinyJuice is a Rust token-compression engine for agent context.** It gives
 <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:26:auditable compression layer with conservative pass-through behavior, recovery
-<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:74:## Compression Surfaces
-<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:145:use tinyjuice::{AgentTokenjuiceCompression, compact_tool_output_with_policy};
+<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:92:TinyJuice does not publish compression percentage claims yet. Throughput
+<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:109:use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
 
 ```
 
@@ -900,7 +900,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs:35:    let opts = FastRetrieveOptions {
 <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs:37:        ..FastRetrieveOptions::default()
 <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs:41:    let resp = fast_retrieve(config, query, opts).await?;
-[+4 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs]
+[+4 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_memory/ops.rs ⟦tj:47c859c3851e848ac92d2679987c9629⟧]
 <OPENHUMAN_ROOT>/src/openhuman/tinyplace/schemas.rs:534:            "The listing ID to retrieve bids for.",
 <OPENHUMAN_ROOT>/src/openhuman/tinyplace/schemas.rs:1409:            "The agent whose follow stats to retrieve.",
 <OPENHUMAN_ROOT>/src/openhuman/tinyplace/schemas.rs:1495:            "The feedback item ID to retrieve.",
@@ -922,7 +922,7 @@ Output excerpt:
 <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:19://!   bash scripts/test-rust-with-mock.sh --test memory_fast_retrieve_e2e
 <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:27:use openhuman_core::openhuman::memory_tree::retrieval::{fast_retrieve, FastRetrieveOptions};
 <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs:77:    let resp = fast_retrieve(
-[+5 more match(es) in <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs]
+[+5 more match(es) in <OPENHUMAN_ROOT>/tests/memory_fast_retrieve_e2e.rs ⟦tj:8bfbabe36d827b8b57f85ce8ece46dfd⟧]
 <OPENHUMAN_ROOT>/gitbooks/guides/privacy-sensitive-data.md:48:**Why local memory *is* the privacy design.** Most assistants trade privacy for context, because more context means more of your raw data uploaded. OpenHuman ...
 
 ```

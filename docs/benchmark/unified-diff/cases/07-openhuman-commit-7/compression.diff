@@ -8,7 +8,7 @@
 - import socketReducer from '../../store/socketSlice';
 - import threadReducer from '../../store/threadSlice';
 - import type { Thread } from '../../types/thread';
-+[... 4 context line(s) omitted ...]
++[... 4 context line(s) omitted ... ⟦tj:16d3db64c45b091aabf86bc78dc1af78⟧]
   
   // ── Hoisted mock state ──────────────────────────────────────────────────────
   
@@ -90,7 +90,7 @@
 -     purge: vi.fn().mockResolvedValue({}),
 -     updateLabels: vi.fn().mockResolvedValue({}),
 -     updateTitle: vi.fn().mockResolvedValue({}),
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fc77f41fbf66aae8e057b835b733e4ee⟧]
       persistReaction: vi.fn().mockResolvedValue({}),
     },
   }));
@@ -172,7 +172,7 @@
 -   return { store, textarea, thread };
 - }
 - 
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fab31c16d2bae5df40e301502b5970cb⟧]
   // ── Tests ────────────────────────────────────────────────────────────────────
   
   describe('Conversations — attachment feature', () => {
@@ -192,7 +192,7 @@
 -       shouldShowBudgetCompletedMessage: false,
 -       isLoading: false,
 -       refresh: vi.fn(),
-+[... 12 context line(s) omitted ...]
++[... 12 context line(s) omitted ... ⟦tj:fafddb9baf45260d3067ffa31cb68b00⟧]
       });
     });
   
@@ -274,7 +274,7 @@
 -     });
 - 
 -     await waitFor(() => {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:045b2e480dc8ccdb9c7ad34c7030626e⟧]
         expect(screen.getByText(/8 MB/i)).toBeInTheDocument();
       });
     });
@@ -284,7 +284,7 @@
       expect(screen.queryByText('no-vision.png')).not.toBeInTheDocument();
 -     expect(mockSelectAgentProfile).not.toHaveBeenCalled();
 -   });
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:f3e4047cdc622d249dfb81a15401aa5d⟧]
   
 -   it('clears attachments and calls chatSend after sending with attachment + text', async () => {
 -     const { chatSend } = await import('../../services/chatService');
@@ -407,7 +407,7 @@
 +     const message = {
 +       id: 'msg-1',
 +       content: 'look at this',
-+[... 35 context line(s) omitted ...]
++[... 35 context line(s) omitted ... ⟦tj:738eb9e89d2d26bf0bb609b3c77ca58b⟧]
       );
   
       await waitFor(() => {
@@ -524,7 +524,7 @@
 -   });
 - 
 -   it('strips raw IMAGE/FILE markers from a legacy message with no extraMetadata', async () => {
-+[... 109 context line(s) omitted ...]
++[... 109 context line(s) omitted ... ⟦tj:3ed842fe2136e2512f987deab7b692a9⟧]
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
       const thread = makeThread({ id: 'legacy-thread', title: 'Legacy Thread' });
@@ -537,7 +537,7 @@
 -       createdAt: new Date().toISOString(),
 -       extraMetadata: {},
 -     };
-+[... 36 context line(s) omitted ...]
++[... 36 context line(s) omitted ... ⟦tj:df562f86d234694fe2c7b3c90d8deeb1⟧]
   
 -     mockGetThreads.mockResolvedValue({ threads: [thread], count: 1 });
 -     mockGetThreadMessages.mockResolvedValue({ messages: [message], count: 1 });
@@ -573,7 +573,7 @@
       // The image marker's data URI still renders as an <img> (parsed out for display)...
       await waitFor(() => {
  -      const img = document.querySelector(`img[src="${dataUri}"]`);
-@@ -606,80 +123,9 @@
+@@ -606,80 +123,11 @@
   
       // ...but the raw marker syntax must never leak into the rendered bubble text.
       expect(document.body.textContent).not.toContain('[IMAGE:');
@@ -651,10 +651,12 @@
 -     const { threadApi } = await import('../../services/api/threadApi');
 - 
 -     // The input seeds with the current title ("Attach Thread"); committing it
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:18405a585b0e64289b7df6b6ad10ff98⟧]
       // unchanged must not dispatch an update.
       fireEvent.click(screen.getByRole('button', { name: 'Edit thread title' }));
       const input = await screen.findByRole('textbox', { name: 'Edit thread title' });
 +
-+[compacted tool output — this is a PARTIAL view; the full original (25120 bytes) is available by calling tokenjuice_retrieve with token "35cd9dc70547ad3520168f43e27af3c1" (marker ⟦tj:35cd9dc70547ad3520168f43e27af3c1⟧)]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (25120 bytes) is available by calling tinyjuice_retrieve with token "35cd9dc70547ad3520168f43e27af3c1" (marker ⟦tj:35cd9dc70547ad3520168f43e27af3c1⟧)]
 \ No newline at end of file

@@ -205,7 +205,7 @@ index 9efa86db2..779ae9239 100644
  //! Structured tracing export off the agent [`progress`](super::progress)
  //! channel (issue #3886).
  //!
-[... 56 context line(s) omitted ...]
+[... 56 context line(s) omitted ... ⟦tj:38c2a4c26442b8725b2bfbbc69afc163⟧]
  use crate::openhuman::config::schema::{AgentTracingBackend, AgentTracingConfig};
  use crate::openhuman::config::Config;
  
@@ -220,7 +220,7 @@ index 9efa86db2..779ae9239 100644
  /// Kind of run a trace belongs to, rendered as stable snake_case strings for
  /// Langfuse trace tags (`run:<type>`) and metadata (`run_type`) so runs can be
  /// filtered in the UI.
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:47fb0d0733b8b2fefb4fbb9a9f4a34bf⟧]
      /// Kind of run — exported as Langfuse trace tags (`run:<type>`) and the
      /// `run_type` metadata key. Defaults to interactive chat.
      pub run_type: RunType,
@@ -914,7 +914,7 @@ index 01a4ef1b2..49955a63e 100644
  //! Agent turn origin — the trust/routing label attached to every agent
  //! `run_turn` invocation. Read by [`crate::openhuman::approval::ApprovalGate`]
  //! and [`crate::openhuman::agent_tool_policy::ToolPolicyEngine`] to make
-[... 23 context line(s) omitted ...]
+[... 23 context line(s) omitted ... ⟦tj:6ae5283dbdfd75daac518ddd01efb76e⟧]
      WebChat {
          thread_id: String,
          client_id: String,
@@ -925,7 +925,7 @@ index 01a4ef1b2..49955a63e 100644
      },
      /// Inbound message from a non-web channel (Telegram / Discord / Slack /
      /// Yuanbao / etc.). External-effect tools must persist a
-[... 128 context line(s) omitted ...]
+[... 128 context line(s) omitted ... ⟦tj:3bbb01bb91cd1f3fc27224a76e1cca8e⟧]
              AgentTurnOrigin::WebChat {
                  thread_id: "outer".into(),
                  client_id: "c-outer".into(),
@@ -933,7 +933,7 @@ index 01a4ef1b2..49955a63e 100644
              },
              async {
                  with_origin(
-[... 16 context line(s) omitted ...]
+[... 16 context line(s) omitted ... ⟦tj:0b9d26aebd6a7f61e0044bcf421b3463⟧]
          }
      }
  }
@@ -945,7 +945,7 @@ index f6a6bd1d5..14f438b3a 100644
      fn take_waiter(&self, request_id: &str) -> Option<oneshot::Sender<ApprovalDecision>> {
          let mut waiters = self.waiters.lock();
          waiters.remove(request_id)
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:02f8779099ab512d1e1af9e4bce78b1f⟧]
          AgentTurnOrigin::WebChat {
              thread_id: "t-test".into(),
              client_id: "c-test".into(),
@@ -953,7 +953,7 @@ index f6a6bd1d5..14f438b3a 100644
          }
      }
  
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:53ca6fdee619c7cc60b0846532db4cd7⟧]
              if let Some(r) = gate.pending_for_meeting("meet-1") {
                  break r;
              }
@@ -961,7 +961,7 @@ index f6a6bd1d5..14f438b3a 100644
      async fn decide_unknown_id_is_noop() {
          let (gate, _dir) = test_gate();
          let decided = gate
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:d462e143f8335b1c08e7fab11f44699b⟧]
          let origin = AgentTurnOrigin::WebChat {
              thread_id: "thread-42".into(),
              client_id: "client-1".into(),
@@ -969,7 +969,7 @@ index f6a6bd1d5..14f438b3a 100644
          };
          let handle = tokio::spawn(async move {
              turn_origin::with_origin(
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:e143c3bdde372d7237122138124b7af6⟧]
          assert_eq!(
              gate.effective_ttl(),
              Duration::from_secs(2),
@@ -981,7 +981,7 @@ index eae023d9e..2203c39e9 100644
              existing.run_queue.push(queued_msg).await;
              let status = existing.run_queue.status().await;
              log::info!(
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:4cc4f0857712d9c2a1592227672d6170⟧]
          let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
              thread_id: thread_id_task.clone(),
              client_id: client_id_task.clone(),
@@ -989,7 +989,7 @@ index eae023d9e..2203c39e9 100644
          };
          // `None` => the turn was cancelled cooperatively before producing a
          // result; the interrupting/cancelling side already emitted the
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fa35982eb2bda6b747ec4f5a4d0343fc⟧]
                  let classified_type_string = classified_type.to_string();
                  if crate::openhuman::agent::error::is_max_iterations_error(&detailed) {
                      log::info!(
@@ -997,7 +997,7 @@ index eae023d9e..2203c39e9 100644
  
      {
          let mut in_flight = IN_FLIGHT.lock().await;
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:da216a6690e66b67fe06305b6cc71ac1⟧]
          let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
              thread_id: thread_id_task.clone(),
              client_id: client_id_task.clone(),
@@ -1005,7 +1005,7 @@ index eae023d9e..2203c39e9 100644
          };
          let result = tokio::select! {
              biased;
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:7179bdd587533df8a7eb09ab86153f97⟧]
              thread_id: thread_id.to_string(),
              handle,
              cancel_token,
@@ -1017,7 +1017,7 @@ index 5587116a9..8a49c1b31 100644
      }
      let mut end = MAX_WIRE_SUBAGENT_OUTPUT.saturating_sub(TRUNCATION_MARKER_BUDGET);
      while end > 0 && !output.is_char_boundary(end) {
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:ccb0530bcd04c05c6388faa1b1d54e61⟧]
          .or(state.user_id)
  }
  
@@ -1115,7 +1115,7 @@ index 5587116a9..8a49c1b31 100644
  /// Spawn a background task that reads [`AgentProgress`] events from the
  /// agent turn loop and translates them into [`WebChannelEvent`]s tagged
  /// with the correct client/thread/request IDs. The task runs until the
-[... 24 context line(s) omitted ...]
+[... 24 context line(s) omitted ... ⟦tj:9ca9a700b42ea43a261e37bfcaae6550⟧]
              metadata.session_id,
          );
          let mut round: u32 = 0;
@@ -1123,7 +1123,7 @@ index 5587116a9..8a49c1b31 100644
          let mut events_seen: u64 = 0;
          let mut parent_completed = false;
          let mut parent_tool_count: u64 = 0;
-[... 5 context line(s) omitted ...]
+[... 5 context line(s) omitted ... ⟦tj:c08132019a17224457c709664bfda278⟧]
          // progress stream into OTel/Langfuse-style spans correlated by session
          // id (falling back to the thread id for headless/autonomous runs).
          // `None` (disabled) is zero-cost.
@@ -1131,7 +1131,7 @@ index 5587116a9..8a49c1b31 100644
          let mut span_collector = if config.observability.share_usage_data
              || config.observability.agent_tracing.enabled
          {
-[... 50 context line(s) omitted ...]
+[... 50 context line(s) omitted ... ⟦tj:3ae868b2a5c0fc7c3ab3e141b908c0d1⟧]
              if let Some(agent_id) = metadata.agent_id.clone() {
                  trace_ctx = trace_ctx.with_agent_id(agent_id);
              }
@@ -1139,7 +1139,7 @@ index 5587116a9..8a49c1b31 100644
              Some(SpanCollector::new(trace_ctx))
          } else {
              None
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:96461a48c84df846d6eb854727f16dc8⟧]
                          iteration,
                          tool_name,
                          call_id,
@@ -1147,7 +1147,7 @@ index 5587116a9..8a49c1b31 100644
                      log::debug!(
                          "[web_channel][bridge] tool_result round={} tool={} call_id={} success={} request_id={}",
                          iteration,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:5f002899539f267e696c7d2dea40c7e5⟧]
                      max_iterations,
                  } => {
                      round = iteration;
@@ -1155,7 +1155,7 @@ index 5587116a9..8a49c1b31 100644
                      publish_web_channel_event(WebChannelEvent {
                          event: "iteration_start".to_string(),
                          client_id: client_id.clone(),
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:687e363966d18599153a6f60f4d630e5⟧]
                                  "elapsedMs": elapsed_ms,
                                  "iteration": iteration,
                                  "failure": failure_json,
@@ -1163,7 +1163,7 @@ index 5587116a9..8a49c1b31 100644
                      total_usd,
                  } => {
                      ledger_upsert_telemetry(
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:de3394e66fe5444508f1acf277a02d50⟧]
          // never affects the turn outcome.
          if let Some(mut collector) = span_collector.take() {
              collector.finish(unix_epoch_ms());
@@ -1182,7 +1182,7 @@ index 5587116a9..8a49c1b31 100644
          }
  
          log::debug!(
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:5c2d0ec70446d1372cceb4804623c994⟧]
          // Truncation landed on a char boundary (no replacement char / panic).
          assert!(capped.starts_with('é'));
          // The final payload (content + marker) must honor the wire cap.
@@ -1194,7 +1194,7 @@ index 984d4b40c..c8effd914 100644
  //! Unit tests for [`super`] — chunk upsert / list / lifecycle / embedding /
  //! content-pointer accessors against a tempdir-backed SQLite store.
  //!
-[... 7 context line(s) omitted ...]
+[... 7 context line(s) omitted ... ⟦tj:015c214753da899730c1b3a64793d64d⟧]
  //! that don't need it.
  
  use super::*;
@@ -1203,7 +1203,7 @@ index 984d4b40c..c8effd914 100644
  use chrono::TimeZone;
  use rusqlite::params;
  use tempfile::TempDir;
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:724565e4a8658b2ce79224ae7720861b⟧]
          ..Default::default()
      };
      let rows = list_chunks(&cfg, &q).unwrap();
@@ -1215,7 +1215,7 @@ index beec1ab99..ca954cb68 100644
                      .map(|s| s.trim().to_string())
                      .filter(|s| !s.is_empty())
                      .collect()
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:89ec4df22795eda001efbbeeaaec9497⟧]
              AgentTurnOrigin::WebChat {
                  thread_id: "t-int".into(),
                  client_id: "c-int".into(),
@@ -1223,7 +1223,7 @@ index beec1ab99..ca954cb68 100644
              },
              tool.execute(json!({ "summary": "plan", "steps": ["one"] })),
          );
-[... 7 context line(s) omitted ...]
+[... 7 context line(s) omitted ... ⟦tj:189737d5228c9cb446c3023a39075c19⟧]
          );
      }
  }
@@ -1235,7 +1235,7 @@ index aa057676f..f81983221 100644
  //! Durable event journals + status stores for tinyagents turns (issue #4249,
  //! Workstream 05-events, 05.1).
  //!
-[... 41 context line(s) omitted ...]
+[... 41 context line(s) omitted ... ⟦tj:b57367cb6f7708cd8246ca24b405ecc7⟧]
  //!
  //! [`EventSink::with_stream_id`]: tinyagents::harness::events::EventSink::with_stream_id
  
@@ -1248,7 +1248,7 @@ index aa057676f..f81983221 100644
  
  use tinyagents::error::Result as TaResult;
  use tinyagents::harness::events::{EventSink, HarnessRunStatus};
-[... 11 context line(s) omitted ...]
+[... 11 context line(s) omitted ... ⟦tj:cb5d496dd28d751fbe104177ddc4acd8⟧]
  /// it round-trips the crate [`FileStore`] name sanitizer.
  const STATUS_NS: &str = "run_status";
  
@@ -1261,7 +1261,7 @@ index aa057676f..f81983221 100644
  /// Mints a fresh, slash-free, process-unique run id (`run.<32-hex>`), used three
  /// ways for one turn: the [`EventSink::with_stream_id`] prefix (so persisted
  /// `event_id`s are the restart-stable `{run_id}-evt-{offset}`), the journal
-[... 9 context line(s) omitted ...]
+[... 9 context line(s) omitted ... ⟦tj:7796b93c494a020b31f543d3bee5cfd2⟧]
      RunId::new(format!("run.{}", uuid::Uuid::new_v4().simple()))
  }
  
@@ -1294,7 +1294,7 @@ index aa057676f..f81983221 100644
  /// Resolve the internal workspace directory (`{workspace}`) whose
  /// `tinyagents_store/` subtree holds the journal + kv stores. Async because the
  /// config load is async; errors are surfaced so callers can log-and-skip.
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:c270f2343479cb1b69a99daac5917bad⟧]
                      Ok(status) => out.push(status),
                      Err(err) => {
                          log::debug!("[journal] skipping undecodable run status key={key} err={err}")
@@ -1306,7 +1306,7 @@ index 785201571..41f2fdb27 100644
      }
  
      let streaming = on_progress.is_some();
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:87ce12d04b39aa659b929fe9971daa26⟧]
          }
          None => None,
      };
@@ -1322,7 +1322,7 @@ index 785201571..41f2fdb27 100644
  
      if let Some(events) = &events {
          ctx = ctx.with_events(events.clone());
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:5e2c0603e4cecf3407b37539e4b5b6ad⟧]
          }
      })
      .await;
@@ -1334,7 +1334,7 @@ index 861218d32..39766b9d4 100644
                          self.send(AgentProgress::ToolCallCompleted {
                              call_id: call_id.as_str().to_string(),
                              tool_name: requested_name.clone(),
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:8206e38cd0638015cfa9ab89f11ed4cf⟧]
                  tool_name,
                  input,
                  output,
@@ -1351,7 +1351,7 @@ index 861218d32..39766b9d4 100644
                  ..
              } => {
                  let iteration = self.iteration();
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:08cc473e8213f2fdcfd183128ee9995b⟧]
              // cost-footer DTO wiring is a follow-up (workstream 06).
              AgentEvent::CacheHit { call_id, key } => {
                  {
@@ -1363,7 +1363,7 @@ index 0538b315e..f023f5ca5 100644
  //! `tinyagents` [`Tool`] adapter over an openhuman [`Tool`] (issue #4249).
  //!
  //! Wraps `Arc<dyn openhuman::tools::Tool>` so the harness agent-loop can invoke
-[... 8 context line(s) omitted ...]
+[... 8 context line(s) omitted ... ⟦tj:bdfdbf8a8168e112e5cfa5b91fb23510⟧]
  use tinyagents::harness::steering::{SteeringCommand, SteeringHandle};
  use tinyagents::harness::tool::{
      SandboxMode, Tool, ToolAccess, ToolCall as TaToolCall, ToolExecutionContext, ToolPolicy,
@@ -1373,7 +1373,7 @@ index 0538b315e..f023f5ca5 100644
  };
  
  /// A captured early-exit: a sub-agent invoked an early-exit tool (e.g.
-[... 134 context line(s) omitted ...]
+[... 134 context line(s) omitted ... ⟦tj:e9c7d3531ef050541bdb3a28fe066e10⟧]
          })
          .with_runtime(ToolRuntime {
              timeout_ms,
@@ -1390,7 +1390,7 @@ index 0538b315e..f023f5ca5 100644
              max_retries: None,
              idempotent: tool.is_concurrency_safe(&serde_json::Value::Null),
              cancelable: true,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:520b1bf0892bd56ab7380301cc90055f⟧]
      let exec = tool.execute_with_context(call.arguments.clone(), options, context);
      let outcome = match deadline {
          Some(d) => match tokio::time::timeout(d, exec).await {
@@ -1402,7 +1402,7 @@ index 93d6c8029..42d0bc60e 100644
      negative_limit.insert("limit".to_string(), json!(-1));
      assert!(recent_handler(negative_limit)
          .await
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:e74c16662637ea6422d2d8d6ce0a6f79⟧]
              AgentTurnOrigin::WebChat {
                  thread_id: "approval-raw-thread".to_string(),
                  client_id: "approval-raw-client".to_string(),
@@ -1410,7 +1410,7 @@ index 93d6c8029..42d0bc60e 100644
              },
              APPROVAL_CHAT_CONTEXT.scope(
                  ApprovalChatContext {
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fa416237e0bfb3bb208cef378a265fe9⟧]
          Some("tools.composio_execute")
      );
  
@@ -1418,7 +1418,7 @@ index 93d6c8029..42d0bc60e 100644
          &harness.rpc_base,
          24,
          "openhuman.approval_list_recent_decisions",
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fbb542cebcfb6dc46e3da226c7d6df55⟧]
          AgentTurnOrigin::WebChat {
              thread_id: "approval-auto-thread".to_string(),
              client_id: "approval-auto-client".to_string(),
@@ -1426,7 +1426,7 @@ index 93d6c8029..42d0bc60e 100644
          },
          gate.intercept_audited(
              "tools.composio_execute",
-[... 45 context line(s) omitted ...]
+[... 45 context line(s) omitted ... ⟦tj:d527ff7e97a9b020e0f585e58784e62d⟧]
              AgentTurnOrigin::WebChat {
                  thread_id: "approval-deny-thread".to_string(),
                  client_id: "approval-deny-client".to_string(),
@@ -1434,7 +1434,7 @@ index 93d6c8029..42d0bc60e 100644
              },
              APPROVAL_CHAT_CONTEXT.scope(
                  ApprovalChatContext {
-[... 112 context line(s) omitted ...]
+[... 112 context line(s) omitted ... ⟦tj:685e8535f83527ecc8f73117c7c66714⟧]
          AgentTurnOrigin::WebChat {
              thread_id: "approval-persist-failure-thread".to_string(),
              client_id: "approval-persist-failure-client".to_string(),
@@ -1442,7 +1442,7 @@ index 93d6c8029..42d0bc60e 100644
          },
          APPROVAL_CHAT_CONTEXT.scope(
              ApprovalChatContext {
-[... 21 context line(s) omitted ...]
+[... 21 context line(s) omitted ... ⟦tj:983825875dd52ddfaaea6550718cf8ca⟧]
  
      harness.rpc_join.abort();
  }
@@ -1454,7 +1454,7 @@ index 014c8eadd..d399cae5e 100644
                  "sortOrder": 42
              }
          }),
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:e781886f83dd9caf7736f46593bf718e⟧]
              AgentTurnOrigin::WebChat {
                  thread_id: "worker-b-thread".to_string(),
                  client_id: "worker-b-client".to_string(),
@@ -1462,8 +1462,11 @@ index 014c8eadd..d399cae5e 100644
              },
              APPROVAL_CHAT_CONTEXT.scope(
                  ApprovalChatContext {
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:9b946232693bfed5111a8c4acf7cc090⟧]
          "thread mapping should be cleared after decision"
      );
+ 
 
-[compacted tool output — this is a PARTIAL view; the full original (177347 bytes) is available by calling tokenjuice_retrieve with token "5b9f415c9b59a3244f71da31f3e780fc" (marker ⟦tj:5b9f415c9b59a3244f71da31f3e780fc⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (177347 bytes) is available by calling tinyjuice_retrieve with token "5b9f415c9b59a3244f71da31f3e780fc" (marker ⟦tj:5b9f415c9b59a3244f71da31f3e780fc⟧)]

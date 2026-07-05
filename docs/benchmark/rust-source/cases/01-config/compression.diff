@@ -1153,7 +1153,7 @@
 -    }
 +    fn backend_url_strips_inference_path_from_env() { … 14 line(s) … ⟦tj:95126b97148db58396af8cbfc6f2379e⟧ }
  }
-+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (53860 bytes) is available by calling tokenjuice_retrieve with token "628b8d203fa7110274d8705e54311625" (marker ⟦tj:628b8d203fa7110274d8705e54311625⟧)]
++[compacted tool output — this is a PARTIAL view; the full original (53860 bytes) is available by calling tinyjuice_retrieve with token "628b8d203fa7110274d8705e54311625" (marker ⟦tj:628b8d203fa7110274d8705e54311625⟧)]
 \ No newline at end of file

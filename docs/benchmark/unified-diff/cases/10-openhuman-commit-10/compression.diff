@@ -78,7 +78,7 @@
 - const STREAMING_PREVIEW_CHARS = 120;
 - type InputMode = 'text' | 'voice';
 - type ReplyMode = 'text' | 'voice';
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:342b6ceae4e98d57a1ffbe991683c518⟧]
   const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
   const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
   const debug = debugFactory('conversations');
@@ -160,7 +160,7 @@
 -   if (err && typeof err === 'object' && 'message' in err) {
 -     const message = (err as { message?: unknown }).message;
 -     if (typeof message === 'string') return message;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:2225ed94dcb5ec531ae2e05e31620738⟧]
     }
     return String(err);
   }
@@ -242,7 +242,7 @@
 -                             )}
 -                           </div>
 -                         ) : (
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:1053371081e8a4ae11ff990a9a9fc36c⟧]
                             <div className="flex flex-col items-end gap-1">
                               {(() => {
                                 const displayText = parsedContent.text;
@@ -324,7 +324,7 @@
 -                                             </svg>
 -                                           )}
 -                                           <span className="truncate font-medium">{video.name}</span>
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:2da99d1fb96a64b8b8d1875b1837ff95⟧]
                                           </div>
                                         ))}
                                       </div>
@@ -406,7 +406,7 @@
 -     // @ts-expect-error -- browser global is injected by WDIO at runtime, not typed in this env
 -     const hasSubdomainInput = await browser
 -       .execute(() => {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:e1eb879fd6092b084cd1b1a8d2053ad9⟧]
           return (
             document.querySelector('[data-testid="composio-required-subdomain"]') !== null ||
             document.querySelector('input[placeholder*="subdomain"]') !== null ||
@@ -488,7 +488,7 @@
 -     console.log(`${LOG} PASS: failed state does not blank screen`);
 -   });
 - 
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:9420a4be1b0ea2c8c69736118709498a⟧]
     it('expired auth shows Reconnect button and does not log user out', async function () {
       this.timeout(60_000);
       seedComposioConnection(TOOLKIT_SLUG, 'EXPIRED', 'c-jira-expired');
@@ -570,7 +570,7 @@
 -     const prefix: string = info?.asset_prefix ?? '';
 -     expect(typeof prefix).toBe('string');
 -     expect(prefix.startsWith('openhuman-core-')).toBe(true);
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:46df832092c1bec55d363048550585aa⟧]
       console.log(`${LOG} update.version: asset_prefix = ${prefix}`);
   
       // No outbound HTTP call should have been made — version is purely local.
@@ -652,7 +652,7 @@
 -   // Coordinates with Scenario 10 (account-switch) but focuses on the
 -   // message-level roundtrip rather than per-account isolation.
 -   // -------------------------------------------------------------------------
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:342ed1d09f6a2c2dec7b4609cf83a780⟧]
     it('thread CRUD smoke: create → append message → list messages roundtrip', async () => {
       await resetEverything('before thread-crud-smoke scenario');
   
@@ -665,7 +665,7 @@
 -   recordMockLlmTurn,
 -   setMockBehavior,
 - } from "../state.mjs";
-+[... 5 context line(s) omitted ...]
++[... 5 context line(s) omitted ... ⟦tj:b8627ea6edb88026571c44cfefc73df3⟧]
   import { buildDynamicCompletion } from "./llm/dynamic.mjs";
   import { headerValue, pickProbeText, resolveThreadKey } from "./llm/shared.mjs";
   
@@ -679,7 +679,7 @@
 - // (tinyhumansai/openhuman#4517).
 - function isPrimaryTurn(parsedBody) {
 -   return Array.isArray(parsedBody?.tools) && parsedBody.tools.length > 0;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:536cb086b606b72e62d20b5cc8e90f2c⟧]
 +   });
   }
   
@@ -695,7 +695,7 @@
 + //   data: {"choices":[{"delta":{"content":"hello"},"finish_reason":null}]}
 + //   data: {"choices":[{"delta":{},"finish_reason":"stop"}], "usage":{...}}
 + //   data: [DONE]
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:6b906b1d24221b2264d3d5832e0bcb1c⟧]
 +   return new Promise((resolve) => setTimeout(resolve, ms));
 + }
   
@@ -721,7 +721,7 @@
 + // Split a string into N-character windows so we can stream tool-call
 + // argument JSON the same way real providers do — clients accumulate the
 + // partial fragments and JSON-parse at the end.
-+[... 131 context line(s) omitted ...]
++[... 131 context line(s) omitted ... ⟦tj:f211de9c539d8e1eb6dcea2cec7c26e0⟧]
       }
     }
   
@@ -1031,7 +1031,7 @@
 - async function streamScriptToResponse({ res, model, script, defaultDelayMs }) {
 +   // Fire-and-forget — the dispatcher only cares that the handler
 +   // claimed the request. Errors mid-stream are surfaced through SSE.
-+[... 21 context line(s) omitted ...]
++[... 21 context line(s) omitted ... ⟦tj:49ba388ded92c7442e82c534cbcf22cd⟧]
     let trailingUsage = null;
     for (let i = 0; i < script.length; i += 1) {
       const entry = script[i] ?? {};
@@ -1043,7 +1043,7 @@
 -       res.end();
 -       return;
 -     }
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fce232698e09d5a0cd5a4a0e59cba129⟧]
 +           finishReason: entry.finish,
 +           usage: trailingUsage ?? undefined,
 +         }),
@@ -1060,7 +1060,7 @@
 -       trailingUsage = entry.usage;
 -       continue;
 -     }
-+[... 37 context line(s) omitted ...]
++[... 37 context line(s) omitted ... ⟦tj:f2791ef380654170e6c6d1d71a7fa025⟧]
 +   const legacy = url.match(
 +     /^\/mock-(telegram|notion|google|gmail|slack|discord|twitter|github)-oauth\/?(\?.*)?$/i,
 +   );
@@ -1212,7 +1212,7 @@
 -       : `openhuman://oauth/success?integrationId=${encodeURIComponent(
 +   if (method === "GET" && (newStyle || legacy || legacyGeneric)) {
 +     const provider = newStyle?.[1] || legacy?.[1] || "generic";
-+[... 22 context line(s) omitted ...]
++[... 22 context line(s) omitted ... ⟦tj:4c18555be1a9dcf3c82652cfcd55d708⟧]
             integrationId,
           )}&provider=${encodeURIComponent(params.provider || provider)}`;
   
@@ -1292,7 +1292,7 @@
 -   for (const pair of search.split("&")) {
 -     if (!pair) continue;
 -     const eq = pair.indexOf("=");
-+[... 72 context line(s) omitted ...]
++[... 72 context line(s) omitted ... ⟦tj:3411f058d290b7632c69dcd2afdb0527⟧]
       const key = eq < 0 ? pair : pair.slice(0, eq);
       const raw = eq < 0 ? "" : pair.slice(eq + 1);
       try {
@@ -1302,7 +1302,7 @@
       }
 -   }
 -   return out;
-+[... 8 context line(s) omitted ...]
++[... 8 context line(s) omitted ... ⟦tj:ee4572d3f5f261ec0a022e914167cb1d⟧]
   }
   
 - function clampDelay(raw, fallback) {
@@ -1327,7 +1327,7 @@
 -     ? "This mock provider is simulating a failed OAuth. The desktop app should receive an error deep link."
 -     : "This is the mock OAuth provider. The desktop app should receive a success deep link.";
 - 
-+[... 9 context line(s) omitted ...]
++[... 9 context line(s) omitted ... ⟦tj:86c208d4da0506bd9b153e9d0b1d844f⟧]
     const autoRedirectScript =
       autoRedirectMs === null
         ? ""
@@ -1344,7 +1344,7 @@
 -     h1 { font-size: 20px; margin: 0 0 12px; }
 -     p  { margin: 0 0 16px; color: #555; }
 -     a.button { display: inline-block; padding: 10px 16px; background: #4A83DD; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
-+[... 9 context line(s) omitted ...]
++[... 9 context line(s) omitted ... ⟦tj:591c904a1fdf231c54296470c37a2f22⟧]
       code { background: #f3f3f3; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
     </style>
   </head>
@@ -1426,11 +1426,11 @@
 - function ruleMatches(rule, ctx) {
 -   if (!rule || typeof rule !== "object") return false;
 -   if (rule.method && String(rule.method).toUpperCase() !== ctx.method)
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:32ce9c1e3919251b684223461014493d⟧]
       return false;
     if (typeof rule.path === "string" && rule.path !== ctx.url) return false;
     if (typeof rule.pathRegex === "string") {
-@@ -1515,80 +334,9 @@
+@@ -1515,80 +334,11 @@
   async function maybeApplyGlobalBehavior(ctx) {
     const mockBehavior = behavior();
     const baseDelay = Number(mockBehavior.globalDelayMs || 0);
@@ -1508,10 +1508,12 @@
 -     });
 -   });
 -   nextServer.on("connection", (socket) => {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:3a450cc0fd8cdb3c816733cc050429c5⟧]
       openSockets.add(socket);
       socket.on("close", () => openSockets.delete(socket));
     });
 +
-+[compacted tool output — this is a PARTIAL view; the full original (65898 bytes) is available by calling tokenjuice_retrieve with token "9ca597ed4cb282758cb90d47a1f0d739" (marker ⟦tj:9ca597ed4cb282758cb90d47a1f0d739⟧)]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (65898 bytes) is available by calling tinyjuice_retrieve with token "9ca597ed4cb282758cb90d47a1f0d739" (marker ⟦tj:9ca597ed4cb282758cb90d47a1f0d739⟧)]
 \ No newline at end of file

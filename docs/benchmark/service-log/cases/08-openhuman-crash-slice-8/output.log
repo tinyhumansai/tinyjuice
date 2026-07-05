@@ -1,19 +1,21 @@
-[... 2 line(s) omitted ...]
+[... 2 line(s) omitted ... ⟦tj:c5bda4cd31ffd7eb499659f8def693af⟧]
 12  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
 13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-[... 20 line(s) omitted ...]
+[... 20 line(s) omitted ... ⟦tj:7e09a628d6f86c1d8d91e42dbeaf1e80⟧]
 12  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
 13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-[... 20 line(s) omitted ...]
+[... 20 line(s) omitted ... ⟦tj:dfed89db860f683957c87e382f3f5df2⟧]
 12  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
-[... 242 line(s) omitted ...]
+[... 242 line(s) omitted ... ⟦tj:7bbd5bb0d68c1edea5a3a6d442d03901⟧]
 13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-[... 20 line(s) omitted ...]
-12  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
-13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-[... 20 line(s) omitted ...]
+[... 20 line(s) omitted ... ⟦tj:73a563b1f24659dbf93ad86c32c9b352⟧]
 12  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
 13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
-[... 15 line(s) omitted ...]
+[... 20 line(s) omitted ... ⟦tj:f14ea8d31db9cc27fe7407f5f465b57f⟧]
+12  OpenHuman                     	       0x10523c3b4 _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h4c64399e54c61e3d + 44
+13  OpenHuman                     	       0x1052a62c4 std::panicking::catch_unwind::do_call::h6438cac469ea6444 + 52
+[... 15 line(s) omitted ... ⟦tj:fa0fecc5aa274b8f0c2ded17d5c344f4⟧]
 
-[compacted tool output — this is a PARTIAL view; the full original (40969 bytes) is available by calling tokenjuice_retrieve with token "7aa04dead4a225a1cf760c5752e89302" (marker ⟦tj:7aa04dead4a225a1cf760c5752e89302⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (40969 bytes) is available by calling tinyjuice_retrieve with token "7aa04dead4a225a1cf760c5752e89302" (marker ⟦tj:7aa04dead4a225a1cf760c5752e89302⟧)]

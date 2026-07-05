@@ -118,6 +118,6 @@ fn verify_all_summary_files(config: &Config) -> Result<(usize, usize, usize, usi
 
 /// Extract the `messages` array and `nextPageToken` from a Composio response.
 fn extract_envelope(data: &Value) -> (Vec<Value>, Option<String>) { … 14 line(s) … ⟦tj:520d0f0d34eb988595c31d11c118cb02⟧ }
-[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (17440 bytes) is available by calling tokenjuice_retrieve with token "de327d088c33663aff65f51429a1108e" (marker ⟦tj:de327d088c33663aff65f51429a1108e⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (17440 bytes) is available by calling tinyjuice_retrieve with token "de327d088c33663aff65f51429a1108e" (marker ⟦tj:de327d088c33663aff65f51429a1108e⟧)]

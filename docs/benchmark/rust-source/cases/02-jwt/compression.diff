@@ -105,7 +105,7 @@
 -    }
 +    fn decode_jwt_exp_none_for_non_jwt_or_garbage() { … 7 line(s) … ⟦tj:e31a414ef8902657500b581f87c6357b⟧ }
  }
-+[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (4490 bytes) is available by calling tokenjuice_retrieve with token "72a9fa15745dfefa792a0adf04d13794" (marker ⟦tj:72a9fa15745dfefa792a0adf04d13794⟧)]
++[compacted tool output — this is a PARTIAL view; the full original (4490 bytes) is available by calling tinyjuice_retrieve with token "72a9fa15745dfefa792a0adf04d13794" (marker ⟦tj:72a9fa15745dfefa792a0adf04d13794⟧)]
 \ No newline at end of file

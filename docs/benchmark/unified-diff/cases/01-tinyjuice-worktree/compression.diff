@@ -5,7 +5,7 @@
   By default, the fixture suite emits metadata only. It does not print raw prompt,
   tool, or context payloads unless `--dump-samples` is explicitly requested.
 - Human-readable before/after samples live under [`docs/benchmark`](benchmark/README.md).
-+[... 39 context line(s) omitted ...]
++[... 39 context line(s) omitted ... ⟦tj:a9ade52ab13f6a7e7310388311061c28⟧]
   
 - ## Corpus Benchmark
 - 
@@ -69,7 +69,7 @@
 - - [LLMLingua](https://arxiv.org/abs/2310.05736) evaluates prompt compression across GSM8K, BBH, ShareGPT, and Arxiv-March23.
 - - [LongLLMLingua](https://arxiv.org/abs/2310.06839) focuses on long-context prompt compression and reports NaturalQuestions, LooGLE, and long-context latency/cost evaluations.
 - - [Selective Context](https://aclanthology.org/2023.emnlp-main.391/) evaluates pruning redundant context on arXiv papers, news articles, and long conversations for summarization, question answering, and response generation.
-+[... 17 context line(s) omitted ...]
++[... 17 context line(s) omitted ... ⟦tj:9262f76c55796d62e2f888e9c765894e⟧]
   - [LongBench](https://arxiv.org/abs/2308.14508) is a broader long-context benchmark that can be useful once TinyJuice adds task-level answer-quality evaluation.
   
   For TinyJuice, the closest future cross-reference is not a single paper score. It is a paired report: compression metadata from this fixture runner plus downstream task accuracy on pinned tool-output corpora.
@@ -91,7 +91,7 @@
 - use std::fmt::Write as _;
 - use std::path::{Path, PathBuf};
 - use std::time::Instant;
-+[... 14 context line(s) omitted ...]
++[... 14 context line(s) omitted ... ⟦tj:b512bccc347ac586df8fb9cd1c0d8d08⟧]
   use tinyjuice::cache;
   use tinyjuice::tokens::estimate_tokens;
   use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind};
@@ -223,7 +223,7 @@
 -     content_kind: String,
 -     compressor: String,
 -     lossy: bool,
-+[... 124 context line(s) omitted ...]
++[... 124 context line(s) omitted ... ⟦tj:60e8d361d0599ceba93845f6c8eb1a8b⟧]
       ccr_marker: bool,
       ccr_recoverable: Option<bool>,
       original_bytes: usize,
@@ -243,7 +243,7 @@
 -     inline_accuracy_percent: f64,
 -     accuracy_gate_passed: bool,
 -     failed_checks: Vec<String>,
-+[... 12 context line(s) omitted ...]
++[... 12 context line(s) omitted ... ⟦tj:c8ab23538fa5785fed77454c9df72da4⟧]
       failed_task_checks: Vec<String>,
   }
   
@@ -302,7 +302,7 @@
 -         let start = Instant::now();
 -         let result = run_once(&case, options).await;
 -         elapsed_nanos += start.elapsed().as_nanos();
-+[... 51 context line(s) omitted ...]
++[... 51 context line(s) omitted ... ⟦tj:2b467d3192f223c32c083180cf44ae5e⟧]
           last = Some(result);
       }
       let result = last.expect("at least one benchmark iteration");
@@ -334,7 +334,7 @@
 -         inline_passed as f64 * 100.0 / inline_total as f64
 -     };
 -     let recovery_gate = ccr_recoverable.unwrap_or(true);
-+[... 24 context line(s) omitted ...]
++[... 24 context line(s) omitted ... ⟦tj:f12cb3d49a900610fb408b45f853972c⟧]
       let accuracy_gate_passed =
           failed_checks.is_empty() && failed_task_checks.is_empty() && recovery_gate;
       let byte_ratio = ratio(result.compacted_bytes, result.original_bytes);
@@ -368,7 +368,7 @@
 -         argv: case.argv.clone(),
 -         original_bytes: case.payload.len(),
 -     };
-+[... 26 context line(s) omitted ...]
++[... 26 context line(s) omitted ... ⟦tj:8ee9e85420d6cd8785d5f9431b34aab1⟧]
       tinyjuice::route(input, options).await
   }
   
@@ -526,7 +526,7 @@
 -                 fallback: json_service_inventory(260),
 -                 hint: ContentHint {
 -                     extension: Some("json".to_string()),
-+[... 150 context line(s) omitted ...]
++[... 150 context line(s) omitted ... ⟦tj:1c4406609b090d798b62f04fb03687ca⟧]
                       source_tool: Some("read_file".to_string()),
                       ..Default::default()
                   },
@@ -608,7 +608,7 @@
 -         );
 -         case.command = Some("rg tokenjuice recover compression".to_string());
 -         case.argv = Some(vec![
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:66ae5f69a0aafd0f443f98d8eca71373⟧]
               "rg".to_string(),
               "tokenjuice".to_string(),
               "recover".to_string(),
@@ -690,7 +690,7 @@
 -         report.options.router_enabled,
 -         report.options.ccr_enabled,
 -         report.options.min_bytes_to_compress,
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:b4702c053e0485889bd09bf58f79822e⟧]
           report.options.ccr_min_tokens
       );
       println!(
@@ -755,7 +755,7 @@
 -     }
 - }
 - 
-+[... 57 context line(s) omitted ...]
++[... 57 context line(s) omitted ... ⟦tj:7ecba9813bd5f384fccc2b335ce567ca⟧]
   fn reduction_percent(ratio: f64) -> f64 {
       (1.0 - ratio) * 100.0
   }
@@ -837,11 +837,11 @@
 -   rust-source \
 -   plain-text
 - do
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:91904d2889cac9d5e4f3f841be786302⟧]
     reset_category "$category"
   done
   
-@@ -1023,80 +300,9 @@
+@@ -1023,80 +300,11 @@
   
   echo "Writing Vitest command-log cases"
   vitest_logs=()
@@ -919,10 +919,12 @@
 -     bash -c 'git -C "$1" show --format= --no-ext-diff --unified=80 "$2" | sed "s#$1#<OPENHUMAN_ROOT>#g"' _ "$openh_root" "$commit"
 - done
 - 
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:ff557f5dc05d02127ecdcdce7c71c9b5⟧]
   echo "Writing HTML/RSS/page cases"
   html_index=1
   fetch_page() {
 +
-+[compacted tool output — this is a PARTIAL view; the full original (39862 bytes) is available by calling tokenjuice_retrieve with token "102054b82fb3a4497c6d2ea9bf0b2816" (marker ⟦tj:102054b82fb3a4497c6d2ea9bf0b2816⟧)]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (39862 bytes) is available by calling tinyjuice_retrieve with token "102054b82fb3a4497c6d2ea9bf0b2816" (marker ⟦tj:102054b82fb3a4497c6d2ea9bf0b2816⟧)]
 \ No newline at end of file

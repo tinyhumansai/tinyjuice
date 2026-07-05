@@ -33,6 +33,6 @@ use openhuman_core::openhuman::config::Config;
 use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
 
 fn main() -> ExitCode { … 76 line(s) … ⟦tj:0bc2aa582a12a896dbb668373d73d51b⟧ }
-[collapsed bodies are individually retrievable: call tokenjuice_retrieve with the token inside a placeholder to expand just that body]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (3396 bytes) is available by calling tokenjuice_retrieve with token "3d481ca113a31ec0f373a8b46b8c8b56" (marker ⟦tj:3d481ca113a31ec0f373a8b46b8c8b56⟧)]
+[compacted tool output — this is a PARTIAL view; the full original (3396 bytes) is available by calling tinyjuice_retrieve with token "3d481ca113a31ec0f373a8b46b8c8b56" (marker ⟦tj:3d481ca113a31ec0f373a8b46b8c8b56⟧)]

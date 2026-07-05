@@ -90,6 +90,18 @@ fn category_name(doc_dir: &str) -> &str {
     doc_dir.split('/').next().unwrap_or(doc_dir)
 }
 
+/// Language tag for a polyglot-source case, taken from the segment after the
+/// `NN-` ordinal in the case dir name (e.g. `01-ts-api-client` → `ts`).
+fn polyglot_lang(doc_dir: &str) -> &str {
+    doc_dir
+        .rsplit('/')
+        .next()
+        .unwrap_or(doc_dir)
+        .split('-')
+        .nth(1)
+        .unwrap_or("txt")
+}
+
 fn input_artifact_name(doc_dir: &str) -> &'static str {
     match category_name(doc_dir) {
         "json-smartcrusher" => "input.json",
@@ -100,6 +112,15 @@ fn input_artifact_name(doc_dir: &str) -> &'static str {
         "html-status-report" if doc_dir.contains("-rss-") => "input.xml",
         "html-status-report" => "input.html",
         "rust-source" => "input.rs",
+        "polyglot-source" => match polyglot_lang(doc_dir) {
+            "ts" => "input.ts",
+            "py" => "input.py",
+            "cpp" => "input.cpp",
+            "go" => "input.go",
+            "rs" => "input.rs",
+            "xml" => "input.xml",
+            _ => "input.txt",
+        },
         "plain-text" => "input.md",
         _ => "input.txt",
     }
@@ -113,6 +134,15 @@ fn output_artifact_name(doc_dir: &str) -> &'static str {
         "search-results" => "output.rg",
         "unified-diff" => "output.diff",
         "rust-source" => "output.rs",
+        "polyglot-source" => match polyglot_lang(doc_dir) {
+            "ts" => "output.ts",
+            "py" => "output.py",
+            "cpp" => "output.cpp",
+            "go" => "output.go",
+            "rs" => "output.rs",
+            "xml" => "output.txt",
+            _ => "output.txt",
+        },
         "plain-text" => "output.md",
         _ => "output.txt",
     }
@@ -730,6 +760,42 @@ fn benchmark_cases() -> Vec<BenchCase> {
                     "Does the compacted output retain Rust function structure?",
                     vec!["fn".to_string()],
                 )],
+            },
+        ));
+    }
+
+    for doc_dir in category_case_dirs("polyglot-source") {
+        let lang = polyglot_lang(&doc_dir).to_string();
+        // XML routes to the HTML/text extractor; everything else is Code.
+        let kind = if lang == "xml" {
+            ContentKind::Html
+        } else {
+            ContentKind::Code
+        };
+        let (check_label, needle) = match lang.as_str() {
+            "ts" => ("ts class retained", "export class ApiClient"),
+            "py" => ("py def retained", "def transform_records"),
+            "cpp" => ("cpp class retained", "class SceneNode"),
+            "go" => ("go func retained", "func (s *Server) handleMetrics"),
+            "rs" => ("rust impl retained", "impl<'a> Lexer<'a>"),
+            "xml" => ("xml artifact text retained", "orchestrator"),
+            _ => ("content retained", "fn"),
+        };
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "polyglot-source",
+                family: if lang == "xml" { "html" } else { "code" },
+                description: "Representative source/markup file in a non-Rust language.",
+                fallback: rust_source_file(70),
+                hint: ContentHint {
+                    extension: Some(lang.clone()),
+                    source_tool: Some("read_file".to_string()),
+                    explicit: Some(kind),
+                    ..Default::default()
+                },
+                checks: vec![SignalCheck::present(check_label, needle)],
+                task_checks: vec![],
             },
         ));
     }

@@ -85,8 +85,20 @@ pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<Compre
     };
 
     for line in &lines {
-        let (opens, closes) = brace_delta(line);
+        let (mut opens, closes) = brace_delta(line);
         let start_depth = depth;
+        // Namespace-like containers wrap entire files (C++/C# `namespace`,
+        // C `extern "C"`); treat them as transparent so classes and functions
+        // inside stay at top level instead of collapsing wholesale.
+        if start_depth == 0 && opens > closes {
+            let t = line.trim_start();
+            if t.starts_with("namespace ")
+                || t.starts_with("namespace{")
+                || t.starts_with("extern \"C\"")
+            {
+                opens -= 1;
+            }
+        }
         // A line that carries signal is always kept, regardless of depth.
         let force_keep = KEEP_MARKERS.iter().any(|m| line.contains(m));
 
@@ -502,5 +514,21 @@ mod tests {
         src.push_str("}\n");
         let out = compress_heuristic(&src, false).expect("compresses");
         assert!(out.text.contains("TODO"), "marker line kept:\n{}", out.text);
+    }
+
+    #[test]
+    fn cpp_namespace_is_transparent() {
+        let mut src = String::from("// engine\n#include <vector>\n\nnamespace engine {\n\n");
+        src.push_str("class SceneNode {\npublic:\n");
+        for i in 0..14 {
+            src.push_str(&format!("    void step_{i}() {{ work({i}); }}\n"));
+        }
+        src.push_str("};\n\n}  // namespace engine\n");
+        let out = compress_heuristic(&src, false).expect("compresses");
+        assert!(
+            out.text.contains("class SceneNode"),
+            "class inside namespace must stay visible: {}",
+            out.text
+        );
     }
 }

@@ -286,5 +286,5 @@
 +
 +]]>Sat, 04 Jul 2026 21:51:09 +0000https://github.com/openai/codex/issues/30364maillehttps://news.ycombinator.com/item?id=48789428https://news.ycombinator.com/item?id=48789428
 +
-+[compacted tool output — this is a PARTIAL view; the full original (15233 bytes) is available by calling tokenjuice_retrieve with token "00e7d721efd40c1f8760962d75c6ade7" (marker ⟦tj:00e7d721efd40c1f8760962d75c6ade7⟧)]
++[compacted tool output — this is a PARTIAL view; the full original (15233 bytes) is available by calling tinyjuice_retrieve with token "00e7d721efd40c1f8760962d75c6ade7" (marker ⟦tj:00e7d721efd40c1f8760962d75c6ade7⟧)]
 \ No newline at end of file

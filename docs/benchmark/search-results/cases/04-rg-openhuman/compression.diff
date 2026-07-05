@@ -55,7 +55,7 @@
 -<OPENHUMAN_ROOT>/src/api/config.rs:1293:        // A custom self-hosted OpenHuman backend (no provider host, no `/v1`
 -<OPENHUMAN_ROOT>/src/api/config.rs:1296:            "https://my-openhuman.example.com/"
 -<OPENHUMAN_ROOT>/src/api/config.rs:1336:        // Regression: OPENHUMAN-TAURI-H6 / -HN, issue #2075.
-+[+45 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs]
++[+45 more match(es) in <OPENHUMAN_ROOT>/src/api/config.rs ⟦tj:f0133a4b71c419789210cfdae866320e⟧]
  <OPENHUMAN_ROOT>/src/api/rest.rs:22:    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
  <OPENHUMAN_ROOT>/src/api/rest.rs:33:    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
  <OPENHUMAN_ROOT>/src/api/rest.rs:81:/// silently fall through to `report_error` (OPENHUMAN-TAURI-R7).
@@ -78,7 +78,7 @@
 -<OPENHUMAN_ROOT>/src/main.rs:42:            .or_else(|| option_env!("OPENHUMAN_CORE_SENTRY_DSN").map(|s| s.to_string()))
 -<OPENHUMAN_ROOT>/src/main.rs:44:            .or_else(|| option_env!("OPENHUMAN_SENTRY_DSN").map(|s| s.to_string()))
 -<OPENHUMAN_ROOT>/src/main.rs:56:            // Sentry — see OPENHUMAN-TAURI-2E (~1393 events), -84 (~1050),
-+[+7 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs]
++[+7 more match(es) in <OPENHUMAN_ROOT>/src/api/rest.rs ⟦tj:c5bf926207f515faf4e3c68b07f40a8c⟧]
  <OPENHUMAN_ROOT>/src/main.rs:58:            // `openhuman::inference::provider::ops::should_report_provider_http_failure`
  <OPENHUMAN_ROOT>/src/main.rs:61:            if openhuman_core::core::observability::is_transient_provider_http_failure(&event) {
 -<OPENHUMAN_ROOT>/src/main.rs:64:            if openhuman_core::core::observability::is_all_transient_provider_exhaustion_event(
@@ -111,7 +111,7 @@
 -<OPENHUMAN_ROOT>/src/main.rs:275:/// Honors `OPENHUMAN_APP_ENV` at runtime (`staging` / `production`) so the
 -<OPENHUMAN_ROOT>/src/main.rs:279:    if let Ok(value) = std::env::var("OPENHUMAN_APP_ENV") {
 -<OPENHUMAN_ROOT>/src/main.rs:297:/// `src/openhuman/memory/safety/mod.rs`.
-+[+37 more match(es) in <OPENHUMAN_ROOT>/src/main.rs]
++[+37 more match(es) in <OPENHUMAN_ROOT>/src/main.rs ⟦tj:b1916b4d33e65d9a8a51bce3e21521de⟧]
  <OPENHUMAN_ROOT>/src/lib.rs:1://! Core library for the OpenHuman platform.
  <OPENHUMAN_ROOT>/src/lib.rs:3://! This crate provides the central logic for the OpenHuman core binary, including:
  <OPENHUMAN_ROOT>/src/lib.rs:6://! - Domain-specific logic for the OpenHuman agent runtime.
@@ -121,7 +121,7 @@
 -<OPENHUMAN_ROOT>/src/lib.rs:18:/// This is the primary entry point for the OpenHuman binary, delegating to the
 -<OPENHUMAN_ROOT>/src/lib.rs:30:    openhuman::service::apply_startup_restart_delay_from_env();
 -<OPENHUMAN_ROOT>/src/lib.rs:31:    openhuman::keyring::init_master_key();
-+[+4 more match(es) in <OPENHUMAN_ROOT>/src/lib.rs]
++[+4 more match(es) in <OPENHUMAN_ROOT>/src/lib.rs ⟦tj:3b7e2e9af1a5c86087d0fc97dc7d715e⟧]
  <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:15://! - Signed-in openhuman session JWT in the same workspace the desktop app
  <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:36:use openhuman_core::openhuman::composio::client::{
  <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:39:use openhuman_core::openhuman::composio::providers::gmail::ingest::ingest_page_into_memory_tree;
@@ -130,7 +130,7 @@
 -<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:44:use openhuman_core::openhuman::memory_queue::drain_until_idle;
 -<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:45:use openhuman_core::openhuman::memory_store::chunks::store::{
 -<OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs:48:use openhuman_core::openhuman::memory_store::content::read::{
-+[+3 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs]
++[+3 more match(es) in <OPENHUMAN_ROOT>/src/bin/gmail_backfill_3d.rs ⟦tj:1f2bef969ee6029c4e291493a3604b4b⟧]
  <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:23://!   OPENHUMAN_APP_ENV=staging \
  <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:24://!   RUST_LOG=info,openhuman_core::openhuman::agent=debug,openhuman_core::openhuman::inference=debug \
  <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:33:use openhuman_core::openhuman::agent::Agent;
@@ -138,7 +138,7 @@
  <OPENHUMAN_ROOT>/src/bin/inference_probe.rs:35:use openhuman_core::openhuman::inference::provider::create_chat_provider;
 -<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:36:use openhuman_core::openhuman::inference::provider::traits::{ChatMessage, ChatRequest};
 -<OPENHUMAN_ROOT>/src/bin/inference_probe.rs:37:use openhuman_core::openhuman::tools::traits::ToolSpec;
-+[+2 more match(es) in <OPENHUMAN_ROOT>/src/bin/inference_probe.rs]
++[+2 more match(es) in <OPENHUMAN_ROOT>/src/bin/inference_probe.rs ⟦tj:c566268d7e426a3d4999160bd0c0fc3c⟧]
  <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:11://! - A working openhuman install (same workspace dir the desktop app
  <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:23://! export OPENHUMAN_WORKSPACE=/path/to/workspace      # must match desktop app
  <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:24://! export OPENHUMAN_MEMORY_EMBED_ENDPOINT=http://localhost:11434
@@ -159,21 +159,21 @@
 -<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:161:    // `RUST_LOG` (e.g. `RUST_LOG=info,openhuman_core=debug`).
 -<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:214:        use openhuman_core::openhuman::memory::ingest_pipeline::ingest_chat;
 -<OPENHUMAN_ROOT>/src/bin/slack_backfill.rs:215:        use openhuman_core::openhuman::memory_sync::canonicalize::chat::{ChatBatch, ChatMessage};
-+[+15 more match(es) in <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs]
++[+15 more match(es) in <OPENHUMAN_ROOT>/src/bin/slack_backfill.rs ⟦tj:8c594c370160086d9b091fb3ff2e43ba⟧]
  <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:3://! This binary intentionally uses the user's real OpenHuman config and live
  <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:24:use openhuman_core::openhuman::agent::progress::AgentProgress;
  <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:25:use openhuman_core::openhuman::agent::Agent;
  <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:26:use openhuman_core::openhuman::agent_orchestration::harness_audit::{
  <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:29:use openhuman_core::openhuman::config::Config;
 -<OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs:246:    eprintln!("[harness_subagent_audit] loading live OpenHuman config");
-+[+1 more match(es) in <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs]
++[+1 more match(es) in <OPENHUMAN_ROOT>/src/bin/harness_subagent_audit.rs ⟦tj:c2e9206ae0ab65158ca6fa83aae8c78b⟧]
  <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:14://! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
  <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:18://! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
  <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:32:use openhuman_core::openhuman::config::Config;
  <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:33:use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
 -<OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:40:    let workspace = match std::env::var("OPENHUMAN_WORKSPACE") {
  <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs:43:            log::error!("OPENHUMAN_WORKSPACE must be set to a writable directory");
-+[+1 more match(es) in <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs]
++[+1 more match(es) in <OPENHUMAN_ROOT>/src/bin/memory_tree_init_smoke.rs ⟦tj:34ece4f3eca570ad5a0fbcf853cd236f⟧]
  <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:21:        let lock = crate::openhuman::config::TEST_ENV_LOCK
 -<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:101:/// To run manually: `cargo test --lib -p openhuman -- --ignored
 -<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:106:    let _signed_out_restore = crate::openhuman::scheduler_gate::SignedOutTestGuard::set(false);
@@ -245,7 +245,7 @@
 -<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1267:    let err = invoke_method(default_state(), "openhuman.totally_made_up_xyz", json!({}))
 -<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1416:        crate::openhuman::wallet::WALLET_NOT_CONFIGURED_MESSAGE
 -<OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs:1426:        crate::openhuman::wallet::WALLET_NOT_CONFIGURED_MESSAGE,
-+[+66 more match(es) in <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs]
++[+66 more match(es) in <OPENHUMAN_ROOT>/src/core/jsonrpc_tests.rs ⟦tj:a4157059ce4bdc516a5bbbf4035ed7b3⟧]
  <OPENHUMAN_ROOT>/src/core/logging.rs:1://! Logging for `openhuman run` (and other CLI paths that need stderr output).
  <OPENHUMAN_ROOT>/src/core/logging.rs:6://!   * [`init_for_cli_run`] — stderr only, used by `openhuman run` / CLI
  <OPENHUMAN_ROOT>/src/core/logging.rs:9://!     `<data_dir>/logs/openhuman-YYYY-MM-DD.log`, used by the Tauri shell
@@ -268,7 +268,7 @@
 -<OPENHUMAN_ROOT>/src/core/logging.rs:522:        std::env::remove_var("OPENHUMAN_LOG_FILE_CONSTRAINTS");
 -<OPENHUMAN_ROOT>/src/core/logging.rs:526:            Some(v) => std::env::set_var("OPENHUMAN_LOG_FILE_CONSTRAINTS", v),
 -<OPENHUMAN_ROOT>/src/core/logging.rs:527:            None => std::env::remove_var("OPENHUMAN_LOG_FILE_CONSTRAINTS"),
-+[+17 more match(es) in <OPENHUMAN_ROOT>/src/core/logging.rs]
++[+17 more match(es) in <OPENHUMAN_ROOT>/src/core/logging.rs ⟦tj:bccfaaf36367090ac1dba5de0298834d⟧]
  <OPENHUMAN_ROOT>/src/core/memory_cli.rs:1://! `openhuman memory` — CLI for memory ingestion, graph inspection, and debugging.
  <OPENHUMAN_ROOT>/src/core/memory_cli.rs:8://!   openhuman memory ingest  <file|->  [--namespace <ns>] [--key <key>] [--title <title>] [-v]
  <OPENHUMAN_ROOT>/src/core/memory_cli.rs:9://!   openhuman memory docs    [--namespace <ns>]
@@ -302,7 +302,7 @@
 -<OPENHUMAN_ROOT>/src/core/memory_cli.rs:458:    println!("  openhuman memory docs -n my-project");
 -<OPENHUMAN_ROOT>/src/core/memory_cli.rs:459:    println!("  openhuman memory query -n my-project -q 'who works on what?'");
 +<OPENHUMAN_ROOT>/src/core/memory_cli.rs:440:    crate::openhuman::memory::global::init(config.workspace_dir).map_err(anyhow::Error::msg)
-+[+27 more match(es) in <OPENHUMAN_ROOT>/src/core/memory_cli.rs]
++[+27 more match(es) in <OPENHUMAN_ROOT>/src/core/memory_cli.rs ⟦tj:891ee5d234a83c533dd0e561d52867cf⟧]
  <OPENHUMAN_ROOT>/src/core/cli.rs:1://! Command-line interface for the OpenHuman core binary.
 -<OPENHUMAN_ROOT>/src/core/cli.rs:30:Contribute & Star us on GitHub: https://github.com/tinyhumansai/openhuman
 -<OPENHUMAN_ROOT>/src/core/cli.rs:67:        "mcp" | "mcp-server" => crate::openhuman::mcp_server::run_stdio_from_cli(&args[1..]),
@@ -340,7 +340,7 @@
 -<OPENHUMAN_ROOT>/src/core/cli.rs:570:    println!("  openhuman <namespace> <function> [--param value ...]\n");
 -<OPENHUMAN_ROOT>/src/core/cli.rs:577:    println!("\nUse `openhuman <namespace> --help` to see functions.");
 -<OPENHUMAN_ROOT>/src/core/cli.rs:590:    println!("\nUse `openhuman {namespace} <function> --help` for parameters.");
-+[+32 more match(es) in <OPENHUMAN_ROOT>/src/core/cli.rs]
++[+32 more match(es) in <OPENHUMAN_ROOT>/src/core/cli.rs ⟦tj:fb1308679b9bba108b1a8788428791bd⟧]
  <OPENHUMAN_ROOT>/README.md:1:<h1 align="center">OpenHuman</h1>
  <OPENHUMAN_ROOT>/README.md:9:		<img src="https://trendshift.io/api/badge/repositories/23680" alt="tinyhumansai%2Fopenhuman | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
 -<OPENHUMAN_ROOT>/README.md:11:	<a href="https://www.producthunt.com/products/openhuman?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-openhuman" target="_blank" rel="noopener noreferrer">
@@ -399,7 +399,7 @@
 -<OPENHUMAN_ROOT>/README.md:178: <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tinyhumansai/openhuman&type=date&legend=top-left" />
 -<OPENHUMAN_ROOT>/README.md:187:<a href="https://github.com/tinyhumansai/openhuman/graphs/contributors">
 -<OPENHUMAN_ROOT>/README.md:188: <img src="https://contrib.rocks/image?repo=tinyhumansai/openhuman" alt="OpenHuman contributors" />
-+[+53 more match(es) in <OPENHUMAN_ROOT>/README.md]
++[+53 more match(es) in <OPENHUMAN_ROOT>/README.md ⟦tj:0d103926fb72a11850d885e0518ab6e7⟧]
  <OPENHUMAN_ROOT>/plan.md:3:Multi-agent audit of the OpenHuman test surface (2,367 files / ~25,900 test declarations per
  <OPENHUMAN_ROOT>/plan.md:15:   `src/openhuman/security/policy/command_checks.rs` + `path_checks.rs` (the documented
 -<OPENHUMAN_ROOT>/plan.md:17:   and `src/openhuman/encryption/core.rs` (Argon2id + AES-256-GCM primitives) have **zero unit
@@ -416,7 +416,7 @@
  <OPENHUMAN_ROOT>/plan.md:94:| ✅ | `src/openhuman/hooks/../useDaemonLifecycle.test.ts` (`app/src/hooks/__tests__/`) | Pins exact `console.log` strings as an effect-rerun proxy. Listener-count assertions are legit — keep them. | Drop the log-text pinning; keep listener/startDaemon observable assertions. |
 -<OPENHUMAN_ROOT>/plan.md:95:| ✅ | `src/openhuman/provider_surfaces/schemas.rs::all_schemas_returns_two` / `all_controllers_returns_two` | Magic-number count breaks on any legitimate 3rd controller. | Replace with `schemas().len() == controllers().len()` parity + presence of a known op (`list_queue`). Standardize this as a shared `assert_schema_controller_parity()` helper — the `== N` pattern repeats across ~15 domains. |
 -<OPENHUMAN_ROOT>/plan.md:201:   Windows-install test (`OpenHumanWindowsInstall.Tests.ps1`). The mock server's socket-auth
-+[+11 more match(es) in <OPENHUMAN_ROOT>/plan.md]
++[+11 more match(es) in <OPENHUMAN_ROOT>/plan.md ⟦tj:851461bf4953dc67b46a4e5eaacbdd49⟧]
  <OPENHUMAN_ROOT>/docker-compose.yml:1:# OpenHuman Core — Docker Compose for self-hosted cloud deploy.
  <OPENHUMAN_ROOT>/docker-compose.yml:3:# Brings up the headless Rust core (`openhuman-core`) on :7788, persists the
  <OPENHUMAN_ROOT>/docker-compose.yml:9:#      OPENHUMAN_CORE_TOKEN; the latter is required for any client that calls
@@ -434,7 +434,7 @@
 -<OPENHUMAN_ROOT>/docker-compose.yml:50:    cpus: ${OPENHUMAN_CORE_CPUS:-2.0}
 -<OPENHUMAN_ROOT>/docker-compose.yml:59:  openhuman-workspace:
 -<OPENHUMAN_ROOT>/docker-compose.yml:60:    name: openhuman-workspace
-+[+12 more match(es) in <OPENHUMAN_ROOT>/docker-compose.yml]
++[+12 more match(es) in <OPENHUMAN_ROOT>/docker-compose.yml ⟦tj:63c382b8c12ad3223526aece7e9e52ab⟧]
  <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:1:# Beginner's Guide to Contributing to OpenHuman
  <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:27:OpenHuman is a desktop AI assistant app. The codebase has three main parts:
  <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:251:1. Go to [github.com/tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman)
@@ -454,11 +454,11 @@
 -<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:411:CLAUDE.md: https://raw.githubusercontent.com/tinyhumansai/openhuman/main/CLAUDE.md
 -<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:470:### Desktop build fails (`pnpm --filter openhuman-app dev:app`)
 -<OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md:482:Thank you for contributing to OpenHuman!
-+[+14 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md]
++[+14 more match(es) in <OPENHUMAN_ROOT>/CONTRIBUTING-BEGINNERS.md ⟦tj:a07b4d627b3694b55bebe49d37f4a22a⟧]
  <OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:20://! [`crate::openhuman::agent::bus::mock_agent_run_turn`]) compose on top of
  <OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:24://! Tests in **any** module of `openhuman_core` can `use
  <OPENHUMAN_ROOT>/src/core/event_bus/testing.rs:61:/// [`crate::openhuman::agent::bus::use_real_agent_handler`] that need the
-@@ -448,53 +119,19 @@
+@@ -448,53 +119,20 @@
  <OPENHUMAN_ROOT>/src/core/all_tests.rs:101:    assert_eq!(rc.rpc_method_name(), "openhuman.billing_get_balance");
  <OPENHUMAN_ROOT>/src/core/all_tests.rs:192:    let schema = schema_for_rpc_method("openhuman.health_snapshot");
  <OPENHUMAN_ROOT>/src/core/all_tests.rs:201:    let schema = schema_for_rpc_method("openhuman.security_policy_info");
@@ -472,7 +472,7 @@
 -<OPENHUMAN_ROOT>/src/core/all_tests.rs:602:    let out = try_invoke_registered_rpc("openhuman.health_snapshot", Map::new()).await;
  <OPENHUMAN_ROOT>/src/core/all_tests.rs:608:    let out = try_invoke_registered_rpc("openhuman.security_policy_info", Map::new())
 -<OPENHUMAN_ROOT>/src/core/all_tests.rs:624:    assert_eq!(rpc_method_name(&s), "openhuman.team_change_member_role");
-+[+9 more match(es) in <OPENHUMAN_ROOT>/src/core/all_tests.rs]
++[+9 more match(es) in <OPENHUMAN_ROOT>/src/core/all_tests.rs ⟦tj:d5b0e32db32c77e199c1fb013f6d57d3⟧]
  <OPENHUMAN_ROOT>/package.json:2:  "name": "openhuman-repo",
  <OPENHUMAN_ROOT>/package.json:9:    "build": "pnpm --filter openhuman-app build",
  <OPENHUMAN_ROOT>/package.json:15:    "compile": "pnpm --filter openhuman-app compile",
@@ -499,7 +499,7 @@
 -<OPENHUMAN_ROOT>/package.json:59:    "tauri:ios:build": "pnpm --filter openhuman-app tauri:ios:build",
 -<OPENHUMAN_ROOT>/package.json:61:    "tauri:android:dev": "pnpm --filter openhuman-app tauri:android:dev",
 -<OPENHUMAN_ROOT>/package.json:62:    "tauri:android:build": "pnpm --filter openhuman-app tauri:android:build",
-+[+21 more match(es) in <OPENHUMAN_ROOT>/package.json]
++[+21 more match(es) in <OPENHUMAN_ROOT>/package.json ⟦tj:e6b80ff969714467e033189d70cbc84f⟧]
  <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:26:    // `openhuman.<namespace>_<function>` form was established.
  <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:27:    ("channels.list", "openhuman.channels_list"),
  <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:33:    // `mcp_clients.list` sorts before all `openhuman.*` entries (m < o).
@@ -514,7 +514,8 @@
 -<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:48:    ("openhuman.get_config", "openhuman.config_get"),
 -<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:50:        "openhuman.get_runtime_flags",
 -<OPENHUMAN_ROOT>/src/core/legacy_aliases.rs:51:        "openhuman.config_get_runtime_flags",
-+[+9 more match(es) in <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs]
++[+9 more match(es) in <OPENHUMAN_ROOT>/src/core/legacy_aliases.rs ⟦tj:ad9a90427229f03614ca7caea81dab8c⟧]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
-+[compacted tool output — this is a PARTIAL view; the full original (65126 bytes) is available by calling tokenjuice_retrieve with token "ba24059e9c7dc5ab08a24a693877be1a" (marker ⟦tj:ba24059e9c7dc5ab08a24a693877be1a⟧)]
++[compacted tool output — this is a PARTIAL view; the full original (65126 bytes) is available by calling tinyjuice_retrieve with token "ba24059e9c7dc5ab08a24a693877be1a" (marker ⟦tj:ba24059e9c7dc5ab08a24a693877be1a⟧)]
 \ No newline at end of file

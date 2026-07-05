@@ -78,7 +78,7 @@
 - const STREAMING_PREVIEW_CHARS = 120;
 - type InputMode = 'text' | 'voice';
 - type ReplyMode = 'text' | 'voice';
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:342b6ceae4e98d57a1ffbe991683c518⟧]
   const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
   const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
   const debug = debugFactory('conversations');
@@ -160,11 +160,11 @@
 -   if (err instanceof Error) return err.message;
 -   if (err && typeof err === 'object' && 'message' in err) {
 -     const message = (err as { message?: unknown }).message;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:c144fc403de66c3b6e280f24178cebcd⟧]
       if (typeof message === 'string') return message;
     }
     return String(err);
-@@ -208,113 +62,16 @@
+@@ -208,80 +62,7 @@
                                             )}>
                                             {emoji}
                                           </button>
@@ -242,14 +242,14 @@
 -                             {(() => {
 -                               const displayText = parsedContent.text;
 -                               const dataUris = (
--                                 Array.isArray(msg.extraMetadata?.attachmentDataUris)
--                                   ? (msg.extraMetadata.attachmentDataUris as string[])
--                                   : parsedContent.dataUris
---                              ).filter(isSafeAttachmentImageSrc);
--+                              ).filter(src => SAFE_IMAGE_DATA_URI_RE.test(src));
--                               const hasImages = dataUris.length > 0;
--                               // Document attachments carry no image data-URI (only
--                               // images do); surface them as filename chips from the
++[... 74 context line(s) omitted ... ⟦tj:5c5a489cb2ef50ffeedba2adf8acdc43⟧]
+                                  Array.isArray(msg.extraMetadata?.attachmentDataUris)
+                                    ? (msg.extraMetadata.attachmentDataUris as string[])
+                                    : parsedContent.dataUris
+@@ -290,31 +71,7 @@
+                                const hasImages = dataUris.length > 0;
+                                // Document attachments carry no image data-URI (only
+                                // images do); surface them as filename chips from the
 -                               // persisted attachmentKinds/attachmentNames metadata.
 -                               const kinds = Array.isArray(msg.extraMetadata?.attachmentKinds)
 -                                 ? (msg.extraMetadata.attachmentKinds as string[])
@@ -275,16 +275,7 @@
 -                               const showTime = latestVisibleMessage?.id === msg.id;
 -                               return (
 -                                 <>
-+[... 74 context line(s) omitted ...]
-+                                 Array.isArray(msg.extraMetadata?.attachmentDataUris)
-+                                   ? (msg.extraMetadata.attachmentDataUris as string[])
-+                                   : parsedContent.dataUris
-+-                              ).filter(isSafeAttachmentImageSrc);
-++                              ).filter(src => SAFE_IMAGE_DATA_URI_RE.test(src));
-+                               const hasImages = dataUris.length > 0;
-+                               // Document attachments carry no image data-URI (only
-+                               // images do); surface them as filename chips from the
-+[... 25 context line(s) omitted ...]
++[... 25 context line(s) omitted ... ⟦tj:1493b1edfb94721e625df31d0a5774a1⟧]
                                     {hasImages && (
                                       <div className="flex flex-wrap gap-1.5 justify-end">
                                         {dataUris.map((uri, i) => (
@@ -366,7 +357,7 @@
 -                                     <div className="rounded-2xl px-4 py-2.5 bg-primary-500 text-content-inverted rounded-br-md break-words overflow-hidden">
 -                                       {displayText && (
 -                                         <BubbleMarkdown content={displayText} tone="user" />
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:fc71d6a772fbc9a4da557cf432bb7459⟧]
                                         )}
                                         {showTime && (
                                           <p
@@ -379,7 +370,7 @@
 -   recordMockLlmTurn,
 -   setMockBehavior,
 - } from "../state.mjs";
-+[... 5 context line(s) omitted ...]
++[... 5 context line(s) omitted ... ⟦tj:b8627ea6edb88026571c44cfefc73df3⟧]
   import { buildDynamicCompletion } from "./llm/dynamic.mjs";
   import { headerValue, pickProbeText, resolveThreadKey } from "./llm/shared.mjs";
   
@@ -393,7 +384,7 @@
 - // (tinyhumansai/openhuman#4517).
 - function isPrimaryTurn(parsedBody) {
 -   return Array.isArray(parsedBody?.tools) && parsedBody.tools.length > 0;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:536cb086b606b72e62d20b5cc8e90f2c⟧]
 +   });
   }
   
@@ -548,7 +539,7 @@
 + // When the agent harness calls the OpenAI-compatible endpoint with
 + // `stream: true`, openhuman/providers/compatible.rs expects SSE chunks
 + // shaped like:
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:66679c1b645276387b3da19e88fdcf3e⟧]
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
   }
   
@@ -566,7 +557,7 @@
 -   }
 -   return out;
 - }
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:d426196e662e43e1ad1afe69bf0f3adf⟧]
   
 - function defaultStreamScript({ content, toolCalls }) {
 -   const script = [];
@@ -712,7 +703,7 @@
 - 
 - async function streamScriptToResponse({ res, model, script, defaultDelayMs }) {
 -   let trailingUsage = null;
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:b6ba17d83fb549b2c3ae4a9e44c05b3e⟧]
     for (let i = 0; i < script.length; i += 1) {
       const entry = script[i] ?? {};
       const delay = safeDelayMs(entry.delayMs, defaultDelayMs);
@@ -770,11 +761,11 @@
 -             type: "function",
 -             function: { name, arguments: first },
 -           },
-+[... 50 context line(s) omitted ...]
++[... 50 context line(s) omitted ... ⟦tj:246242497369b50492756392e47ce914⟧]
           }),
         );
         for (const piece of argPieces) {
-@@ -842,80 +181,9 @@
+@@ -842,80 +181,11 @@
           writeSseEvent(
             res,
             sseChunkEnvelope({
@@ -852,10 +843,12 @@
 -       id: tc.id ?? `call_${callIdSeed}_${idx}`,
 -       type: "function",
 -       function: {
-+[... 74 context line(s) omitted ...]
++[... 74 context line(s) omitted ... ⟦tj:35feea2d71ee5eb12712382cdf90edda⟧]
           name: String(tc.name ?? ""),
           arguments:
             typeof tc.arguments === "string"
 +
-+[compacted tool output — this is a PARTIAL view; the full original (39398 bytes) is available by calling tokenjuice_retrieve with token "4b5705d39bb0941449016cd01a76fc46" (marker ⟦tj:4b5705d39bb0941449016cd01a76fc46⟧)]
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[compacted tool output — this is a PARTIAL view; the full original (39398 bytes) is available by calling tinyjuice_retrieve with token "4b5705d39bb0941449016cd01a76fc46" (marker ⟦tj:4b5705d39bb0941449016cd01a76fc46⟧)]
 \ No newline at end of file

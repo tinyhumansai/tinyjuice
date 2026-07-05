@@ -6,7 +6,7 @@ index 61b4d12fb..7237cd6e9 100644
  //! SQLite-backed persistence for ingested chunks (Phase 1 / issue #707).
  //!
  //! The store lives at `<workspace>/memory_tree/chunks.db`. Schema is applied
-[... 19 context line(s) omitted ...]
+[... 19 context line(s) omitted ... ⟦tj:210c6d02a05f20f7eb13041e3142b15b⟧]
  //! init failures for 30 s so a broken install does not busy-loop.
  
  use anyhow::{Context, Result};
@@ -32,7 +32,7 @@ index 61b4d12fb..7237cd6e9 100644
  // 15s gives the busy-handler enough headroom that transient write-lock
  // contention (4 job workers + scheduler + ingest producers all writing the
  // same `memory_tree/chunks.db`) is absorbed inside rusqlite instead of
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:2912e9b3d26bedd17ccbd4397ca5b142⟧]
      PRIMARY KEY (chunk_id, model_signature)
  );
  
@@ -40,7 +40,7 @@ index 61b4d12fb..7237cd6e9 100644
              path_scope = excluded.path_scope,
              source_ref = excluded.source_ref,
              owner = excluded.owner,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:770543346431fb8ee6253c6626dcdc6a⟧]
      tinycortex::memory::chunks::get_chunk(&engine_config(config), id)
  }
  
@@ -232,7 +232,7 @@ index 61b4d12fb..7237cd6e9 100644
  }
  
  /// Count total chunks in the store (useful for tests / diagnostics).
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fb1a50df2e32103840e4fbf0f3d6216a⟧]
      if changed == 0 {
          log::warn!(
              "[memory::chunk_store] lifecycle update affected 0 rows chunk_id={} status={}",
@@ -240,7 +240,7 @@ index 61b4d12fb..7237cd6e9 100644
                      "[memory::chunk_store] delete_orphaned_source_tree: source_id_hash={} has no source-scoped tree (gates_cleared={}); shared/collection trees left intact",
                      redact_value(source_id),
                      gate_ids.len(),
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:44706cde3dffea053a29dbf12746b13c⟧]
      }
  }
  
@@ -306,7 +306,7 @@ index 61b4d12fb..7237cd6e9 100644
  #[path = "connection.rs"]
  mod connection;
  pub(crate) use connection::recover_corrupt_db;
-[... 19 context line(s) omitted ...]
+[... 19 context line(s) omitted ... ⟦tj:8fb0295546de4c29d0ff160481e8ce75⟧]
      list_summaries_with_content_path, set_chunk_raw_refs, set_chunk_raw_refs_tx, RawRef,
  };
  
@@ -320,9 +320,11 @@ index 61b4d12fb..7237cd6e9 100644
  /// Idempotent `ALTER TABLE ADD COLUMN` — treats an existing column as success.
  fn add_column_if_missing(conn: &Connection, table: &str, name: &str, sql_type: &str) -> Result<()> {
      match conn.execute(
-[... 30 context line(s) omitted ...]
+[... 30 context line(s) omitted ... ⟦tj:3342a3e88a689f384d86812c498e1484⟧]
  #[cfg(test)]
  #[path = "store_tests.rs"]
  mod tests;
 
-[compacted tool output — this is a PARTIAL view; the full original (29287 bytes) is available by calling tokenjuice_retrieve with token "27eb742dcf24a75ca86ad4472a53106c" (marker ⟦tj:27eb742dcf24a75ca86ad4472a53106c⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (29287 bytes) is available by calling tinyjuice_retrieve with token "27eb742dcf24a75ca86ad4472a53106c" (marker ⟦tj:27eb742dcf24a75ca86ad4472a53106c⟧)]

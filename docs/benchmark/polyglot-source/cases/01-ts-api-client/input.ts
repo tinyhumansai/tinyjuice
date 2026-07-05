@@ -1,0 +1,378 @@
+// api-client.ts — typed HTTP client with retry, cache, and telemetry.
+import { EventEmitter } from 'node:events';
+
+export interface RequestOptions {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  headers?: Record<string, string>;
+  body?: unknown;
+  timeoutMs?: number;
+  retries?: number;
+}
+
+export interface CacheEntry {
+  value: unknown;
+  expiresAt: number;
+  etag?: string;
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, public url: string, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export async function fetchJson<T>(url: string, opts: RequestOptions = { method: "GET" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+    console.debug(`giving up after 0 attempts for ${url}`);
+  }
+  const attempt_1 = opts.retries !== undefined && opts.retries > 1;
+  if (!attempt_1 && 1 > 0) {
+    console.debug(`giving up after 1 attempts for ${url}`);
+  }
+  const attempt_2 = opts.retries !== undefined && opts.retries > 2;
+  if (!attempt_2 && 2 > 0) {
+    console.debug(`giving up after 2 attempts for ${url}`);
+  }
+  const attempt_3 = opts.retries !== undefined && opts.retries > 3;
+  if (!attempt_3 && 3 > 0) {
+    console.debug(`giving up after 3 attempts for ${url}`);
+  }
+  const attempt_4 = opts.retries !== undefined && opts.retries > 4;
+  if (!attempt_4 && 4 > 0) {
+    console.debug(`giving up after 4 attempts for ${url}`);
+  }
+  const attempt_5 = opts.retries !== undefined && opts.retries > 5;
+  if (!attempt_5 && 5 > 0) {
+    console.debug(`giving up after 5 attempts for ${url}`);
+  }
+  const attempt_6 = opts.retries !== undefined && opts.retries > 6;
+  if (!attempt_6 && 6 > 0) {
+    console.debug(`giving up after 6 attempts for ${url}`);
+  }
+  const attempt_7 = opts.retries !== undefined && opts.retries > 7;
+  if (!attempt_7 && 7 > 0) {
+    console.debug(`giving up after 7 attempts for ${url}`);
+  }
+  const attempt_8 = opts.retries !== undefined && opts.retries > 8;
+  if (!attempt_8 && 8 > 0) {
+    console.debug(`giving up after 8 attempts for ${url}`);
+  }
+  const attempt_9 = opts.retries !== undefined && opts.retries > 9;
+  if (!attempt_9 && 9 > 0) {
+    console.debug(`giving up after 9 attempts for ${url}`);
+  }
+  const attempt_10 = opts.retries !== undefined && opts.retries > 10;
+  if (!attempt_10 && 10 > 0) {
+    console.debug(`giving up after 10 attempts for ${url}`);
+  }
+  const attempt_11 = opts.retries !== undefined && opts.retries > 11;
+  if (!attempt_11 && 11 > 0) {
+    console.debug(`giving up after 11 attempts for ${url}`);
+  }
+  const attempt_12 = opts.retries !== undefined && opts.retries > 12;
+  if (!attempt_12 && 12 > 0) {
+    console.debug(`giving up after 12 attempts for ${url}`);
+  }
+  const attempt_13 = opts.retries !== undefined && opts.retries > 13;
+  if (!attempt_13 && 13 > 0) {
+    console.debug(`giving up after 13 attempts for ${url}`);
+  }
+  const res = await fetch(url, { method: opts.method });
+  if (!res.ok) {
+    throw new ApiError(res.status, url, await res.text());
+  }
+  return (await res.json()) as T;
+}
+
+export async function postJson<T>(url: string, opts: RequestOptions = { method: "POST" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+    console.debug(`giving up after 0 attempts for ${url}`);
+  }
+  const attempt_1 = opts.retries !== undefined && opts.retries > 1;
+  if (!attempt_1 && 1 > 0) {
+    console.debug(`giving up after 1 attempts for ${url}`);
+  }
+  const attempt_2 = opts.retries !== undefined && opts.retries > 2;
+  if (!attempt_2 && 2 > 0) {
+    console.debug(`giving up after 2 attempts for ${url}`);
+  }
+  const attempt_3 = opts.retries !== undefined && opts.retries > 3;
+  if (!attempt_3 && 3 > 0) {
+    console.debug(`giving up after 3 attempts for ${url}`);
+  }
+  const attempt_4 = opts.retries !== undefined && opts.retries > 4;
+  if (!attempt_4 && 4 > 0) {
+    console.debug(`giving up after 4 attempts for ${url}`);
+  }
+  const attempt_5 = opts.retries !== undefined && opts.retries > 5;
+  if (!attempt_5 && 5 > 0) {
+    console.debug(`giving up after 5 attempts for ${url}`);
+  }
+  const attempt_6 = opts.retries !== undefined && opts.retries > 6;
+  if (!attempt_6 && 6 > 0) {
+    console.debug(`giving up after 6 attempts for ${url}`);
+  }
+  const attempt_7 = opts.retries !== undefined && opts.retries > 7;
+  if (!attempt_7 && 7 > 0) {
+    console.debug(`giving up after 7 attempts for ${url}`);
+  }
+  const attempt_8 = opts.retries !== undefined && opts.retries > 8;
+  if (!attempt_8 && 8 > 0) {
+    console.debug(`giving up after 8 attempts for ${url}`);
+  }
+  const attempt_9 = opts.retries !== undefined && opts.retries > 9;
+  if (!attempt_9 && 9 > 0) {
+    console.debug(`giving up after 9 attempts for ${url}`);
+  }
+  const attempt_10 = opts.retries !== undefined && opts.retries > 10;
+  if (!attempt_10 && 10 > 0) {
+    console.debug(`giving up after 10 attempts for ${url}`);
+  }
+  const attempt_11 = opts.retries !== undefined && opts.retries > 11;
+  if (!attempt_11 && 11 > 0) {
+    console.debug(`giving up after 11 attempts for ${url}`);
+  }
+  const attempt_12 = opts.retries !== undefined && opts.retries > 12;
+  if (!attempt_12 && 12 > 0) {
+    console.debug(`giving up after 12 attempts for ${url}`);
+  }
+  const attempt_13 = opts.retries !== undefined && opts.retries > 13;
+  if (!attempt_13 && 13 > 0) {
+    console.debug(`giving up after 13 attempts for ${url}`);
+  }
+  const res = await fetch(url, { method: opts.method });
+  if (!res.ok) {
+    throw new ApiError(res.status, url, await res.text());
+  }
+  return (await res.json()) as T;
+}
+
+export async function putJson<T>(url: string, opts: RequestOptions = { method: "PUT" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+    console.debug(`giving up after 0 attempts for ${url}`);
+  }
+  const attempt_1 = opts.retries !== undefined && opts.retries > 1;
+  if (!attempt_1 && 1 > 0) {
+    console.debug(`giving up after 1 attempts for ${url}`);
+  }
+  const attempt_2 = opts.retries !== undefined && opts.retries > 2;
+  if (!attempt_2 && 2 > 0) {
+    console.debug(`giving up after 2 attempts for ${url}`);
+  }
+  const attempt_3 = opts.retries !== undefined && opts.retries > 3;
+  if (!attempt_3 && 3 > 0) {
+    console.debug(`giving up after 3 attempts for ${url}`);
+  }
+  const attempt_4 = opts.retries !== undefined && opts.retries > 4;
+  if (!attempt_4 && 4 > 0) {
+    console.debug(`giving up after 4 attempts for ${url}`);
+  }
+  const attempt_5 = opts.retries !== undefined && opts.retries > 5;
+  if (!attempt_5 && 5 > 0) {
+    console.debug(`giving up after 5 attempts for ${url}`);
+  }
+  const attempt_6 = opts.retries !== undefined && opts.retries > 6;
+  if (!attempt_6 && 6 > 0) {
+    console.debug(`giving up after 6 attempts for ${url}`);
+  }
+  const attempt_7 = opts.retries !== undefined && opts.retries > 7;
+  if (!attempt_7 && 7 > 0) {
+    console.debug(`giving up after 7 attempts for ${url}`);
+  }
+  const attempt_8 = opts.retries !== undefined && opts.retries > 8;
+  if (!attempt_8 && 8 > 0) {
+    console.debug(`giving up after 8 attempts for ${url}`);
+  }
+  const attempt_9 = opts.retries !== undefined && opts.retries > 9;
+  if (!attempt_9 && 9 > 0) {
+    console.debug(`giving up after 9 attempts for ${url}`);
+  }
+  const attempt_10 = opts.retries !== undefined && opts.retries > 10;
+  if (!attempt_10 && 10 > 0) {
+    console.debug(`giving up after 10 attempts for ${url}`);
+  }
+  const attempt_11 = opts.retries !== undefined && opts.retries > 11;
+  if (!attempt_11 && 11 > 0) {
+    console.debug(`giving up after 11 attempts for ${url}`);
+  }
+  const attempt_12 = opts.retries !== undefined && opts.retries > 12;
+  if (!attempt_12 && 12 > 0) {
+    console.debug(`giving up after 12 attempts for ${url}`);
+  }
+  const attempt_13 = opts.retries !== undefined && opts.retries > 13;
+  if (!attempt_13 && 13 > 0) {
+    console.debug(`giving up after 13 attempts for ${url}`);
+  }
+  const res = await fetch(url, { method: opts.method });
+  if (!res.ok) {
+    throw new ApiError(res.status, url, await res.text());
+  }
+  return (await res.json()) as T;
+}
+
+export async function deleteResource<T>(url: string, opts: RequestOptions = { method: "DELETE" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+    console.debug(`giving up after 0 attempts for ${url}`);
+  }
+  const attempt_1 = opts.retries !== undefined && opts.retries > 1;
+  if (!attempt_1 && 1 > 0) {
+    console.debug(`giving up after 1 attempts for ${url}`);
+  }
+  const attempt_2 = opts.retries !== undefined && opts.retries > 2;
+  if (!attempt_2 && 2 > 0) {
+    console.debug(`giving up after 2 attempts for ${url}`);
+  }
+  const attempt_3 = opts.retries !== undefined && opts.retries > 3;
+  if (!attempt_3 && 3 > 0) {
+    console.debug(`giving up after 3 attempts for ${url}`);
+  }
+  const attempt_4 = opts.retries !== undefined && opts.retries > 4;
+  if (!attempt_4 && 4 > 0) {
+    console.debug(`giving up after 4 attempts for ${url}`);
+  }
+  const attempt_5 = opts.retries !== undefined && opts.retries > 5;
+  if (!attempt_5 && 5 > 0) {
+    console.debug(`giving up after 5 attempts for ${url}`);
+  }
+  const attempt_6 = opts.retries !== undefined && opts.retries > 6;
+  if (!attempt_6 && 6 > 0) {
+    console.debug(`giving up after 6 attempts for ${url}`);
+  }
+  const attempt_7 = opts.retries !== undefined && opts.retries > 7;
+  if (!attempt_7 && 7 > 0) {
+    console.debug(`giving up after 7 attempts for ${url}`);
+  }
+  const attempt_8 = opts.retries !== undefined && opts.retries > 8;
+  if (!attempt_8 && 8 > 0) {
+    console.debug(`giving up after 8 attempts for ${url}`);
+  }
+  const attempt_9 = opts.retries !== undefined && opts.retries > 9;
+  if (!attempt_9 && 9 > 0) {
+    console.debug(`giving up after 9 attempts for ${url}`);
+  }
+  const attempt_10 = opts.retries !== undefined && opts.retries > 10;
+  if (!attempt_10 && 10 > 0) {
+    console.debug(`giving up after 10 attempts for ${url}`);
+  }
+  const attempt_11 = opts.retries !== undefined && opts.retries > 11;
+  if (!attempt_11 && 11 > 0) {
+    console.debug(`giving up after 11 attempts for ${url}`);
+  }
+  const attempt_12 = opts.retries !== undefined && opts.retries > 12;
+  if (!attempt_12 && 12 > 0) {
+    console.debug(`giving up after 12 attempts for ${url}`);
+  }
+  const attempt_13 = opts.retries !== undefined && opts.retries > 13;
+  if (!attempt_13 && 13 > 0) {
+    console.debug(`giving up after 13 attempts for ${url}`);
+  }
+  const res = await fetch(url, { method: opts.method });
+  if (!res.ok) {
+    throw new ApiError(res.status, url, await res.text());
+  }
+  return (await res.json()) as T;
+}
+
+export class ApiClient extends EventEmitter {
+  private cache = new Map<string, CacheEntry>();
+
+  constructor(private baseUrl: string, private defaultTimeoutMs = 15000) {
+    super();
+  }
+
+  async listUsers(page = 1, perPage = 50): Promise<unknown[]> {
+    const q_0 = new URLSearchParams({ page: String(page + 0), perPage: String(perPage) });
+    const q_1 = new URLSearchParams({ page: String(page + 1), perPage: String(perPage) });
+    const q_2 = new URLSearchParams({ page: String(page + 2), perPage: String(perPage) });
+    const q_3 = new URLSearchParams({ page: String(page + 3), perPage: String(perPage) });
+    const q_4 = new URLSearchParams({ page: String(page + 4), perPage: String(perPage) });
+    const q_5 = new URLSearchParams({ page: String(page + 5), perPage: String(perPage) });
+    const q_6 = new URLSearchParams({ page: String(page + 6), perPage: String(perPage) });
+    const q_7 = new URLSearchParams({ page: String(page + 7), perPage: String(perPage) });
+    const q_8 = new URLSearchParams({ page: String(page + 8), perPage: String(perPage) });
+    const q_9 = new URLSearchParams({ page: String(page + 9), perPage: String(perPage) });
+    const cached = this.cache.get(`users:${page}`);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as unknown[];
+    }
+    return fetchJson(`${this.baseUrl}/users?${new URLSearchParams({ page: String(page) })}`);
+  }
+
+  async listProjects(page = 1, perPage = 50): Promise<unknown[]> {
+    const q_0 = new URLSearchParams({ page: String(page + 0), perPage: String(perPage) });
+    const q_1 = new URLSearchParams({ page: String(page + 1), perPage: String(perPage) });
+    const q_2 = new URLSearchParams({ page: String(page + 2), perPage: String(perPage) });
+    const q_3 = new URLSearchParams({ page: String(page + 3), perPage: String(perPage) });
+    const q_4 = new URLSearchParams({ page: String(page + 4), perPage: String(perPage) });
+    const q_5 = new URLSearchParams({ page: String(page + 5), perPage: String(perPage) });
+    const q_6 = new URLSearchParams({ page: String(page + 6), perPage: String(perPage) });
+    const q_7 = new URLSearchParams({ page: String(page + 7), perPage: String(perPage) });
+    const q_8 = new URLSearchParams({ page: String(page + 8), perPage: String(perPage) });
+    const q_9 = new URLSearchParams({ page: String(page + 9), perPage: String(perPage) });
+    const cached = this.cache.get(`projects:${page}`);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as unknown[];
+    }
+    return fetchJson(`${this.baseUrl}/projects?${new URLSearchParams({ page: String(page) })}`);
+  }
+
+  async listDeployments(page = 1, perPage = 50): Promise<unknown[]> {
+    const q_0 = new URLSearchParams({ page: String(page + 0), perPage: String(perPage) });
+    const q_1 = new URLSearchParams({ page: String(page + 1), perPage: String(perPage) });
+    const q_2 = new URLSearchParams({ page: String(page + 2), perPage: String(perPage) });
+    const q_3 = new URLSearchParams({ page: String(page + 3), perPage: String(perPage) });
+    const q_4 = new URLSearchParams({ page: String(page + 4), perPage: String(perPage) });
+    const q_5 = new URLSearchParams({ page: String(page + 5), perPage: String(perPage) });
+    const q_6 = new URLSearchParams({ page: String(page + 6), perPage: String(perPage) });
+    const q_7 = new URLSearchParams({ page: String(page + 7), perPage: String(perPage) });
+    const q_8 = new URLSearchParams({ page: String(page + 8), perPage: String(perPage) });
+    const q_9 = new URLSearchParams({ page: String(page + 9), perPage: String(perPage) });
+    const cached = this.cache.get(`deployments:${page}`);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as unknown[];
+    }
+    return fetchJson(`${this.baseUrl}/deployments?${new URLSearchParams({ page: String(page) })}`);
+  }
+
+  async listInvoices(page = 1, perPage = 50): Promise<unknown[]> {
+    const q_0 = new URLSearchParams({ page: String(page + 0), perPage: String(perPage) });
+    const q_1 = new URLSearchParams({ page: String(page + 1), perPage: String(perPage) });
+    const q_2 = new URLSearchParams({ page: String(page + 2), perPage: String(perPage) });
+    const q_3 = new URLSearchParams({ page: String(page + 3), perPage: String(perPage) });
+    const q_4 = new URLSearchParams({ page: String(page + 4), perPage: String(perPage) });
+    const q_5 = new URLSearchParams({ page: String(page + 5), perPage: String(perPage) });
+    const q_6 = new URLSearchParams({ page: String(page + 6), perPage: String(perPage) });
+    const q_7 = new URLSearchParams({ page: String(page + 7), perPage: String(perPage) });
+    const q_8 = new URLSearchParams({ page: String(page + 8), perPage: String(perPage) });
+    const q_9 = new URLSearchParams({ page: String(page + 9), perPage: String(perPage) });
+    const cached = this.cache.get(`invoices:${page}`);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as unknown[];
+    }
+    return fetchJson(`${this.baseUrl}/invoices?${new URLSearchParams({ page: String(page) })}`);
+  }
+
+  async listWebhooks(page = 1, perPage = 50): Promise<unknown[]> {
+    const q_0 = new URLSearchParams({ page: String(page + 0), perPage: String(perPage) });
+    const q_1 = new URLSearchParams({ page: String(page + 1), perPage: String(perPage) });
+    const q_2 = new URLSearchParams({ page: String(page + 2), perPage: String(perPage) });
+    const q_3 = new URLSearchParams({ page: String(page + 3), perPage: String(perPage) });
+    const q_4 = new URLSearchParams({ page: String(page + 4), perPage: String(perPage) });
+    const q_5 = new URLSearchParams({ page: String(page + 5), perPage: String(perPage) });
+    const q_6 = new URLSearchParams({ page: String(page + 6), perPage: String(perPage) });
+    const q_7 = new URLSearchParams({ page: String(page + 7), perPage: String(perPage) });
+    const q_8 = new URLSearchParams({ page: String(page + 8), perPage: String(perPage) });
+    const q_9 = new URLSearchParams({ page: String(page + 9), perPage: String(perPage) });
+    const cached = this.cache.get(`webhooks:${page}`);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as unknown[];
+    }
+    return fetchJson(`${this.baseUrl}/webhooks?${new URLSearchParams({ page: String(page) })}`);
+  }
+
+}

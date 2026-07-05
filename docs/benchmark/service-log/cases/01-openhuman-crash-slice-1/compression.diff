@@ -1,6 +1,6 @@
 --- input/input.log
 +++ output/output.log
-@@ -1,349 +1,13 @@
+@@ -1,349 +1,15 @@
 --------------------------------------
 -Translated Report (Full Report Below)
 --------------------------------------
@@ -33,13 +33,13 @@
 -
 -Triggered by Thread: 46  tokio-rt-worker
 -
-+[... 32 line(s) omitted ...]
++[... 32 line(s) omitted ... ⟦tj:0155c2cddf478d13f916badfee0141ff⟧]
  Exception Type:    EXC_BAD_ACCESS (SIGBUS)
  Exception Subtype: KERN_PROTECTION_FAILURE at 0x00000003028534f0
  Exception Message: Could not determine thread index for stack guard region
  Exception Codes:   0x0000000000000002, 0x00000003028534f0
 -
-+[... 1 line(s) omitted ...]
++[... 1 line(s) omitted ... ⟦tj:e3b0c44298fc1c149afbf4c8996fb924⟧]
  Termination Reason:  Namespace SIGNAL, Code 10, Bus error: 10
 -Terminating Process: exc handler [90825]
 -
@@ -102,7 +102,7 @@
 -13  OpenHuman                     	       0x101844a14 tracing_appender::worker::Worker$LT$T$GT$::worker_thread::_$u7b$$u7b$closure$u7d$$u7d$::hb7811fcc92cf916c + 32
 -14  OpenHuman                     	       0x10177388c std::sys::backtrace::__rust_begin_short_backtrace::h9059a573f3ca8f30 + 16
 -15  OpenHuman                     	       0x101a79868 std::thread::lifecycle::spawn_unchecked::_$u7b$$u7b$closure$u7d$$u7d$::_$u7b$$u7b$closure$u7d$$u7d$::hc1ad5879cbb72eea + 124
-+[... 61 line(s) omitted ...]
++[... 61 line(s) omitted ... ⟦tj:5187f676d6221360bf3ea70691c78c7f⟧]
  16  OpenHuman                     	       0x1029a57bc _$LT$core..panic..unwind_safe..AssertUnwindSafe$LT$F$GT$$u20$as$u20$core..ops..function..FnOnce$LT$$LP$$RP$$GT$$GT$::call_once::h0abea6da5fd65be4 + 48
  17  OpenHuman                     	       0x1024a5688 std::panicking::catch_unwind::do_call::h34447d5ada7f4206 + 56
 -18  OpenHuman                     	       0x101a7e64c __rust_try + 32
@@ -111,7 +111,7 @@
 -21  OpenHuman                     	       0x1057e9fdc std::sys::thread::unix::Thread::new::thread_start::hd42ed9e591878587 + 408
 -22  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
 -23  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
-+[... 248 line(s) omitted ...]
++[... 248 line(s) omitted ... ⟦tj:03c5b8d1785f717c5f218dbdf098c066⟧]
  
 -Thread 2:: com.apple.NSEventThread
 -0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
@@ -124,7 +124,8 @@
 -7   AppKit                        	       0x18f259c7c _NSEventThread + 184
 -8   libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
 -9   libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
--
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+ 
 -Thread 3:: StackSamplingProfiler
 -0   libsystem_kernel.dylib        	       0x18ac09c34 mach_msg2_trap + 8
 -1   libsystem_kernel.dylib        	       0x18ac1c574 mach_msg2_internal + 76
@@ -354,5 +355,5 @@
 -11  libsystem_pthread.dylib       	       0x18ac4dc58 _pthread_start + 136
 -12  libsystem_pthread.dylib       	       0x18ac48c1c thread_start + 8
 -
-+[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tokenjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5⟧)]
++[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5⟧)]
 \ No newline at end of file

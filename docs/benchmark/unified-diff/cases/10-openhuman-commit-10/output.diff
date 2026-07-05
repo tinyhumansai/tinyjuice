@@ -6,7 +6,7 @@ index 928fc0968..d649681fb 100644
    type ToolTimelineEntry,
  } from '../store/chatRuntimeSlice';
  import { useAppDispatch, useAppSelector } from '../store/hooks';
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:342b6ceae4e98d57a1ffbe991683c518⟧]
  const AUTOCOMPLETE_POLL_DEBOUNCE_MS = 320;
  const AUTOCOMPLETE_MIN_CONTEXT_CHARS = 3;
  const debug = debugFactory('conversations');
@@ -18,7 +18,7 @@ index 928fc0968..d649681fb 100644
  
  interface ConversationsProps {
    /**
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:2225ed94dcb5ec531ae2e05e31620738⟧]
    }
    return String(err);
  }
@@ -26,7 +26,7 @@ index 928fc0968..d649681fb 100644
                                            className="flex items-center rounded-full border border-primary-200 bg-primary-100 px-1.5 text-xs leading-[1.5] shadow-sm transition-colors hover:bg-primary-200 dark:border-primary-400/40 dark:bg-primary-500/25"
                                            title={t('chat.removeReaction').replace(
                                              '{emoji}',
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:1053371081e8a4ae11ff990a9a9fc36c⟧]
                            <div className="flex flex-col items-end gap-1">
                              {(() => {
                                const displayText = parsedContent.text;
@@ -41,7 +41,7 @@ index 928fc0968..d649681fb 100644
                                const hasImages = dataUris.length > 0;
                                // Document attachments carry no image data-URI (only
                                // images do); surface them as filename chips from the
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:2da99d1fb96a64b8b8d1875b1837ff95⟧]
                                          </div>
                                        ))}
                                      </div>
@@ -53,7 +53,7 @@ index 8718d16f3..6e77c7731 100644
  const CONNECTOR_NAME = 'Jira';
  const TOOLKIT_SLUG = 'jira';
  const AUTH_TOKEN = 'e2e-connector-jira-token';
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:e1eb879fd6092b084cd1b1a8d2053ad9⟧]
          return (
            document.querySelector('[data-testid="composio-required-subdomain"]') !== null ||
            document.querySelector('input[placeholder*="subdomain"]') !== null ||
@@ -76,7 +76,7 @@ index 8718d16f3..6e77c7731 100644
          );
        })
        .catch(() => false);
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:9420a4be1b0ea2c8c69736118709498a⟧]
    it('expired auth shows Reconnect button and does not log user out', async function () {
      this.timeout(60_000);
      seedComposioConnection(TOOLKIT_SLUG, 'EXPIRED', 'c-jira-expired');
@@ -88,7 +88,7 @@ index 4f5bc3cbc..8225fa4ea 100644
      });
      const ingressBody = await ingressResp.json().catch(() => ({}));
      expect(ingressResp.status).toBe(200);
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:46df832092c1bec55d363048550585aa⟧]
      console.log(`${LOG} update.version: asset_prefix = ${prefix}`);
  
      // No outbound HTTP call should have been made — version is purely local.
@@ -106,7 +106,7 @@ index 4f5bc3cbc..8225fa4ea 100644
      expect(outbound).toBeUndefined();
  
      const ping = await callOpenhumanRpc('core.ping', {});
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:342ed1d09f6a2c2dec7b4609cf83a780⟧]
    it('thread CRUD smoke: create → append message → list messages roundtrip', async () => {
      await resetEverything('before thread-crud-smoke scenario');
  
@@ -118,7 +118,7 @@ index ef3402b1a..ed8609646 100644
  import { json, setCors } from "../http.mjs";
  import {
    behavior,
-[... 5 context line(s) omitted ...]
+[... 5 context line(s) omitted ... ⟦tj:b8627ea6edb88026571c44cfefc73df3⟧]
  import { buildDynamicCompletion } from "./llm/dynamic.mjs";
  import { headerValue, pickProbeText, resolveThreadKey } from "./llm/shared.mjs";
  
@@ -127,7 +127,7 @@ index ef3402b1a..ed8609646 100644
  // The scripted `llmForcedResponses` FIFO models the *interactive* agent turn,
  // which always advertises tools (the orchestrator's delegate_* tools). Ancillary
  // completions that share the endpoint but carry no tools — thread-title/summary
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:536cb086b606b72e62d20b5cc8e90f2c⟧]
    });
  }
  
@@ -135,7 +135,7 @@ index ef3402b1a..ed8609646 100644
  //   data: {"choices":[{"delta":{"content":"hello"},"finish_reason":null}]}
  //   data: {"choices":[{"delta":{},"finish_reason":"stop"}], "usage":{...}}
  //   data: [DONE]
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:6b906b1d24221b2264d3d5832e0bcb1c⟧]
    return new Promise((resolve) => setTimeout(resolve, ms));
  }
  
@@ -148,7 +148,7 @@ index ef3402b1a..ed8609646 100644
  // Split a string into N-character windows so we can stream tool-call
  // argument JSON the same way real providers do — clients accumulate the
  // partial fragments and JSON-parse at the end.
-[... 131 context line(s) omitted ...]
+[... 131 context line(s) omitted ... ⟦tj:f211de9c539d8e1eb6dcea2cec7c26e0⟧]
      }
    }
  
@@ -161,7 +161,7 @@ index ef3402b1a..ed8609646 100644
  
    // Fire-and-forget — the dispatcher only cares that the handler
    // claimed the request. Errors mid-stream are surfaced through SSE.
-[... 21 context line(s) omitted ...]
+[... 21 context line(s) omitted ... ⟦tj:49ba388ded92c7442e82c534cbcf22cd⟧]
    let trailingUsage = null;
    for (let i = 0; i < script.length; i += 1) {
      const entry = script[i] ?? {};
@@ -172,7 +172,7 @@ index ef3402b1a..ed8609646 100644
      if (delay > 0) await sleep(delay);
  
      if (entry.error) {
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:fce232698e09d5a0cd5a4a0e59cba129⟧]
            finishReason: entry.finish,
            usage: trailingUsage ?? undefined,
          }),
@@ -184,7 +184,7 @@ index 869beb7e5..63fc6c7d4 100644
  import { html, json, setCors } from "../http.mjs";
  import { behavior, MOCK_JWT } from "../state.mjs";
  
-[... 37 context line(s) omitted ...]
+[... 37 context line(s) omitted ... ⟦tj:f2791ef380654170e6c6d1d71a7fa025⟧]
    const legacy = url.match(
      /^\/mock-(telegram|notion|google|gmail|slack|discord|twitter|github)-oauth\/?(\?.*)?$/i,
    );
@@ -194,7 +194,7 @@ index 869beb7e5..63fc6c7d4 100644
  
    if (method === "GET" && (newStyle || legacy || legacyGeneric)) {
      const provider = newStyle?.[1] || legacy?.[1] || "generic";
-[... 22 context line(s) omitted ...]
+[... 22 context line(s) omitted ... ⟦tj:4c18555be1a9dcf3c82652cfcd55d708⟧]
            integrationId,
          )}&provider=${encodeURIComponent(params.provider || provider)}`;
  
@@ -217,7 +217,7 @@ index 869beb7e5..63fc6c7d4 100644
    if (method === "GET" && callbackMatch) {
      const provider = callbackMatch[1];
      const params = parseQuery(url);
-[... 72 context line(s) omitted ...]
+[... 72 context line(s) omitted ... ⟦tj:3411f058d290b7632c69dcd2afdb0527⟧]
      const key = eq < 0 ? pair : pair.slice(0, eq);
      const raw = eq < 0 ? "" : pair.slice(eq + 1);
      try {
@@ -228,7 +228,7 @@ index 869beb7e5..63fc6c7d4 100644
      } catch {
        out[key] = raw;
      }
-[... 8 context line(s) omitted ...]
+[... 8 context line(s) omitted ... ⟦tj:ee4572d3f5f261ec0a022e914167cb1d⟧]
  }
  
  function escapeHtml(s) {
@@ -253,7 +253,7 @@ index 869beb7e5..63fc6c7d4 100644
  }
  
  function renderOAuthPage({ provider, target, autoRedirectMs, errorCode }) {
-[... 9 context line(s) omitted ...]
+[... 9 context line(s) omitted ... ⟦tj:86c208d4da0506bd9b153e9d0b1d844f⟧]
    const autoRedirectScript =
      autoRedirectMs === null
        ? ""
@@ -281,7 +281,7 @@ index 869beb7e5..63fc6c7d4 100644
  
    return `<!doctype html>
  <html lang="en">
-[... 9 context line(s) omitted ...]
+[... 9 context line(s) omitted ... ⟦tj:591c904a1fdf231c54296470c37a2f22⟧]
      code { background: #f3f3f3; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
    </style>
  </head>
@@ -303,7 +303,7 @@ index 68d55ea99..aff66d35d 100644
    handleUser,
    handleInvites,
    handlePayments,
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:32ce9c1e3919251b684223461014493d⟧]
      return false;
    if (typeof rule.path === "string" && rule.path !== ctx.url) return false;
    if (typeof rule.pathRegex === "string") {
@@ -334,9 +334,11 @@ index 68d55ea99..aff66d35d 100644
  async function maybeApplyGlobalBehavior(ctx) {
    const mockBehavior = behavior();
    const baseDelay = Number(mockBehavior.globalDelayMs || 0);
-[... 74 context line(s) omitted ...]
+[... 74 context line(s) omitted ... ⟦tj:3a450cc0fd8cdb3c816733cc050429c5⟧]
      openSockets.add(socket);
      socket.on("close", () => openSockets.delete(socket));
    });
 
-[compacted tool output — this is a PARTIAL view; the full original (65898 bytes) is available by calling tokenjuice_retrieve with token "9ca597ed4cb282758cb90d47a1f0d739" (marker ⟦tj:9ca597ed4cb282758cb90d47a1f0d739⟧)]
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (65898 bytes) is available by calling tinyjuice_retrieve with token "9ca597ed4cb282758cb90d47a1f0d739" (marker ⟦tj:9ca597ed4cb282758cb90d47a1f0d739⟧)]
