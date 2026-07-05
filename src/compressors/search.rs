@@ -15,17 +15,22 @@
 //! lossless by the CCR offload — and is enabled by default per project decision.
 
 use async_trait::async_trait;
+use std::borrow::Cow;
 use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::line_score;
 use crate::detect::parse_search_line;
+use crate::relevance::tokenize;
+use crate::types::LineRange;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 /// Only compress result sets with more than this many matching lines.
 pub const MIN_MATCHES: usize = 40;
 /// Matches kept per file before the "+N more" tally.
 pub const TOP_K_PER_FILE: usize = 5;
+/// Default line context on each side for ranked search-read snippets.
+pub const DEFAULT_SNIPPET_CONTEXT: usize = 2;
 
 pub struct SearchCompressor;
 
@@ -167,6 +172,235 @@ fn score_match(body: &str, query_terms: &[String]) -> f32 {
     importance.max(density)
 }
 
+/// Host-provided search-read query metadata. TinyJuice only scores already
+/// discovered matches; filesystem traversal stays in the host.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SearchReadQuery {
+    pub literal: Option<String>,
+    pub regex: Option<String>,
+    pub symbols: Vec<String>,
+    pub file_kinds: Vec<String>,
+}
+
+/// One candidate file already discovered by a host search adapter.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchReadCandidate<'a> {
+    pub path: Cow<'a, str>,
+    pub matched_lines: Vec<SearchReadLine<'a>>,
+    pub imports: Vec<Cow<'a, str>>,
+    pub exports: Vec<Cow<'a, str>>,
+    pub generated: bool,
+    pub vendor: bool,
+    pub max_line: usize,
+}
+
+impl<'a> SearchReadCandidate<'a> {
+    pub fn new(path: impl Into<Cow<'a, str>>) -> Self {
+        Self {
+            path: path.into(),
+            matched_lines: Vec::new(),
+            imports: Vec::new(),
+            exports: Vec::new(),
+            generated: false,
+            vendor: false,
+            max_line: 0,
+        }
+    }
+}
+
+/// One host-provided match line.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchReadLine<'a> {
+    pub line_number: usize,
+    pub text: Cow<'a, str>,
+}
+
+impl<'a> SearchReadLine<'a> {
+    pub fn new(line_number: usize, text: impl Into<Cow<'a, str>>) -> Self {
+        Self {
+            line_number,
+            text: text.into(),
+        }
+    }
+}
+
+/// Bounded snippet-window selection for a candidate file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SnippetWindowSelection {
+    pub windows: Vec<LineRange>,
+    pub omitted_matches: usize,
+}
+
+/// Score a candidate file for a ranked search-read adapter. Exact symbol
+/// matches dominate path matches, which dominate match density.
+pub fn rank_search_read_candidate(
+    candidate: &SearchReadCandidate<'_>,
+    query: &SearchReadQuery,
+) -> f32 {
+    let exact_symbol_match = query
+        .symbols
+        .iter()
+        .filter(|symbol| !symbol.trim().is_empty())
+        .any(|symbol| candidate_has_exact_symbol(candidate, symbol));
+    let path_match = query_terms(query)
+        .iter()
+        .any(|term| candidate.path.to_ascii_lowercase().contains(term));
+    let regex_density = regex_match_density(candidate, query);
+    let import_export_match = query
+        .symbols
+        .iter()
+        .any(|symbol| import_export_contains(candidate, symbol));
+
+    let generated_penalty = if candidate.generated || looks_generated_path(&candidate.path) {
+        4.0
+    } else {
+        0.0
+    };
+    let vendor_penalty = if candidate.vendor || looks_vendor_path(&candidate.path) {
+        3.0
+    } else {
+        0.0
+    };
+
+    (if exact_symbol_match { 8.0 } else { 0.0 })
+        + (if path_match { 4.0 } else { 0.0 })
+        + regex_density * 3.0
+        + (if import_export_match { 2.0 } else { 0.0 })
+        - generated_penalty
+        - vendor_penalty
+}
+
+/// Select and merge snippet windows around match lines. The output is bounded
+/// by `max_snippets`, with omitted match count made explicit.
+pub fn select_snippet_windows(
+    match_lines: &[usize],
+    context: usize,
+    max_line: usize,
+    max_snippets: usize,
+) -> SnippetWindowSelection {
+    if max_snippets == 0 || match_lines.is_empty() || max_line == 0 {
+        return SnippetWindowSelection {
+            windows: Vec::new(),
+            omitted_matches: match_lines.len(),
+        };
+    }
+
+    let mut lines: Vec<usize> = match_lines
+        .iter()
+        .copied()
+        .filter(|line| *line > 0)
+        .collect();
+    lines.sort_unstable();
+    lines.dedup();
+
+    let mut merged: Vec<LineRange> = Vec::new();
+    for line in lines {
+        let range = LineRange::new(
+            line.saturating_sub(context).max(1),
+            (line + context).min(max_line),
+        );
+        if let Some(last) = merged.last_mut()
+            && range.start <= last.end.saturating_add(1)
+        {
+            last.end = last.end.max(range.end);
+            continue;
+        }
+        merged.push(range);
+    }
+
+    let omitted_matches = if merged.len() > max_snippets {
+        let kept_end = merged[max_snippets - 1].end;
+        match_lines.iter().filter(|line| **line > kept_end).count()
+    } else {
+        0
+    };
+    merged.truncate(max_snippets);
+
+    SnippetWindowSelection {
+        windows: merged,
+        omitted_matches,
+    }
+}
+
+fn candidate_has_exact_symbol(candidate: &SearchReadCandidate<'_>, symbol: &str) -> bool {
+    candidate
+        .matched_lines
+        .iter()
+        .any(|line| contains_exact_token(&line.text, symbol))
+        || candidate
+            .exports
+            .iter()
+            .any(|export| export.as_ref() == symbol)
+}
+
+fn import_export_contains(candidate: &SearchReadCandidate<'_>, symbol: &str) -> bool {
+    candidate
+        .imports
+        .iter()
+        .chain(candidate.exports.iter())
+        .any(|entry| entry.contains(symbol))
+}
+
+fn regex_match_density(candidate: &SearchReadCandidate<'_>, query: &SearchReadQuery) -> f32 {
+    if candidate.matched_lines.is_empty() {
+        return 0.0;
+    }
+    let terms = query_terms(query);
+    if terms.is_empty() && query.regex.is_none() {
+        return 0.0;
+    }
+    let hit_count = candidate
+        .matched_lines
+        .iter()
+        .filter(|line| {
+            let lower = line.text.to_ascii_lowercase();
+            terms.iter().any(|term| lower.contains(term))
+                || query
+                    .regex
+                    .as_ref()
+                    .is_some_and(|regex| lower.contains(&regex.to_ascii_lowercase()))
+        })
+        .count();
+    hit_count as f32 / candidate.matched_lines.len() as f32
+}
+
+fn query_terms(query: &SearchReadQuery) -> Vec<String> {
+    query
+        .literal
+        .iter()
+        .chain(query.symbols.iter())
+        .flat_map(|value| tokenize(value))
+        .collect()
+}
+
+fn contains_exact_token(text: &str, needle: &str) -> bool {
+    tokenize(text)
+        .iter()
+        .any(|token| token == &needle.to_ascii_lowercase())
+}
+
+fn looks_vendor_path(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    lower.contains("/node_modules/")
+        || lower.contains("/vendor/")
+        || lower.contains("/third_party/")
+        || lower.starts_with("vendor/")
+        || lower.starts_with("third_party/")
+}
+
+fn looks_generated_path(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    lower.contains("/target/")
+        || lower.contains("/dist/")
+        || lower.contains("/build/")
+        || lower.ends_with(".min.js")
+        || lower.ends_with(".min.css")
+        || lower.ends_with(".map")
+        || lower.ends_with("package-lock.json")
+        || lower.ends_with("cargo.lock")
+        || lower.ends_with("go.sum")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -215,5 +449,82 @@ mod tests {
     fn small_result_set_passes_through() {
         let s = "a.rs:1:hit\nb.rs:2:hit\n";
         assert!(compress(s, None).is_none());
+    }
+
+    #[test]
+    fn ranked_search_exact_symbol_beats_path_and_density() {
+        let query = SearchReadQuery {
+            literal: Some("payment".to_string()),
+            symbols: vec!["settle_invoice".to_string()],
+            ..Default::default()
+        };
+        let symbol = SearchReadCandidate {
+            path: "src/billing/worker.rs".into(),
+            matched_lines: vec![SearchReadLine::new(42, "fn settle_invoice() -> Result<()>")],
+            max_line: 100,
+            ..SearchReadCandidate::new("src/billing/worker.rs")
+        };
+        let path_only = SearchReadCandidate {
+            path: "src/payment/readme.md".into(),
+            matched_lines: vec![SearchReadLine::new(1, "general overview")],
+            max_line: 10,
+            ..SearchReadCandidate::new("src/payment/readme.md")
+        };
+        let density = SearchReadCandidate {
+            path: "src/other.rs".into(),
+            matched_lines: vec![
+                SearchReadLine::new(10, "payment retry"),
+                SearchReadLine::new(11, "payment queue"),
+            ],
+            max_line: 20,
+            ..SearchReadCandidate::new("src/other.rs")
+        };
+
+        let symbol_score = rank_search_read_candidate(&symbol, &query);
+        let path_score = rank_search_read_candidate(&path_only, &query);
+        let density_score = rank_search_read_candidate(&density, &query);
+
+        assert!(symbol_score > path_score, "{symbol_score} <= {path_score}");
+        assert!(
+            path_score > density_score,
+            "{path_score} <= {density_score}"
+        );
+    }
+
+    #[test]
+    fn ranked_search_deprioritizes_vendor_and_generated_paths() {
+        let query = SearchReadQuery {
+            symbols: vec!["hydrateRoot".to_string()],
+            ..Default::default()
+        };
+        let first_party = SearchReadCandidate {
+            path: "src/app/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            ..SearchReadCandidate::new("src/app/root.tsx")
+        };
+        let vendor = SearchReadCandidate {
+            path: "node_modules/pkg/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            vendor: true,
+            ..SearchReadCandidate::new("node_modules/pkg/root.tsx")
+        };
+
+        assert!(
+            rank_search_read_candidate(&first_party, &query)
+                > rank_search_read_candidate(&vendor, &query)
+        );
+    }
+
+    #[test]
+    fn snippet_windows_merge_and_report_omitted_matches() {
+        let selected = select_snippet_windows(&[10, 11, 20, 50], 2, 100, 2);
+
+        assert_eq!(
+            selected.windows,
+            vec![LineRange::new(8, 13), LineRange::new(18, 22)]
+        );
+        assert_eq!(selected.omitted_matches, 1);
     }
 }
