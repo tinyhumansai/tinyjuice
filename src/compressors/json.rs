@@ -50,6 +50,12 @@ pub const NEAR_DUPLICATE_SIMHASH_DISTANCE: u32 = 3;
 pub const MAX_SPREAD_ANCHORS: usize = 8;
 /// Maximum extra spread anchors when semantic bigrams do not saturate early.
 pub const MAX_ADAPTIVE_SPREAD_ANCHOR_BOOST: usize = 4;
+/// Minimum distinct semantic bigrams before saturation changes anchor counts.
+pub const MIN_SATURATION_BIGRAMS: usize = 16;
+/// Share of distinct semantic bigrams that defines the saturation knee.
+pub const SATURATION_KNEE_PERCENT: usize = 70;
+/// Position threshold for treating the saturation knee as early.
+pub const EARLY_SATURATION_POSITION_PERCENT: usize = 50;
 /// Maximum information-dense middle rows to anchor.
 pub const MAX_INFORMATION_DENSE_ANCHORS: usize = 8;
 /// Extra positional rows to keep when query wording asks for a side of the list.
@@ -432,18 +438,47 @@ fn adaptive_spread_anchor_count(rows: &[FlatRow], start: usize, end: usize) -> u
     }
 
     let total = cumulative_semantic_bigrams(rows, start, end);
-    if total < 16 {
+    if total < MIN_SATURATION_BIGRAMS {
         return base;
     }
-
-    let midpoint = start + middle_len / 2;
-    let midpoint_total = cumulative_semantic_bigrams(rows, start, midpoint);
-    if midpoint_total * 100 >= total * 70 {
+    if semantic_bigrams_saturate_early(rows, start, end, total) {
         return base;
     }
 
     let boost = base.clamp(1, MAX_ADAPTIVE_SPREAD_ANCHOR_BOOST);
     (base + boost).min(MAX_SPREAD_ANCHORS)
+}
+
+fn semantic_bigrams_saturate_early(
+    rows: &[FlatRow],
+    start: usize,
+    end: usize,
+    total: usize,
+) -> bool {
+    semantic_bigram_knee_percent(rows, start, end, total)
+        .is_some_and(|position| position <= EARLY_SATURATION_POSITION_PERCENT)
+}
+
+fn semantic_bigram_knee_percent(
+    rows: &[FlatRow],
+    start: usize,
+    end: usize,
+    total: usize,
+) -> Option<usize> {
+    let threshold = total * SATURATION_KNEE_PERCENT;
+    let middle_len = end - start;
+    let mut seen = BTreeSet::new();
+    for (offset, row) in rows[start..end].iter().enumerate() {
+        let tokens = semantic_tokens(&row_text(row));
+        for pair in tokens.windows(2) {
+            seen.insert((pair[0].clone(), pair[1].clone()));
+        }
+        if seen.len() * 100 >= threshold {
+            let consumed = offset + 1;
+            return Some((consumed * 100).div_ceil(middle_len));
+        }
+    }
+    None
 }
 
 fn cumulative_semantic_bigrams(rows: &[FlatRow], start: usize, end: usize) -> usize {
@@ -1144,6 +1179,27 @@ mod tests {
 
         assert!(c.lossy);
         assert!(c.text.contains(&expected), "{}", c.text);
+    }
+
+    #[test]
+    fn early_saturation_keeps_base_spread_anchors() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if i < 70 {
+                format!("topic {} marker alpha beta", alpha_word(i))
+            } else {
+                "topic repeated marker alpha beta".to_string()
+            };
+            rows.push(format!(
+                r#"{{"id":"job-{i}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("job-94"), "{}", c.text);
     }
 
     fn alpha_word(mut n: usize) -> String {
