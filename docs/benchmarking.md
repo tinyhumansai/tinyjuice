@@ -49,14 +49,23 @@ Every case can carry two inline accuracy layers:
 
 Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
 
-Benchmark tables use two compression passes:
+Benchmark tables report three views of each case:
 
-- **Pass 1: no CCR** disables CCR and reports only reductions that the router can safely accept without a recovery store. Lossy compressors therefore show `0.0%` unless they can produce an accepted non-CCR result.
-- **Pass 2: with CCR** uses the normal model-facing output, including the CCR recovery footer when the compressor drops data.
+- **Algorithm** runs the compressor directly with no CCR gating or recovery
+  footer — the number that measures the compression algorithm itself.
+- **Pass 1: no CCR** disables CCR (`ccr_enabled = false`). With the default
+  `lossy_without_ccr = true` the router still accepts lossy results — dropped
+  content carries omission markers but no recovery footer — so this tracks the
+  algorithm column. Under the strict setting (`lossy_without_ccr = false`,
+  as used by the `light` profile) lossy compressors decline and this column
+  drops to `0.0%`.
+- **Pass 2: with CCR** uses the normal model-facing output, including the CCR
+  recovery footer when the compressor drops data.
 
-Use Pass 1 to judge whether a compression algorithm is intrinsically useful
-without recoverability. Use Pass 2 to judge final context savings when TinyJuice
-is allowed to make lossy output recoverable.
+Use Algorithm/Pass 1 to judge intrinsic compression quality, and Pass 2 to
+judge final context savings once recovery footers are paid for. Category
+summaries include byte-weighted totals (total output vs total input) alongside
+per-case means, so one large fixture cannot hide behind several small ones.
 
 Current categories cover:
 

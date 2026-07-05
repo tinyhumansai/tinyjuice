@@ -20,9 +20,11 @@ duplicated JSON keys, huge Docker logs, repetitive grep hits, lockfile diffs,
 and markup nobody needs to reason about. TinyJuice cuts that noise before it
 hits the model.
 
-The important part: compacted output stays recoverable. When TinyJuice shows a
-partial view, it stores the exact original behind a retrieval token instead of
-silently throwing data away.
+The important part: nothing disappears silently. Every partial view marks what
+was dropped, and with CCR enabled (the default) the exact original is stored
+behind a retrieval token so it can be pulled back on demand. Hosts that want
+the strict lossless-or-recoverable guarantee (e.g. coding agents on the
+`light` profile) can require a recovery token for any lossy output.
 
 ## Quick Setup
 
@@ -76,20 +78,29 @@ attribution for agent-created commits.
 
 ## Benchmark Snapshot
 
-The checked-in benchmark corpus uses 10 real snapshots per category. `Pass 1`
-disables CCR and reports only reductions that are safe without recovery. `Pass
-2` is the final model-facing result with CCR enabled.
+The checked-in benchmark corpus uses 10 real snapshots per category (6.4 MB of
+real tool output in total). `Algorithm` is the compressor-only token
+reduction. **Weighted** columns are byte-weighted (total output vs total
+input), so one large stubborn fixture can't hide behind nine small easy ones;
+the **mean** column is the per-case average. `Applied` counts cases where
+compression actually fired — the rest pass through untouched (too small,
+or a shape the compressor declines).
 
-| Category | Cases | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
-| --- | ---: | ---: | ---: | ---: |
-| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 0.0% | 86.3% | 0.144 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 0.0% | 75.3% | 0.167 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 0.0% | 70.0% | 0.150 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 0.0% | 51.9% | 0.710 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 0.0% | 48.0% | 0.311 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 0.0% | 19.4% | 0.363 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 0.0% | 14.1% | 0.034 ms |
-| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0.0% | 0.0% | 0.000 ms |
+| Category | Cases | Applied | Algorithm (weighted) | Algorithm (mean) | Avg latency |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 8 | 65.1% | 53.7% | 0.702 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 64.4% | 70.4% | 0.182 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 3 | 63.9% | 20.1% | 0.535 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 47.1% | 77.5% | 0.184 ms |
+| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 10 | 42.0% | 86.9% | 0.193 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 2 | 33.2% | 15.3% | 0.041 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 13.8% | 48.3% | 0.401 ms |
+| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
+
+Across the whole corpus that is a **39% byte-weighted reduction** (6.4 MB →
+3.9 MB), with CCR recovery footers costing well under 1%. Every case passes
+its accuracy gates: signal checks (errors, changed lines, matches survive),
+task checks, and a byte-exact CCR recovery compare.
 
 These are local real-snapshot corpus measurements, not production-wide claims.
 See [docs/benchmark](docs/benchmark) and
