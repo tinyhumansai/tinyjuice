@@ -6,18 +6,20 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 ## Cases
 
-| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | 890.8 KB | 74.1% | 74.1% | 74.0% | 3.673 ms | true |
-| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | 106.7 KB | 65.9% | 65.9% | 65.7% | 0.494 ms | true |
-| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | 110.9 KB | 60.7% | 60.7% | 60.5% | 0.790 ms | true |
-| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | 62.0 KB | 0.0% | 0.0% | 0.0% | 0.201 ms | n/a |
-| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | 9.4 KB | 0.0% | 0.0% | 0.0% | 0.028 ms | n/a |
-| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | 16.8 KB | 0.0% | 0.0% | 0.0% | 0.041 ms | n/a |
-| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | 48.6 KB | 0.0% | 0.0% | 0.0% | 0.118 ms | n/a |
-| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | 2.4 KB | 0.0% | 0.0% | 0.0% | 0.007 ms | n/a |
-| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | 201 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | 313 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+
+| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | [diff](cases/02-notion-tools-array/compression.diff) | 890.8 KB | 74.1% | 74.1% | 74.0% | 3.673 ms | true |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | [diff](cases/03-slack-tools-array/compression.diff) | 106.7 KB | 65.9% | 65.9% | 65.7% | 0.494 ms | true |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | [diff](cases/01-github-tools-array/compression.diff) | 110.9 KB | 60.7% | 60.7% | 60.5% | 0.790 ms | true |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | [diff](cases/10-cargo-metadata/compression.diff) | 62.0 KB | 0.0% | 0.0% | 0.0% | 0.201 ms | n/a |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | [diff](cases/09-package-manifest/compression.diff) | 9.4 KB | 0.0% | 0.0% | 0.0% | 0.028 ms | n/a |
+| `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | [diff](cases/08-lottie-animation/compression.diff) | 16.8 KB | 0.0% | 0.0% | 0.0% | 0.041 ms | n/a |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | [diff](cases/07-app-schema-object/compression.diff) | 48.6 KB | 0.0% | 0.0% | 0.0% | 0.118 ms | n/a |
+| `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | [diff](cases/06-tauri-capabilities-schema/compression.diff) | 2.4 KB | 0.0% | 0.0% | 0.0% | 0.007 ms | n/a |
+| `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | [diff](cases/05-polymarket-events-list/compression.diff) | 201 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `04-polymarket-markets-list` | [input](cases/04-polymarket-markets-list/input.json) | [output](cases/04-polymarket-markets-list/output.md) | [diff](cases/04-polymarket-markets-list/compression.diff) | 313 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 
@@ -29,6 +31,7 @@ TinyJuice parses JSON before choosing a representation. Homogeneous object array
 
 - [Full input](cases/02-notion-tools-array/input.json)
 - [Full output](cases/02-notion-tools-array/output.md)
+- [Input vs output diff](cases/02-notion-tools-array/compression.diff)
 
 Input excerpt:
 
@@ -118,6 +121,7 @@ Output excerpt:
 
 - [Full input](cases/03-slack-tools-array/input.json)
 - [Full output](cases/03-slack-tools-array/output.md)
+- [Input vs output diff](cases/03-slack-tools-array/compression.diff)
 
 Input excerpt:
 
@@ -207,6 +211,7 @@ Output excerpt:
 
 - [Full input](cases/01-github-tools-array/input.json)
 - [Full output](cases/01-github-tools-array/output.md)
+- [Input vs output diff](cases/01-github-tools-array/compression.diff)
 
 Input excerpt:
 
@@ -296,6 +301,7 @@ Output excerpt:
 
 - [Full input](cases/10-cargo-metadata/input.json)
 - [Full output](cases/10-cargo-metadata/output.md)
+- [Input vs output diff](cases/10-cargo-metadata/compression.diff)
 
 Input excerpt:
 
@@ -315,6 +321,7 @@ Output excerpt:
 
 - [Full input](cases/09-package-manifest/input.json)
 - [Full output](cases/09-package-manifest/output.md)
+- [Input vs output diff](cases/09-package-manifest/compression.diff)
 
 Input excerpt:
 
@@ -404,6 +411,7 @@ Output excerpt:
 
 - [Full input](cases/08-lottie-animation/input.json)
 - [Full output](cases/08-lottie-animation/output.md)
+- [Input vs output diff](cases/08-lottie-animation/compression.diff)
 
 Input excerpt:
 
@@ -493,6 +501,7 @@ Output excerpt:
 
 - [Full input](cases/07-app-schema-object/input.json)
 - [Full output](cases/07-app-schema-object/output.md)
+- [Input vs output diff](cases/07-app-schema-object/compression.diff)
 
 Input excerpt:
 
@@ -582,6 +591,7 @@ Output excerpt:
 
 - [Full input](cases/06-tauri-capabilities-schema/input.json)
 - [Full output](cases/06-tauri-capabilities-schema/output.md)
+- [Input vs output diff](cases/06-tauri-capabilities-schema/compression.diff)
 
 Input excerpt:
 
@@ -671,6 +681,7 @@ Output excerpt:
 
 - [Full input](cases/05-polymarket-events-list/input.json)
 - [Full output](cases/05-polymarket-events-list/output.md)
+- [Input vs output diff](cases/05-polymarket-events-list/compression.diff)
 
 Input excerpt:
 
@@ -712,6 +723,7 @@ Output excerpt:
 
 - [Full input](cases/04-polymarket-markets-list/input.json)
 - [Full output](cases/04-polymarket-markets-list/output.md)
+- [Input vs output diff](cases/04-polymarket-markets-list/compression.diff)
 
 Input excerpt:
 

@@ -1,0 +1,110 @@
+--- input/input.rs
++++ output/output.rs
+@@ -12,16 +12,7 @@
+ }
+ 
+ /// Best-effort decode of a JWT payload without verifying the signature.
+-pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> {
+-    // JWT = header.payload.signature (base64url, no padding). Only the payload
+-    // segment is needed.
+-    let payload_b64 = token.trim().split('.').nth(1)?;
+-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+-        .decode(payload_b64)
+-        .or_else(|_| base64::engine::general_purpose::URL_SAFE.decode(payload_b64))
+-        .ok()?;
+-    serde_json::from_slice(&bytes).ok()
+-}
++pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … }
+ 
+ /// Best-effort decode of a JWT's `exp` (expiry) claim into a UTC timestamp.
+ ///
+@@ -37,79 +28,28 @@
+ /// still 401s, caught by the `flatten_authed_error` net). Returns `None` for any
+ /// non-JWT / malformed / `exp`-less token, in which case expiry tracking
+ /// degrades to the previous behaviour (no local precheck).
+-pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> {
+-    let claims = decode_jwt_payload(token)?;
+-    // `exp` is a NumericDate (seconds since epoch); accept int or float shapes.
+-    let exp = claims
+-        .get("exp")
+-        .and_then(|v| v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)))?;
+-    DateTime::<Utc>::from_timestamp(exp, 0)
+-}
++pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … }
+ 
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+ 
+     #[test]
+-    fn test_bearer_authorization_value() {
+-        // Standard token
+-        assert_eq!(bearer_authorization_value("my_token"), "Bearer my_token");
++    fn test_bearer_authorization_value() { … 22 line(s) … }
+ 
+-        // Token with leading/trailing spaces
+-        assert_eq!(
+-            bearer_authorization_value("  spaced_token  "),
+-            "Bearer spaced_token"
+-        );
++    fn jwt_with_payload(payload_json: &str) -> String { … 5 line(s) … }
+ 
+-        // Empty string
+-        assert_eq!(bearer_authorization_value(""), "Bearer ");
+-
+-        // Whitespace only string
+-        assert_eq!(bearer_authorization_value("   "), "Bearer ");
+-
+-        // Token with internal spaces (should not be trimmed)
+-        assert_eq!(
+-            bearer_authorization_value("token with spaces"),
+-            "Bearer token with spaces"
+-        );
+-    }
+-
+-    fn jwt_with_payload(payload_json: &str) -> String {
+-        let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload_json);
+-        // header + signature are irrelevant to `decode_jwt_exp` (no verification).
+-        format!("eyJhbGciOiJIUzI1NiJ9.{payload}.sig")
+-    }
+-
+     #[test]
+-    fn decode_jwt_exp_reads_integer_exp() {
+-        let token = jwt_with_payload(r#"{"sub":"u1","exp":1700000000}"#);
+-        assert_eq!(
+-            decode_jwt_exp(&token),
+-            DateTime::<Utc>::from_timestamp(1_700_000_000, 0)
+-        );
+-    }
++    fn decode_jwt_exp_reads_integer_exp() { … 7 line(s) … }
+ 
+     #[test]
+-    fn decode_jwt_exp_reads_float_exp() {
+-        let token = jwt_with_payload(r#"{"exp":1700000000.0}"#);
+-        assert_eq!(
+-            decode_jwt_exp(&token),
+-            DateTime::<Utc>::from_timestamp(1_700_000_000, 0)
+-        );
+-    }
++    fn decode_jwt_exp_reads_float_exp() { … 7 line(s) … }
+ 
+     #[test]
+-    fn decode_jwt_exp_none_when_exp_absent() {
+-        let token = jwt_with_payload(r#"{"sub":"u1"}"#);
+-        assert_eq!(decode_jwt_exp(&token), None);
+-    }
++    fn decode_jwt_exp_none_when_exp_absent() { … 4 line(s) … }
+ 
+     #[test]
+-    fn decode_jwt_exp_none_for_non_jwt_or_garbage() {
+-        assert_eq!(decode_jwt_exp("not-a-jwt"), None);
+-        assert_eq!(decode_jwt_exp(""), None);
+-        assert_eq!(decode_jwt_exp("a.b"), None); // payload "b" isn't valid base64 JSON
+-                                                 // local offline session sentinel (not a JWT) must not panic / must be None
+-        assert_eq!(decode_jwt_exp("local-session-xyz"), None);
+-    }
++    fn decode_jwt_exp_none_for_non_jwt_or_garbage() { … 7 line(s) … }
+ }
++
++[compacted tool output — this is a PARTIAL view; the full original (4490 bytes) is available by calling tokenjuice_retrieve with token "72a9fa15745dfefa792a0adf04d13794" (marker ⟦tj:72a9fa15745dfefa792a0adf04d13794⟧)]
+\ No newline at end of file

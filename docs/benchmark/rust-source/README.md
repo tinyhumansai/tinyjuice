@@ -6,18 +6,20 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 ## Cases
 
-| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | 26.4 KB | 82.6% | 82.6% | 81.8% | 1.151 ms | true |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | 34.7 KB | 76.8% | 76.8% | 76.2% | 1.239 ms | true |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | 17.4 KB | 73.0% | 73.0% | 71.7% | 0.719 ms | true |
-| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | 8.4 KB | 67.5% | 67.5% | 64.9% | 0.334 ms | true |
-| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | 48.1 KB | 64.3% | 64.3% | 63.9% | 1.746 ms | true |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | 3.4 KB | 63.3% | 63.3% | 56.8% | 0.141 ms | true |
-| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | 53.9 KB | 56.3% | 56.3% | 55.8% | 1.530 ms | true |
-| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | 4.5 KB | 52.7% | 52.7% | 47.8% | 0.163 ms | true |
-| `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | 2.0 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+
+| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB | 82.6% | 82.6% | 81.8% | 1.151 ms | true |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB | 76.8% | 76.8% | 76.2% | 1.239 ms | true |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB | 73.0% | 73.0% | 71.7% | 0.719 ms | true |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB | 67.5% | 67.5% | 64.9% | 0.334 ms | true |
+| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB | 64.3% | 64.3% | 63.9% | 1.746 ms | true |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB | 63.3% | 63.3% | 56.8% | 0.141 ms | true |
+| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB | 56.3% | 56.3% | 55.8% | 1.530 ms | true |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB | 52.7% | 52.7% | 47.8% | 0.163 ms | true |
+| `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | [diff](cases/06-socket/compression.diff) | 2.0 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | [diff](cases/03-socket/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 
@@ -29,6 +31,7 @@ The code path keeps the navigation surface: imports, signatures, top-level items
 
 - [Full input](cases/05-rest-tests/input.rs)
 - [Full output](cases/05-rest-tests/output.rs)
+- [Input vs output diff](cases/05-rest-tests/compression.diff)
 
 Input excerpt:
 
@@ -118,6 +121,7 @@ fn extracts_id_from_root() { … 9 line(s) … }
 
 - [Full input](cases/08-harness-subagent-audit/input.rs)
 - [Full output](cases/08-harness-subagent-audit/output.rs)
+- [Input vs output diff](cases/08-harness-subagent-audit/compression.diff)
 
 Input excerpt:
 
@@ -207,6 +211,7 @@ struct Args {
 
 - [Full input](cases/07-gmail-backfill-3d/input.rs)
 - [Full output](cases/07-gmail-backfill-3d/output.rs)
+- [Input vs output diff](cases/07-gmail-backfill-3d/compression.diff)
 
 Input excerpt:
 
@@ -296,6 +301,7 @@ use openhuman_core::openhuman::composio::client::{
 
 - [Full input](cases/09-inference-probe/input.rs)
 - [Full output](cases/09-inference-probe/output.rs)
+- [Input vs output diff](cases/09-inference-probe/compression.diff)
 
 Input excerpt:
 
@@ -385,6 +391,7 @@ use openhuman_core::openhuman::inference::provider::traits::{ChatMessage, ChatRe
 
 - [Full input](cases/04-rest/input.rs)
 - [Full output](cases/04-rest/output.rs)
+- [Input vs output diff](cases/04-rest/compression.diff)
 
 Input excerpt:
 
@@ -474,6 +481,7 @@ pub enum BackendApiError {
 
 - [Full input](cases/10-memory-tree-init-smoke/input.rs)
 - [Full output](cases/10-memory-tree-init-smoke/output.rs)
+- [Input vs output diff](cases/10-memory-tree-init-smoke/compression.diff)
 
 Input excerpt:
 
@@ -563,6 +571,7 @@ fn main() -> ExitCode { … 76 line(s) … }
 
 - [Full input](cases/01-config/input.rs)
 - [Full output](cases/01-config/output.rs)
+- [Input vs output diff](cases/01-config/compression.diff)
 
 Input excerpt:
 
@@ -652,6 +661,7 @@ Output excerpt:
 
 - [Full input](cases/02-jwt/input.rs)
 - [Full output](cases/02-jwt/output.rs)
+- [Input vs output diff](cases/02-jwt/compression.diff)
 
 Input excerpt:
 
@@ -741,6 +751,7 @@ mod tests {
 
 - [Full input](cases/06-socket/input.rs)
 - [Full output](cases/06-socket/output.rs)
+- [Input vs output diff](cases/06-socket/compression.diff)
 
 Input excerpt:
 
@@ -830,6 +841,7 @@ mod tests {
 
 - [Full input](cases/03-socket/input.rs)
 - [Full output](cases/03-socket/output.rs)
+- [Input vs output diff](cases/03-socket/compression.diff)
 
 Input excerpt:
 

@@ -178,8 +178,9 @@ for category in "${categories[@]}"; do
       printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
     fi
     printf '## Cases\n\n'
-    printf '| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |\n'
-    printf '| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n'
+    printf 'Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.\n\n'
+    printf '| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |\n'
+    printf '| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n'
 
     jq -r --arg category "$category" '
       [.cases[] | select(.docDir | startswith($category + "/cases/"))]
@@ -201,12 +202,22 @@ for category in "${categories[@]}"; do
       rel_dir="${doc_dir#"$category/"}"
       input_name="$(input_file_name "$category" "$doc_dir")"
       output_name="$(output_file_name "$category")"
-      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | %s | %.1f%% | %.1f%% | %.1f%% | %.3f ms | %s |\n' \
+      input_file="$bench_root/$doc_dir/$input_name"
+      output_file="$bench_root/$doc_dir/$output_name"
+      # Render a unified diff between input and compacted output so the
+      # removed noise / kept signal is reviewable at a glance.
+      diff -u \
+        -L "input/$input_name" \
+        -L "output/$output_name" \
+        "$input_file" "$output_file" \
+        >"$bench_root/$doc_dir/compression.diff" || true
+      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | [diff](%s/compression.diff) | %s | %.1f%% | %.1f%% | %.1f%% | %.3f ms | %s |\n' \
         "$case_name" \
         "$rel_dir" \
         "$input_name" \
         "$rel_dir" \
         "$output_name" \
+        "$rel_dir" \
         "$(format_bytes "$original")" \
         "$algo" \
         "$pass1" \
@@ -259,7 +270,8 @@ for category in "${categories[@]}"; do
       output_file="$bench_root/$doc_dir/$output_name"
       printf '### `%s`\n\n' "$case_name"
       printf -- '- [Full input](%s/%s)\n' "$rel_dir" "$input_name"
-      printf -- '- [Full output](%s/%s)\n\n' "$rel_dir" "$output_name"
+      printf -- '- [Full output](%s/%s)\n' "$rel_dir" "$output_name"
+      printf -- '- [Input vs output diff](%s/compression.diff)\n\n' "$rel_dir"
       printf 'Input excerpt:\n\n'
       printf '```%s\n' "$(input_lang "$category" "$doc_dir")"
       snippet "$input_file"

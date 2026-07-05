@@ -6,18 +6,20 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 ## Cases
 
-| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | 5.6 KB | 79.5% | 79.5% | 75.4% | 0.266 ms | true |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | 2.8 KB | 73.6% | 73.6% | 65.4% | 0.148 ms | true |
-| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | [output](cases/06-vitest-unit-20260704-235240/output.log) | 971 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | 970 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | 967 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | 967 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | 969 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+
+| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB | 79.5% | 79.5% | 75.4% | 0.266 ms | true |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB | 73.6% | 73.6% | 65.4% | 0.148 ms | true |
+| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | [diff](cases/10-vitest-excerpt-10/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | [diff](cases/09-vitest-excerpt-9/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | [diff](cases/08-vitest-excerpt-8/compression.diff) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | [output](cases/06-vitest-unit-20260704-235240/output.log) | [diff](cases/06-vitest-unit-20260704-235240/compression.diff) | 971 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 970 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 967 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 967 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 969 B | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 
@@ -29,6 +31,7 @@ The command context routes these logs through the Vitest rule. Setup chatter and
 
 - [Full input](cases/07-vitest-excerpt-7/input.log)
 - [Full output](cases/07-vitest-excerpt-7/output.log)
+- [Input vs output diff](cases/07-vitest-excerpt-7/compression.diff)
 
 Input excerpt:
 
@@ -106,6 +109,7 @@ Error: expect(element).not.toBeInTheDocument()
 
 - [Full input](cases/01-vitest-unit-20260704-234941/input.log)
 - [Full output](cases/01-vitest-unit-20260704-234941/output.log)
+- [Input vs output diff](cases/01-vitest-unit-20260704-234941/compression.diff)
 
 Input excerpt:
 
@@ -174,6 +178,7 @@ Error: expect(element).not.toBeInTheDocument()
 
 - [Full input](cases/10-vitest-excerpt-10/input.log)
 - [Full output](cases/10-vitest-excerpt-10/output.log)
+- [Input vs output diff](cases/10-vitest-excerpt-10/compression.diff)
 
 Input excerpt:
 
@@ -263,6 +268,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/09-vitest-excerpt-9/input.log)
 - [Full output](cases/09-vitest-excerpt-9/output.log)
+- [Input vs output diff](cases/09-vitest-excerpt-9/compression.diff)
 
 Input excerpt:
 
@@ -352,6 +358,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/08-vitest-excerpt-8/input.log)
 - [Full output](cases/08-vitest-excerpt-8/output.log)
+- [Input vs output diff](cases/08-vitest-excerpt-8/compression.diff)
 
 Input excerpt:
 
@@ -441,6 +448,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/06-vitest-unit-20260704-235240/input.log)
 - [Full output](cases/06-vitest-unit-20260704-235240/output.log)
+- [Input vs output diff](cases/06-vitest-unit-20260704-235240/compression.diff)
 
 Input excerpt:
 
@@ -494,6 +502,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/05-vitest-unit-20260704-235231/input.log)
 - [Full output](cases/05-vitest-unit-20260704-235231/output.log)
+- [Input vs output diff](cases/05-vitest-unit-20260704-235231/compression.diff)
 
 Input excerpt:
 
@@ -547,6 +556,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/04-vitest-unit-20260704-235125/input.log)
 - [Full output](cases/04-vitest-unit-20260704-235125/output.log)
+- [Input vs output diff](cases/04-vitest-unit-20260704-235125/compression.diff)
 
 Input excerpt:
 
@@ -600,6 +610,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/03-vitest-unit-20260704-235052/input.log)
 - [Full output](cases/03-vitest-unit-20260704-235052/output.log)
+- [Input vs output diff](cases/03-vitest-unit-20260704-235052/compression.diff)
 
 Input excerpt:
 
@@ -653,6 +664,7 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 - [Full input](cases/02-vitest-unit-20260704-234958/input.log)
 - [Full output](cases/02-vitest-unit-20260704-234958/output.log)
+- [Input vs output diff](cases/02-vitest-unit-20260704-234958/compression.diff)
 
 Input excerpt:
 

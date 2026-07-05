@@ -6,18 +6,20 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 ## Cases
 
-| Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | [output](cases/01-openhuman-crash-slice-1/output.log) | 26.6 KB | 97.2% | 97.2% | 96.4% | 0.117 ms | true |
-| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | [output](cases/02-openhuman-crash-slice-2/output.log) | 29.7 KB | 97.1% | 97.1% | 96.4% | 0.120 ms | true |
-| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | [output](cases/04-openhuman-crash-slice-4/output.log) | 47.0 KB | 96.4% | 96.4% | 95.9% | 0.150 ms | true |
-| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | [output](cases/03-openhuman-crash-slice-3/output.log) | 45.9 KB | 96.3% | 96.3% | 95.8% | 0.156 ms | true |
-| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | [output](cases/05-openhuman-crash-slice-5/output.log) | 44.5 KB | 96.2% | 96.2% | 95.7% | 0.137 ms | true |
-| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | [output](cases/07-openhuman-crash-slice-7/output.log) | 40.9 KB | 95.9% | 95.9% | 95.3% | 0.126 ms | true |
-| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | [output](cases/08-openhuman-crash-slice-8/output.log) | 41.0 KB | 95.6% | 95.6% | 95.1% | 0.126 ms | true |
-| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | [output](cases/06-openhuman-crash-slice-6/output.log) | 41.0 KB | 95.4% | 95.4% | 94.9% | 0.127 ms | true |
-| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | [output](cases/09-openhuman-crash-slice-9/output.log) | 38.1 KB | 95.3% | 95.3% | 94.7% | 0.126 ms | true |
-| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | [output](cases/10-openhuman-crash-slice-10/output.log) | 493.4 KB | 3.1% | 3.1% | 3.0% | 0.741 ms | true |
+Every case links to the raw input, the exact model-facing output (with the CCR recovery footer), and a unified diff between the two.
+
+| Case | Input | Output (after CCR) | Diff | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | [output](cases/01-openhuman-crash-slice-1/output.log) | [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 26.6 KB | 97.2% | 97.2% | 96.4% | 0.117 ms | true |
+| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | [output](cases/02-openhuman-crash-slice-2/output.log) | [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 29.7 KB | 97.1% | 97.1% | 96.4% | 0.120 ms | true |
+| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | [output](cases/04-openhuman-crash-slice-4/output.log) | [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 47.0 KB | 96.4% | 96.4% | 95.9% | 0.150 ms | true |
+| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | [output](cases/03-openhuman-crash-slice-3/output.log) | [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 45.9 KB | 96.3% | 96.3% | 95.8% | 0.156 ms | true |
+| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | [output](cases/05-openhuman-crash-slice-5/output.log) | [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 44.5 KB | 96.2% | 96.2% | 95.7% | 0.137 ms | true |
+| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | [output](cases/07-openhuman-crash-slice-7/output.log) | [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 40.9 KB | 95.9% | 95.9% | 95.3% | 0.126 ms | true |
+| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | [output](cases/08-openhuman-crash-slice-8/output.log) | [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 41.0 KB | 95.6% | 95.6% | 95.1% | 0.126 ms | true |
+| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | [output](cases/06-openhuman-crash-slice-6/output.log) | [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 41.0 KB | 95.4% | 95.4% | 94.9% | 0.127 ms | true |
+| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | [output](cases/09-openhuman-crash-slice-9/output.log) | [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 38.1 KB | 95.3% | 95.3% | 94.7% | 0.126 ms | true |
+| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | [output](cases/10-openhuman-crash-slice-10/output.log) | [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 493.4 KB | 3.1% | 3.1% | 3.0% | 0.741 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -29,6 +31,7 @@ The log path scores lines by signal. Errors, warnings, exception metadata, stack
 
 - [Full input](cases/01-openhuman-crash-slice-1/input.log)
 - [Full output](cases/01-openhuman-crash-slice-1/output.log)
+- [Input vs output diff](cases/01-openhuman-crash-slice-1/compression.diff)
 
 Input excerpt:
 
@@ -95,6 +98,7 @@ Termination Reason:  Namespace SIGNAL, Code 10, Bus error: 10
 
 - [Full input](cases/02-openhuman-crash-slice-2/input.log)
 - [Full output](cases/02-openhuman-crash-slice-2/output.log)
+- [Input vs output diff](cases/02-openhuman-crash-slice-2/compression.diff)
 
 Input excerpt:
 
@@ -159,6 +163,7 @@ Output excerpt:
 
 - [Full input](cases/04-openhuman-crash-slice-4/input.log)
 - [Full output](cases/04-openhuman-crash-slice-4/output.log)
+- [Input vs output diff](cases/04-openhuman-crash-slice-4/compression.diff)
 
 Input excerpt:
 
@@ -231,6 +236,7 @@ Output excerpt:
 
 - [Full input](cases/03-openhuman-crash-slice-3/input.log)
 - [Full output](cases/03-openhuman-crash-slice-3/output.log)
+- [Input vs output diff](cases/03-openhuman-crash-slice-3/compression.diff)
 
 Input excerpt:
 
@@ -303,6 +309,7 @@ Output excerpt:
 
 - [Full input](cases/05-openhuman-crash-slice-5/input.log)
 - [Full output](cases/05-openhuman-crash-slice-5/output.log)
+- [Input vs output diff](cases/05-openhuman-crash-slice-5/compression.diff)
 
 Input excerpt:
 
@@ -375,6 +382,7 @@ Output excerpt:
 
 - [Full input](cases/07-openhuman-crash-slice-7/input.log)
 - [Full output](cases/07-openhuman-crash-slice-7/output.log)
+- [Input vs output diff](cases/07-openhuman-crash-slice-7/compression.diff)
 
 Input excerpt:
 
@@ -446,6 +454,7 @@ Output excerpt:
 
 - [Full input](cases/08-openhuman-crash-slice-8/input.log)
 - [Full output](cases/08-openhuman-crash-slice-8/output.log)
+- [Input vs output diff](cases/08-openhuman-crash-slice-8/compression.diff)
 
 Input excerpt:
 
@@ -518,6 +527,7 @@ Output excerpt:
 
 - [Full input](cases/06-openhuman-crash-slice-6/input.log)
 - [Full output](cases/06-openhuman-crash-slice-6/output.log)
+- [Input vs output diff](cases/06-openhuman-crash-slice-6/compression.diff)
 
 Input excerpt:
 
@@ -589,6 +599,7 @@ Output excerpt:
 
 - [Full input](cases/09-openhuman-crash-slice-9/input.log)
 - [Full output](cases/09-openhuman-crash-slice-9/output.log)
+- [Input vs output diff](cases/09-openhuman-crash-slice-9/compression.diff)
 
 Input excerpt:
 
@@ -661,6 +672,7 @@ Output excerpt:
 
 - [Full input](cases/10-openhuman-crash-slice-10/input.log)
 - [Full output](cases/10-openhuman-crash-slice-10/output.log)
+- [Input vs output diff](cases/10-openhuman-crash-slice-10/compression.diff)
 
 Input excerpt:
 
