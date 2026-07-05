@@ -14,12 +14,13 @@
 //! so the dropped rows stay recoverable.
 
 use async_trait::async_trait;
-use serde_json::Value;
-use std::collections::BTreeSet;
+use serde_json::{Map, Value};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::has_error_indicators;
+use crate::relevance::Bm25Corpus;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 /// Minimum rows before tabular rendering is worth the header overhead.
@@ -46,13 +47,51 @@ impl Compressor for JsonCompressor {
         input: &CompressInput<'_>,
         _opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content)
+        compress_with_query(input.content, input.hint.query.as_deref())
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct JsonAnalysis {
+    pub row_count: usize,
+    pub columns: Vec<String>,
+    pub fields: Vec<JsonFieldAnalysis>,
+    pub estimated_table_bytes: usize,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct JsonFieldAnalysis {
+    pub key: String,
+    pub present: usize,
+    pub types: BTreeSet<&'static str>,
+    pub unique_count: usize,
+    pub constant: bool,
+    pub sparse: bool,
+    pub numeric: Option<JsonNumericStats>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct JsonNumericStats {
+    pub min: f64,
+    pub max: f64,
+    pub mean: f64,
+    pub stddev: f64,
+}
+
+#[derive(Debug, Clone)]
+struct JsonPlan {
+    lossy: bool,
+    keep_rows: Vec<usize>,
 }
 
 /// Compress a JSON array-of-objects into a compact table. Returns `None` when
 /// the content isn't a uniform-enough array of objects or wouldn't shrink.
 pub fn compress(content: &str) -> Option<CompressOutput> {
+    compress_with_query(content, None)
+}
+
+/// Compress a JSON array-of-objects with optional query context for row anchors.
+pub fn compress_with_query(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     let value: Value = serde_json::from_str(content.trim()).ok()?;
     let array = value.as_array()?;
     if array.len() < MIN_ROWS {
@@ -62,28 +101,19 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         return None;
     }
 
-    // Column order = first-seen key order across all rows (union, stable).
-    let mut columns: Vec<String> = Vec::new();
-    for item in array {
-        if let Some(obj) = item.as_object() {
-            for key in obj.keys() {
-                if !columns.iter().any(|c| c == key) {
-                    columns.push(key.clone());
-                }
-            }
-        }
-    }
+    let flat_rows = flatten_rows(array)?;
+    let analysis = analyze_flat_rows(&flat_rows);
+    let columns = analysis.columns.clone();
     if columns.len() < 2 {
         return None;
     }
 
     // Render every row's cells up front so we can choose full vs. row-dropped.
-    let mut rows: Vec<String> = Vec::with_capacity(array.len());
-    for item in array {
-        let obj = item.as_object()?;
+    let mut rows: Vec<String> = Vec::with_capacity(flat_rows.len());
+    for obj in &flat_rows {
         let cells: Vec<String> = columns
             .iter()
-            .map(|col| match obj.get(col) {
+            .map(|col| match obj.values.get(col) {
                 None => String::new(),
                 Some(v) => render_cell(v),
             })
@@ -91,7 +121,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         rows.push(cells.join(" | "));
     }
 
-    let lossy = rows.len() > ROW_DROP_THRESHOLD;
+    let plan = plan_rows(&flat_rows, &analysis, query);
     let mut out = String::with_capacity(content.len());
     let _ = writeln!(
         out,
@@ -101,12 +131,11 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
     );
     let _ = writeln!(out, "{}", columns.join(" | "));
 
-    if lossy {
+    if plan.lossy {
         // Keep head + tail PLUS any anomalous rows (errors / numeric outliers)
         // so the signal in a large homogeneous array survives row-dropping.
-        let keep = rows_to_keep(array, &columns, rows.len());
         let mut prev: Option<usize> = None;
-        for &i in &keep {
+        for &i in &plan.keep_rows {
             if let Some(p) = prev {
                 let gap = i - p - 1;
                 if gap > 0 {
@@ -138,11 +167,11 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         "[tokenjuice][json] {} rows × {} cols, lossy={} ({} -> {} bytes)",
         rows.len(),
         columns.len(),
-        lossy,
+        plan.lossy,
         content.len(),
         out.len(),
     );
-    if lossy {
+    if plan.lossy {
         Some(CompressOutput::lossy(out, CompressorKind::SmartCrusher))
     } else {
         // All values preserved, but the array→table reformat changes layout.
@@ -153,62 +182,242 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
     }
 }
 
+/// Analyze a JSON array-of-objects without rendering it.
+pub fn analyze(content: &str) -> Option<JsonAnalysis> {
+    let value: Value = serde_json::from_str(content.trim()).ok()?;
+    let array = value.as_array()?;
+    if array.len() < MIN_ROWS || !array.iter().all(Value::is_object) {
+        return None;
+    }
+    let flat_rows = flatten_rows(array)?;
+    Some(analyze_flat_rows(&flat_rows))
+}
+
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
 /// any row flagged as anomalous (error text or a numeric outlier in any
 /// column). Returns ascending, de-duplicated indices.
-fn rows_to_keep(array: &[Value], columns: &[String], n: usize) -> Vec<usize> {
+fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
+    let n = rows.len();
+    let lossy = n > ROW_DROP_THRESHOLD;
+    if !lossy {
+        return JsonPlan {
+            lossy: false,
+            keep_rows: (0..n).collect(),
+        };
+    }
+
     let mut keep: BTreeSet<usize> = BTreeSet::new();
-    for i in 0..HEAD_ROWS.min(n) {
+    for i in 0..dynamic_head_rows(n) {
         keep.insert(i);
     }
-    for i in n.saturating_sub(TAIL_ROWS)..n {
+    for i in n.saturating_sub(dynamic_tail_rows(n))..n {
         keep.insert(i);
     }
 
     // Error-text rows: any string/scalar cell carrying an error indicator.
-    for (i, item) in array.iter().enumerate() {
-        if let Some(obj) = item.as_object() {
-            let row_has_error = obj.values().any(|v| match v {
-                Value::String(s) => has_error_indicators(s),
-                other => has_error_indicators(&other.to_string()),
-            });
-            if row_has_error {
-                keep.insert(i);
-            }
+    for (i, row) in rows.iter().enumerate() {
+        let row_has_error = row.values.values().any(|v| match v {
+            Value::String(s) => has_error_indicators(s),
+            other => has_error_indicators(&other.to_string()),
+        });
+        if row_has_error {
+            keep.insert(i);
         }
     }
 
     // Numeric outliers: for each column, compute mean/std over numeric cells and
     // keep rows whose value is beyond OUTLIER_SIGMA. Bounded by a cap so a wide
     // anomalous tail can't defeat the point of dropping.
-    for col in columns {
-        let nums: Vec<(usize, f64)> = array
-            .iter()
-            .enumerate()
-            .filter_map(|(i, item)| {
-                item.as_object()
-                    .and_then(|o| o.get(col))
-                    .and_then(Value::as_f64)
-                    .map(|x| (i, x))
-            })
-            .collect();
-        if nums.len() < 4 {
-            continue;
+    for field in &analysis.fields {
+        if let Some(stats) = field.numeric
+            && stats.stddev > f64::EPSILON
+        {
+            for (i, row) in rows.iter().enumerate() {
+                if let Some(x) = row.values.get(&field.key).and_then(Value::as_f64)
+                    && ((x - stats.mean) / stats.stddev).abs() >= OUTLIER_SIGMA
+                {
+                    keep.insert(i);
+                }
+            }
         }
-        let mean = nums.iter().map(|(_, x)| x).sum::<f64>() / nums.len() as f64;
-        let var = nums.iter().map(|(_, x)| (x - mean).powi(2)).sum::<f64>() / nums.len() as f64;
-        let std = var.sqrt();
-        if std <= f64::EPSILON {
-            continue;
-        }
-        for (i, x) in nums {
-            if ((x - mean) / std).abs() >= OUTLIER_SIGMA {
-                keep.insert(i);
+        if field.sparse {
+            for (i, row) in rows.iter().enumerate() {
+                if row.values.contains_key(&field.key) {
+                    keep.insert(i);
+                }
             }
         }
     }
 
-    keep.into_iter().collect()
+    if let Some(query) = query.filter(|q| !q.trim().is_empty()) {
+        let docs: Vec<String> = rows.iter().map(row_text).collect();
+        let corpus = Bm25Corpus::new(docs.iter().map(String::as_str));
+        let mut scored = corpus.score_all(query);
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.index.cmp(&b.index))
+        });
+        for score in scored
+            .into_iter()
+            .take(20)
+            .filter(|score| score.score > 0.0)
+        {
+            keep.insert(score.index);
+        }
+    }
+
+    JsonPlan {
+        lossy,
+        keep_rows: keep.into_iter().collect(),
+    }
+}
+
+#[derive(Debug, Clone)]
+struct FlatRow {
+    values: BTreeMap<String, Value>,
+}
+
+fn flatten_rows(array: &[Value]) -> Option<Vec<FlatRow>> {
+    array
+        .iter()
+        .map(|item| {
+            let obj = item.as_object()?;
+            Some(FlatRow {
+                values: flatten_object(obj),
+            })
+        })
+        .collect()
+}
+
+fn flatten_object(obj: &Map<String, Value>) -> BTreeMap<String, Value> {
+    let mut out = BTreeMap::new();
+    for (key, value) in obj {
+        flatten_value(key, value, &mut out);
+    }
+    out
+}
+
+fn flatten_value(prefix: &str, value: &Value, out: &mut BTreeMap<String, Value>) {
+    match value {
+        Value::Object(obj) if !obj.is_empty() => {
+            for (key, child) in obj {
+                flatten_value(&format!("{prefix}.{key}"), child, out);
+            }
+        }
+        _ => {
+            out.insert(prefix.to_string(), value.clone());
+        }
+    }
+}
+
+fn analyze_flat_rows(rows: &[FlatRow]) -> JsonAnalysis {
+    let mut present: HashMap<String, usize> = HashMap::new();
+    let mut types: HashMap<String, BTreeSet<&'static str>> = HashMap::new();
+    let mut uniques: HashMap<String, BTreeSet<String>> = HashMap::new();
+    let mut numeric_values: HashMap<String, Vec<f64>> = HashMap::new();
+
+    for row in rows {
+        for (key, value) in &row.values {
+            *present.entry(key.clone()).or_insert(0) += 1;
+            types
+                .entry(key.clone())
+                .or_default()
+                .insert(value_type(value));
+            uniques
+                .entry(key.clone())
+                .or_default()
+                .insert(render_cell(value));
+            if let Some(x) = value.as_f64() {
+                numeric_values.entry(key.clone()).or_default().push(x);
+            }
+        }
+    }
+
+    let mut fields: Vec<JsonFieldAnalysis> = present
+        .into_iter()
+        .map(|(key, present)| {
+            let unique_count = uniques.get(&key).map_or(0, BTreeSet::len);
+            JsonFieldAnalysis {
+                key: key.clone(),
+                present,
+                types: types.remove(&key).unwrap_or_default(),
+                unique_count,
+                constant: unique_count == 1 && present == rows.len(),
+                sparse: present <= sparse_threshold(rows.len()),
+                numeric: numeric_values.get(&key).map(|values| numeric_stats(values)),
+            }
+        })
+        .collect();
+
+    fields.sort_by(|a, b| b.present.cmp(&a.present).then_with(|| a.key.cmp(&b.key)));
+    let columns = fields
+        .iter()
+        .map(|field| field.key.clone())
+        .collect::<Vec<_>>();
+    let estimated_table_bytes = rows
+        .iter()
+        .map(|row| {
+            row.values
+                .values()
+                .map(render_cell)
+                .map(|s| s.len() + 3)
+                .sum::<usize>()
+        })
+        .sum::<usize>()
+        + columns.iter().map(String::len).sum::<usize>();
+
+    JsonAnalysis {
+        row_count: rows.len(),
+        columns,
+        fields,
+        estimated_table_bytes,
+    }
+}
+
+fn value_type(value: &Value) -> &'static str {
+    match value {
+        Value::Null => "null",
+        Value::Bool(_) => "bool",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
+    }
+}
+
+fn numeric_stats(values: &[f64]) -> JsonNumericStats {
+    let min = values.iter().copied().fold(f64::INFINITY, f64::min);
+    let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let mean = values.iter().sum::<f64>() / values.len() as f64;
+    let variance = values.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / values.len() as f64;
+    JsonNumericStats {
+        min,
+        max,
+        mean,
+        stddev: variance.sqrt(),
+    }
+}
+
+fn sparse_threshold(row_count: usize) -> usize {
+    3.max(row_count / 10)
+}
+
+fn dynamic_head_rows(row_count: usize) -> usize {
+    HEAD_ROWS.min((row_count / 4).max(5))
+}
+
+fn dynamic_tail_rows(row_count: usize) -> usize {
+    TAIL_ROWS.min((row_count / 8).max(3))
+}
+
+fn row_text(row: &FlatRow) -> String {
+    row.values
+        .iter()
+        .map(|(key, value)| format!("{key}={}", render_cell(value)))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// Render a single cell. Scalars print bare-ish; nested values stay as compact
@@ -256,6 +465,104 @@ mod tests {
         assert!(c.text.contains("record number 199"), "{}", c.text);
         assert!(c.text.contains("omitted"));
         assert!(c.text.len() < input.len());
+    }
+
+    #[test]
+    fn analyzer_reports_constants_sparse_fields_and_numeric_stats() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            let extra = if i == 13 {
+                r#","debug":"only here""#
+            } else {
+                ""
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","latency":{}{extra}}}"#,
+                10 + i
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let analysis = analyze(&input).expect("analysis");
+        let status = analysis
+            .fields
+            .iter()
+            .find(|field| field.key == "status")
+            .expect("status field");
+        let debug = analysis
+            .fields
+            .iter()
+            .find(|field| field.key == "debug")
+            .expect("debug field");
+        let latency = analysis
+            .fields
+            .iter()
+            .find(|field| field.key == "latency")
+            .expect("latency field");
+
+        assert!(status.constant);
+        assert!(debug.sparse);
+        assert_eq!(debug.present, 1);
+        assert_eq!(latency.numeric.expect("numeric").min, 10.0);
+    }
+
+    #[test]
+    fn query_anchor_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 71 {
+                "contains special needle token"
+            } else {
+                "ordinary row"
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress_with_query(&input, Some("special needle")).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("special needle token"), "{}", c.text);
+    }
+
+    #[test]
+    fn sparse_structural_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let extra = if i == 72 {
+                r#","diagnostic":"rare sparse field""#
+            } else {
+                ""
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active"{extra}}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("rare sparse field"), "{}", c.text);
+    }
+
+    #[test]
+    fn nested_objects_flatten_to_dotted_columns() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"user":{{"name":"user {i}","team":"core"}},"status":"active"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.text.contains("user.name"), "{}", c.text);
+        assert!(c.text.contains("user.team"), "{}", c.text);
+        assert!(c.text.contains("user 7"), "{}", c.text);
     }
 
     #[test]
