@@ -609,6 +609,7 @@ fn hook_options_from_env() -> SdkCompressOptions {
         max_inline_chars: read_usize_env("TINYJUICE_MAX_INLINE_CHARS"),
         ccr_min_tokens: read_usize_env("TINYJUICE_CCR_MIN_TOKENS"),
         ccr_enabled: read_bool_env("TINYJUICE_CCR_ENABLED"),
+        lossy_without_ccr: read_bool_env("TINYJUICE_LOSSY_WITHOUT_CCR"),
         ..Default::default()
     }
 }

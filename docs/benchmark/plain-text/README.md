@@ -2,7 +2,7 @@
 
 Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (compressed, omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled (recovery footer included).
 
 ## Cases
 
@@ -16,7 +16,7 @@ Each row links to the full raw input and the exact compacted output used by the 
 | `05-build-agent-md-` | [input](cases/05-build-agent-md-/input.md) | [output](cases/05-build-agent-md-/output.md) | 2.0 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `04-architectobot-md-` | [input](cases/04-architectobot-md-/input.md) | [output](cases/04-architectobot-md-/output.md) | 4.4 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `03-ship-and-babysit-md-` | [input](cases/03-ship-and-babysit-md-/input.md) | [output](cases/03-ship-and-babysit-md-/output.md) | 4.4 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
-| `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/input.md) | [output](cases/02-pr-manager-md-/output.md) | 13.6 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
+| `02-pr-manager-md-` | [input](cases/02-pr-manager-md-/input.md) | [output](cases/02-pr-manager-md-/output.md) | 13.6 KB | 0.0% | 0.0% | 0.0% | 0.003 ms | n/a |
 | `01-pr-manager-lite-md-` | [input](cases/01-pr-manager-lite-md-/input.md) | [output](cases/01-pr-manager-lite-md-/output.md) | 9.6 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing

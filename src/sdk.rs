@@ -108,6 +108,8 @@ pub struct SdkCompressOptions {
     #[serde(default)]
     pub ccr_min_tokens: Option<usize>,
     #[serde(default)]
+    pub lossy_without_ccr: Option<bool>,
+    #[serde(default)]
     pub max_inline_chars: Option<usize>,
 }
 
@@ -137,6 +139,9 @@ impl SdkCompressOptions {
         }
         if let Some(value) = self.ccr_min_tokens {
             opts.ccr_min_tokens = value;
+        }
+        if let Some(value) = self.lossy_without_ccr {
+            opts.lossy_without_ccr = value;
         }
         if let Some(value) = self.max_inline_chars {
             opts.max_inline_chars = Some(value);
@@ -316,6 +321,7 @@ impl From<CompressOptions> for SdkCompressOptions {
             ml_text_enabled: Some(value.ml_text_enabled),
             min_bytes_to_compress: Some(value.min_bytes_to_compress),
             ccr_min_tokens: Some(value.ccr_min_tokens),
+            lossy_without_ccr: Some(value.lossy_without_ccr),
             max_inline_chars: value.max_inline_chars,
         }
     }
@@ -337,6 +343,7 @@ pub async fn compress_request(request: SdkCompressionRequest) -> SdkCompressionR
         }
         AgentTokenjuiceCompression::Light => {
             opts.ccr_enabled = false;
+            opts.lossy_without_ccr = false;
             opts.ml_text_enabled = false;
         }
         AgentTokenjuiceCompression::Auto | AgentTokenjuiceCompression::Full => {}

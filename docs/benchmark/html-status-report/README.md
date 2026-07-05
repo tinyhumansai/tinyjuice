@@ -2,22 +2,22 @@
 
 Real RSS feeds, noisy web pages, forum pages, and OpenHuman coverage HTML. The HTML compressor strips markup/script noise and keeps readable page text.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (compressed, omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled (recovery footer included).
 
 ## Cases
 
 | Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.9 KB | 96.1% | 0.0% | 95.9% | 0.154 ms | true |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 92.3% | 0.0% | 87.3% | 0.013 ms | true |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 91.6% | 0.0% | 87.4% | 0.016 ms | true |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.4 KB | 89.3% | 0.0% | 88.7% | 0.099 ms | true |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 84.2% | 0.0% | 80.8% | 0.022 ms | true |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 83.7% | 0.0% | 79.9% | 0.019 ms | true |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 82.7% | 0.0% | 79.3% | 0.022 ms | true |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 80.1% | 0.0% | 79.2% | 0.081 ms | true |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.2 KB | 53.0% | 0.0% | 51.6% | 0.048 ms | true |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 23.0% | 0.0% | 23.0% | 1.185 ms | true |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.9 KB | 95.8% | 95.8% | 95.5% | 0.176 ms | true |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 91.3% | 91.3% | 86.4% | 0.015 ms | true |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 90.9% | 90.9% | 86.7% | 0.018 ms | true |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.4 KB | 89.3% | 89.3% | 88.7% | 0.108 ms | true |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 83.4% | 83.4% | 80.0% | 0.024 ms | true |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 82.7% | 82.7% | 78.9% | 0.022 ms | true |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 81.8% | 81.8% | 78.5% | 0.024 ms | true |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 79.9% | 79.9% | 79.0% | 0.110 ms | true |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.2 KB | 52.9% | 52.9% | 51.4% | 0.053 ms | true |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 27.5% | 27.5% | 27.5% | 1.287 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -114,59 +114,92 @@ fn main() …
 
 ```
 
-### `03-noisy-hacker-news`
+### `06-openhuman-coverage-6`
 
-- [Full input](cases/03-noisy-hacker-news/input.html)
-- [Full output](cases/03-noisy-hacker-news/output.txt)
+- [Full input](cases/06-openhuman-coverage-6/input.html)
+- [Full output](cases/06-openhuman-coverage-6/output.txt)
 
 Input excerpt:
 
 ```html
-<html lang="en" op="news"><head><meta name="referrer" content="origin"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" type="text/css" href="news.css?Ug1GY3B6Kr5c7uonNem9"><li...
-<center><span class="yclinks"><a href="newsguidelines.html">Guidelines</a> | <a href="newsfaq.html">FAQ</a> | <a href="lists">Lists</a> | <a href="https://github.com/HackerNews/API">API</a> | <a href="security.html">Secu...
-<form method="get" action="//hn.algolia.com/">Search: <input type="text" name="q" size="17" autocorrect="off" spellcheck="false" autocapitalize="off" autocomplete="off"></form></center></td></tr></table></center></body><...
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/assets/icons</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> src/assets/icons</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/2</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
 
 ```
 
 Output excerpt:
 
 ```text
-Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
-1.
-Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
-176 points by dabinat 7 hours ago | hide | 67 comments
-2.
-If you&#x27;re a button, you have one job (aresluna.org)
-302 points by nozzlegear 10 hours ago | hide | 153 comments
-3.
-Claude Design System Prompt (github.com/trystan-sa)
-40 points by handfuloflight 3 hours ago | hide | 7 comments
-4.
-Fast Software, the Best Software (2019) (craigmod.com)
-51 points by ustad 5 hours ago | hide | 22 comments
-5.
-GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
-313 points by maille 14 hours ago | hide | 117 comments
-6.
-Functional Programming in hica (hica.dev)
-11 points by cladamski79 2 hours ago | hide | 2 comments
-7.
-Educators disciplined over Charlie Kirk posts are securing big payouts (nbcnews.com)
-10 points by Anon84 10 minutes ago | hide | 1 comment
-8.
-Pandoc Lua Filters (pandoc.org)
-85 points by ankitg12 7 hours ago | hide | 5 comments
-9.
-Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
-16 points by saikatsg 2 hours ago | hide | 4 comments
-10.
-Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
-149 points by hhs 14 hours ago | hide | 31 comments
-11.
-Knowledge Should Not Be Gated (formaly.io)
-20 points by nezhar 4 hours ago | hide | 2 comments
-12.
-Megawatts by Microwave (computer.rip)
+All files src/assets/icons
+
+0%
+Statements
+0/2
+
+0%
+Branches
+0/1
+
+0%
+Functions
+0/1
+
+0%
+Lines
+0/2
+
+Press n or j to go to the next uncovered block, b, p or k for the previous block.
+
+Filter:
+
+File
+
+Statements
+
+Branches
+
+Functions
+
+Lines
+
+GoogleIcon.tsx
+
+0%
+0/2
 
 ```
 
@@ -259,92 +292,59 @@ chatSendError.ts
 
 ```
 
-### `06-openhuman-coverage-6`
+### `03-noisy-hacker-news`
 
-- [Full input](cases/06-openhuman-coverage-6/input.html)
-- [Full output](cases/06-openhuman-coverage-6/output.txt)
+- [Full input](cases/03-noisy-hacker-news/input.html)
+- [Full output](cases/03-noisy-hacker-news/output.txt)
 
 Input excerpt:
 
 ```html
-
-<!doctype html>
-<html lang="en">
-
-<head>
-    <title>Code coverage report for src/assets/icons</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../prettify.css" />
-    <link rel="stylesheet" href="../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type='text/css'>
-        .coverage-summary .sorter {
-            background-image: url(../../../sort-arrow-sprite.png);
-        }
-    </style>
-</head>
-    
-<body>
-<div class='wrapper'>
-    <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> src/assets/icons</h1>
-        <div class='clearfix'>
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>0/2</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
-            </div>
+<html lang="en" op="news"><head><meta name="referrer" content="origin"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" type="text/css" href="news.css?Ug1GY3B6Kr5c7uonNem9"><li...
+<center><span class="yclinks"><a href="newsguidelines.html">Guidelines</a> | <a href="newsfaq.html">FAQ</a> | <a href="lists">Lists</a> | <a href="https://github.com/HackerNews/API">API</a> | <a href="security.html">Secu...
+<form method="get" action="//hn.algolia.com/">Search: <input type="text" name="q" size="17" autocorrect="off" spellcheck="false" autocapitalize="off" autocomplete="off"></form></center></td></tr></table></center></body><...
 
 ```
 
 Output excerpt:
 
 ```text
-All files src/assets/icons
-
-0%
-Statements
-0/2
-
-0%
-Branches
-0/1
-
-0%
-Functions
-0/1
-
-0%
-Lines
-0/2
-
-Press n or j to go to the next uncovered block, b, p or k for the previous block.
-
-Filter:
-
-File
-
-Statements
-
-Branches
-
-Functions
-
-Lines
-
-GoogleIcon.tsx
-
-0%
-0/2
+Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
+1.
+Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
+176 points by dabinat 7 hours ago | hide | 67 comments
+2.
+If you&#x27;re a button, you have one job (aresluna.org)
+302 points by nozzlegear 10 hours ago | hide | 153 comments
+3.
+Claude Design System Prompt (github.com/trystan-sa)
+40 points by handfuloflight 3 hours ago | hide | 7 comments
+4.
+Fast Software, the Best Software (2019) (craigmod.com)
+51 points by ustad 5 hours ago | hide | 22 comments
+5.
+GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
+313 points by maille 14 hours ago | hide | 117 comments
+6.
+Functional Programming in hica (hica.dev)
+11 points by cladamski79 2 hours ago | hide | 2 comments
+7.
+Educators disciplined over Charlie Kirk posts are securing big payouts (nbcnews.com)
+10 points by Anon84 10 minutes ago | hide | 1 comment
+8.
+Pandoc Lua Filters (pandoc.org)
+85 points by ankitg12 7 hours ago | hide | 5 comments
+9.
+Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
+16 points by saikatsg 2 hours ago | hide | 4 comments
+10.
+Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
+149 points by hhs 14 hours ago | hide | 31 comments
+11.
+Knowledge Should Not Be Gated (formaly.io)
+20 points by nezhar 4 hours ago | hide | 2 comments
+12.
+Megawatts by Microwave (computer.rip)
 
 ```
 

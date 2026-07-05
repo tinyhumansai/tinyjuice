@@ -173,7 +173,7 @@ for category in "${categories[@]}"; do
   {
     printf '# %s\n\n' "$title"
     printf '%s\n\n' "$(category_summary "$category")"
-    printf 'Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.\n\n'
+    printf 'Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (compressed, omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled (recovery footer included).\n\n'
     if [[ "$category" == "unified-diff" ]]; then
       printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
     fi

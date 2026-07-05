@@ -2,14 +2,14 @@
 
 Real OpenHuman Vitest command logs. The command-aware reducer keeps failure summaries and drops repetitive success or setup noise.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (lossy results are declined, so it is usually 0). `Pass 2` is the final model-facing result with CCR enabled.
+Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (compressed, omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled (recovery footer included).
 
 ## Cases
 
 | Case | Input | Output | Original | Algorithm | Pass 1: no CCR | Pass 2: with CCR | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | 5.6 KB | 79.5% | 0.0% | 75.4% | 0.248 ms | true |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | 2.8 KB | 73.6% | 0.0% | 65.4% | 0.149 ms | true |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | 5.6 KB | 79.5% | 79.5% | 75.4% | 0.266 ms | true |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | 2.8 KB | 73.6% | 73.6% | 65.4% | 0.148 ms | true |
 | `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |
 | `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | 1.9 KB | 0.0% | 0.0% | 0.0% | 0.000 ms | n/a |

@@ -531,6 +531,13 @@ pub struct CompressOptions {
     /// through (lossless reformats may still apply without offload). Lets small
     /// tool results skip the cache entirely.
     pub ccr_min_tokens: usize,
+    /// Allow lossy compression when CCR is not in play (disabled, below
+    /// `ccr_min_tokens`, or the original couldn't be retained). Dropped
+    /// content is still marked with explicit `[... omitted ...]` markers —
+    /// it just isn't recoverable via a retrieve footer. Set to `false` for
+    /// the strict invariant that lossy output always carries a recovery
+    /// token (the `light` profile does this).
+    pub lossy_without_ccr: bool,
     /// Maximum inline character count for the generic/rule fallback path.
     pub max_inline_chars: Option<usize>,
 }
@@ -546,6 +553,7 @@ impl Default for CompressOptions {
             ml_text_enabled: false,
             min_bytes_to_compress: 2048,
             ccr_min_tokens: 500,
+            lossy_without_ccr: true,
             max_inline_chars: None,
         }
     }

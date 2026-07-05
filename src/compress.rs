@@ -91,13 +91,14 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
 
-    // CCR threshold: only offload (and therefore only allow *lossy* compaction)
-    // when the input is large enough to be worth caching. Below the token
-    // threshold a lossy result can't be made recoverable, so pass it through;
-    // lossless reformats are still allowed without an offload.
+    // CCR threshold: only offload when the input is large enough to be worth
+    // caching. When CCR is not in play a lossy result carries no recovery
+    // footer; whether that is acceptable is the caller's call via
+    // `lossy_without_ccr` (dropped content is still explicitly marked with
+    // omission markers — it just isn't retrievable).
     let original_tokens = estimate_tokens(content);
     let ccr_for_call = opts.ccr_enabled && original_tokens as usize >= opts.ccr_min_tokens;
-    if out.lossy && !ccr_for_call {
+    if out.lossy && !ccr_for_call && !opts.lossy_without_ccr {
         return CompressedOutput::passthrough(content.to_string(), kind);
     }
 
@@ -115,10 +116,11 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
         let (token, retained) = cache::offload_checked(content);
         if !retained {
             // The original is too large to keep in memory (over the byte cap)
-            // and the disk tier isn't on, so it can't be recovered. A lossy view
-            // would be irreversible — decline it. A lossless reformat is still
-            // safe to return, just without a (dangling) recovery footer.
-            if out.lossy {
+            // and the disk tier isn't on, so it can't be recovered. A lossy
+            // view is irreversible — decline it unless the caller allows
+            // unrecoverable lossy output. Either way no (dangling) recovery
+            // footer is attached.
+            if out.lossy && !opts.lossy_without_ccr {
                 return CompressedOutput::passthrough(content.to_string(), kind);
             }
             (out.text, None)
@@ -223,6 +225,43 @@ mod tests {
         assert!(res.applied);
         assert_eq!(res.content_kind, ContentKind::Html);
         assert!(res.text.contains("cell number 7 content"));
+    }
+
+    fn big_json_array() -> String {
+        let mut rows = Vec::new();
+        for i in 0..120 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"account_{i}","email":"a{i}@ex.com","tier":"gold"}}"#
+            ));
+        }
+        format!("[{}]", rows.join(","))
+    }
+
+    #[tokio::test]
+    async fn lossy_compression_works_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        let original = big_json_array();
+        let res = compress_content(&original, None, &o).await;
+        assert!(res.applied, "lossy compression must apply without CCR");
+        assert!(res.text.len() < original.len());
+        assert!(res.ccr_token.is_none(), "no recovery token without CCR");
+        assert!(
+            !res.text.contains("⟦tj:"),
+            "no dangling footer: {}",
+            res.text
+        );
+    }
+
+    #[tokio::test]
+    async fn strict_mode_declines_lossy_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        o.lossy_without_ccr = false;
+        let original = big_json_array();
+        let res = compress_content(&original, None, &o).await;
+        assert!(!res.applied, "strict mode must decline unrecoverable lossy");
+        assert_eq!(res.text, original);
     }
 
     #[tokio::test]

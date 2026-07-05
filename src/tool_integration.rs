@@ -60,10 +60,12 @@ fn options_for_agent(profile: AgentTokenjuiceCompression) -> Option<CompressOpti
         }
         AgentTokenjuiceCompression::Light => {
             let mut opts = current_options();
-            // Coding agents need raw, exact tool text more than aggressive token
-            // savings. Disabling CCR makes every lossy compressor decline in
-            // route(), while still allowing any truly lossless reduction.
+            // Coding agents need raw, exact tool text more than aggressive
+            // token savings. With CCR off and lossy-without-CCR disallowed,
+            // every lossy compressor declines in route(), while any truly
+            // lossless reduction is still allowed.
             opts.ccr_enabled = false;
+            opts.lossy_without_ccr = false;
             opts.ml_text_enabled = false;
             Some(opts)
         }
