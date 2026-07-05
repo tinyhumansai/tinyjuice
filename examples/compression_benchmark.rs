@@ -323,12 +323,22 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
     let algorithm_tokens_est = estimate_tokens(&algorithm.text);
     let no_ccr_tokens_est = estimate_tokens(&no_ccr_result.text);
     let compacted_tokens_est = estimate_tokens(&result.text);
-    let failed_checks: Vec<String> = case
+    let mut failed_checks: Vec<String> = case
         .checks
         .iter()
         .filter(|check| !check.evaluate(&result.text))
         .map(|check| check.label.to_string())
         .collect();
+    // Structural invariants shared by every case: valid text with no
+    // compressor-introduced junk bytes, and no inflation when compression
+    // claims to have been applied.
+    let mut checks_total = case.checks.len();
+    for (label, ok) in structural_invariants(&case.payload, &result) {
+        checks_total += 1;
+        if !ok {
+            failed_checks.push(format!("structural: {label}"));
+        }
+    }
     let failed_task_checks: Vec<String> = case
         .task_checks
         .iter()
@@ -336,12 +346,12 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
         .map(|check| format!("{} ({})", check.label, check.question))
         .collect();
     let ccr_recoverable = recovery_status(&case.payload, &result);
-    let checks_passed = case.checks.len().saturating_sub(failed_checks.len());
+    let checks_passed = checks_total.saturating_sub(failed_checks.len());
     let task_checks_passed = case
         .task_checks
         .len()
         .saturating_sub(failed_task_checks.len());
-    let inline_total = case.checks.len() + case.task_checks.len();
+    let inline_total = checks_total + case.task_checks.len();
     let inline_passed = checks_passed + task_checks_passed;
     let inline_accuracy_percent = if inline_total == 0 {
         None
@@ -391,7 +401,7 @@ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize)
         token_reduction_percent: reduction_percent(token_ratio),
         avg_latency_ms: elapsed_nanos as f64 / iterations as f64 / 1_000_000.0,
         checks_passed,
-        checks_total: case.checks.len(),
+        checks_total,
         task_checks_passed,
         task_checks_total: case.task_checks.len(),
         inline_accuracy_percent,
@@ -541,6 +551,166 @@ impl TaskCheck {
     }
 }
 
+/// Cheap meaning-independent invariants every routed output must satisfy.
+/// Output is a Rust `String`, so UTF-8 validity holds by construction; these
+/// guard the remaining mojibake and inflation bug classes:
+///
+/// - the compressor must not introduce control bytes (beyond `\n`, `\t`,
+///   `\r`) or U+FFFD replacement characters that were not already present in
+///   the input (byte-slicing multi-byte sequences is how mojibake shipped);
+/// - when `applied` is true the output must be strictly smaller than the
+///   input, CCR footer included.
+fn structural_invariants(
+    input: &str,
+    result: &tinyjuice::CompressedOutput,
+) -> Vec<(&'static str, bool)> {
+    let no_new_junk_chars = !result.text.chars().any(|c| {
+        let junk = (c.is_control() && !matches!(c, '\n' | '\t' | '\r')) || c == '\u{FFFD}';
+        junk && !input.contains(c)
+    });
+    let no_inflation = !result.applied || result.compacted_bytes < result.original_bytes;
+    vec![
+        ("no control bytes or U+FFFD introduced", no_new_junk_chars),
+        ("applied output smaller than input", no_inflation),
+    ]
+}
+
+/// Last path segment of a case dir (`json-smartcrusher/cases/01-x` → `01-x`).
+fn case_name(doc_dir: &str) -> &str {
+    doc_dir.rsplit('/').next().unwrap_or(doc_dir)
+}
+
+/// Per-fixture JSON checks: a row identifier from the middle band of each
+/// fixture's dominant array (or a deep key for object fixtures) must survive
+/// compression. Middle-band rows are exactly what sampling-style bugs drop
+/// silently, so plain presence is the gate.
+fn json_case_checks(doc_dir: &str) -> Vec<SignalCheck> {
+    let (label, needle): (&str, &str) = match case_name(doc_dir) {
+        "01-github-tools-array" => (
+            "middle-band tool retained",
+            "GITHUB_AUTH_USER_DOCKER_CONFLICT_PACKAGES_LIST",
+        ),
+        "02-notion-tools-array" => ("middle-band tool retained", "NOTION_GET_ABOUT_USER"),
+        "03-slack-tools-array" => ("middle-band tool retained", "SLACK_DOWNLOAD_SLACK_FILE"),
+        "04-polymarket-markets-list" => ("middle-band market retained", "will-btc-hit-200k"),
+        "05-polymarket-events-list" => ("middle-band event retained", "bitcoin-milestones"),
+        "06-tauri-capabilities-schema" => {
+            ("capability identifier retained", "webview-accounts-recipes")
+        }
+        "07-app-schema-object" => (
+            "middle-band method retained",
+            "openhuman.config_update_model_settings",
+        ),
+        "08-lottie-animation" => ("middle-band layer name retained", "shield"),
+        "09-package-manifest" => ("middle-band dependency retained", "os-browserify"),
+        "10-cargo-metadata" => ("middle-band target retained", "slack-backfill"),
+        _ => return vec![],
+    };
+    vec![SignalCheck::present(label, needle)]
+}
+
+/// Per-fixture HTML/XML presence checks: 1-2 key readable strings from each
+/// page (page/feed title plus one article/topic/file identifier) must survive
+/// text extraction.
+fn html_case_checks(doc_dir: &str) -> Vec<SignalCheck> {
+    match case_name(doc_dir) {
+        "01-rss-rust-blog" => vec![
+            SignalCheck::present("feed title retained", "Rust Blog"),
+            SignalCheck::present("article title retained", "Announcing Rust 1.96.1"),
+        ],
+        "02-rss-hacker-news" => vec![
+            SignalCheck::present("feed title retained", "Hacker News: Front Page"),
+            SignalCheck::present("item title retained", "The Engineer in the Half-Space"),
+        ],
+        "03-noisy-hacker-news" => vec![
+            SignalCheck::present("page title retained", "Hacker News"),
+            SignalCheck::present("story title retained", "Claude Design System Prompt"),
+        ],
+        "04-forum-rust-users" => vec![
+            SignalCheck::present("page title retained", "The Rust Programming Language Forum"),
+            SignalCheck::present(
+                "topic title retained",
+                "Forum Code Formatting and Syntax Highlighting",
+            ),
+        ],
+        "05-openhuman-coverage-5" => vec![
+            SignalCheck::present("report title retained", "Code coverage report"),
+            SignalCheck::present("covered file retained", "GoogleIcon.tsx"),
+        ],
+        "06-openhuman-coverage-6" => vec![
+            SignalCheck::present("report title retained", "Code coverage report"),
+            SignalCheck::present("covered path retained", "src/assets/icons"),
+        ],
+        "07-openhuman-coverage-7" => vec![
+            SignalCheck::present("report title retained", "Code coverage report"),
+            SignalCheck::present("covered file retained", "chatSendError.ts"),
+        ],
+        "08-openhuman-coverage-8" => vec![
+            SignalCheck::present("report title retained", "Code coverage report"),
+            SignalCheck::present("covered path retained", "src/chat"),
+        ],
+        "09-openhuman-coverage-9" => vec![
+            SignalCheck::present("report title retained", "Code coverage report"),
+            SignalCheck::present("covered file retained", "promptInjectionGuard.ts"),
+        ],
+        "10-openhuman-coverage-10" => vec![
+            SignalCheck::present("report title retained", "Code coverage report"),
+            SignalCheck::present("covered file retained", "AppBackground.tsx"),
+        ],
+        _ => vec![],
+    }
+}
+
+/// Per-fixture service-log checks. These fixtures are macOS crash-report
+/// slices of OpenHuman: every one carries `panic`-path frames, and a log
+/// compressor that replaces all error/crash content with `[Template: …]`/`×N`
+/// summaries must still surface that substring somewhere in the output.
+fn service_log_case_checks(doc_dir: &str) -> Vec<SignalCheck> {
+    let name = case_name(doc_dir);
+    if !name.starts_with(|c: char| c.is_ascii_digit()) {
+        // Synthetic fallback case (fixtures missing); needles below are tied
+        // to the real crash-report fixtures.
+        return vec![];
+    }
+    let mut checks = vec![SignalCheck::present("panic frame retained", "panic")];
+    if name == "01-openhuman-crash-slice-1" {
+        checks.push(SignalCheck::present(
+            "termination reason retained",
+            "Bus error: 10",
+        ));
+    }
+    checks
+}
+
+/// Per-fixture github-logs checks: a distinctive constant substring from a
+/// real ERROR/failure line in each error-bearing fixture. Template-style
+/// summaries keep the constant message text, so these pass for both exemplar
+/// retention and `[Template: …] ×N` output — but fail if error content is
+/// dropped wholesale. Fixtures without error lines get no per-case check.
+fn github_log_case_checks(doc_dir: &str) -> Vec<SignalCheck> {
+    let needle: &str = match case_name(doc_dir) {
+        "02-hadoop" => "Container complete event for unknown container",
+        "04-zookeeper" => "Connection broken for id",
+        "05-bgl" => "instruction cache parity error",
+        "06-hpc" => "psu failure",
+        "07-thunderbird" => "Wait for ready failed before probe",
+        "08-windows" => "Failed to start upload with file pattern",
+        "09-linux" => "authentication failure; logname=",
+        "11-healthapp" => "saveOneDetailData fail",
+        "12-apache-error" => "workerEnv in error state",
+        "13-proxifier" => "A connection request was canceled",
+        "14-openssh" => "POSSIBLE BREAK-IN ATTEMPT",
+        "16-mac" => "AuthFail",
+        "19-auth-log" => "maximum authentication attempts exceeded",
+        "20-caddy-coraza-waf" => "Coraza",
+        "23-authelia-bf" => "Unsuccessful 1FA authentication attempt",
+        "26-gitlab-bf" => "\"action\":\"failure\"",
+        "30-laravel-app" => "local.ERROR",
+        _ => return vec![],
+    };
+    vec![SignalCheck::present("error exemplar retained", needle)]
+}
+
 fn category_case_dirs(category: &str) -> Vec<String> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("docs/benchmark")
@@ -623,19 +793,20 @@ fn benchmark_cases() -> Vec<BenchCase> {
     let mut cases = Vec::new();
 
     for doc_dir in category_case_dirs("json-smartcrusher") {
+        let checks = json_case_checks(&doc_dir);
         cases.push(make_case(
             doc_dir,
             CaseSeed {
                 category: "json-smartcrusher",
                 family: "json",
-                description: "Real OpenHuman Composio tool-catalog JSON slice.",
+                description: "Real JSON payload: tool catalogs, market lists, schemas, manifests.",
                 fallback: json_service_inventory(260),
                 hint: ContentHint {
                     extension: Some("json".to_string()),
                     source_tool: Some("read_file".to_string()),
                     ..Default::default()
                 },
-                checks: vec![],
+                checks,
                 task_checks: vec![],
             },
         ));
@@ -672,19 +843,20 @@ fn benchmark_cases() -> Vec<BenchCase> {
     }
 
     for doc_dir in category_case_dirs("service-log") {
+        let checks = service_log_case_checks(&doc_dir);
         cases.push(make_case(
             doc_dir,
             CaseSeed {
                 category: "service-log",
                 family: "log",
-                description: "Real OpenHuman runtime or Docker-style service log snapshot.",
+                description: "Real OpenHuman crash-report/service log snapshot.",
                 fallback: docker_error_log(5_000),
                 hint: ContentHint {
                     explicit: Some(ContentKind::Log),
                     source_tool: Some("docker_logs".to_string()),
                     ..Default::default()
                 },
-                checks: vec![],
+                checks,
                 task_checks: vec![],
             },
         ));
@@ -750,6 +922,16 @@ fn benchmark_cases() -> Vec<BenchCase> {
     }
 
     for doc_dir in category_case_dirs("html-status-report") {
+        // Markup-leak absence checks apply to every HTML/XML case (they pass
+        // trivially where the input never contained the construct); presence
+        // checks for key readable strings are per fixture.
+        let mut checks = vec![
+            SignalCheck::absent("script removed", "<script>"),
+            SignalCheck::absent("no CDATA terminator leak", "]]>"),
+            SignalCheck::absent("no media-query attribute leak", "= 40rem)\""),
+            SignalCheck::absent("no stylesheet attribute leak", "rel=\"stylesheet\""),
+        ];
+        checks.extend(html_case_checks(&doc_dir));
         cases.push(make_case(
             doc_dir,
             CaseSeed {
@@ -763,7 +945,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
                     explicit: Some(ContentKind::Html),
                     ..Default::default()
                 },
-                checks: vec![SignalCheck::absent("script removed", "<script>")],
+                checks,
                 task_checks: vec![],
             },
         ));
@@ -867,6 +1049,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
     }
 
     for doc_dir in category_case_dirs("github-logs") {
+        let checks = github_log_case_checks(&doc_dir);
         cases.push(make_case(
             doc_dir,
             CaseSeed {
@@ -878,7 +1061,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
                     extension: Some("log".to_string()),
                     ..Default::default()
                 },
-                checks: vec![],
+                checks,
                 task_checks: vec![],
             },
         ));
