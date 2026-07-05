@@ -22,6 +22,7 @@ pub mod log_template;
 pub mod ml_text;
 pub mod search;
 pub mod signals;
+pub(crate) mod tag_protect;
 
 use async_trait::async_trait;
 

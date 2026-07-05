@@ -13,7 +13,7 @@
 
 use async_trait::async_trait;
 
-use super::Compressor;
+use super::{Compressor, tag_protect};
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 pub struct MlTextCompressor;
@@ -32,11 +32,27 @@ impl Compressor for MlTextCompressor {
         if !opts.ml_text_enabled {
             return None;
         }
-        match crate::ml::compress(input.content, opts).await {
-            Ok(Some(text)) if text.len() < input.content.len() => {
-                Some(CompressOutput::lossy(text, CompressorKind::MlText))
+        // Structural XML-ish tags (e.g. `<system-reminder>`, `<tool_call>`)
+        // are markers downstream code parses; swap them for opaque
+        // placeholders so the lossy model can't destroy them, and splice them
+        // back afterwards.
+        let (protected, saved) = tag_protect::protect(input.content);
+        match crate::ml::compress(&protected, opts).await {
+            Ok(Some(text)) => {
+                if !tag_protect::all_placeholders_present(&text, &saved) {
+                    log::debug!(
+                        "[tinyjuice][ml] output lost a protected structural tag; declining"
+                    );
+                    return None;
+                }
+                let restored = tag_protect::restore(&text, &saved);
+                if restored.len() < input.content.len() {
+                    Some(CompressOutput::lossy(restored, CompressorKind::MlText))
+                } else {
+                    None
+                }
             }
-            Ok(_) => None,
+            Ok(None) => None,
             Err(e) => {
                 log::debug!("[tinyjuice][ml] unavailable, falling back: {e:#}");
                 None
