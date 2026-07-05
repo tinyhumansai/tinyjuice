@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-config` | [input](cases/01-config/full-input.txt) | [output](cases/01-config/full-output.txt) | 53.9 KB | 25.3 KB | 55.8% | 1.752 ms | true |
-| `02-jwt` | [input](cases/02-jwt/full-input.txt) | [output](cases/02-jwt/full-output.txt) | 4.5 KB | 2.4 KB | 47.8% | 0.187 ms | true |
-| `03-socket` | [input](cases/03-socket/full-input.txt) | [output](cases/03-socket/full-output.txt) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
-| `04-rest` | [input](cases/04-rest/full-input.txt) | [output](cases/04-rest/full-output.txt) | 48.1 KB | 17.5 KB | 63.9% | 2.132 ms | true |
-| `05-rest-tests` | [input](cases/05-rest-tests/full-input.txt) | [output](cases/05-rest-tests/full-output.txt) | 26.4 KB | 5.0 KB | 81.8% | 1.320 ms | true |
-| `06-socket` | [input](cases/06-socket/full-input.txt) | [output](cases/06-socket/full-output.txt) | 2.0 KB | 2.0 KB | 0.0% | 0.000 ms | n/a |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/full-input.txt) | [output](cases/07-gmail-backfill-3d/full-output.txt) | 17.4 KB | 4.9 KB | 71.7% | 0.679 ms | true |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/full-input.txt) | [output](cases/08-harness-subagent-audit/full-output.txt) | 34.7 KB | 8.4 KB | 76.2% | 1.391 ms | true |
-| `09-inference-probe` | [input](cases/09-inference-probe/full-input.txt) | [output](cases/09-inference-probe/full-output.txt) | 8.4 KB | 3.0 KB | 64.9% | 0.349 ms | true |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/full-input.txt) | [output](cases/10-memory-tree-init-smoke/full-output.txt) | 3.4 KB | 1.5 KB | 56.8% | 0.154 ms | true |
+| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | 53.9 KB | 25.3 KB | 55.8% | 1.531 ms | true |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | 4.5 KB | 2.4 KB | 47.8% | 0.156 ms | true |
+| `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
+| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | 48.1 KB | 17.5 KB | 63.9% | 1.858 ms | true |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | 26.4 KB | 5.0 KB | 81.8% | 1.147 ms | true |
+| `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | 2.0 KB | 2.0 KB | 0.0% | 0.000 ms | n/a |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | 17.4 KB | 4.9 KB | 71.7% | 0.637 ms | true |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | 34.7 KB | 8.4 KB | 76.2% | 1.318 ms | true |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | 8.4 KB | 3.0 KB | 64.9% | 0.332 ms | true |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | 3.4 KB | 1.5 KB | 56.8% | 0.141 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -27,8 +27,8 @@ The code path keeps the navigation surface: imports, signatures, top-level items
 
 ### `01-config`
 
-- [Full input](cases/01-config/full-input.txt)
-- [Full output](cases/01-config/full-output.txt)
+- [Full input](cases/01-config/input.rs)
+- [Full output](cases/01-config/output.rs)
 
 Input excerpt:
 
@@ -116,8 +116,8 @@ Output excerpt:
 
 ### `02-jwt`
 
-- [Full input](cases/02-jwt/full-input.txt)
-- [Full output](cases/02-jwt/full-output.txt)
+- [Full input](cases/02-jwt/input.rs)
+- [Full output](cases/02-jwt/output.rs)
 
 Input excerpt:
 
@@ -205,8 +205,8 @@ mod tests {
 
 ### `03-socket`
 
-- [Full input](cases/03-socket/full-input.txt)
-- [Full output](cases/03-socket/full-output.txt)
+- [Full input](cases/03-socket/input.rs)
+- [Full output](cases/03-socket/output.rs)
 
 Input excerpt:
 
@@ -294,8 +294,8 @@ impl Default for SocketState {
 
 ### `04-rest`
 
-- [Full input](cases/04-rest/full-input.txt)
-- [Full output](cases/04-rest/full-output.txt)
+- [Full input](cases/04-rest/input.rs)
+- [Full output](cases/04-rest/output.rs)
 
 Input excerpt:
 
@@ -383,8 +383,8 @@ pub enum BackendApiError {
 
 ### `05-rest-tests`
 
-- [Full input](cases/05-rest-tests/full-input.txt)
-- [Full output](cases/05-rest-tests/full-output.txt)
+- [Full input](cases/05-rest-tests/input.rs)
+- [Full output](cases/05-rest-tests/output.rs)
 
 Input excerpt:
 
@@ -472,8 +472,8 @@ fn extracts_id_from_root() { … 9 line(s) … }
 
 ### `06-socket`
 
-- [Full input](cases/06-socket/full-input.txt)
-- [Full output](cases/06-socket/full-output.txt)
+- [Full input](cases/06-socket/input.rs)
+- [Full output](cases/06-socket/output.rs)
 
 Input excerpt:
 
@@ -561,8 +561,8 @@ mod tests {
 
 ### `07-gmail-backfill-3d`
 
-- [Full input](cases/07-gmail-backfill-3d/full-input.txt)
-- [Full output](cases/07-gmail-backfill-3d/full-output.txt)
+- [Full input](cases/07-gmail-backfill-3d/input.rs)
+- [Full output](cases/07-gmail-backfill-3d/output.rs)
 
 Input excerpt:
 
@@ -650,8 +650,8 @@ use openhuman_core::openhuman::composio::client::{
 
 ### `08-harness-subagent-audit`
 
-- [Full input](cases/08-harness-subagent-audit/full-input.txt)
-- [Full output](cases/08-harness-subagent-audit/full-output.txt)
+- [Full input](cases/08-harness-subagent-audit/input.rs)
+- [Full output](cases/08-harness-subagent-audit/output.rs)
 
 Input excerpt:
 
@@ -739,8 +739,8 @@ struct Args {
 
 ### `09-inference-probe`
 
-- [Full input](cases/09-inference-probe/full-input.txt)
-- [Full output](cases/09-inference-probe/full-output.txt)
+- [Full input](cases/09-inference-probe/input.rs)
+- [Full output](cases/09-inference-probe/output.rs)
 
 Input excerpt:
 
@@ -828,8 +828,8 @@ use openhuman_core::openhuman::inference::provider::traits::{ChatMessage, ChatRe
 
 ### `10-memory-tree-init-smoke`
 
-- [Full input](cases/10-memory-tree-init-smoke/full-input.txt)
-- [Full output](cases/10-memory-tree-init-smoke/full-output.txt)
+- [Full input](cases/10-memory-tree-init-smoke/input.rs)
+- [Full output](cases/10-memory-tree-init-smoke/output.rs)
 
 Input excerpt:
 

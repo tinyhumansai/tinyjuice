@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/full-input.txt) | [output](cases/01-rss-rust-blog/full-output.txt) | 384.1 KB | 295.9 KB | 23.0% | 1.338 ms | true |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/full-input.txt) | [output](cases/02-rss-hacker-news/full-output.txt) | 15.2 KB | 7.3 KB | 52.1% | 0.055 ms | true |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/full-input.txt) | [output](cases/03-noisy-hacker-news/full-output.txt) | 34.4 KB | 3.9 KB | 88.8% | 0.112 ms | true |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/full-input.txt) | [output](cases/04-forum-rust-users/full-output.txt) | 83.6 KB | 3.5 KB | 95.9% | 0.178 ms | true |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/full-input.txt) | [output](cases/05-openhuman-coverage-5/full-output.txt) | 6.6 KB | 1.4 KB | 79.3% | 0.024 ms | true |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/full-input.txt) | [output](cases/06-openhuman-coverage-6/full-output.txt) | 4.4 KB | 567 B | 87.3% | 0.014 ms | true |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/full-input.txt) | [output](cases/07-openhuman-coverage-7/full-output.txt) | 6.5 KB | 1.3 KB | 80.8% | 0.024 ms | true |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/full-input.txt) | [output](cases/08-openhuman-coverage-8/full-output.txt) | 5.2 KB | 661 B | 87.4% | 0.017 ms | true |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/full-input.txt) | [output](cases/09-openhuman-coverage-9/full-output.txt) | 24.6 KB | 5.1 KB | 79.2% | 0.088 ms | true |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/full-input.txt) | [output](cases/10-openhuman-coverage-10/full-output.txt) | 5.8 KB | 1.2 KB | 79.9% | 0.022 ms | true |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | 384.1 KB | 295.9 KB | 23.0% | 1.172 ms | true |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | 15.2 KB | 7.3 KB | 52.1% | 0.053 ms | true |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | 34.5 KB | 3.9 KB | 88.6% | 0.109 ms | true |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | 83.6 KB | 3.5 KB | 95.9% | 0.166 ms | true |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | 6.6 KB | 1.4 KB | 79.3% | 0.024 ms | true |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | 4.4 KB | 567 B | 87.3% | 0.014 ms | true |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | 6.5 KB | 1.3 KB | 80.8% | 0.025 ms | true |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | 5.2 KB | 661 B | 87.4% | 0.017 ms | true |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | 24.6 KB | 5.1 KB | 79.2% | 0.087 ms | true |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | 5.8 KB | 1.2 KB | 79.9% | 0.021 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -27,8 +27,8 @@ HTML snapshots are converted into readable text. Script/style payloads and repea
 
 ### `01-rss-rust-blog`
 
-- [Full input](cases/01-rss-rust-blog/full-input.txt)
-- [Full output](cases/01-rss-rust-blog/full-output.txt)
+- [Full input](cases/01-rss-rust-blog/input.xml)
+- [Full output](cases/01-rss-rust-blog/output.txt)
 
 Input excerpt:
 
@@ -116,8 +116,8 @@ Contributors to 1.96.1</h3>
 
 ### `02-rss-hacker-news`
 
-- [Full input](cases/02-rss-hacker-news/full-input.txt)
-- [Full output](cases/02-rss-hacker-news/full-output.txt)
+- [Full input](cases/02-rss-hacker-news/input.xml)
+- [Full output](cases/02-rss-hacker-news/output.txt)
 
 Input excerpt:
 
@@ -205,8 +205,8 @@ Comments URL: https://news.ycombinator.com/item?id=48792352
 
 ### `03-noisy-hacker-news`
 
-- [Full input](cases/03-noisy-hacker-news/full-input.txt)
-- [Full output](cases/03-noisy-hacker-news/full-output.txt)
+- [Full input](cases/03-noisy-hacker-news/input.html)
+- [Full output](cases/03-noisy-hacker-news/output.txt)
 
 Input excerpt:
 
@@ -223,46 +223,46 @@ Output excerpt:
 Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
 1.
 Europe&#x27;s new climate in seven charts (bbc.com)
-44 points by saikatsg 1 hour ago | hide | 8 comments
+68 points by saikatsg 2 hours ago | hide | 26 comments
 2.
 Shadcn&#x2F;UI now defaults to Base UI instead of Radix (shadcn.com)
-157 points by dabinat 7 hours ago | hide | 59 comments
+159 points by dabinat 7 hours ago | hide | 59 comments
 3.
 If you&#x27;re a button, you have one job (aresluna.org)
-264 points by nozzlegear 9 hours ago | hide | 141 comments
+270 points by nozzlegear 10 hours ago | hide | 142 comments
 4.
-Pi square is nearly 10 (mihai.page)
-12 points by freediver 1 hour ago | hide | 4 comments
-5.
 GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
-296 points by maille 14 hours ago | hide | 115 comments
-6.
+299 points by maille 14 hours ago | hide | 115 comments
+5.
 Fast Software, the Best Software (craigmod.com)
-35 points by ustad 4 hours ago | hide | 13 comments
-7.
+38 points by ustad 4 hours ago | hide | 14 comments
+6.
 Pandoc Lua Filters (pandoc.org)
-81 points by ankitg12 6 hours ago | hide | 5 comments
-8.
+81 points by ankitg12 7 hours ago | hide | 5 comments
+7.
 Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
 140 points by hhs 13 hours ago | hide | 30 comments
-9.
+8.
 Claude Design System Prompt (github.com/trystan-sa)
-18 points by handfuloflight 3 hours ago | hide | 1 comment
-10.
+23 points by handfuloflight 3 hours ago | hide | 1 comment
+9.
 Megawatts by Microwave (computer.rip)
-31 points by eternauta3k 5 hours ago | hide | 4 comments
+31 points by eternauta3k 6 hours ago | hide | 4 comments
+10.
+Functional Programming in hica (hica.dev)
+4 points by cladamski79 2 hours ago | hide | 1 comment
 11.
-Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
-9 points by saikatsg 1 hour ago | hide | 2 comments
-12.
 Programmers need to start meditating (jacob.gold)
+88 points by enz 4 hours ago | hide | 88 comments
+12.
+Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
 
 ```
 
 ### `04-forum-rust-users`
 
-- [Full input](cases/04-forum-rust-users/full-input.txt)
-- [Full output](cases/04-forum-rust-users/full-output.txt)
+- [Full input](cases/04-forum-rust-users/input.html)
+- [Full output](cases/04-forum-rust-users/output.txt)
 
 Input excerpt:
 
@@ -283,7 +283,7 @@ Input excerpt:
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 <link rel="canonical" href="https://users.rust-lang.org/" />
 <script type="application/ld+json">{"@context":"http://schema.org","@type":"WebSite","url":"https://users.rust-lang.org","name":"The Rust Programming Language Forum","potentialAction":{"@type":"SearchAction","target":"ht...
-<meta name="discourse-track-view-session-id" content="PjywytOX8IHU3oLZ0DdkDTPYqhfyQNmQ">
+<meta name="discourse-track-view-session-id" content="MJB6A4x0BksWVLRCPjWYI5q2nzGAvLPM">
 <link rel="search" type="application/opensearchdescription+xml" href="https://users.rust-lang.org/opensearch.xml" title="The Rust Programming Language Forum Search">
 
     
@@ -350,8 +350,8 @@ fn main() …
 
 ### `05-openhuman-coverage-5`
 
-- [Full input](cases/05-openhuman-coverage-5/full-input.txt)
-- [Full output](cases/05-openhuman-coverage-5/full-output.txt)
+- [Full input](cases/05-openhuman-coverage-5/input.html)
+- [Full output](cases/05-openhuman-coverage-5/output.txt)
 
 Input excerpt:
 
@@ -439,8 +439,8 @@ Filter:
 
 ### `06-openhuman-coverage-6`
 
-- [Full input](cases/06-openhuman-coverage-6/full-input.txt)
-- [Full output](cases/06-openhuman-coverage-6/full-output.txt)
+- [Full input](cases/06-openhuman-coverage-6/input.html)
+- [Full output](cases/06-openhuman-coverage-6/output.txt)
 
 Input excerpt:
 
@@ -528,8 +528,8 @@ GoogleIcon.tsx
 
 ### `07-openhuman-coverage-7`
 
-- [Full input](cases/07-openhuman-coverage-7/full-input.txt)
-- [Full output](cases/07-openhuman-coverage-7/full-output.txt)
+- [Full input](cases/07-openhuman-coverage-7/input.html)
+- [Full output](cases/07-openhuman-coverage-7/output.txt)
 
 Input excerpt:
 
@@ -617,8 +617,8 @@ Filter:
 
 ### `08-openhuman-coverage-8`
 
-- [Full input](cases/08-openhuman-coverage-8/full-input.txt)
-- [Full output](cases/08-openhuman-coverage-8/full-output.txt)
+- [Full input](cases/08-openhuman-coverage-8/input.html)
+- [Full output](cases/08-openhuman-coverage-8/output.txt)
 
 Input excerpt:
 
@@ -706,8 +706,8 @@ chatSendError.ts
 
 ### `09-openhuman-coverage-9`
 
-- [Full input](cases/09-openhuman-coverage-9/full-input.txt)
-- [Full output](cases/09-openhuman-coverage-9/full-output.txt)
+- [Full input](cases/09-openhuman-coverage-9/input.html)
+- [Full output](cases/09-openhuman-coverage-9/output.txt)
 
 Input excerpt:
 
@@ -795,8 +795,8 @@ Filter:
 
 ### `10-openhuman-coverage-10`
 
-- [Full input](cases/10-openhuman-coverage-10/full-input.txt)
-- [Full output](cases/10-openhuman-coverage-10/full-output.txt)
+- [Full input](cases/10-openhuman-coverage-10/input.html)
+- [Full output](cases/10-openhuman-coverage-10/output.txt)
 
 Input excerpt:
 

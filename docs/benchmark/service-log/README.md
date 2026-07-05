@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/full-input.txt) | [output](cases/01-openhuman-crash-slice-1/full-output.txt) | 26.6 KB | 965 B | 96.4% | 0.141 ms | true |
-| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/full-input.txt) | [output](cases/02-openhuman-crash-slice-2/full-output.txt) | 29.7 KB | 1.1 KB | 96.4% | 0.117 ms | true |
-| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/full-input.txt) | [output](cases/03-openhuman-crash-slice-3/full-output.txt) | 45.9 KB | 1.9 KB | 95.8% | 0.165 ms | true |
-| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/full-input.txt) | [output](cases/04-openhuman-crash-slice-4/full-output.txt) | 47.0 KB | 1.9 KB | 95.9% | 0.154 ms | true |
-| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/full-input.txt) | [output](cases/05-openhuman-crash-slice-5/full-output.txt) | 44.5 KB | 1.9 KB | 95.7% | 0.126 ms | true |
-| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/full-input.txt) | [output](cases/06-openhuman-crash-slice-6/full-output.txt) | 41.0 KB | 2.1 KB | 94.9% | 0.114 ms | true |
-| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/full-input.txt) | [output](cases/07-openhuman-crash-slice-7/full-output.txt) | 40.9 KB | 1.9 KB | 95.3% | 0.116 ms | true |
-| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/full-input.txt) | [output](cases/08-openhuman-crash-slice-8/full-output.txt) | 41.0 KB | 2.0 KB | 95.1% | 0.112 ms | true |
-| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/full-input.txt) | [output](cases/09-openhuman-crash-slice-9/full-output.txt) | 38.1 KB | 2.0 KB | 94.7% | 0.117 ms | true |
-| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/full-input.txt) | [output](cases/10-openhuman-crash-slice-10/full-output.txt) | 493.4 KB | 478.4 KB | 3.0% | 0.606 ms | true |
+| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | [output](cases/01-openhuman-crash-slice-1/output.log) | 26.6 KB | 965 B | 96.4% | 0.092 ms | true |
+| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | [output](cases/02-openhuman-crash-slice-2/output.log) | 29.7 KB | 1.1 KB | 96.4% | 0.093 ms | true |
+| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | [output](cases/03-openhuman-crash-slice-3/output.log) | 45.9 KB | 1.9 KB | 95.8% | 0.115 ms | true |
+| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | [output](cases/04-openhuman-crash-slice-4/output.log) | 47.0 KB | 1.9 KB | 95.9% | 0.122 ms | true |
+| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | [output](cases/05-openhuman-crash-slice-5/output.log) | 44.5 KB | 1.9 KB | 95.7% | 0.115 ms | true |
+| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | [output](cases/06-openhuman-crash-slice-6/output.log) | 41.0 KB | 2.1 KB | 94.9% | 0.104 ms | true |
+| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | [output](cases/07-openhuman-crash-slice-7/output.log) | 40.9 KB | 1.9 KB | 95.3% | 0.104 ms | true |
+| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | [output](cases/08-openhuman-crash-slice-8/output.log) | 41.0 KB | 2.0 KB | 95.1% | 0.103 ms | true |
+| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | [output](cases/09-openhuman-crash-slice-9/output.log) | 38.1 KB | 2.0 KB | 94.7% | 0.104 ms | true |
+| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | [output](cases/10-openhuman-crash-slice-10/output.log) | 493.4 KB | 478.4 KB | 3.0% | 0.539 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -27,8 +27,8 @@ The log path scores lines by signal. Errors, warnings, exception metadata, stack
 
 ### `01-openhuman-crash-slice-1`
 
-- [Full input](cases/01-openhuman-crash-slice-1/full-input.txt)
-- [Full output](cases/01-openhuman-crash-slice-1/full-output.txt)
+- [Full input](cases/01-openhuman-crash-slice-1/input.log)
+- [Full output](cases/01-openhuman-crash-slice-1/output.log)
 
 Input excerpt:
 
@@ -93,8 +93,8 @@ Termination Reason:  Namespace SIGNAL, Code 10, Bus error: 10
 
 ### `02-openhuman-crash-slice-2`
 
-- [Full input](cases/02-openhuman-crash-slice-2/full-input.txt)
-- [Full output](cases/02-openhuman-crash-slice-2/full-output.txt)
+- [Full input](cases/02-openhuman-crash-slice-2/input.log)
+- [Full output](cases/02-openhuman-crash-slice-2/output.log)
 
 Input excerpt:
 
@@ -157,8 +157,8 @@ Output excerpt:
 
 ### `03-openhuman-crash-slice-3`
 
-- [Full input](cases/03-openhuman-crash-slice-3/full-input.txt)
-- [Full output](cases/03-openhuman-crash-slice-3/full-output.txt)
+- [Full input](cases/03-openhuman-crash-slice-3/input.log)
+- [Full output](cases/03-openhuman-crash-slice-3/output.log)
 
 Input excerpt:
 
@@ -229,8 +229,8 @@ Output excerpt:
 
 ### `04-openhuman-crash-slice-4`
 
-- [Full input](cases/04-openhuman-crash-slice-4/full-input.txt)
-- [Full output](cases/04-openhuman-crash-slice-4/full-output.txt)
+- [Full input](cases/04-openhuman-crash-slice-4/input.log)
+- [Full output](cases/04-openhuman-crash-slice-4/output.log)
 
 Input excerpt:
 
@@ -301,8 +301,8 @@ Output excerpt:
 
 ### `05-openhuman-crash-slice-5`
 
-- [Full input](cases/05-openhuman-crash-slice-5/full-input.txt)
-- [Full output](cases/05-openhuman-crash-slice-5/full-output.txt)
+- [Full input](cases/05-openhuman-crash-slice-5/input.log)
+- [Full output](cases/05-openhuman-crash-slice-5/output.log)
 
 Input excerpt:
 
@@ -373,8 +373,8 @@ Output excerpt:
 
 ### `06-openhuman-crash-slice-6`
 
-- [Full input](cases/06-openhuman-crash-slice-6/full-input.txt)
-- [Full output](cases/06-openhuman-crash-slice-6/full-output.txt)
+- [Full input](cases/06-openhuman-crash-slice-6/input.log)
+- [Full output](cases/06-openhuman-crash-slice-6/output.log)
 
 Input excerpt:
 
@@ -444,8 +444,8 @@ Output excerpt:
 
 ### `07-openhuman-crash-slice-7`
 
-- [Full input](cases/07-openhuman-crash-slice-7/full-input.txt)
-- [Full output](cases/07-openhuman-crash-slice-7/full-output.txt)
+- [Full input](cases/07-openhuman-crash-slice-7/input.log)
+- [Full output](cases/07-openhuman-crash-slice-7/output.log)
 
 Input excerpt:
 
@@ -515,8 +515,8 @@ Output excerpt:
 
 ### `08-openhuman-crash-slice-8`
 
-- [Full input](cases/08-openhuman-crash-slice-8/full-input.txt)
-- [Full output](cases/08-openhuman-crash-slice-8/full-output.txt)
+- [Full input](cases/08-openhuman-crash-slice-8/input.log)
+- [Full output](cases/08-openhuman-crash-slice-8/output.log)
 
 Input excerpt:
 
@@ -587,8 +587,8 @@ Output excerpt:
 
 ### `09-openhuman-crash-slice-9`
 
-- [Full input](cases/09-openhuman-crash-slice-9/full-input.txt)
-- [Full output](cases/09-openhuman-crash-slice-9/full-output.txt)
+- [Full input](cases/09-openhuman-crash-slice-9/input.log)
+- [Full output](cases/09-openhuman-crash-slice-9/output.log)
 
 Input excerpt:
 
@@ -659,8 +659,8 @@ Output excerpt:
 
 ### `10-openhuman-crash-slice-10`
 
-- [Full input](cases/10-openhuman-crash-slice-10/full-input.txt)
-- [Full output](cases/10-openhuman-crash-slice-10/full-output.txt)
+- [Full input](cases/10-openhuman-crash-slice-10/input.log)
+- [Full output](cases/10-openhuman-crash-slice-10/output.log)
 
 Input excerpt:
 

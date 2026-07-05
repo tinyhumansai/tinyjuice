@@ -20,11 +20,44 @@ case_dir() {
   printf '%s/%s/cases/%02d-%s' "$bench_root" "$category" "$index" "$slug"
 }
 
+input_name() {
+  local category="$1"
+  local slug="${2:-}"
+  case "$category" in
+    json-smartcrusher) echo "input.json" ;;
+    test-failure-log|service-log) echo "input.log" ;;
+    search-results) echo "input.rg" ;;
+    unified-diff) echo "input.diff" ;;
+    html-status-report)
+      if [[ "$slug" == rss-* ]]; then
+        echo "input.xml"
+      else
+        echo "input.html"
+      fi
+      ;;
+    rust-source) echo "input.rs" ;;
+    plain-text) echo "input.md" ;;
+    *) echo "input.txt" ;;
+  esac
+}
+
+output_name() {
+  local category="$1"
+  case "$category" in
+    test-failure-log|service-log) echo "output.log" ;;
+    search-results) echo "output.rg" ;;
+    unified-diff) echo "output.diff" ;;
+    rust-source) echo "output.rs" ;;
+    plain-text) echo "output.md" ;;
+    *) echo "output.txt" ;;
+  esac
+}
+
 reset_category() {
   local category="$1"
   rm -rf "$bench_root/$category/cases"
   mkdir -p "$bench_root/$category/cases"
-  rm -f "$bench_root/$category/full-input.txt" "$bench_root/$category/full-output.txt"
+  rm -f "$bench_root/$category"/full-input.txt "$bench_root/$category"/full-output.txt
 }
 
 copy_case() {
@@ -33,11 +66,13 @@ copy_case() {
   local slug="$3"
   local source="$4"
   local dir
+  local input_file
   dir="$(case_dir "$category" "$index" "$slug")"
+  input_file="$(input_name "$category" "$slug")"
   mkdir -p "$dir"
-  cp "$source" "$dir/full-input.txt"
-  if [[ ! -s "$dir/full-input.txt" ]]; then
-    echo "empty case input: $dir/full-input.txt" >&2
+  cp "$source" "$dir/$input_file"
+  if [[ ! -s "$dir/$input_file" ]]; then
+    echo "empty case input: $dir/$input_file" >&2
     exit 1
   fi
 }
@@ -48,11 +83,13 @@ write_case() {
   local slug="$3"
   shift 3
   local dir
+  local input_file
   dir="$(case_dir "$category" "$index" "$slug")"
+  input_file="$(input_name "$category" "$slug")"
   mkdir -p "$dir"
-  "$@" >"$dir/full-input.txt"
-  if [[ ! -s "$dir/full-input.txt" ]]; then
-    echo "empty case input: $dir/full-input.txt" >&2
+  "$@" >"$dir/$input_file"
+  if [[ ! -s "$dir/$input_file" ]]; then
+    echo "empty case input: $dir/$input_file" >&2
     exit 1
   fi
 }
@@ -178,14 +215,16 @@ fetch_page() {
   local slug="$2"
   if command -v curl >/dev/null 2>&1; then
     local dir
+    local input_file
     dir="$(case_dir "html-status-report" "$html_index" "$slug")"
+    input_file="$(input_name "html-status-report" "$slug")"
     mkdir -p "$dir"
-    if curl -L --max-time 15 --retry 1 -A 'tinyjuice-benchmark-snapshot/1.0' "$url" >"$dir/full-input.txt" 2>/dev/null \
-      && [[ -s "$dir/full-input.txt" ]]; then
+    if curl -L --max-time 15 --retry 1 -A 'tinyjuice-benchmark-snapshot/1.0' "$url" >"$dir/$input_file" 2>/dev/null \
+      && [[ -s "$dir/$input_file" ]]; then
       html_index=$((html_index + 1))
       return 0
     fi
-    rm -f "$dir/full-input.txt"
+    rm -f "$dir/$input_file"
   fi
   return 1
 }
@@ -249,8 +288,8 @@ done
 )
 
 if command -v perl >/dev/null 2>&1; then
-  escaped_openh_root="$(printf '%s' "$openh_root" | perl -Mquotemeta -ne 'print quotemeta')"
-  escaped_home="$(printf '%s' "${HOME:-}" | perl -Mquotemeta -ne 'print quotemeta')"
-  find "$bench_root" -type f \( -name 'full-input.txt' -o -name 'full-output.txt' \) -print0 \
+  escaped_openh_root="$(perl -e 'print quotemeta shift' "$openh_root")"
+  escaped_home="$(perl -e 'print quotemeta shift' "${HOME:-}")"
+  find "$bench_root" -type f \( -name 'input.*' -o -name 'output.*' \) -print0 \
     | xargs -0 perl -pi -e "s#$escaped_openh_root#<OPENHUMAN_ROOT>#g; s#$escaped_home#<USER_HOME>#g"
 fi

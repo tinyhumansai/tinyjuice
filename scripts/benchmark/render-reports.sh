@@ -102,6 +102,39 @@ output_lang() {
   esac
 }
 
+input_file_name() {
+  local category="$1"
+  local doc_dir="${2:-}"
+  case "$category" in
+    json-smartcrusher) echo "input.json" ;;
+    test-failure-log|service-log) echo "input.log" ;;
+    search-results) echo "input.rg" ;;
+    unified-diff) echo "input.diff" ;;
+    html-status-report)
+      if [[ "$doc_dir" == *rss-* ]]; then
+        echo "input.xml"
+      else
+        echo "input.html"
+      fi
+      ;;
+    rust-source) echo "input.rs" ;;
+    plain-text) echo "input.md" ;;
+    *) echo "input.txt" ;;
+  esac
+}
+
+output_file_name() {
+  local category="$1"
+  case "$category" in
+    test-failure-log|service-log) echo "output.log" ;;
+    search-results) echo "output.rg" ;;
+    unified-diff) echo "output.diff" ;;
+    rust-source) echo "output.rs" ;;
+    plain-text) echo "output.md" ;;
+    *) echo "output.txt" ;;
+  esac
+}
+
 categories=(
   json-smartcrusher
   test-failure-log
@@ -139,10 +172,14 @@ for category in "${categories[@]}"; do
     ' "$json_report" | while IFS=$'\t' read -r doc_dir original compacted reduction latency ccr; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
-      printf '| `%s` | [input](%s/full-input.txt) | [output](%s/full-output.txt) | %s | %s | %.1f%% | %.3f ms | %s |\n' \
+      input_name="$(input_file_name "$category" "$doc_dir")"
+      output_name="$(output_file_name "$category")"
+      printf '| `%s` | [input](%s/%s) | [output](%s/%s) | %s | %s | %.1f%% | %.3f ms | %s |\n' \
         "$case_name" \
         "$rel_dir" \
+        "$input_name" \
         "$rel_dir" \
+        "$output_name" \
         "$(format_bytes "$original")" \
         "$(format_bytes "$compacted")" \
         "$reduction" \
@@ -186,11 +223,13 @@ for category in "${categories[@]}"; do
     ' "$json_report" | while IFS= read -r doc_dir; do
       case_name="${doc_dir##*/}"
       rel_dir="${doc_dir#"$category/"}"
-      input_file="$bench_root/$doc_dir/full-input.txt"
-      output_file="$bench_root/$doc_dir/full-output.txt"
+      input_name="$(input_file_name "$category" "$doc_dir")"
+      output_name="$(output_file_name "$category")"
+      input_file="$bench_root/$doc_dir/$input_name"
+      output_file="$bench_root/$doc_dir/$output_name"
       printf '### `%s`\n\n' "$case_name"
-      printf -- '- [Full input](%s/full-input.txt)\n' "$rel_dir"
-      printf -- '- [Full output](%s/full-output.txt)\n\n' "$rel_dir"
+      printf -- '- [Full input](%s/%s)\n' "$rel_dir" "$input_name"
+      printf -- '- [Full output](%s/%s)\n\n' "$rel_dir" "$output_name"
       printf 'Input excerpt:\n\n'
       printf '```%s\n' "$(input_lang "$category" "$doc_dir")"
       snippet "$input_file"

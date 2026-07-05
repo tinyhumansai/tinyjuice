@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-github-tools-1` | [input](cases/01-github-tools-1/full-input.txt) | [output](cases/01-github-tools-1/full-output.txt) | 84.4 KB | 36.0 KB | 57.3% | 0.284 ms | true |
-| `02-github-tools-2` | [input](cases/02-github-tools-2/full-input.txt) | [output](cases/02-github-tools-2/full-output.txt) | 144.5 KB | 62.0 KB | 57.1% | 0.500 ms | true |
-| `03-github-tools-3` | [input](cases/03-github-tools-3/full-input.txt) | [output](cases/03-github-tools-3/full-output.txt) | 170.1 KB | 69.4 KB | 59.2% | 0.599 ms | true |
-| `04-github-tools-4` | [input](cases/04-github-tools-4/full-input.txt) | [output](cases/04-github-tools-4/full-output.txt) | 71.6 KB | 29.8 KB | 58.4% | 0.256 ms | true |
-| `05-github-tools-5` | [input](cases/05-github-tools-5/full-input.txt) | [output](cases/05-github-tools-5/full-output.txt) | 91.5 KB | 43.0 KB | 53.0% | 0.346 ms | true |
-| `06-github-tools-6` | [input](cases/06-github-tools-6/full-input.txt) | [output](cases/06-github-tools-6/full-output.txt) | 72.8 KB | 30.5 KB | 58.2% | 0.307 ms | true |
-| `07-github-tools-7` | [input](cases/07-github-tools-7/full-input.txt) | [output](cases/07-github-tools-7/full-output.txt) | 70.5 KB | 28.7 KB | 59.3% | 0.306 ms | true |
-| `08-github-tools-8` | [input](cases/08-github-tools-8/full-input.txt) | [output](cases/08-github-tools-8/full-output.txt) | 61.1 KB | 24.5 KB | 59.9% | 0.275 ms | true |
-| `09-github-tools-9` | [input](cases/09-github-tools-9/full-input.txt) | [output](cases/09-github-tools-9/full-output.txt) | 78.9 KB | 34.7 KB | 56.0% | 0.334 ms | true |
-| `10-github-tools-10` | [input](cases/10-github-tools-10/full-input.txt) | [output](cases/10-github-tools-10/full-output.txt) | 98.3 KB | 36.1 KB | 63.3% | 0.413 ms | true |
+| `01-github-tools-1` | [input](cases/01-github-tools-1/input.json) | [output](cases/01-github-tools-1/output.txt) | 84.4 KB | 36.0 KB | 57.3% | 0.275 ms | true |
+| `02-github-tools-2` | [input](cases/02-github-tools-2/input.json) | [output](cases/02-github-tools-2/output.txt) | 144.5 KB | 62.0 KB | 57.1% | 0.473 ms | true |
+| `03-github-tools-3` | [input](cases/03-github-tools-3/input.json) | [output](cases/03-github-tools-3/output.txt) | 170.1 KB | 69.4 KB | 59.2% | 0.570 ms | true |
+| `04-github-tools-4` | [input](cases/04-github-tools-4/input.json) | [output](cases/04-github-tools-4/output.txt) | 71.6 KB | 29.8 KB | 58.4% | 0.239 ms | true |
+| `05-github-tools-5` | [input](cases/05-github-tools-5/input.json) | [output](cases/05-github-tools-5/output.txt) | 91.5 KB | 43.0 KB | 53.0% | 0.287 ms | true |
+| `06-github-tools-6` | [input](cases/06-github-tools-6/input.json) | [output](cases/06-github-tools-6/output.txt) | 72.8 KB | 30.5 KB | 58.2% | 0.235 ms | true |
+| `07-github-tools-7` | [input](cases/07-github-tools-7/input.json) | [output](cases/07-github-tools-7/output.txt) | 70.5 KB | 28.7 KB | 59.3% | 0.242 ms | true |
+| `08-github-tools-8` | [input](cases/08-github-tools-8/input.json) | [output](cases/08-github-tools-8/output.txt) | 61.1 KB | 24.5 KB | 59.9% | 0.209 ms | true |
+| `09-github-tools-9` | [input](cases/09-github-tools-9/input.json) | [output](cases/09-github-tools-9/output.txt) | 78.9 KB | 34.7 KB | 56.0% | 0.251 ms | true |
+| `10-github-tools-10` | [input](cases/10-github-tools-10/input.json) | [output](cases/10-github-tools-10/output.txt) | 98.3 KB | 36.1 KB | 63.3% | 0.321 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -27,8 +27,8 @@ TinyJuice recognizes repeated JSON object arrays and pays for the keys once by r
 
 ### `01-github-tools-1`
 
-- [Full input](cases/01-github-tools-1/full-input.txt)
-- [Full output](cases/01-github-tools-1/full-output.txt)
+- [Full input](cases/01-github-tools-1/input.json)
+- [Full output](cases/01-github-tools-1/output.txt)
 
 Input excerpt:
 
@@ -116,8 +116,8 @@ function | type
 
 ### `02-github-tools-2`
 
-- [Full input](cases/02-github-tools-2/full-input.txt)
-- [Full output](cases/02-github-tools-2/full-output.txt)
+- [Full input](cases/02-github-tools-2/input.json)
+- [Full output](cases/02-github-tools-2/output.txt)
 
 Input excerpt:
 
@@ -205,8 +205,8 @@ function | type
 
 ### `03-github-tools-3`
 
-- [Full input](cases/03-github-tools-3/full-input.txt)
-- [Full output](cases/03-github-tools-3/full-output.txt)
+- [Full input](cases/03-github-tools-3/input.json)
+- [Full output](cases/03-github-tools-3/output.txt)
 
 Input excerpt:
 
@@ -293,8 +293,8 @@ function | type
 
 ### `04-github-tools-4`
 
-- [Full input](cases/04-github-tools-4/full-input.txt)
-- [Full output](cases/04-github-tools-4/full-output.txt)
+- [Full input](cases/04-github-tools-4/input.json)
+- [Full output](cases/04-github-tools-4/output.txt)
 
 Input excerpt:
 
@@ -382,8 +382,8 @@ function | type
 
 ### `05-github-tools-5`
 
-- [Full input](cases/05-github-tools-5/full-input.txt)
-- [Full output](cases/05-github-tools-5/full-output.txt)
+- [Full input](cases/05-github-tools-5/input.json)
+- [Full output](cases/05-github-tools-5/output.txt)
 
 Input excerpt:
 
@@ -471,8 +471,8 @@ function | type
 
 ### `06-github-tools-6`
 
-- [Full input](cases/06-github-tools-6/full-input.txt)
-- [Full output](cases/06-github-tools-6/full-output.txt)
+- [Full input](cases/06-github-tools-6/input.json)
+- [Full output](cases/06-github-tools-6/output.txt)
 
 Input excerpt:
 
@@ -559,8 +559,8 @@ function | type
 
 ### `07-github-tools-7`
 
-- [Full input](cases/07-github-tools-7/full-input.txt)
-- [Full output](cases/07-github-tools-7/full-output.txt)
+- [Full input](cases/07-github-tools-7/input.json)
+- [Full output](cases/07-github-tools-7/output.txt)
 
 Input excerpt:
 
@@ -648,8 +648,8 @@ function | type
 
 ### `08-github-tools-8`
 
-- [Full input](cases/08-github-tools-8/full-input.txt)
-- [Full output](cases/08-github-tools-8/full-output.txt)
+- [Full input](cases/08-github-tools-8/input.json)
+- [Full output](cases/08-github-tools-8/output.txt)
 
 Input excerpt:
 
@@ -736,8 +736,8 @@ function | type
 
 ### `09-github-tools-9`
 
-- [Full input](cases/09-github-tools-9/full-input.txt)
-- [Full output](cases/09-github-tools-9/full-output.txt)
+- [Full input](cases/09-github-tools-9/input.json)
+- [Full output](cases/09-github-tools-9/output.txt)
 
 Input excerpt:
 
@@ -824,8 +824,8 @@ function | type
 
 ### `10-github-tools-10`
 
-- [Full input](cases/10-github-tools-10/full-input.txt)
-- [Full output](cases/10-github-tools-10/full-output.txt)
+- [Full input](cases/10-github-tools-10/input.json)
+- [Full output](cases/10-github-tools-10/output.txt)
 
 Input excerpt:
 

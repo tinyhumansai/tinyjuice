@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/full-input.txt) | [output](cases/01-vitest-unit-20260704-234941/full-output.txt) | 2.8 KB | 1.0 KB | 65.4% | 0.140 ms | true |
-| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/full-input.txt) | [output](cases/02-vitest-unit-20260704-234958/full-output.txt) | 969 B | 969 B | 0.0% | 0.000 ms | n/a |
-| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/full-input.txt) | [output](cases/03-vitest-unit-20260704-235052/full-output.txt) | 967 B | 967 B | 0.0% | 0.000 ms | n/a |
-| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/full-input.txt) | [output](cases/04-vitest-unit-20260704-235125/full-output.txt) | 967 B | 967 B | 0.0% | 0.000 ms | n/a |
-| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/full-input.txt) | [output](cases/05-vitest-unit-20260704-235231/full-output.txt) | 970 B | 970 B | 0.0% | 0.000 ms | n/a |
-| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/full-input.txt) | [output](cases/06-vitest-unit-20260704-235240/full-output.txt) | 971 B | 971 B | 0.0% | 0.000 ms | n/a |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/full-input.txt) | [output](cases/07-vitest-excerpt-7/full-output.txt) | 5.6 KB | 1.5 KB | 75.4% | 0.363 ms | true |
-| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/full-input.txt) | [output](cases/08-vitest-excerpt-8/full-output.txt) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
-| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/full-input.txt) | [output](cases/09-vitest-excerpt-9/full-output.txt) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
-| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/full-input.txt) | [output](cases/10-vitest-excerpt-10/full-output.txt) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | 2.8 KB | 1.0 KB | 65.4% | 0.115 ms | true |
+| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | 969 B | 969 B | 0.0% | 0.000 ms | n/a |
+| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | 967 B | 967 B | 0.0% | 0.000 ms | n/a |
+| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | 967 B | 967 B | 0.0% | 0.000 ms | n/a |
+| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | 970 B | 970 B | 0.0% | 0.000 ms | n/a |
+| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | [output](cases/06-vitest-unit-20260704-235240/output.log) | 971 B | 971 B | 0.0% | 0.000 ms | n/a |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | 5.6 KB | 1.5 KB | 75.4% | 0.231 ms | true |
+| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
+| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
+| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | 1.9 KB | 1.9 KB | 0.0% | 0.000 ms | n/a |
 
 ## What TinyJuice Is Doing
 
@@ -27,8 +27,8 @@ The command context routes these logs through the Vitest rule. Setup chatter and
 
 ### `01-vitest-unit-20260704-234941`
 
-- [Full input](cases/01-vitest-unit-20260704-234941/full-input.txt)
-- [Full output](cases/01-vitest-unit-20260704-234941/full-output.txt)
+- [Full input](cases/01-vitest-unit-20260704-234941/input.log)
+- [Full output](cases/01-vitest-unit-20260704-234941/output.log)
 
 Input excerpt:
 
@@ -95,8 +95,8 @@ Error: expect(element).not.toBeInTheDocument()
 
 ### `02-vitest-unit-20260704-234958`
 
-- [Full input](cases/02-vitest-unit-20260704-234958/full-input.txt)
-- [Full output](cases/02-vitest-unit-20260704-234958/full-output.txt)
+- [Full input](cases/02-vitest-unit-20260704-234958/input.log)
+- [Full output](cases/02-vitest-unit-20260704-234958/output.log)
 
 Input excerpt:
 
@@ -148,8 +148,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `03-vitest-unit-20260704-235052`
 
-- [Full input](cases/03-vitest-unit-20260704-235052/full-input.txt)
-- [Full output](cases/03-vitest-unit-20260704-235052/full-output.txt)
+- [Full input](cases/03-vitest-unit-20260704-235052/input.log)
+- [Full output](cases/03-vitest-unit-20260704-235052/output.log)
 
 Input excerpt:
 
@@ -201,8 +201,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `04-vitest-unit-20260704-235125`
 
-- [Full input](cases/04-vitest-unit-20260704-235125/full-input.txt)
-- [Full output](cases/04-vitest-unit-20260704-235125/full-output.txt)
+- [Full input](cases/04-vitest-unit-20260704-235125/input.log)
+- [Full output](cases/04-vitest-unit-20260704-235125/output.log)
 
 Input excerpt:
 
@@ -254,8 +254,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `05-vitest-unit-20260704-235231`
 
-- [Full input](cases/05-vitest-unit-20260704-235231/full-input.txt)
-- [Full output](cases/05-vitest-unit-20260704-235231/full-output.txt)
+- [Full input](cases/05-vitest-unit-20260704-235231/input.log)
+- [Full output](cases/05-vitest-unit-20260704-235231/output.log)
 
 Input excerpt:
 
@@ -307,8 +307,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `06-vitest-unit-20260704-235240`
 
-- [Full input](cases/06-vitest-unit-20260704-235240/full-input.txt)
-- [Full output](cases/06-vitest-unit-20260704-235240/full-output.txt)
+- [Full input](cases/06-vitest-unit-20260704-235240/input.log)
+- [Full output](cases/06-vitest-unit-20260704-235240/output.log)
 
 Input excerpt:
 
@@ -360,8 +360,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `07-vitest-excerpt-7`
 
-- [Full input](cases/07-vitest-excerpt-7/full-input.txt)
-- [Full output](cases/07-vitest-excerpt-7/full-output.txt)
+- [Full input](cases/07-vitest-excerpt-7/input.log)
+- [Full output](cases/07-vitest-excerpt-7/output.log)
 
 Input excerpt:
 
@@ -437,8 +437,8 @@ Error: expect(element).not.toBeInTheDocument()
 
 ### `08-vitest-excerpt-8`
 
-- [Full input](cases/08-vitest-excerpt-8/full-input.txt)
-- [Full output](cases/08-vitest-excerpt-8/full-output.txt)
+- [Full input](cases/08-vitest-excerpt-8/input.log)
+- [Full output](cases/08-vitest-excerpt-8/output.log)
 
 Input excerpt:
 
@@ -526,8 +526,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `09-vitest-excerpt-9`
 
-- [Full input](cases/09-vitest-excerpt-9/full-input.txt)
-- [Full output](cases/09-vitest-excerpt-9/full-output.txt)
+- [Full input](cases/09-vitest-excerpt-9/input.log)
+- [Full output](cases/09-vitest-excerpt-9/output.log)
 
 Input excerpt:
 
@@ -615,8 +615,8 @@ Both esbuild and oxc options were set. oxc options will be used and esbuild opti
 
 ### `10-vitest-excerpt-10`
 
-- [Full input](cases/10-vitest-excerpt-10/full-input.txt)
-- [Full output](cases/10-vitest-excerpt-10/full-output.txt)
+- [Full input](cases/10-vitest-excerpt-10/input.log)
+- [Full output](cases/10-vitest-excerpt-10/output.log)
 
 Input excerpt:
 

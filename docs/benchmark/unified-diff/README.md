@@ -8,16 +8,16 @@ Each row links to the full raw input and the exact compacted output used by the 
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/full-input.txt) | [output](cases/01-tinyjuice-worktree/full-output.txt) | 42.5 KB | 28.3 KB | 33.4% | 0.068 ms | true |
-| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/full-input.txt) | [output](cases/02-openhuman-commit-2/full-output.txt) | 63.9 KB | 4.2 KB | 93.4% | 0.140 ms | true |
-| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/full-input.txt) | [output](cases/03-openhuman-commit-3/full-output.txt) | 192.1 KB | 90.0 KB | 53.2% | 0.435 ms | true |
-| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/full-input.txt) | [output](cases/04-openhuman-commit-4/full-output.txt) | 186.4 KB | 106.7 KB | 42.7% | 0.373 ms | true |
-| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/full-input.txt) | [output](cases/05-openhuman-commit-5/full-output.txt) | 177.3 KB | 61.3 KB | 65.4% | 0.294 ms | true |
-| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/full-input.txt) | [output](cases/06-openhuman-commit-6/full-output.txt) | 87.2 KB | 7.1 KB | 91.8% | 0.181 ms | true |
-| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/full-input.txt) | [output](cases/07-openhuman-commit-7/full-output.txt) | 25.1 KB | 6.1 KB | 76.6% | 0.045 ms | true |
-| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/full-input.txt) | [output](cases/08-openhuman-commit-8/full-output.txt) | 39.4 KB | 7.6 KB | 80.7% | 0.057 ms | true |
-| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/full-input.txt) | [output](cases/09-openhuman-commit-9/full-output.txt) | 29.3 KB | 14.6 KB | 50.2% | 0.046 ms | true |
-| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/full-input.txt) | [output](cases/10-openhuman-commit-10/full-output.txt) | 65.9 KB | 13.5 KB | 79.5% | 0.106 ms | true |
+| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | 24.8 KB | 8.3 KB | 66.5% | 0.040 ms | true |
+| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | 63.9 KB | 4.2 KB | 93.4% | 0.127 ms | true |
+| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | 192.1 KB | 90.0 KB | 53.2% | 0.367 ms | true |
+| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | 186.4 KB | 106.7 KB | 42.7% | 0.351 ms | true |
+| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | 177.3 KB | 61.3 KB | 65.4% | 0.264 ms | true |
+| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | 87.2 KB | 7.1 KB | 91.8% | 0.173 ms | true |
+| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | 25.1 KB | 6.1 KB | 76.6% | 0.042 ms | true |
+| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | 39.4 KB | 7.6 KB | 80.7% | 0.052 ms | true |
+| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | 29.3 KB | 14.6 KB | 50.2% | 0.045 ms | true |
+| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | 65.9 KB | 13.5 KB | 79.5% | 0.102 ms | true |
 
 ## What TinyJuice Is Doing
 
@@ -27,97 +27,97 @@ Diff compression preserves review-critical structure: file headers, hunk headers
 
 ### `01-tinyjuice-worktree`
 
-- [Full input](cases/01-tinyjuice-worktree/full-input.txt)
-- [Full output](cases/01-tinyjuice-worktree/full-output.txt)
+- [Full input](cases/01-tinyjuice-worktree/input.diff)
+- [Full output](cases/01-tinyjuice-worktree/output.diff)
 
 Input excerpt:
 
 ```diff
-diff --git a/README.md b/README.md
-index 5e70cce..a9442dc 100644
---- a/README.md
-+++ b/README.md
-@@ -93,161 +93,163 @@ TinyJuice does not publish compression percentage claims yet. Throughput
- benchmarks exist for hot paths, but ratio and quality claims require benchmark
- fixtures that prove retained facts, latency, reversibility, and regression
- safety.
+diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
+index cd47c7c..52199c7 100644
+--- a/examples/compression_benchmark.rs
++++ b/examples/compression_benchmark.rs
+@@ -1,148 +1,188 @@
+ //! Fixture-driven TinyJuice compression benchmark.
+ //!
+ //! Run with:
+ //!
+ //! ` ` `sh
+ //! cargo run --release --example compression_benchmark -- --iterations 20
+ //! cargo run --release --example compression_benchmark -- --format json
+ //! ` ` `
+ //!
+ //! The report intentionally emits metadata only: sizes, token estimates,
+ //! latency, compressor labels, CCR recovery, and named accuracy checks.
  
- ## Quick Start
+ use serde::Serialize;
+ use serde_json::json;
+ use std::fmt::Write as _;
+ use std::path::{Path, PathBuf};
+ use std::time::Instant;
+ use tinyjuice::cache;
+ use tinyjuice::tokens::estimate_tokens;
+ use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind};
  
- Add TinyJuice to a Rust project once published:
- 
- ` ` `toml
- [dependencies]
- tinyjuice = "0.1"
- ` ` `
- 
- Use the small public trait scaffold when you want a simple strategy boundary:
- 
- ` ` `rust
- use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
- 
- fn main() -> Result<(), tinyjuice::TinyJuiceError> {
-     let compressor = PassthroughCompressor;
-     let output = compressor.compress(
-         CompressionInput::new("Keep this text unchanged for now."),
-         &CompressionConfig::default(),
-     )?;
- 
-     assert_eq!(output.report.strategy, "passthrough");
-     Ok(())
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ enum ReportFormat {
+     Markdown,
+     Json,
  }
- ` ` `
  
- Use the content router for real tool-output compaction:
+ #[derive(Debug, Clone)]
+ struct Args {
+     iterations: usize,
+     format: ReportFormat,
 
 ```
 
 Output excerpt:
 
 ```diff
-diff --git a/README.md b/README.md
-index 5e70cce..a9442dc 100644
---- a/README.md
-+++ b/README.md
-@@ -93,161 +93,163 @@ TinyJuice does not publish compression percentage claims yet. Throughput
- benchmarks exist for hot paths, but ratio and quality claims require benchmark
- fixtures that prove retained facts, latency, reversibility, and regression
- safety.
-[... 74 context line(s) omitted ...]
- cargo bench
- ` ` `
- 
--Run fixture-driven compression benchmarks:
-+Run the real-snapshot compression benchmark corpus:
- 
- ` ` `sh
-+cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
- cargo run --release --example compression_benchmark -- --iterations 20
- cargo run --release --example compression_benchmark -- --iterations 20 --format json
- ` ` `
- 
--Fixture benchmark snapshot from `cargo run --release --example
-+Corpus benchmark snapshot from `cargo run --release --example
- compression_benchmark -- --iterations 20`:
- 
--| Use case | Compressor | Est. token reduction | Avg latency | CCR recovery |
--| --- | --- | ---: | ---: | --- |
--| JSON service inventory | SmartCrusher | 94.9% | 0.397 ms | yes |
--| Cargo test failure log | Log | 93.6% | 0.667 ms | yes |
--| Docker service log | Log | 99.8% | 1.110 ms | yes |
--| Ripgrep search results | Search | 75.3% | 0.034 ms | yes |
--| Unified diff | Diff | 84.3% | 0.008 ms | yes |
--| HTML status report | HTML | 61.2% | 0.063 ms | yes |
--| Rust source file | Code | 88.6% | 0.199 ms | yes |
--| Plain text with ML off | None | 0.0% | 0.000 ms | n/a |
-+| Use case | Cases | Compressor | Avg est. token reduction | Avg latency | CCR recovery |
+diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
+index cd47c7c..52199c7 100644
+--- a/examples/compression_benchmark.rs
++++ b/examples/compression_benchmark.rs
+@@ -1,148 +1,188 @@
+ //! Fixture-driven TinyJuice compression benchmark.
+ //!
+ //! Run with:
+[... 60 context line(s) omitted ...]
+     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+         .join("docs/benchmark")
+         .join(doc_dir)
+-        .join("full-input.txt");
+-    std::fs::read_to_string(&path).unwrap_or(fallback)
++        .join(input_artifact_name(doc_dir));
++    std::fs::read_to_string(&path)
++        .or_else(|_| {
++            std::fs::read_to_string(
++                Path::new(env!("CARGO_MANIFEST_DIR"))
++                    .join("docs/benchmark")
++                    .join(doc_dir)
++                    .join("full-input.txt"),
++            )
++        })
++        .unwrap_or(fallback)
++}
++
++fn category_name(doc_dir: &str) -> &str {
++    doc_dir.split('/').next().unwrap_or(doc_dir)
++}
++
++fn input_artifact_name(doc_dir: &str) -> &'static str {
++    match category_name(doc_dir) {
++        "json-smartcrusher" => "input.json",
++        "test-failure-log" => "input.log",
++        "service-log" => "input.log",
 
 ```
 
 ### `02-openhuman-commit-2`
 
-- [Full input](cases/02-openhuman-commit-2/full-input.txt)
-- [Full output](cases/02-openhuman-commit-2/full-output.txt)
+- [Full input](cases/02-openhuman-commit-2/input.diff)
+- [Full output](cases/02-openhuman-commit-2/output.diff)
 
 Input excerpt:
 
@@ -205,8 +205,8 @@ index 241e0d09f..70240e869 100644
 
 ### `03-openhuman-commit-3`
 
-- [Full input](cases/03-openhuman-commit-3/full-input.txt)
-- [Full output](cases/03-openhuman-commit-3/full-output.txt)
+- [Full input](cases/03-openhuman-commit-3/input.diff)
+- [Full output](cases/03-openhuman-commit-3/output.diff)
 
 Input excerpt:
 
@@ -294,8 +294,8 @@ index 3b7a830c2..79a796ff6 100644
 
 ### `04-openhuman-commit-4`
 
-- [Full input](cases/04-openhuman-commit-4/full-input.txt)
-- [Full output](cases/04-openhuman-commit-4/full-output.txt)
+- [Full input](cases/04-openhuman-commit-4/input.diff)
+- [Full output](cases/04-openhuman-commit-4/output.diff)
 
 Input excerpt:
 
@@ -383,8 +383,8 @@ index 000000000..96f0a088b
 
 ### `05-openhuman-commit-5`
 
-- [Full input](cases/05-openhuman-commit-5/full-input.txt)
-- [Full output](cases/05-openhuman-commit-5/full-output.txt)
+- [Full input](cases/05-openhuman-commit-5/input.diff)
+- [Full output](cases/05-openhuman-commit-5/output.diff)
 
 Input excerpt:
 
@@ -472,8 +472,8 @@ index 000000000..73fd65eb3
 
 ### `06-openhuman-commit-6`
 
-- [Full input](cases/06-openhuman-commit-6/full-input.txt)
-- [Full output](cases/06-openhuman-commit-6/full-output.txt)
+- [Full input](cases/06-openhuman-commit-6/input.diff)
+- [Full output](cases/06-openhuman-commit-6/output.diff)
 
 Input excerpt:
 
@@ -561,8 +561,8 @@ index 9913ff760..3b7a830c2 100644
 
 ### `07-openhuman-commit-7`
 
-- [Full input](cases/07-openhuman-commit-7/full-input.txt)
-- [Full output](cases/07-openhuman-commit-7/full-output.txt)
+- [Full input](cases/07-openhuman-commit-7/input.diff)
+- [Full output](cases/07-openhuman-commit-7/output.diff)
 
 Input excerpt:
 
@@ -650,8 +650,8 @@ index e24e569ce..8167f088c 100644
 
 ### `08-openhuman-commit-8`
 
-- [Full input](cases/08-openhuman-commit-8/full-input.txt)
-- [Full output](cases/08-openhuman-commit-8/full-output.txt)
+- [Full input](cases/08-openhuman-commit-8/input.diff)
+- [Full output](cases/08-openhuman-commit-8/output.diff)
 
 Input excerpt:
 
@@ -739,8 +739,8 @@ index d649681fb..ffe82de44 100644
 
 ### `09-openhuman-commit-9`
 
-- [Full input](cases/09-openhuman-commit-9/full-input.txt)
-- [Full output](cases/09-openhuman-commit-9/full-output.txt)
+- [Full input](cases/09-openhuman-commit-9/input.diff)
+- [Full output](cases/09-openhuman-commit-9/output.diff)
 
 Input excerpt:
 
@@ -828,8 +828,8 @@ index 61b4d12fb..7237cd6e9 100644
 
 ### `10-openhuman-commit-10`
 
-- [Full input](cases/10-openhuman-commit-10/full-input.txt)
-- [Full output](cases/10-openhuman-commit-10/full-output.txt)
+- [Full input](cases/10-openhuman-commit-10/input.diff)
+- [Full output](cases/10-openhuman-commit-10/output.diff)
 
 Input excerpt:
 
