@@ -116,7 +116,6 @@ pub fn compress(content: &str, block_tokens: bool) -> Option<CompressOutput> {
     if !saw_hunk {
         return None;
     }
-    let mut out = out;
     if any_token {
         out.push_str(BLOCK_NOTE);
         out.push('\n');

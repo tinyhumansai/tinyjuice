@@ -116,9 +116,21 @@ async fn full_profile_compacts_and_original_is_recoverable() {
         !tokens.is_empty(),
         "lossy compaction must embed a recovery marker; got:\n{text}"
     );
-    let original = cache::retrieve(&tokens[0])
+    // Earlier markers are per-block tokens (omitted row ranges etc.); the
+    // whole-payload footer token comes last.
+    let footer_token = tokens.last().expect("non-empty");
+    let original = cache::retrieve(footer_token)
         .expect("footer-referenced token must be retrievable at emission time");
     assert_eq!(original, payload, "CCR roundtrip must restore the original");
+
+    // Any per-block tokens must retrieve pieces of the original, not noise.
+    for token in &tokens[..tokens.len() - 1] {
+        let block = cache::retrieve(token).expect("block token retrievable");
+        assert!(
+            block.len() < payload.len(),
+            "a block is a strict subset of the payload"
+        );
+    }
 }
 
 #[tokio::test]
