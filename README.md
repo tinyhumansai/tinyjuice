@@ -84,6 +84,12 @@ tool-call/result boundary alignment, latest user/assistant anchors, JSON
 string-leaf shrinking, and old tool-result digesting with sensitive metadata
 redaction.
 
+`savings::configure_record_recorder` installs a metadata-only savings recorder
+that receives class-labeled `SavingsRecord` values (`counted`, `measured`, or
+`estimated`) with content kind, compressor, byte/token counts, lossy/CCR flags,
+and redacted rule or skip labels. The older four-argument
+`configure_recorder` callback remains as a compatibility wrapper.
+
 Run the local analytics interface:
 
 ```sh

@@ -263,8 +263,19 @@ pub async fn route_with_store_report(
     );
 
     // Record savings for the dashboard (tokens + cost saved for the LLM the
-    // result is being compressed for).
-    savings::record(kind, out.kind, original_tokens, compacted_tokens);
+    // result is being compressed for). Token counts are estimated; byte counts
+    // are measured directly from this reducer invocation.
+    savings::record_event(
+        savings::SavingsRecord::estimated_compaction(
+            kind,
+            out.kind,
+            original_tokens,
+            compacted_tokens,
+        )
+        .with_bytes(original_bytes as u64, compacted_bytes as u64)
+        .with_lossy(out.lossy)
+        .with_ccr_token_present(ccr_token.is_some()),
+    );
 
     let res = CompressedOutput {
         text,
