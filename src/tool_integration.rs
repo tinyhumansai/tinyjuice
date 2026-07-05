@@ -52,12 +52,11 @@ pub fn current_options() -> CompressOptions {
         .clone()
 }
 
-fn options_for_agent(profile: AgentTokenjuiceCompression) -> Option<CompressOptions> {
+fn options_for_agent(profile: AgentTokenjuiceCompression) -> Result<CompressOptions, &'static str> {
     match profile {
-        AgentTokenjuiceCompression::Off => None,
-        AgentTokenjuiceCompression::Auto | AgentTokenjuiceCompression::Full => {
-            Some(current_options())
-        }
+        AgentTokenjuiceCompression::Off => Err("none/agent-profile-off"),
+        AgentTokenjuiceCompression::Auto => Err("none/agent-profile-auto-unresolved"),
+        AgentTokenjuiceCompression::Full => Ok(current_options()),
         AgentTokenjuiceCompression::Light => {
             let mut opts = current_options();
             // Coding agents need raw, exact tool text more than aggressive token
@@ -65,7 +64,7 @@ fn options_for_agent(profile: AgentTokenjuiceCompression) -> Option<CompressOpti
             // route(), while still allowing any truly lossless reduction.
             opts.ccr_enabled = false;
             opts.ml_text_enabled = false;
-            Some(opts)
+            Ok(opts)
         }
     }
 }
@@ -134,22 +133,26 @@ pub async fn compact_tool_output_with_policy(
 ) -> (String, CompactionStats) {
     let original_bytes = output.len();
 
-    let Some(opts) = options_for_agent(profile) else {
-        log::debug!(
-            "[tokenjuice] agent profile disabled compaction tool={} bytes={}",
-            tool_name,
-            original_bytes
-        );
-        return (
-            output.to_string(),
-            CompactionStats {
-                tool_name: tool_name.to_string(),
-                original_bytes,
-                compacted_bytes: original_bytes,
-                rule_id: "none/agent-profile-off".to_string(),
-                applied: false,
-            },
-        );
+    let opts = match options_for_agent(profile) {
+        Ok(opts) => opts,
+        Err(rule_id) => {
+            log::debug!(
+                "[tokenjuice] agent profile skipped compaction tool={} profile={} bytes={}",
+                tool_name,
+                profile.as_str(),
+                original_bytes
+            );
+            return (
+                output.to_string(),
+                CompactionStats {
+                    tool_name: tool_name.to_string(),
+                    original_bytes,
+                    compacted_bytes: original_bytes,
+                    rule_id: rule_id.to_string(),
+                    applied: false,
+                },
+            );
+        }
     };
 
     // A recovery tool's output is the original we previously offloaded — never
@@ -381,6 +384,28 @@ mod tests {
             compact_output_with_policy(big.clone(), "grep", true, AgentTokenjuiceCompression::Off)
                 .await;
         assert_eq!(returned, big);
+    }
+
+    #[tokio::test]
+    async fn auto_agent_profile_requires_host_resolution() {
+        let mut lines = vec!["On branch main".to_owned()];
+        for i in 0..200 {
+            lines.push(format!("\tmodified:   src/file_{i}.rs"));
+        }
+        let output = lines.join("\n");
+        let args = json!({"command": "git status"});
+        let (returned, stats) = compact_tool_output_with_policy(
+            "shell",
+            Some(&args),
+            &output,
+            Some(0),
+            AgentTokenjuiceCompression::Auto,
+        )
+        .await;
+
+        assert_eq!(returned, output);
+        assert!(!stats.applied);
+        assert_eq!(stats.rule_id, "none/agent-profile-auto-unresolved");
     }
 
     #[test]

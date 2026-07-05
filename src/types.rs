@@ -303,9 +303,9 @@ pub struct CompactResult {
 
 /// Per-agent TokenJuice profile.
 ///
-/// `Auto` is resolved by the agent definition layer. TokenJuice itself treats
-/// `Auto` like `Full` so non-agent callers keep the global `[tokenjuice]`
-/// behaviour unless they explicitly pass a narrower profile.
+/// `Auto` must be resolved by the host agent definition layer before calling
+/// TokenJuice. The compression adapter treats unresolved `Auto` as a
+/// passthrough so hosts cannot accidentally apply `Full` to coding agents.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentTokenjuiceCompression {
