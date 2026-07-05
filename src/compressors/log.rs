@@ -15,16 +15,15 @@
 //! listing, CSV, generated data) and must not be head/tail truncated.
 
 use async_trait::async_trait;
-use once_cell::sync::Lazy;
 use std::collections::HashSet;
 use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::{Severity, severity};
 use crate::reduce::reduce_execution_with_rules;
-use crate::rules::load_builtin_rules;
+use crate::rules::cached_overlay_rules;
 use crate::types::{
-    CompiledRule, CompressInput, CompressOptions, CompressOutput, CompressorKind, ReduceOptions,
+    CompressInput, CompressOptions, CompressOutput, CompressorKind, ReduceOptions,
     ToolExecutionInput,
 };
 
@@ -33,8 +32,6 @@ pub const MAX_WARNINGS: usize = 5;
 pub const MAX_STACK_TRACES: usize = 3;
 pub const STACK_TRACE_MAX_LINES: usize = 20;
 pub const MAX_TOTAL_LINES: usize = 100;
-
-static BUILTIN_RULES: Lazy<Vec<CompiledRule>> = Lazy::new(load_builtin_rules);
 
 pub struct LogCompressor;
 
@@ -97,7 +94,10 @@ fn run_rule_engine(
         max_inline_chars: opts.max_inline_chars,
         ..Default::default()
     };
-    let result = reduce_execution_with_rules(exec, &BUILTIN_RULES, &reduce_opts);
+    // Full three-layer overlay (builtin → user → project) so project rules in
+    // `<cwd>/.tokenjuice/rules/` apply to the compression path, as documented.
+    let rules = cached_overlay_rules(None);
+    let result = reduce_execution_with_rules(exec, &rules, &reduce_opts);
     if result.inline_text.len() >= input.content.len() {
         return None;
     }

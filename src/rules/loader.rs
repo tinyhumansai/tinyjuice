@@ -13,7 +13,10 @@
 
 use super::{builtin::BUILTIN_RULE_JSONS, compiler::compile_rule};
 use crate::types::{CompiledRule, JsonRule, RuleOrigin};
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 // ---------------------------------------------------------------------------
 // Options
@@ -188,13 +191,19 @@ fn load_disk_descriptors(root: &Path, source: RuleOrigin) -> Vec<(RuleOrigin, St
 
 /// Merge descriptors by `rule.id`: later entries win (project > user > builtin).
 fn overlay_and_sort(descriptors: Vec<(RuleOrigin, String, JsonRule)>) -> Vec<CompiledRule> {
-    // Use an IndexMap-like approach via a Vec to preserve last-write semantics
-    // while keeping insertion order (needed for stable sort).
-    let mut by_id: std::collections::HashMap<String, (RuleOrigin, String, JsonRule)> =
-        std::collections::HashMap::new();
+    // Last write wins per id; the final sort below restores a stable order.
+    let mut by_id: HashMap<String, (RuleOrigin, String, JsonRule)> = HashMap::new();
 
     for (source, path, rule) in descriptors {
-        by_id.insert(rule.id.clone(), (source, path, rule));
+        let id = rule.id.clone();
+        if let Some((prev_source, prev_path, _)) = by_id.insert(id.clone(), (source, path, rule)) {
+            log::debug!(
+                "[tokenjuice] rule '{}' from {:?} {} overridden by a later layer/file",
+                id,
+                prev_source,
+                prev_path
+            );
+        }
     }
 
     let mut compiled: Vec<CompiledRule> = by_id
@@ -266,6 +275,43 @@ pub fn load_builtin_rules() -> Vec<CompiledRule> {
         exclude_project: true,
         ..Default::default()
     })
+}
+
+// ---------------------------------------------------------------------------
+// Cached overlay for hot paths
+// ---------------------------------------------------------------------------
+
+type OverlayCache = Mutex<HashMap<(PathBuf, PathBuf), Arc<Vec<CompiledRule>>>>;
+static OVERLAY_CACHE: Lazy<OverlayCache> = Lazy::new(Default::default);
+
+/// Cached [`load_rules`] for hot paths (the compression router's rule engine).
+///
+/// Keyed by the resolved user/project rule directories, so callers in
+/// different working directories get their own overlay. Cached for the
+/// process lifetime — rule-file edits need a new process to be picked up,
+/// the same lifetime the builtin-only cache had before overlay support.
+pub fn cached_overlay_rules(cwd: Option<&Path>) -> Arc<Vec<CompiledRule>> {
+    let cwd = cwd
+        .map(Path::to_path_buf)
+        .or_else(|| std::env::current_dir().ok());
+    let key = (
+        user_rules_root(None),
+        project_rules_root(cwd.as_deref(), None),
+    );
+
+    if let Ok(cache) = OVERLAY_CACHE.lock()
+        && let Some(hit) = cache.get(&key)
+    {
+        return Arc::clone(hit);
+    }
+    let rules = Arc::new(load_rules(&LoadRuleOptions {
+        cwd,
+        ..Default::default()
+    }));
+    if let Ok(mut cache) = OVERLAY_CACHE.lock() {
+        cache.insert(key, Arc::clone(&rules));
+    }
+    rules
 }
 
 #[cfg(test)]
