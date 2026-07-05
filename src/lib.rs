@@ -5,6 +5,7 @@
 //! own RPC/tool surfaces.
 
 pub mod cache;
+pub mod cache_hints;
 pub mod classify;
 pub mod compress;
 pub mod compressor;
@@ -27,6 +28,10 @@ pub mod tool_integration;
 pub mod types;
 mod util;
 
+pub use cache_hints::{
+    CacheMarkerPlacement, PromptCacheHint, PromptCacheTtl, StaticPrefixCacheHint,
+    ToolSchemaForCache, anthropic_cache_hints, stable_prefix_cache_key, static_prefix_cache_hint,
+};
 pub use compress::{
     compress_content, compress_content_with_store, compress_content_with_store_report, route,
     route_with_store, route_with_store_report,
@@ -42,15 +47,21 @@ pub use compressors::web_extract::{
 pub use compressors::{compressor_for, generic_compressor};
 pub use config::CompressionConfig;
 pub use conversation::{
-    ChatMessage, ConversationBudget, ConversationMessage, EventMetadata, EvidencePolicy,
-    EvidenceRef, Finding, HeadProtection, OmissionReport, SubagentEvent, SubagentEventRole,
-    SubagentSummaryInput, SubagentSummaryOutput, TailBudgetSelection, ToolCall, ToolDigestEntry,
+    ChatMessage, ConversationBudget, ConversationMessage, DeterministicSummaryOptions,
+    EventMetadata, EvidencePolicy, EvidenceRef, Finding, HeadProtection, OmissionReport,
+    SUMMARY_END_MARKER, SUMMARY_METADATA_KIND, StructuredSummary, SubagentEvent, SubagentEventRole,
+    SubagentSummaryInput, SubagentSummaryOutput, SummaryError, SummaryErrorKind,
+    SummaryFailureAction, SummaryFailureDecision, SummaryFailurePolicy, SummaryInsertionReport,
+    SummaryProvider, SummaryRequest, TailBudgetSelection, ToolCall, ToolDigestEntry,
     ToolDigestOptions, ToolDigestReport, ToolResultMessage, align_tail_start_for_tool_boundaries,
-    digest_old_tool_results, effective_input_window, estimate_message_tokens,
-    format_subagent_summary_markdown, latest_real_user_index, latest_visible_assistant_index,
-    protected_head_end, redact_sensitive_json, sanitize_orphan_tool_messages,
-    select_tail_by_budget, shrink_json_string_leaves, summarize_subagent_transcript,
-    threshold_tokens,
+    build_summary_prompt, compaction_summary_message, decide_summary_failure,
+    deterministic_fallback_summary, digest_old_tool_results, effective_input_window,
+    estimate_message_tokens, format_subagent_summary_markdown, is_compaction_summary_message,
+    latest_real_user_index, latest_visible_assistant_index, normalize_summary_text,
+    protected_head_end, redact_sensitive_json, rehydrate_summary_from_message,
+    render_structured_summary, sanitize_orphan_tool_messages, select_tail_by_budget,
+    shrink_json_string_leaves, summarize_subagent_transcript, threshold_tokens,
+    upsert_compaction_summary,
 };
 pub use detect::detect_content_kind;
 pub use error::{TinyJuiceError, TinyJuiceResult};

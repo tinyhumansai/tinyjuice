@@ -6,6 +6,7 @@
 mod boundary;
 mod budget;
 mod subagent;
+mod summary;
 mod tool_digest;
 mod types;
 
@@ -21,6 +22,14 @@ pub use subagent::{
     EventMetadata, EvidencePolicy, EvidenceRef, Finding, OmissionReport, SubagentEvent,
     SubagentEventRole, SubagentSummaryInput, SubagentSummaryOutput,
     format_subagent_summary_markdown, summarize_subagent_transcript,
+};
+pub use summary::{
+    DeterministicSummaryOptions, SUMMARY_END_MARKER, SUMMARY_METADATA_KIND, StructuredSummary,
+    SummaryError, SummaryErrorKind, SummaryFailureAction, SummaryFailureDecision,
+    SummaryFailurePolicy, SummaryInsertionReport, SummaryProvider, SummaryRequest,
+    build_summary_prompt, compaction_summary_message, decide_summary_failure,
+    deterministic_fallback_summary, is_compaction_summary_message, normalize_summary_text,
+    rehydrate_summary_from_message, render_structured_summary, upsert_compaction_summary,
 };
 pub use tool_digest::{
     ToolDigestEntry, ToolDigestOptions, ToolDigestReport, digest_old_tool_results,
