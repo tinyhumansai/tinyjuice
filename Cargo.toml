@@ -25,7 +25,7 @@ unicode-segmentation = "1"
 unicode-width = "0.2"
 
 [dependencies.tree-sitter]
-version = "0.24"
+version = "0.25"
 optional = true
 
 [dependencies.tree-sitter-python]
@@ -41,8 +41,13 @@ version = "0.23"
 optional = true
 
 [dev-dependencies]
+criterion = "0.5"
 tempfile = "3"
 tokio = { version = "1", features = ["macros", "rt", "test-util"] }
+
+[[bench]]
+name = "compression"
+harness = false
 
 [features]
 default = ["tokenjuice-treesitter"]

@@ -14,6 +14,7 @@ on hardening and extending those boundaries rather than replacing them.
 - [Current State And Critique](current-state-and-critique.md)
 - [Reference Algorithm Summary](reference-algorithm-summary.md)
 - [OpenHuman Integration Plan](openhuman-integration-plan.md)
+- [OpenHuman Algorithm Port Plan](openhuman-algorithm-port-plan.md)
 - [Pipeline And CCR Plan](pipeline-and-ccr-plan.md)
 - [Rule CLI And Safety Parity Plan](rule-cli-and-safety-parity-plan.md)
 - [Content Compressor Roadmap](content-compressor-roadmap.md)

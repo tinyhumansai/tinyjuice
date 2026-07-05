@@ -93,6 +93,26 @@ yet implement the richer policy from the references: safe inventory pipelines
 may compact, exact content reads stay raw, mixed shell sequences stay raw, and
 unsafe actions such as `find -exec` stay raw.
 
+### Footer Placement Is A Fragile Host Contract
+
+`route()` appends the recovery footer to the end of the compacted text and
+returns a single string. Hosts that apply their own truncation caps after
+compaction (OpenHuman applies a per-tool char cap and a 16 KiB byte-cap
+backstop after the TokenJuice stage) keep the head and cut the tail, which
+severs the footer and leaves an unrecoverable lossy view. `CompressedOutput`
+should expose the footer (or the body/footer split) as separate fields so
+hosts can truncate the body and reattach the marker. Until then, every host
+integration must be audited for post-compaction truncation.
+
+### The Rule Catalog Is Inert Without Arguments
+
+`compact_output_with_policy` forwards `arguments: None, exit_code: None`, and
+the rule reducer only fires for command output. OpenHuman currently calls this
+minimal wrapper, so the 100-rule catalog, extension hints, query hints, and
+exit-code handling are all dead at the only production call site. The plan's
+Phase 1 must treat migrating that call site as the primary deliverable, not a
+confirmation task.
+
 ### Limited Observability
 
 Current stats expose bytes and compressor labels, and savings callbacks estimate

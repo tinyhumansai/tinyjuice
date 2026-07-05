@@ -20,6 +20,10 @@ Plan:
 - Preserve the flattened filename convention under `src/vendor/rules`.
 - Generate a manifest with upstream commit, rule id, source path, local path,
   and any schema compatibility notes.
+- Handle licensing in the sync: upstream TokenJuice is MIT while TinyJuice is
+  GPL-3.0-only. Imported rules and fixtures need attribution and license
+  preservation in the manifest; prefer mechanical import with a recorded
+  source commit over hand-edited copies.
 - Preserve TinyJuice-specific rules.
 - Add tests that assert expected rule ids are present and `generic/fallback`
   sorts last.

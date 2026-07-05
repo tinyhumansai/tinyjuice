@@ -10,6 +10,14 @@ persistence.
 
 Conversation compression is not the same as tool-output compression.
 
+OpenHuman already runs conversation-level middlewares on the tinyagents graph:
+`ContextCompressionMiddleware` (live history summarization,
+`src/openhuman/tinyagents/summarize.rs`), `MessageTrimMiddleware`, and
+`MicrocompactMiddleware` (clears older tool-result bodies). These are the
+integration seams for this plan — the helpers below should be consumable from
+those middlewares, and the tool-result digest must coordinate with
+microcompaction so the same messages are not processed twice.
+
 TinyJuice core can provide:
 
 - provider-neutral message types
