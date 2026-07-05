@@ -1,30 +1,61 @@
 class DisjointSetTreeNode {
   // Disjoint Set Node to store the parent and rank
-  constructor(key) { … 5 line(s) … ⟦tj:cc203209ef83cf88d95f82bbc1ff2e63⟧ }
+  constructor(key) {
+    this.key = key
+    this.parent = this
+    this.rank = 0
+  }
 }
 
 class DisjointSetTree {
   // Disjoint Set DataStructure
-  constructor() { … 4 line(s) … ⟦tj:423f66fac68fd7c61caff56fa67e3e01⟧ }
+  constructor() {
+    // map to from node name to the node object
+    this.map = {}
+  }
 
-  makeSet(x) { … 4 line(s) … ⟦tj:3be76121c4e24a58afbeca0ec04cd9c0⟧ }
+  makeSet(x) {
+    // Function to create a new set with x as its member
+    this.map[x] = new DisjointSetTreeNode(x)
+  }
 
-  findSet(x) { … 7 line(s) … ⟦tj:100847979048df823ae6a5423d44d937⟧ }
+  findSet(x) {
+    // Function to find the set x belongs to (with path-compression)
+    if (this.map[x] !== this.map[x].parent) {
+      this.map[x].parent = this.findSet(this.map[x].parent.key)
+    }
+    return this.map[x].parent
+  }
 
-  union(x, y) { … 4 line(s) … ⟦tj:d3f1c74c4d1b4efa72fe8d37129a1d34⟧ }
+  union(x, y) {
+    // Function to merge 2 disjoint sets
+    this.link(this.findSet(x), this.findSet(y))
+  }
 
   link(x, y) { … 11 line(s) … ⟦tj:9f99af8cff2f922138fd7f3a02ff748b⟧ }
 }
 
 class GraphWeightedUndirectedAdjacencyList {
   // Weighted Undirected Graph class
-  constructor() { … 4 line(s) … ⟦tj:e126c8ad49d316abc603fbd0df82d5ff⟧ }
+  constructor() {
+    this.connections = {}
+    this.nodes = 0
+  }
 
-  addNode(node) { … 5 line(s) … ⟦tj:a4388b9b38823db199f56247533ec4bd⟧ }
+  addNode(node) {
+    // Function to add a node to the graph (connection represented by set)
+    this.connections[node] = {}
+    this.nodes += 1
+  }
 
   addEdge(node1, node2, weight) { … 11 line(s) … ⟦tj:8cf29be138c5b1ef6e39d1dd4e890e1c⟧ }
 
-  KruskalMST() { … 33 line(s) … ⟦tj:073a50b8b3172c5f099f335e9b01768a⟧ }
+  KruskalMST() {
+    // Kruskal's Algorithm to generate a Minimum Spanning Tree (MST) of a graph
+    // Details: https://en.wikipedia.org/wiki/Kruskal%27s_algorithm
+    { … 28 line(s) … ⟦tj:073a50b8b3172c5f099f335e9b01768a⟧ }
+    return graph
+}
 }
 
 export { GraphWeightedUndirectedAdjacencyList }

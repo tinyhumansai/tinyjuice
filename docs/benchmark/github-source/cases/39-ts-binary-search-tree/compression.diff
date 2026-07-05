@@ -1,15 +1,11 @@
 --- input/input.ts
 +++ output/output.ts
-@@ -52,97 +52,30 @@
-    *
-    * @param data The data to check for.
-    */
--  has(data: T): boolean {
--    if (!this.rootNode) {
--      return false
+@@ -55,27 +55,9 @@
+   has(data: T): boolean {
+     if (!this.rootNode) {
+       return false
 -    }
-+  has(data: T): boolean { … 24 line(s) … ⟦tj:c314b509a6e54416c9cb7e9eb985ca9e⟧ }
- 
+-
 -    let currentNode = this.rootNode
 -    while (currentNode.data !== data) {
 -      if (data > currentNode.data) {
@@ -27,21 +23,21 @@
 -      }
 -    }
 -
--    return true
++    { … 19 line(s) … ⟦tj:c314b509a6e54416c9cb7e9eb985ca9e⟧ }
+     return true
 -  }
--
++}
+ 
    /**
     * Inserts the given data into the binary search tree.
-    *
-    * @param data The data to be stored in the binary search tree.
-    * @returns
-    */
--  insert(data: T): void {
--    if (!this.rootNode) {
--      this.rootNode = new TreeNode<T>(data)
+@@ -86,63 +68,24 @@
+   insert(data: T): void {
+     if (!this.rootNode) {
+       this.rootNode = new TreeNode<T>(data)
 -      return
--    }
-+  insert(data: T): void { … 25 line(s) … ⟦tj:d0937293e564ddc2c7605b529bb69e1d⟧ }
++    { … 20 line(s) … ⟦tj:d0937293e564ddc2c7605b529bb69e1d⟧ }
+     }
++}
  
 -    let currentNode: TreeNode<T> = this.rootNode
 -    while (true) {
@@ -102,16 +98,12 @@
    /**
     * Traverses to the binary search tree in in-order, i. e. it follow the schema of:
     * Left Node -> Root Node -> Right Node
-@@ -150,25 +83,8 @@
-    * @param array The already found node data for recursive access.
-    * @returns
-    */
--  inOrderTraversal(array: T[] = []): T[] {
--    if (!this.rootNode) {
--      return array
+@@ -153,21 +96,9 @@
+   inOrderTraversal(array: T[] = []): T[] {
+     if (!this.rootNode) {
+       return array
 -    }
-+  inOrderTraversal(array: T[] = []): T[] { … 18 line(s) … ⟦tj:56a0cfe04911f60efc6baa21b22ee892⟧ }
- 
+-
 -    const traverse = (node?: TreeNode<T>, array: T[] = []): T[] => {
 -      if (!node) {
 -        return array
@@ -123,22 +115,19 @@
 -      return array
 -    }
 -
--    return traverse(this.rootNode)
++    { … 13 line(s) … ⟦tj:56a0cfe04911f60efc6baa21b22ee892⟧ }
+     return traverse(this.rootNode)
 -  }
--
++}
+ 
    /**
     * Traverses to the binary search tree in pre-order, i. e. it follow the schema of:
-    * Root Node -> Left Node -> Right Node
-@@ -176,26 +92,8 @@
-    * @param array The already found node data for recursive access.
-    * @returns
-    */
--  preOrderTraversal(array: T[] = []): T[] {
--    if (!this.rootNode) {
--      return array
+@@ -179,22 +110,9 @@
+   preOrderTraversal(array: T[] = []): T[] {
+     if (!this.rootNode) {
+       return array
 -    }
-+  preOrderTraversal(array: T[] = []): T[] { … 19 line(s) … ⟦tj:3f4174a7b354ddfe8236979e1bb0e325⟧ }
- 
+-
 -    const traverse = (node?: TreeNode<T>, array: T[] = []): T[] => {
 -      if (!node) {
 -        return array
@@ -151,19 +140,17 @@
 -      return array
 -    }
 -
--    return traverse(this.rootNode)
++    { … 14 line(s) … ⟦tj:3f4174a7b354ddfe8236979e1bb0e325⟧ }
+     return traverse(this.rootNode)
 -  }
--
++}
+ 
    /**
     * Traverses to the binary search tree in post-order, i. e. it follow the schema of:
-    * Left Node -> Right Node -> Root Node
-@@ -203,23 +101,8 @@
-    * @param array The already found node data for recursive access.
-    * @returns
-    */
--  postOrderTraversal(array: T[] = []): T[] {
--    if (!this.rootNode) {
--      return array
+@@ -206,20 +124,10 @@
+   postOrderTraversal(array: T[] = []): T[] {
+     if (!this.rootNode) {
+       return array
 -    }
 -
 -    const traverse = (node?: TreeNode<T>, array: T[] = []): T[] => {
@@ -178,10 +165,11 @@
 -      return array
 -    }
 -
--    return traverse(this.rootNode)
++    { … 14 line(s) … ⟦tj:d2a4b84ecd9bb10491e2783baa27e559⟧ }
+     return traverse(this.rootNode)
 -  }
-+  postOrderTraversal(array: T[] = []): T[] { … 19 line(s) … ⟦tj:d2a4b84ecd9bb10491e2783baa27e559⟧ }
  }
++}
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
 +[compacted tool output — this is a PARTIAL view; the full original (5205 bytes) is available by calling tinyjuice_retrieve with token "c015bc624a6090ff6b3173a0417647b5" (marker ⟦tj:c015bc624a6090ff6b3173a0417647b5⟧)]

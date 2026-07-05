@@ -1,31 +1,10 @@
 --- input/input.py
 +++ output/output.py
-@@ -11,431 +11,56 @@
- class PriorityQueue:
-     # Based on Min Heap
-     def __init__(self):
--        """
--        Priority queue class constructor method.
-+        ...  # 15 line(s) collapsed ⟦tj:7db5305f0fd9638b8cd379adb0ad49eb⟧
- 
--        Examples:
--        >>> priority_queue_test = PriorityQueue()
--        >>> priority_queue_test.cur_size
--        0
--        >>> priority_queue_test.array
--        []
--        >>> priority_queue_test.pos
--        {}
--        """
--        self.cur_size = 0
--        self.array = []
--        self.pos = {}  # To store the pos of node in array
--
+@@ -30,183 +30,49 @@
      def is_empty(self):
--        """
--        Conditional boolean method to determine if the priority queue is empty or not.
-+        ...  # 12 line(s) collapsed ⟦tj:e9a3c55f96e272abfbd740b3ae869ff9⟧
- 
+         """
+         Conditional boolean method to determine if the priority queue is empty or not.
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.is_empty()
@@ -34,13 +13,13 @@
 -        >>> priority_queue_test.is_empty()
 -        False
 -        """
--        return self.cur_size == 0
--
-     def min_heapify(self, idx):
--        """
--        Sorts the queue array so that the minimum element is root.
-+        ...  # 41 line(s) collapsed ⟦tj:e68ba07f1cf37bf4fc4fb12980512969⟧
++...  # 9 line(s) collapsed ⟦tj:e9a3c55f96e272abfbd740b3ae869ff9⟧
+         return self.cur_size == 0
  
+     def min_heapify(self, idx):
+         """
+         Sorts the queue array so that the minimum element is root.
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.cur_size = 3
@@ -78,13 +57,13 @@
 -            smallest = rc
 -        if smallest != idx:
 -            self.swap(idx, smallest)
--            self.min_heapify(smallest)
--
-     def insert(self, tup):
--        """
--        Inserts a node into the Priority Queue.
-+        ...  # 19 line(s) collapsed ⟦tj:aa9f5de3e7060348d33e72a5f676422d⟧
++...  # 38 line(s) collapsed ⟦tj:e68ba07f1cf37bf4fc4fb12980512969⟧
+             self.min_heapify(smallest)
  
+     def insert(self, tup):
+         """
+         Inserts a node into the Priority Queue.
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.insert((10, 'A'))
@@ -100,13 +79,13 @@
 -        self.pos[tup[1]] = self.cur_size
 -        self.cur_size += 1
 -        self.array.append((sys.maxsize, tup[1]))
--        self.decrease_key((sys.maxsize, tup[1]), tup[0])
--
-     def extract_min(self):
--        """
--        Removes and returns the min element at top of priority queue.
-+        ...  # 20 line(s) collapsed ⟦tj:ed24fe442d98453d401abe5dbf9ca749⟧
++...  # 16 line(s) collapsed ⟦tj:aa9f5de3e7060348d33e72a5f676422d⟧
+         self.decrease_key((sys.maxsize, tup[1]), tup[0])
  
+     def extract_min(self):
+         """
+         Removes and returns the min element at top of priority queue.
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.array = [(10, 'A'), (15, 'B')]
@@ -123,8 +102,9 @@
 -        self.cur_size -= 1
 -        self.min_heapify(0)
 -        del self.pos[min_node]
--        return min_node
--
++...  # 17 line(s) collapsed ⟦tj:ed24fe442d98453d401abe5dbf9ca749⟧
+         return min_node
+ 
      def left(self, i):
 -        """
 -        Returns the index of left child
@@ -154,10 +134,9 @@
 -        return 2 * i + 2
 -
      def par(self, i):
--        """
--        Returns the index of parent
-+        ...  # 13 line(s) collapsed ⟦tj:94ca3c6fba4d67ce39435985eeeb378f⟧
- 
+         """
+         Returns the index of parent
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.par(1)
@@ -167,13 +146,13 @@
 -        >>> priority_queue_test.par(4)
 -        2
 -        """
--        return math.floor(i / 2)
--
-     def swap(self, i, j):
--        """
--        Swaps array elements at indices i and j, update the pos{}
-+        ...  # 19 line(s) collapsed ⟦tj:765ebf08d947f25d711be0c64d62c5a7⟧
++...  # 10 line(s) collapsed ⟦tj:94ca3c6fba4d67ce39435985eeeb378f⟧
+         return math.floor(i / 2)
  
+     def swap(self, i, j):
+         """
+         Swaps array elements at indices i and j, update the pos{}
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.array = [(10, 'A'), (15, 'B')]
@@ -189,13 +168,13 @@
 -        self.pos[self.array[j][1]] = i
 -        temp = self.array[i]
 -        self.array[i] = self.array[j]
--        self.array[j] = temp
--
-     def decrease_key(self, tup, new_d):
--        """
--        Decrease the key value for a given tuple, assuming the new_d is at most old_d.
-+        ...  # 18 line(s) collapsed ⟦tj:8730a79118e1c3f399c9ccaac3270c55⟧
++...  # 16 line(s) collapsed ⟦tj:765ebf08d947f25d711be0c64d62c5a7⟧
+         self.array[j] = temp
  
+     def decrease_key(self, tup, new_d):
+         """
+         Decrease the key value for a given tuple, assuming the new_d is at most old_d.
+-
 -        Examples:
 -        >>> priority_queue_test = PriorityQueue()
 -        >>> priority_queue_test.array = [(10, 'A'), (15, 'B')]
@@ -210,37 +189,15 @@
 -        self.array[idx] = (new_d, tup[1])
 -        while idx > 0 and self.array[self.par(idx)][0] > self.array[idx][0]:
 -            self.swap(idx, self.par(idx))
--            idx = self.par(idx)
++...  # 15 line(s) collapsed ⟦tj:8730a79118e1c3f399c9ccaac3270c55⟧
+             idx = self.par(idx)
  
--
- class Graph:
-     def __init__(self, num):
--        """
--        Graph class constructor
--
--        Examples:
--        >>> graph_test = Graph(1)
--        >>> graph_test.num_nodes
--        1
--        >>> graph_test.dist
--        [0]
--        >>> graph_test.par
--        [-1]
--        >>> graph_test.adjList
--        {}
--        """
--        self.adjList = {}  # To store graph: u -> (v,w)
--        self.num_nodes = num  # Number of nodes in graph
--        # To store the distance from source vertex
--        self.dist = [0] * self.num_nodes
--        self.par = [-1] * self.num_nodes  # To store the path
-+        ...  # 19 line(s) collapsed ⟦tj:13633fb69f2078a40ca4d8d3b5796cb6⟧
  
+@@ -235,204 +101,31 @@
      def add_edge(self, u, v, w):
--        """
--        Add edge going from node u to v and v to u with weight w: u (w)-> v, v (w) -> u
-+        ...  # 21 line(s) collapsed ⟦tj:8eca862055cf8bdc980d37815306ea47⟧
- 
+         """
+         Add edge going from node u to v and v to u with weight w: u (w)-> v, v (w) -> u
+-
 -        Examples:
 -        >>> graph_test = Graph(1)
 -        >>> graph_test.add_edge(1, 2, 1)
@@ -258,13 +215,13 @@
 -        if v in self.adjList:
 -            self.adjList[v].append((u, w))
 -        else:
--            self.adjList[v] = [(u, w)]
--
-     def show_graph(self):
--        """
--        Show the graph: u -> v(w)
-+        ...  # 17 line(s) collapsed ⟦tj:5d165ae537bcf53fbe6e6e9d55008d61⟧
++...  # 18 line(s) collapsed ⟦tj:8eca862055cf8bdc980d37815306ea47⟧
+             self.adjList[v] = [(u, w)]
  
+     def show_graph(self):
+         """
+         Show the graph: u -> v(w)
+-
 -        Examples:
 -        >>> graph_test = Graph(1)
 -        >>> graph_test.add_edge(1, 2, 1)
@@ -278,13 +235,13 @@
 -        3 -> 2(2)
 -        """
 -        for u in self.adjList:
--            print(u, "->", " -> ".join(str(f"{v}({w})") for v, w in self.adjList[u]))
--
-     def dijkstra(self, src):
--        """
--        Dijkstra algorithm
-+        ...  # 101 line(s) collapsed ⟦tj:548dc4e1d8688d2341645e1dcdc2a9f7⟧
++...  # 14 line(s) collapsed ⟦tj:5d165ae537bcf53fbe6e6e9d55008d61⟧
+             print(u, "->", " -> ".join(str(f"{v}({w})") for v, w in self.adjList[u]))
  
+     def dijkstra(self, src):
+         """
+         Dijkstra algorithm
+-
 -        Examples:
 -        >>> graph_test = Graph(3)
 -        >>> graph_test.add_edge(0, 1, 2)
@@ -382,13 +339,13 @@
 -                    self.par[v] = u
 -
 -        # Show the shortest distances from src
--        self.show_distances(src)
--
-     def show_distances(self, src):
--        """
--        Show the distances from src to all other nodes in a graph
-+        ...  # 12 line(s) collapsed ⟦tj:f15126b8518182330dc1862cfffb2582⟧
++...  # 98 line(s) collapsed ⟦tj:548dc4e1d8688d2341645e1dcdc2a9f7⟧
+         self.show_distances(src)
  
+     def show_distances(self, src):
+         """
+         Show the distances from src to all other nodes in a graph
+-
 -        Examples:
 -        >>> graph_test = Graph(1)
 -        >>> graph_test.show_distances(0)
@@ -397,14 +354,14 @@
 -        """
 -        print(f"Distance from node: {src}")
 -        for u in range(self.num_nodes):
--            print(f"Node {u} has distance: {self.dist[u]}")
--
-     def show_path(self, src, dest):
--        """
--        Shows the shortest path from src to dest.
--        WARNING: Use it *after* calling dijkstra.
-+        ...  # 42 line(s) collapsed ⟦tj:3101fb4a6bf0fb7464d8028248d8a35e⟧
++...  # 9 line(s) collapsed ⟦tj:f15126b8518182330dc1862cfffb2582⟧
+             print(f"Node {u} has distance: {self.dist[u]}")
  
+     def show_path(self, src, dest):
+         """
+         Shows the shortest path from src to dest.
+-        WARNING: Use it *after* calling dijkstra.
+-
 -        Examples:
 -        >>> graph_test = Graph(4)
 -        >>> graph_test.add_edge(0, 1, 1)
@@ -435,20 +392,18 @@
 -            temp = self.par[temp]
 -        path.append(src)
 -        path.reverse()
- 
+-
 -        print(f"----Path to reach {dest} from {src}----")
 -        for u in path:
 -            print(f"{u}", end=" ")
 -            if u != dest:
 -                print("-> ", end="")
 -
--        print("\nTotal cost of path: ", cost)
--
--
- if __name__ == "__main__":
-     from doctest import testmod
++...  # 39 line(s) collapsed ⟦tj:3101fb4a6bf0fb7464d8028248d8a35e⟧
+         print("\nTotal cost of path: ", cost)
  
-@@ -482,3 +107,6 @@
+ 
+@@ -482,3 +175,6 @@
  # ----Path to reach 4 from 0----
  # 0 -> 7 -> 6 -> 5 -> 4
  # Total cost of path:  21

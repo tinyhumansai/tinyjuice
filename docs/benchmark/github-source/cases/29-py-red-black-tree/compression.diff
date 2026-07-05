@@ -1,23 +1,6 @@
 --- input/input.py
 +++ output/output.py
-@@ -25,496 +25,95 @@
-         left: RedBlackTree | None = None,
-         right: RedBlackTree | None = None,
-     ) -> None:
--        """Initialize a new Red-Black Tree node with the given values:
--        label: The value associated with this node
--        color: 0 if black, 1 if red
--        parent: The parent to this node
--        left: This node's left child
--        right: This node's right child
--        """
--        self.label = label
--        self.parent = parent
--        self.left = left
--        self.right = right
--        self.color = color
-+        ...  # 12 line(s) collapsed ⟦tj:9450e24d6e7d58b04ce863cb03ae6cf6⟧
- 
+@@ -41,301 +41,54 @@
      # Here are functions which are specific to red-black trees
  
      def rotate_left(self) -> RedBlackTree:
@@ -40,8 +23,10 @@
 -            else:
 -                parent.right = right
 -        right.parent = parent
--        return right
-+        ...  # 20 line(s) collapsed ⟦tj:2d75ce0d2b19ff14671b16d3e6a80c71⟧
++        """Rotate the subtree rooted at this node to the left and
++        returns the new root to this subtree.
++...  # 17 line(s) collapsed ⟦tj:2d75ce0d2b19ff14671b16d3e6a80c71⟧
+         return right
  
      def rotate_right(self) -> RedBlackTree:
 -        """Rotate the subtree rooted at this node to the right and
@@ -63,8 +48,10 @@
 -            else:
 -                parent.left = left
 -        left.parent = parent
--        return left
-+        ...  # 20 line(s) collapsed ⟦tj:57b1ba48ed62415ddd706f934f108f5c⟧
++        """Rotate the subtree rooted at this node to the right and
++        returns the new root to this subtree.
++...  # 17 line(s) collapsed ⟦tj:57b1ba48ed62415ddd706f934f108f5c⟧
+         return left
  
      def insert(self, label: int) -> RedBlackTree:
 -        """Inserts label into the subtree rooted at self, performs any
@@ -89,8 +76,10 @@
 -        else:
 -            self.right = RedBlackTree(label, 1, self)
 -            self.right._insert_repair()
--        return self.parent or self
-+        ...  # 23 line(s) collapsed ⟦tj:befc51b2ab78f3e7262e26b070551572⟧
++        """Inserts label into the subtree rooted at self, performs any
++        rotations necessary to maintain balance, and then returns the
++...  # 20 line(s) collapsed ⟦tj:befc51b2ab78f3e7262e26b070551572⟧
+         return self.parent or self
  
      def _insert_repair(self) -> None:
 -        """Repair the coloring from inserting into a tree."""
@@ -128,8 +117,10 @@
 -                if uncle and self.grandparent:
 -                    uncle.color = 0
 -                    self.grandparent.color = 1
--                    self.grandparent._insert_repair()
-+        ...  # 36 line(s) collapsed ⟦tj:eb8901b7247bd361503e31762ef5946d⟧
++        """Repair the coloring from inserting into a tree."""
++        if self.parent is None:
++...  # 33 line(s) collapsed ⟦tj:eb8901b7247bd361503e31762ef5946d⟧
+                     self.grandparent._insert_repair()
  
      def remove(self, label: int) -> RedBlackTree:
 -        """Remove label from this tree."""
@@ -184,8 +175,10 @@
 -                self.left.remove(label)
 -        elif self.right:
 -            self.right.remove(label)
--        return self.parent or self
-+        ...  # 53 line(s) collapsed ⟦tj:ca0594ef386d04b2c3cd01c176d85a0d⟧
++        """Remove label from this tree."""
++        if self.label == label:
++...  # 50 line(s) collapsed ⟦tj:ca0594ef386d04b2c3cd01c176d85a0d⟧
+         return self.parent or self
  
      def _remove_repair(self) -> None:
 -        """Repair the coloring of the tree that may have been messed up."""
@@ -249,7 +242,10 @@
 -            self.parent.rotate_left()
 -            self.grandparent.color = self.parent.color
 -            self.parent.color = 0
--            self.parent.sibling.color = 0
++        """Repair the coloring of the tree that may have been messed up."""
++        if (
++...  # 68 line(s) collapsed ⟦tj:8b779663a824d8051f2d6ceb1cafdae2⟧
+             self.parent.sibling.color = 0
 -        if (
 -            self.is_right()
 -            and color(self.sibling) == 0
@@ -259,7 +255,6 @@
 -            self.grandparent.color = self.parent.color
 -            self.parent.color = 0
 -            self.parent.sibling.color = 0
-+        ...  # 71 line(s) collapsed ⟦tj:8b779663a824d8051f2d6ceb1cafdae2⟧
  
      def check_color_properties(self) -> bool:
 -        """Check the coloring of the tree, and return True iff the tree
@@ -292,8 +287,10 @@
 -            print("Property 5")
 -            return False
 -        # All properties were met
--        return True
-+        ...  # 31 line(s) collapsed ⟦tj:6ae263c8b4785c8ff038ca7fe5fc2532⟧
++        """Check the coloring of the tree, and return True iff the tree
++        is colored in a way which matches these five properties:
++...  # 28 line(s) collapsed ⟦tj:6ae263c8b4785c8ff038ca7fe5fc2532⟧
+         return True
  
      def check_coloring(self) -> bool:
 -        """A helper function to recursively check Property 4 of a
@@ -324,18 +321,14 @@
 -            return None
 -        # Return the black depth of children, plus one if this node is
 -        # black
--        return left + (1 - self.color)
-+        ...  # 18 line(s) collapsed ⟦tj:a94beb9afa94e459836439dca902e2a7⟧
++        """Returns the number of black nodes from this node to the
++        leaves of the tree, or None if there isn't one such value (the
++...  # 15 line(s) collapsed ⟦tj:a94beb9afa94e459836439dca902e2a7⟧
+         return left + (1 - self.color)
  
      # Here are functions which are general to all binary search trees
- 
-     def __contains__(self, label: int) -> bool:
--        """Search through the tree for label, returning True iff it is
--        found somewhere in the tree.
--        Guaranteed to run in O(log(n)) time.
--        """
--        return self.search(label) is not None
-+        ...  # 5 line(s) collapsed ⟦tj:2bd317852088786340149b3bee42ad04⟧
+@@ -348,76 +101,28 @@
+         return self.search(label) is not None
  
      def search(self, label: int) -> RedBlackTree | None:
 -        """Search through the tree for label, returning its node if
@@ -352,14 +345,19 @@
 -        elif self.left is None:
 -            return None
 -        else:
--            return self.left.search(label)
-+        ...  # 15 line(s) collapsed ⟦tj:80cb2d2ac7ee2d0164a8757f921d7f5d⟧
++        """Search through the tree for label, returning its node if
++        it's found, and None otherwise.
++...  # 12 line(s) collapsed ⟦tj:80cb2d2ac7ee2d0164a8757f921d7f5d⟧
+             return self.left.search(label)
  
      def floor(self, label: int) -> int | None:
 -        """Returns the largest element in this tree which is at most label.
 -        This method is guaranteed to run in O(log(n)) time."""
 -        if self.label == label:
--            return self.label
++        """Returns the largest element in this tree which is at most label.
++        This method is guaranteed to run in O(log(n)) time."""
++...  # 12 line(s) collapsed ⟦tj:6dec1252e934e8b07966f01932645985⟧
+             return self.label
 -        elif self.label is not None and self.label > label:
 -            if self.left:
 -                return self.left.floor(label)
@@ -371,14 +369,16 @@
 -                if attempt is not None:
 -                    return attempt
 -            return self.label
-+        ...  # 15 line(s) collapsed ⟦tj:6dec1252e934e8b07966f01932645985⟧
  
      def ceil(self, label: int) -> int | None:
 -        """Returns the smallest element in this tree which is at least label.
 -        This method is guaranteed to run in O(log(n)) time.
 -        """
 -        if self.label == label:
--            return self.label
++        """Returns the smallest element in this tree which is at least label.
++        This method is guaranteed to run in O(log(n)) time.
++...  # 13 line(s) collapsed ⟦tj:8de4eb1f4a101aeeb1194d74e8e752f6⟧
+             return self.label
 -        elif self.label is not None and self.label < label:
 -            if self.right:
 -                return self.right.ceil(label)
@@ -390,7 +390,6 @@
 -                if attempt is not None:
 -                    return attempt
 -            return self.label
-+        ...  # 16 line(s) collapsed ⟦tj:8de4eb1f4a101aeeb1194d74e8e752f6⟧
  
      def get_max(self) -> int | None:
 -        """Returns the largest element in this tree.
@@ -416,39 +415,7 @@
  
      @property
      def grandparent(self) -> RedBlackTree | None:
--        """Get the current node's grandparent, or None if it doesn't exist."""
--        if self.parent is None:
--            return None
--        else:
--            return self.parent.parent
-+        ...  # 5 line(s) collapsed ⟦tj:1bdd45dad3c7164b34cc35abe5540066⟧
- 
-     @property
-     def sibling(self) -> RedBlackTree | None:
--        """Get the current node's sibling, or None if it doesn't exist."""
--        if self.parent is None:
--            return None
--        elif self.parent.left is self:
--            return self.parent.right
--        else:
--            return self.parent.left
-+        ...  # 7 line(s) collapsed ⟦tj:69f0048fd96c3b0b13f80daad909df35⟧
- 
-     def is_left(self) -> bool:
--        """Returns true iff this node is the left child of its parent."""
--        if self.parent is None:
--            return False
--        return self.parent.left is self
-+        ...  # 4 line(s) collapsed ⟦tj:65f460f2b20e18818908ff123a0c4295⟧
- 
-     def is_right(self) -> bool:
--        """Returns true iff this node is the right child of its parent."""
--        if self.parent is None:
--            return False
--        return self.parent.right is self
-+        ...  # 4 line(s) collapsed ⟦tj:432019dab95fd673368c135f0fdcd51f⟧
- 
-     def __bool__(self) -> bool:
+@@ -453,15 +158,7 @@
          return True
  
      def __len__(self) -> int:
@@ -464,33 +431,13 @@
 +        ...  # 9 line(s) collapsed ⟦tj:ebd8f15925c8f11b71d6cd845452af0b⟧
  
      def preorder_traverse(self) -> Iterator[int | None]:
--        yield self.label
--        if self.left:
--            yield from self.left.preorder_traverse()
--        if self.right:
--            yield from self.right.preorder_traverse()
-+        ...  # 5 line(s) collapsed ⟦tj:f7ba3ed7559e5dd76568c005ea2b940f⟧
- 
-     def inorder_traverse(self) -> Iterator[int | None]:
--        if self.left:
--            yield from self.left.inorder_traverse()
--        yield self.label
--        if self.right:
--            yield from self.right.inorder_traverse()
-+        ...  # 5 line(s) collapsed ⟦tj:8c6ccb1ab82bcfeb7f454c5b5672840f⟧
- 
-     def postorder_traverse(self) -> Iterator[int | None]:
--        if self.left:
--            yield from self.left.postorder_traverse()
--        if self.right:
--            yield from self.right.postorder_traverse()
--        yield self.label
-+        ...  # 5 line(s) collapsed ⟦tj:a3c8694fa7e2b41e4cf1e69036f22ae9⟧
+         yield self.label
+@@ -485,18 +182,9 @@
+         yield self.label
  
      def __repr__(self) -> str:
 -        from pprint import pformat
-+        ...  # 13 line(s) collapsed ⟦tj:d44c4d9bcc3f958d1c37644a7d3588f1⟧
- 
+-
 -        if self.left is None and self.right is None:
 -            return f"'{self.label} {(self.color and 'red') or 'blk'}'"
 -        return pformat(
@@ -501,30 +448,13 @@
 -                )
 -            },
 -            indent=1,
--        )
--
++        from pprint import pformat
++
++...  # 10 line(s) collapsed ⟦tj:d44c4d9bcc3f958d1c37644a7d3588f1⟧
+         )
+ 
      def __eq__(self, other: object) -> bool:
--        """Test if two trees are equal."""
--        if not isinstance(other, RedBlackTree):
--            return NotImplemented
--        if self.label == other.label:
--            return self.left == other.left and self.right == other.right
--        else:
--            return False
-+        ...  # 7 line(s) collapsed ⟦tj:e5f9be90e699771941770d20052596ae⟧
- 
- 
- def color(node: RedBlackTree | None) -> int:
--    """Returns the color of a node, allowing for None leaves."""
--    if node is None:
--        return 0
--    else:
--        return node.color
-+    ...  # 5 line(s) collapsed ⟦tj:9e6fd66fef4430e51f4395a500f91df3⟧
- 
- 
- """
-@@ -524,161 +123,39 @@
+@@ -524,36 +212,9 @@
  
  
  def test_rotations() -> bool:
@@ -558,19 +488,13 @@
 -    right_rot.right.right = RedBlackTree(10, parent=right_rot.right)
 -    right_rot.right.right.left = RedBlackTree(5, parent=right_rot.right.right)
 -    right_rot.right.right.right = RedBlackTree(20, parent=right_rot.right.right)
--    return tree == right_rot
-+    ...  # 31 line(s) collapsed ⟦tj:7d1ff0bd5bbe190bad63ee4d195099ff⟧
++    """Test that the rotate_left and rotate_right functions work."""
++    # Make a tree to test on
++...  # 28 line(s) collapsed ⟦tj:7d1ff0bd5bbe190bad63ee4d195099ff⟧
+     return tree == right_rot
  
  
- def test_insertion_speed() -> bool:
--    """Test that the tree balances inserts to O(log(n)) by doing a lot
--    of them.
--    """
--    tree = RedBlackTree(-1)
--    for i in range(300000):
--        tree = tree.insert(i)
--    return True
-+    ...  # 7 line(s) collapsed ⟦tj:63915eb27cc5776d9b126e39c0e8412e⟧
+@@ -568,117 +229,46 @@
  
  
  def test_insert() -> bool:
@@ -591,8 +515,10 @@
 -    ans.right.right = RedBlackTree(11, 0, ans.right)
 -    ans.right.right.left = RedBlackTree(10, 1, ans.right.right)
 -    ans.right.right.right = RedBlackTree(12, 1, ans.right.right)
--    return tree == ans
-+    ...  # 18 line(s) collapsed ⟦tj:f4efcfb66393e30deadc97a9f0818ecd⟧
++    """Test the insert() method of the tree correctly balances, colors,
++    and inserts.
++...  # 15 line(s) collapsed ⟦tj:f4efcfb66393e30deadc97a9f0818ecd⟧
+     return tree == ans
  
  
  def test_insert_and_search() -> bool:
@@ -608,8 +534,10 @@
 -        # Found something not in there
 -        return False
 -    # Find all these things in there
--    return all(i in tree for i in (11, 12, -8, 0))
-+    ...  # 13 line(s) collapsed ⟦tj:ff4ad8b630ad119a070eb5bce9ca26e7⟧
++    """Tests searching through the tree for values."""
++    tree = RedBlackTree(0)
++...  # 10 line(s) collapsed ⟦tj:ff4ad8b630ad119a070eb5bce9ca26e7⟧
+     return all(i in tree for i in (11, 12, -8, 0))
  
  
  def test_insert_delete() -> bool:
@@ -631,8 +559,10 @@
 -    tree = tree.remove(9)
 -    if not tree.check_color_properties():
 -        return False
--    return list(tree.inorder_traverse()) == [-8, 0, 4, 8, 10, 11, 12]
-+    ...  # 19 line(s) collapsed ⟦tj:b6ce061d7d7792a5dab40659ac1bc13c⟧
++    """Test the insert() and delete() method of the tree, verifying the
++    insertion and removal of elements, and the balancing of the tree.
++...  # 16 line(s) collapsed ⟦tj:b6ce061d7d7792a5dab40659ac1bc13c⟧
+     return list(tree.inorder_traverse()) == [-8, 0, 4, 8, 10, 11, 12]
  
  
  def test_floor_ceil() -> bool:
@@ -648,8 +578,10 @@
 -    for val, floor, ceil in tuples:
 -        if tree.floor(val) != floor or tree.ceil(val) != ceil:
 -            return False
--    return True
-+    ...  # 13 line(s) collapsed ⟦tj:2ca8cb739269cbe6d9d866cc990c6fca⟧
++    """Tests the floor and ceiling functions in the tree."""
++    tree = RedBlackTree(0)
++...  # 10 line(s) collapsed ⟦tj:2ca8cb739269cbe6d9d866cc990c6fca⟧
+     return True
  
  
  def test_min_max() -> bool:
@@ -678,8 +610,10 @@
 -        return False
 -    if list(tree.preorder_traverse()) != [0, -16, 16, 8, 22, 20, 24]:
 -        return False
--    return list(tree.postorder_traverse()) == [-16, 8, 20, 24, 22, 16, 0]
-+    ...  # 13 line(s) collapsed ⟦tj:a55d5a0ea8e2fe9a8518b8c6a7489dcb⟧
++    """Tests the three different tree traversal functions."""
++    tree = RedBlackTree(0)
++...  # 10 line(s) collapsed ⟦tj:a55d5a0ea8e2fe9a8518b8c6a7489dcb⟧
+     return list(tree.postorder_traverse()) == [-16, 8, 20, 24, 22, 16, 0]
  
  
  def test_tree_chaining() -> bool:
@@ -695,36 +629,7 @@
  
  
  def print_results(msg: str, passes: bool) -> None:
-@@ -686,31 +163,15 @@
- 
- 
- def pytests() -> None:
--    assert test_rotations()
--    assert test_insert()
--    assert test_insert_and_search()
--    assert test_insert_delete()
--    assert test_floor_ceil()
--    assert test_tree_traversal()
--    assert test_tree_chaining()
-+    ...  # 7 line(s) collapsed ⟦tj:b20322c50ae95f45f10a5156c136af19⟧
- 
- 
- def main() -> None:
--    """
--    >>> pytests()
--    """
--    print_results("Rotating right and left", test_rotations())
--    print_results("Inserting", test_insert())
--    print_results("Searching", test_insert_and_search())
--    print_results("Deleting", test_insert_delete())
--    print_results("Floor and ceil", test_floor_ceil())
--    print_results("Tree traversal", test_tree_traversal())
--    print_results("Tree traversal", test_tree_chaining())
--    print("Testing tree balancing...")
--    print("This should only be a few seconds.")
--    test_insertion_speed()
--    print("Done!")
-+    ...  # 14 line(s) collapsed ⟦tj:45f7bf67cfa71dcd4c8bd2bf3f59d644⟧
+@@ -713,4 +303,7 @@
  
  
  if __name__ == "__main__":

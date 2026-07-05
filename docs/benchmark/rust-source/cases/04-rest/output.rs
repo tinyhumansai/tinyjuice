@@ -62,7 +62,14 @@ pub enum BackendApiError {
 /// with #2959's removal of brittle string-based suppression. Every other error
 /// (including `MessageNotFound`) keeps its full `{e:#}` chain so genuine
 /// failures still reach Sentry.
-pub fn flatten_authed_error(err: anyhow::Error) -> String { … 8 line(s) … ⟦tj:da698ccd8a30417b1e744eaa6c8dbc86⟧ }
+pub fn flatten_authed_error(err: anyhow::Error) -> String {
+    match err.downcast_ref::<BackendApiError>() {
+        Some(BackendApiError::Unauthorized { method, path }) => {
+            format!("SESSION_EXPIRED: backend rejected session token on {method} {path}")
+        }
+        _ => format!("{err:#}"),
+    }
+}
 
 /// Extract `(provider, message_id)` from a backend channel path of the
 /// shape `…/channels/<provider>/messages/<id>`. Returns `None` for paths
@@ -72,7 +79,12 @@ pub fn flatten_authed_error(err: anyhow::Error) -> String { … 8 line(s) … �
 /// base-path prefix (e.g. `/api/v1/channels/telegram/messages/1103`) via a
 /// sliding window so that `BACKEND_URL` variants with path prefixes do not
 /// silently fall through to `report_error` (OPENHUMAN-TAURI-R7).
-fn parse_message_path(path: &str) -> Option<(&str, &str)> { … 14 line(s) … ⟦tj:e1ba36b9d80e4eea767369549a6be4c2⟧ }
+fn parse_message_path(path: &str) -> Option<(&str, &str)> {
+    let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
+    // Fast path: exact four-segment canonical form /channels/<p>/messages/<id>
+    { … 9 line(s) … ⟦tj:e1ba36b9d80e4eea767369549a6be4c2⟧ }
+    None
+}
 
 const CLIENT_VERSION_HEADER_MAX_LEN: usize = 64;
 
@@ -96,19 +108,46 @@ const BACKEND_API_BODY_SHAPE_MAX_BYTES: usize = 120;
 /// response — the `TAURI-RUST-8C` case (a 91-byte body matching no route this
 /// backend emits), where our canonical envelope is `{success,error,errorCode}`
 /// and a foreign gateway/proxy is not.
-fn backend_api_body_shape(body: &str) -> String { … 29 line(s) … ⟦tj:25e1fe0e8456169a00a40a7af4ed22e2⟧ }
+fn backend_api_body_shape(body: &str) -> String {
+    let trimmed = body.trim();
+    if trimmed.is_empty() {
+    { … 24 line(s) … ⟦tj:25e1fe0e8456169a00a40a7af4ed22e2⟧ }
+    }
+}
 
 /// A JSON key safe to echo into telemetry: a short ASCII identifier (the shape
 /// of a schema field name). Anything else — non-ASCII, punctuation like `@`,
 /// whitespace, or overlong — is treated as response-controlled data and excluded
 /// so `body_shape` can never leak an email/UUID/free-text used as a key.
-fn is_schema_like_key(key: &str) -> bool { … 8 line(s) … ⟦tj:f02e0ef286ecbbc1209c551d62fa845a⟧ }
+fn is_schema_like_key(key: &str) -> bool {
+    const MAX_KEY_LEN: usize = 40;
+    !key.is_empty()
+        && key.len() <= MAX_KEY_LEN
+        && key
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
+}
 
-fn sanitize_client_version(raw: &str) -> Option<String> { … 14 line(s) … ⟦tj:575295daac4c9b3d4b889be7758377cc⟧ }
+fn sanitize_client_version(raw: &str) -> Option<String> {
+    let sanitized: String = raw
+        .trim()
+    { … 9 line(s) … ⟦tj:575295daac4c9b3d4b889be7758377cc⟧ }
+    }
+}
 
-fn build_backend_reqwest_client() -> Result<Client> { … 31 line(s) … ⟦tj:ebad9d86d21fbd345b90abc2577bc5bf⟧ }
+fn build_backend_reqwest_client() -> Result<Client> {
+    let mut default_headers = HeaderMap::new();
+    if let Some(version) = sanitize_client_version(env!("CARGO_PKG_VERSION")) {
+    { … 26 line(s) … ⟦tj:ebad9d86d21fbd345b90abc2577bc5bf⟧ }
+        .map_err(|e| anyhow::anyhow!("failed to build HTTP client: {e}"))
+}
 
-fn parse_api_response_json(text: &str) -> Result<Value> { … 30 line(s) … ⟦tj:252ec75d708c945e3bfa5471d1ae893a⟧ }
+fn parse_api_response_json(text: &str) -> Result<Value> {
+    let v: Value = serde_json::from_str(text).with_context(|| format!("parse API JSON: {text}"))?;
+    let Some(obj) = v.as_object() else {
+    { … 25 line(s) … ⟦tj:252ec75d708c945e3bfa5471d1ae893a⟧ }
+    Ok(v)
+}
 
 fn user_id_from_object(obj: &serde_json::Map<String, Value>) -> Option<String> { … 11 line(s) … ⟦tj:dd49a8b5a840154743d78cacdd62a874⟧ }
 
@@ -116,7 +155,12 @@ fn user_id_from_object(obj: &serde_json::Map<String, Value>) -> Option<String> {
 ///
 /// This function handles various envelope formats, including raw user objects
 /// or those nested under `data` or `user` keys.
-pub fn user_id_from_profile_payload(payload: &Value) -> Option<String> { … 16 line(s) … ⟦tj:62d5f9c928cfe963ee02d655490c88f0⟧ }
+pub fn user_id_from_profile_payload(payload: &Value) -> Option<String> {
+    let obj = payload.as_object()?;
+    if let Some(data) = obj.get("data").and_then(|v| v.as_object()) {
+    { … 11 line(s) … ⟦tj:62d5f9c928cfe963ee02d655490c88f0⟧ }
+    })
+}
 
 /// Alias for [`user_id_from_profile_payload`] for semantic clarity in auth flows.
 pub fn user_id_from_auth_me_payload(payload: &Value) -> Option<String> {
@@ -216,7 +260,18 @@ impl BackendOAuthClient {
     /// (e.g. `https://host/v1/chat/completions`) instead of just the origin:
     /// without stripping, `join("teams/me/usage")` would produce the wrong
     /// path `/v1/chat/teams/me/usage` via RFC 3986 relative resolution.
-    pub fn new(api_base: &str) -> Result<Self> { … 12 line(s) … ⟦tj:aaddf236a710acb3932a84a99bcade0b⟧ }
+    pub fn new(api_base: &str) -> Result<Self> {
+        let mut base = Url::parse(api_base.trim()).context("Invalid API base URL")?;
+        anyhow::ensure!(
+            matches!(base.scheme(), "http" | "https") && base.host_str().is_some(),
+            "API base URL must be an absolute http(s) URL with host"
+        );
+        base.set_path("");
+        base.set_query(None);
+        base.set_fragment(None);
+        let client = build_backend_reqwest_client()?;
+        Ok(Self { client, base })
+    }
 
     /// Borrow the underlying `reqwest::Client` for callers that need to
     /// drive a non-JSON request shape (e.g. `multipart/form-data` uploads
@@ -228,10 +283,20 @@ impl BackendOAuthClient {
     /// Resolve a backend-relative path against the configured base URL.
     /// Mirrors what `authed_json` does internally so callers using
     /// `raw_client()` don't have to assemble URLs by hand.
-    pub fn url_for(&self, path: &str) -> Result<Url> { … 5 line(s) … ⟦tj:00a5addc8c4559ff9055b5229c8668a4⟧ }
+    pub fn url_for(&self, path: &str) -> Result<Url> {
+        self.base
+            .join(path.trim_start_matches('/'))
+            .with_context(|| format!("build URL for {path}"))
+    }
 
     /// Returns the URL for initiating a login flow for a specific provider.
-    pub fn login_url(&self, provider: &str) -> Result<Url> { … 7 line(s) … ⟦tj:5aedd26225bbe65a8c00dff5d0b2b6d2⟧ }
+    pub fn login_url(&self, provider: &str) -> Result<Url> {
+        let p = provider.trim().trim_matches('/');
+        anyhow::ensure!(!p.is_empty(), "provider is required");
+        self.base
+            .join(&format!("auth/{p}/login"))
+            .context("build login URL")
+    }
 
     /// Initiates an OAuth connection flow for the current user and a specific provider.
     pub async fn connect(
@@ -241,23 +306,46 @@ impl BackendOAuthClient {
         skill_id: Option<&str>,
         response_type: Option<&str>,
         encryption_mode: Option<&str>,
-    ) -> Result<ConnectResponse> { … 46 line(s) … ⟦tj:9dc9ef7bb15dc308504a37c3c3080dcc⟧ }
+    ) -> Result<ConnectResponse> {
+        let p = provider.trim().trim_matches('/');
+        anyhow::ensure!(!p.is_empty(), "provider is required");
+        { … 41 line(s) … ⟦tj:9dc9ef7bb15dc308504a37c3c3080dcc⟧ }
+        Ok(ConnectResponse { oauth_url, state })
+}
 
     /// Fetches the current authenticated user profile using the provided JWT.
-    pub async fn fetch_current_user(&self, bearer_jwt: &str) -> Result<Value> { … 17 line(s) … ⟦tj:b3f21ee589eb48124cfd1a9360249740⟧ }
+    pub async fn fetch_current_user(&self, bearer_jwt: &str) -> Result<Value> {
+        let url = self.base.join("auth/me").context("build /auth/me URL")?;
+        let resp = self
+        { … 12 line(s) … ⟦tj:b3f21ee589eb48124cfd1a9360249740⟧ }
+        parse_api_response_json(&text)
+}
 
     /// Exchanges a one-time login token (e.g. from Telegram) for a long-lived JWT.
-    pub async fn consume_login_token(&self, login_token: &str) -> Result<String> { … 39 line(s) … ⟦tj:41cbd0ac227589fccd1722209a4d7a96⟧ }
+    pub async fn consume_login_token(&self, login_token: &str) -> Result<String> {
+        let token = login_token.trim();
+        anyhow::ensure!(!token.is_empty(), "login token is required");
+        { … 34 line(s) … ⟦tj:41cbd0ac227589fccd1722209a4d7a96⟧ }
+        Ok(jwt)
+}
 
     /// Validates that the provided session token is still active and accepted.
-    pub async fn validate_session_token(&self, bearer_jwt: &str) -> Result<()> { … 4 line(s) … ⟦tj:f850c9d98f60ff16ceb47fd72c07a248⟧ }
+    pub async fn validate_session_token(&self, bearer_jwt: &str) -> Result<()> {
+        let _ = self.fetch_current_user(bearer_jwt).await?;
+        Ok(())
+    }
 
     /// Creates a short-lived link token for connecting a specific communication channel.
     pub async fn create_channel_link_token(
         &self,
         channel: &str,
         bearer_jwt: &str,
-    ) -> Result<Value> { … 26 line(s) … ⟦tj:d4330e34484e04b2245b1fcecef2ad9c⟧ }
+    ) -> Result<Value> {
+        let channel = channel.trim().trim_matches('/');
+        anyhow::ensure!(!channel.is_empty(), "channel is required");
+        { … 21 line(s) … ⟦tj:d4330e34484e04b2245b1fcecef2ad9c⟧ }
+        parse_api_response_json(&text)
+}
 
     /// Generic authenticated JSON request helper for backend API routes.
     pub async fn authed_json(
@@ -266,10 +354,225 @@ impl BackendOAuthClient {
         method: Method,
         path: &str,
         body: Option<Value>,
-    ) -> Result<Value> { … 211 line(s) … ⟦tj:7e5df346187de9d1e342ab9c957d9081⟧ }
+    ) -> Result<Value> {
+        let url = self
+            .base
+            .join(path.trim_start_matches('/'))
+            .with_context(|| format!("build URL for {path}"))?;
+
+        let mut request = self
+            .client
+            .request(method.clone(), url.clone())
+            .header(AUTHORIZATION, bearer_authorization_value(bearer_jwt));
+
+        if let Some(body) = body {
+            request = request.json(&body);
+        }
+
+        let response = request.send().await.map_err(|e| {
+            // Walk the error source chain so transient markers hidden in nested
+            // causes (reqwest -> hyper -> rustls TLS EOF, etc.) still classify
+            // correctly. The top-level `e.to_string()` often only carries the
+            // outermost wrapper, e.g. "error sending request for url (...)".
+            let mut error_message = e.to_string();
+            let mut src: Option<&(dyn std::error::Error + 'static)> = std::error::Error::source(&e);
+            while let Some(s) = src {
+                error_message.push_str(" → ");
+                error_message.push_str(&s.to_string());
+                src = s.source();
+            }
+            if crate::core::observability::contains_transient_transport_phrase(&error_message) {
+                tracing::warn!(
+                    domain = "backend_api",
+                    operation = "authed_json",
+                    method = method.as_str(),
+                    path = url.path(),
+                    failure = "transport",
+                    error = %error_message,
+                    "[backend_api] transient transport failure on {} {}: {}",
+                    method.as_str(),
+                    url.path(),
+                    error_message,
+                );
+            } else {
+                crate::core::observability::report_error(
+                    error_message.as_str(),
+                    "backend_api",
+                    "authed_json",
+                    &[
+                        ("method", method.as_str()),
+                        ("path", url.path()),
+                        ("failure", "transport"),
+                    ],
+                );
+            }
+            anyhow::Error::new(e).context(format!(
+                "backend request {} {}",
+                method.as_str(),
+                url.path()
+            ))
+        })?;
+
+        let status = response.status();
+        let text = response.text().await.unwrap_or_default();
+        if !status.is_success() {
+            let status_code = status.as_u16();
+            let status_str = status_code.to_string();
+
+            // 401 on any authed backend endpoint is an expected user-session
+            // state (token expired / revoked / rotated server-side), not a
+            // code bug — every authed endpoint will see this once the session
+            // lapses. Surface a typed `BackendApiError::Unauthorized` so the
+            // auth domain can drive recovery, and skip `report_error` to
+            // avoid Sentry noise. Targets `OPENHUMAN-TAURI-4K8` (mascot TTS
+            // surfaced it first on `/openai/v1/audio/speech`, but the same
+            // shape applies to every `authed_json` path).
+            if status_code == 401 {
+                tracing::info!(
+                    domain = "backend_api",
+                    operation = "authed_json",
+                    method = method.as_str(),
+                    path = url.path(),
+                    status = status_code,
+                    failure = "non_2xx",
+                    "[backend_api] 401 on {} {} — session token rejected, surfacing typed error",
+                    method.as_str(),
+                    url.path(),
+                );
+                return Err(anyhow::Error::new(BackendApiError::Unauthorized {
+                    method: method.as_str().to_string(),
+                    path: url.path().to_string(),
+                }));
+            }
+
+            // 404 on `/channels/<provider>/messages/<id>` is an expected
+            // state (user deleted the message provider-side, or backend
+            // GC'd the relay row) — not a code bug. Surface a typed
+            // `BackendApiError::MessageNotFound` so callers (`bus.rs`
+            // streaming/thinking/delete/final paths) can clear stale
+            // ids and skip retry, without funneling the 404 into
+            // `report_error`. Targets `OPENHUMAN-TAURI-2Y` (~454 events).
+            if status_code == 404 {
+                if let Some((provider, message_id)) = parse_message_path(url.path()) {
+                    tracing::info!(
+                        domain = "backend_api",
+                        operation = "authed_json",
+                        provider = provider,
+                        message_id = message_id,
+                        "[backend_api] message-not-found 404 on {} {} — surfacing typed error",
+                        method.as_str(),
+                        url.path(),
+                    );
+                    return Err(anyhow::Error::new(BackendApiError::MessageNotFound {
+                        provider: provider.to_string(),
+                        message_id: message_id.to_string(),
+                    }));
+                }
+                // Defense-in-depth: PATCH/DELETE 404s on any channel-message path that
+                // parse_message_path could not parse (e.g. exotic URL variant with extra
+                // segments). Still an expected backend state — suppress the Sentry event
+                // without propagating a typed error. Targets OPENHUMAN-TAURI-R7.
+                if (method == Method::PATCH || method == Method::DELETE)
+                    && url.path().contains("/channels/")
+                    && url.path().contains("/messages/")
+                {
+                    tracing::debug!(
+                        domain = "backend_api",
+                        operation = "authed_json",
+                        "[backend_api] channel-message 404 on {} {} — path not matched by \
+                         parse_message_path, suppressing Sentry (TAURI-R7 defense-in-depth)",
+                        method.as_str(),
+                        url.path(),
+                    );
+                    anyhow::bail!(
+                        "channel message not found (404) on {} {}",
+                        method.as_str(),
+                        url.path(),
+                    );
+                }
+            }
+
+            // These are transient infrastructure errors (proxy/CDN/backend
+            // temporarily unavailable). They are not code bugs and callers already
+            // implement retry/disable logic, so skip Sentry to avoid noise.
+            let is_transient_infra =
+                crate::core::observability::is_transient_http_status_code(status_code);
+            let is_budget_exhausted = status_code == 400
+                && crate::openhuman::inference::provider::is_budget_exhausted_message(&text);
+            if is_budget_exhausted {
+                tracing::info!(
+                    method = method.as_str(),
+                    path = url.path(),
+                    status = status_code,
+                    failure = "non_2xx",
+                    kind = "budget",
+                    "[backend_api] budget-exhausted 400 on {} {} — not reporting to Sentry",
+                    method.as_str(),
+                    url.path(),
+                );
+            } else if is_transient_infra {
+                tracing::warn!(
+                    domain = "backend_api",
+                    operation = "authed_json",
+                    method = method.as_str(),
+                    path = url.path(),
+                    status = status_code,
+                    failure = "non_2xx",
+                    "[backend_api] transient {status} on {} {} — not reporting to Sentry",
+                    method.as_str(),
+                    url.path(),
+                );
+            } else {
+                // Enrich the report with the two fields triage needs to pin a
+                // non-2xx's origin: the outbound `host` and a PII-safe `body_shape`
+                // (top-level JSON key names only — never values; see
+                // `backend_api_body_shape`). `report_error` previously logged only
+                // `response_body_len`, leaving us blind when a client hits a
+                // non-canonical backend (custom BACKEND_URL / proxy / foreign
+                // host) — TAURI-RUST-8C: 12k `GET /teams/me/usage` 404s from one
+                // user whose 91-byte body matched no route this backend emits,
+                // un-diagnosable because neither host nor shape was captured.
+                // `host_str()` carries no scheme/path/query/token. Telemetry only
+                // — the error still propagates below (no suppression).
+                let host = url.host_str().unwrap_or("");
+                let body_shape = backend_api_body_shape(&text);
+                crate::core::observability::report_error(
+                    format!(
+                        "{} {} failed ({status}); response_body_len={}; body_shape={}",
+                        method.as_str(),
+                        url.path(),
+                        text.len(),
+                        body_shape,
+                    )
+                    .as_str(),
+                    "backend_api",
+                    "authed_json",
+                    &[
+                        ("method", method.as_str()),
+                        ("path", url.path()),
+                        ("host", host),
+                        ("status", status_str.as_str()),
+                        ("failure", "non_2xx"),
+                    ],
+                );
+            }
+            anyhow::bail!(
+                "{} {} failed ({status}): {text}",
+                method.as_str(),
+                url.path()
+            );
+        }
+
+        parse_api_response_json(&text)
+    }
 
     /// Lists all active integrations for the current user.
-    pub async fn list_integrations(&self, bearer_jwt: &str) -> Result<Vec<IntegrationSummary>> { … 25 line(s) … ⟦tj:b85029dae3250be552af7b5ba1eed31d⟧ }
+    pub async fn list_integrations(&self, bearer_jwt: &str) -> Result<Vec<IntegrationSummary>> {
+        let url = self
+            .base
+        { … 20 line(s) … ⟦tj:b85029dae3250be552af7b5ba1eed31d⟧ }
+        Ok(env.data.integrations)
+}
 
     /// Fetches the decrypted OAuth tokens for a specific integration.
     ///
@@ -280,13 +583,23 @@ impl BackendOAuthClient {
         integration_id: &str,
         bearer_jwt: &str,
         encryption_key: &str,
-    ) -> Result<IntegrationTokensHandoff> { … 33 line(s) … ⟦tj:a134660949c59e8e4c486e23621b2895⟧ }
+    ) -> Result<IntegrationTokensHandoff> {
+        let id = integration_id.trim();
+        anyhow::ensure!(
+        { … 28 line(s) … ⟦tj:a134660949c59e8e4c486e23621b2895⟧ }
+        serde_json::from_str(&plaintext).context("parse decrypted token JSON")
+}
 
     /// Fetches the client key share for a specific integration.
     ///
     /// This is a one-time handoff; the key is deleted from the backend's
     /// temporary storage (Redis) after retrieval.
-    pub async fn fetch_client_key(&self, integration_id: &str, bearer_jwt: &str) -> Result<String> { … 44 line(s) … ⟦tj:beeb0770add0293e7e7c8dde328cc4ab⟧ }
+    pub async fn fetch_client_key(&self, integration_id: &str, bearer_jwt: &str) -> Result<String> {
+        let id = integration_id.trim();
+        anyhow::ensure!(
+        { … 39 line(s) … ⟦tj:beeb0770add0293e7e7c8dde328cc4ab⟧ }
+        Ok(client_key.to_string())
+}
 
     /// Sends a message to a communication channel.
     pub async fn send_channel_message(
@@ -323,7 +636,12 @@ impl BackendOAuthClient {
         message_id: &str,
         bearer_jwt: &str,
         edit_body: Value,
-    ) -> Result<Value> { … 14 line(s) … ⟦tj:aeb257647fddbf4ac766f1edb57cea77⟧ }
+    ) -> Result<Value> {
+        let channel = channel.trim().trim_matches('/');
+        anyhow::ensure!(!channel.is_empty(), "channel is required");
+        { … 9 line(s) … ⟦tj:aeb257647fddbf4ac766f1edb57cea77⟧ }
+        .await
+}
 
     /// Deletes a message from a communication channel. Used to clean up
     /// ephemeral messages (e.g. thinking indicators) after the final
@@ -333,7 +651,12 @@ impl BackendOAuthClient {
         channel: &str,
         message_id: &str,
         bearer_jwt: &str,
-    ) -> Result<Value> { … 14 line(s) … ⟦tj:6f0804714a20d92383924fe3d229e06b⟧ }
+    ) -> Result<Value> {
+        let channel = channel.trim().trim_matches('/');
+        anyhow::ensure!(!channel.is_empty(), "channel is required");
+        { … 9 line(s) … ⟦tj:6f0804714a20d92383924fe3d229e06b⟧ }
+        .await
+}
 
     /// Sends a reaction (e.g. emoji) to a message in a channel.
     pub async fn send_channel_reaction(
@@ -349,7 +672,12 @@ impl BackendOAuthClient {
         channel: &str,
         bearer_jwt: &str,
         title: &str,
-    ) -> Result<Value> { … 14 line(s) … ⟦tj:5b99cc3d7363d7a0e8a620ce23144d63⟧ }
+    ) -> Result<Value> {
+        let channel = channel.trim().trim_matches('/');
+        anyhow::ensure!(!channel.is_empty(), "channel is required");
+        { … 9 line(s) … ⟦tj:5b99cc3d7363d7a0e8a620ce23144d63⟧ }
+        .await
+}
 
     /// Updates an existing thread (e.g., closing or reopening it).
     pub async fn update_channel_thread(
@@ -358,7 +686,12 @@ impl BackendOAuthClient {
         bearer_jwt: &str,
         thread_id: &str,
         action: &str,
-    ) -> Result<Value> { … 19 line(s) … ⟦tj:6e88a2298172ac07cc351ec7073be4c9⟧ }
+    ) -> Result<Value> {
+        let channel = channel.trim().trim_matches('/');
+        anyhow::ensure!(!channel.is_empty(), "channel is required");
+        { … 14 line(s) … ⟦tj:6e88a2298172ac07cc351ec7073be4c9⟧ }
+        .await
+}
 
     /// Lists threads in a communication channel, optionally filtering by status.
     pub async fn list_channel_threads(
@@ -366,14 +699,29 @@ impl BackendOAuthClient {
         channel: &str,
         bearer_jwt: &str,
         active_filter: Option<bool>,
-    ) -> Result<Value> { … 14 line(s) … ⟦tj:cae2fee2152a60395cca8f7d1f28fa92⟧ }
+    ) -> Result<Value> {
+        let channel = channel.trim().trim_matches('/');
+        anyhow::ensure!(!channel.is_empty(), "channel is required");
+        { … 9 line(s) … ⟦tj:cae2fee2152a60395cca8f7d1f28fa92⟧ }
+        self.authed_json(bearer_jwt, Method::GET, &path, None).await
+}
 
     /// Revokes (deletes) an active integration.
-    pub async fn revoke_integration(&self, integration_id: &str, bearer_jwt: &str) -> Result<()> { … 22 line(s) … ⟦tj:1464e692211475eaa6c05f68adfdce70⟧ }
+    pub async fn revoke_integration(&self, integration_id: &str, bearer_jwt: &str) -> Result<()> {
+        let id = integration_id.trim();
+        anyhow::ensure!(!id.is_empty(), "integration id is required");
+        { … 17 line(s) … ⟦tj:1464e692211475eaa6c05f68adfdce70⟧ }
+        Ok(())
+}
 }
 
 /// AES-256-GCM decrypt compatible with backend `encryptMessageFromString` (IV 16 + tag 16 + ciphertext, base64).
-pub fn decrypt_handoff_blob(b64_ciphertext: &str, key_str: &str) -> Result<String> { … 32 line(s) … ⟦tj:2403473aea18f7be5173ff249ee681ac⟧ }
+pub fn decrypt_handoff_blob(b64_ciphertext: &str, key_str: &str) -> Result<String> {
+    let key = key_bytes_from_string(key_str)?;
+    let combined = base64::engine::general_purpose::STANDARD
+    { … 27 line(s) … ⟦tj:2403473aea18f7be5173ff249ee681ac⟧ }
+    String::from_utf8(plain).context("handoff plaintext is not UTF-8")
+}
 
 /// Decode the shared encryption key into 32 raw AES bytes.
 ///
@@ -394,7 +742,12 @@ pub fn decrypt_handoff_blob(b64_ciphertext: &str, key_str: &str) -> Result<Strin
 /// `{ key: ... }` POST body of `fetch_integration_tokens_handoff`) is the
 /// original string — never re-encoded — so base64url keys stay base64url
 /// on the wire.
-fn key_bytes_from_string(key: &str) -> Result<Vec<u8>> { … 32 line(s) … ⟦tj:7b325fc299e0ddad7d13259ceb3a28c5⟧ }
+fn key_bytes_from_string(key: &str) -> Result<Vec<u8>> {
+    let trimmed = key.trim();
+
+    { … 27 line(s) … ⟦tj:7b325fc299e0ddad7d13259ceb3a28c5⟧ }
+    );
+}
 
 #[cfg(test)]
 #[path = "rest_tests.rs"]

@@ -43,10 +43,16 @@
 const char *SDS_NOINIT = "SDS_NOINIT";
 
 static inline int sdsHdrSize(char type) {
-    { … 14 line(s) … ⟦tj:8ed5c5befbd5069040e1506230bb6e6f⟧ }
+    switch(type&SDS_TYPE_MASK) {
+        case SDS_TYPE_5:
+    { … 10 line(s) … ⟦tj:8ed5c5befbd5069040e1506230bb6e6f⟧ }
+    return 0;
 
 static inline char sdsReqType(size_t string_size) {
-    { … 14 line(s) … ⟦tj:7f8ee8f24e05af74975824fa34390d8b⟧ }
+    if (string_size < 1<<5)
+        return SDS_TYPE_5;
+    { … 10 line(s) … ⟦tj:7f8ee8f24e05af74975824fa34390d8b⟧ }
+#endif
 
 static inline size_t sdsTypeMaxSize(char type) {
     { … 12 line(s) … ⟦tj:156a3722aa780ce5f34027fb7c944b46⟧ }
@@ -65,7 +71,10 @@ static inline size_t sdsTypeMaxSize(char type) {
  * end of the string. However the string is binary safe and can contain
  * \0 characters in the middle, as the length is stored in the sds header. */
 sds _sdsnewlen(const void *init, size_t initlen, int trymalloc) {
-    { … 63 line(s) … ⟦tj:d67faf289304390e811a6debc02dd14e⟧ }
+    void *sh;
+    sds s;
+    { … 59 line(s) … ⟦tj:d67faf289304390e811a6debc02dd14e⟧ }
+    return s;
 
 sds sdsnewlen(const void *init, size_t initlen) {
     return _sdsnewlen(init, initlen, 0);
@@ -139,7 +148,57 @@ void sdsclear(sds s) {
  * Note: this does not change the *length* of the sds string as returned
  * by sdslen(), but only the free buffer space we have. */
 sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
-    { … 51 line(s) … ⟦tj:7f3aba56089dfcf25b8e2ca147b59d79⟧ }
+    void *sh, *newsh;
+    size_t avail = sdsavail(s);
+    size_t len, newlen, reqlen;
+    char type, oldtype = s[-1] & SDS_TYPE_MASK;
+    int hdrlen;
+    size_t usable;
+
+    /* Return ASAP if there is enough space left. */
+    if (avail >= addlen) return s;
+
+    len = sdslen(s);
+    sh = (char*)s-sdsHdrSize(oldtype);
+    reqlen = newlen = (len+addlen);
+    assert(newlen > len);   /* Catch size_t overflow */
+    if (greedy == 1) {
+        if (newlen < SDS_MAX_PREALLOC)
+            newlen *= 2;
+        else
+            newlen += SDS_MAX_PREALLOC;
+    }
+
+    type = sdsReqType(newlen);
+
+    /* Don't use type 5: the user is appending to the string and type 5 is
+     * not able to remember empty space, so sdsMakeRoomFor() must be called
+     * at every appending operation. */
+    if (type == SDS_TYPE_5) type = SDS_TYPE_8;
+
+    hdrlen = sdsHdrSize(type);
+    assert(hdrlen + newlen + 1 > reqlen);  /* Catch size_t overflow */
+    if (oldtype==type) {
+        newsh = s_realloc_usable(sh, hdrlen+newlen+1, &usable);
+        if (newsh == NULL) return NULL;
+        s = (char*)newsh+hdrlen;
+    } else {
+        /* Since the header size changes, need to move the string forward,
+         * and can't use realloc */
+        newsh = s_malloc_usable(hdrlen+newlen+1, &usable);
+        if (newsh == NULL) return NULL;
+        memcpy((char*)newsh+hdrlen, s, len+1);
+        s_free(sh);
+        s = (char*)newsh+hdrlen;
+        s[-1] = type;
+        sdssetlen(s, len);
+    }
+    usable = usable-hdrlen-1;
+    if (usable > sdsTypeMaxSize(type))
+        usable = sdsTypeMaxSize(type);
+    sdssetalloc(s, usable);
+    return s;
+}
 
 /* Enlarge the free space at the end of the sds string more than needed,
  * This is useful to avoid repeated re-allocations when repeatedly appending to the sds. */
@@ -172,7 +231,10 @@ sds sdsRemoveFreeSpace(sds s, int would_regrow) {
  * allocation size, this is done in order to avoid repeated calls to this
  * function when the caller detects that it has excess space. */
 sds sdsResize(sds s, size_t size, int would_regrow) {
-    { … 56 line(s) … ⟦tj:f66b0db5be241720059588834cce8ece⟧ }
+    void *sh, *newsh;
+    char type, oldtype = s[-1] & SDS_TYPE_MASK;
+    { … 52 line(s) … ⟦tj:f66b0db5be241720059588834cce8ece⟧ }
+    return s;
 
 /* Return the total size of the allocation of the specified sds string,
  * including:
@@ -216,7 +278,10 @@ void *sdsAllocPtr(sds s) {
  * sdsIncrLen(s, nread);
  */
 void sdsIncrLen(sds s, ssize_t incr) {
-    { … 39 line(s) … ⟦tj:c5d872ed183dff9fd122f02e05c5f9cb⟧ }
+    unsigned char flags = s[-1];
+    size_t len;
+    { … 35 line(s) … ⟦tj:c5d872ed183dff9fd122f02e05c5f9cb⟧ }
+    s[len] = '\0';
 
 /* Grow the sds to have the specified length. Bytes that were not part of
  * the original length of the sds will be set to zero.
@@ -266,11 +331,18 @@ sds sdscpy(sds s, const char *t) {
  * sdscatprintf(sdsempty(),"%lld\n", value);
  */
 sds sdsfromlonglong(long long value) {
-    { … 5 line(s) … ⟦tj:e0655e03dd9255413cd7451ed941a3b5⟧ }
+    char buf[LONG_STR_SIZE];
+    int len = ll2string(buf,sizeof(buf),value);
+
+    return sdsnewlen(buf,len);
+}
 
 /* Like sdscatprintf() but gets va_list instead of being variadic. */
 sds sdscatvprintf(sds s, const char *fmt, va_list ap) {
-    { … 39 line(s) … ⟦tj:7b1ebb90928eb747ba636e33170de52a⟧ }
+    va_list cpy;
+    char staticbuf[1024], *buf = staticbuf, *t;
+    { … 35 line(s) … ⟦tj:7b1ebb90928eb747ba636e33170de52a⟧ }
+    return t;
 
 /* Append to the sds string 's' a string obtained using printf-alike format
  * specifier.
@@ -289,7 +361,13 @@ sds sdscatvprintf(sds s, const char *fmt, va_list ap) {
  * s = sdscatprintf(sdsempty(), "... your format ...", args);
  */
 sds sdscatprintf(sds s, const char *fmt, ...) {
-    { … 7 line(s) … ⟦tj:eb224f4ca8f39a5e646f7330a012e141⟧ }
+    va_list ap;
+    char *t;
+    va_start(ap, fmt);
+    t = sdscatvprintf(s,fmt,ap);
+    va_end(ap);
+    return t;
+}
 
 /* This function is similar to sdscatprintf, but much faster as it does
  * not rely on sprintf() family functions implemented by the libc that
@@ -308,7 +386,10 @@ sds sdscatprintf(sds s, const char *fmt, ...) {
  * %% - Verbatim "%" character.
  */
 sds sdscatfmt(sds s, char const *fmt, ...) {
-    { … 93 line(s) … ⟦tj:6d3a1ea1b330740bd463adc347b5d434⟧ }
+    size_t initlen = sdslen(s);
+    const char *f = fmt;
+    { … 89 line(s) … ⟦tj:6d3a1ea1b330740bd463adc347b5d434⟧ }
+    return s;
 
 /* Remove the part of the string from left and from right composed just of
  * contiguous characters found in 'cset', that is a null terminated C string.
@@ -325,7 +406,10 @@ sds sdscatfmt(sds s, char const *fmt, ...) {
  * Output will be just "HelloWorld".
  */
 sds sdstrim(sds s, const char *cset) {
-    { … 13 line(s) … ⟦tj:6bf491f6b1e6bf2c88737738cad83791⟧ }
+    char *end, *sp, *ep;
+    size_t len;
+    { … 9 line(s) … ⟦tj:6bf491f6b1e6bf2c88737738cad83791⟧ }
+    return s;
 
 /* Changes the input string to be a subset of the original.
  * It does not release the free space in the string, so a call to
@@ -359,11 +443,17 @@ void sdsrange(sds s, ssize_t start, ssize_t end) {
 
 /* Apply tolower() to every character of the sds string 's'. */
 void sdstolower(sds s) {
-    { … 4 line(s) … ⟦tj:73f0142663c7194814b20ebf11d39440⟧ }
+    size_t len = sdslen(s), j;
+
+    for (j = 0; j < len; j++) s[j] = tolower(s[j]);
+}
 
 /* Apply toupper() to every character of the sds string 's'. */
 void sdstoupper(sds s) {
-    { … 4 line(s) … ⟦tj:914b89313c2f071c3bb6b0a1fe037df2⟧ }
+    size_t len = sdslen(s), j;
+
+    for (j = 0; j < len; j++) s[j] = toupper(s[j]);
+}
 
 /* Compare two sds strings s1 and s2 with memcmp().
  *
@@ -396,11 +486,18 @@ int sdscmp(const sds s1, const sds s2) {
  * same function but for zero-terminated strings.
  */
 sds *sdssplitlen(const char *s, ssize_t len, const char *sep, int seplen, int *count) {
-    { … 46 line(s) … ⟦tj:1145a599fe3d0247c30996cfa316847e⟧ }
+    int elements = 0, slots = 5;
+    long start = 0, j;
+    { … 42 line(s) … ⟦tj:1145a599fe3d0247c30996cfa316847e⟧ }
+    }
 
 /* Free the result returned by sdssplitlen(), or do nothing if 'tokens' is NULL. */
 void sdsfreesplitres(sds *tokens, int count) {
-    { … 5 line(s) … ⟦tj:64d69b7ae6a1d1fe64e69303690d181c⟧ }
+    if (!tokens) return;
+    while(count--)
+        sdsfree(tokens[count]);
+    s_free(tokens);
+}
 
 /* Append to the sds string "s" an escaped string representation where
  * all the non-printable characters (tested with isprint()) are turned into
@@ -409,7 +506,10 @@ void sdsfreesplitres(sds *tokens, int count) {
  * After the call, the modified sds string is no longer valid and all the
  * references must be substituted with the new pointer returned by the call. */
 sds sdscatrepr(sds s, const char *p, size_t len) {
-    { … 24 line(s) … ⟦tj:46da1f63dc6aa1270a0222010267abae⟧ }
+    s = sdsMakeRoomFor(s, len + 2);
+    s = sdscatlen(s,"\"",1);
+    { … 20 line(s) … ⟦tj:46da1f63dc6aa1270a0222010267abae⟧ }
+    return sdscatlen(s,"\"",1);
 
 /* Returns one if the string contains characters to be escaped
  * by sdscatrepr(), zero otherwise.
@@ -431,7 +531,10 @@ int is_hex_digit(char c) {
 /* Helper function for sdssplitargs() that converts a hex digit into an
  * integer from 0 to 15 */
 int hex_digit_to_int(char c) {
-    { … 20 line(s) … ⟦tj:9219f89a0f07da977142786bdad6ab45⟧ }
+    switch(c) {
+    case '0': return 0;
+    { … 16 line(s) … ⟦tj:9219f89a0f07da977142786bdad6ab45⟧ }
+    }
 
 /* Split a line into arguments, where every argument can be in the
  * following programming-language REPL-alike form:
@@ -453,7 +556,10 @@ int hex_digit_to_int(char c) {
  * as in: "foo"bar or "foo'
  */
 sds *sdssplitargs(const char *line, int *argc) {
-    { … 108 line(s) … ⟦tj:2dc78d37f6f0834677373759f9bb9758⟧ }
+    const char *p = line;
+    char *current = NULL;
+    { … 104 line(s) … ⟦tj:2dc78d37f6f0834677373759f9bb9758⟧ }
+    return NULL;
 
 /* Modify the string substituting all the occurrences of the set of
  * characters specified in the 'from' string to the corresponding character
@@ -493,17 +599,10 @@ void sds_free(void *ptr) { s_free(ptr); }
  */
 sds sdstemplate(const char *template, sdstemplate_callback_t cb_func, void *cb_arg)
 {
-    { … 17 line(s) … ⟦tj:15dc2391544c5be1cb81ea9db74ec61b⟧ }
-        if (!*sv) goto error;       /* Premature end of template */
-    { … 9 line(s) … ⟦tj:7bc893ff5a94b6fd5c162261fd758c1b⟧ }
-        if (!ev) goto error;
-    { … 6 line(s) … ⟦tj:875c80722586163ef2b2e915a50e8bc8⟧ }
-        if (!value) goto error;
-    { … 9 line(s) … ⟦tj:a6f1cd9a863f7ab25a5bee551c957f90⟧ }
-error:
-    sdsfree(res);
+    sds res = sdsempty();
+    const char *p = template;
+    { … 44 line(s) … ⟦tj:f1ad479849360fd201ae367b4047bc56⟧ }
     return NULL;
-}
 
 #ifdef REDIS_TEST
 #include <stdio.h>
@@ -513,14 +612,20 @@ error:
 #define UNUSED(x) (void)(x)
 
 static sds sdsTestTemplateCallback(sds varname, void *arg) {
-    { … 8 line(s) … ⟦tj:4ff72367edd7b1fdce262c3f4c45f091⟧ }
+    UNUSED(arg);
+    static const char *_var1 = "variable1";
+    static const char *_var2 = "variable2";
+
+    if (!strcmp(varname, _var1)) return sdsnew("value1");
+    else if (!strcmp(varname, _var2)) return sdsnew("value2");
+    else return NULL;
+}
 
 int sdsTest(int argc, char **argv, int flags) {
-    { … 198 line(s) … ⟦tj:fe327ef0f0367432d6c22624c93f95d5⟧ }
-        /* Template with callback error */
-        x = sdstemplate("v1={variable1} v3={doesnotexist}", sdsTestTemplateCallback, NULL);
-        test_cond("sdstemplate() with callback error", x == NULL);
-    { … 45 line(s) … ⟦tj:a027fea74cb39e38be9371e19725b347⟧ }
+    UNUSED(argc);
+    UNUSED(argv);
+    { … 242 line(s) … ⟦tj:519db131d70eb84b647096dbe62a1ce3⟧ }
+    return 0;
 #endif
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 

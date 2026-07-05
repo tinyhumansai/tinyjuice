@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB -> 3.5 KB (-96%) | 95.8% | 95.5% | 0.195 ms |
-| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB -> 385 B (-91%) | 91.3% | 86.4% | 0.018 ms |
-| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | [diff](cases/08-openhuman-coverage-8/compression.diff) | 5.2 KB -> 471 B (-91%) | 90.9% | 86.7% | 0.020 ms |
-| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB -> 3.7 KB (-89%) | 89.3% | 88.7% | 0.118 ms |
-| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB -> 1.1 KB (-83%) | 83.4% | 80.0% | 0.027 ms |
-| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | [diff](cases/10-openhuman-coverage-10/compression.diff) | 5.8 KB -> 1.0 KB (-83%) | 82.7% | 78.9% | 0.024 ms |
-| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB -> 1.2 KB (-82%) | 81.8% | 78.5% | 0.027 ms |
-| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB -> 5.0 KB (-80%) | 79.9% | 79.0% | 0.099 ms |
-| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | [diff](cases/02-rss-hacker-news/compression.diff) | 15.2 KB -> 7.2 KB (-53%) | 52.9% | 51.4% | 0.059 ms |
-| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB -> 278.4 KB (-28%) | 27.5% | 27.5% | 1.350 ms |
+| `04-forum-rust-users` | [input](cases/04-forum-rust-users/input.html) | [output](cases/04-forum-rust-users/output.txt) | [diff](cases/04-forum-rust-users/compression.diff) | 83.9 KB -> 3.3 KB (-96%) | 96.1% | 95.8% | 0.164 ms |
+| `06-openhuman-coverage-6` | [input](cases/06-openhuman-coverage-6/input.html) | [output](cases/06-openhuman-coverage-6/output.txt) | [diff](cases/06-openhuman-coverage-6/compression.diff) | 4.4 KB -> 385 B (-91%) | 91.3% | 86.4% | 0.014 ms |
+| `08-openhuman-coverage-8` | [input](cases/08-openhuman-coverage-8/input.html) | [output](cases/08-openhuman-coverage-8/output.txt) | [diff](cases/08-openhuman-coverage-8/compression.diff) | 5.2 KB -> 471 B (-91%) | 90.9% | 86.7% | 0.018 ms |
+| `03-noisy-hacker-news` | [input](cases/03-noisy-hacker-news/input.html) | [output](cases/03-noisy-hacker-news/output.txt) | [diff](cases/03-noisy-hacker-news/compression.diff) | 34.4 KB -> 3.7 KB (-89%) | 89.3% | 88.7% | 0.092 ms |
+| `07-openhuman-coverage-7` | [input](cases/07-openhuman-coverage-7/input.html) | [output](cases/07-openhuman-coverage-7/output.txt) | [diff](cases/07-openhuman-coverage-7/compression.diff) | 6.5 KB -> 1.1 KB (-83%) | 83.4% | 80.0% | 0.021 ms |
+| `10-openhuman-coverage-10` | [input](cases/10-openhuman-coverage-10/input.html) | [output](cases/10-openhuman-coverage-10/output.txt) | [diff](cases/10-openhuman-coverage-10/compression.diff) | 5.8 KB -> 1.0 KB (-83%) | 82.7% | 78.9% | 0.019 ms |
+| `05-openhuman-coverage-5` | [input](cases/05-openhuman-coverage-5/input.html) | [output](cases/05-openhuman-coverage-5/output.txt) | [diff](cases/05-openhuman-coverage-5/compression.diff) | 6.6 KB -> 1.2 KB (-82%) | 81.8% | 78.5% | 0.022 ms |
+| `09-openhuman-coverage-9` | [input](cases/09-openhuman-coverage-9/input.html) | [output](cases/09-openhuman-coverage-9/output.txt) | [diff](cases/09-openhuman-coverage-9/compression.diff) | 24.6 KB -> 5.0 KB (-80%) | 79.9% | 79.0% | 0.079 ms |
+| `02-rss-hacker-news` | [input](cases/02-rss-hacker-news/input.xml) | [output](cases/02-rss-hacker-news/output.txt) | [diff](cases/02-rss-hacker-news/compression.diff) | 15.2 KB -> 8.1 KB (-47%) | 47.0% | 45.6% | 0.053 ms |
+| `01-rss-rust-blog` | [input](cases/01-rss-rust-blog/input.xml) | [output](cases/01-rss-rust-blog/output.txt) | [diff](cases/01-rss-rust-blog/compression.diff) | 384.1 KB -> 278.4 KB (-28%) | 27.5% | 27.5% | 1.200 ms |
 
 ## What TinyJuice Is Doing
 
@@ -80,12 +80,6 @@ Output excerpt:
 ```text
 The Rust Programming Language Forum
 
-= 40rem)" rel="stylesheet" data-target="desktop" />
-
-= 40rem)" rel="stylesheet" data-target="discourse-ai_desktop" />
-= 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop" />
-= 40rem)" rel="stylesheet" data-target="poll_desktop" />
-
 The Rust Programming Language Forum
 
 General discussion of The Rust Programming Language
@@ -114,6 +108,12 @@ Forum Code Formatting and Syntax Highlighting
 meta
 
 To format code in this forum you need to surround the code with three backticks (` ` `). For example, typing this...
+` ` `
+fn main() {
+println!()
+}
+` ` `
+
 
 ```
 
@@ -316,7 +316,7 @@ Output excerpt:
 
 ```text
 Hacker News
-Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
+Hacker Newsnew | past | comments | ask | show | jobs | submit login
 1.
 Shadcn/UI now defaults to Base UI instead of Radix (shadcn.com)
 176 points by dabinat 7 hours ago | hide | 67 comments
@@ -766,7 +766,9 @@ Output excerpt:
 
 ```text
 Hacker News: Front Page
-https://news.ycombinator.com/Hacker News RSShttps://hnrss.org/hnrss v2.1.1Sun, 05 Jul 2026 12:36:38 +0000
+https://news.ycombinator.com/ Hacker News RSS https://hnrss.org/ hnrss v2.1.1 Sun, 05 Jul 2026 12:36:38 +0000
+Educators disciplined over Charlie Kirk posts are securing big payouts
+
 Article URL: https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568
 
 Comments URL: https://news.ycombinator.com/item?id=48793726
@@ -775,7 +777,9 @@ Points: 5
 
 # Comments: 0
 
-]]>Sun, 05 Jul 2026 12:29:44 +0000https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568Anon84https://news.ycombinator.com/item?id=48793726https://news.ycombinat...
+Sun, 05 Jul 2026 12:29:44 +0000 https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568 Anon84 https://news.ycombinator.com/item?id=48793726 https://news.ycombina...
+The Engineer in the Half-Space
+
 Article URL: https://yusufaytas.com/the-engineer-in-the-half-space
 
 Comments URL: https://news.ycombinator.com/item?id=48793716
@@ -784,7 +788,9 @@ Points: 13
 
 # Comments: 0
 
-]]>Sun, 05 Jul 2026 12:28:04 +0000https://yusufaytas.com/the-engineer-in-the-half-spaceyusufaytashttps://news.ycombinator.com/item?id=48793716https://news.ycombinator.com/item?id=48793716
+Sun, 05 Jul 2026 12:28:04 +0000 https://yusufaytas.com/the-engineer-in-the-half-space yusufaytas https://news.ycombinator.com/item?id=48793716 https://news.ycombinator.com/item?id=48793716
+Europe's new climate in seven charts
+
 Article URL: https://www.bbc.com/news/articles/c8e2j0j87reo
 
 Comments URL: https://news.ycombinator.com/item?id=48792790
@@ -793,14 +799,8 @@ Points: 107
 
 # Comments: 119
 
-]]>Sun, 05 Jul 2026 09:56:10 +0000https://www.bbc.com/news/articles/c8e2j0j87reosaikatsghttps://news.ycombinator.com/item?id=48792790https://news.ycombinator.com/item?id=48792790
-Article URL: https://www.bbc.com/news/articles/cz758x04g83o
-
-Comments URL: https://news.ycombinator.com/item?id=48792780
-
-Points: 16
-
-# Comments: 4
+Sun, 05 Jul 2026 09:56:10 +0000 https://www.bbc.com/news/articles/c8e2j0j87reo saikatsg https://news.ycombinator.com/item?id=48792790 https://news.ycombinator.com/item?id=48792790
+Scientist who cleaned space toilet on work now leading Mars exploration
 
 ```
 

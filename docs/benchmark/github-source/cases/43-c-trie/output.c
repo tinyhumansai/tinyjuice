@@ -25,7 +25,13 @@ int trie_new (
     struct trie ** trie
 )
 {
-    { … 7 line(s) … ⟦tj:14b067434c370241c52d7829f2ce6c05⟧ }
+    *trie = calloc(1, sizeof(struct trie));
+    if (NULL == *trie) {
+        // memory allocation failed
+        return -1;
+    }
+    return 0;
+}
 
 
 /*--Insert new word to Trie--*/
@@ -35,7 +41,44 @@ int trie_insert (
     unsigned word_len
 )
 {
-    { … 38 line(s) … ⟦tj:dc2373e1161e007ee2b6c1b1326f3aea⟧ }
+    int ret = 0;
+
+    // this is the end of this word; add an end-of-word marker here and we're
+    // done.
+    if (0 == word_len) {
+        trie->end_of_word = true;
+        return 0;
+    }
+
+    // if you have some more complex mapping, you could introduce one here. In
+    // this easy example, we just subtract 'a' (97) from it, meaning that 'a' is 0,
+    // 'b' is 1, and so on.
+    const unsigned int index = word[0] - 'a';
+
+    // this index is outside the alphabet size; indexing this would mean an
+    // out-of-bound memory access (bad!). If you introduce a separate map
+    // function for indexing, then you could move the out-of-bounds index in
+    // there.
+    if (ALPHABET_SIZE <= index) {
+        return -1;
+    }
+
+    // The index does not exist yet, allocate it.
+    if (NULL == trie->children[index]) {
+        ret = trie_new(&trie->children[index]);
+        if (-1 == ret) {
+            // creating new trie node failed
+            return -1;
+        }
+    }
+    
+    // recurse into the child node
+    return trie_insert(
+        /* trie = */ trie->children[index],
+        /* word = */ word + 1,
+        /* word_len = */ word_len - 1
+    );
+}
 
 
 /*--Search a word in the Trie--*/
@@ -46,7 +89,35 @@ int trie_search(
     struct trie ** result
 )
 {
-    { … 29 line(s) … ⟦tj:b0752dd8150f1f318d7abdcd281b31df⟧ }
+    // we found a match
+    if (0 == word_len) {
+        *result = trie;
+        return 0;
+    }
+
+    // same here as in trie_insert, if you have a separate index mapping, add
+    // it here. In this example, we just subtract 'a'.
+    const unsigned int index = word[0] - 'a';
+
+    // This word contains letters outside the alphabet length; it's invalid.
+    // Remember to do this to prevent buffer overflows.
+    if (ALPHABET_SIZE <= index) {
+        return -1;
+    }
+
+    // No match
+    if (NULL == trie->children[index]) {
+        return -1;
+    }
+
+    // traverse the trie
+    return trie_search(
+        /* trie = */ trie->children[index],
+        /* word = */ word + 1,
+        /* word_len = */ word_len - 1,
+        /* result = */ result
+    );
+}
 
 /*---Return all the related words------*/
 void trie_print (
@@ -55,13 +126,73 @@ void trie_print (
     unsigned prefix_len
 )
 {
-    { … 24 line(s) … ⟦tj:0d4d1fefe61ad9f6b47286da312ae463⟧ }
+
+    // An end-of-word marker means that this is a complete word, print it.
+    if (true == trie->end_of_word) {
+        printf("%.*s\n", prefix_len, prefix);
+    }
+
+    // However, there can be longer words with the same prefix; traverse into
+    // those as well.
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+
+        // No words on this character
+{ … 11 line(s) … ⟦tj:7b83ecf72b61bee7083a682e46ad5e7b⟧ }
+    }
 
 
 /*------Demonstrate purposes uses text file called dictionary -------*/
 
 int main() {
-    { … 49 line(s) … ⟦tj:e9fe61775b8c626c074b333e01b4a672⟧ }
+    int ret = 0;
+    struct trie * root = NULL;
+    struct trie * trie = NULL;
+    char word[100] = {0};
+
+    // Create a root trie
+    ret = trie_new(&root);
+    if (-1 == ret) {
+        fprintf(stderr, "Could not create trie\n");
+        exit(1);
+    }
+
+    // open the dictionary file
+    FILE *fp = fopen("dictionary.txt", "r");
+    if (NULL == fp) {
+        fprintf(stderr, "Error while opening dictionary file");
+        exit(1);
+    }
+
+    // insert all the words from the dictionary
+    while (1 == fscanf(fp, "%100s\n", word)) {
+        ret = trie_insert(root, word, strnlen(word, 100));
+        if (-1 == ret) {
+            fprintf(stderr, "Could not insert word into trie\n");
+            exit(1);
+        }
+    }
+
+    while (1) {
+        printf("Enter keyword: ");
+        if (1 != scanf("%100s", word)) {
+            break;
+        }
+
+        printf(
+            "\n==========================================================\n");
+        printf("\n********************* Possible Words ********************\n");
+
+        ret = trie_search(root, word, strnlen(word, 100), &trie);
+        if (-1 == ret) {
+            printf("No results\n");
+            continue;
+        }
+
+        trie_print(trie, word, strnlen(word, 100));
+
+        printf("\n==========================================================\n");
+    }
+}
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [compacted tool output — this is a PARTIAL view; the full original (5241 bytes) is available by calling tinyjuice_retrieve with token "6310a979a27595cc7a51260fd786f142" (marker ⟦tj:6310a979a27595cc7a51260fd786f142⟧)]

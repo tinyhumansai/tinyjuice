@@ -1,6 +1,6 @@
 --- input/input.log
 +++ output/output.log
-@@ -1,2000 +1,22 @@
+@@ -1,2000 +1,7 @@
 -081109 203615 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
 -081109 203807 222 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-6952295868487656571 terminating
 -081109 204005 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_7128370237687728475 size 67108864
@@ -2002,23 +2002,8 @@
 -081111 101954 26414 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_5225719677049010638 terminating
 -081111 102017 26347 INFO dfs.DataNode$DataXceiver: Receiving block blk_4343207286455274569 src: /10.250.9.207:59759 dest: /10.250.9.207:50010
 +[... 77 line(s) omitted ... ⟦tj:4bec07bb1d48c444a07b61c7e9766683⟧]
-+081109 214043 2561 WARN dfs.DataNode$DataXceiver: 10.251.30.85:50010:Got exception while serving blk_-2918118818249673980 to /10.251.90.64:
-+081109 214402 2677 WARN dfs.DataNode$DataXceiver: 10.251.126.255:50010:Got exception while serving blk_8376667364205250596 to /10.251.91.159:
-+[... 1 line(s) omitted ... ⟦tj:aa768ccd6f8649887c8dd6998cf6e023⟧]
-+081109 214529 2747 WARN dfs.DataNode$DataXceiver: 10.251.123.132:50010:Got exception while serving blk_3763728533434719668 to /10.251.38.214:
-+081109 214910 2848 WARN dfs.DataNode$DataXceiver: 10.250.13.188:50010:Got exception while serving blk_6241141267506413726 to /10.251.194.245:
-+[... 1 line(s) omitted ... ⟦tj:fe001978517c233f627f8a3cd467b277⟧]
-+081109 215136 2868 WARN dfs.DataNode$DataXceiver: 10.251.199.19:50010:Got exception while serving blk_8466246428293623262 to /10.251.106.37:
-+[... 1029 line(s) omitted ... ⟦tj:0aed3df73a59f6b6a76c7a9120b7eee8⟧]
-+081110 233954 17191 WARN dfs.DataNode$DataXceiver: 10.250.7.230:50010:Got exception while serving blk_-7029628814943626474 to /10.251.38.197:
-+[... 5 line(s) omitted ... ⟦tj:93c51bed5081231c46db6585ffabfbcb⟧]
-+081111 004102 17259 WARN dfs.DataNode$DataXceiver: 10.251.214.175:50010:Got exception while serving blk_481857539063371482 to /10.251.105.189:
-+[... 1 line(s) omitted ... ⟦tj:2dd4005418c9288af48a818ce485c499⟧]
-+081111 011254 17716 WARN dfs.DataNode$DataXceiver: 10.251.39.144:50010:Got exception while serving blk_-8083036675630459841 to /10.251.39.209:
-+081111 012254 17517 WARN dfs.DataNode$DataXceiver: 10.250.7.32:50010:Got exception while serving blk_-1508527605812345693 to /10.251.74.192:
-+[... 3 line(s) omitted ... ⟦tj:f14bc5473560a3661cf95d0229c5ce62⟧]
-+081111 014431 17416 WARN dfs.DataNode$DataXceiver: 10.251.107.98:50010:Got exception while serving blk_-3140031507252212554 to /10.250.7.244:
-+[... 873 line(s) omitted ... ⟦tj:73c6b3b2dda0627c72e61000739b4afb⟧]
++081109 214043 2561 WARN dfs.DataNode$DataXceiver: 10.251.30.85:50010:Got exception while serving blk_-2918118818249673980 to /10.251.90.64:  [×80 first 081109 214043, last 081111 014431]
++[... 1922 line(s) omitted ... ⟦tj:277cd8998699c04f24456f04a5793caa⟧]
 +
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +

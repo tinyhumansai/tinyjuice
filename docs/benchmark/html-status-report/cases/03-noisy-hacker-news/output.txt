@@ -1,5 +1,5 @@
 Hacker News
-Hacker Newsnew | past | comments | ask | show | jobs | submitlogin
+Hacker Newsnew | past | comments | ask | show | jobs | submit login
 1.
 Shadcn/UI now defaults to Base UI instead of Radix (shadcn.com)
 176 points by dabinat 7 hours ago | hide | 67 comments

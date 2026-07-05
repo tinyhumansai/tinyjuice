@@ -10,14 +10,14 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB -> 6.8 KB (-74%) | 82.6% | 75.1% | 1.274 ms |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB -> 9.0 KB (-74%) | 76.8% | 73.9% | 1.450 ms |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB -> 5.0 KB (-71%) | 73.0% | 69.8% | 0.695 ms |
-| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB -> 3.0 KB (-64%) | 67.5% | 61.9% | 0.495 ms |
-| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB -> 18.8 KB (-61%) | 64.3% | 61.1% | 1.983 ms |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB -> 1.4 KB (-58%) | 63.3% | 51.7% | 0.162 ms |
-| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB -> 27.8 KB (-48%) | 56.3% | 51.0% | 2.084 ms |
-| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB -> 2.6 KB (-41%) | 52.7% | 38.0% | 0.191 ms |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB -> 11.3 KB (-68%) | 69.2% | 67.2% | 1.308 ms |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB -> 3.9 KB (-53%) | 56.2% | 51.1% | 0.353 ms |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB -> 15.7 KB (-41%) | 44.0% | 40.3% | 1.162 ms |
+| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB -> 35.0 KB (-35%) | 39.7% | 36.6% | 1.651 ms |
+| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB -> 32.6 KB (-32%) | 34.9% | 32.2% | 1.855 ms |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB -> 13.3 KB (-24%) | 26.2% | 23.2% | 0.678 ms |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB -> 3.8 KB (-15%) | 20.1% | 10.4% | 0.160 ms |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB -> 3.4 KB (-0%) | 0.0% | 0.0% | 0.138 ms |
 | `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | [diff](cases/06-socket/compression.diff) | 2.0 KB -> 2.0 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
 | `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | [diff](cases/03-socket/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
 
@@ -26,96 +26,6 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 The code path keeps the navigation surface: imports, signatures, top-level items, and important comments. Large function bodies can be collapsed and recovered through CCR.
 
 ## Syntax-Aware Samples
-
-### `05-rest-tests`
-
-- [Full input](cases/05-rest-tests/input.rs)
-- [Full output](cases/05-rest-tests/output.rs)
-- [Input vs output diff](cases/05-rest-tests/compression.diff)
-
-Input excerpt:
-
-```rust
-use super::{
-    backend_api_body_shape, flatten_authed_error, key_bytes_from_string, parse_message_path,
-    sanitize_client_version, BackendApiError, BackendOAuthClient, BACKEND_API_BODY_SHAPE_MAX_BYTES,
-};
-use axum::extract::State;
-use axum::http::HeaderMap;
-use axum::routing::{get, post};
-use axum::{Json, Router};
-use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
-use base64::Engine;
-use reqwest::Method;
-use serde_json::{json, Value};
-use std::sync::{Arc, Mutex};
-use tokio::net::TcpListener;
-
-#[test]
-fn decodes_base64url_no_pad() {
-    // A 32-byte key that, when base64url-encoded, contains both `-` and `_`.
-    let raw = [
-        0xff_u8, 0xfb, 0xef, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
-        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-        0x0b, 0x0c, 0x0d,
-    ];
-    let url_key = URL_SAFE_NO_PAD.encode(raw);
-    assert!(url_key.contains('-') || url_key.contains('_'));
-    let decoded = key_bytes_from_string(&url_key).unwrap();
-    assert_eq!(decoded, raw);
-}
-
-#[test]
-fn decodes_standard_base64() {
-    let raw = [0x41_u8; 32];
-    let std_key = STANDARD.encode(raw);
-    let decoded = key_bytes_from_string(&std_key).unwrap();
-    assert_eq!(decoded, raw);
-}
-
-```
-
-Output excerpt:
-
-```rust
-use super::{
-    backend_api_body_shape, flatten_authed_error, key_bytes_from_string, parse_message_path,
-    sanitize_client_version, BackendApiError, BackendOAuthClient, BACKEND_API_BODY_SHAPE_MAX_BYTES,
-};
-use axum::extract::State;
-use axum::http::HeaderMap;
-use axum::routing::{get, post};
-use axum::{Json, Router};
-use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
-use base64::Engine;
-use reqwest::Method;
-use serde_json::{json, Value};
-use std::sync::{Arc, Mutex};
-use tokio::net::TcpListener;
-
-#[test]
-fn decodes_base64url_no_pad() { … 12 line(s) … ⟦tj:ddf29b8d10b80e7e212d08535a344a6a⟧ }
-
-#[test]
-fn decodes_standard_base64() { … 6 line(s) … ⟦tj:39e7a405158b4a2bb93f1b93a288977b⟧ }
-
-#[test]
-fn decodes_raw_32_byte_key() { … 6 line(s) … ⟦tj:1f13f406f0fbc06a10064473ab59e0ea⟧ }
-
-#[test]
-fn trims_whitespace() { … 6 line(s) … ⟦tj:8893f6a3af7a5243d8c83bb6395b541f⟧ }
-
-#[test]
-fn rejects_wrong_length() { … 4 line(s) … ⟦tj:2a9bb9ec7d041f12b84985a6a9771a8c⟧ }
-
-use super::user_id_from_profile_payload;
-
-#[test]
-fn extracts_id_from_root() { … 9 line(s) … ⟦tj:5773768f2eb30e66724da281b08aa272⟧ }
-
-#[test]
-
-```
 
 ### `08-harness-subagent-audit`
 
@@ -204,96 +114,6 @@ use tokio::sync::mpsc;
 #[command(name = "harness-subagent-audit")]
 struct Args {
     /// Sub-agent archetype to request from the orchestrator.
-
-```
-
-### `07-gmail-backfill-3d`
-
-- [Full input](cases/07-gmail-backfill-3d/input.rs)
-- [Full output](cases/07-gmail-backfill-3d/output.rs)
-- [Input vs output diff](cases/07-gmail-backfill-3d/compression.diff)
-
-Input excerpt:
-
-```rust
-//! Backfill the last N days of Gmail into the memory-tree content store.
-//!
-//! Authenticates via Composio (JWT from `<workspace>/auth-profiles.json`),
-//! fetches Gmail pages via `GMAIL_FETCH_EMAILS`, converts each thread into an
-//! [`EmailThread`], ingests it through `ingest_page_into_memory_tree` (which
-//! writes `.md` files via `content_store` and populates SQLite), then drains
-//! the async worker pool until idle.
-//!
-//! After draining, the binary performs an integrity check: for every chunk
-//! that has a `content_path` in SQLite, it verifies the on-disk SHA-256
-//! matches the stored `content_sha256`.
-//!
-//! # Prerequisites
-//!
-//! - Signed-in openhuman session JWT in the same workspace the desktop app
-//!   uses (stored at `<workspace>/auth-profiles.json`).
-//! - Active Gmail connection on Composio for that user.
-//!
-//! # Usage
-//!
-//! ` ` `sh
-//! cargo run --bin gmail-backfill-3d
-//! cargo run --bin gmail-backfill-3d -- --days 7
-//! cargo run --bin gmail-backfill-3d -- --days 14 --page-size 100
-//! cargo run --bin gmail-backfill-3d -- --skip-drain
-//! cargo run --bin gmail-backfill-3d -- --skip-verify
-//! cargo run --bin gmail-backfill-3d -- --wipe
-//! ` ` `
-//!
-//! Set `RUST_LOG=info` (or `debug`) for detailed output.
-
-use anyhow::{Context, Result};
-use clap::Parser;
-use serde_json::{json, Value};
-
-use openhuman_core::openhuman::composio::client::{
-
-```
-
-Output excerpt:
-
-```rust
-//! Backfill the last N days of Gmail into the memory-tree content store.
-//!
-//! Authenticates via Composio (JWT from `<workspace>/auth-profiles.json`),
-//! fetches Gmail pages via `GMAIL_FETCH_EMAILS`, converts each thread into an
-//! [`EmailThread`], ingests it through `ingest_page_into_memory_tree` (which
-//! writes `.md` files via `content_store` and populates SQLite), then drains
-//! the async worker pool until idle.
-//!
-//! After draining, the binary performs an integrity check: for every chunk
-//! that has a `content_path` in SQLite, it verifies the on-disk SHA-256
-//! matches the stored `content_sha256`.
-//!
-//! # Prerequisites
-//!
-//! - Signed-in openhuman session JWT in the same workspace the desktop app
-//!   uses (stored at `<workspace>/auth-profiles.json`).
-//! - Active Gmail connection on Composio for that user.
-//!
-//! # Usage
-//!
-//! ` ` `sh
-//! cargo run --bin gmail-backfill-3d
-//! cargo run --bin gmail-backfill-3d -- --days 7
-//! cargo run --bin gmail-backfill-3d -- --days 14 --page-size 100
-//! cargo run --bin gmail-backfill-3d -- --skip-drain
-//! cargo run --bin gmail-backfill-3d -- --skip-verify
-//! cargo run --bin gmail-backfill-3d -- --wipe
-//! ` ` `
-//!
-//! Set `RUST_LOG=info` (or `debug`) for detailed output.
-
-use anyhow::{Context, Result};
-use clap::Parser;
-use serde_json::{json, Value};
-
-use openhuman_core::openhuman::composio::client::{
 
 ```
 
@@ -387,183 +207,93 @@ use openhuman_core::openhuman::inference::provider::traits::{ChatMessage, ChatRe
 
 ```
 
-### `04-rest`
+### `05-rest-tests`
 
-- [Full input](cases/04-rest/input.rs)
-- [Full output](cases/04-rest/output.rs)
-- [Input vs output diff](cases/04-rest/compression.diff)
+- [Full input](cases/05-rest-tests/input.rs)
+- [Full output](cases/05-rest-tests/output.rs)
+- [Input vs output diff](cases/05-rest-tests/compression.diff)
 
 Input excerpt:
 
 ```rust
-//! HTTP client for TinyHumans / AlphaHuman API routes (`/auth/...`, etc.).
-
-use anyhow::{Context, Result};
+use super::{
+    backend_api_body_shape, flatten_authed_error, key_bytes_from_string, parse_message_path,
+    sanitize_client_version, BackendApiError, BackendOAuthClient, BACKEND_API_BODY_SHAPE_MAX_BYTES,
+};
+use axum::extract::State;
+use axum::http::HeaderMap;
+use axum::routing::{get, post};
+use axum::{Json, Router};
+use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
 use base64::Engine;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION};
-use reqwest::{Client, Method, Url};
-use serde::{Deserialize, Serialize};
+use reqwest::Method;
 use serde_json::{json, Value};
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
+use tokio::net::TcpListener;
 
-use super::jwt::bearer_authorization_value;
+#[test]
+fn decodes_base64url_no_pad() {
+    // A 32-byte key that, when base64url-encoded, contains both `-` and `_`.
+    let raw = [
+        0xff_u8, 0xfb, 0xef, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        0x0b, 0x0c, 0x0d,
+    ];
+    let url_key = URL_SAFE_NO_PAD.encode(raw);
+    assert!(url_key.contains('-') || url_key.contains('_'));
+    let decoded = key_bytes_from_string(&url_key).unwrap();
+    assert_eq!(decoded, raw);
+}
 
-/// Typed errors surfaced by `authed_json` for expected backend states that
-/// callers should recover from in-flow rather than funnel into Sentry.
-#[derive(Debug, thiserror::Error)]
-pub enum BackendApiError {
-    /// Edit / delete of a channel message returned 404. Happens when the
-    /// user deletes the message on the provider side (Telegram, Discord,
-    /// Slack, …) but our local `StreamingState` still has the id, or when
-    /// the backend GC'd the relay row before we got around to editing it.
-    /// Callers should clear stale state and skip the retry. Targets
-    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
-    #[error("message not found on {provider}: {message_id}")]
-    MessageNotFound {
-        /// Channel provider segment (e.g. `"telegram"`, `"discord"`).
-        provider: String,
-        /// Provider-specific message id from the URL.
-        message_id: String,
-    },
-    /// Backend rejected the bearer JWT with `401 Unauthorized`. This is an
-    /// expected user-session state (token expired, revoked, rotated
-    /// server-side) — not a code bug. Callers can route to a re-sign-in
-    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
-    /// (12 events on `/openai/v1/audio/speech` mascot TTS, but the same
-    /// shape fires on every authed endpoint once the session lapses).
-    #[error("backend rejected session token on {method} {path}")]
+#[test]
+fn decodes_standard_base64() {
+    let raw = [0x41_u8; 32];
+    let std_key = STANDARD.encode(raw);
+    let decoded = key_bytes_from_string(&std_key).unwrap();
+    assert_eq!(decoded, raw);
+}
 
 ```
 
 Output excerpt:
 
 ```rust
-//! HTTP client for TinyHumans / AlphaHuman API routes (`/auth/...`, etc.).
-
-use anyhow::{Context, Result};
+use super::{
+    backend_api_body_shape, flatten_authed_error, key_bytes_from_string, parse_message_path,
+    sanitize_client_version, BackendApiError, BackendOAuthClient, BACKEND_API_BODY_SHAPE_MAX_BYTES,
+};
+use axum::extract::State;
+use axum::http::HeaderMap;
+use axum::routing::{get, post};
+use axum::{Json, Router};
+use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
 use base64::Engine;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION};
-use reqwest::{Client, Method, Url};
-use serde::{Deserialize, Serialize};
+use reqwest::Method;
 use serde_json::{json, Value};
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
+use tokio::net::TcpListener;
 
-use super::jwt::bearer_authorization_value;
+#[test]
+fn decodes_base64url_no_pad() { … 12 line(s) … ⟦tj:ddf29b8d10b80e7e212d08535a344a6a⟧ }
 
-/// Typed errors surfaced by `authed_json` for expected backend states that
-/// callers should recover from in-flow rather than funnel into Sentry.
-#[derive(Debug, thiserror::Error)]
-pub enum BackendApiError {
-    /// Edit / delete of a channel message returned 404. Happens when the
-    /// user deletes the message on the provider side (Telegram, Discord,
-    /// Slack, …) but our local `StreamingState` still has the id, or when
-    /// the backend GC'd the relay row before we got around to editing it.
-    /// Callers should clear stale state and skip the retry. Targets
-    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
-    #[error("message not found on {provider}: {message_id}")]
-    MessageNotFound {
-        /// Channel provider segment (e.g. `"telegram"`, `"discord"`).
-        provider: String,
-        /// Provider-specific message id from the URL.
-        message_id: String,
-    },
-    /// Backend rejected the bearer JWT with `401 Unauthorized`. This is an
-    /// expected user-session state (token expired, revoked, rotated
-    /// server-side) — not a code bug. Callers can route to a re-sign-in
-    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
-    /// (12 events on `/openai/v1/audio/speech` mascot TTS, but the same
-    /// shape fires on every authed endpoint once the session lapses).
-    #[error("backend rejected session token on {method} {path}")]
+#[test]
+fn decodes_standard_base64() {
+    let raw = [0x41_u8; 32];
+    let std_key = STANDARD.encode(raw);
+    let decoded = key_bytes_from_string(&std_key).unwrap();
+    assert_eq!(decoded, raw);
+}
 
-```
+#[test]
+fn decodes_raw_32_byte_key() {
+    let raw = "abcdefghijklmnopqrstuvwxyz012345";
+    assert_eq!(raw.len(), 32);
+    let decoded = key_bytes_from_string(raw).unwrap();
+    assert_eq!(decoded, raw.as_bytes());
+}
 
-### `10-memory-tree-init-smoke`
-
-- [Full input](cases/10-memory-tree-init-smoke/input.rs)
-- [Full output](cases/10-memory-tree-init-smoke/output.rs)
-- [Input vs output diff](cases/10-memory-tree-init-smoke/compression.diff)
-
-Input excerpt:
-
-```rust
-//! Manual stress smoke for the memory_tree schema-init race fix.
-//!
-//! Spins N concurrent threads racing into `memory::tree::store::with_connection`
-//! against a shared workspace. Pre-fix (without the mutex-gated init guard),
-//! cold-start runs would surface SQLite codes 14 (CANTOPEN), 1546
-//! (IOERR_TRUNCATE), or 4874 (IOERR_SHMMAP) on some threads. Post-fix,
-//! all N threads must return Ok.
-//!
-//! # Usage
-//!
-//! ` ` `sh
-//! # Fresh workspace (forces cold-start path)
-//! rm -rf /tmp/mt-smoke
-//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
-//!   cargo run --bin memory-tree-init-smoke -- 32
-//!
-//! # Re-run against warm DB (should also be Ok; exercises fast path)
-//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
-//!   cargo run --bin memory-tree-init-smoke -- 32
-//! ` ` `
-//!
-//! Arg is thread count (default 16, must be > 0). Higher = more contention.
-//! Use `RUST_LOG=debug` to see per-worker results.
-//!
-//! Exit code: 0 if all threads Ok, 1 if any failed.
-
-use std::path::PathBuf;
-use std::process::ExitCode;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-
-use openhuman_core::openhuman::config::Config;
-use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
-
-fn main() -> ExitCode {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-
-```
-
-Output excerpt:
-
-```rust
-//! Manual stress smoke for the memory_tree schema-init race fix.
-//!
-//! Spins N concurrent threads racing into `memory::tree::store::with_connection`
-//! against a shared workspace. Pre-fix (without the mutex-gated init guard),
-//! cold-start runs would surface SQLite codes 14 (CANTOPEN), 1546
-//! (IOERR_TRUNCATE), or 4874 (IOERR_SHMMAP) on some threads. Post-fix,
-//! all N threads must return Ok.
-//!
-//! # Usage
-//!
-//! ` ` `sh
-//! # Fresh workspace (forces cold-start path)
-//! rm -rf /tmp/mt-smoke
-//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
-//!   cargo run --bin memory-tree-init-smoke -- 32
-//!
-//! # Re-run against warm DB (should also be Ok; exercises fast path)
-//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
-//!   cargo run --bin memory-tree-init-smoke -- 32
-//! ` ` `
-//!
-//! Arg is thread count (default 16, must be > 0). Higher = more contention.
-//! Use `RUST_LOG=debug` to see per-worker results.
-//!
-//! Exit code: 0 if all threads Ok, 1 if any failed.
-
-use std::path::PathBuf;
-use std::process::ExitCode;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-
-use openhuman_core::openhuman::config::Config;
-use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
-
-fn main() -> ExitCode { … 76 line(s) … ⟦tj:0bc2aa582a12a896dbb668373d73d51b⟧ }
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+#[test]
+fn trims_whitespace() {
 
 ```
 
@@ -657,6 +387,186 @@ Output excerpt:
 
 ```
 
+### `04-rest`
+
+- [Full input](cases/04-rest/input.rs)
+- [Full output](cases/04-rest/output.rs)
+- [Input vs output diff](cases/04-rest/compression.diff)
+
+Input excerpt:
+
+```rust
+//! HTTP client for TinyHumans / AlphaHuman API routes (`/auth/...`, etc.).
+
+use anyhow::{Context, Result};
+use base64::Engine;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION};
+use reqwest::{Client, Method, Url};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::time::Duration;
+
+use super::jwt::bearer_authorization_value;
+
+/// Typed errors surfaced by `authed_json` for expected backend states that
+/// callers should recover from in-flow rather than funnel into Sentry.
+#[derive(Debug, thiserror::Error)]
+pub enum BackendApiError {
+    /// Edit / delete of a channel message returned 404. Happens when the
+    /// user deletes the message on the provider side (Telegram, Discord,
+    /// Slack, …) but our local `StreamingState` still has the id, or when
+    /// the backend GC'd the relay row before we got around to editing it.
+    /// Callers should clear stale state and skip the retry. Targets
+    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
+    #[error("message not found on {provider}: {message_id}")]
+    MessageNotFound {
+        /// Channel provider segment (e.g. `"telegram"`, `"discord"`).
+        provider: String,
+        /// Provider-specific message id from the URL.
+        message_id: String,
+    },
+    /// Backend rejected the bearer JWT with `401 Unauthorized`. This is an
+    /// expected user-session state (token expired, revoked, rotated
+    /// server-side) — not a code bug. Callers can route to a re-sign-in
+    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
+    /// (12 events on `/openai/v1/audio/speech` mascot TTS, but the same
+    /// shape fires on every authed endpoint once the session lapses).
+    #[error("backend rejected session token on {method} {path}")]
+
+```
+
+Output excerpt:
+
+```rust
+//! HTTP client for TinyHumans / AlphaHuman API routes (`/auth/...`, etc.).
+
+use anyhow::{Context, Result};
+use base64::Engine;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION};
+use reqwest::{Client, Method, Url};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::time::Duration;
+
+use super::jwt::bearer_authorization_value;
+
+/// Typed errors surfaced by `authed_json` for expected backend states that
+/// callers should recover from in-flow rather than funnel into Sentry.
+#[derive(Debug, thiserror::Error)]
+pub enum BackendApiError {
+    /// Edit / delete of a channel message returned 404. Happens when the
+    /// user deletes the message on the provider side (Telegram, Discord,
+    /// Slack, …) but our local `StreamingState` still has the id, or when
+    /// the backend GC'd the relay row before we got around to editing it.
+    /// Callers should clear stale state and skip the retry. Targets
+    /// `OPENHUMAN-TAURI-2Y` (~454 events on `/channels/telegram/messages/<id>`).
+    #[error("message not found on {provider}: {message_id}")]
+    MessageNotFound {
+        /// Channel provider segment (e.g. `"telegram"`, `"discord"`).
+        provider: String,
+        /// Provider-specific message id from the URL.
+        message_id: String,
+    },
+    /// Backend rejected the bearer JWT with `401 Unauthorized`. This is an
+    /// expected user-session state (token expired, revoked, rotated
+    /// server-side) — not a code bug. Callers can route to a re-sign-in
+    /// flow; the auth domain owns recovery. Targets `OPENHUMAN-TAURI-4K8`
+    /// (12 events on `/openai/v1/audio/speech` mascot TTS, but the same
+    /// shape fires on every authed endpoint once the session lapses).
+    #[error("backend rejected session token on {method} {path}")]
+
+```
+
+### `07-gmail-backfill-3d`
+
+- [Full input](cases/07-gmail-backfill-3d/input.rs)
+- [Full output](cases/07-gmail-backfill-3d/output.rs)
+- [Input vs output diff](cases/07-gmail-backfill-3d/compression.diff)
+
+Input excerpt:
+
+```rust
+//! Backfill the last N days of Gmail into the memory-tree content store.
+//!
+//! Authenticates via Composio (JWT from `<workspace>/auth-profiles.json`),
+//! fetches Gmail pages via `GMAIL_FETCH_EMAILS`, converts each thread into an
+//! [`EmailThread`], ingests it through `ingest_page_into_memory_tree` (which
+//! writes `.md` files via `content_store` and populates SQLite), then drains
+//! the async worker pool until idle.
+//!
+//! After draining, the binary performs an integrity check: for every chunk
+//! that has a `content_path` in SQLite, it verifies the on-disk SHA-256
+//! matches the stored `content_sha256`.
+//!
+//! # Prerequisites
+//!
+//! - Signed-in openhuman session JWT in the same workspace the desktop app
+//!   uses (stored at `<workspace>/auth-profiles.json`).
+//! - Active Gmail connection on Composio for that user.
+//!
+//! # Usage
+//!
+//! ` ` `sh
+//! cargo run --bin gmail-backfill-3d
+//! cargo run --bin gmail-backfill-3d -- --days 7
+//! cargo run --bin gmail-backfill-3d -- --days 14 --page-size 100
+//! cargo run --bin gmail-backfill-3d -- --skip-drain
+//! cargo run --bin gmail-backfill-3d -- --skip-verify
+//! cargo run --bin gmail-backfill-3d -- --wipe
+//! ` ` `
+//!
+//! Set `RUST_LOG=info` (or `debug`) for detailed output.
+
+use anyhow::{Context, Result};
+use clap::Parser;
+use serde_json::{json, Value};
+
+use openhuman_core::openhuman::composio::client::{
+
+```
+
+Output excerpt:
+
+```rust
+//! Backfill the last N days of Gmail into the memory-tree content store.
+//!
+//! Authenticates via Composio (JWT from `<workspace>/auth-profiles.json`),
+//! fetches Gmail pages via `GMAIL_FETCH_EMAILS`, converts each thread into an
+//! [`EmailThread`], ingests it through `ingest_page_into_memory_tree` (which
+//! writes `.md` files via `content_store` and populates SQLite), then drains
+//! the async worker pool until idle.
+//!
+//! After draining, the binary performs an integrity check: for every chunk
+//! that has a `content_path` in SQLite, it verifies the on-disk SHA-256
+//! matches the stored `content_sha256`.
+//!
+//! # Prerequisites
+//!
+//! - Signed-in openhuman session JWT in the same workspace the desktop app
+//!   uses (stored at `<workspace>/auth-profiles.json`).
+//! - Active Gmail connection on Composio for that user.
+//!
+//! # Usage
+//!
+//! ` ` `sh
+//! cargo run --bin gmail-backfill-3d
+//! cargo run --bin gmail-backfill-3d -- --days 7
+//! cargo run --bin gmail-backfill-3d -- --days 14 --page-size 100
+//! cargo run --bin gmail-backfill-3d -- --skip-drain
+//! cargo run --bin gmail-backfill-3d -- --skip-verify
+//! cargo run --bin gmail-backfill-3d -- --wipe
+//! ` ` `
+//!
+//! Set `RUST_LOG=info` (or `debug`) for detailed output.
+
+use anyhow::{Context, Result};
+use clap::Parser;
+use serde_json::{json, Value};
+
+use openhuman_core::openhuman::composio::client::{
+
+```
+
 ### `02-jwt`
 
 - [Full input](cases/02-jwt/input.rs)
@@ -738,12 +648,102 @@ pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 lin
 /// still 401s, caught by the `flatten_authed_error` net). Returns `None` for any
 /// non-JWT / malformed / `exp`-less token, in which case expiry tracking
 /// degrades to the previous behaviour (no local precheck).
-pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … ⟦tj:902053cf712b0ec0319a8b4193f0b577⟧ }
+pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> {
+    let claims = decode_jwt_payload(token)?;
+    // `exp` is a NumericDate (seconds since epoch); accept int or float shapes.
+    let exp = claims
+        .get("exp")
+        .and_then(|v| v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)))?;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+```
 
+### `10-memory-tree-init-smoke`
+
+- [Full input](cases/10-memory-tree-init-smoke/input.rs)
+- [Full output](cases/10-memory-tree-init-smoke/output.rs)
+- [Input vs output diff](cases/10-memory-tree-init-smoke/compression.diff)
+
+Input excerpt:
+
+```rust
+//! Manual stress smoke for the memory_tree schema-init race fix.
+//!
+//! Spins N concurrent threads racing into `memory::tree::store::with_connection`
+//! against a shared workspace. Pre-fix (without the mutex-gated init guard),
+//! cold-start runs would surface SQLite codes 14 (CANTOPEN), 1546
+//! (IOERR_TRUNCATE), or 4874 (IOERR_SHMMAP) on some threads. Post-fix,
+//! all N threads must return Ok.
+//!
+//! # Usage
+//!
+//! ` ` `sh
+//! # Fresh workspace (forces cold-start path)
+//! rm -rf /tmp/mt-smoke
+//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
+//!   cargo run --bin memory-tree-init-smoke -- 32
+//!
+//! # Re-run against warm DB (should also be Ok; exercises fast path)
+//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
+//!   cargo run --bin memory-tree-init-smoke -- 32
+//! ` ` `
+//!
+//! Arg is thread count (default 16, must be > 0). Higher = more contention.
+//! Use `RUST_LOG=debug` to see per-worker results.
+//!
+//! Exit code: 0 if all threads Ok, 1 if any failed.
+
+use std::path::PathBuf;
+use std::process::ExitCode;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
+use openhuman_core::openhuman::config::Config;
+use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
+
+fn main() -> ExitCode {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+
+```
+
+Output excerpt:
+
+```rust
+//! Manual stress smoke for the memory_tree schema-init race fix.
+//!
+//! Spins N concurrent threads racing into `memory::tree::store::with_connection`
+//! against a shared workspace. Pre-fix (without the mutex-gated init guard),
+//! cold-start runs would surface SQLite codes 14 (CANTOPEN), 1546
+//! (IOERR_TRUNCATE), or 4874 (IOERR_SHMMAP) on some threads. Post-fix,
+//! all N threads must return Ok.
+//!
+//! # Usage
+//!
+//! ` ` `sh
+//! # Fresh workspace (forces cold-start path)
+//! rm -rf /tmp/mt-smoke
+//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
+//!   cargo run --bin memory-tree-init-smoke -- 32
+//!
+//! # Re-run against warm DB (should also be Ok; exercises fast path)
+//! OPENHUMAN_WORKSPACE=/tmp/mt-smoke \
+//!   cargo run --bin memory-tree-init-smoke -- 32
+//! ` ` `
+//!
+//! Arg is thread count (default 16, must be > 0). Higher = more contention.
+//! Use `RUST_LOG=debug` to see per-worker results.
+//!
+//! Exit code: 0 if all threads Ok, 1 if any failed.
+
+use std::path::PathBuf;
+use std::process::ExitCode;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
+use openhuman_core::openhuman::config::Config;
+use openhuman_core::openhuman::memory_store::chunks::store::with_connection;
+
+fn main() -> ExitCode {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
 
 ```
 

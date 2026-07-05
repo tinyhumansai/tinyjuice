@@ -60,7 +60,152 @@ namespace aystar_search {
  */
 template <size_t N = 3>
 class EightPuzzle {
-    { … 200 line(s) … ⟦tj:8a40bde4c263df3f153f6fdce0f4080a⟧ }
+    std::array<std::array<uint32_t, N>, N>
+        board;  /// N x N array to store the current state of the Puzzle.
+
+    std::vector<std::pair<int8_t, int8_t>> moves = {
+        {0, 1},
+        {1, 0},
+        {0, -1},
+        {-1,
+         0}};  /// A helper array to evaluate the next state from current state;
+    /**
+     * @brief Finds an empty space in puzzle (in this case; a zero)
+     * @returns a pair indicating integer distances from top and right
+     * respectively, else returns -1, -1
+     */
+    std::pair<uint32_t, uint32_t> find_zero() {
+        { … 9 line(s) … ⟦tj:b9f0291748682e55fbb9d904a0858ba7⟧ }
+    /**
+     * @brief check whether the index value is bounded within the puzzle area
+     * @param value index for the current board
+     * @returns `true` if index is within the board, else `false`
+     */
+    inline bool in_range(const uint32_t value) const { return value < N; }
+
+ public:
+    /**
+     * @brief get the value from i units from right and j units from left side
+     * of the board
+     * @param i integer denoting ith row
+     * @param j integer denoting column
+     * @returns non-negative integer denoting the value at ith row and jth
+     * column
+     * @returns -1 if invalid i or j position
+     */
+    uint32_t get(size_t i, size_t j) const {
+        if (in_range(i) && in_range(j)) {
+            return board[i][j];
+        }
+        return -1;
+    }
+    /**
+     * @brief Returns the current state of the board
+     */
+    std::array<std::array<uint32_t, N>, N> get_state() { return board; }
+
+    /**
+     * @brief returns the size of the EightPuzzle (number of row / column)
+     * @return N, the size of the puzzle.
+     */
+    inline size_t get_size() const { return N; }
+    /**
+     * @brief Default constructor for EightPuzzle
+     */
+    EightPuzzle() {
+        for (size_t i = 0; i < N; ++i) {
+            for (size_t j = 0; j < N; ++j) {
+                board[i][j] = ((i * 3 + j + 1) % (N * N));
+            }
+        }
+    }
+    /**
+     * @brief Parameterized Constructor for EightPuzzle
+     * @param init a 2-dimensional array denoting a puzzle configuration
+     */
+    explicit EightPuzzle(const std::array<std::array<uint32_t, N>, N> &init)
+        : board(init) {}
+
+    /**
+     * @brief Copy constructor
+     * @param A a reference of an EightPuzzle
+     */
+    EightPuzzle(const EightPuzzle<N> &A) : board(A.board) {}
+
+    /**
+     * @brief Move constructor
+     * @param A a reference of an EightPuzzle
+     */
+    EightPuzzle(const EightPuzzle<N> &&A) noexcept
+        : board(std::move(A.board)) {}
+    /**
+     * @brief Destructor of EightPuzzle
+     */
+    ~EightPuzzle() = default;
+
+    /**
+     * @brief Copy assignment operator
+     * @param A a reference of an EightPuzzle
+     */
+    EightPuzzle &operator=(const EightPuzzle &A) {
+        board = A.board;
+        return *this;
+    }
+
+    /**
+     * @brief Move assignment operator
+     * @param A a reference of an EightPuzzle
+     */
+    EightPuzzle &operator=(EightPuzzle &&A) noexcept {
+        board = std::move(A.board);
+        return *this;
+    }
+
+    /**
+     * @brief Find all possible states after processing all possible
+     * moves, given the current state of the puzzle
+     * @returns list of vector containing all possible next moves
+     * @note the implementation is compulsory to create A* search
+     */
+    std::vector<EightPuzzle<N>> generate_possible_moves() {
+        auto zero_pos = find_zero();
+        // vector which will contain all possible state from current state
+        std::vector<EightPuzzle<N>> NewStates;
+        for (auto &move : moves) {
+            if (in_range(zero_pos.first + move.first) &&
+                in_range(zero_pos.second + move.second)) {
+                { … 12 line(s) … ⟦tj:915870e5d429d9f9cdf6d6b1b63a9a56⟧ }
+    /**
+     * @brief check whether two boards are equal
+     * @returns `true` if check.state is equal to `this->state`, else
+     * `false`
+     */
+    bool operator==(const EightPuzzle<N> &check) const {
+        { … 12 line(s) … ⟦tj:fba8a76ce5c504d6e749a8505a59d8b3⟧ }
+    /**
+     * @brief check whether one board is lexicographically smaller
+     * @returns `true` if this->state is lexicographically smaller than
+     * `check.state`, else `false`
+     */
+    bool operator<(const EightPuzzle<N> &check) const {
+        { … 9 line(s) … ⟦tj:3b9484972bb586b8fc763c70daf422f9⟧ }
+    /**
+     * @brief check whether one board is lexicographically smaller or equal
+     * @returns `true` if this->state is lexicographically smaller than
+     * `check.state` or same, else `false`
+     */
+    bool operator<=(const EightPuzzle<N> &check) const {
+        { … 9 line(s) … ⟦tj:82f36bcf3142806a7146e3e88a1a4f4f⟧ }
+
+    /**
+     * @brief friend operator to display EightPuzzle<>
+     * @param op ostream object
+     * @param SomeState a certain state.
+     * @returns ostream operator op
+     */
+    friend std::ostream &operator<<(std::ostream &op,
+                                    const EightPuzzle<N> &SomeState) {
+        { … 9 line(s) … ⟦tj:7b59209e86d099bf6dc36b7e688a0aab⟧ }
 /**
  * @class AyStarSearch
  * @brief A class defining [A* search
@@ -89,7 +234,82 @@ class EightPuzzle {
  */
 template <typename Puzzle>
 class AyStarSearch {
-    { … 238 line(s) … ⟦tj:df5f1d7d54cab58ceb599689e4c9370e⟧ }
+    /**
+     * @brief Struct that handles all the information related to the current
+     * state.
+     */
+    typedef struct Info {
+        std::shared_ptr<Puzzle> state;  /// Holds the current state.
+        size_t heuristic_value = 0;     /// stores h score
+        { … 45 line(s) … ⟦tj:1a0c15a444c8209ef0350acfb187d735⟧ }
+         */
+        Info &operator=(const Info &A) {
+            { … 10 line(s) … ⟦tj:e3244563074b88813fe9dbdaef52ca81⟧ }
+        Info &operator=(Info &&A) noexcept {
+            { … 10 line(s) … ⟦tj:971ae18bfe2c4eff44cc59533100425b⟧ }
+
+    std::shared_ptr<Info> Initial;  // Initial state of the AyStarSearch
+    std::shared_ptr<Info> Final;    // Final state of the AyStarSearch
+    /**
+     * @brief Custom comparator for open_list
+     */
+    struct comparison_operator {
+        bool operator()(const std::shared_ptr<Info> &a,
+                        const std::shared_ptr<Info> &b) const {
+            return *(a->state) < *(b->state);
+        }
+    };
+
+ public:
+    using MapOfPuzzleInfoWithPuzzleInfo =
+        std::map<std::shared_ptr<Info>, std::shared_ptr<Info>,
+                 comparison_operator>;
+
+    using MapOfPuzzleInfoWithInteger =
+        std::map<std::shared_ptr<Info>, uint32_t, comparison_operator>;
+
+    using SetOfPuzzleInfo =
+        std::set<std::shared_ptr<Info>, comparison_operator>;
+    /**
+     * @brief Parameterized constructor for AyStarSearch
+     * @param initial denoting initial state of the puzzle
+     * @param final denoting final state of the puzzle
+     */
+    AyStarSearch(const Puzzle &initial, const Puzzle &final) {
+        Initial = std::make_shared<Info>(initial);
+        Final = std::make_shared<Info>(final);
+    }
+    /**
+     * @brief A helper solution: launches when a solution for AyStarSearch
+     * is found
+     * @param FinalState the pointer to the obtained final state
+     * @param parent_of the list of all parents of nodes stored during A*
+     * search
+     * @returns the list of moves denoting moves from final state to initial
+     * state (in reverse)
+     */
+    std::vector<Puzzle> Solution(
+        std::shared_ptr<Info> FinalState,
+        const MapOfPuzzleInfoWithPuzzleInfo &parent_of) {
+        //  Useful for traversing from final state to current state.
+        auto current_state = FinalState;
+        { … 9 line(s) … ⟦tj:435493ce522a8ba2b8ec37cd6a4f1f94⟧ }
+        return answer;
+    /**
+     * Main algorithm for finding `FinalState`, given the `InitialState`
+     * @param dist the heuristic finction, defined by the user
+     * @param permissible_depth the depth at which the A* search discards
+     * searching for solution
+     * @returns List of moves from Final state to initial state, if
+     * evaluated, else returns an empty array
+     */
+    std::vector<Puzzle> a_star_search(
+        const std::function<uint32_t(const Puzzle &, const Puzzle &)> &dist,
+        const uint32_t permissible_depth = 30) {
+        MapOfPuzzleInfoWithPuzzleInfo
+            parent_of;                       /// Stores the parent of the states
+        { … 91 line(s) … ⟦tj:54654c3eeca4888c33e31c55a06aecf9⟧ }
+    }
 }  // namespace aystar_search
 }  // namespace machine_learning
 
@@ -98,7 +318,10 @@ class AyStarSearch {
  * @returns void
  */
 static void test() {
-    { … 168 line(s) … ⟦tj:0ef5028e6fc9817f75a81b8785abfdea⟧ }
+    // Renaming for simplicity
+    using matrix3 = std::array<std::array<uint32_t, 3>, 3>;
+    { … 164 line(s) … ⟦tj:0ef5028e6fc9817f75a81b8785abfdea⟧ }
+    }
 /**
  * @brief Main function
  * @returns 0 on exit

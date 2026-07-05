@@ -1,49 +1,6 @@
 --- input/input.ts
 +++ output/output.ts
-@@ -14,10 +14,7 @@
-   // A comparison function. Returns true if a should be the parent of b.
-   protected compare: (a: T, b: T) => boolean
- 
--  constructor(compare: (a: T, b: T) => boolean) {
--    this.heap = []
--    this.compare = compare
--  }
-+  constructor(compare: (a: T, b: T) => boolean) { … 4 line(s) … ⟦tj:be0b603ce3085f47bdd24ab8c53aa4ea⟧ }
- 
-   /**
-    * Compares the value at parentIndex with the value at childIndex
-@@ -35,27 +32,11 @@
-   private getChildIndexToSwap(
-     leftChildIndex: number,
-     rightChildIndex: number
--  ): number {
--    if (rightChildIndex >= this.size()) {
--      return leftChildIndex
--    }
--    return this.compare(this.heap[leftChildIndex], this.heap[rightChildIndex])
--      ? leftChildIndex
--      : rightChildIndex
--  }
-+  ): number { … 8 line(s) … ⟦tj:dcb84a17745802fe17ac95514de5922c⟧ }
- 
--  public insert(value: T): void {
--    this.heap.push(value)
--    this.bubbleUp()
--  }
-+  public insert(value: T): void { … 4 line(s) … ⟦tj:5f9f1aef4bd454c0bd86cee082060388⟧ }
- 
--  public extract(): T {
--    const maxElement = this.heap[0]
--    this.heap[0] = this.heap[this.size() - 1]
--    this.heap.pop()
--    this.sinkDown()
--    return maxElement
--  }
-+  public extract(): T { … 7 line(s) … ⟦tj:e81e0416fbd3cf46c72eefea114e2b0a⟧ }
- 
-   public size(): number {
-     return this.heap.length
-@@ -69,36 +50,10 @@
+@@ -69,35 +69,14 @@
      ;[this.heap[a], this.heap[b]] = [this.heap[b], this.heap[a]]
    }
  
@@ -58,11 +15,10 @@
 -      index = parentIndex
 -    }
 -  }
-+  private sinkDown(): void { … 18 line(s) … ⟦tj:2963b0929fd7273aa9ec7bddb00deac2⟧ }
- 
--  private sinkDown(): void {
--    let index = 0
--    let leftChildIndex = this.getLeftChildIndex(index)
+-
+   private sinkDown(): void {
+     let index = 0
+     let leftChildIndex = this.getLeftChildIndex(index)
 -    let rightChildIndex = this.getRightChildIndex(index)
 -    let childIndexToSwap
 -
@@ -76,80 +32,17 @@
 -      index = childIndexToSwap
 -      leftChildIndex = this.getLeftChildIndex(index)
 -      rightChildIndex = this.getRightChildIndex(index)
--    }
++    { … 13 line(s) … ⟦tj:2963b0929fd7273aa9ec7bddb00deac2⟧ }
+     }
 -  }
--
++}
+ 
    private getLeftChildIndex(index: number): number {
      return index * 2 + 1
-   }
-@@ -111,28 +66,7 @@
-     this._check()
-   }
- 
--  private _check(index: number = 0): void {
--    if (!this.heap[index]) return
--    const leftChildIndex = this.getLeftChildIndex(index)
--    const rightChildIndex = this.getRightChildIndex(index)
--
--    if (
--      this.heap[leftChildIndex] &&
--      !this.isRightlyPlaced(leftChildIndex, index)
--    ) {
--      throw new Error('Heap does not adhere to heap invariant')
--    }
--
--    if (
--      this.heap[rightChildIndex] &&
--      !this.isRightlyPlaced(rightChildIndex, index)
--    ) {
--      throw new Error('Heap does not adhere to heap invariant')
--    }
--
--    this._check(leftChildIndex)
--    this._check(rightChildIndex)
--  }
-+  private _check(index: number = 0): void { … 22 line(s) … ⟦tj:38cd81861143707f6fcd53b70fa0d6d4⟧ }
- }
- 
- export class MinHeap<T> extends Heap<T> {
-@@ -157,46 +91,16 @@
-     keys_index: (a: T) => number,
-     num_keys: number,
-     compare: (a: T, b: T) => boolean = (a: T, b: T) => a < b
--  ) {
--    super(compare)
--    this.keys = Array(num_keys).fill(-1)
--    this.keys_index = keys_index
--  }
-+  ) { … 5 line(s) … ⟦tj:2ecc07abd8381948e4f52fd60c4057ab⟧ }
- 
--  protected swap(a: number, b: number): void {
--    const akey = this.keys_index(this.heap[a])
--    const bkey = this.keys_index(this.heap[b])
--    ;[this.keys[akey], this.keys[bkey]] = [this.keys[bkey], this.keys[akey]]
--    super.swap(a, b)
--  }
-+  protected swap(a: number, b: number): void { … 6 line(s) … ⟦tj:36490f4c0eaf01a5a3c6de5a64fe640a⟧ }
- 
--  public insert(value: T): void {
--    this.keys[this.keys_index(value)] = this.size()
--    super.insert(value)
--  }
-+  public insert(value: T): void { … 4 line(s) … ⟦tj:fd1e6fafd8c08aa773bb23651c089a72⟧ }
- 
--  public extract(): T {
--    // Unmark the highest priority element and set key to zero for the last element in the heap.
--    this.keys[this.keys_index(this.heap[0])] = -1
--    if (this.size() > 1) {
--      this.keys[this.keys_index(this.heap[this.size() - 1])] = 0
--    }
--    return super.extract()
--  }
-+  public extract(): T { … 8 line(s) … ⟦tj:49acd1b8c345648491329d47efd89062⟧ }
- 
--  public increasePriority(idx: number, value: T): void {
--    if (this.keys[idx] === -1) {
--      // If the key does not exist, insert the value.
+@@ -187,16 +166,10 @@
+   public increasePriority(idx: number, value: T): void {
+     if (this.keys[idx] === -1) {
+       // If the key does not exist, insert the value.
 -      this.insert(value)
 -      return
 -    }
@@ -160,10 +53,11 @@
 -    }
 -    // Increase the priority and bubble it up the heap.
 -    this.heap[key] = value
--    this.bubbleUp(key)
++    { … 10 line(s) … ⟦tj:a5a81ac499398714426c7fdf598f10f3⟧ }
+     this.bubbleUp(key)
 -  }
-+  public increasePriority(idx: number, value: T): void { … 15 line(s) … ⟦tj:a5a81ac499398714426c7fdf598f10f3⟧ }
  }
++}
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
 +[compacted tool output — this is a PARTIAL view; the full original (5726 bytes) is available by calling tinyjuice_retrieve with token "00c5ab612cd0c92619c52f54d185463b" (marker ⟦tj:00c5ab612cd0c92619c52f54d185463b⟧)]

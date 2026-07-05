@@ -52,7 +52,12 @@ export class BinarySearchTree<T> {
    *
    * @param data The data to check for.
    */
-  has(data: T): boolean { … 24 line(s) … ⟦tj:c314b509a6e54416c9cb7e9eb985ca9e⟧ }
+  has(data: T): boolean {
+    if (!this.rootNode) {
+      return false
+    { … 19 line(s) … ⟦tj:c314b509a6e54416c9cb7e9eb985ca9e⟧ }
+    return true
+}
 
   /**
    * Inserts the given data into the binary search tree.
@@ -60,7 +65,12 @@ export class BinarySearchTree<T> {
    * @param data The data to be stored in the binary search tree.
    * @returns
    */
-  insert(data: T): void { … 25 line(s) … ⟦tj:d0937293e564ddc2c7605b529bb69e1d⟧ }
+  insert(data: T): void {
+    if (!this.rootNode) {
+      this.rootNode = new TreeNode<T>(data)
+    { … 20 line(s) … ⟦tj:d0937293e564ddc2c7605b529bb69e1d⟧ }
+    }
+}
 
   /**
    * Finds the minimum value of the binary search tree.
@@ -83,7 +93,12 @@ export class BinarySearchTree<T> {
    * @param array The already found node data for recursive access.
    * @returns
    */
-  inOrderTraversal(array: T[] = []): T[] { … 18 line(s) … ⟦tj:56a0cfe04911f60efc6baa21b22ee892⟧ }
+  inOrderTraversal(array: T[] = []): T[] {
+    if (!this.rootNode) {
+      return array
+    { … 13 line(s) … ⟦tj:56a0cfe04911f60efc6baa21b22ee892⟧ }
+    return traverse(this.rootNode)
+}
 
   /**
    * Traverses to the binary search tree in pre-order, i. e. it follow the schema of:
@@ -92,7 +107,12 @@ export class BinarySearchTree<T> {
    * @param array The already found node data for recursive access.
    * @returns
    */
-  preOrderTraversal(array: T[] = []): T[] { … 19 line(s) … ⟦tj:3f4174a7b354ddfe8236979e1bb0e325⟧ }
+  preOrderTraversal(array: T[] = []): T[] {
+    if (!this.rootNode) {
+      return array
+    { … 14 line(s) … ⟦tj:3f4174a7b354ddfe8236979e1bb0e325⟧ }
+    return traverse(this.rootNode)
+}
 
   /**
    * Traverses to the binary search tree in post-order, i. e. it follow the schema of:
@@ -101,7 +121,12 @@ export class BinarySearchTree<T> {
    * @param array The already found node data for recursive access.
    * @returns
    */
-  postOrderTraversal(array: T[] = []): T[] { … 19 line(s) … ⟦tj:d2a4b84ecd9bb10491e2783baa27e559⟧ }
+  postOrderTraversal(array: T[] = []): T[] {
+    if (!this.rootNode) {
+      return array
+    { … 14 line(s) … ⟦tj:d2a4b84ecd9bb10491e2783baa27e559⟧ }
+    return traverse(this.rootNode)
+}
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 

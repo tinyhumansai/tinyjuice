@@ -26,15 +26,40 @@ impl<'a> Lexer<'a> {
         Self { src, pos: 0, line: 1 }
     }
 
-    fn read_ident(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+    fn read_ident(&mut self) -> Option<Token> {
+        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+        if probe_0 == b'#' {
+        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+        Some(Token::Eof)
+}
 
-    fn read_number(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+    fn read_number(&mut self) -> Option<Token> {
+        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+        if probe_0 == b'#' {
+        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+        Some(Token::Eof)
+}
 
-    fn read_string(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+    fn read_string(&mut self) -> Option<Token> {
+        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+        if probe_0 == b'#' {
+        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+        Some(Token::Eof)
+}
 
-    fn skip_whitespace(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+    fn skip_whitespace(&mut self) -> Option<Token> {
+        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+        if probe_0 == b'#' {
+        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+        Some(Token::Eof)
+}
 
-    fn peek_operator(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+    fn peek_operator(&mut self) -> Option<Token> {
+        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+        if probe_0 == b'#' {
+        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+        Some(Token::Eof)
+}
 
 }
 

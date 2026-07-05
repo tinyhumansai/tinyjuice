@@ -1,138 +1,33 @@
 --- input/input.rg
 +++ output/output.rg
 @@ -1,3 +1,4 @@
-+[search: 500 match(es) across 142 file(s) · top 5 per file · full set via retrieve footer]
++[search: 500 match(es) across 142 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
  <OPENHUMAN_ROOT>/src/core/event_bus/README.md:48:  compression, tool-exposure, and steering signals ride the TinyAgents
  <OPENHUMAN_ROOT>/README.md:72:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: tool output compressed before it hits the model: same information, up to 80% fewer tokens. A brain this big would be unaffordable without it.
  <OPENHUMAN_ROOT>/src/core/all.rs:651:            Some("Hierarchical time-based summarization tree for background knowledge compression.")
-@@ -19,13 +20,8 @@
- <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:8:# Smart Token Compression
- <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:12:OpenHuman ships with **TokenJuice**, a compression router wired directly into the agent's tool-execution path. Before any tool result reaches a model, TokenJuice classifies it, routes it to a specialized compressor, optionally offloads the full original to a recoverable cache, and records how many tokens (and dollars) it saved.
- <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:53:3. **Compressor selection.** Each kind routes to a dedicated compressor, honoring per-kind toggles (`search_enabled`, `code_enabled`, `html_enabled`, `ml_compression_enabled`).
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:54:4. **Compression.** The compressor runs. If it declines or its output is no smaller than the input, TokenJuice falls back to the generic compressor or passes the original through. It never makes things bigger.
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:55:5. **CCR offload.** For **lossy** compressions where the original is large enough (`ccr_min_tokens`, default ~500 tokens), the full original is stowed in the **Compress-Cache-Retrieve** store so nothing is permanently lost.
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:73:| **MlText**       | PlainText   | Opt-in ML salience compression (see below).                                                              |
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:80:## ML compression (opt-in)
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:84:* **Off by default.** Enable with `ml_compression_enabled = true` in `[tokenjuice]`.
- <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:93:Lossy compression would normally mean throwing data away. TokenJuice instead **offloads** the full original into the **Compress-Cache-Retrieve (CCR)** store and leaves a breadcrumb (`vendor/tinyjuice/src/cache/`).
--<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:106:Every compression is metered by an OpenHuman savings callback (`src/openhuman/tokenjuice/savings.rs`). TokenJuice reports events and token deltas; OpenHuman applies per-model input pricing, aggregates `total`, `by_model`, and `by_compressor`, and persists stats to `<workspace>/state/tokenjuice_savings.json`.
-+[+6 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md ⟦tj:5ad9c692754c7f05570d402f1f3ee671⟧]
- <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/scoring.md:109:Embeddings run on the background workers, not the ingest hot path, so a burst of new sources never blocks the UI. Trees give compression and navigation; embeddings keep similarity search working underneath them.
- <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/scoring.md:118:* [Token Compression](../token-compression.md) - why keeping the tree dense matters.
- <OPENHUMAN_ROOT>/gitbooks/features/obsidian-wiki/memory-diff.md:101:Checkpoints are cheap to prune: `cleanup` deletes tags older than N days, but **snapshot commits are never deleted** - git history _is_ the ledger, and git's delta compression keeps it compact.
-@@ -36,17 +32,10 @@
- <OPENHUMAN_ROOT>/src/openhuman/channels/runtime/dispatch/mod.rs:128:            tokenjuice_compression: crate::openhuman::tokenjuice::AgentTokenjuiceCompression::Auto,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:14:**TinyJuice is a Rust token-compression engine for agent context.** It gives
- <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:26:auditable compression layer with conservative pass-through behavior, recovery
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:74:## Compression Surfaces
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:88:  compression; disabled by default.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:92:TinyJuice does not publish compression percentage claims yet. Throughput
- <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:109:use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:114:        CompressionInput::new("Keep this text unchanged for now."),
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:115:        &CompressionConfig::default(),
- <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:145:use tinyjuice::{AgentTokenjuiceCompression, compact_tool_output_with_policy};
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:153:        AgentTokenjuiceCompression::Full,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:181:The interface accepts metadata-oriented compression records. Do not feed raw
--<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:196:  config/            Small public CompressionConfig scaffold
+@@ -46,7 +47,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:153:        AgentTokenjuiceCompression::Full,
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:181:The interface accepts metadata-oriented compression records. Do not feed raw
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:196:  config/            Small public CompressionConfig scaffold
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/README.md:225:claim compression percentages until benchmark fixtures exist.
-+[+8 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md ⟦tj:2b7b5b75f027b357bcd68017af539a7e⟧]
++[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/README.md ⟦tj:af11dee09c015c333cce2eb06251cfcf⟧]
  <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/mod.rs:5:    CompressionInput, CompressionOutput, CompressionReport, Compressor, PassthroughCompressor,
  <OPENHUMAN_ROOT>/vendor/tinyjuice/examples/passthrough.rs:1:use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
  <OPENHUMAN_ROOT>/vendor/tinyjuice/examples/passthrough.rs:5:    let input = CompressionInput::new("Keep this text unchanged for now.");
-@@ -55,23 +44,15 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:3:use crate::{CompressionConfig, TinyJuiceError, TinyJuiceResult};
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:6:pub struct CompressionInput {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:10:impl CompressionInput {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:25:pub struct CompressionOutput {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:27:    pub report: CompressionReport,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:31:pub struct CompressionReport {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:42:        input: CompressionInput,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:43:        config: &CompressionConfig,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:44:    ) -> TinyJuiceResult<CompressionOutput>;
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:57:        input: CompressionInput,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:58:        config: &CompressionConfig,
+@@ -64,8 +65,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:57:        input: CompressionInput,
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:58:        config: &CompressionConfig,
  <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:59:    ) -> TinyJuiceResult<CompressionOutput> {
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:65:        Ok(CompressionOutput {
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs:66:            report: CompressionReport {
-+[+9 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs ⟦tj:01232cbfe36084450f450360796b7943⟧]
++[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/types.rs ⟦tj:7ecca0e169f48bd0e7326ede777f4677⟧]
  <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:14:use tinyjuice::types::AgentTokenjuiceCompression;
  <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:43:        AgentTokenjuiceCompression::Off,
  <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:60:            AgentTokenjuiceCompression::Full,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:77:        AgentTokenjuiceCompression::Light,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:102:        AgentTokenjuiceCompression::Full,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:138:        AgentTokenjuiceCompression::Full,
-+[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs ⟦tj:89e25a85dea69d1031efb6bdb6bd4c64⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/CONTRIBUTING.md:25:TinyJuice should make token compression explicit and inspectable. Prefer:
- <OPENHUMAN_ROOT>/vendor/tinyjuice/CONTRIBUTING.md:29:- deterministic compression behavior around model-facing context
- <OPENHUMAN_ROOT>/vendor/tinyjuice/CONTRIBUTING.md:31:- reports that make compression ratios and strategy choices visible
-@@ -95,7 +76,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/test.rs:13:            .compress(input, &CompressionConfig::default())
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/test.rs:14:            .expect("passthrough compression should succeed");
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/test.rs:24:        let input = CompressionInput::new("   ");
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/test.rs:27:            .compress(input, &CompressionConfig::default())
-+[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressor/test.rs ⟦tj:31be1bcfd8b03b0ef0648a075e111383⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/batched-edit-validation-spec.md:6:tool-round-trip reduction strategy, not text compression.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/batched-edit-validation-spec.md:74:  report: CompressionReport,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/charts.tsx:1:import type { AlgorithmSummary, CompressionRun } from "./types";
-@@ -124,13 +105,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:12:export async function loadSampleRuns(): Promise<CompressionRun[]> {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:20:export function loadStoredRuns(): CompressionRun[] | null {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:33:export function storeRuns(runs: CompressionRun[]) {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:41:export function normalizeRuns(input: unknown): CompressionRun[] {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:45:    .filter((row): row is CompressionRun => row !== null)
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:49:function normalizeRun(row: unknown, index: number): CompressionRun | null {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:67:  const status = typeof value.status === "string" && KNOWN_STATUSES.has(value.status as CompressionStatus)
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:68:    ? (value.status as CompressionStatus)
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:92:export function summarizeByAlgorithm(runs: CompressionRun[]): AlgorithmSummary[] {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts:93:  const map = new Map<string, CompressionRun[]>();
-+[+7 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/interface/src/data.ts ⟦tj:165c7f7dbe108fd9d0e9cc84a4cb4c3c⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/config/types.rs:6:pub struct CompressionConfig {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/config/types.rs:11:impl CompressionConfig {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/config/types.rs:21:impl Default for CompressionConfig {
-@@ -139,7 +114,7 @@
- <OPENHUMAN_ROOT>/gitbooks/features/native-tools/tool-memory.md:34:| `normal`   | Stored in the namespace; retrieved on demand via `memory_recall`. | No - eligible for compression like any other namespaced memory. |
- <OPENHUMAN_ROOT>/gitbooks/features/native-tools/tool-memory.md:36:The compression-resistance property is structural: critical and high rules ride in the *system prompt*, which the inference backend's prefix cache keeps frozen for the entire session. There is no way for token compression to silently drop a `critical` rule.
- <OPENHUMAN_ROOT>/gitbooks/features/native-tools/tool-memory.md:75:4. The agent sees `### \`send_email\`` followed by `- **[critical]** Never email Sarah at sarah@example.com.` before ever choosing a tool, and the rule survives any mid-session token compression.
--<OPENHUMAN_ROOT>/gitbooks/features/native-tools/tool-memory.md:82:- [Smart Token Compression](../token-compression.md) - what the system prompt is protected against.
-+[+1 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/native-tools/tool-memory.md ⟦tj:b4001f418b7123a9926febd4934fbb9d⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/ranked-search-read-spec.md:46:  report: CompressionReport,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/config/test.rs:3:    use crate::{CompressionConfig, TinyJuiceError};
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/config/test.rs:6:    fn default_config_targets_aggressive_compression() {
-@@ -153,9 +128,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md:6:not an implementation commitment, benchmark claim, or prompt compression claim.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md:42:  config: CompressionConfig,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md:47:CompressionConfig {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md:79:## Compression
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md:98:## Decompression
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md:120:compression_ratio(config) -> f32
-+[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/turboquant-vector-spec.md ⟦tj:b271fa89b60cb82b5b5b5b5b11dc8568⟧]
- <OPENHUMAN_ROOT>/gitbooks/features/orchestration.md:31:Inbound traffic hits a **fast reflex agent** that triages in seconds and hands a deep **reasoning core** a concise brief; the core does the multi-step work and delegates to workers. The [subconscious loop](subconscious.md) reviews compressed session history and injects steering directives, keeping the always-on layer aligned with your goals, while 20:1 compression keeps week-long sessions bounded.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/AGENTS.md:3:TinyJuice is a Rust crate for pluggable token compression in OpenHuman. Keep the
- <OPENHUMAN_ROOT>/vendor/tinyjuice/AGENTS.md:4:scaffold small until real compression strategies are ready.
-@@ -172,9 +145,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:71:- `AgentTokenjuiceCompression` profiles
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:88:- wiring optional ML compression through the existing callback
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:94:- deterministic classification and compression
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:201:`ContextCompressionMiddleware` (`src/openhuman/tinyagents/summarize.rs`, live
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:226:- Applying code compression to exact reads would damage trust. Default should be
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:233:- ML text compression can remove workflow tags or instructions. It should stay
-+[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md ⟦tj:a64eadf238b2787fb5e334c0d78ac660⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/benches/compression.rs:1://! Criterion benchmarks for the compression hot paths.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/benches/compression.rs:4://! rule engine on deterministic synthetic payloads. They are NOT compression-
- <OPENHUMAN_ROOT>/vendor/tinyjuice/benches/compression.rs:14:    AgentTokenjuiceCompression, CompressOptions, ReduceOptions, ToolExecutionInput,
-@@ -182,84 +153,31 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/subagent-summary-spec.md:53:## Compression Contract
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/rule-cli-and-safety-parity-plan.md:43:- Content-router extension hints can still trigger code or JSON compression.
- <OPENHUMAN_ROOT>/gitbooks/SUMMARY.md:44:* [Smart Token Compression](features/token-compression.md)
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:1:# Hermes Compression Algorithms and Techniques Spec
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:5:This spec documents the compression and prompt-size management techniques found
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:7:It is a design reference only. It does not claim TinyJuice compression savings;
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:19:- `agent/conversation_compression.py`
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:23:- `agent/manual_compression_feedback.py`
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:55:- manual partial compression boundaries
+@@ -191,41 +191,10 @@
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:66:- JSON table compression with head/tail, error-row, and outlier preservation
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:69:- optional tree-sitter code compression
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:70:- optional ML text compression through an adapter boundary
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:69:- optional tree-sitter code compression
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:70:- optional ML text compression through an adapter boundary
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:78:## Important Distinction: Compression vs Prompt Caching
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:80:Hermes keeps prompt caching separate from compression:
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:82:- `agent/context_compressor.py` and `agent/conversation_compression.py` mutate
@@ -168,119 +63,45 @@
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:889:- Do not merge prompt caching with lossy compression.
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:909:- Compression failure policy aborts on auth and network failures.
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md:916:core Rust reducer should continue to focus on content-aware compression and CCR.
-+[+39 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md ⟦tj:113d7348c55039f5a3e5726f76575363⟧]
++[+32 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/hermes-compression-algorithms-spec.md ⟦tj:c85b1c26411e09b2834a604548b243ca⟧]
  <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:1:# Conversation Compression Plan
  <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:11:Conversation compression is not the same as tool-output compression.
  <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:14:`ContextCompressionMiddleware` (live history summarization,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:107:- Cache hints are reported separately from compression steps.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:152:- Hosts can show why compression triggered without logging raw prompt text.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:160:- Compression leases implemented against OpenHuman storage inside core.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md:161:- Prompt cache mutation mixed into lossy compression APIs.
-+[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/conversation-compression-plan.md ⟦tj:31d0f9b1ad58e50238a6d8545c4c3577⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/openhuman/mod.rs:4:pub use types::OpenHumanCompressionContext;
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:128:Source spec: `hermes-compression-algorithms-spec.md`. Design detail exists in
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:129:`plan/conversation-compression-plan.md`; this section maps it onto OpenHuman's
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:135:- `src/openhuman/tinyagents/summarize.rs` — `ContextCompressionMiddleware`
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:165:- `src/openhuman/tinyagents/summarize.rs` — `ContextCompressionMiddleware`
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:256:compression behind `tokenjuice-treesitter` (OpenHuman enables it by default in
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:301:enabling `ml_compression_enabled` (the Kompress bridge is already wired in
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:370:Source spec: `hermes-compression-algorithms-spec.md` (P2 portions). Builds on
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:376:`ContextCompressionMiddleware` implements `SummaryProvider` over its existing
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:390:  value (fewer retry loops) but it is mutation tooling, not compression, and
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:398:- **TurboQuant vectors** (`turboquant-vector-spec.md`): storage compression
+@@ -244,7 +213,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:376:`ContextCompressionMiddleware` implements `SummaryProvider` over its existing
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:390:  value (fewer retry loops) but it is mutation tooling, not compression, and
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:398:- **TurboQuant vectors** (`turboquant-vector-spec.md`): storage compression
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:399:  for embedding indexes, not prompt compression. OpenHuman does have an
-+[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md ⟦tj:07b994c795e4984beccdced24f48bc07⟧]
++[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md ⟦tj:5eb8d85c7a2be4dd790c323b54b0a97a⟧]
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:22:- Do not claim Headroom's public compression percentages for TinyJuice.
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:54:- Reformat-only compression works when CCR is disabled.
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:55:- Offload compression declines when the CCR store cannot retain the original.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:84:- Frozen bytes are byte-identical before and after compression in adapter
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:104:- Keep backend construction outside the hot compression path.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:210:ML text compression should not be the only useful plain-text path. Add a
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:232:## P1: Tag Protection for ML Compression
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:234:Before expanding ML compression, TinyJuice should protect custom workflow tags.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:242:- Restore exact original tag text after ML compression.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:246:- Custom tags survive ML compression byte-for-byte.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:270:- Exact identifiers receive enough score to survive compression.
+@@ -257,9 +226,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:246:- Custom tags survive ML compression byte-for-byte.
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:270:- Exact identifiers receive enough score to survive compression.
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:274:Headroom centralizes mode-specific decisions in a compression policy. TinyJuice
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:279:- Add `CompressionPolicy` with fields such as:
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:284:  - ML compression allowed
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md:334:7. Add tag protection around ML compression.
-+[+10 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md ⟦tj:d4aeab9ab8b9f221a7f1e164dd089007⟧]
++[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-improvement-ingestion-spec.md ⟦tj:fe04e5c9e6f74de98f00e4941d15fa6d⟧]
  <OPENHUMAN_ROOT>/vendor/tinyjuice/interface/README.md:3:Self-hostable analytics UI for TinyJuice compression runs. It follows the same
  <OPENHUMAN_ROOT>/vendor/tinyjuice/src/openhuman/types.rs:4:pub struct OpenHumanCompressionContext {
  <OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs:18:    /// Whether lossy compressions offload the original to the CCR store and emit
-@@ -267,14 +185,13 @@
- <OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs:61:    /// Target compression ratio (0–1) hint for the ML compressor.
- <OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs:121:            ml_compression_enabled: false,
- <OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs:141:        assert!(!c.ml_compression_enabled);
--<OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs:150:            ml_compression_enabled = true
--<OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs:157:        assert!(c.ml_compression_enabled);
-+[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/config/schema/tokenjuice.rs ⟦tj:9728a4607b434f2fbb28f6d8bb81360e⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:8:  `CompressionInput`, `CompressionOutput`, `CompressionReport`, and
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:23:- host callback slots for ML compression and savings accounting
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:31:The crate boundary is mostly clean. ML text compression is a host callback, and
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:141:- Abstractive prose compression as the default fallback.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:142:- Vector compression in the prompt-compression path.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:145:- Compression percentage marketing claims.
-+[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md ⟦tj:737dc1fd5bc256af033c9801ec18ae7c⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/savings-accounting-spec.md:6:accounting infrastructure, not a compression algorithm.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/savings-accounting-spec.md:72:enough `CompressionReport` metadata for aggregation:
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/openhuman/test.rs:3:    use crate::openhuman::OpenHumanCompressionContext;
-@@ -284,9 +201,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md:86:- Signal compression for data that has no log signal.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md:92:- Logs with no useful template pass to signal compression or decline.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md:123:## Search Compression
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md:189:- Tag protection around ML compression before enabling broader use.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md:194:- Default ML text compression without tag-protection fixtures.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md:199:- Custom workflow tags survive ML compression byte-for-byte.
-+[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/content-compressor-roadmap.md ⟦tj:34a13982ebb6e70c1aa743b9cf576740⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/web-extract-truncate-store-spec.md:54:- Do not make compression percentage, speedup, or cost claims until TinyJuice has
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:311:pub enum AgentTokenjuiceCompression {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:324:impl AgentTokenjuiceCompression {
-@@ -297,8 +212,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/deferred-and-rejected-work.md:6:storage, not for immediate prompt compression. It should be deferred until
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/deferred-and-rejected-work.md:21:ML text compression and embedding relevance should stay optional.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/deferred-and-rejected-work.md:49:Installers are product surface, not core compression. They should wait until the
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/deferred-and-rejected-work.md:73:- it crosses from compression into interpretation
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/deferred-and-rejected-work.md:78:## Rejected: Compression Percentage Claims
-+[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/deferred-and-rejected-work.md ⟦tj:554db68486c92d110cd1578b66068310⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/Cargo.toml:6:description = "Pluggable token compression for OpenHuman."
- <OPENHUMAN_ROOT>/vendor/tinyjuice/Cargo.toml:9:keywords = ["llm", "tokens", "compression", "openhuman", "context"]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/Cargo.toml:49:name = "compression"
-@@ -307,15 +221,7 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:55:fn options_for_agent(profile: AgentTokenjuiceCompression) -> Option<CompressOptions> {
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:57:        AgentTokenjuiceCompression::Off => None,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:58:        AgentTokenjuiceCompression::Auto | AgentTokenjuiceCompression::Full => {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:61:        AgentTokenjuiceCompression::Light => {
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:133:    profile: AgentTokenjuiceCompression,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:210:        AgentTokenjuiceCompression::Full,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:220:    profile: AgentTokenjuiceCompression,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:304:            AgentTokenjuiceCompression::Full,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:325:            AgentTokenjuiceCompression::Full,
+@@ -313,9 +280,7 @@
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:220:    profile: AgentTokenjuiceCompression,
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:304:            AgentTokenjuiceCompression::Full,
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:325:            AgentTokenjuiceCompression::Full,
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:343:            AgentTokenjuiceCompression::Full,
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:370:            AgentTokenjuiceCompression::Light,
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:381:            compact_output_with_policy(big.clone(), "grep", true, AgentTokenjuiceCompression::Off)
-+[+9 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs ⟦tj:5060a3fa6501353d12f2eb8d3afa617a⟧]
++[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs ⟦tj:1809cf0ba789c80008a5a75862269226⟧]
  <OPENHUMAN_ROOT>/gitbooks/developing/architecture/agent-harness.md:145:**One engine, three entry points.** The loop lives in one place (the tinyagents `AgentHarness`, entered via `run_turn_via_tinyagents_shared` in `src/openhuman/tinyagents/mod.rs`) and every caller drives it: the chat turn (`harness/session/turn/core.rs` → `session/turn/graph.rs`), the channel/CLI bus turn (`harness/graph.rs`), and spawned sub-agents (`harness/subagent_runner/ops/graph.rs`). What varies per caller is supplied through the adapter seam: OpenHuman's provider wrapped as a `ChatModel` (`tinyagents/model.rs`), tools wrapped as tinyagents `Tool`s (`tinyagents/tools.rs`), an event bridge that projects harness `AgentEvent`s into `AgentProgress` + cost telemetry (`tinyagents/observability.rs`), `RunPolicy::unknown_tool` for hallucinated tool recovery, and a named middleware stack (`tinyagents/middleware.rs`) carrying the OpenHuman cross-cuts: approval/security gating (`ApprovalSecurityMiddleware`), tool policy and CLI/RPC-only denial (`ToolPolicyMiddleware`, `CliRpcOnlyMiddleware`), malformed-argument recovery (`ArgRecoveryMiddleware`), cost budget pre-checks (`CostBudgetMiddleware`), the repeated-tool-failure circuit breaker (`RepeatedToolFailureMiddleware`), and context trimming/compression. Policy stop hooks fire through `StopHookMiddleware` (`tinyagents/stop_hooks.rs`). The surviving OpenHuman-owned seams, `CheckpointStrategy` (error vs. summarize at the model-call cap) and `TurnProgress`, live in `harness/engine/`. Because all three entry points assemble the same harness, they can't drift.
  <OPENHUMAN_ROOT>/gitbooks/developing/architecture/agent-harness.md:164:* **Microcompact / autocompact** - when total history is creeping toward the context window, tinyagents middleware (message trimming + the compression hooks in `tinyagents/summarize.rs`) compacts older turns into summaries before the next provider call. The compacted history keeps the system prompt and the most recent turns intact (KV-cache stability) and rewrites the middle.
  <OPENHUMAN_ROOT>/gitbooks/developing/architecture/agent-harness.md:184:Every lossy compression offloads the original to the **CCR (Compress-Cache-Retrieve)** store behind a `⟦tj:<hash>⟧` marker, so compaction is effectively lossless: the agent calls `tokenjuice_retrieve` (token + optional byte/line range) to fetch the full original on demand. The same engine is exposed as a universal `compress_content(content, hint, opts)` for any large payload (file reads, web fetches), and as read-only `tokenjuice.*` debug RPCs. Configured via the `[tokenjuice]` block / `OPENHUMAN_TOKENJUICE_*` env. Agent definitions can override tool-result compression with `tokenjuice_compression = "auto" | "full" | "light" | "off"`; `auto` resolves coding-model agents (`[model] hint = "coding"`) to `light`, which disables CCR-backed lossy compression so coding agents keep raw build/test/diff/search text unless a reduction is truly lossless. Other agents default to `full`. The ML (Kompress) path runs as a `kompress` backend of the shared [`runtime_python_server`](../../../src/openhuman/runtime_python_server/) (torch + ModernBERT pip-installed at runtime), gated by the `ml_compression_enabled` flag and degrading gracefully to a native compressor when the Python runtime is unavailable.
-@@ -327,33 +233,19 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt-harness.md:33:benches/compression.rs            criterion throughput benches (harness=false)
- <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt-harness.md:74:`benches/compression.rs` measures **throughput of hot paths** on
- <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt-harness.md:76:decline, rule reduction). It is NOT a compression-ratio benchmark — ratio and
--<OPENHUMAN_ROOT>/vendor/tinyjuice/prompt-harness.md:121:- No compression-percentage claims anywhere until a fixture-backed benchmark
-+[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt-harness.md ⟦tj:3793f7277a0c65e2dae532bbf62cef32⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:5:This spec documents the compression algorithms and product strategies found in
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:25:- signal-preserving log compression
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:26:- optional tree-sitter code compression behind a feature boundary
- <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:27:- optional ML text compression through the existing OpenHuman runtime boundary
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:35:Headroom's Rust core defines a two-mechanism compression pipeline:
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:52:- record applied steps and cache keys in the compression report
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:156:compression is disabled or unavailable.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:174:Headroom separates ordinary diff compression from a dedicated offload that
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:193:- signal compression is an offload because it drops low-priority lines and needs
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:201:Headroom protects workflow tags before ML compression:
--<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:205:- replace custom-tag spans with placeholders before ML compression
+@@ -339,13 +304,8 @@
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:193:- signal compression is an offload because it drops low-priority lines and needs
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:201:Headroom protects workflow tags before ML compression:
+ <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:205:- replace custom-tag spans with placeholders before ML compression
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:206:- restore exact tags after compression
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:212:compression.
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:221:- compression happens only in the live zone after the frozen prefix
@@ -288,66 +109,11 @@
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:248:## Compression Policy
 -<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:250:Headroom centralizes compression policy by auth mode and request economics:
  <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md:259:TinyJuice can generalize this as a `CompressionPolicy` independent of auth mode.
-+[+13 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md ⟦tj:0501c79f41a36fe5701b773f38ab9dcc⟧]
++[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/headroom-algorithms-strategies-spec.md ⟦tj:6a502f136e49f09cb89d56855eb79a4c⟧]
  <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:31:- protect custom workflow tags before ML compression
  <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:54:not be folded into `compress_content` or made mandatory for core compression.
  <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:92:TinyJuice already has tree-sitter-backed code compression behind a feature. The
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:98:This is not text compression. It reduces retry loops:
- <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:134:Savings accounting is infrastructure, not compression:
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:143:## TurboQuant Vector Compression
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:145:TurboQuant-style vector compression applies to embedding/index storage:
--<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:151:This is not prompt compression. It should be deferred or isolated behind a
-+[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md ⟦tj:1d8663c53aab7bbeaf7190c18d3c8426⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:9:- **TinyJuice** (this repo): Rust compression engine crate. Core work happens
- <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:23:3. `plan/pipeline-and-ccr-plan.md`, `plan/conversation-compression-plan.md`,
- <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:69:- No compression-percentage claims anywhere until fixture benchmarks exist in
-@@ -382,14 +274,13 @@
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Home.md:47:   `Compressor` trait, `CompressionInput`, `CompressionOutput`, and
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Home.md:48:   `CompressionConfig` surface.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Home.md:50:   UI for metadata-only compression run records.
--<OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Home.md:58:- Use `AgentTokenjuiceCompression::Light` when exact coding output matters more
-+[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Home.md ⟦tj:3832977a1eff21eeabb166f364de436b⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:53:Use this when you need a stable compression strategy boundary and report shape:
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:56:use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:60:    let input = CompressionInput::new("Keep this text unchanged for now.");
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:61:    let output = compressor.compress(input, &CompressionConfig::default())?;
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:102:use tinyjuice::{AgentTokenjuiceCompression, compact_tool_output_with_policy};
--<OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:111:        AgentTokenjuiceCompression::Full,
--<OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md:184:  compression behavior.
-+[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Quick-Start.md ⟦tj:3ccba8380f9be263b23ce8223df510ba⟧]
- <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/diff.rs:39:/// work with or compression wouldn't shrink it.
- <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/Capabilities.md:43:| `light` | Disables CCR-backed lossy compression and ML plain-text compression |
- <OPENHUMAN_ROOT>/src/openhuman/config/schema/load/env_overlay.rs:491:        if let Some(flag) = env.get("OPENHUMAN_TOKENJUICE_ML_COMPRESSION_ENABLED") {
-@@ -416,8 +307,7 @@
- <OPENHUMAN_ROOT>/Cargo.lock:267: "compression-core",
- <OPENHUMAN_ROOT>/Cargo.lock:279: "async-compression",
- <OPENHUMAN_ROOT>/Cargo.lock:1042:name = "compression-codecs"
--<OPENHUMAN_ROOT>/Cargo.lock:1047: "compression-core",
--<OPENHUMAN_ROOT>/Cargo.lock:1052:name = "compression-core"
-+[+2 more match(es) in <OPENHUMAN_ROOT>/Cargo.lock ⟦tj:a30c7c9d5c012357a50648081cb81306⟧]
- <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:5://! dry-run a compression and show the marker/stats), inspect CCR occupancy, and
- <OPENHUMAN_ROOT>/src/openhuman/tools/orchestrator_tools.rs:284:            tokenjuice_compression: crate::openhuman::tokenjuice::AgentTokenjuiceCompression::Auto,
- <OPENHUMAN_ROOT>/vendor/tinycortex/README.md:17:The human brain is a master at compression. It doesn't try to remember every passing detail; instead it aggressively prunes noise to keep a sharp, focused, easily accessible recall of what truly matters. Traditional AI memory systems do the opposite — they try to remember _everything_ and retrieve whatever is _similar_. But similar doesn't mean important. The result? Your AI drowns in stale, irrelevant context that degrades every response.
-@@ -451,7 +341,7 @@
- <OPENHUMAN_ROOT>/tests/screen_intelligence_vision_e2e.rs:405:fn compression_handles_various_sizes() {
- <OPENHUMAN_ROOT>/tests/screen_intelligence_vision_e2e.rs:519:/// Verify that compression produces significant savings on realistic images.
- <OPENHUMAN_ROOT>/tests/screen_intelligence_vision_e2e.rs:521:fn compression_savings_on_realistic_screenshot() {
--<OPENHUMAN_ROOT>/tests/screen_intelligence_vision_e2e.rs:541:        "compression ratio should be under 50%, got {:.1}%",
-+[+1 more match(es) in <OPENHUMAN_ROOT>/tests/screen_intelligence_vision_e2e.rs ⟦tj:ce6c01982117d273f630d8da689b4fb2⟧]
- <OPENHUMAN_ROOT>/vendor/tinycortex/gitbooks/goals-and-tool-memory.md:192:| `Critical` | `critical` | Pinned into the (compression-resistant) system prompt |
- <OPENHUMAN_ROOT>/vendor/tinycortex/gitbooks/goals-and-tool-memory.md:196:survives mid-session context compression.
- <OPENHUMAN_ROOT>/vendor/tinycortex/gitbooks/goals-and-tool-memory.md:238:in the **system prompt** specifically because mid-session compression rewrites
-@@ -471,8 +361,7 @@
- <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:793:            AgentTokenjuiceCompression::Light
- <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:804:            def.effective_tokenjuice_compression(),
- <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:805:            AgentTokenjuiceCompression::Light
--<OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:816:            def.effective_tokenjuice_compression(),
--<OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:817:            AgentTokenjuiceCompression::Light
-+[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs ⟦tj:8e4abbabba14ac3ed35776de18e9218e⟧]
- <OPENHUMAN_ROOT>/tests/tools_agent_credentials_state_raw_coverage_e2e.rs:45:use openhuman_core::openhuman::tokenjuice::AgentTokenjuiceCompression;
- <OPENHUMAN_ROOT>/tests/tools_agent_credentials_state_raw_coverage_e2e.rs:416:        tokenjuice_compression: AgentTokenjuiceCompression::Auto,
- <OPENHUMAN_ROOT>/vendor/tinycortex/src/memory/tool_memory/mod.rs:33://!   system prompt so they survive mid-session compression.
-@@ -498,3 +387,6 @@
+@@ -498,3 +458,6 @@
  <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:109:        bail!("tokenjuice.ml_compression_enabled is false");
  <OPENHUMAN_ROOT>/src/openhuman/context/manager.rs:16://!    tinyagents graph (`ContextCompressionMiddleware` +
  <OPENHUMAN_ROOT>/src/openhuman/context/manager.rs:61:    /// now runs in the tinyagents graph (`ContextCompressionMiddleware` +

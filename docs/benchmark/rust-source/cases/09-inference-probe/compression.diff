@@ -1,38 +1,9 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -60,176 +60,11 @@
- }
- 
- #[tokio::main]
--async fn main() -> Result<()> {
--    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-+async fn main() -> Result<()> { … 21 line(s) … ⟦tj:f8bd0f857911dbb5d7563ec965b299a1⟧ }
- 
--    let args = Args::parse();
-+async fn run_harness(config: &Config, prompt: &str) -> Result<()> { … 33 line(s) … ⟦tj:5ce916adfdaa2ca80cbce94071148b86⟧ }
- 
--    let config = Config::load_or_init()
--        .await
--        .context("loading user config (Config::load_or_init)")?;
-+async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> { … 117 line(s) … ⟦tj:21548d9b2c455fc7599b2dc27489af20⟧ }
-+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
- 
--    eprintln!("[probe] config.default_model = {:?}", config.default_model);
--    eprintln!(
--        "[probe] config.agent.tool_dispatcher = {:?}",
--        config.agent.tool_dispatcher
--    );
--
--    match args.mode.as_str() {
--        "harness" => run_harness(&config, &args.prompt).await,
--        "raw" => run_raw(&config, &args.role, &args.raw_mode, &args.prompt).await,
--        other => anyhow::bail!("unknown --mode {other:?}; want 'harness' or 'raw'"),
--    }
--}
--
--async fn run_harness(config: &Config, prompt: &str) -> Result<()> {
--    eprintln!("[probe] mode = harness (orchestrator)");
--    eprintln!("[probe] prompt = {prompt:?}");
+@@ -85,151 +85,16 @@
+ async fn run_harness(config: &Config, prompt: &str) -> Result<()> {
+     eprintln!("[probe] mode = harness (orchestrator)");
+     eprintln!("[probe] prompt = {prompt:?}");
 -
 -    let mut agent = Agent::from_config(config).context("Agent::from_config failed")?;
 -
@@ -61,12 +32,13 @@
 -    println!("=== FINAL ASSISTANT REPLY ===");
 -    println!("{response}");
 -    println!("=== /FINAL ASSISTANT REPLY ===");
--    Ok(())
--}
--
--async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> {
--    let (provider, model_name) =
--        create_chat_provider(role, config).context("create_chat_provider failed")?;
++    { … 28 line(s) … ⟦tj:5ce916adfdaa2ca80cbce94071148b86⟧ }
+     Ok(())
+ }
+ 
+ async fn run_raw(config: &Config, role: &str, raw_mode: &str, prompt: &str) -> Result<()> {
+     let (provider, model_name) =
+         create_chat_provider(role, config).context("create_chat_provider failed")?;
 -    eprintln!("[probe] mode = raw");
 -    eprintln!("[probe] role = {role}");
 -    eprintln!("[probe] resolved model = {model_name}");
@@ -179,7 +151,10 @@
 -    if !saw_pformat && !saw_native {
 -        eprintln!("[probe] VERDICT: ZERO tool calls.");
 -    }
--    Ok(())
--}
++    { … 112 line(s) … ⟦tj:21548d9b2c455fc7599b2dc27489af20⟧ }
+     Ok(())
+ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
 +[compacted tool output — this is a PARTIAL view; the full original (8413 bytes) is available by calling tinyjuice_retrieve with token "598826d731037d2a00e9e59a518805d2" (marker ⟦tj:598826d731037d2a00e9e59a518805d2⟧)]
 \ No newline at end of file

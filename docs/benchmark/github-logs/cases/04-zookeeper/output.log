@@ -1,23 +1,35 @@
-[... 5 line(s) omitted ... ⟦tj:c872a0c89d808f2a493b48f15a630652⟧]
-2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-[... 1 line(s) omitted ... ⟦tj:76ee3eb69ea90ef0ffcbb7b52ea80681⟧]
-2015-07-29 19:13:27,721 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-[... 3 line(s) omitted ... ⟦tj:3d0ac8fc734768fe574aa8bfea3cb303⟧]
-2015-07-29 19:13:47,731 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-[... 1 line(s) omitted ... ⟦tj:4c2e9d9e8bf48166e6c1bee77cb4278a⟧]
-2015-07-29 19:13:54,399 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-[... 17 line(s) omitted ... ⟦tj:b82106d73c48db7a2873ed46b0c4b391⟧]
-2015-07-29 19:16:24,348 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-[... 1914 line(s) omitted ... ⟦tj:053df1b92e5a52bdc7ea1df770848377⟧]
-2015-07-30 16:21:13,810 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
-[... 7 line(s) omitted ... ⟦tj:35355ddc4a2ec3c549cb682237b34750⟧]
-2015-07-30 17:36:52,812 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
-2015-07-30 17:40:45,765 - WARN  [RecvWorker:1:QuorumCnxManager$RecvWorker@762] - Connection broken for id 1, my id = 3, error = 
-[... 17 line(s) omitted ... ⟦tj:c89b56349786a3ff416f3f552ba5a4b3⟧]
-2015-07-30 23:03:42,330 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
-[... 7 line(s) omitted ... ⟦tj:4abb0e6b27de556dfaac3ab8a4255127⟧]
-2015-07-31 00:16:12,152 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
-[... 18 line(s) omitted ... ⟦tj:308905979430fc8694348571832e2a63⟧]
+2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200
+2015-07-29 19:04:12,394 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45307
+2015-07-29 19:04:29,071 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread  [×262 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:04:29,079 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue  [×314 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:13:17,524 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error =   [×289 first 2015-07-29, last 2015-07-29]
+[... 9 line(s) omitted ... ⟦tj:29fc0d80898573eb60dc6da52c19392c⟧]
+2015-07-29 19:14:07,559 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker  [×265 first 2015-07-29, last 2015-07-29]
+[... 479 line(s) omitted ... ⟦tj:4c3e6cc2b5264f5e2b43e6e617b35df4⟧]
+2015-07-29 19:52:05,118 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×4 first 2015-07-29, last 2015-07-29]
+[... 7 line(s) omitted ... ⟦tj:935197bb725fffd2a7a66daa9ac317cb⟧]
+2015-07-29 21:39:28,234 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.26:56952
+2015-07-29 23:44:21,576 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001] - Closed socket connection for client /10.10.34.11:49557 which had sessionid 0x14ed93111f20048
+2015-07-29 23:44:28,903 - ERROR [CommitProcessor:1:NIOServerCnxn@180] - Unexpected Exception: 
+2015-07-29 23:52:08,962 - INFO  [CommitProcessor:1:ZooKeeperServer@595] - Established session 0x14ed93111f2005b with negotiated timeout 10000 for client /10.10.34.28:52117
+2015-07-29 23:52:09,163 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.30:38562
+[... 14 line(s) omitted ... ⟦tj:77254eefea70d6c61dba1dfd7b5508ca⟧]
+2015-07-30 16:12:01,554 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.19:33442; will be dropped if server is in r-o mode  [×8 first 2015-07-30, last 2015-07-30]
+[... 12 line(s) omitted ... ⟦tj:de2f7541ced04ff3e049a4e599a7d8f0⟧]
+2015-07-30 17:11:54,937 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×6 first 2015-07-30, last 2015-07-30]
+[... 4 line(s) omitted ... ⟦tj:183ab4005a7776f3e90fd774855b5a7b⟧]
+2015-07-30 17:49:05,943 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.12:45728; will be dropped if server is in r-o mode  [×5 first 2015-07-30, last 2015-08-10]
+2015-07-30 17:55:26,200 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 2 at election address /10.10.34.12:3888  [×2 first 2015-07-30, last 2015-07-29]
+[... 5 line(s) omitted ... ⟦tj:6d3265b7b0a5d49ab5d51955d6348d3a⟧]
+2015-07-30 19:59:02,538 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.13:38053; will be dropped if server is in r-o mode  [×4 first 2015-07-30, last 2015-07-30]
+[... 204 line(s) omitted ... ⟦tj:6c9aeb079d74b5ca62c30b9ad5e68166⟧]
+2015-08-25 11:21:22,561 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 3 at election address /10.10.34.13:3888
+2015-07-29 17:42:30,405 - INFO  [QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:Environment@100] - Server environment:java.vendor=Oracle Corporation
+2015-07-29 19:03:35,413 - ERROR [LearnerHandler-/10.10.34.11:52225:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open  [×12 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:03:54,584 - ERROR [LearnerHandler-/10.10.34.11:52241:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open
+2015-07-29 19:04:30,989 - WARN  [LearnerHandler-/10.10.34.11:52264:LearnerHandler@575] - ******* GOODBYE /10.10.34.11:52264 ********
+[... 1243 line(s) omitted ... ⟦tj:778a3f8773e49f521a217ca2b493ff9e⟧]
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 

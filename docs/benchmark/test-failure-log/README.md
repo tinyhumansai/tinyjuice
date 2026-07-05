@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB -> 1.2 KB (-78%) | 79.5% | 75.4% | 0.233 ms |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB -> 792 B (-71%) | 73.6% | 65.5% | 0.145 ms |
-| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | [diff](cases/10-vitest-excerpt-10/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | [diff](cases/09-vitest-excerpt-9/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | [diff](cases/08-vitest-excerpt-8/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | [output](cases/06-vitest-unit-20260704-235240/output.log) | [diff](cases/06-vitest-unit-20260704-235240/compression.diff) | 971 B -> 971 B (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 970 B -> 970 B (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 967 B -> 967 B (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 967 B -> 967 B (-0%) | 0.0% | 0.0% | 0.000 ms |
-| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 969 B -> 969 B (-0%) | 0.0% | 0.0% | 0.000 ms |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB -> 1.2 KB (-78%) | 79.5% | 75.4% | 0.238 ms |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB -> 792 B (-71%) | 73.6% | 65.5% | 0.144 ms |
+| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | [diff](cases/10-vitest-excerpt-10/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.7% | 67.4% | 0.078 ms |
+| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | [diff](cases/09-vitest-excerpt-9/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.7% | 67.4% | 0.083 ms |
+| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | [diff](cases/08-vitest-excerpt-8/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.6% | 67.2% | 0.076 ms |
+| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 969 B -> 969 B (-0%) | 78.2% | 56.0% | 0.048 ms |
+| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 967 B -> 967 B (-0%) | 78.1% | 55.8% | 0.044 ms |
+| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 967 B -> 967 B (-0%) | 78.1% | 55.8% | 0.044 ms |
+| `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | [output](cases/06-vitest-unit-20260704-235240/output.log) | [diff](cases/06-vitest-unit-20260704-235240/compression.diff) | 971 B -> 971 B (-0%) | 77.8% | 55.6% | 0.043 ms |
+| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 970 B -> 970 B (-0%) | 78.2% | 55.6% | 0.043 ms |
 
 ## What TinyJuice Is Doing
 
@@ -105,6 +105,427 @@ Error: expect(element).not.toBeInTheDocument()
 
 ```
 
+### `10-vitest-excerpt-10`
+
+- [Full input](cases/10-vitest-excerpt-10/input.log)
+- [Full output](cases/10-vitest-excerpt-10/output.log)
+- [Input vs output diff](cases/10-vitest-excerpt-10/compression.diff)
+
+Input excerpt:
+
+```text
+11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:51:26
+   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+
+11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:51:26
+   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:51:26
+   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:51:26
+   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (1934 bytes) is available by calling tinyjuice_retrieve with token "13daad6e3388bc546954e3f132c0fbac" (marker ⟦tj:13daad6e3388bc546954e3f132c0fbac⟧)]
+
+```
+
+### `09-vitest-excerpt-9`
+
+- [Full input](cases/09-vitest-excerpt-9/input.log)
+- [Full output](cases/09-vitest-excerpt-9/output.log)
+- [Input vs output diff](cases/09-vitest-excerpt-9/compression.diff)
+
+Input excerpt:
+
+```text
+11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+
+11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (1934 bytes) is available by calling tinyjuice_retrieve with token "c741b45480ff49d2da14c8f5ebe4e264" (marker ⟦tj:c741b45480ff49d2da14c8f5ebe4e264⟧)]
+
+```
+
+### `08-vitest-excerpt-8`
+
+- [Full input](cases/08-vitest-excerpt-8/input.log)
+- [Full output](cases/08-vitest-excerpt-8/output.log)
+- [Input vs output diff](cases/08-vitest-excerpt-8/compression.diff)
+
+Input excerpt:
+
+```text
+11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (1938 bytes) is available by calling tinyjuice_retrieve with token "8e829b53a3eba9d8d543876623d5fd81" (marker ⟦tj:8e829b53a3eba9d8d543876623d5fd81⟧)]
+
+```
+
+### `02-vitest-unit-20260704-234958`
+
+- [Full input](cases/02-vitest-unit-20260704-234958/input.log)
+- [Full output](cases/02-vitest-unit-20260704-234958/output.log)
+- [Input vs output diff](cases/02-vitest-unit-20260704-234958/compression.diff)
+
+Input excerpt:
+
+```text
+11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  23:49:59
+   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (969 bytes) is available by calling tinyjuice_retrieve with token "33584aa40077e45faaf15e86ed05b667" (marker ⟦tj:33584aa40077e45faaf15e86ed05b667⟧)]
+
+```
+
+### `05-vitest-unit-20260704-235231`
+
+- [Full input](cases/05-vitest-unit-20260704-235231/input.log)
+- [Full output](cases/05-vitest-unit-20260704-235231/output.log)
+- [Input vs output diff](cases/05-vitest-unit-20260704-235231/compression.diff)
+
+Input excerpt:
+
+```text
+11:52:31 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  23:52:32
+   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  23:52:32
+   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (970 bytes) is available by calling tinyjuice_retrieve with token "ddb0cfd662fa34d5f4bba410ef1e402f" (marker ⟦tj:ddb0cfd662fa34d5f4bba410ef1e402f⟧)]
+
+```
+
+### `04-vitest-unit-20260704-235125`
+
+- [Full input](cases/04-vitest-unit-20260704-235125/input.log)
+- [Full output](cases/04-vitest-unit-20260704-235125/output.log)
+- [Input vs output diff](cases/04-vitest-unit-20260704-235125/compression.diff)
+
+Input excerpt:
+
+```text
+11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:51:26
+   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:51:26
+   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (967 bytes) is available by calling tinyjuice_retrieve with token "cfa1a1d241b616e925c4cfe672c6e5ba" (marker ⟦tj:cfa1a1d241b616e925c4cfe672c6e5ba⟧)]
+
+```
+
+### `03-vitest-unit-20260704-235052`
+
+- [Full input](cases/03-vitest-unit-20260704-235052/input.log)
+- [Full output](cases/03-vitest-unit-20260704-235052/output.log)
+- [Input vs output diff](cases/03-vitest-unit-20260704-235052/compression.diff)
+
+Input excerpt:
+
+```text
+11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:50:52
+   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
+
+[compacted tool output — this is a PARTIAL view; the full original (967 bytes) is available by calling tinyjuice_retrieve with token "4a03c2794bc9e773675b9a4c162b5954" (marker ⟦tj:4a03c2794bc9e773675b9a4c162b5954⟧)]
+
+```
+
+### `06-vitest-unit-20260704-235240`
+
+- [Full input](cases/06-vitest-unit-20260704-235240/input.log)
+- [Full output](cases/06-vitest-unit-20260704-235240/output.log)
+- [Input vs output diff](cases/06-vitest-unit-20260704-235240/compression.diff)
+
+Input excerpt:
+
+```text
+11:52:41 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+    'globalThis.global = globalThis.global || __global_polyfill\n' +
+    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+    'globalThis.process = globalThis.process || __process_polyfill\n'
+}`
+
+ RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+
+
+ Test Files  8 passed (8)
+      Tests  69 passed (69)
+   Start at  23:52:41
+   Duration  5.07s (transform 1.45s, setup 763ms, import 1.64s, tests 600ms, environment 1.53s)
+
+
+```
+
+Output excerpt:
+
+```text
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  8 passed (8)
+      Tests  69 passed (69)
+   Start at  23:52:41
+   Duration  5.07s (transform 1.45s, setup 763ms, import 1.64s, tests 600ms, environment 1.53s)
+
+[compacted tool output — this is a PARTIAL view; the full original (971 bytes) is available by calling tinyjuice_retrieve with token "2dae148f0f15a4aa336dc8e45977a35f" (marker ⟦tj:2dae148f0f15a4aa336dc8e45977a35f⟧)]
+
+```
+
 ### `01-vitest-unit-20260704-234941`
 
 - [Full input](cases/01-vitest-unit-20260704-234941/input.log)
@@ -171,546 +592,6 @@ Error: expect(element).not.toBeInTheDocument()
    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
 [compacted tool output — this is a PARTIAL view; the full original (2777 bytes) is available by calling tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5" (marker ⟦tj:86eb51aa134ea50382aa89d95827b1b5⟧)]
-
-```
-
-### `10-vitest-excerpt-10`
-
-- [Full input](cases/10-vitest-excerpt-10/input.log)
-- [Full output](cases/10-vitest-excerpt-10/output.log)
-- [Input vs output diff](cases/10-vitest-excerpt-10/compression.diff)
-
-Input excerpt:
-
-```text
-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  23:51:26
-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
-
-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  23:51:26
-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  23:51:26
-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
-
-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  23:51:26
-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
-
-
-```
-
-### `09-vitest-excerpt-9`
-
-- [Full input](cases/09-vitest-excerpt-9/input.log)
-- [Full output](cases/09-vitest-excerpt-9/output.log)
-- [Input vs output diff](cases/09-vitest-excerpt-9/compression.diff)
-
-Input excerpt:
-
-```text
-11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  23:50:52
-   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
-
-11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  23:50:52
-   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  23:50:52
-   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
-
-11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  23:50:52
-   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
-
-
-```
-
-### `08-vitest-excerpt-8`
-
-- [Full input](cases/08-vitest-excerpt-8/input.log)
-- [Full output](cases/08-vitest-excerpt-8/output.log)
-- [Input vs output diff](cases/08-vitest-excerpt-8/compression.diff)
-
-Input excerpt:
-
-```text
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
-
-```
-
-### `06-vitest-unit-20260704-235240`
-
-- [Full input](cases/06-vitest-unit-20260704-235240/input.log)
-- [Full output](cases/06-vitest-unit-20260704-235240/output.log)
-- [Input vs output diff](cases/06-vitest-unit-20260704-235240/compression.diff)
-
-Input excerpt:
-
-```text
-11:52:41 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  8 passed (8)
-      Tests  69 passed (69)
-   Start at  23:52:41
-   Duration  5.07s (transform 1.45s, setup 763ms, import 1.64s, tests 600ms, environment 1.53s)
-
-
-```
-
-Output excerpt:
-
-```text
-11:52:41 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  8 passed (8)
-      Tests  69 passed (69)
-   Start at  23:52:41
-   Duration  5.07s (transform 1.45s, setup 763ms, import 1.64s, tests 600ms, environment 1.53s)
-
-
-```
-
-### `05-vitest-unit-20260704-235231`
-
-- [Full input](cases/05-vitest-unit-20260704-235231/input.log)
-- [Full output](cases/05-vitest-unit-20260704-235231/output.log)
-- [Input vs output diff](cases/05-vitest-unit-20260704-235231/compression.diff)
-
-Input excerpt:
-
-```text
-11:52:31 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  13 passed (13)
-   Start at  23:52:32
-   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:52:31 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  13 passed (13)
-   Start at  23:52:32
-   Duration  848ms (transform 151ms, setup 235ms, import 77ms, tests 154ms, environment 317ms)
-
-
-```
-
-### `04-vitest-unit-20260704-235125`
-
-- [Full input](cases/04-vitest-unit-20260704-235125/input.log)
-- [Full output](cases/04-vitest-unit-20260704-235125/output.log)
-- [Input vs output diff](cases/04-vitest-unit-20260704-235125/compression.diff)
-
-Input excerpt:
-
-```text
-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  23:51:26
-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:51:25 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  23:51:26
-   Duration  713ms (transform 116ms, setup 273ms, import 11ms, tests 10ms, environment 348ms)
-
-
-```
-
-### `03-vitest-unit-20260704-235052`
-
-- [Full input](cases/03-vitest-unit-20260704-235052/input.log)
-- [Full output](cases/03-vitest-unit-20260704-235052/output.log)
-- [Input vs output diff](cases/03-vitest-unit-20260704-235052/compression.diff)
-
-Input excerpt:
-
-```text
-11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  23:50:52
-   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:50:52 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  23:50:52
-   Duration  1.28s (transform 363ms, setup 598ms, import 28ms, tests 57ms, environment 491ms)
-
-
-```
-
-### `02-vitest-unit-20260704-234958`
-
-- [Full input](cases/02-vitest-unit-20260704-234958/input.log)
-- [Full output](cases/02-vitest-unit-20260704-234958/output.log)
-- [Input vs output diff](cases/02-vitest-unit-20260704-234958/compression.diff)
-
-Input excerpt:
-
-```text
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
-
-```
-
-Output excerpt:
-
-```text
-11:49:59 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
-    'globalThis.global = globalThis.global || __global_polyfill\n' +
-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
-    'globalThis.process = globalThis.process || __process_polyfill\n'
-}`
-
- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  23:49:59
-   Duration  2.33s (transform 1.41s, setup 263ms, import 1.43s, tests 116ms, environment 302ms)
-
 
 ```
 

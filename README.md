@@ -99,22 +99,31 @@ through because they are too small or a shape the compressor declines.
 
 | Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 89.4% | 84.9% | 0.638 ms |
-| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 10 | 86.9% | 86.3% | 0.193 ms |
-| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 24 | 68.3% | 67.7% | 0.623 ms |
-| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 45 | 64.7% | 60.0% | 0.537 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.5% | 75.3% | 0.184 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 70.0% | 0.182 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 8 | 53.7% | 51.9% | 0.702 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 48.3% | 48.0% | 0.401 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 3 | 20.1% | 20.0% | 0.535 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 2 | 15.3% | 14.1% | 0.041 ms |
+| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 86.7% | 85.6% | 1.276 ms |
+| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 80.4% | 75.7% | 0.412 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 77.9% | 62.1% | 0.084 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 74.7% | 0.168 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 68.7% | 0.252 ms |
+| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 58.0% | 57.7% | 4.246 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 35.4% | 35.3% | 1.894 ms |
+| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 34.5% | 30.1% | 0.529 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 32.4% | 31.4% | 0.925 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 29.0% | 26.1% | 0.730 ms |
 | [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
 
-Across the whole corpus TinyJuice cut 15.4 MB of content down to 5.8 MB, and
+Across the whole corpus TinyJuice cut 15.4 MB of content down to 6.9 MB, and
 every case passes its accuracy gates: signal checks (errors, changed lines,
-matches, class/function signatures survive), task checks, and a byte-exact
-CCR recovery compare.
+matches, class/function signatures survive), task checks, structural
+invariants (no inflation, no encoding damage), and a byte-exact CCR recovery
+compare.
+
+Source-code numbers are deliberately lower than they used to be: the
+compressor now keeps every class skeleton (fields, signatures, doc comments),
+short and important bodies (`main`, constructors, error handling), and the
+first/last lines of collapsed bodies instead of erasing whole classes behind
+one marker. Log compression is likewise template-aware: repeated lines
+collapse to one exemplar with a `×N (first…last)` count while every distinct
+error survives with its surrounding context.
 
 These are local real-snapshot corpus measurements, not production-wide claims.
 See [docs/benchmark](docs/benchmark) and

@@ -18,36 +18,18 @@
  
  /// Best-effort decode of a JWT's `exp` (expiry) claim into a UTC timestamp.
  ///
-@@ -37,79 +28,29 @@
- /// still 401s, caught by the `flatten_authed_error` net). Returns `None` for any
- /// non-JWT / malformed / `exp`-less token, in which case expiry tracking
- /// degrades to the previous behaviour (no local precheck).
--pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> {
--    let claims = decode_jwt_payload(token)?;
--    // `exp` is a NumericDate (seconds since epoch); accept int or float shapes.
--    let exp = claims
--        .get("exp")
--        .and_then(|v| v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)))?;
--    DateTime::<Utc>::from_timestamp(exp, 0)
--}
-+pub fn decode_jwt_exp(token: &str) -> Option<DateTime<Utc>> { … 8 line(s) … ⟦tj:902053cf712b0ec0319a8b4193f0b577⟧ }
- 
- #[cfg(test)]
- mod tests {
-     use super::*;
- 
-     #[test]
--    fn test_bearer_authorization_value() {
--        // Standard token
--        assert_eq!(bearer_authorization_value("my_token"), "Bearer my_token");
-+    fn test_bearer_authorization_value() { … 22 line(s) … ⟦tj:17462efaa4775ee4ac19ad739a19b500⟧ }
- 
+@@ -54,26 +45,10 @@
+     fn test_bearer_authorization_value() {
+         // Standard token
+         assert_eq!(bearer_authorization_value("my_token"), "Bearer my_token");
+-
 -        // Token with leading/trailing spaces
 -        assert_eq!(
 -            bearer_authorization_value("  spaced_token  "),
 -            "Bearer spaced_token"
--        );
-+    fn jwt_with_payload(payload_json: &str) -> String { … 5 line(s) … ⟦tj:e882c3db72449d94ada78c26c72c39c0⟧ }
++        { … 17 line(s) … ⟦tj:17462efaa4775ee4ac19ad739a19b500⟧ }
+         );
++}
  
 -        // Empty string
 -        assert_eq!(bearer_authorization_value(""), "Bearer ");
@@ -62,48 +44,12 @@
 -        );
 -    }
 -
--    fn jwt_with_payload(payload_json: &str) -> String {
--        let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload_json);
--        // header + signature are irrelevant to `decode_jwt_exp` (no verification).
--        format!("eyJhbGciOiJIUzI1NiJ9.{payload}.sig")
--    }
--
-     #[test]
--    fn decode_jwt_exp_reads_integer_exp() {
--        let token = jwt_with_payload(r#"{"sub":"u1","exp":1700000000}"#);
--        assert_eq!(
--            decode_jwt_exp(&token),
--            DateTime::<Utc>::from_timestamp(1_700_000_000, 0)
--        );
--    }
-+    fn decode_jwt_exp_reads_integer_exp() { … 7 line(s) … ⟦tj:ab44ea261852517b65d41aa23898dd43⟧ }
- 
-     #[test]
--    fn decode_jwt_exp_reads_float_exp() {
--        let token = jwt_with_payload(r#"{"exp":1700000000.0}"#);
--        assert_eq!(
--            decode_jwt_exp(&token),
--            DateTime::<Utc>::from_timestamp(1_700_000_000, 0)
--        );
--    }
-+    fn decode_jwt_exp_reads_float_exp() { … 7 line(s) … ⟦tj:6fd3bf1124fefc83f04c88deac57f289⟧ }
- 
-     #[test]
--    fn decode_jwt_exp_none_when_exp_absent() {
--        let token = jwt_with_payload(r#"{"sub":"u1"}"#);
--        assert_eq!(decode_jwt_exp(&token), None);
--    }
-+    fn decode_jwt_exp_none_when_exp_absent() { … 4 line(s) … ⟦tj:44b40f8f4d6a909f740c603ece433104⟧ }
- 
-     #[test]
--    fn decode_jwt_exp_none_for_non_jwt_or_garbage() {
--        assert_eq!(decode_jwt_exp("not-a-jwt"), None);
--        assert_eq!(decode_jwt_exp(""), None);
--        assert_eq!(decode_jwt_exp("a.b"), None); // payload "b" isn't valid base64 JSON
--                                                 // local offline session sentinel (not a JWT) must not panic / must be None
--        assert_eq!(decode_jwt_exp("local-session-xyz"), None);
--    }
-+    fn decode_jwt_exp_none_for_non_jwt_or_garbage() { … 7 line(s) … ⟦tj:e31a414ef8902657500b581f87c6357b⟧ }
+     fn jwt_with_payload(payload_json: &str) -> String {
+         let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload_json);
+         // header + signature are irrelevant to `decode_jwt_exp` (no verification).
+@@ -113,3 +88,6 @@
+         assert_eq!(decode_jwt_exp("local-session-xyz"), None);
+     }
  }
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +

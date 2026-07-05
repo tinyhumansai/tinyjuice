@@ -16,7 +16,12 @@ type Graph<V, E> = BTreeMap<V, BTreeMap<V, E>>;
 /// (island node, or sink in the case of a directed graph)
 pub fn floyd_warshall<V: Ord + Copy, E: Ord + Copy + Add<Output = E> + num_traits::Zero>(
     graph: &Graph<V, E>,
-) -> BTreeMap<V, BTreeMap<V, E>> { … 48 line(s) … ⟦tj:34932fe2c456b844392edaa7eecd2dbe⟧ }
+) -> BTreeMap<V, BTreeMap<V, E>> {
+    let mut map: BTreeMap<V, BTreeMap<V, E>> = BTreeMap::new();
+    for (u, edges) in graph.iter() {
+    { … 43 line(s) … ⟦tj:34932fe2c456b844392edaa7eecd2dbe⟧ }
+    map
+}
 
 #[cfg(test)]
 mod tests {
@@ -27,16 +32,37 @@ mod tests {
         graph.entry(v1).or_default().insert(v2, c);
     }
 
-    fn bi_add_edge<V: Ord + Copy, E: Ord + Copy>(graph: &mut Graph<V, E>, v1: V, v2: V, c: E) { … 4 line(s) … ⟦tj:628c3deb8939af59eedcbfef0a5284b5⟧ }
+    fn bi_add_edge<V: Ord + Copy, E: Ord + Copy>(graph: &mut Graph<V, E>, v1: V, v2: V, c: E) {
+        add_edge(graph, v1, v2, c);
+        add_edge(graph, v2, v1, c);
+    }
 
     #[test]
-    fn single_vertex() { … 9 line(s) … ⟦tj:8a33699bc7e5f62866d92e62eb15cac1⟧ }
+    fn single_vertex() {
+        let mut graph: Graph<usize, usize> = BTreeMap::new();
+        graph.insert(0, BTreeMap::new());
+
+        let mut dists = BTreeMap::new();
+        dists.insert(0, BTreeMap::new());
+        dists.get_mut(&0).unwrap().insert(0, 0);
+        assert_eq!(floyd_warshall(&graph), dists);
+    }
 
     #[test]
-    fn single_edge() { … 21 line(s) … ⟦tj:ae02f70cb2d0137c119c9ee1a28913aa⟧ }
+    fn single_edge() {
+        let mut graph = BTreeMap::new();
+        bi_add_edge(&mut graph, 0, 1, 2);
+        { … 16 line(s) … ⟦tj:ae02f70cb2d0137c119c9ee1a28913aa⟧ }
+        assert_eq!(floyd_warshall(&graph), dists_0);
+}
 
     #[test]
-    fn graph_1() { … 74 line(s) … ⟦tj:3cc40fdee7886c6dab3ac06cf858fda2⟧ }
+    fn graph_1() {
+        let mut graph = BTreeMap::new();
+        add_edge(&mut graph, 'a', 'c', 12);
+        { … 69 line(s) … ⟦tj:3cc40fdee7886c6dab3ac06cf858fda2⟧ }
+        assert_eq!(floyd_warshall(&graph), dists_a);
+}
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 

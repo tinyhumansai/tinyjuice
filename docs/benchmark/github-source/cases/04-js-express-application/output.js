@@ -62,7 +62,12 @@ var trustProxyDefaultSymbol = '@@symbol:trust_proxy_default';
  */
 
 app.init = function init() {
-    { … 6 line(s) … ⟦tj:1f89cb236c85d775f00c6c88320a88d0⟧ }
+  this.cache = {};
+  this.engines = {};
+  this.settings = {};
+
+  this.defaultConfiguration();
+};
 
 /**
  * Initialize application configuration.
@@ -70,7 +75,63 @@ app.init = function init() {
  */
 
 app.defaultConfiguration = function defaultConfiguration() {
-    { … 57 line(s) … ⟦tj:5d4bea40f74b777937da209f2cbe14c6⟧ }
+  var env = process.env.NODE_ENV || 'development';
+
+  // default settings
+  this.enable('x-powered-by');
+  this.set('etag', 'weak');
+  this.set('env', env);
+  this.set('query parser', 'extended');
+  this.set('subdomain offset', 2);
+  this.set('trust proxy', false);
+
+  // trust proxy inherit back-compat
+  Object.defineProperty(this.settings, trustProxyDefaultSymbol, {
+    configurable: true,
+    value: true
+  });
+
+  debug('booting in %s mode', env);
+
+  this.on('mount', function onmount(parent) {
+    // inherit trust proxy
+    if (this.settings[trustProxyDefaultSymbol] === true
+      && typeof parent.settings['trust proxy fn'] === 'function') {
+      delete this.settings['trust proxy'];
+      delete this.settings['trust proxy fn'];
+    }
+
+    // inherit protos
+    setPrototypeOf(this.request, parent.request)
+    setPrototypeOf(this.response, parent.response)
+    setPrototypeOf(this.engines, parent.engines)
+    setPrototypeOf(this.settings, parent.settings)
+  });
+
+  // setup locals
+  this.locals = Object.create(null);
+
+  // top-most app is mounted at /
+  this.mountpath = '/';
+
+  // default locals
+  this.locals.settings = this.settings;
+
+  // default configuration
+  this.set('view', View);
+  this.set('views', resolve('views'));
+  this.set('jsonp callback name', 'callback');
+
+  if (env === 'production') {
+    this.enable('view cache');
+  }
+
+  Object.defineProperty(this, 'router', {
+    get: function() {
+      throw new Error('\'app.router\' is deprecated!\nPlease see the 3.x to 4.x migration guide for details on how to update your app.');
+    }
+  });
+};
 
 /**
  * lazily adds the base router if it has not yet been added.
@@ -81,7 +142,16 @@ app.defaultConfiguration = function defaultConfiguration() {
  * @private
  */
 app.lazyrouter = function lazyrouter() {
-    { … 10 line(s) … ⟦tj:8913d148d11d2c51dc6b583f1a814d58⟧ }
+  if (!this._router) {
+    this._router = new Router({
+      caseSensitive: this.enabled('case sensitive routing'),
+      strict: this.enabled('strict routing')
+    });
+
+    this._router.use(query(this.get('query parser fn')));
+    this._router.use(middleware.init(this));
+  }
+};
 
 /**
  * Dispatch a req, res pair into the application. Starts pipeline processing.
@@ -93,9 +163,23 @@ app.lazyrouter = function lazyrouter() {
  */
 
 app.handle = function handle(req, res, callback) {
-    { … 5 line(s) … ⟦tj:fbbd4fbb3d66841cfbdaa27baa2f654f⟧ }
+  var router = this._router;
+
+  // final handler
+  var done = callback || finalhandler(req, res, {
+    env: this.get('env'),
     onerror: logerror.bind(this)
-    { … 11 line(s) … ⟦tj:85b457ee7ca7fe99efb339cb256c9502⟧ }
+  });
+
+  // no routes
+  if (!router) {
+    debug('no routes defined on app');
+    done();
+    return;
+  }
+
+  router.handle(req, res, done);
+};
 
 /**
  * Proxy `Router#use()` to add middleware to the app router.
@@ -108,7 +192,61 @@ app.handle = function handle(req, res, callback) {
  */
 
 app.use = function use(fn) {
-    { … 55 line(s) … ⟦tj:d68433624da34bd8dcb5254d242467fa⟧ }
+  var offset = 0;
+  var path = '/';
+
+  // default path to '/'
+  // disambiguate app.use([fn])
+  if (typeof fn !== 'function') {
+    var arg = fn;
+
+    while (Array.isArray(arg) && arg.length !== 0) {
+      arg = arg[0];
+    }
+
+    // first arg is the path
+    if (typeof arg !== 'function') {
+      offset = 1;
+      path = fn;
+    }
+  }
+
+  var fns = flatten(slice.call(arguments, offset));
+
+  if (fns.length === 0) {
+    throw new TypeError('app.use() requires a middleware function')
+  }
+
+  // setup router
+  this.lazyrouter();
+  var router = this._router;
+
+  fns.forEach(function (fn) {
+    // non-express app
+    if (!fn || !fn.handle || !fn.set) {
+      return router.use(path, fn);
+    }
+
+    debug('.use app under %s', path);
+    fn.mountpath = path;
+    fn.parent = this;
+
+    // restore .app property on req and res
+    router.use(path, function mounted_app(req, res, next) {
+      var orig = req.app;
+      fn.handle(req, res, function (err) {
+        setPrototypeOf(req, orig.request)
+        setPrototypeOf(res, orig.response)
+        next(err);
+      });
+    });
+
+    // mounted an app
+    fn.emit('mount', this);
+  }, this);
+
+  return this;
+};
 
 /**
  * Proxy to the app `Router#route()`
@@ -160,7 +298,20 @@ app.route = function route(path) {
  */
 
 app.engine = function engine(ext, fn) {
-    { … 14 line(s) … ⟦tj:5422d4b95567093ed0ddbd46a4158a72⟧ }
+  if (typeof fn !== 'function') {
+    throw new Error('callback function required');
+  }
+
+  // get file extension
+  var extension = ext[0] !== '.'
+    ? '.' + ext
+    : ext;
+
+  // store engine
+  this.engines[extension] = fn;
+
+  return this;
+};
 
 /**
  * Proxy to `Router#param()` with one added api feature. The _name_ parameter
@@ -175,7 +326,20 @@ app.engine = function engine(ext, fn) {
  */
 
 app.param = function param(name, fn) {
-    { … 14 line(s) … ⟦tj:1c1722971811dbd6e968046017e919d6⟧ }
+  this.lazyrouter();
+
+  if (Array.isArray(name)) {
+    for (var i = 0; i < name.length; i++) {
+      this.param(name[i], fn);
+    }
+
+    return this;
+  }
+
+  this._router.param(name, fn);
+
+  return this;
+};
 
 /**
  * Assign `setting` to `val`, or return `setting`'s value.
@@ -193,7 +357,48 @@ app.param = function param(name, fn) {
  */
 
 app.set = function set(setting, val) {
-    { … 42 line(s) … ⟦tj:bb9fbd06d2144dbcecc92389964bc433⟧ }
+  if (arguments.length === 1) {
+    // app.get(setting)
+    var settings = this.settings
+
+    while (settings && settings !== Object.prototype) {
+      if (hasOwnProperty.call(settings, setting)) {
+        return settings[setting]
+      }
+
+      settings = Object.getPrototypeOf(settings)
+    }
+
+    return undefined
+  }
+
+  debug('set "%s" to %o', setting, val);
+
+  // set value
+  this.settings[setting] = val;
+
+  // trigger matched settings
+  switch (setting) {
+    case 'etag':
+      this.set('etag fn', compileETag(val));
+      break;
+    case 'query parser':
+      this.set('query parser fn', compileQueryParser(val));
+      break;
+    case 'trust proxy':
+      this.set('trust proxy fn', compileTrust(val));
+
+      // trust proxy inherit back-compat
+      Object.defineProperty(this.settings, trustProxyDefaultSymbol, {
+        configurable: true,
+        value: false
+      });
+
+      break;
+  }
+
+  return this;
+};
 
 /**
  * Return the app's absolute pathname
@@ -210,7 +415,10 @@ app.set = function set(setting, val) {
  */
 
 app.path = function path() {
-    { … 4 line(s) … ⟦tj:55627f8b3abcbf56d66eb752505b0a4f⟧ }
+  return this.parent
+    ? this.parent.path() + this.mountpath
+    : '';
+};
 
 /**
  * Check if `setting` is enabled (truthy).
@@ -279,7 +487,19 @@ app.disable = function disable(setting) {
  */
 
 methods.forEach(function(method){
-    { … 13 line(s) … ⟦tj:5d017c08e9a6259bda61605c9afbe05a⟧ }
+  app[method] = function(path){
+    if (method === 'get' && arguments.length === 1) {
+      // app.get(setting)
+      return this.set(path);
+    }
+
+    this.lazyrouter();
+
+    var route = this._router.route(path);
+    route[method].apply(route, slice.call(arguments, 1));
+    return this;
+  };
+});
 
 /**
  * Special-cased "all" method, applying the given route `path`,
@@ -292,7 +512,17 @@ methods.forEach(function(method){
  */
 
 app.all = function all(path) {
-    { … 11 line(s) … ⟦tj:32c2787b17bbbae37c9b86124b2ac443⟧ }
+  this.lazyrouter();
+
+  var route = this._router.route(path);
+  var args = slice.call(arguments, 1);
+
+  for (var i = 0; i < methods.length; i++) {
+    route[methods[i]].apply(route, args);
+  }
+
+  return this;
+};
 
 // del -> delete alias
 
@@ -316,7 +546,68 @@ app.del = deprecate.function(app.delete, 'app.del: Use app.delete instead');
  */
 
 app.render = function render(name, options, callback) {
-    { … 62 line(s) … ⟦tj:b421f18c9ab567152889b5cef076b33d⟧ }
+  var cache = this.cache;
+  var done = callback;
+  var engines = this.engines;
+  var opts = options;
+  var renderOptions = {};
+  var view;
+
+  // support callback function as second arg
+  if (typeof options === 'function') {
+    done = options;
+    opts = {};
+  }
+
+  // merge app.locals
+  merge(renderOptions, this.locals);
+
+  // merge options._locals
+  if (opts._locals) {
+    merge(renderOptions, opts._locals);
+  }
+
+  // merge options
+  merge(renderOptions, opts);
+
+  // set .cache unless explicitly provided
+  if (renderOptions.cache == null) {
+    renderOptions.cache = this.enabled('view cache');
+  }
+
+  // primed cache
+  if (renderOptions.cache) {
+    view = cache[name];
+  }
+
+  // view
+  if (!view) {
+    var View = this.get('view');
+
+    view = new View(name, {
+      defaultEngine: this.get('view engine'),
+      root: this.get('views'),
+      engines: engines
+    });
+
+    if (!view.path) {
+      var dirs = Array.isArray(view.root) && view.root.length > 1
+        ? 'directories "' + view.root.slice(0, -1).join('", "') + '" or "' + view.root[view.root.length - 1] + '"'
+        : 'directory "' + view.root + '"'
+      var err = new Error('Failed to lookup view "' + name + '" in views ' + dirs);
+      err.view = view;
+      return done(err);
+    }
+
+    // prime the cache
+    if (renderOptions.cache) {
+      cache[name] = view;
+    }
+  }
+
+  // render
+  tryRender(view, renderOptions, done);
+};
 
 /**
  * Listen for connections.
@@ -362,7 +653,9 @@ function logerror(err) {
  */
 
 function tryRender(view, options, callback) {
-    { … 6 line(s) … ⟦tj:6c304467830e5f70c4b9511aa31c6ba6⟧ }
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
-
-[compacted tool output — this is a PARTIAL view; the full original (14593 bytes) is available by calling tinyjuice_retrieve with token "5901b32f609ba349351bf7406dbdc0c4" (marker ⟦tj:5901b32f609ba349351bf7406dbdc0c4⟧)]
+  try {
+    view.render(options, callback);
+  } catch (err) {
+    callback(err);
+  }
+}

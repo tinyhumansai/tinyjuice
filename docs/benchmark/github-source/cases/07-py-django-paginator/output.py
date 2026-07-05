@@ -42,41 +42,101 @@ class Paginator:
         allow_empty_first_page=True,
         error_messages=None,
     ):
-        ...  # 10 line(s) collapsed ⟦tj:c35d231d146e0824190f325295d32897⟧
+        self.object_list = object_list
+        self._check_object_list_is_ordered()
+        self.per_page = int(per_page)
+        self.orphans = int(orphans)
+        self.allow_empty_first_page = allow_empty_first_page
+        self.error_messages = (
+            self.default_error_messages
+            if error_messages is None
+            else self.default_error_messages | error_messages
+        )
 
     def __iter__(self):
         for page_number in self.page_range:
             yield self.page(page_number)
 
     def validate_number(self, number):
-        ...  # 12 line(s) collapsed ⟦tj:5f0a61a86fdc9f39b891a59543246fd9⟧
+        """Validate the given 1-based page number."""
+        try:
+            if isinstance(number, float) and not number.is_integer():
+                raise ValueError
+            number = int(number)
+        except (TypeError, ValueError):
+            raise PageNotAnInteger(self.error_messages["invalid_page"])
+        if number < 1:
+            raise EmptyPage(self.error_messages["min_page"])
+        if number > self.num_pages:
+            raise EmptyPage(self.error_messages["no_results"])
+        return number
 
     def get_page(self, number):
-        ...  # 11 line(s) collapsed ⟦tj:2fd8c780105b0a9b26f2b8399626eec4⟧
+        """
+        Return a valid page, even if the page argument isn't a number or isn't
+        in range.
+        """
+        try:
+            number = self.validate_number(number)
+        except PageNotAnInteger:
+            number = 1
+        except EmptyPage:
+            number = self.num_pages
+        return self.page(number)
 
     def page(self, number):
-        ...  # 7 line(s) collapsed ⟦tj:39a6518b899e1f15bc77aa77841165bb⟧
+        """Return a Page object for the given 1-based page number."""
+        number = self.validate_number(number)
+        bottom = (number - 1) * self.per_page
+        top = bottom + self.per_page
+        if top + self.orphans >= self.count:
+            top = self.count
+        return self._get_page(self.object_list[bottom:top], number, self)
 
     def _get_page(self, *args, **kwargs):
-        ...  # 7 line(s) collapsed ⟦tj:8ab440114d92f6539bdc572d30c4387c⟧
+        """
+        Return an instance of a single page.
+
+        This hook can be used by subclasses to use an alternative to the
+        standard :cls:`Page` object.
+        """
+        return Page(*args, **kwargs)
 
     @cached_property
     def count(self):
-        ...  # 5 line(s) collapsed ⟦tj:a6f2de3783d70fd2c92c6b59a0b7e936⟧
+        """Return the total number of objects, across all pages."""
+        c = getattr(self.object_list, "count", None)
+        if callable(c) and not inspect.isbuiltin(c) and method_has_no_args(c):
+            return c()
+        return len(self.object_list)
 
     @cached_property
     def num_pages(self):
-        ...  # 5 line(s) collapsed ⟦tj:6691055d4fab68ec01b4bd525998ef6e⟧
+        """Return the total number of pages."""
+        if self.count == 0 and not self.allow_empty_first_page:
+            return 0
+        hits = max(1, self.count - self.orphans)
+        return ceil(hits / self.per_page)
 
     @property
     def page_range(self):
-        ...  # 5 line(s) collapsed ⟦tj:93a1ef53901490deaa69999eb4d2d113⟧
+        """
+        Return a 1-based range of pages for iterating through within
+        a template for loop.
+        """
+        return range(1, self.num_pages + 1)
 
     def _check_object_list_is_ordered(self):
-        ...  # 18 line(s) collapsed ⟦tj:7b5c319ded7ccea4438613f1c378ed62⟧
+        """
+        Warn if self.object_list is unordered (typically a QuerySet).
+...  # 15 line(s) collapsed ⟦tj:7b5c319ded7ccea4438613f1c378ed62⟧
+            )
 
     def get_elided_page_range(self, number=1, *, on_each_side=3, on_ends=2):
-        ...  # 29 line(s) collapsed ⟦tj:f0b8113bd34e11890b3f371f3b1f077e⟧
+        """
+        Return a 1-based range of pages with some values elided.
+...  # 26 line(s) collapsed ⟦tj:f0b8113bd34e11890b3f371f3b1f077e⟧
+            yield from range(number + 1, self.num_pages + 1)
 
 
 class Page(collections.abc.Sequence):

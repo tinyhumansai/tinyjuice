@@ -12,16 +12,55 @@ const _schemePattern = /^\w[\w\d+.-]*$/;
 const _singleSlashStart = /^\//;
 const _doubleSlashStart = /^\/\//;
 
-function _validateUri(ret: URI, _strict?: boolean): void { … 30 line(s) … ⟦tj:c29af706c2a756e7d9ceac766aa84c06⟧ }
+function _validateUri(ret: URI, _strict?: boolean): void {
+
+	// scheme, must be set
+	if (!ret.scheme && _strict) {
+		throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
+	}
+
+	// scheme, https://tools.ietf.org/html/rfc3986#section-3.1
+	// ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+	if (ret.scheme && !_schemePattern.test(ret.scheme)) {
+		throw new Error('[UriError]: Scheme contains illegal characters.');
+	}
+
+	// path, http://tools.ietf.org/html/rfc3986#section-3.3
+	// If a URI contains an authority component, then the path component
+	// must either be empty or begin with a slash ("/") character.  If a URI
+	// does not contain an authority component, then the path cannot begin
+	// with two slash characters ("//").
+	if (ret.path) {
+		if (ret.authority) {
+			if (!_singleSlashStart.test(ret.path)) {
+				throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
+			}
+		} else {
+			if (_doubleSlashStart.test(ret.path)) {
+				throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+			}
+		}
+	}
+}
 
 // for a while we allowed uris *without* schemes and this is the migration
 // for them, e.g. an uri without scheme and without strict-mode warns and falls
 // back to the file-scheme. that should cause the least carnage and still be a
 // clear warning
-function _schemeFix(scheme: string, _strict: boolean): string { … 6 line(s) … ⟦tj:45324278e6f2870b9c8bd4f27755df97⟧ }
+function _schemeFix(scheme: string, _strict: boolean): string {
+	if (!scheme && !_strict) {
+		return 'file';
+	}
+	return scheme;
+}
 
 // implements a bit of https://tools.ietf.org/html/rfc3986#section-5
-function _referenceResolution(scheme: string, path: string): string { … 19 line(s) … ⟦tj:5464103aa9f50450b3236344d6db8e4e⟧ }
+function _referenceResolution(scheme: string, path: string): string {
+
+	// the slash-character is our 'default base' as we don't
+{ … 14 line(s) … ⟦tj:5464103aa9f50450b3236344d6db8e4e⟧ }
+	return path;
+}
 
 const _empty = '';
 const _slash = '/';
@@ -45,7 +84,12 @@ const _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
  */
 export class URI implements UriComponents {
 
-	static isUri(thing: any): thing is URI { … 16 line(s) … ⟦tj:1c5429c9a1b270b0e13830f228d49723⟧ }
+	static isUri(thing: any): thing is URI {
+		if (thing instanceof URI) {
+			return true;
+		{ … 11 line(s) … ⟦tj:1c5429c9a1b270b0e13830f228d49723⟧ }
+			&& typeof (<URI>thing).toString === 'function';
+}
 
 	/**
 	 * scheme is the 'http' part of 'http://www.example.com/some/path?query#fragment'.
@@ -87,7 +131,27 @@ export class URI implements UriComponents {
 	/**
 	 * @internal
 	 */
-	protected constructor(schemeOrData: string | UriComponents, authority?: string, path?: string, query?: string, fragment?: string, _strict: boolean = false) { … 21 line(s) … ⟦tj:a0d3123145e5b20aef09bb4622164305⟧ }
+	protected constructor(schemeOrData: string | UriComponents, authority?: string, path?: string, query?: string, fragment?: string, _strict: boolean = false) {
+
+		if (typeof schemeOrData === 'object') {
+			this.scheme = schemeOrData.scheme || _empty;
+			this.authority = schemeOrData.authority || _empty;
+			this.path = schemeOrData.path || _empty;
+			this.query = schemeOrData.query || _empty;
+			this.fragment = schemeOrData.fragment || _empty;
+			// no validation because it's this URI
+			// that creates uri components.
+			// _validateUri(this);
+		} else {
+			this.scheme = _schemeFix(schemeOrData, _strict);
+			this.authority = authority || _empty;
+			this.path = _referenceResolution(this.scheme, path || _empty);
+			this.query = query || _empty;
+			this.fragment = fragment || _empty;
+
+			_validateUri(this, _strict);
+		}
+	}
 
 	// ---- filesystem path -----------------------
 
@@ -115,11 +179,21 @@ export class URI implements UriComponents {
 	 * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working
 	 * with URIs that represent files on disk (`file` scheme).
 	 */
-	get fsPath(): string { … 6 line(s) … ⟦tj:7efa32afc8079b17145a7ab82856bd0e⟧ }
+	get fsPath(): string {
+		// if (this.scheme !== 'file') {
+		// 	console.warn(`[UriError] calling fsPath with scheme ${this.scheme}`);
+		// }
+		return uriToFsPath(this, false);
+	}
 
 	// ---- modify to new -------------------------
 
-	with(change: { scheme?: string; authority?: string | null; path?: string | null; query?: string | null; fragment?: string | null }): URI { … 44 line(s) … ⟦tj:212723d05e5d1990128ee33d5201f061⟧ }
+	with(change: { scheme?: string; authority?: string | null; path?: string | null; query?: string | null; fragment?: string | null }): URI {
+
+		if (!change) {
+{ … 39 line(s) … ⟦tj:212723d05e5d1990128ee33d5201f061⟧ }
+		return new Uri(scheme, authority, path, query, fragment);
+}
 
 	// ---- parse & validate ------------------------
 
@@ -129,7 +203,12 @@ export class URI implements UriComponents {
 	 *
 	 * @param value A string which represents an URI (see `URI#toString`).
 	 */
-	static parse(value: string, _strict: boolean = false): URI { … 14 line(s) … ⟦tj:187ea2dc3fd36c99b3cc8df3c1f78448⟧ }
+	static parse(value: string, _strict: boolean = false): URI {
+		const match = _regexp.exec(value);
+		if (!match) {
+		{ … 9 line(s) … ⟦tj:187ea2dc3fd36c99b3cc8df3c1f78448⟧ }
+		);
+}
 
 	/**
 	 * Creates a new URI from a file system path, e.g. `c:\my\files`,
@@ -152,7 +231,12 @@ export class URI implements UriComponents {
 	 *
 	 * @param path A file system path (see `URI#fsPath`)
 	 */
-	static file(path: string): URI { … 26 line(s) … ⟦tj:c9082ca90142cafbdd31326e10d450f5⟧ }
+	static file(path: string): URI {
+
+		let authority = _empty;
+{ … 21 line(s) … ⟦tj:c9082ca90142cafbdd31326e10d450f5⟧ }
+		return new Uri('file', authority, path, _empty, _empty);
+}
 
 	/**
 	 * Creates new URI from uri components.
@@ -239,11 +323,21 @@ class Uri extends URI {
 	_formatted: string | null = null;
 	_fsPath: string | null = null;
 
-	override get fsPath(): string { … 6 line(s) … ⟦tj:1c93566a3399f398f825497789102696⟧ }
+	override get fsPath(): string {
+		if (!this._fsPath) {
+			this._fsPath = uriToFsPath(this, false);
+		}
+		return this._fsPath;
+	}
 
 	override toString(skipEncoding: boolean = false): string { … 11 line(s) … ⟦tj:d74be94362da385e328912d10faafafb⟧ }
 
-	override toJSON(): UriComponents { … 35 line(s) … ⟦tj:c62499753706595e0d7002428baab8fa⟧ }
+	override toJSON(): UriComponents {
+		// eslint-disable-next-line local/code-no-dangerous-type-assertions
+		const res = <UriState>{
+		{ … 30 line(s) … ⟦tj:c62499753706595e0d7002428baab8fa⟧ }
+		return res;
+}
 }
 
 // reserved characters: https://tools.ietf.org/html/rfc3986#section-2.2
@@ -271,19 +365,39 @@ const encodeTable: { [ch: number]: string } = {
 	[CharCode.Space]: '%20',
 };
 
-function encodeURIComponentFast(uriComponent: string, isPath: boolean, isAuthority: boolean): string { … 63 line(s) … ⟦tj:4ab6816d1f5e5ec18d5fc3ff9b487604⟧ }
+function encodeURIComponentFast(uriComponent: string, isPath: boolean, isAuthority: boolean): string {
+	let res: string | undefined = undefined;
+	let nativeEncodePos = -1;
+	{ … 58 line(s) … ⟦tj:4ab6816d1f5e5ec18d5fc3ff9b487604⟧ }
+	return res !== undefined ? res : uriComponent;
+}
 
-function encodeURIComponentMinimal(path: string): string { … 17 line(s) … ⟦tj:aec32af8b1e057b4e7976f6a3a4bd18e⟧ }
+function encodeURIComponentMinimal(path: string): string {
+	let res: string | undefined = undefined;
+	for (let pos = 0; pos < path.length; pos++) {
+	{ … 12 line(s) … ⟦tj:aec32af8b1e057b4e7976f6a3a4bd18e⟧ }
+	return res !== undefined ? res : path;
+}
 
 /**
  * Compute `fsPath` for the given uri
  */
-export function uriToFsPath(uri: URI, keepDriveLetterCasing: boolean): string { … 26 line(s) … ⟦tj:cf4dcabef15b1c3e4e2da59a4ada3f87⟧ }
+export function uriToFsPath(uri: URI, keepDriveLetterCasing: boolean): string {
+
+	let value: string;
+{ … 21 line(s) … ⟦tj:cf4dcabef15b1c3e4e2da59a4ada3f87⟧ }
+	return value;
+}
 
 /**
  * Create the external version of a uri
  */
-function _asFormatted(uri: URI, skipEncoding: boolean): string { … 69 line(s) … ⟦tj:17b293d3fadb7801cd5e5f6d9764de2b⟧ }
+function _asFormatted(uri: URI, skipEncoding: boolean): string {
+
+	const encoder = !skipEncoding
+{ … 64 line(s) … ⟦tj:17b293d3fadb7801cd5e5f6d9764de2b⟧ }
+	return res;
+}
 
 // --- decode
 
@@ -291,7 +405,12 @@ function decodeURIComponentGraceful(str: string): string { … 11 line(s) … �
 
 const _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
 
-function percentDecode(str: string): string { … 6 line(s) … ⟦tj:9b172791de1f4c0a3d36bdc0960fe746⟧ }
+function percentDecode(str: string): string {
+	if (!str.match(_rEncodedAsHex)) {
+		return str;
+	}
+	return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));
+}
 
 /**
  * Mapped-type that replaces all occurrences of URI with UriComponents

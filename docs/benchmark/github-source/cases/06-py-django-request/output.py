@@ -61,10 +61,27 @@ class HttpRequest:
         # Any variable assignment made here should also happen in
         # `WSGIRequest.__init__()`.
 
-        ...  # 12 line(s) collapsed ⟦tj:b9a9700f66d87c55899082077d7390ae⟧
+        self.GET = QueryDict(mutable=True)
+        self.POST = QueryDict(mutable=True)
+        self.COOKIES = {}
+        self.META = {}
+        self.FILES = MultiValueDict()
+
+        self.path = ""
+        self.path_info = ""
+        self.method = None
+        self.resolver_match = None
+        self.content_type = None
+        self.content_params = None
 
     def __repr__(self):
-        ...  # 7 line(s) collapsed ⟦tj:3624eaa7571754d7caf41137e20d182c⟧
+        if self.method is None or not self.get_full_path():
+            return "<%s>" % self.__class__.__name__
+        return "<%s: %s %r>" % (
+            self.__class__.__name__,
+            self.method,
+            self.get_full_path(),
+        )
 
     @cached_property
     def headers(self):
@@ -84,13 +101,24 @@ class HttpRequest:
         ...  # 11 line(s) collapsed ⟦tj:318f71979ba5bf1615ad7516e3d9d795⟧
 
     def _get_raw_host(self):
-        ...  # 16 line(s) collapsed ⟦tj:ae3998ffd7f8984b619ad34f1c2c0a84⟧
+        """
+        Return the HTTP host using the environment or request headers. Skip
+...  # 13 line(s) collapsed ⟦tj:ae3998ffd7f8984b619ad34f1c2c0a84⟧
+        return host
 
     def get_host(self):
-        ...  # 20 line(s) collapsed ⟦tj:92ead705017835fa7e977416b6ebe742⟧
+        """Return the HTTP host using the environment or request headers."""
+        host = self._get_raw_host()
+...  # 17 line(s) collapsed ⟦tj:92ead705017835fa7e977416b6ebe742⟧
+            raise DisallowedHost(msg)
 
     def get_port(self):
-        ...  # 6 line(s) collapsed ⟦tj:a6cd2f4b9875f5b4287eac24730e5958⟧
+        """Return the port number for the request as a string."""
+        if settings.USE_X_FORWARDED_PORT and "HTTP_X_FORWARDED_PORT" in self.META:
+            port = self.META["HTTP_X_FORWARDED_PORT"]
+        else:
+            port = self.META["SERVER_PORT"]
+        return str(port)
 
     def get_full_path(self, force_append_slash=False):
         return self._get_full_path(self.path, force_append_slash)
@@ -104,21 +132,61 @@ class HttpRequest:
         ...  # 9 line(s) collapsed ⟦tj:8ae0640bc4a6e039ca6a1d6d8d248489⟧
 
     def get_signed_cookie(self, key, default=RAISE_ERROR, salt="", max_age=None):
-        ...  # 22 line(s) collapsed ⟦tj:d7c5be08cdfd772cf5817ffdbba2a65b⟧
+        """
+        Attempt to return a signed cookie. If the signature fails or the
+        cookie has expired, raise an exception, unless the `default` argument
+        is provided,  in which case return that value.
+        """
+        try:
+            cookie_value = self.COOKIES[key]
+        except KeyError:
+            if default is not RAISE_ERROR:
+                return default
+            else:
+                raise
+        try:
+            value = signing.get_cookie_signer(salt=key + salt).unsign(
+                cookie_value, max_age=max_age
+            )
+        except signing.BadSignature:
+            if default is not RAISE_ERROR:
+                return default
+            else:
+                raise
+        return value
 
     def build_absolute_uri(self, location=None):
-        ...  # 37 line(s) collapsed ⟦tj:9dcce7c20e41e6f5e6522f07bfeba41f⟧
+        """
+        Build an absolute URI from the location and the variables available in
+...  # 34 line(s) collapsed ⟦tj:9dcce7c20e41e6f5e6522f07bfeba41f⟧
+        return iri_to_uri(location)
 
     @cached_property
     def _current_scheme_host(self):
         return "{}://{}".format(self.scheme, self.get_host())
 
     def _get_scheme(self):
-        ...  # 5 line(s) collapsed ⟦tj:d62fb1afebc60e5b1ead32fb5db7370f⟧
+        """
+        Hook for subclasses like WSGIRequest to implement. Return 'http' by
+        default.
+        """
+        return "http"
 
     @property
     def scheme(self):
-        ...  # 13 line(s) collapsed ⟦tj:4cf453b034bcdd27c0cefccd2bd7a161⟧
+        if settings.SECURE_PROXY_SSL_HEADER:
+            try:
+                header, secure_value = settings.SECURE_PROXY_SSL_HEADER
+            except ValueError:
+                raise ImproperlyConfigured(
+                    "The SECURE_PROXY_SSL_HEADER setting must be a tuple containing "
+                    "two values."
+                )
+            header_value = self.META.get(header)
+            if header_value is not None:
+                header_value, *_ = header_value.split(",", 1)
+                return "https" if header_value.strip() == secure_value else "http"
+        return self._get_scheme()
 
     def is_secure(self):
         return self.scheme == "https"
@@ -132,29 +200,104 @@ class HttpRequest:
         ...  # 10 line(s) collapsed ⟦tj:c9804e728bfd4632633920a7843a9b8b⟧
 
     def _initialize_handlers(self):
-        ...  # 4 line(s) collapsed ⟦tj:e9593daced472f85ff316627081d311a⟧
+        self._upload_handlers = [
+            uploadhandler.load_handler(handler, self)
+            for handler in settings.FILE_UPLOAD_HANDLERS
+        ]
 
     @property
     def upload_handlers(self):
-        ...  # 4 line(s) collapsed ⟦tj:96df52b9cbc7baf52e6faf73ff3267a8⟧
+        if not self._upload_handlers:
+            # If there are no upload handlers defined, initialize them from settings.
+            self._initialize_handlers()
+        return self._upload_handlers
 
     @upload_handlers.setter
     def upload_handlers(self, upload_handlers):
-        ...  # 6 line(s) collapsed ⟦tj:7a01c56a44f13610a0d4d8cc6a158274⟧
+        if hasattr(self, "_files"):
+            raise AttributeError(
+                "You cannot set the upload handlers after the upload has been "
+                "processed."
+            )
+        self._upload_handlers = upload_handlers
 
     def parse_file_upload(self, META, post_data):
         ...  # 10 line(s) collapsed ⟦tj:e45198db389c45d59776c6840cee3e5e⟧
 
     @property
     def body(self):
-        ...  # 24 line(s) collapsed ⟦tj:383069cacbc7b7d2c83d21bdff2a95fb⟧
+        if not hasattr(self, "_body"):
+            if self._read_started:
+                raise RawPostDataException(
+                    "You cannot access body after reading from request's data stream"
+                )
+
+            # Limit the maximum request data size that will be handled in-memory.
+            if (
+                settings.DATA_UPLOAD_MAX_MEMORY_SIZE is not None
+                and int(self.META.get("CONTENT_LENGTH") or 0)
+                > settings.DATA_UPLOAD_MAX_MEMORY_SIZE
+            ):
+                raise RequestDataTooBig(
+                    "Request body exceeded settings.DATA_UPLOAD_MAX_MEMORY_SIZE."
+                )
+
+            try:
+                self._body = self.read()
+            except OSError as e:
+                raise UnreadablePostError(*e.args) from e
+            finally:
+                self._stream.close()
+            self._stream = BytesIO(self._body)
+        return self._body
 
     def _mark_post_parse_error(self):
         self._post = QueryDict()
         self._files = MultiValueDict()
 
     def _load_post_and_files(self):
-        ...  # 42 line(s) collapsed ⟦tj:312c17501c406a0fb71790bf49b1bc97⟧
+        """Populate self._post and self._files if the content-type is a form type"""
+        if self.method != "POST":
+            self._post, self._files = (
+                QueryDict(encoding=self._encoding),
+                MultiValueDict(),
+            )
+            return
+        if self._read_started and not hasattr(self, "_body"):
+            self._mark_post_parse_error()
+            return
+
+        if self.content_type == "multipart/form-data":
+            if hasattr(self, "_body"):
+                # Use already read data
+                data = BytesIO(self._body)
+            else:
+                data = self
+            try:
+                self._post, self._files = self.parse_file_upload(self.META, data)
+            except (MultiPartParserError, TooManyFilesSent):
+                # An error occurred while parsing POST data. Since when
+                # formatting the error the request handler might access
+                # self.POST, set self._post and self._file to prevent
+                # attempts to parse POST data again.
+                self._mark_post_parse_error()
+                raise
+        elif self.content_type == "application/x-www-form-urlencoded":
+            # According to RFC 1866, the "application/x-www-form-urlencoded"
+            # content type does not have a charset and should be always treated
+            # as UTF-8.
+            if self._encoding is not None and self._encoding.lower() != "utf-8":
+                raise BadRequest(
+                    "HTTP requests with the 'application/x-www-form-urlencoded' "
+                    "content type must be UTF-8 encoded."
+                )
+            self._post = QueryDict(self.body, encoding="utf-8")
+            self._files = MultiValueDict()
+        else:
+            self._post, self._files = (
+                QueryDict(encoding=self._encoding),
+                MultiValueDict(),
+            )
 
     def close(self):
         if hasattr(self, "_files"):
@@ -170,10 +313,18 @@ class HttpRequest:
     # containing that data.
 
     def read(self, *args, **kwargs):
-        ...  # 5 line(s) collapsed ⟦tj:d3446275819ab253e49b1b48913498d5⟧
+        self._read_started = True
+        try:
+            return self._stream.read(*args, **kwargs)
+        except OSError as e:
+            raise UnreadablePostError(*e.args) from e
 
     def readline(self, *args, **kwargs):
-        ...  # 5 line(s) collapsed ⟦tj:6b875550635b6d401440c4677ad204f7⟧
+        self._read_started = True
+        try:
+            return self._stream.readline(*args, **kwargs)
+        except OSError as e:
+            raise UnreadablePostError(*e.args) from e
 
     def __iter__(self):
         return iter(self.readline, b"")
@@ -188,7 +339,12 @@ class HttpHeaders(CaseInsensitiveMapping):
     UNPREFIXED_HEADERS = {"CONTENT_TYPE", "CONTENT_LENGTH"}
 
     def __init__(self, environ):
-        ...  # 6 line(s) collapsed ⟦tj:ebe66ca05658c532793442d98a155566⟧
+        headers = {}
+        for header, value in environ.items():
+            name = self.parse_header_name(header)
+            if name:
+                headers[name] = value
+        super().__init__(headers)
 
     def __getitem__(self, key):
         """Allow header lookup using underscores in place of hyphens."""
@@ -196,11 +352,18 @@ class HttpHeaders(CaseInsensitiveMapping):
 
     @classmethod
     def parse_header_name(cls, header):
-        ...  # 5 line(s) collapsed ⟦tj:3c6a675f8d98c4c74f872d55ca44c1f5⟧
+        if header.startswith(cls.HTTP_PREFIX):
+            header = header.removeprefix(cls.HTTP_PREFIX)
+        elif header not in cls.UNPREFIXED_HEADERS:
+            return None
+        return header.replace("_", "-").title()
 
     @classmethod
     def to_wsgi_name(cls, header):
-        ...  # 4 line(s) collapsed ⟦tj:60333ba51d054e97077d40b3a6395405⟧
+        header = header.replace("-", "_").upper()
+        if header in cls.UNPREFIXED_HEADERS:
+            return header
+        return f"{cls.HTTP_PREFIX}{header}"
 
     @classmethod
     def to_asgi_name(cls, header):
@@ -208,11 +371,17 @@ class HttpHeaders(CaseInsensitiveMapping):
 
     @classmethod
     def to_wsgi_names(cls, headers):
-        ...  # 4 line(s) collapsed ⟦tj:54ccd0ba249a1596e59d74688ba46f57⟧
+        return {
+            cls.to_wsgi_name(header_name): value
+            for header_name, value in headers.items()
+        }
 
     @classmethod
     def to_asgi_names(cls, headers):
-        ...  # 4 line(s) collapsed ⟦tj:b148291d10aea80a2bd4933d8eb71387⟧
+        return {
+            cls.to_asgi_name(header_name): value
+            for header_name, value in headers.items()
+        }
 
 
 class QueryDict(MultiValueDict):
@@ -236,7 +405,34 @@ class QueryDict(MultiValueDict):
     _encoding = None
 
     def __init__(self, query_string=None, mutable=False, encoding=None):
-        ...  # 28 line(s) collapsed ⟦tj:21602b6d23cfbf1ffb99f54b59259830⟧
+        super().__init__()
+        self.encoding = encoding or settings.DEFAULT_CHARSET
+        query_string = query_string or ""
+        parse_qsl_kwargs = {
+            "keep_blank_values": True,
+            "encoding": self.encoding,
+            "max_num_fields": settings.DATA_UPLOAD_MAX_NUMBER_FIELDS,
+        }
+        if isinstance(query_string, bytes):
+            # query_string normally contains URL-encoded data, a subset of ASCII.
+            try:
+                query_string = query_string.decode(self.encoding)
+            except UnicodeDecodeError:
+                # ... but some user agents are misbehaving :-(
+                query_string = query_string.decode("iso-8859-1")
+        try:
+            for key, value in parse_qsl(query_string, **parse_qsl_kwargs):
+                self.appendlist(key, value)
+        except ValueError as e:
+            # ValueError can also be raised if the strict_parsing argument to
+            # parse_qsl() is True. As that is not used by Django, assume that
+            # the exception was raised by exceeding the value of max_num_fields
+            # instead of fragile checks of exception message strings.
+            raise TooManyFieldsSent(
+                "The number of GET/POST parameters exceeded "
+                "settings.DATA_UPLOAD_MAX_NUMBER_FIELDS."
+            ) from e
+        self._mutable = mutable
 
     @classmethod
     def fromkeys(cls, iterable, value="", mutable=False, encoding=None):
@@ -257,27 +453,43 @@ class QueryDict(MultiValueDict):
             raise AttributeError("This QueryDict instance is immutable")
 
     def __setitem__(self, key, value):
-        ...  # 4 line(s) collapsed ⟦tj:ef7a601a575024b4440fc86e76a66c14⟧
+        self._assert_mutable()
+        key = bytes_to_text(key, self.encoding)
+        value = bytes_to_text(value, self.encoding)
+        super().__setitem__(key, value)
 
     def __delitem__(self, key):
         self._assert_mutable()
         super().__delitem__(key)
 
     def __copy__(self):
-        ...  # 4 line(s) collapsed ⟦tj:00483be2ce0b075eb4599b533f223ade⟧
+        result = self.__class__("", mutable=True, encoding=self.encoding)
+        for key, value in self.lists():
+            result.setlist(key, value)
+        return result
 
     def __deepcopy__(self, memo):
-        ...  # 5 line(s) collapsed ⟦tj:a2a4ead5359bcb95692a8ffe50172b21⟧
+        result = self.__class__("", mutable=True, encoding=self.encoding)
+        memo[id(self)] = result
+        for key, value in self.lists():
+            result.setlist(copy.deepcopy(key, memo), copy.deepcopy(value, memo))
+        return result
 
     def setlist(self, key, list_):
-        ...  # 4 line(s) collapsed ⟦tj:18dfa97d9bbac3b1e1491d3a9264a793⟧
+        self._assert_mutable()
+        key = bytes_to_text(key, self.encoding)
+        list_ = [bytes_to_text(elt, self.encoding) for elt in list_]
+        super().setlist(key, list_)
 
     def setlistdefault(self, key, default_list=None):
         self._assert_mutable()
         return super().setlistdefault(key, default_list)
 
     def appendlist(self, key, value):
-        ...  # 4 line(s) collapsed ⟦tj:f00b5faf6a084a8fca195321539c74ef⟧
+        self._assert_mutable()
+        key = bytes_to_text(key, self.encoding)
+        value = bytes_to_text(value, self.encoding)
+        super().appendlist(key, value)
 
     def pop(self, key, *args):
         self._assert_mutable()
@@ -292,22 +504,36 @@ class QueryDict(MultiValueDict):
         super().clear()
 
     def setdefault(self, key, default=None):
-        ...  # 4 line(s) collapsed ⟦tj:6c4ba3e2c610a96b86c98b4429360636⟧
+        self._assert_mutable()
+        key = bytes_to_text(key, self.encoding)
+        default = bytes_to_text(default, self.encoding)
+        return super().setdefault(key, default)
 
     def copy(self):
         """Return a mutable copy of this object."""
         return self.__deepcopy__({})
 
     def urlencode(self, safe=None):
-        ...  # 30 line(s) collapsed ⟦tj:077d124acdf701eb6f0c0cf9ff26860f⟧
+        """
+        Return an encoded string of all query string arguments.
+...  # 27 line(s) collapsed ⟦tj:077d124acdf701eb6f0c0cf9ff26860f⟧
+        return "&".join(output)
 
 
 class MediaType:
     def __init__(self, media_type_raw_line):
-        ...  # 4 line(s) collapsed ⟦tj:ec365039e2a9b4efbfe48dd414ed2df6⟧
+        full_type, self.params = parse_header_parameters(
+            media_type_raw_line if media_type_raw_line else ""
+        )
+        self.main_type, _, self.sub_type = full_type.partition("/")
 
     def __str__(self):
-        ...  # 6 line(s) collapsed ⟦tj:829290fca6122314137bd218abc9009a⟧
+        params_str = "".join("; %s=%s" % (k, v) for k, v in self.params.items())
+        return "%s%s%s" % (
+            self.main_type,
+            ("/%s" % self.sub_type) if self.sub_type else "",
+            params_str,
+        )
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__qualname__, self)
@@ -317,7 +543,12 @@ class MediaType:
         return self.main_type == "*" and self.sub_type == "*"
 
     def match(self, other):
-        ...  # 6 line(s) collapsed ⟦tj:91cac5eaab5279c9939f736c2a2f073e⟧
+        if self.is_all_types:
+            return True
+        other = MediaType(other)
+        if self.main_type == other.main_type and self.sub_type in {"*", other.sub_type}:
+            return True
+        return False
 
 
 # It's neither necessary nor appropriate to use
@@ -332,7 +563,10 @@ def split_domain_port(host):
 
 
 def validate_host(host, allowed_hosts):
-    ...  # 17 line(s) collapsed ⟦tj:29bd899770727238f6dd31965295822f⟧
+    """
+    Validate the given host for this site.
+...  # 14 line(s) collapsed ⟦tj:29bd899770727238f6dd31965295822f⟧
+    )
 
 
 def parse_accept_header(header):

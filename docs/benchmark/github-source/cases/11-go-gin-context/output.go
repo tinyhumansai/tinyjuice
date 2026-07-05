@@ -53,22 +53,28 @@ const abortIndex int8 = math.MaxInt8 >> 1
 // Context is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
 type Context struct {
-    { … 19 line(s) … ⟦tj:9a1270943b42fa52e1385edc487311d5⟧ }
-	// Errors is a list of errors attached to all the handlers/middlewares who used this context.
-	Errors errorMsgs
-    { … 15 line(s) … ⟦tj:fa259917d4c1ad094e9611264a8ddb58⟧ }
+	writermem responseWriter
+	Request   *http.Request
+	{ … 32 line(s) … ⟦tj:e76a48b1c6b938fc7a52f940ea8696c8⟧ }
+	sameSite http.SameSite
 
 /************************************/
 /********** CONTEXT CREATION ********/
 /************************************/
 
 func (c *Context) reset() {
-    { … 15 line(s) … ⟦tj:5b3c24b3a9ab0063b837cb0434a02fbe⟧ }
+	c.Writer = &c.writermem
+	c.Params = c.Params[:0]
+	{ … 11 line(s) … ⟦tj:5b3c24b3a9ab0063b837cb0434a02fbe⟧ }
+	*c.skippedNodes = (*c.skippedNodes)[:0]
 
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
 // This has to be used when the context has to be passed to a goroutine.
 func (c *Context) Copy() *Context {
-    { … 26 line(s) … ⟦tj:feec7b1b9368f7f5a066c814534365b2⟧ }
+	cp := Context{
+		writermem: c.writermem,
+	{ … 22 line(s) … ⟦tj:feec7b1b9368f7f5a066c814534365b2⟧ }
+	return &cp
 
 // HandlerName returns the main handler's name. For example if the handler is "handleGetUsers()",
 // this function will return "main.handleGetUsers".
@@ -79,7 +85,12 @@ func (c *Context) HandlerName() string {
 // HandlerNames returns a list of all registered handlers for this context in descending order,
 // following the semantics of HandlerName()
 func (c *Context) HandlerNames() []string {
-    { … 6 line(s) … ⟦tj:3bbdf395a1e2b49103302a76afe1760f⟧ }
+	hn := make([]string, 0, len(c.handlers))
+	for _, val := range c.handlers {
+		hn = append(hn, nameOfFunction(val))
+	}
+	return hn
+}
 
 // Handler returns the main handler.
 func (c *Context) Handler() HandlerFunc {
@@ -104,7 +115,12 @@ func (c *Context) FullPath() string {
 // It executes the pending handlers in the chain inside the calling handler.
 // See example in GitHub.
 func (c *Context) Next() {
-    { … 6 line(s) … ⟦tj:7803276cafb026f117326e9e7a39e9e0⟧ }
+	c.index++
+	for c.index < int8(len(c.handlers)) {
+		c.handlers[c.index](c)
+		c.index++
+	}
+}
 
 // IsAborted returns true if the current context was aborted.
 func (c *Context) IsAborted() bool {
@@ -122,7 +138,10 @@ func (c *Context) Abort() {
 // AbortWithStatus calls `Abort()` and writes the headers with the specified status code.
 // For example, a failed attempt to authenticate a request could use: context.AbortWithStatus(401).
 func (c *Context) AbortWithStatus(code int) {
-    { … 4 line(s) … ⟦tj:f5655e70f5e3d757905c8f9e55729699⟧ }
+	c.Status(code)
+	c.Writer.WriteHeaderNow()
+	c.Abort()
+}
 
 // AbortWithStatusJSON calls `Abort()` and then `JSON` internally.
 // This method stops the chain, writes the status code and return a JSON body.
@@ -152,11 +171,8 @@ func (c *Context) AbortWithError(code int, err error) *Error {
 func (c *Context) Error(err error) *Error {
 	if err == nil {
 		panic("err is nil")
-	}
-
-	var parsedError *Error
-	ok := errors.As(err, &parsedError)
-    { … 10 line(s) … ⟦tj:5202f77d676de76bdbc3bae46176fcf7⟧ }
+	{ … 12 line(s) … ⟦tj:96faaac29ac615e151f028edb079862e⟧ }
+	return parsedError
 
 /************************************/
 /******** METADATA MANAGEMENT********/
@@ -165,12 +181,23 @@ func (c *Context) Error(err error) *Error {
 // Set is used to store a new key/value pair exclusively for this context.
 // It also lazy initializes  c.Keys if it was not used previously.
 func (c *Context) Set(key string, value any) {
-    { … 8 line(s) … ⟦tj:ffa014371535336767555d30b5168ed4⟧ }
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.Keys == nil {
+		c.Keys = make(map[string]any)
+	}
+
+	c.Keys[key] = value
+}
 
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exist it returns (nil, false)
 func (c *Context) Get(key string) (value any, exists bool) {
-    { … 5 line(s) … ⟦tj:2a4773150194f4c52eb9e7a9ce981858⟧ }
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	value, exists = c.Keys[key]
+	return
+}
 
 // MustGet returns the value for the given key if it exists, otherwise it panics.
 func (c *Context) MustGet(key string) any {
@@ -182,55 +209,107 @@ func (c *Context) MustGet(key string) any {
 
 // GetString returns the value associated with the key as a string.
 func (c *Context) GetString(key string) (s string) {
-    { … 5 line(s) … ⟦tj:e5c48a02c48545a54b87135c2e1544da⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		s, _ = val.(string)
+	}
+	return
+}
 
 // GetBool returns the value associated with the key as a boolean.
 func (c *Context) GetBool(key string) (b bool) {
-    { … 5 line(s) … ⟦tj:cc5ceb494843b77df1e69fbee90ae9a7⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		b, _ = val.(bool)
+	}
+	return
+}
 
 // GetInt returns the value associated with the key as an integer.
 func (c *Context) GetInt(key string) (i int) {
-    { … 5 line(s) … ⟦tj:d7c99e4e73c4e6a89e87e13be735f9a8⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		i, _ = val.(int)
+	}
+	return
+}
 
 // GetInt64 returns the value associated with the key as an integer.
 func (c *Context) GetInt64(key string) (i64 int64) {
-    { … 5 line(s) … ⟦tj:1a2811376d7eb9a6c9a72c4f07580b8c⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		i64, _ = val.(int64)
+	}
+	return
+}
 
 // GetUint returns the value associated with the key as an unsigned integer.
 func (c *Context) GetUint(key string) (ui uint) {
-    { … 5 line(s) … ⟦tj:adb30b9ee56861a4370c601d0e249e52⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		ui, _ = val.(uint)
+	}
+	return
+}
 
 // GetUint64 returns the value associated with the key as an unsigned integer.
 func (c *Context) GetUint64(key string) (ui64 uint64) {
-    { … 5 line(s) … ⟦tj:531ab91fcba2756093c2d99c92af1665⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		ui64, _ = val.(uint64)
+	}
+	return
+}
 
 // GetFloat64 returns the value associated with the key as a float64.
 func (c *Context) GetFloat64(key string) (f64 float64) {
-    { … 5 line(s) … ⟦tj:f8a9e095092bdf28a8b38d8219972a70⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		f64, _ = val.(float64)
+	}
+	return
+}
 
 // GetTime returns the value associated with the key as time.
 func (c *Context) GetTime(key string) (t time.Time) {
-    { … 5 line(s) … ⟦tj:ef7fae87eddd5cb519609fdbc911b3a9⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		t, _ = val.(time.Time)
+	}
+	return
+}
 
 // GetDuration returns the value associated with the key as a duration.
 func (c *Context) GetDuration(key string) (d time.Duration) {
-    { … 5 line(s) … ⟦tj:9eeb49401b320c3ad42e1cbb61e70ccf⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		d, _ = val.(time.Duration)
+	}
+	return
+}
 
 // GetStringSlice returns the value associated with the key as a slice of strings.
 func (c *Context) GetStringSlice(key string) (ss []string) {
-    { … 5 line(s) … ⟦tj:fc6eb37d13c8cf0b39c5abc31ade4d72⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		ss, _ = val.([]string)
+	}
+	return
+}
 
 // GetStringMap returns the value associated with the key as a map of interfaces.
 func (c *Context) GetStringMap(key string) (sm map[string]any) {
-    { … 5 line(s) … ⟦tj:c314e09423f796a4d1fdb547d892ae92⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		sm, _ = val.(map[string]any)
+	}
+	return
+}
 
 // GetStringMapString returns the value associated with the key as a map of strings.
 func (c *Context) GetStringMapString(key string) (sms map[string]string) {
-    { … 5 line(s) … ⟦tj:d72d06202c0720b7001000a8e207baa6⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		sms, _ = val.(map[string]string)
+	}
+	return
+}
 
 // GetStringMapStringSlice returns the value associated with the key as a map to a slice of strings.
 func (c *Context) GetStringMapStringSlice(key string) (smss map[string][]string) {
-    { … 5 line(s) … ⟦tj:0524aa40483441cafa2e703539a34d53⟧ }
+	if val, ok := c.Get(key); ok && val != nil {
+		smss, _ = val.(map[string][]string)
+	}
+	return
+}
 
 /************************************/
 /************ INPUT DATA ************/
@@ -281,7 +360,11 @@ func (c *Context) Query(key string) (value string) {
 //	c.DefaultQuery("id", "none") == "none"
 //	c.DefaultQuery("lastname", "none") == ""
 func (c *Context) DefaultQuery(key, defaultValue string) string {
-    { … 5 line(s) … ⟦tj:9fbbae47ea368b5a0a16a522cd24e273⟧ }
+	if value, ok := c.GetQuery(key); ok {
+		return value
+	}
+	return defaultValue
+}
 
 // GetQuery is like Query(), it returns the keyed url query value
 // if it exists `(value, true)` (even when the value is an empty string),
@@ -293,7 +376,11 @@ func (c *Context) DefaultQuery(key, defaultValue string) string {
 //	("", false) == c.GetQuery("id")
 //	("", true) == c.GetQuery("lastname")
 func (c *Context) GetQuery(key string) (string, bool) {
-    { … 5 line(s) … ⟦tj:02f49c5466de366cad02845b3ac23456⟧ }
+	if values, ok := c.GetQueryArray(key); ok {
+		return values[0], ok
+	}
+	return "", false
+}
 
 // QueryArray returns a slice of strings for a given query key.
 // The length of the slice depends on the number of params with the given key.
@@ -303,12 +390,22 @@ func (c *Context) QueryArray(key string) (values []string) {
 }
 
 func (c *Context) initQueryCache() {
-    { … 8 line(s) … ⟦tj:8c70fe6586884d5e5c21eb5b2200b4bd⟧ }
+	if c.queryCache == nil {
+		if c.Request != nil {
+			c.queryCache = c.Request.URL.Query()
+		} else {
+			c.queryCache = url.Values{}
+		}
+	}
+}
 
 // GetQueryArray returns a slice of strings for a given query key, plus
 // a boolean value whether at least one value exists for the given key.
 func (c *Context) GetQueryArray(key string) (values []string, ok bool) {
-    { … 4 line(s) … ⟦tj:0222e8c86150664c53d855ddef89d284⟧ }
+	c.initQueryCache()
+	values, ok = c.queryCache[key]
+	return
+}
 
 // QueryMap returns a map for a given query key.
 func (c *Context) QueryMap(key string) (dicts map[string]string) {
@@ -334,7 +431,11 @@ func (c *Context) PostForm(key string) (value string) {
 // when it exists, otherwise it returns the specified defaultValue string.
 // See: PostForm() and GetPostForm() for further information.
 func (c *Context) DefaultPostForm(key, defaultValue string) string {
-    { … 5 line(s) … ⟦tj:d5809a0a03efcff38a01bd0b01ddd7f8⟧ }
+	if value, ok := c.GetPostForm(key); ok {
+		return value
+	}
+	return defaultValue
+}
 
 // GetPostForm is like PostForm(key). It returns the specified key from a POST urlencoded
 // form or multipart form when it exists `(value, true)` (even when the value is an empty string),
@@ -345,7 +446,11 @@ func (c *Context) DefaultPostForm(key, defaultValue string) string {
 //		   email=                  -->  ("", true) := GetPostForm("email") // set email to ""
 //	                            -->  ("", false) := GetPostForm("email") // do nothing with email
 func (c *Context) GetPostForm(key string) (string, bool) {
-    { … 5 line(s) … ⟦tj:8ba53f2ae7732ebbdca2a20b4c2204cd⟧ }
+	if values, ok := c.GetPostFormArray(key); ok {
+		return values[0], ok
+	}
+	return "", false
+}
 
 // PostFormArray returns a slice of strings for a given form key.
 // The length of the slice depends on the number of params with the given key.
@@ -355,15 +460,15 @@ func (c *Context) PostFormArray(key string) (values []string) {
 }
 
 func (c *Context) initFormCache() {
-    { … 4 line(s) … ⟦tj:749e97a91cb03da91758ad7e88e404f3⟧ }
-			if !errors.Is(err, http.ErrNotMultipart) {
-				debugPrint("error on parse multipart form array: %v", err)
-    { … 5 line(s) … ⟦tj:4d0f21f07d631b654cd5248aeee4584b⟧ }
+	{ … 11 line(s) … ⟦tj:7f2b97d4ce87767a6e5a0af8ae35916e⟧ }
 
 // GetPostFormArray returns a slice of strings for a given form key, plus
 // a boolean value whether at least one value exists for the given key.
 func (c *Context) GetPostFormArray(key string) (values []string, ok bool) {
-    { … 4 line(s) … ⟦tj:4251c9402aea282f55d2e1154e6011fa⟧ }
+	c.initFormCache()
+	values, ok = c.formCache[key]
+	return
+}
 
 // PostFormMap returns a map for a given form key.
 func (c *Context) PostFormMap(key string) (dicts map[string]string) {
@@ -380,11 +485,11 @@ func (c *Context) GetPostFormMap(key string) (map[string]string, bool) {
 
 // get is an internal method and returns a map which satisfies conditions.
 func (c *Context) get(m map[string][]string, key string) (map[string]string, bool) {
-    { … 12 line(s) … ⟦tj:b7b1f01e68248c2779fdadd87580e96e⟧ }
+	{ … 12 line(s) … ⟦tj:b7b1f01e68248c2779fdadd87580e96e⟧ }
 
 // FormFile returns the first file for the provided form key.
 func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
-    { … 12 line(s) … ⟦tj:ca98264052fa4111d12d090b07e64b35⟧ }
+	{ … 12 line(s) … ⟦tj:ca98264052fa4111d12d090b07e64b35⟧ }
 
 // MultipartForm is the parsed multipart form, including file uploads.
 func (c *Context) MultipartForm() (*multipart.Form, error) {
@@ -394,7 +499,25 @@ func (c *Context) MultipartForm() (*multipart.Form, error) {
 
 // SaveUploadedFile uploads the form file to specific dst.
 func (c *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error {
-    { … 19 line(s) … ⟦tj:53da2a8db7e903db9fe43d4f3d0e8c8b⟧ }
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	if err = os.MkdirAll(filepath.Dir(dst), 0750); err != nil {
+		return err
+	}
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, src)
+	return err
+}
 
 // Bind checks the Method and Content-Type to select a binding engine automatically,
 // Depending on the "Content-Type" header different bindings are used, for example:
@@ -443,13 +566,23 @@ func (c *Context) BindHeader(obj any) error {
 // BindUri binds the passed struct pointer using binding.Uri.
 // It will abort the request with HTTP 400 if any error occurs.
 func (c *Context) BindUri(obj any) error {
-    { … 6 line(s) … ⟦tj:ba676ecd0e584387e1202cea6fb9cb5f⟧ }
+	if err := c.ShouldBindUri(obj); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err).SetType(ErrorTypeBind) //nolint: errcheck
+		return err
+	}
+	return nil
+}
 
 // MustBindWith binds the passed struct pointer using the specified binding engine.
 // It will abort the request with HTTP 400 if any error occurs.
 // See the binding package.
 func (c *Context) MustBindWith(obj any, b binding.Binding) error {
-    { … 6 line(s) … ⟦tj:ae561bbd17cd28e8df57dcf4ed135a00⟧ }
+	if err := c.ShouldBindWith(obj, b); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err).SetType(ErrorTypeBind) //nolint: errcheck
+		return err
+	}
+	return nil
+}
 
 // ShouldBind checks the Method and Content-Type to select a binding engine automatically,
 // Depending on the "Content-Type" header different bindings are used, for example:
@@ -497,7 +630,12 @@ func (c *Context) ShouldBindHeader(obj any) error {
 
 // ShouldBindUri binds the passed struct pointer using the specified binding engine.
 func (c *Context) ShouldBindUri(obj any) error {
-    { … 6 line(s) … ⟦tj:b3f0e97d80a3bd8406038592cf11e66a⟧ }
+	m := make(map[string][]string, len(c.Params))
+	for _, v := range c.Params {
+		m[v.Key] = []string{v.Value}
+	}
+	return binding.Uri.BindUri(m, obj)
+}
 
 // ShouldBindWith binds the passed struct pointer using the specified binding engine.
 // See the binding package.
@@ -511,7 +649,10 @@ func (c *Context) ShouldBindWith(obj any, b binding.Binding) error {
 // NOTE: This method reads the body before binding. So you should use
 // ShouldBindWith for better performance if you need to call only once.
 func (c *Context) ShouldBindBodyWith(obj any, bb binding.BindingBody) (err error) {
-    { … 15 line(s) … ⟦tj:289091dc325bb26f65dc4faa041214f3⟧ }
+	var body []byte
+	if cb, ok := c.Get(BodyBytesKey); ok {
+	{ … 11 line(s) … ⟦tj:289091dc325bb26f65dc4faa041214f3⟧ }
+	return bb.BindBody(body, obj)
 
 // ShouldBindBodyWithJSON is a shortcut for c.ShouldBindBodyWith(obj, binding.JSON).
 func (c *Context) ShouldBindBodyWithJSON(obj any) error {
@@ -540,11 +681,18 @@ func (c *Context) ShouldBindBodyWithTOML(obj any) error {
 // the remote IP (coming from Request.RemoteAddr) is returned.
 func (c *Context) ClientIP() string {
 	// Check if we're running on a trusted platform, continue running backwards if error
-    { … 34 line(s) … ⟦tj:b2cea2977fc30ce505bd0c142c8bc58e⟧ }
+	if c.engine.TrustedPlatform != "" {
+	{ … 31 line(s) … ⟦tj:00920d9d61dc55ad09f69fdfc4c15cb9⟧ }
+	return remoteIP.String()
 
 // RemoteIP parses the IP from Request.RemoteAddr, normalizes and returns the IP (without the port).
 func (c *Context) RemoteIP() string {
-    { … 6 line(s) … ⟦tj:e6a261628f3ea9251c9df966d97e3d56⟧ }
+	ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request.RemoteAddr))
+	if err != nil {
+		return ""
+	}
+	return ip
+}
 
 // ContentType returns the Content-Type header of the request.
 func (c *Context) ContentType() string {
@@ -554,7 +702,12 @@ func (c *Context) ContentType() string {
 // IsWebsocket returns true if the request headers indicate that a websocket
 // handshake is being initiated by the client.
 func (c *Context) IsWebsocket() bool {
-    { … 6 line(s) … ⟦tj:536435774db2a2517b6343d0dee0f4ae⟧ }
+	if strings.Contains(strings.ToLower(c.requestHeader("Connection")), "upgrade") &&
+		strings.EqualFold(c.requestHeader("Upgrade"), "websocket") {
+		return true
+	}
+	return false
+}
 
 func (c *Context) requestHeader(key string) string {
 	return c.Request.Header.Get(key)
@@ -566,7 +719,7 @@ func (c *Context) requestHeader(key string) string {
 
 // bodyAllowedForStatus is a copy of http.bodyAllowedForStatus non-exported function.
 func bodyAllowedForStatus(status int) bool {
-    { … 10 line(s) … ⟦tj:4690c24a1f7c2314f497818795724948⟧ }
+	{ … 10 line(s) … ⟦tj:4690c24a1f7c2314f497818795724948⟧ }
 
 // Status sets the HTTP response code.
 func (c *Context) Status(code int) {
@@ -577,7 +730,12 @@ func (c *Context) Status(code int) {
 // It writes a header in the response.
 // If value == "", this method removes the header `c.Writer.Header().Del(key)`
 func (c *Context) Header(key, value string) {
-    { … 6 line(s) … ⟦tj:dd91b1a2dd176c79119f534c83ea9777⟧ }
+	if value == "" {
+		c.Writer.Header().Del(key)
+		return
+	}
+	c.Writer.Header().Set(key, value)
+}
 
 // GetHeader returns value from request headers.
 func (c *Context) GetHeader(key string) string {
@@ -601,20 +759,30 @@ func (c *Context) SetSameSite(samesite http.SameSite) {
 // The provided cookie must have a valid Name. Invalid cookies may be
 // silently dropped.
 func (c *Context) SetCookie(name, value string, maxAge int, path, domain string, secure, httpOnly bool) {
-    { … 14 line(s) … ⟦tj:65865993495c54bb7283c5ead1f95e66⟧ }
+	if path == "" {
+		path = "/"
+	{ … 10 line(s) … ⟦tj:65865993495c54bb7283c5ead1f95e66⟧ }
+	})
 
 // Cookie returns the named cookie provided in the request or
 // ErrNoCookie if not found. And return the named cookie is unescaped.
 // If multiple cookies match the given name, only one cookie will
 // be returned.
 func (c *Context) Cookie(name string) (string, error) {
-    { … 7 line(s) … ⟦tj:7fb4fbce278466d04fd5fcb69e6c5319⟧ }
+	cookie, err := c.Request.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+	val, _ := url.QueryUnescape(cookie.Value)
+	return val, nil
+}
 
 // Render writes the response headers and calls render.Render to render data.
 func (c *Context) Render(code int, r render.Render) {
-    { … 9 line(s) … ⟦tj:495c584c1d802078e6e0cb72cbdea0be⟧ }
-		// Pushing error to c.Errors
-    { … 4 line(s) … ⟦tj:977a3de29534b66d79816c11ab634621⟧ }
+	c.Status(code)
+
+	{ … 10 line(s) … ⟦tj:e59b43446c23f1cd370ed7079acd7510⟧ }
+	}
 
 // HTML renders the HTTP template specified by its file name.
 // It also updates the HTTP code and sets the Content-Type as "text/html".
@@ -643,7 +811,13 @@ func (c *Context) SecureJSON(code int, obj any) {
 // It adds padding to response body to request data from a server residing in a different domain than the client.
 // It also sets the Content-Type as "application/javascript".
 func (c *Context) JSONP(code int, obj any) {
-    { … 7 line(s) … ⟦tj:ede0a588aec45159c5da8397b14f7436⟧ }
+	callback := c.DefaultQuery("callback", "")
+	if callback == "" {
+		c.Render(code, render.JSON{Data: obj})
+		return
+	}
+	c.Render(code, render.JsonpJSON{Callback: callback, Data: obj})
+}
 
 // JSON serializes the given struct as JSON into the response body.
 // It also sets the Content-Type as "application/json".
@@ -691,15 +865,30 @@ func (c *Context) String(code int, format string, values ...any) {
 
 // Redirect returns an HTTP redirect to the specific location.
 func (c *Context) Redirect(code int, location string) {
-    { … 6 line(s) … ⟦tj:030a8d27a6dcef2cc088e28cf025e78c⟧ }
+	c.Render(-1, render.Redirect{
+		Code:     code,
+		Location: location,
+		Request:  c.Request,
+	})
+}
 
 // Data writes some data into the body stream and updates the HTTP code.
 func (c *Context) Data(code int, contentType string, data []byte) {
-    { … 5 line(s) … ⟦tj:5ce34452edc97426eb3d0ce26638b36d⟧ }
+	c.Render(code, render.Data{
+		ContentType: contentType,
+		Data:        data,
+	})
+}
 
 // DataFromReader writes the specified reader into the body stream and updates the HTTP code.
 func (c *Context) DataFromReader(code int, contentLength int64, contentType string, reader io.Reader, extraHeaders map[string]string) {
-    { … 7 line(s) … ⟦tj:2a6c82fc13fe6dc245e90fdf1ed260c9⟧ }
+	c.Render(code, render.Reader{
+		Headers:       extraHeaders,
+		ContentType:   contentType,
+		ContentLength: contentLength,
+		Reader:        reader,
+	})
+}
 
 // File writes the specified file into the body stream in an efficient way.
 func (c *Context) File(filepath string) {
@@ -708,7 +897,14 @@ func (c *Context) File(filepath string) {
 
 // FileFromFS writes the specified file from http.FileSystem into the body stream in an efficient way.
 func (c *Context) FileFromFS(filepath string, fs http.FileSystem) {
-    { … 8 line(s) … ⟦tj:5f86c7fce614989c7739973b56269f52⟧ }
+	defer func(old string) {
+		c.Request.URL.Path = old
+	}(c.Request.URL.Path)
+
+	c.Request.URL.Path = filepath
+
+	http.FileServer(fs).ServeHTTP(c.Writer, c.Request)
+}
 
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
@@ -719,16 +915,29 @@ func escapeQuotes(s string) string {
 // FileAttachment writes the specified file into the body stream in an efficient way
 // On the client side, the file will typically be downloaded with the given filename
 func (c *Context) FileAttachment(filepath, filename string) {
-    { … 7 line(s) … ⟦tj:4248e111396e50eb29f2546f8ed25d59⟧ }
+	if isASCII(filename) {
+		c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+escapeQuotes(filename)+`"`)
+	} else {
+		c.Writer.Header().Set("Content-Disposition", `attachment; filename*=UTF-8''`+url.QueryEscape(filename))
+	}
+	http.ServeFile(c.Writer, c.Request, filepath)
+}
 
 // SSEvent writes a Server-Sent Event into the body stream.
 func (c *Context) SSEvent(name string, message any) {
-    { … 5 line(s) … ⟦tj:41c5811a84738f7ef7098a0a7d4c284a⟧ }
+	c.Render(-1, sse.Event{
+		Event: name,
+		Data:  message,
+	})
+}
 
 // Stream sends a streaming response and returns a boolean
 // indicates "Is client disconnected in middle of stream"
 func (c *Context) Stream(step func(w io.Writer) bool) bool {
-    { … 15 line(s) … ⟦tj:aad66ffd8eff2e4936619394da11d9bf⟧ }
+	w := c.Writer
+	clientGone := w.CloseNotify()
+	{ … 11 line(s) … ⟦tj:aad66ffd8eff2e4936619394da11d9bf⟧ }
+	}
 
 /************************************/
 /******** CONTENT NEGOTIATION *******/
@@ -736,18 +945,21 @@ func (c *Context) Stream(step func(w io.Writer) bool) bool {
 
 // Negotiate contains all negotiations data.
 type Negotiate struct {
-    { … 9 line(s) … ⟦tj:ecd4ed2f9a0d9b8eed19bf7b4946810d⟧ }
+	{ … 9 line(s) … ⟦tj:ecd4ed2f9a0d9b8eed19bf7b4946810d⟧ }
 
 // Negotiate calls different Render according to acceptable Accept format.
 func (c *Context) Negotiate(code int, config Negotiate) {
-    { … 22 line(s) … ⟦tj:4f36e26e26ca3ee53edb58dd272c8efb⟧ }
-		c.AbortWithError(http.StatusNotAcceptable, errors.New("the accepted formats are not offered by the server")) //nolint: errcheck
+	switch c.NegotiateFormat(config.Offered...) {
+	case binding.MIMEJSON:
+	{ … 21 line(s) … ⟦tj:6e41d39627a69477fee326b95311cdac⟧ }
 	}
-}
 
 // NegotiateFormat returns an acceptable Accept format.
 func (c *Context) NegotiateFormat(offered ...string) string {
-    { … 28 line(s) … ⟦tj:889280f9babfb9d383dd346cc2f25f53⟧ }
+	assert1(len(offered) > 0, "you must provide at least one offer")
+
+	{ … 24 line(s) … ⟦tj:889280f9babfb9d383dd346cc2f25f53⟧ }
+	return ""
 
 // SetAccepted sets Accept header data.
 func (c *Context) SetAccepted(formats ...string) {
@@ -760,25 +972,43 @@ func (c *Context) SetAccepted(formats ...string) {
 
 // hasRequestContext returns whether c.Request has Context and fallback.
 func (c *Context) hasRequestContext() bool {
-    { … 4 line(s) … ⟦tj:1270d3dc986c833a098d835ad5e9b7d6⟧ }
+	hasFallback := c.engine != nil && c.engine.ContextWithFallback
+	hasRequestContext := c.Request != nil && c.Request.Context() != nil
+	return hasFallback && hasRequestContext
+}
 
 // Deadline returns that there is no deadline (ok==false) when c.Request has no Context.
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-    { … 5 line(s) … ⟦tj:86903c466d300a35ec0a80cab7070e73⟧ }
+	if !c.hasRequestContext() {
+		return
+	}
+	return c.Request.Context().Deadline()
+}
 
 // Done returns nil (chan which will wait forever) when c.Request has no Context.
 func (c *Context) Done() <-chan struct{} {
-    { … 5 line(s) … ⟦tj:93904026450f79213b3afec2c5f3c306⟧ }
+	if !c.hasRequestContext() {
+		return nil
+	}
+	return c.Request.Context().Done()
+}
 
 // Err returns nil when c.Request has no Context.
 func (c *Context) Err() error {
-    { … 5 line(s) … ⟦tj:6498ba305a645dddd62c0b81809d9b55⟧ }
+	if !c.hasRequestContext() {
+		return nil
+	}
+	return c.Request.Context().Err()
+}
 
 // Value returns the value associated with this context for key, or nil
 // if no value is associated with key. Successive calls to Value with
 // the same key returns the same result.
 func (c *Context) Value(key any) any {
-    { … 16 line(s) … ⟦tj:d0c10cfc51f0bd76a8fc036800da8319⟧ }
+	if key == ContextRequestKey {
+		return c.Request
+	{ … 12 line(s) … ⟦tj:d0c10cfc51f0bd76a8fc036800da8319⟧ }
+	return c.Request.Context().Value(key)
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [compacted tool output — this is a PARTIAL view; the full original (38997 bytes) is available by calling tinyjuice_retrieve with token "6b4d7e0478a20e6ab2757ea20026c3c2" (marker ⟦tj:6b4d7e0478a20e6ab2757ea20026c3c2⟧)]

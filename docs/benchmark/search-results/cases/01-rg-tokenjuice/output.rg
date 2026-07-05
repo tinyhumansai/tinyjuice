@@ -1,10 +1,12 @@
-[search: 500 match(es) across 113 file(s) · top 5 per file · full set via retrieve footer]
+[search: 500 match(es) across 113 file(s) · top 5-12 per file (adaptive) · full set via retrieve footer]
 <OPENHUMAN_ROOT>/Cargo.toml:51:# TinyJuice — host-agnostic TokenJuice compression engine. OpenHuman keeps
 <OPENHUMAN_ROOT>/Cargo.toml:52:# config/RPC/tool/runtime adapters in `src/openhuman/tokenjuice/` and patches
 <OPENHUMAN_ROOT>/Cargo.toml:79:# TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
 <OPENHUMAN_ROOT>/Cargo.toml:80:# behind the default `tokenjuice-treesitter` feature; disabling it falls back to
+<OPENHUMAN_ROOT>/Cargo.toml:81:# the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
+<OPENHUMAN_ROOT>/Cargo.toml:326:default = ["tokenjuice-treesitter"]
+<OPENHUMAN_ROOT>/Cargo.toml:329:tokenjuice-treesitter = [
 <OPENHUMAN_ROOT>/Cargo.toml:330:    "tinyjuice/tokenjuice-treesitter",
-[+3 more match(es) in <OPENHUMAN_ROOT>/Cargo.toml ⟦tj:3ac438bed0c3bce658b515ad6724b1b6⟧]
 <OPENHUMAN_ROOT>/README.md:72:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: tool output compressed before it hits the model: same information, up to 80% fewer tokens. A brain this big would be unaffordable without it.
 <OPENHUMAN_ROOT>/README.md:145:| **Cost**               | ⚠️ Sub + add-ons  | ⚠️ BYO models     | ⚠️ BYO models     | ✅ One sub + TokenJuice                                                                                  |
 <OPENHUMAN_ROOT>/docs/README.ko.md:70:- **[TokenJuice](https://tinyhumans.gitbook.io/openhuman/features/token-compression)**: 도구 출력은 모델에 닿기 전에 압축되어, 동일한 정보가 최대 80% 적은 토큰으로 전달됩니다. 이것 없이는 이만큼 큰 두뇌를 감당할 수 없을 것입니다.
@@ -32,7 +34,7 @@
 <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:224:        // No HTML markup: clean_tool_output runs after tokenjuice and would
 <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:302:        tokenjuice_compression: AgentTokenjuiceCompression::Auto,
 <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:364:    // the oversized-result path with payloads that survive tokenjuice's
-[+1 more match(es) in <OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs ⟦tj:3a52d07fd3b17ecfcf1f560ce9214baa⟧]
+<OPENHUMAN_ROOT>/tests/agent_large_round25_raw_coverage_e2e.rs:425:    // payload (tokenjuice-compacted to ~1200 chars) fits within the handoff
 <OPENHUMAN_ROOT>/tests/agent_prompts_subagent_raw_coverage_e2e.rs:24:use openhuman_core::openhuman::tokenjuice::AgentTokenjuiceCompression;
 <OPENHUMAN_ROOT>/tests/agent_prompts_subagent_raw_coverage_e2e.rs:268:        tokenjuice_compression: AgentTokenjuiceCompression::Auto,
 <OPENHUMAN_ROOT>/tests/agent_session_turn_raw_coverage_e2e.rs:25:use openhuman_core::openhuman::tokenjuice::AgentTokenjuiceCompression;
@@ -41,18 +43,32 @@
 <OPENHUMAN_ROOT>/gitbooks/features/billing-and-usage.md:108:- [Token compression (TokenJuice)](token-compression.md)
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:3:  TokenJuice - a multi-stage compression router that compacts verbose tool
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:12:OpenHuman ships with **TokenJuice**, a compression router wired directly into the agent's tool-execution path. Before any tool result reaches a model, TokenJuice classifies it, routes it to a specialized compressor, optionally offloads the full original to a recoverable cache, and records how many tokens (and dollars) it saved.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:14:It began as a port of [vincentkoc/tokenjuice](https://github.com/vincentkoc/tokenjuice). That JSON rule overlay is still in here as the log/command compressor, but it has since grown into a multi-stage, content-aware pipeline.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:20:Every blob that flows through the policy-aware TokenJuice tool-output adapters
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:54:4. **Compression.** The compressor runs. If it declines or its output is no smaller than the input, TokenJuice falls back to the generic compressor or passes the original through. It never makes things bigger.
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:82:Beyond the deterministic compressors, TokenJuice can route plain text through a **ModernBERT** token-salience model that scores and drops low-information spans. The TinyJuice compressor exposes the optional ML slot, and OpenHuman bridges it to Kompress in `src/openhuman/tokenjuice/ml/`.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:84:* **Off by default.** Enable with `ml_compression_enabled = true` in `[tokenjuice]`.
 <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:93:Lossy compression would normally mean throwing data away. TokenJuice instead **offloads** the full original into the **Compress-Cache-Retrieve (CCR)** store and leaves a breadcrumb (`vendor/tinyjuice/src/cache/`).
-[+17 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md ⟦tj:b7f2fe828d446cad90fb927387146784⟧]
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:96:* **On-disk tier** (optional): `<workspace>/.tokenjuice/ccr/`, enabled with `ccr_disk_enabled`, survives memory eviction. Optional TTL via `ccr_ttl_secs`.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:97:* **The marker:** compacted output ends with a footer like `[compacted tool output — PARTIAL view; full original available via tokenjuice_retrieve with token "…"]` carrying the `⟦tj:<hash>⟧` token.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:106:Every compression is metered by an OpenHuman savings callback (`src/openhuman/tokenjuice/savings.rs`). TokenJuice reports events and token deltas; OpenHuman applies per-model input pricing, aggregates `total`, `by_model`, and `by_compressor`, and persists stats to `<workspace>/state/tokenjuice_savings.json`.
+<OPENHUMAN_ROOT>/gitbooks/features/token-compression.md:135:* **Agent tool:** `tokenjuice_retrieve` (read-only) recovers offloaded originals.
+[+10 more match(es) in <OPENHUMAN_ROOT>/gitbooks/features/token-compression.md ⟦tj:759984c17c9aa9ed53074dbce9dd586e⟧]
 <OPENHUMAN_ROOT>/tests/agent_harness_raw_coverage_e2e.rs:18:use openhuman_core::openhuman::tokenjuice::AgentTokenjuiceCompression;
 <OPENHUMAN_ROOT>/tests/agent_harness_raw_coverage_e2e.rs:329:        tokenjuice_compression: AgentTokenjuiceCompression::Auto,
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1055:async fn json_rpc_tokenjuice_detect_and_cache_stats() {
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1064:        "openhuman.tokenjuice_detect",
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1068:    let detect_result = assert_no_jsonrpc_error(&detect, "tokenjuice_detect");
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1078:        "openhuman.tokenjuice_cache_stats",
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1082:    let stats_result = assert_no_jsonrpc_error(&stats, "tokenjuice_cache_stats");
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1093:async fn json_rpc_tokenjuice_settings_and_savings() {
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1098:    // settings_get: returns the [tokenjuice] block with the configurable
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1103:        "openhuman.tokenjuice_settings_get",
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1107:    let get_result = assert_no_jsonrpc_error(&get, "tokenjuice_settings_get");
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1128:    let updated_result = assert_no_jsonrpc_error(&updated, "tokenjuice_settings_update");
 <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1145:    let savings_result = assert_no_jsonrpc_error(&savings, "tokenjuice_savings_stats");
-[+10 more match(es) in <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs ⟦tj:634f5a52f05e932951d7abf60de81e32⟧]
+<OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs:1162:    let reset_result = assert_no_jsonrpc_error(&reset, "tokenjuice_savings_reset");
+[+3 more match(es) in <OPENHUMAN_ROOT>/tests/json_rpc_e2e.rs ⟦tj:b946ec8eb4b729bc6c66d76401dac3c0⟧]
 <OPENHUMAN_ROOT>/tests/tools_approval_channels_raw_coverage_e2e.rs:88:use openhuman_core::openhuman::tokenjuice::AgentTokenjuiceCompression;
 <OPENHUMAN_ROOT>/tests/tools_approval_channels_raw_coverage_e2e.rs:306:        tokenjuice_compression: AgentTokenjuiceCompression::Auto,
 <OPENHUMAN_ROOT>/gitbooks/features/platform.md:63:│ • Model router, TokenJuice, native tools │
@@ -76,7 +92,14 @@
 <OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:5: * the Rust core (`src/openhuman/tokenjuice/schemas.rs`): read/update the
 <OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:6: * `[tokenjuice]` settings block and read/reset compaction savings statistics.
 <OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:10:/** The `[tokenjuice]` config block (snake_case, matching the Rust config keys). */
-[+14 more match(es) in <OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts ⟦tj:0bf3f94ce48ea04529a14cc5d2918fb7⟧]
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:11:export interface TokenjuiceSettings {
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:32:export type TokenjuiceSettingsPatch = Partial<TokenjuiceSettings>;
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:50:export async function getTokenjuiceSettings(): Promise<TokenjuiceSettings> {
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:51:  const res = await callCoreRpc<{ settings: TokenjuiceSettings }>({
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:52:    method: 'openhuman.tokenjuice_settings_get',
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:58:export async function updateTokenjuiceSettings(
+<OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts:59:  patch: TokenjuiceSettingsPatch
+[+7 more match(es) in <OPENHUMAN_ROOT>/app/src/utils/tauriCommands/tokenjuice.ts ⟦tj:8da31d59bb9948408fa401f84028e22c⟧]
 <OPENHUMAN_ROOT>/src/openhuman/tools/ops.rs:230:        // TokenJuice 2.0 content-router retrieval: fetches the original (full or
 <OPENHUMAN_ROOT>/src/openhuman/tools/ops.rs:233:        Box::new(crate::openhuman::tokenjuice::TokenjuiceRetrieveTool::new()),
 <OPENHUMAN_ROOT>/src/openhuman/tools/orchestrator_tools.rs:284:            tokenjuice_compression: crate::openhuman::tokenjuice::AgentTokenjuiceCompression::Auto,
@@ -86,7 +109,7 @@
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/setters.rs:351:    pub fn tokenjuice_compression(
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/setters.rs:353:        profile: crate::openhuman::tokenjuice::AgentTokenjuiceCompression,
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/setters.rs:355:        self.tokenjuice_compression = profile;
-[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/setters.rs ⟦tj:a794223771cfd922bdb0017714c45d3f⟧]
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/setters.rs:527:            tokenjuice_compression: self.tokenjuice_compression,
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/factory.rs:1091:        let effective_tokenjuice_compression = target_def
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/factory.rs:1092:            .map(|def| def.effective_tokenjuice_compression())
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/builder/factory.rs:1093:            .unwrap_or(crate::openhuman::tokenjuice::AgentTokenjuiceCompression::Full);
@@ -100,7 +123,14 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:57:        AgentTokenjuiceCompression::Off => None,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:58:        AgentTokenjuiceCompression::Auto | AgentTokenjuiceCompression::Full => {
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:61:        AgentTokenjuiceCompression::Light => {
-[+17 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs ⟦tj:cd3e7c8330f63803684b000ed6a3d486⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:133:    profile: AgentTokenjuiceCompression,
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:210:        AgentTokenjuiceCompression::Full,
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:220:    profile: AgentTokenjuiceCompression,
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:304:            AgentTokenjuiceCompression::Full,
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:325:            AgentTokenjuiceCompression::Full,
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:343:            AgentTokenjuiceCompression::Full,
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs:370:            AgentTokenjuiceCompression::Light,
+[+10 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/tool_integration.rs ⟦tj:6b2a27a56f24649644328de121fcf50b⟧]
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/turn/core.rs:894:            tokenjuice_compaction_enabled: self.context.compaction_enabled(),
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/session/turn/core.rs:895:            tokenjuice_compression: self.tokenjuice_compression,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/text_tests.rs:1://! Additional unit tests for the `tokenjuice::text` sub-modules.
@@ -124,7 +154,10 @@
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs:219:    pub tokenjuice_compression: AgentTokenjuiceCompression,
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs:485:    pub fn effective_tokenjuice_compression(&self) -> AgentTokenjuiceCompression {
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs:486:        match self.tokenjuice_compression {
-[+4 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs ⟦tj:c918e108828fa0c34113bec09541bebd⟧]
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs:487:            AgentTokenjuiceCompression::Auto => match &self.model {
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs:489:                    AgentTokenjuiceCompression::Light
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs:491:                _ => AgentTokenjuiceCompression::Full,
+[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition.rs ⟦tj:7cdaaed514cf46b5cfb658eeaa1ce5e0⟧]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/text/ansi.rs:39:        "[tokenjuice] strip_ansi in_len={} out_len={}",
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/text/mod.rs:1://! Text-processing utilities for the TokenJuice engine.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compress.rs:130:        "[tokenjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
@@ -133,7 +166,7 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/tinyjuice-integration-spec.md:180:[tokenjuice]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/tinyjuice-integration-spec.md:188:[tokenjuice.ccr]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/tinyjuice-integration-spec.md:196:[tokenjuice.compressors]
-[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/tinyjuice-integration-spec.md ⟦tj:5c878e1a59decf45dc5556b7297c012b⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/docs/references/tinyjuice-integration-spec.md:227:- `tokenjuice_retrieve(token)`
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/rules/loader.rs:76:                    "[tokenjuice] failed to parse builtin rule '{}': {}",
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/rules/loader.rs:106:            log::debug!("[tokenjuice] read_dir failed at {}: {}", dir.display(), err);
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/rules/loader.rs:119:                    "[tokenjuice] file_type failed at {}: {}",
@@ -177,7 +210,14 @@
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:111:            tokenjuice_compression,
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:169:    // Agent-level TokenJuice profile (`definition.effective_tokenjuice_compression()`,
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:173:    tokenjuice_compression: AgentTokenjuiceCompression,
-[+16 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs ⟦tj:e30346c527805baff161e0878966c778⟧]
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:246:    let context_mw = build_subagent_context_mw(tokenjuice_compression).await;
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:548:    tokenjuice_compression: AgentTokenjuiceCompression,
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:553:    mw.tokenjuice_compression = tokenjuice_compression;
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:573:                compression = ?mw.tokenjuice_compression,
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:1093:            AgentTokenjuiceCompression::Off,
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:1182:            AgentTokenjuiceCompression::Off,
+<OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs:1329:            AgentTokenjuiceCompression::Off,
+[+9 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent/harness/subagent_runner/ops/graph.rs ⟦tj:491ab8260b1646392e5f91145e2db076⟧]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/log.rs:7://!   is TokenJuice's original behaviour — git/cargo/npm/docker-aware rules with
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/log.rs:109:        "[tokenjuice][log] command rule={} kind={} {} -> {} bytes",
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/log.rs:217:        "[tokenjuice][log] signal kept {} of {} line(s)",
@@ -193,7 +233,7 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/code.rs:150:#[cfg(feature = "tokenjuice-treesitter")]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/code.rs:236:            "[tokenjuice][code] tree-sitter ext={} {} -> {} bytes",
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/code.rs:302:    #[cfg(feature = "tokenjuice-treesitter")]
-[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/code.rs ⟦tj:115bfe7c498c58348e46f8865beb5b1f⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/compressors/code.rs:329:    #[cfg(feature = "tokenjuice-treesitter")]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/lib.rs:3://! TinyJuice owns the reusable TokenJuice compression engine. Hosts provide
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/lib.rs:41:    AgentTokenjuiceCompression, CompactResult, CompressInput, CompressOptions, CompressOutput,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/wiki/CCR-Recovery.md:22:router appends footer with tokenjuice_retrieve token
@@ -224,8 +264,9 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:14:  adapter at `src/openhuman/tokenjuice/`.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:61:  consumes the crate via `src/openhuman/tokenjuice/` re-exports and
 <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:76:- Recovery-tool output (`tokenjuice_retrieve`, legacy `retrieve_tool_output`)
+<OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:104:  HandoffMiddleware (sees raw first) → PayloadSummarizer → TokenJuice →
+<OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:105:  per-tool char cap → byte-cap backstop. TokenJuice may receive summarizer
 <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md:107:- `AgentTokenjuiceCompression::Auto` is resolved host-side
-[+2 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/prompt.md ⟦tj:860f7a11ba97749b5510feed53389fab⟧]
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/agent_graph.rs:65:    /// Agent-level TokenJuice compaction profile
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/agent_graph.rs:66:    /// (`definition.effective_tokenjuice_compression()`), threaded into the
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/agent_graph.rs:69:    pub tokenjuice_compression: crate::openhuman::tokenjuice::AgentTokenjuiceCompression,
@@ -237,13 +278,13 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:60:            AgentTokenjuiceCompression::Full,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:77:        AgentTokenjuiceCompression::Light,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:102:        AgentTokenjuiceCompression::Full,
-[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs ⟦tj:89e25a85dea69d1031efb6bdb6bd4c64⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/tests/e2e_tool_output.rs:138:        AgentTokenjuiceCompression::Full,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs:6://! `tokenjuice_retrieve` tool to get the original back on demand — so even
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs:32:/// Tunable limits, settable once at startup from the `[tokenjuice]` config.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs:68:/// Enable the on-disk tier rooted at `root` (e.g. `<workspace>/.tokenjuice/ccr`).
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs:74:        log::warn!("[tokenjuice][ccr] could not create disk tier at {root:?}");
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs:197:            Err(e) => log::debug!("[tokenjuice][ccr] disk write failed for {hash}: {e}"),
-[+1 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs ⟦tj:04e34f041a67a070bbb8678ae1f0b61a⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/cache/store.rs:240:        log::debug!("[tokenjuice][ccr] disk entry expired for {hash}");
 <OPENHUMAN_ROOT>/src/openhuman/agent/harness/definition_tests.rs:29:        tokenjuice_compression: crate::openhuman::tokenjuice::AgentTokenjuiceCompression::Auto,
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/classify.rs:151:            "[tokenjuice] forced classification: rule='{}' family='{}'",
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/classify.rs:170:            "[tokenjuice] no rule matched tool='{}' argv={:?} — using generic fallback",
@@ -251,15 +292,26 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:1://! Core type definitions for the TokenJuice reduction engine.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:304:/// Per-agent TokenJuice profile.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:306:/// `Auto` is resolved by the agent definition layer. TokenJuice itself treats
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:307:/// `Auto` like `Full` so non-agent callers keep the global `[tokenjuice]`
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:311:pub enum AgentTokenjuiceCompression {
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:316:    /// Use the process-global TokenJuice configuration unchanged.
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:320:    /// Bypass TokenJuice for this agent's tool results.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:324:impl AgentTokenjuiceCompression {
-[+5 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs ⟦tj:275c9c155ea3a46ddc140ac1326e729e⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:336:// Content Router (TokenJuice 2.0) — content-kind detection + compressor dispatch
+<OPENHUMAN_ROOT>/vendor/tinyjuice/src/types.rs:511:/// `[tokenjuice]` config block. TokenJuice stays decoupled from the config
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:12:`[patch.crates-io]`) and ships it as the "TokenJuice" product feature. The
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:15:- Adapter module: `src/openhuman/tokenjuice/` re-exports the crate API and owns
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:19:- Config: `[tokenjuice]` block in `src/openhuman/config/schema/tokenjuice.rs`
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:20:  plus per-agent `AgentTokenjuiceCompression` overrides and
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:21:  `tokenjuice/config_patch.rs` partial updates.
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:25:  (2) TokenJuice compaction, (3) per-tool char cap, (4) shared 16 KiB byte-cap
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:32:  `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered.
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:52:   TokenJuice and keep the head, so an output that is compacted but still over
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:71:- `AgentTokenjuiceCompression` profiles
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:72:- `tokenjuice_retrieve` marker and recovery-tool bypass constants
-[+10 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md ⟦tj:f3f9503b738a1eb396bb446862ceec72⟧]
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:84:- exposing `tokenjuice_retrieve(token, range?)`
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md:121:  first, then summarizer, then TokenJuice, then caps. TokenJuice must tolerate
+[+3 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-integration-plan.md ⟦tj:fde0141f1dd1bcb6c2a07e450ef2d5c7⟧]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/rule-cli-and-safety-parity-plan.md:5:Bring TinyJuice to TokenJuice product parity where it matters for safe
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/rule-cli-and-safety-parity-plan.md:14:- The reference spec says upstream TokenJuice has 130 non-fixture rules.
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/rule-cli-and-safety-parity-plan.md:23:- Handle licensing in the sync: upstream TokenJuice is MIT while TinyJuice is
@@ -267,8 +319,15 @@
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:33:| savings-accounting | Port | P1 | Core + `tokenjuice/savings.rs` |
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:43:| tokenjuice reduce-json protocol + CLI + installers | Defer for OpenHuman | — | OpenHuman uses the crate directly |
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:68:- `src/openhuman/tokenjuice/mod.rs` — re-export `CcrStore`, `PipelineReport`;
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:71:- `src/openhuman/tokenjuice/schemas.rs` — surface `PipelineReport` fields
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:84:`tokenjuice-improvement-spec.md` (P0 Safety Policy Port). Prerequisite: the
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:111:- `src/openhuman/config/schema/tokenjuice.rs` — add `shell_policy` key
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:113:- `src/openhuman/tokenjuice/config_patch.rs` — partial-update support for the
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:183:(`src/openhuman/tokenjuice/savings.rs`, dashboard-facing) and the README
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:196:- `src/openhuman/tokenjuice/savings.rs` — persist the new fields; feed
+<OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:199:- Dashboard schema (`src/openhuman/tokenjuice/schemas.rs`) — expose the class
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md:256:compression behind `tokenjuice-treesitter` (OpenHuman enables it by default in
-[+13 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md ⟦tj:9bf4dccdfb01dd8f26418d42e63a8db2⟧]
+[+6 more match(es) in <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/openhuman-algorithm-port-plan.md ⟦tj:dd5d593a76a3f35b3dd07ee84125f9f8⟧]
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:10:- The newer TokenJuice-style engine, exported from `lib.rs`, centered on
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/current-state-and-critique.md:101:backstop after the TokenJuice stage) keep the head and cut the tail, which
 <OPENHUMAN_ROOT>/vendor/tinyjuice/plan/reference-algorithm-summary.md:3:## TokenJuice
@@ -283,32 +342,44 @@
 <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:793:            AgentTokenjuiceCompression::Light
 <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:804:            def.effective_tokenjuice_compression(),
 <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:805:            AgentTokenjuiceCompression::Light
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs ⟦tj:8e4abbabba14ac3ed35776de18e9218e⟧]
+<OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:816:            def.effective_tokenjuice_compression(),
+<OPENHUMAN_ROOT>/src/openhuman/agent_registry/agents/loader.rs:817:            AgentTokenjuiceCompression::Light
 <OPENHUMAN_ROOT>/vendor/tinyagents/docs/sdk-gaps.md:17:  `src/openhuman/tokenjuice/*`.
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:1://! Read-only RPC controller for inspecting the TokenJuice content router.
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:73:            namespace: "tokenjuice",
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:105:            namespace: "tokenjuice",
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:130:            namespace: "tokenjuice",
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:142:            namespace: "tokenjuice",
-[+19 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs ⟦tj:5eb77ff7233725668b40da7bdc2a5332⟧]
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:159:            namespace: "tokenjuice",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:161:            description: "Get the current [tokenjuice] configuration block.",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:166:                comment: "The tokenjuice config (router/CCR/compressor toggles + ML fields).",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:171:            namespace: "tokenjuice",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:173:            description: "Patch the [tokenjuice] config (any subset of fields), persist, and apply live.",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs:177:                comment: "Partial tokenjuice settings; only present fields are changed.",
+[+13 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/schemas.rs ⟦tj:bdf09de6bbc7d40976efcae70480883a⟧]
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs:10://! `workspace_dir/state/tokenjuice_savings.json` so the dashboard survives
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs:20:use crate::openhuman::tokenjuice::types::{CompressorKind, ContentKind};
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs:130:/// snapshot. Called once at startup from [`crate::openhuman::tokenjuice::install_config`].
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs:132:    let path = workspace_dir.join("state").join("tokenjuice_savings.json");
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs:192:                log::debug!("[tokenjuice][savings] snapshot write failed: {e}");
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs:195:        Err(e) => log::debug!("[tokenjuice][savings] snapshot serialize failed: {e}"),
-[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/savings.rs ⟦tj:b564baa14ea6ee70b2c7c02f3ac43fa2⟧]
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:1://! TokenJuice ML plain-text compressor ("Kompress").
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:9://! Opt-in at runtime via `config.tokenjuice.ml_compression_enabled` (default
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:20:use crate::openhuman::tokenjuice::types::CompressOptions;
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:31:/// `tokenjuice.settings_update` so the runtime sees current values.
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:48:            None => anyhow::bail!("tokenjuice ml not configured"),
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs ⟦tj:f6d7243e1f0dde2de034765ff2675616⟧]
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:51:    let tj = &config.tokenjuice;
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/ml/mod.rs:65:        "[tokenjuice::ml] kompress {} -> {} chars",
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:3://! TinyJuice owns the host-agnostic TokenJuice engine: detection, compressors,
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:22:/// Install the full TokenJuice runtime from a [`Config`] in one call: router /
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:31:    let tj = &config.tokenjuice;
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:45:        .then(|| config.workspace_dir.join(".tokenjuice").join("ccr"));
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:75:/// All read-only TokenJuice debug controllers (detect / compress / cache_stats
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:77:pub fn all_tokenjuice_registered_controllers() -> Vec<crate::core::all::RegisteredController> {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:81:/// Declared schemas for the TokenJuice debug controllers.
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:82:pub fn all_tokenjuice_controller_schemas() -> Vec<crate::core::ControllerSchema> {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:99:pub use tools::TokenjuiceRetrieveTool;
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs:101:    AgentTokenjuiceCompression, CompactResult, CompressInput, CompressOptions, CompressOutput,
-[+5 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/mod.rs ⟦tj:59cdd14230152fa257d750c656f0715f⟧]
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/README.md:1:# OpenHuman TokenJuice Adapter
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/README.md:13:| `config_patch.rs` | Partial update shape for the `[tokenjuice]` config block. |
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/README.md:14:| `tools.rs` | OpenHuman agent tool implementation for `tokenjuice_retrieve`. |
@@ -317,25 +388,46 @@
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:14:use crate::openhuman::tokenjuice::cache::{self, store::RangeUnit};
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:17:pub struct TokenjuiceRetrieveTool;
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:19:impl TokenjuiceRetrieveTool {
-[+11 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs ⟦tj:176ede1c5dca7075bd2aafa8c05497f0⟧]
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:25:impl Default for TokenjuiceRetrieveTool {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:32:impl Tool for TokenjuiceRetrieveTool {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:83:                "tokenjuice_retrieve: missing required 'token' argument".to_string(),
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:98:                        "[tokenjuice][ccr] retrieved range token={token} {start}..{end} {} bytes",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:110:                    "[tokenjuice][ccr] retrieved token={token} bytes={}",
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:122:        "tokenjuice_retrieve: no cached original for token '{token}' \
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs:130:    use crate::openhuman::tokenjuice::cache::store;
+[+4 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/tools.rs ⟦tj:ddbbafa6ef89474f4bf38e57757cf9c5⟧]
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:1://! Partial-update patch for the `[tokenjuice]` config block, used by the
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:2://! `tokenjuice.settings_update` RPC. Only fields present in the JSON are
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:7:use crate::openhuman::config::TokenjuiceConfig;
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:9:// Field names are snake_case to match the `[tokenjuice]` config keys that
 <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:10:// `tokenjuice.settings_get` returns, so the UI reads and writes the same shape.
-[+8 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs ⟦tj:3d080c173159e3012b4a8567eda3f127⟧]
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:13:pub struct TokenjuiceSettingsPatch {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:34:impl TokenjuiceSettingsPatch {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:36:    pub fn apply(&self, cfg: &mut TokenjuiceConfig) {
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:103:        let mut cfg = TokenjuiceConfig::default();
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:104:        let patch: TokenjuiceSettingsPatch =
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:116:        let mut cfg = TokenjuiceConfig::default();
+<OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs:117:        let set: TokenjuiceSettingsPatch =
+[+1 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/tokenjuice/config_patch.rs ⟦tj:4abed0c92ec389d2d5581b16668f3b27⟧]
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:296:            let idle_timeout = Duration::from_secs(config.tokenjuice.ml_sidecar_idle_timeout_secs);
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:435:        config.tokenjuice.ml_model_id.clone(),
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:439:        config.tokenjuice.ml_device.clone(),
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:443:        config.tokenjuice.ml_target_ratio.to_string(),
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:447:        config.tokenjuice.ml_max_input_chars.to_string(),
-[+2 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs ⟦tj:b7581a79f8729ab094b1ac6dbe96e065⟧]
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:568:                "target_ratio": config.tokenjuice.ml_target_ratio,
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/server.rs:569:                "max_input_chars": config.tokenjuice.ml_max_input_chars,
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:1://! Kompress backend — TokenJuice ML plain-text compressor (ModernBERT/torch).
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:99:    marker_path(&venv, &config.tokenjuice.ml_model_id).exists() && venv_python_path(&venv).exists()
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:108:    if !config.tokenjuice.ml_compression_enabled {
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:109:        bail!("tokenjuice.ml_compression_enabled is false");
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:116:    if marker_path(&venv_dir, &config.tokenjuice.ml_model_id).exists() && venv_python.exists() {
-[+7 more match(es) in <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs ⟦tj:9fd31d85f8b152af090132cc14a1d375⟧]
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:130:        config.tokenjuice.ml_model_id
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:153:    install_deps_and_model(&venv_python, &hf, &config.tokenjuice.ml_model_id).await?;
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:156:        marker_path(&venv_dir, &config.tokenjuice.ml_model_id),
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:177:        .map(|d| marker_path(d, &config.tokenjuice.ml_model_id))
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:178:        .unwrap_or_else(|| marker_path(Path::new("."), &config.tokenjuice.ml_model_id));
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:189:    install_deps_and_model(venv_python, &hf, &config.tokenjuice.ml_model_id).await?;
+<OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/kompress.rs:190:    let _ = tokio::fs::write(&shared_marker, config.tokenjuice.ml_model_id.as_bytes()).await;
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/registry.rs:6:    /// TokenJuice ML plain-text compressor ("Kompress", ModernBERT via torch).
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/registry.rs:28:    if config.tokenjuice.ml_compression_enabled {
 <OPENHUMAN_ROOT>/src/openhuman/runtime_python_server/registry.rs:58:        config.tokenjuice.ml_compression_enabled = true;

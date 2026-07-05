@@ -12,16 +12,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | [diff](cases/02-openhuman-commit-2/compression.diff) | 63.9 KB -> 4.8 KB (-93%) | 93.8% | 92.3% | 0.192 ms |
-| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | [diff](cases/06-openhuman-commit-6/compression.diff) | 87.2 KB -> 8.0 KB (-91%) | 92.1% | 90.7% | 0.247 ms |
-| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | [diff](cases/08-openhuman-commit-8/compression.diff) | 39.4 KB -> 8.0 KB (-80%) | 81.2% | 79.2% | 0.086 ms |
-| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | [diff](cases/10-openhuman-commit-10/compression.diff) | 65.9 KB -> 14.3 KB (-78%) | 79.8% | 78.0% | 0.164 ms |
-| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | [diff](cases/07-openhuman-commit-7/compression.diff) | 25.1 KB -> 6.5 KB (-74%) | 77.5% | 74.5% | 0.064 ms |
-| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | [diff](cases/01-tinyjuice-worktree/compression.diff) | 39.9 KB -> 13.9 KB (-65%) | 67.0% | 64.8% | 0.099 ms |
-| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | [diff](cases/05-openhuman-commit-5/compression.diff) | 177.3 KB -> 63.1 KB (-64%) | 65.6% | 64.4% | 0.507 ms |
-| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | [diff](cases/03-openhuman-commit-3/compression.diff) | 192.1 KB -> 91.3 KB (-52%) | 53.3% | 52.5% | 0.516 ms |
-| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | [diff](cases/09-openhuman-commit-9/compression.diff) | 29.3 KB -> 14.8 KB (-50%) | 51.0% | 48.8% | 0.068 ms |
-| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | [diff](cases/04-openhuman-commit-4/compression.diff) | 186.4 KB -> 108.2 KB (-42%) | 42.8% | 41.9% | 0.481 ms |
+| `02-openhuman-commit-2` | [input](cases/02-openhuman-commit-2/input.diff) | [output](cases/02-openhuman-commit-2/output.diff) | [diff](cases/02-openhuman-commit-2/compression.diff) | 63.9 KB -> 4.8 KB (-93%) | 93.8% | 92.3% | 0.156 ms |
+| `06-openhuman-commit-6` | [input](cases/06-openhuman-commit-6/input.diff) | [output](cases/06-openhuman-commit-6/output.diff) | [diff](cases/06-openhuman-commit-6/compression.diff) | 87.2 KB -> 8.0 KB (-91%) | 92.1% | 90.7% | 0.205 ms |
+| `08-openhuman-commit-8` | [input](cases/08-openhuman-commit-8/input.diff) | [output](cases/08-openhuman-commit-8/output.diff) | [diff](cases/08-openhuman-commit-8/compression.diff) | 39.4 KB -> 8.0 KB (-80%) | 81.2% | 79.2% | 0.082 ms |
+| `10-openhuman-commit-10` | [input](cases/10-openhuman-commit-10/input.diff) | [output](cases/10-openhuman-commit-10/output.diff) | [diff](cases/10-openhuman-commit-10/compression.diff) | 65.9 KB -> 14.3 KB (-78%) | 79.8% | 78.0% | 0.148 ms |
+| `07-openhuman-commit-7` | [input](cases/07-openhuman-commit-7/input.diff) | [output](cases/07-openhuman-commit-7/output.diff) | [diff](cases/07-openhuman-commit-7/compression.diff) | 25.1 KB -> 6.5 KB (-74%) | 77.5% | 74.5% | 0.062 ms |
+| `01-tinyjuice-worktree` | [input](cases/01-tinyjuice-worktree/input.diff) | [output](cases/01-tinyjuice-worktree/output.diff) | [diff](cases/01-tinyjuice-worktree/compression.diff) | 39.9 KB -> 13.9 KB (-65%) | 67.0% | 64.8% | 0.095 ms |
+| `05-openhuman-commit-5` | [input](cases/05-openhuman-commit-5/input.diff) | [output](cases/05-openhuman-commit-5/output.diff) | [diff](cases/05-openhuman-commit-5/compression.diff) | 177.3 KB -> 63.1 KB (-64%) | 65.6% | 64.4% | 0.448 ms |
+| `03-openhuman-commit-3` | [input](cases/03-openhuman-commit-3/input.diff) | [output](cases/03-openhuman-commit-3/output.diff) | [diff](cases/03-openhuman-commit-3/compression.diff) | 192.1 KB -> 91.3 KB (-52%) | 53.3% | 52.5% | 0.606 ms |
+| `09-openhuman-commit-9` | [input](cases/09-openhuman-commit-9/input.diff) | [output](cases/09-openhuman-commit-9/output.diff) | [diff](cases/09-openhuman-commit-9/compression.diff) | 29.3 KB -> 14.8 KB (-50%) | 51.0% | 48.8% | 0.077 ms |
+| `04-openhuman-commit-4` | [input](cases/04-openhuman-commit-4/input.diff) | [output](cases/04-openhuman-commit-4/output.diff) | [diff](cases/04-openhuman-commit-4/compression.diff) | 186.4 KB -> 108.2 KB (-42%) | 42.8% | 41.9% | 0.643 ms |
 
 ## What TinyJuice Is Doing
 

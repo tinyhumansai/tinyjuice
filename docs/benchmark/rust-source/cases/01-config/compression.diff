@@ -1,6 +1,6 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -105,33 +105,15 @@
+@@ -105,19 +105,8 @@
  pub fn effective_inference_url(
      api_url_override: &Option<String>,
      inference_url_override: &Option<String>,
@@ -21,28 +21,10 @@
  /// Resolve the **chat/inference base URL** (used for inference routing only,
  /// not for backend domain calls).
  ///
- /// Prefer [`effective_backend_api_url`] for anything other than chat completions.
- /// The two functions are intentionally separate — see the module-level doc.
--pub fn effective_api_url(api_url: &Option<String>) -> String {
--    if let Some(u) = non_empty_str(api_url) {
--        return normalize_api_base_url(u);
--    }
-+pub fn effective_api_url(api_url: &Option<String>) -> String { … 8 line(s) … ⟦tj:3259d1b2cdb50e768517784dc15191f5⟧ }
- 
--    api_base_from_env()
--        .unwrap_or_else(|| default_api_base_url_for_env(app_env_from_env().as_deref()).to_string())
--}
--
- /// Resolve the API base URL for **all hosted-backend calls**:
- /// auth, billing, team, referral, webhooks, credentials, channels,
- /// voice, sockets, app-state, integrations, core/jsonrpc, …
-@@ -151,87 +133,8 @@
- /// `OPENHUMAN-TAURI-51 / -80 / -7Z` — Ollama users saw every integration
- /// request 404 because `config.api_url` (set to the Ollama endpoint) was also
- /// used as the integrations base.
--pub fn effective_backend_api_url(api_url: &Option<String>) -> String {
--    if let Some(u) = non_empty_str(api_url) {
--        let is_local_ai = looks_like_local_ai_endpoint(u);
+@@ -154,81 +143,7 @@
+ pub fn effective_backend_api_url(api_url: &Option<String>) -> String {
+     if let Some(u) = non_empty_str(api_url) {
+         let is_local_ai = looks_like_local_ai_endpoint(u);
 -        let is_inference_provider = looks_like_inference_provider_endpoint(u);
 -        let is_openhuman = looks_like_openhuman_backend_endpoint(u);
 -        // A public third-party inference host (openrouter.ai, api.openai.com, …)
@@ -58,8 +40,7 @@
 -                    &h,
 -                )
 -            });
-+pub fn effective_backend_api_url(api_url: &Option<String>) -> String { … 80 line(s) … ⟦tj:4e2dee5b380bdbeb9573b828cd17d56f⟧ }
- 
+-
 -        tracing::debug!(
 -            api_url = %redact_url_for_log(u),
 -            is_local_ai,
@@ -119,19 +100,14 @@
 -    // `OPENHUMAN-TAURI-H6 / -HN`, issue #2075).
 -    api_base_from_env()
 -        .map(|u| normalize_backend_api_base_url(&u))
--        .unwrap_or_else(|| default_api_base_url_for_env(app_env_from_env().as_deref()).to_string())
--}
--
- // ─── URL classification ──────────────────────────────────────────────────────
++    { … 75 line(s) … ⟦tj:4e2dee5b380bdbeb9573b828cd17d56f⟧ }
+         .unwrap_or_else(|| default_api_base_url_for_env(app_env_from_env().as_deref()).to_string())
+ }
  
- /// Returns `true` when the URL appears to be a local / self-hosted model
-@@ -261,44 +164,8 @@
- /// A bare `/v1` path (e.g. `https://api.openai.com/v1`) intentionally does
- /// NOT match — it is a legitimate API-version suffix used by many real
- /// backends, and over-matching here would silently reroute paying users.
--pub fn looks_like_local_ai_endpoint(url: &str) -> bool {
--    let trimmed = url.trim();
--    if trimmed.is_empty() {
+@@ -264,38 +179,7 @@
+ pub fn looks_like_local_ai_endpoint(url: &str) -> bool {
+     let trimmed = url.trim();
+     if trimmed.is_empty() {
 -        return false;
 -    }
 -
@@ -147,8 +123,7 @@
 -    if path.ends_with("/v1/chat/completions") || path.ends_with("/v1/completions") {
 -        return true;
 -    }
-+pub fn looks_like_local_ai_endpoint(url: &str) -> bool { … 37 line(s) … ⟦tj:d28d6861d2e0f41ef5f84e44acf5c4fa⟧ }
- 
+-
 -    // ── Signal 2: loopback / private host + secondary LLM signal ───────────
 -    if !host_is_local(&parsed) {
 -        return false;
@@ -165,23 +140,17 @@
 -    // root `/` which is indistinguishable from any plain HTTP server.
 -    let path_is_llm = path.starts_with("/v1/") || path == "/v1";
 -
--    port_is_llm || path_is_llm
--}
--
- /// Well-known managed inference-provider registrable domains. A `config.api_url`
- /// pointed at one of these (or a subdomain) is a BYO chat/inference base — never
- /// an OpenHuman control-plane backend — so backend calls must NOT route there.
-@@ -349,95 +216,15 @@
- ///
- /// Our own hosted backend short-circuits to `false` so a user who set
- /// `api_url` to `https://api.tinyhumans.ai/...` still reaches the backend.
--pub fn looks_like_inference_provider_endpoint(url: &str) -> bool {
--    let trimmed = url.trim();
--    if trimmed.is_empty() {
++    { … 32 line(s) … ⟦tj:d28d6861d2e0f41ef5f84e44acf5c4fa⟧ }
+     port_is_llm || path_is_llm
+ }
+ 
+@@ -352,39 +236,7 @@
+ pub fn looks_like_inference_provider_endpoint(url: &str) -> bool {
+     let trimmed = url.trim();
+     if trimmed.is_empty() {
 -        return false;
 -    }
-+pub fn looks_like_inference_provider_endpoint(url: &str) -> bool { … 38 line(s) … ⟦tj:1e28db1d697278585b21c20784e68f76⟧ }
- 
+-
 -    // Our own hosted backend is a backend, never a "foreign" inference base.
 -    if looks_like_openhuman_backend_endpoint(trimmed) {
 -        return false;
@@ -212,19 +181,15 @@
 -        return true;
 -    }
 -
--    false
--}
--
- /// Returns `true` when the URL's host is one of the known OpenHuman backends.
- ///
- /// Used in [`effective_backend_api_url`] to short-circuit the local-AI check:
- /// a user who set `api_url` to `https://api.tinyhumans.ai/openai/v1/chat/completions`
- /// must still reach the real backend (not fall back to the default chain).
--fn looks_like_openhuman_backend_endpoint(url: &str) -> bool {
--    let trimmed = url.trim();
--    let redacted = redact_url_for_log(trimmed);
-+fn looks_like_openhuman_backend_endpoint(url: &str) -> bool { … 44 line(s) … ⟦tj:c8ad4fa73b0dd25f99294628364ab990⟧ }
++    { … 33 line(s) … ⟦tj:1e28db1d697278585b21c20784e68f76⟧ }
+     false
+ }
  
+@@ -396,45 +248,7 @@
+ fn looks_like_openhuman_backend_endpoint(url: &str) -> bool {
+     let trimmed = url.trim();
+     let redacted = redact_url_for_log(trimmed);
+-
 -    let parsed = match url::Url::parse(trimmed) {
 -        Ok(p) => {
 -            tracing::trace!(
@@ -263,19 +228,14 @@
 -        "[api/config] OpenHuman backend classification complete"
 -    );
 -
--    is_openhuman
--}
--
- // ─── URL normalization helpers ───────────────────────────────────────────────
++    { … 39 line(s) … ⟦tj:c8ad4fa73b0dd25f99294628364ab990⟧ }
+     is_openhuman
+ }
  
- /// Trim whitespace and strip trailing slashes so all base URLs are in
-@@ -467,31 +254,8 @@
- /// `https://` prefix so the path can still be stripped before the value is
- /// used as a base. Without this, a scheme-less inference path survived into
- /// every backend call — Sentry `OPENHUMAN-TAURI-H6 / -HN`, issue #2075.
--pub(crate) fn normalize_backend_api_base_url(url: &str) -> String {
--    let normalized = normalize_api_base_url(url);
--    if normalized.is_empty() {
+@@ -470,25 +284,7 @@
+ pub(crate) fn normalize_backend_api_base_url(url: &str) -> String {
+     let normalized = normalize_api_base_url(url);
+     if normalized.is_empty() {
 -        return normalized;
 -    }
 -
@@ -287,8 +247,7 @@
 -        // will surface a network error rather than silently 404.
 -        return normalized;
 -    };
-+pub(crate) fn normalize_backend_api_base_url(url: &str) -> String { … 24 line(s) … ⟦tj:c73bd9b828f964158ae68cd320349ba9⟧ }
- 
+-
 -    // Strip everything after the host (path, query, fragment).
 -    if parsed.path() != "/" {
 -        parsed.set_path("");
@@ -296,23 +255,18 @@
 -    parsed.set_query(None);
 -    parsed.set_fragment(None);
 -
--    parsed.to_string().trim_end_matches('/').to_string()
--}
--
- /// Safely join an API base URL with an absolute path.
- ///
- /// # Behaviour
-@@ -506,35 +270,14 @@
- /// Paths **must start with `/`**. Relative paths (no leading slash) are
- /// resolved per RFC 3986 — the base's last segment is dropped — which is
- /// almost never what an API client wants.
--pub fn api_url(base: &str, path: &str) -> String {
--    let base = base.trim();
-+pub fn api_url(base: &str, path: &str) -> String { … 15 line(s) … ⟦tj:d8b4209960f3ed1ab187959097f38565⟧ }
++    { … 19 line(s) … ⟦tj:c73bd9b828f964158ae68cd320349ba9⟧ }
+     parsed.to_string().trim_end_matches('/').to_string()
+ }
+ 
+@@ -509,17 +305,8 @@
+ pub fn api_url(base: &str, path: &str) -> String {
+     let base = base.trim();
  
 -    if path.is_empty() {
 -        return normalize_api_base_url(base);
--    }
++    { … 10 line(s) … ⟦tj:d8b4209960f3ed1ab187959097f38565⟧ }
+     }
 -
 -    match url::Url::parse(base) {
 -        Ok(parsed) => match parsed.join(path) {
@@ -321,32 +275,13 @@
 -        },
 -        Err(_) => fallback_concat(base, path),
 -    }
--}
--
+ }
+ 
  /// Last-resort URL join used when `url::Url::parse` rejects the base.
- ///
- /// Guarantees a slash between `base` and `path` regardless of whether either
- /// carries one, but does not otherwise validate the resulting string.
- #[inline]
--fn fallback_concat(base: &str, path: &str) -> String {
--    let base = base.trim_end_matches('/');
--    if path.starts_with('/') {
--        format!("{base}{path}")
--    } else {
--        format!("{base}/{path}")
--    }
--}
-+fn fallback_concat(base: &str, path: &str) -> String { … 8 line(s) … ⟦tj:fcd2f2f8c5b5600ec60826dd8207ff7f⟧ }
- 
- // ─── Environment resolution ───────────────────────────────────────────────────
- 
-@@ -547,67 +290,21 @@
- /// active for the renderer.
- ///
- /// Returns `None` when neither key is set or both are empty.
--pub fn api_base_from_env() -> Option<String> {
--    // 1. Runtime — each key checked independently.
--    for key in ["BACKEND_URL", "VITE_BACKEND_URL"] {
+@@ -550,24 +337,7 @@
+ pub fn api_base_from_env() -> Option<String> {
+     // 1. Runtime — each key checked independently.
+     for key in ["BACKEND_URL", "VITE_BACKEND_URL"] {
 -        if let Ok(v) = std::env::var(key) {
 -            let url = normalize_api_base_url(&v);
 -            if !url.is_empty() {
@@ -354,8 +289,7 @@
 -            }
 -        }
 -    }
-+pub fn api_base_from_env() -> Option<String> { … 23 line(s) … ⟦tj:6a4c30ef3fd17e4c610ffcc7e6d0e134⟧ }
- 
+-
 -    // 2. Compile-time fallback — baked by the CI pipeline into the binary.
 -    //    Allows a shipped DMG / installer to resolve the correct environment
 -    //    without any shell vars in the user's session.
@@ -366,24 +300,21 @@
 -        }
 -    }
 -
--    None
--}
--
- /// Resolve the app environment string (e.g. `"staging"`, `"production"`).
- ///
- /// Resolution order mirrors [`api_base_from_env`]: runtime vars first, then
- /// compile-time bakes, each key checked independently.
--pub fn app_env_from_env() -> Option<String> {
--    for key in [APP_ENV_VAR, VITE_APP_ENV_VAR] {
--        if let Ok(v) = std::env::var(key) {
++    { … 18 line(s) … ⟦tj:6a4c30ef3fd17e4c610ffcc7e6d0e134⟧ }
+     None
+ }
+ 
+@@ -578,20 +348,7 @@
+ pub fn app_env_from_env() -> Option<String> {
+     for key in [APP_ENV_VAR, VITE_APP_ENV_VAR] {
+         if let Ok(v) = std::env::var(key) {
 -            let s = v.trim().to_ascii_lowercase();
 -            if !s.is_empty() {
 -                return Some(s);
 -            }
 -        }
 -    }
-+pub fn app_env_from_env() -> Option<String> { … 19 line(s) … ⟦tj:14092531d4677ee06232bb7390ec4b63⟧ }
- 
+-
 -    for v in compile_time_app_env_values().into_iter().flatten() {
 -        let s = v.trim().to_ascii_lowercase();
 -        if !s.is_empty() {
@@ -391,47 +322,13 @@
 -        }
 -    }
 -
--    None
--}
--
- /// Return `true` when `app_env` equals `"staging"` (case-insensitive).
- pub fn is_staging_app_env(app_env: Option<&str>) -> bool {
-     matches!(app_env.map(str::trim), Some(env) if env.eq_ignore_ascii_case("staging"))
++    { … 14 line(s) … ⟦tj:14092531d4677ee06232bb7390ec4b63⟧ }
+     None
  }
  
- /// Map an app environment string to its canonical API base URL constant.
--pub fn default_api_base_url_for_env(app_env: Option<&str>) -> &'static str {
--    if is_staging_app_env(app_env) {
--        DEFAULT_STAGING_API_BASE_URL
--    } else {
--        DEFAULT_API_BASE_URL
--    }
--}
-+pub fn default_api_base_url_for_env(app_env: Option<&str>) -> &'static str { … 7 line(s) … ⟦tj:cf20f6dda2061475dc21f25efef19123⟧ }
- 
- // ─── Compile-time env accessors ───────────────────────────────────────────────
- 
-@@ -626,12 +323,7 @@
- }
- 
- #[cfg(not(test))]
--fn compile_time_app_env_values() -> [Option<&'static str>; 2] {
--    [
--        option_env!("OPENHUMAN_APP_ENV"),
--        option_env!("VITE_OPENHUMAN_APP_ENV"),
--    ]
--}
-+fn compile_time_app_env_values() -> [Option<&'static str>; 2] { … 6 line(s) … ⟦tj:bf1948239dd7134333026a11982ee5a8⟧ }
- 
- #[cfg(test)]
- fn compile_time_app_env_values() -> [Option<&'static str>; 2] {
-@@ -644,41 +336,12 @@
- ///
- /// Falls back to a scheme-prefixed parse for bare-host strings like
- /// `localhost:1234` so those are still sanitised rather than returned verbatim.
--pub(crate) fn redact_url_for_log(raw: &str) -> String {
--    let trimmed = raw.trim();
-+pub(crate) fn redact_url_for_log(raw: &str) -> String { … 19 line(s) … ⟦tj:da0945bada4c33f3beac7a76a23e61f4⟧ }
+@@ -647,38 +404,14 @@
+ pub(crate) fn redact_url_for_log(raw: &str) -> String {
+     let trimmed = raw.trim();
  
 -    let parsed =
 -        url::Url::parse(trimmed).or_else(|_| url::Url::parse(&format!("http://{trimmed}")));
@@ -447,9 +344,10 @@
 -        let _ = parsed.set_password(Some("redacted"));
 -    }
 -
--    parsed.to_string().trim_end_matches('/').to_string()
--}
--
++    { … 14 line(s) … ⟦tj:da0945bada4c33f3beac7a76a23e61f4⟧ }
+     parsed.to_string().trim_end_matches('/').to_string()
+ }
+ 
  /// Emit a single `warn!` log the **first time** the backend URL falls back
  /// from a user-set local-AI endpoint. Uses `std::sync::Once` to suppress
  /// subsequent emissions so the log is not spammed on every backend request.
@@ -469,7 +367,7 @@
  
  // ─── Private utilities ───────────────────────────────────────────────────────
  
-@@ -699,19 +362,7 @@
+@@ -699,19 +432,7 @@
  /// (`::ffff:127.0.0.1`), the bare IPv6 loopback (`::1`), and all three
  /// IPv4 loopback forms classify correctly.
  #[inline]
@@ -490,21 +388,7 @@
  
  // ─── Tests ───────────────────────────────────────────────────────────────────
  
-@@ -728,12 +379,7 @@
-     /// threads race on `set_var` / `remove_var` and produce flaky failures.
-     static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
- 
--    fn env_lock() -> MutexGuard<'static, ()> {
--        match ENV_LOCK.get_or_init(Mutex::default).lock() {
--            Ok(g) => g,
--            Err(p) => p.into_inner(), // recover from a poisoned lock
--        }
--    }
-+    fn env_lock() -> MutexGuard<'static, ()> { … 6 line(s) … ⟦tj:8ba64defed95449aceb77db7b39e0b54⟧ }
- 
-     /// RAII guard that captures the current values of the four backend env
-     /// vars, removes them, and restores them on drop — even if the test panics.
-@@ -742,163 +388,50 @@
+@@ -742,19 +463,7 @@
      }
  
      impl EnvSnapshot {
@@ -525,34 +409,13 @@
      }
  
      impl Drop for EnvSnapshot {
--        fn drop(&mut self) {
--            for (key, value) in &self.vars {
--                match value {
--                    Some(v) => std::env::set_var(key, v),
--                    None => std::env::remove_var(key),
--                }
--            }
--        }
-+        fn drop(&mut self) { … 8 line(s) … ⟦tj:c003e9e9f4c370fa13bc0edeaa9336a9⟧ }
-     }
- 
-     /// The URL that should be used as the backend base when no config override
-     /// is present and the runtime env has been cleared for the test.
--    fn fallback_backend_base_for_current_build() -> String {
--        api_base_from_env().unwrap_or_else(|| {
--            default_api_base_url_for_env(app_env_from_env().as_deref()).to_string()
--        })
--    }
-+    fn fallback_backend_base_for_current_build() -> String { … 5 line(s) … ⟦tj:8f8c6f58d25c2b314b70f1c30fdfecf2⟧ }
- 
-     // ── api_url ───────────────────────────────────────────────────────────────
- 
-     #[test]
--    fn api_url_empty_path_returns_normalized_base() {
--        assert_eq!(
--            api_url("https://api.tinyhumans.ai", ""),
+@@ -782,49 +491,20 @@
+     fn api_url_empty_path_returns_normalized_base() {
+         assert_eq!(
+             api_url("https://api.tinyhumans.ai", ""),
 -            "https://api.tinyhumans.ai"
--        );
++        { … 9 line(s) … ⟦tj:0f23dbe97485b8b6244f5d6d18b49a08⟧ }
+         );
 -        assert_eq!(
 -            api_url("https://api.tinyhumans.ai/", ""),
 -            "https://api.tinyhumans.ai"
@@ -562,7 +425,7 @@
 -            "https://api.tinyhumans.ai"
 -        );
 -    }
-+    fn api_url_empty_path_returns_normalized_base() { … 14 line(s) … ⟦tj:0f23dbe97485b8b6244f5d6d18b49a08⟧ }
++}
  
      #[test]
 -    fn api_url_absolute_path_replaces_base_path() {
@@ -579,15 +442,16 @@
 +    fn api_url_absolute_path_replaces_base_path() { … 11 line(s) … ⟦tj:106f3aa04e100454a379662410315ff4⟧ }
  
      #[test]
--    fn api_url_clean_base_joins_cleanly() {
--        let expected = "https://api.tinyhumans.ai/agent-integrations/composio/toolkits";
--        assert_eq!(
+     fn api_url_clean_base_joins_cleanly() {
+         let expected = "https://api.tinyhumans.ai/agent-integrations/composio/toolkits";
+         assert_eq!(
 -            api_url(
 -                "https://api.tinyhumans.ai",
 -                "/agent-integrations/composio/toolkits"
 -            ),
 -            expected
--        );
++        { … 12 line(s) … ⟦tj:398287afb71bb2821477492ec9b964fb⟧ }
+         );
 -        assert_eq!(
 -            api_url(
 -                "https://api.tinyhumans.ai/",
@@ -596,65 +460,17 @@
 -            expected
 -        );
 -    }
-+    fn api_url_clean_base_joins_cleanly() { … 17 line(s) … ⟦tj:398287afb71bb2821477492ec9b964fb⟧ }
++}
  
      #[test]
--    fn api_url_preserves_query_string_on_path() {
--        assert_eq!(
--            api_url(
--                "https://api.tinyhumans.ai",
--                "/agent-integrations/composio/tools?toolkits=gmail"
--            ),
--            "https://api.tinyhumans.ai/agent-integrations/composio/tools?toolkits=gmail"
--        );
--    }
-+    fn api_url_preserves_query_string_on_path() { … 9 line(s) … ⟦tj:824b61635e14ed03510636b69f7fdab9⟧ }
- 
-     #[test]
--    fn api_url_unparseable_base_falls_back_to_concat() {
--        assert_eq!(api_url("not a url", "/x"), "not a url/x");
--        assert_eq!(api_url("not a url/", "/x"), "not a url/x");
--    }
-+    fn api_url_unparseable_base_falls_back_to_concat() { … 4 line(s) … ⟦tj:3d3802c01ce41466a96f63744b5c0a13⟧ }
- 
-     #[test]
--    fn api_url_with_lm_studio_base_joins_correctly() {
--        // LM Studio URL must not reach effective_backend_api_url in practice
--        // (it redirects), but api_url itself must not panic and the result
--        // must use the correct host root.
--        assert_eq!(
--            api_url("http://localhost:1234/v1", "/agent-integrations/foo"),
--            "http://localhost:1234/agent-integrations/foo"
--        );
--    }
-+    fn api_url_with_lm_studio_base_joins_correctly() { … 9 line(s) … ⟦tj:47c41e45786a1336e79f19cffe91eeb5⟧ }
- 
-     #[test]
--    fn api_url_multiple_trailing_slashes_on_base_are_stripped() {
--        assert_eq!(
--            api_url("https://api.tinyhumans.ai///", "/v1/foo"),
--            "https://api.tinyhumans.ai/v1/foo"
--        );
--    }
-+    fn api_url_multiple_trailing_slashes_on_base_are_stripped() { … 6 line(s) … ⟦tj:cb188473bde7636229f94f12dac5a755⟧ }
- 
-     #[test]
--    fn api_url_relative_path_without_leading_slash_does_not_panic() {
--        // Documented edge-case: relative paths are resolved RFC 3986-style
--        // (last base segment dropped). The exact result depends on base
--        // structure; we just pin the no-panic contract.
--        assert!(!api_url("https://api.tinyhumans.ai", "relative").is_empty());
--    }
-+    fn api_url_relative_path_without_leading_slash_does_not_panic() { … 6 line(s) … ⟦tj:ba3efeb46565fa9cc8a00f4efffc8cc3⟧ }
- 
-     // ── normalize_api_base_url ────────────────────────────────────────────────
- 
-     #[test]
--    fn normalize_strips_trailing_slashes_and_whitespace() {
--        assert_eq!(
--            normalize_api_base_url("https://api.tinyhumans.ai/"),
+     fn api_url_preserves_query_string_on_path() {
+@@ -876,21 +556,9 @@
+     fn normalize_strips_trailing_slashes_and_whitespace() {
+         assert_eq!(
+             normalize_api_base_url("https://api.tinyhumans.ai/"),
 -            "https://api.tinyhumans.ai"
--        );
++        { … 13 line(s) … ⟦tj:019a2b4696ca51cef26ddd99e9b3ff48⟧ }
+         );
 -        assert_eq!(
 -            normalize_api_base_url("https://api.tinyhumans.ai///"),
 -            "https://api.tinyhumans.ai"
@@ -668,75 +484,12 @@
 -            "https://api.tinyhumans.ai"
 -        );
 -    }
-+    fn normalize_strips_trailing_slashes_and_whitespace() { … 18 line(s) … ⟦tj:019a2b4696ca51cef26ddd99e9b3ff48⟧ }
++}
  
      #[test]
--    fn normalize_preserves_mid_path() {
--        assert_eq!(
--            normalize_api_base_url("https://api.tinyhumans.ai/v2"),
--            "https://api.tinyhumans.ai/v2"
--        );
--    }
-+    fn normalize_preserves_mid_path() { … 6 line(s) … ⟦tj:0906dd5a20471091d559454db25b9ab4⟧ }
- 
-     #[test]
-     fn normalize_empty_string_returns_empty() {
-@@ -908,29 +441,13 @@
-     // ── normalize_backend_api_base_url ────────────────────────────────────────
- 
-     #[test]
--    fn normalize_backend_strips_inference_path() {
--        assert_eq!(
--            normalize_backend_api_base_url("https://api.tinyhumans.ai/openai/v1/chat/completions"),
--            "https://api.tinyhumans.ai"
--        );
--    }
-+    fn normalize_backend_strips_inference_path() { … 6 line(s) … ⟦tj:eaee81934ba27d392f9ec441495324b8⟧ }
- 
-     #[test]
--    fn normalize_backend_handles_schemeless_input() {
--        // Sentry OPENHUMAN-TAURI-H6 / issue #2075.
--        assert_eq!(
--            normalize_backend_api_base_url("api.tinyhumans.ai/openai/v1/chat/completions"),
--            "https://api.tinyhumans.ai"
--        );
--    }
-+    fn normalize_backend_handles_schemeless_input() { … 7 line(s) … ⟦tj:196d99b12519de97d257fbab25454f8f⟧ }
- 
-     #[test]
--    fn normalize_backend_passes_through_clean_root() {
--        assert_eq!(
--            normalize_backend_api_base_url("https://api.tinyhumans.ai/"),
--            "https://api.tinyhumans.ai"
--        );
--    }
-+    fn normalize_backend_passes_through_clean_root() { … 6 line(s) … ⟦tj:6f379ca54c0dcf08c03e77621254dbfb⟧ }
- 
-     #[test]
-     fn normalize_backend_empty_string_is_idempotent() {
-@@ -940,410 +457,97 @@
-     // ── app / api env resolution ──────────────────────────────────────────────
- 
-     #[test]
--    fn staging_env_resolves_to_staging_url() {
--        assert_eq!(
--            default_api_base_url_for_env(Some("staging")),
--            DEFAULT_STAGING_API_BASE_URL
--        );
--        assert!(is_staging_app_env(Some("STAGING")));
--    }
-+    fn staging_env_resolves_to_staging_url() { … 7 line(s) … ⟦tj:ab160e68f0614ff942ee2eae4a48c194⟧ }
- 
-     #[test]
--    fn non_staging_env_resolves_to_production_url() {
--        assert_eq!(
--            default_api_base_url_for_env(Some("production")),
--            DEFAULT_API_BASE_URL
--        );
--        assert_eq!(default_api_base_url_for_env(None), DEFAULT_API_BASE_URL);
--        assert!(!is_staging_app_env(Some("development")));
--    }
-+    fn non_staging_env_resolves_to_production_url() { … 8 line(s) … ⟦tj:2e12d141b9fdc98566970a08990e97f8⟧ }
+     fn normalize_preserves_mid_path() {
+@@ -959,68 +627,26 @@
+     }
  
      #[test]
 -    fn app_env_from_env_reads_runtime_var() {
@@ -753,9 +506,9 @@
 +    fn app_env_from_env_reads_runtime_var() { … 11 line(s) … ⟦tj:d889044ffbf3bbd4f3377c72107ee9ef⟧ }
  
      #[test]
--    fn app_env_empty_primary_falls_through_to_secondary() {
--        let _guard = env_lock();
--        let prev_p = std::env::var(APP_ENV_VAR).ok();
+     fn app_env_empty_primary_falls_through_to_secondary() {
+         let _guard = env_lock();
+         let prev_p = std::env::var(APP_ENV_VAR).ok();
 -        let prev_s = std::env::var(VITE_APP_ENV_VAR).ok();
 -        std::env::set_var(APP_ENV_VAR, "");
 -        std::env::set_var(VITE_APP_ENV_VAR, "staging");
@@ -768,9 +521,10 @@
 -            Some(v) => std::env::set_var(VITE_APP_ENV_VAR, v),
 -            None => std::env::remove_var(VITE_APP_ENV_VAR),
 -        }
--        assert_eq!(result.as_deref(), Some("staging"));
++        { … 12 line(s) … ⟦tj:09886ccc8e10eb16050a054e9954b854⟧ }
+         assert_eq!(result.as_deref(), Some("staging"));
 -    }
-+    fn app_env_empty_primary_falls_through_to_secondary() { … 17 line(s) … ⟦tj:09886ccc8e10eb16050a054e9954b854⟧ }
++}
  
      #[test]
 -    fn api_base_from_env_reads_runtime_var() {
@@ -787,9 +541,9 @@
 +    fn api_base_from_env_reads_runtime_var() { … 11 line(s) … ⟦tj:8f0d68f604087329726f6354e6694a16⟧ }
  
      #[test]
--    fn api_base_empty_primary_falls_through_to_secondary() {
--        let _guard = env_lock();
--        let prev_p = std::env::var("BACKEND_URL").ok();
+     fn api_base_empty_primary_falls_through_to_secondary() {
+         let _guard = env_lock();
+         let prev_p = std::env::var("BACKEND_URL").ok();
 -        let prev_s = std::env::var("VITE_BACKEND_URL").ok();
 -        std::env::set_var("BACKEND_URL", "");
 -        std::env::set_var("VITE_BACKEND_URL", "https://staging-api.tinyhumans.ai/");
@@ -802,53 +556,15 @@
 -            Some(v) => std::env::set_var("VITE_BACKEND_URL", v),
 -            None => std::env::remove_var("VITE_BACKEND_URL"),
 -        }
--        assert_eq!(result.as_deref(), Some("https://staging-api.tinyhumans.ai"));
++        { … 12 line(s) … ⟦tj:e11b5f577644f91fa0e99f73f2107f05⟧ }
+         assert_eq!(result.as_deref(), Some("https://staging-api.tinyhumans.ai"));
 -    }
-+    fn api_base_empty_primary_falls_through_to_secondary() { … 17 line(s) … ⟦tj:e11b5f577644f91fa0e99f73f2107f05⟧ }
++}
  
      // ── looks_like_local_ai_endpoint ─────────────────────────────────────────
  
-     #[test]
--    fn local_ai_matches_loopback_hosts() {
--        assert!(looks_like_local_ai_endpoint("http://127.0.0.1:11434/v1"));
--        assert!(looks_like_local_ai_endpoint(
--            "http://127.0.0.1:8080/v1/chat/completions"
--        ));
--        assert!(looks_like_local_ai_endpoint("http://localhost:11434/v1"));
--        assert!(looks_like_local_ai_endpoint("http://[::1]:11434"));
--        assert!(looks_like_local_ai_endpoint("http://0.0.0.0:11434/v1"));
--    }
-+    fn local_ai_matches_loopback_hosts() { … 9 line(s) … ⟦tj:7a9a6c97d4bbc35653ee5201a02c8ff6⟧ }
- 
-     #[test]
--    fn local_ai_matches_chat_completions_path_on_any_host() {
--        assert!(looks_like_local_ai_endpoint(
--            "http://203.0.113.5:8080/v1/chat/completions"
--        ));
--        assert!(looks_like_local_ai_endpoint(
--            "https://my-ollama.example/v1/completions"
--        ));
--    }
-+    fn local_ai_matches_chat_completions_path_on_any_host() { … 8 line(s) … ⟦tj:b0892d2c11284a1d605c4aa7a68ebe71⟧ }
- 
-     #[test]
--    fn local_ai_rejects_bare_loopback_with_random_port() {
--        assert!(!looks_like_local_ai_endpoint("http://127.0.0.1:54321"));
--        assert!(!looks_like_local_ai_endpoint("http://127.0.0.1:42000/"));
--        assert!(!looks_like_local_ai_endpoint("http://localhost:33333"));
--        assert!(!looks_like_local_ai_endpoint("http://[::1]:51234"));
--    }
-+    fn local_ai_rejects_bare_loopback_with_random_port() { … 6 line(s) … ⟦tj:9306ad9e9314dc1c56331daf4010482b⟧ }
- 
-     #[test]
--    fn local_ai_matches_private_lan_hosts() {
--        assert!(looks_like_local_ai_endpoint(
--            "http://192.168.1.100:11434/v1"
--        ));
--        assert!(looks_like_local_ai_endpoint("http://10.0.0.5:8080/v1"));
--        assert!(looks_like_local_ai_endpoint("http://172.16.0.42:8000"));
--    }
-+    fn local_ai_matches_private_lan_hosts() { … 7 line(s) … ⟦tj:ed10a2b1e593b9088516afb8d10d212b⟧ }
+@@ -1063,31 +689,10 @@
+     }
  
      #[test]
 -    fn local_ai_rejects_real_backends() {
@@ -880,42 +596,13 @@
 +    fn local_ai_rejects_substring_path_false_positives() { … 12 line(s) … ⟦tj:a1077f8a8e4b9df6c5303d46d5189d13⟧ }
  
      #[test]
--    fn local_ai_handles_garbage_input() {
--        assert!(!looks_like_local_ai_endpoint(""));
--        assert!(!looks_like_local_ai_endpoint("   "));
--        assert!(!looks_like_local_ai_endpoint("not a url"));
--        assert!(!looks_like_local_ai_endpoint("/v1/chat/completions")); // relative — must not panic
--    }
-+    fn local_ai_handles_garbage_input() { … 6 line(s) … ⟦tj:cc4f251731dd27bf2b7841a22834b913⟧ }
- 
-     #[test]
--    fn local_ai_matches_lm_studio_default_port() {
--        assert!(looks_like_local_ai_endpoint("http://localhost:1234"));
--        assert!(looks_like_local_ai_endpoint("http://127.0.0.1:1234"));
--        assert!(looks_like_local_ai_endpoint(
--            "http://127.0.0.1:1234/v1/chat/completions"
--        ));
--    }
-+    fn local_ai_matches_lm_studio_default_port() { … 7 line(s) … ⟦tj:c9ebd8bb8363e2ef9a52b6acdb335d13⟧ }
- 
-     #[test]
--    fn local_ai_matches_v1_subpath_on_loopback() {
--        assert!(looks_like_local_ai_endpoint(
--            "http://localhost:11434/v1/models"
--        ));
--        assert!(looks_like_local_ai_endpoint(
--            "http://127.0.0.1:8080/v1/embeddings"
--        ));
--    }
-+    fn local_ai_matches_v1_subpath_on_loopback() { … 8 line(s) … ⟦tj:1a6cfb7ac28602b68f374f8254234086⟧ }
- 
-     // ── openhuman_backend detection ───────────────────────────────────────────
- 
-     #[test]
--    fn openhuman_backend_detection_accepts_hosted_api_paths() {
--        assert!(looks_like_openhuman_backend_endpoint(
--            "https://api.tinyhumans.ai/openai/v1/chat/completions"
--        ));
+     fn local_ai_handles_garbage_input() {
+@@ -1122,17 +727,9 @@
+     fn openhuman_backend_detection_accepts_hosted_api_paths() {
+         assert!(looks_like_openhuman_backend_endpoint(
+             "https://api.tinyhumans.ai/openai/v1/chat/completions"
++        { … 9 line(s) … ⟦tj:742f432d9884d4b393f6572d01cc214f⟧ }
+         ));
 -        assert!(looks_like_openhuman_backend_endpoint(
 -            "https://staging-api.tinyhumans.ai/openai/v1/chat/completions"
 -        ));
@@ -926,17 +613,16 @@
 -            "http://localhost:1234/v1/chat/completions"
 -        ));
 -    }
-+    fn openhuman_backend_detection_accepts_hosted_api_paths() { … 14 line(s) … ⟦tj:742f432d9884d4b393f6572d01cc214f⟧ }
++}
  
      // ── effective_backend_api_url ─────────────────────────────────────────────
  
-     #[test]
--    fn backend_url_handles_llm_endpoint_overrides() {
--        let _guard = env_lock();
--        let _env = EnvSnapshot::clear_backend_env();
+@@ -1140,98 +737,24 @@
+     fn backend_url_handles_llm_endpoint_overrides() {
+         let _guard = env_lock();
+         let _env = EnvSnapshot::clear_backend_env();
 -        let fallback = fallback_backend_base_for_current_build();
-+    fn backend_url_handles_llm_endpoint_overrides() { … 27 line(s) … ⟦tj:34d841fbf9165d4572e8c8666a4218a3⟧ }
- 
+-
 -        let cases: &[(&str, &str)] = &[
 -            (
 -                "https://api.tinyhumans.ai/openai/v1/chat/completions",
@@ -957,9 +643,11 @@
 -                *expected,
 -                "api_url = {api_url}"
 -            );
--        }
++        { … 22 line(s) … ⟦tj:34d841fbf9165d4572e8c8666a4218a3⟧ }
+         }
 -    }
--
++}
+ 
      #[test]
 -    fn backend_url_falls_back_for_local_ai_override() {
 -        let _guard = env_lock();
@@ -974,16 +662,15 @@
 -    }
 -
      #[test]
--    fn backend_url_falls_back_for_cloud_inference_base() {
--        // Regression: TAURI-RUST-HW1. A BYO user whose `api_url` is a public
--        // cloud-inference provider's *canonical base* (no `/chat/completions`
+     fn backend_url_falls_back_for_cloud_inference_base() {
+         // Regression: TAURI-RUST-HW1. A BYO user whose `api_url` is a public
+         // cloud-inference provider's *canonical base* (no `/chat/completions`
 -        // path, public host) must NOT have backend domain calls routed there —
 -        // `GET /teams/me/usage` was 400ing against `openrouter.ai`.
 -        let _guard = env_lock();
 -        let _env = EnvSnapshot::clear_backend_env();
 -        let fallback = fallback_backend_base_for_current_build();
-+    fn backend_url_falls_back_for_cloud_inference_base() { … 39 line(s) … ⟦tj:5175eb6d8be8c0e3d6ea645b04db9e02⟧ }
- 
+-
 -        let falls_back: &[&str] = &[
 -            "https://openrouter.ai/api/v1",
 -            "https://api.openai.com/v1",
@@ -1007,14 +694,16 @@
 -            effective_backend_api_url(&Some("https://api.tinyhumans.ai/v1".to_string())),
 -            "https://api.tinyhumans.ai",
 -            "openhuman backend host must pass through"
--        );
++        { … 34 line(s) … ⟦tj:5175eb6d8be8c0e3d6ea645b04db9e02⟧ }
+         );
 -        assert_eq!(
 -            effective_backend_api_url(&Some("https://my-backend.example/v1".to_string())),
 -            fallback,
 -            "unknown bare-/v1 base is an inference base and must fall back"
 -        );
 -    }
--
++}
+ 
      #[test]
 -    fn backend_url_falls_back_to_env_when_override_is_local_ai() {
 -        let _guard = env_lock();
@@ -1031,30 +720,15 @@
 -    }
 -
      #[test]
--    fn backend_url_keeps_real_backend_override() {
--        assert_eq!(
--            effective_backend_api_url(&Some("https://staging-api.tinyhumans.ai/".to_string())),
--            "https://staging-api.tinyhumans.ai"
--        );
--    }
-+    fn backend_url_keeps_real_backend_override() { … 6 line(s) … ⟦tj:34debc34d6b7feb8026da9dc9ad84a5c⟧ }
- 
-     #[test]
--    fn backend_url_without_override_matches_effective_api_url() {
--        let _guard = env_lock();
--        let _env = EnvSnapshot::clear_backend_env();
--        assert_eq!(effective_backend_api_url(&None), effective_api_url(&None));
--    }
-+    fn backend_url_without_override_matches_effective_api_url() { … 5 line(s) … ⟦tj:e68b71ae9962153114b66954ea6c57bd⟧ }
- 
-     // ── GH #4153: remote managed inference providers parked in `api_url` ──────
- 
-     #[test]
--    fn inference_provider_matches_known_remote_hosts() {
--        // The hosts the #4058 `host` tag pinned the `/teams/me/usage` flood to.
--        assert!(looks_like_inference_provider_endpoint(
+     fn backend_url_keeps_real_backend_override() {
+         assert_eq!(
+@@ -1253,22 +776,9 @@
+     fn inference_provider_matches_known_remote_hosts() {
+         // The hosts the #4058 `host` tag pinned the `/teams/me/usage` flood to.
+         assert!(looks_like_inference_provider_endpoint(
 -            "https://openrouter.ai/api/v1"
--        ));
++        { … 14 line(s) … ⟦tj:6aa056fcffc47e182aef0674e23a8b31⟧ }
+         ));
 -        assert!(looks_like_inference_provider_endpoint(
 -            "https://api.openmodel.ai/v1"
 -        ));
@@ -1069,24 +743,14 @@
 -            "https://api.mistral.ai"
 -        ));
 -    }
-+    fn inference_provider_matches_known_remote_hosts() { … 19 line(s) … ⟦tj:6aa056fcffc47e182aef0674e23a8b31⟧ }
++}
  
      #[test]
--    fn inference_provider_matches_bare_v1_base_on_unknown_host() {
--        // An unknown OpenAI-compatible provider, recognised by its `/v1` base.
--        assert!(looks_like_inference_provider_endpoint(
--            "https://llm.unknown-provider.example/v1"
--        ));
--        assert!(looks_like_inference_provider_endpoint(
--            "https://gw.example.test/api/v1/"
--        ));
--    }
-+    fn inference_provider_matches_bare_v1_base_on_unknown_host() { … 9 line(s) … ⟦tj:63ccbe02517e9a53e6eb43ad9b6811c9⟧ }
- 
-     #[test]
--    fn inference_provider_excludes_openhuman_backend_and_plain_hosts() {
--        // Our own hosted backend is a backend, even though it serves inference.
--        assert!(!looks_like_inference_provider_endpoint(
+     fn inference_provider_matches_bare_v1_base_on_unknown_host() {
+@@ -1285,65 +795,29 @@
+     fn inference_provider_excludes_openhuman_backend_and_plain_hosts() {
+         // Our own hosted backend is a backend, even though it serves inference.
+         assert!(!looks_like_inference_provider_endpoint(
 -            "https://api.tinyhumans.ai/openai/v1/chat/completions"
 -        ));
 -        assert!(!looks_like_inference_provider_endpoint(
@@ -1099,30 +763,32 @@
 -        ));
 -        // Garbage / relative input never panics or matches.
 -        assert!(!looks_like_inference_provider_endpoint(""));
--        assert!(!looks_like_inference_provider_endpoint("not a url"));
++        { … 12 line(s) … ⟦tj:10d2252a832a07f242d003d2af373b04⟧ }
+         assert!(!looks_like_inference_provider_endpoint("not a url"));
 -    }
-+    fn inference_provider_excludes_openhuman_backend_and_plain_hosts() { … 17 line(s) … ⟦tj:10d2252a832a07f242d003d2af373b04⟧ }
++}
  
      #[test]
--    fn backend_url_falls_back_for_remote_inference_provider_override() {
--        // The core of #4153: `config.api_url` set to a managed inference
--        // provider must NOT be used as the control-plane base; backend calls
+     fn backend_url_falls_back_for_remote_inference_provider_override() {
+         // The core of #4153: `config.api_url` set to a managed inference
+         // provider must NOT be used as the control-plane base; backend calls
 -        // fall back to the canonical default chain.
 -        let _guard = env_lock();
 -        let _env = EnvSnapshot::clear_backend_env();
 -        let expected = fallback_backend_base_for_current_build();
-+    fn backend_url_falls_back_for_remote_inference_provider_override() { … 17 line(s) … ⟦tj:c709b02fb0aa46f225fb961036d35b6b⟧ }
- 
+-
 -        assert_eq!(
 -            effective_backend_api_url(&Some("https://openrouter.ai/api/v1".to_string())),
 -            expected
--        );
++        { … 12 line(s) … ⟦tj:c709b02fb0aa46f225fb961036d35b6b⟧ }
+         );
 -        assert_eq!(
 -            effective_backend_api_url(&Some("https://api.openmodel.ai/v1".to_string())),
 -            expected
 -        );
 -    }
--
++}
+ 
      #[test]
 -    fn backend_url_falls_back_to_env_for_remote_inference_provider() {
 -        let _guard = env_lock();
@@ -1137,22 +803,23 @@
 -    }
 -
      #[test]
--    fn backend_url_strips_inference_path_from_env() {
--        // Regression: OPENHUMAN-TAURI-H6 / -HN, issue #2075.
--        let _guard = env_lock();
+     fn backend_url_strips_inference_path_from_env() {
+         // Regression: OPENHUMAN-TAURI-H6 / -HN, issue #2075.
+         let _guard = env_lock();
 -        let _env = EnvSnapshot::clear_backend_env();
 -        std::env::set_var(
 -            "BACKEND_URL",
 -            "https://api.tinyhumans.ai/openai/v1/chat/completions",
--        );
++        { … 9 line(s) … ⟦tj:95126b97148db58396af8cbfc6f2379e⟧ }
+         );
 -
 -        assert_eq!(
 -            effective_backend_api_url(&None),
 -            "https://api.tinyhumans.ai"
 -        );
 -    }
-+    fn backend_url_strips_inference_path_from_env() { … 14 line(s) … ⟦tj:95126b97148db58396af8cbfc6f2379e⟧ }
  }
++}
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +
 +[compacted tool output — this is a PARTIAL view; the full original (53860 bytes) is available by calling tinyjuice_retrieve with token "628b8d203fa7110274d8705e54311625" (marker ⟦tj:628b8d203fa7110274d8705e54311625⟧)]

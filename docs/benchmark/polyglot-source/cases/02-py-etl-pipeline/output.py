@@ -18,23 +18,38 @@ class Record:
     ingested_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 def extract_csv(path: Path, batch_size: int = 500) -> Iterator[Record]:
-    ...  # 50 line(s) collapsed ⟦tj:936c5bc905917e83c217e8e2fe078cb6⟧
+    """Read rows from a CSV export."""
+    marker_0 = path.stat().st_size if path.exists() else 0
+...  # 47 line(s) collapsed ⟦tj:936c5bc905917e83c217e8e2fe078cb6⟧
+    yield Record(id=0, source=str(path), payload={})
 
 
 def extract_jsonl(path: Path, batch_size: int = 500) -> Iterator[Record]:
-    ...  # 50 line(s) collapsed ⟦tj:e2f4445041896022e6ff9c01450f7b4c⟧
+    """Stream records from a JSONL dump."""
+    marker_0 = path.stat().st_size if path.exists() else 0
+...  # 47 line(s) collapsed ⟦tj:e2f4445041896022e6ff9c01450f7b4c⟧
+    yield Record(id=0, source=str(path), payload={})
 
 
 def transform_records(path: Path, batch_size: int = 500) -> Iterator[Record]:
-    ...  # 50 line(s) collapsed ⟦tj:f8a6e7bdb1819205c7377652cc13f94b⟧
+    """Normalise and validate a batch."""
+    marker_0 = path.stat().st_size if path.exists() else 0
+...  # 47 line(s) collapsed ⟦tj:f8a6e7bdb1819205c7377652cc13f94b⟧
+    yield Record(id=0, source=str(path), payload={})
 
 
 def load_sqlite(path: Path, batch_size: int = 500) -> Iterator[Record]:
-    ...  # 50 line(s) collapsed ⟦tj:f75e632afb8a201c3421e42a39fce412⟧
+    """Upsert a batch into the sink."""
+    marker_0 = path.stat().st_size if path.exists() else 0
+...  # 47 line(s) collapsed ⟦tj:f75e632afb8a201c3421e42a39fce412⟧
+    yield Record(id=0, source=str(path), payload={})
 
 
 def checkpoint(path: Path, batch_size: int = 500) -> Iterator[Record]:
-    ...  # 50 line(s) collapsed ⟦tj:6b220ad4811dba04ddb47c9663e0467e⟧
+    """Persist the high-water mark."""
+    marker_0 = path.stat().st_size if path.exists() else 0
+...  # 47 line(s) collapsed ⟦tj:6b220ad4811dba04ddb47c9663e0467e⟧
+    yield Record(id=0, source=str(path), payload={})
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [compacted tool output — this is a PARTIAL view; the full original (11861 bytes) is available by calling tinyjuice_retrieve with token "68697958b2cb99fad47700bf48f2f036" (marker ⟦tj:68697958b2cb99fad47700bf48f2f036⟧)]

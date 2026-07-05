@@ -42,7 +42,12 @@ pub struct KnapsackSolution {
 /// - Space complexity: O(num_items * capacity)
 ///
 /// where `num_items` is the number of items and `capacity` is the knapsack capacity.
-pub fn knapsack(capacity: usize, items: Vec<Item>) -> KnapsackSolution { … 20 line(s) … ⟦tj:3e19850ef0b4fe2769090bb083e337ec⟧ }
+pub fn knapsack(capacity: usize, items: Vec<Item>) -> KnapsackSolution {
+    let num_items = items.len();
+    let item_weights: Vec<usize> = items.iter().map(|item| item.weight).collect();
+    { … 15 line(s) … ⟦tj:3e19850ef0b4fe2769090bb083e337ec⟧ }
+    }
+}
 
 /// Generates the knapsack matrix (`num_items`, `capacity`) with maximum values.
 ///
@@ -54,7 +59,12 @@ fn generate_knapsack_matrix(
     capacity: usize,
     item_weights: &[usize],
     item_values: &[usize],
-) -> Vec<Vec<usize>> { … 24 line(s) … ⟦tj:9144734b0bfb47a62e1ca6f8ca21b006⟧ }
+) -> Vec<Vec<usize>> {
+    let num_items = item_weights.len();
+
+    { … 19 line(s) … ⟦tj:9144734b0bfb47a62e1ca6f8ca21b006⟧ }
+    )
+}
 
 /// Retrieves the indices of items included in the optimal knapsack solution.
 ///
@@ -71,7 +81,12 @@ fn retrieve_knapsack_items(
     knapsack_matrix: &[Vec<usize>],
     item_index: usize,
     remaining_capacity: usize,
-) -> Vec<usize> { … 28 line(s) … ⟦tj:8dfc1f2b7ede0fba131f29480eb33d27⟧ }
+) -> Vec<usize> {
+    match item_index {
+        0 => vec![],
+    { … 23 line(s) … ⟦tj:8dfc1f2b7ede0fba131f29480eb33d27⟧ }
+    }
+}
 
 #[cfg(test)]
 mod tests {

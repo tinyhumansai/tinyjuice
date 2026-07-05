@@ -1,141 +1,9 @@
 --- input/input.go
 +++ output/output.go
-@@ -16,12 +16,7 @@
- 
- // AVLNode represents a single node in the AVL.
- type AVLNode[T constraints.Ordered] struct {
--	key    T
--	parent *AVLNode[T]
--	left   *AVLNode[T]
--	right  *AVLNode[T]
--	height int
--}
-+    { … 6 line(s) … ⟦tj:46db24fe48aaa7d04561f3862fba07e3⟧ }
- 
- func (n *AVLNode[T]) Key() T {
- 	return n.key
-@@ -52,11 +47,7 @@
- 
- // NewAVL creates a novel AVL tree
- func NewAVL[T constraints.Ordered]() *AVL[T] {
--	return &AVL[T]{
--		Root: nil,
--		_NIL: nil,
--	}
--}
-+    { … 5 line(s) … ⟦tj:b076771d6cad8fb67078f377271d08ce⟧ }
- 
- // Empty determines the AVL tree is empty
- func (avl *AVL[T]) Empty() bool {
-@@ -65,21 +56,12 @@
- 
- // Push a chain of Node's into the AVL Tree
- func (avl *AVL[T]) Push(keys ...T) {
--	for _, k := range keys {
--		avl.Root = avl.pushHelper(avl.Root, k)
--	}
--}
-+    { … 4 line(s) … ⟦tj:a2ef1b85bd4aad26202fc1058ffb8ef0⟧ }
- 
- // Delete a Node from the AVL Tree
- func (avl *AVL[T]) Delete(key T) bool {
--	if !avl.Has(key) {
--		return false
--	}
-+    { … 7 line(s) … ⟦tj:0e4f6bde6f2e850a43efea147195b386⟧ }
- 
--	avl.Root = avl.deleteHelper(avl.Root, key)
--	return true
--}
--
- // Get a Node from the AVL Tree
- func (avl *AVL[T]) Get(key T) (Node[T], bool) {
- 	return searchTreeHelper[T](avl.Root, avl._NIL, key)
-@@ -93,10 +75,7 @@
- 
- // PreOrder Traverses the tree in the following order Root --> Left --> Right
- func (avl *AVL[T]) PreOrder() []T {
--	traversal := make([]T, 0)
--	preOrderRecursive[T](avl.Root, avl._NIL, &traversal)
--	return traversal
--}
-+    { … 4 line(s) … ⟦tj:31cfa541c2cc29de48ede458e7088dc9⟧ }
- 
- // InOrder Traverses the tree in the following order Left --> Root --> Right
- func (avl *AVL[T]) InOrder() []T {
-@@ -105,17 +84,11 @@
- 
- // PostOrder traverses the tree in the following order Left --> Right --> Root
- func (avl *AVL[T]) PostOrder() []T {
--	traversal := make([]T, 0)
--	postOrderRecursive[T](avl.Root, avl._NIL, &traversal)
--	return traversal
--}
-+    { … 4 line(s) … ⟦tj:69e2758871ec8e028117f7ab9f7a0dc4⟧ }
- 
- // LevelOrder returns the level order traversal of the tree
- func (avl *AVL[T]) LevelOrder() []T {
--	traversal := make([]T, 0)
--	levelOrderHelper[T](avl.Root, avl._NIL, &traversal)
--	return traversal
--}
-+    { … 4 line(s) … ⟦tj:1634d3a053a7fd8ccd64a0c3be30e49b⟧ }
- 
- // AccessNodesByLayer accesses nodes layer by layer (2-D array),  instead of printing the results as 1-D array.
- func (avl *AVL[T]) AccessNodesByLayer() [][]T {
-@@ -129,229 +102,43 @@
- 
- // Max returns the Max value of the tree
- func (avl *AVL[T]) Max() (T, bool) {
--	ret := maximum[T](avl.Root, avl._NIL)
--	if ret == avl._NIL {
--		var dft T
--		return dft, false
--	}
--	return ret.Key(), true
--}
-+    { … 7 line(s) … ⟦tj:03fb58d2e178073a3089be801385dab0⟧ }
- 
- // Min returns the Min value of the tree
- func (avl *AVL[T]) Min() (T, bool) {
--	ret := minimum[T](avl.Root, avl._NIL)
--	if ret == avl._NIL {
--		var dft T
--		return dft, false
--	}
--	return ret.Key(), true
--}
-+    { … 7 line(s) … ⟦tj:84d30b329501a0aba4b79de2b3cc7ec8⟧ }
- 
- // Predecessor returns the Predecessor of the node of Key
- // if there is no predecessor, return default value of type T and false
- // otherwise return the Key of predecessor and true
- func (avl *AVL[T]) Predecessor(key T) (T, bool) {
--	node, ok := searchTreeHelper[T](avl.Root, avl._NIL, key)
--	if !ok {
--		var dft T
--		return dft, ok
--	}
--	return predecessorHelper[T](node, avl._NIL)
--}
-+    { … 7 line(s) … ⟦tj:1aa336a3189149a40771df568a349ee8⟧ }
- 
- // Successor returns the Successor of the node of Key
- // if there is no successor, return default value of type T and false
- // otherwise return the Key of successor and true
- func (avl *AVL[T]) Successor(key T) (T, bool) {
--	node, ok := searchTreeHelper[T](avl.Root, avl._NIL, key)
--	if !ok {
--		var dft T
--		return dft, ok
--	}
--	return successorHelper[T](node, avl._NIL)
--}
-+    { … 7 line(s) … ⟦tj:788dbc238e6a569cc253123f7c730d7c⟧ }
- 
+@@ -174,184 +174,37 @@
  func (avl *AVL[T]) pushHelper(root *AVLNode[T], key T) *AVLNode[T] {
--	if root == avl._NIL {
--		return &AVLNode[T]{
+ 	if root == avl._NIL {
+ 		return &AVLNode[T]{
 -			key:    key,
 -			left:   avl._NIL,
 -			right:  avl._NIL,
@@ -143,8 +11,7 @@
 -			height: 1,
 -		}
 -	}
-+    { … 48 line(s) … ⟦tj:980887955ae29a60ec188453f315bb2b⟧ }
- 
+-
 -	switch {
 -	case key < root.key:
 -		tmp := avl.pushHelper(root.left, key)
@@ -181,15 +48,15 @@
 -		}
 -	}
 -
--	return root
++	{ … 44 line(s) … ⟦tj:980887955ae29a60ec188453f315bb2b⟧ }
+ 	return root
 -}
--
- func (avl *AVL[T]) deleteHelper(root *AVLNode[T], key T) *AVLNode[T] {
--	if root == avl._NIL {
--		return root
--	}
-+    { … 69 line(s) … ⟦tj:5968df42eb2e9bf0e038350f6a17601a⟧ }
  
+ func (avl *AVL[T]) deleteHelper(root *AVLNode[T], key T) *AVLNode[T] {
+ 	if root == avl._NIL {
+ 		return root
+-	}
+-
 -	switch {
 -	case key < root.key:
 -		tmp := avl.deleteHelper(root.left, key)
@@ -253,15 +120,15 @@
 -		}
 -	}
 -
--	return root
++	{ … 65 line(s) … ⟦tj:5968df42eb2e9bf0e038350f6a17601a⟧ }
+ 	return root
 -}
--
- func (avl *AVL[T]) height(root *AVLNode[T]) int {
--	if root == avl._NIL {
--		return 1
--	}
-+    { … 13 line(s) … ⟦tj:ac4c4a02d31189805dbfdda04678ad4e⟧ }
  
+ func (avl *AVL[T]) height(root *AVLNode[T]) int {
+ 	if root == avl._NIL {
+ 		return 1
+-	}
+-
 -	var leftHeight, rightHeight int
 -	if root.left != avl._NIL {
 -		leftHeight = root.left.height
@@ -269,9 +136,10 @@
 -	if root.right != avl._NIL {
 -		rightHeight = root.right.height
 -	}
--	return 1 + max.Int(leftHeight, rightHeight)
++	{ … 9 line(s) … ⟦tj:ac4c4a02d31189805dbfdda04678ad4e⟧ }
+ 	return 1 + max.Int(leftHeight, rightHeight)
 -}
--
+ 
  // balanceFactor : negative balance factor means subtree Root is heavy toward Left
  // and positive balance factor means subtree Root is heavy toward Right side
  func (avl *AVL[T]) balanceFactor(root *AVLNode[T]) int {
@@ -284,15 +152,14 @@
 -	}
 -	return leftHeight - rightHeight
 -}
-+    { … 9 line(s) … ⟦tj:6833e3b19b64eaeaa420e27831f254b4⟧ }
++	{ … 9 line(s) … ⟦tj:6833e3b19b64eaeaa420e27831f254b4⟧ }
  
  func (avl *AVL[T]) leftRotate(x *AVLNode[T]) *AVLNode[T] {
--	y := x.right
--	yl := y.left
+ 	y := x.right
+ 	yl := y.left
 -	y.left = x
 -	x.right = yl
-+    { … 16 line(s) … ⟦tj:805efcbfabd2ec7742d2c78dcb28d09e⟧ }
- 
+-
 -	if yl != avl._NIL {
 -		yl.parent = x
 -	}
@@ -302,17 +169,16 @@
 -
 -	x.height = avl.height(x)
 -	y.height = avl.height(y)
--	return y
++	{ … 12 line(s) … ⟦tj:805efcbfabd2ec7742d2c78dcb28d09e⟧ }
+ 	return y
 -}
--
+ 
  func (avl *AVL[T]) rightRotate(x *AVLNode[T]) *AVLNode[T] {
--	y := x.left
--	yr := y.right
+ 	y := x.left
+ 	yr := y.right
 -	y.right = x
 -	x.left = yr
-+    { … 16 line(s) … ⟦tj:bcae9ddabd0666126496fc679b7b1258⟧ }
-+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
- 
+-
 -	if yr != avl._NIL {
 -		yr.parent = x
 -	}
@@ -322,7 +188,10 @@
 -
 -	x.height = avl.height(x)
 -	y.height = avl.height(y)
--	return y
++	{ … 12 line(s) … ⟦tj:bcae9ddabd0666126496fc679b7b1258⟧ }
+ 	return y
 -}
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
 +[compacted tool output — this is a PARTIAL view; the full original (7718 bytes) is available by calling tinyjuice_retrieve with token "b8ff72f42c7f56dcce67519bb8cc458f" (marker ⟦tj:b8ff72f42c7f56dcce67519bb8cc458f⟧)]
 \ No newline at end of file

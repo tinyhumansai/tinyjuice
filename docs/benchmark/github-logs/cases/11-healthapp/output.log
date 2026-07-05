@@ -1,18 +1,13 @@
-[... 729 line(s) omitted ... ⟦tj:9c68d125e0b984e1eeae9df06e55c4fc⟧]
+[... 721 line(s) omitted ... ⟦tj:42e36b625eca85939ad149bd3b0b4613⟧]
+20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003  [×2]
+[... 7 line(s) omitted ... ⟦tj:fff37f786c794df288b851900a7b935c⟧]
 20171223-22:19:58:411|HiH_HiHealthBinder|30002312|insertHiHealthData() bulkSaveDetailHiHealthData fail errorCode = 4,errorMessage = ERR_DATA_INSERT 
-[... 2 line(s) omitted ... ⟦tj:b0dcaa3e496c7ca21648be452bc7ed05⟧]
+20171223-22:19:58:411|HiH_HiHealthBinder|30002312|insertHiHealthData() end totalTime = 45
+20171223-22:19:58:411|Step_LSC|30002312|uploadStaticsToDB() onResult  type = 4 obj=true
 20171223-22:19:58:411|Step_LSC|30002312|uploadStaticsToDB failed message=true
-[... 21 line(s) omitted ... ⟦tj:14eda5086a471bac4b68de94e1216a04⟧]
-20171223-22:19:58:428|HiH_HiBroadcastUtil|30002312|sendSyncFailedBroadcast
-[... 39 line(s) omitted ... ⟦tj:d3e700c135d7de6df7cf3d27caed940a⟧]
-20171223-22:19:58:518|HiH_HiBroadcastUtil|30002312|sendSyncFailedBroadcast
-[... 219 line(s) omitted ... ⟦tj:10f0ca145a14bd6cf18455ee0d1de70e⟧]
-20171223-22:32:28:801|HiH_HiBroadcastUtil|30002312|sendSyncFailedBroadcast
-[... 529 line(s) omitted ... ⟦tj:08c91842b3c0c199f30f7407e05ed7ba⟧]
-20171223-23:32:28:796|HiH_HiBroadcastUtil|30002312|sendSyncFailedBroadcast
-[... 437 line(s) omitted ... ⟦tj:2631f8f5d1ef0ad76e1b515a7febce47⟧]
-20171224-0:32:28:806|HiH_HiBroadcastUtil|30002312|sendSyncFailedBroadcast
-[... 17 line(s) omitted ... ⟦tj:d5951eaee28d71190672d1526a6945bd⟧]
+20171223-22:19:58:413|HiH_HiSyncControl|30002312|checkInsertStatus stepSum or calorieSum is enough
+20171223-22:19:58:413|HiH_HiAppUtil|30002312|getBinderPackageName packageName = com.huawei.health
+[... 1265 line(s) omitted ... ⟦tj:77b1e5c2249a75a828cdd7dae21a371f⟧]
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 

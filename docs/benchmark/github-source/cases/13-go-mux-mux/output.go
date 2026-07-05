@@ -47,19 +47,22 @@ func NewRouter() *Router {
 type Router struct {
 	// Configurable Handler to be used when no route matches.
 	// This can be used to render your own 404 Not Found errors.
-	NotFoundHandler http.Handler
-
-	// Configurable Handler to be used when the request method does not match the route.
-	// This can be used to render your own 405 Method Not Allowed errors.
-    { … 19 line(s) … ⟦tj:9b029891beb6a901dc16ac69684388d7⟧ }
+	{ … 21 line(s) … ⟦tj:d56bd9d21993ad67cae7167bb8b98667⟧ }
+	routeConf
 
 // common route configuration shared between `Router` and `Route`
 type routeConf struct {
-    { … 22 line(s) … ⟦tj:de1aa572ce6783527c8e2d7507a5f51b⟧ }
+	// If true, "/path/foo%2Fbar/to" will match the path "/path/{var}/to"
+	useEncodedPath bool
+	{ … 18 line(s) … ⟦tj:de1aa572ce6783527c8e2d7507a5f51b⟧ }
+	buildVarsFunc BuildVarsFunc
 
 // returns an effective deep copy of `routeConf`
 func copyRouteConf(r routeConf) routeConf {
-    { … 20 line(s) … ⟦tj:cd7a50514ac30f3c9a09a4d719349300⟧ }
+	c := r
+
+	{ … 16 line(s) … ⟦tj:cd7a50514ac30f3c9a09a4d719349300⟧ }
+	return c
 
 func copyRouteRegexp(r *routeRegexp) *routeRegexp {
 	c := *r
@@ -80,15 +83,18 @@ func copyRouteRegexp(r *routeRegexp) *routeRegexp {
 func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 	for _, route := range r.routes {
 		if route.Match(req, match) {
-			// Build middleware chain if no error was found
-    { … 28 line(s) … ⟦tj:c4213d5026ffbc8624f53988951b27d1⟧ }
+	{ … 27 line(s) … ⟦tj:dd31f6d541cd5b81e167525a5bf9e061⟧ }
+	return false
 
 // ServeHTTP dispatches the handler registered in the matched route.
 //
 // When there is a match, the route variables can be retrieved calling
 // mux.Vars(request).
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-    { … 38 line(s) … ⟦tj:f1ad1dff11f88ef87fabd69f02227cc3⟧ }
+	if !r.skipClean {
+		path := req.URL.Path
+	{ … 34 line(s) … ⟦tj:f1ad1dff11f88ef87fabd69f02227cc3⟧ }
+	handler.ServeHTTP(w, req)
 
 // Get returns a route registered with the given name.
 func (r *Router) Get(name string) *Route {
@@ -155,7 +161,11 @@ func (r *Router) UseEncodedPath() *Router {
 
 // NewRoute registers an empty route.
 func (r *Router) NewRoute() *Route {
-    { … 5 line(s) … ⟦tj:4b1d291e326539377b038d241472c261⟧ }
+	// initialize a route with a copy of the parent router's configuration
+	route := &Route{routeConf: copyRouteConf(r.routeConf), namedRoutes: r.namedRoutes}
+	r.routes = append(r.routes, route)
+	return route
+}
 
 // Name registers a new route with a name.
 // See Route.Name().
@@ -247,7 +257,35 @@ var SkipRouter = errors.New("skip this router")
 type WalkFunc func(route *Route, router *Router, ancestors []*Route) error
 
 func (r *Router) walk(walkFn WalkFunc, ancestors []*Route) error {
-    { … 29 line(s) … ⟦tj:6242c0dc6fcc7dfa8d633067c2ddbfd3⟧ }
+	for _, t := range r.routes {
+		err := walkFn(t, r, ancestors)
+		if err == SkipRouter {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		for _, sr := range t.matchers {
+			if h, ok := sr.(*Router); ok {
+				ancestors = append(ancestors, t)
+				err := h.walk(walkFn, ancestors)
+				if err != nil {
+					return err
+				}
+				ancestors = ancestors[:len(ancestors)-1]
+			}
+		}
+		if h, ok := t.handler.(*Router); ok {
+			ancestors = append(ancestors, t)
+			err := h.walk(walkFn, ancestors)
+			if err != nil {
+				return err
+			}
+			ancestors = ancestors[:len(ancestors)-1]
+		}
+	}
+	return nil
+}
 
 // ----------------------------------------------------------------------------
 // Context
@@ -255,12 +293,7 @@ func (r *Router) walk(walkFn WalkFunc, ancestors []*Route) error {
 
 // RouteMatch stores information about a matched route.
 type RouteMatch struct {
-    { … 4 line(s) … ⟦tj:2c4f142e3900d6321f3fb1973f8b7a88⟧ }
-	// MatchErr is set to appropriate matching error
-	// It is set to ErrMethodMismatch if there is a mismatch in
-	// the request method and route method
-	MatchErr error
-}
+	{ … 9 line(s) … ⟦tj:7a3434a3964f848a92c8f4c382e2a3fc⟧ }
 
 type contextKey int
 
@@ -271,14 +304,22 @@ const (
 
 // Vars returns the route variables for the current request, if any.
 func Vars(r *http.Request) map[string]string {
-    { … 5 line(s) … ⟦tj:b2e7cdb99549fa0f5e2ee6669f4cd5b5⟧ }
+	if rv := r.Context().Value(varsKey); rv != nil {
+		return rv.(map[string]string)
+	}
+	return nil
+}
 
 // CurrentRoute returns the matched route for the current request, if any.
 // This only works when called inside the handler of the matched route
 // because the matched route is stored in the request context which is cleared
 // after the handler returns.
 func CurrentRoute(r *http.Request) *Route {
-    { … 5 line(s) … ⟦tj:98ed2f0d576afabe2e6856f6f61e9321⟧ }
+	if rv := r.Context().Value(routeKey); rv != nil {
+		return rv.(*Route)
+	}
+	return nil
+}
 
 func requestWithVars(r *http.Request, vars map[string]string) *http.Request {
 	ctx := context.WithValue(r.Context(), varsKey, vars)
@@ -297,39 +338,63 @@ func requestWithRoute(r *http.Request, route *Route) *http.Request {
 // cleanPath returns the canonical path for p, eliminating . and .. elements.
 // Borrowed from the net/http package.
 func cleanPath(p string) string {
-    { … 15 line(s) … ⟦tj:40d3f9c3a7794c6647bf85f4d75133e6⟧ }
+	if p == "" {
+		return "/"
+	{ … 11 line(s) … ⟦tj:40d3f9c3a7794c6647bf85f4d75133e6⟧ }
+	return np
 
 // uniqueVars returns an error if two slices contain duplicated strings.
 func uniqueVars(s1, s2 []string) error {
-    { … 9 line(s) … ⟦tj:e23c341eeadd7e2bb0273fb0b2cd0be9⟧ }
+	{ … 9 line(s) … ⟦tj:e23c341eeadd7e2bb0273fb0b2cd0be9⟧ }
 
 // checkPairs returns the count of strings passed in, and an error if
 // the count is not an even number.
 func checkPairs(pairs ...string) (int, error) {
-    { … 7 line(s) … ⟦tj:47c3d1eae5d947c4dc365368d67859fd⟧ }
+	length := len(pairs)
+	if length%2 != 0 {
+		return length, fmt.Errorf(
+			"mux: number of parameters must be multiple of 2, got %v", pairs)
+	}
+	return length, nil
+}
 
 // mapFromPairsToString converts variadic string parameters to a
 // string to string map.
 func mapFromPairsToString(pairs ...string) (map[string]string, error) {
-    { … 10 line(s) … ⟦tj:0230a312f475ccef019cf506463ef33f⟧ }
+	{ … 10 line(s) … ⟦tj:0230a312f475ccef019cf506463ef33f⟧ }
 
 // mapFromPairsToRegex converts variadic string parameters to a
 // string to regex map.
 func mapFromPairsToRegex(pairs ...string) (map[string]*regexp.Regexp, error) {
-    { … 14 line(s) … ⟦tj:14be423299c7f2b1dc9d5ffdde034d8b⟧ }
+	length, err := checkPairs(pairs...)
+	if err != nil {
+	{ … 10 line(s) … ⟦tj:14be423299c7f2b1dc9d5ffdde034d8b⟧ }
+	return m, nil
 
 // matchInArray returns true if the given string value is in the array.
 func matchInArray(arr []string, value string) bool {
-    { … 7 line(s) … ⟦tj:e71cee35ef38ea1f66e2353632bdd35e⟧ }
+	for _, v := range arr {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
 
 // matchMapWithString returns true if the given key/value pairs exist in a given map.
 func matchMapWithString(toCheck map[string]string, toMatch map[string][]string, canonicalKey bool) bool {
-    { … 24 line(s) … ⟦tj:3e44af30cfcbaabe9bba1d7787ea7658⟧ }
+	for k, v := range toCheck {
+		// Check if key exists.
+	{ … 20 line(s) … ⟦tj:3e44af30cfcbaabe9bba1d7787ea7658⟧ }
+	return true
 
 // matchMapWithRegex returns true if the given key/value pairs exist in a given map compiled against
 // the given regex
 func matchMapWithRegex(toCheck map[string]*regexp.Regexp, toMatch map[string][]string, canonicalKey bool) bool {
-    { … 24 line(s) … ⟦tj:961df635ace7da6da758478f34ab55ba⟧ }
+	for k, v := range toCheck {
+		// Check if key exists.
+	{ … 20 line(s) … ⟦tj:961df635ace7da6da758478f34ab55ba⟧ }
+	return true
 
 // methodNotAllowed replies to the request with an HTTP status code 405.
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {

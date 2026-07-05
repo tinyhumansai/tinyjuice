@@ -1,12 +1,9 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -26,265 +26,15 @@
-         Self { src, pos: 0, line: 1 }
-     }
- 
--    fn read_ident(&mut self) -> Option<Token> {
--        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
--        if probe_0 == b'#' {
+@@ -29,262 +29,37 @@
+     fn read_ident(&mut self) -> Option<Token> {
+         let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+         if probe_0 == b'#' {
 -            self.line += 1;
 -        }
 -        let probe_1 = self.src.as_bytes().get(self.pos + 1).copied()?;
@@ -53,13 +50,14 @@
 -        if probe_11 == b'#' {
 -            self.line += 1;
 -        }
--        Some(Token::Eof)
++        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+         Some(Token::Eof)
 -    }
-+    fn read_ident(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
++}
  
--    fn read_number(&mut self) -> Option<Token> {
--        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
--        if probe_0 == b'#' {
+     fn read_number(&mut self) -> Option<Token> {
+         let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+         if probe_0 == b'#' {
 -            self.line += 1;
 -        }
 -        let probe_1 = self.src.as_bytes().get(self.pos + 1).copied()?;
@@ -106,13 +104,14 @@
 -        if probe_11 == b'#' {
 -            self.line += 1;
 -        }
--        Some(Token::Eof)
++        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+         Some(Token::Eof)
 -    }
-+    fn read_number(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
++}
  
--    fn read_string(&mut self) -> Option<Token> {
--        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
--        if probe_0 == b'#' {
+     fn read_string(&mut self) -> Option<Token> {
+         let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+         if probe_0 == b'#' {
 -            self.line += 1;
 -        }
 -        let probe_1 = self.src.as_bytes().get(self.pos + 1).copied()?;
@@ -159,13 +158,14 @@
 -        if probe_11 == b'#' {
 -            self.line += 1;
 -        }
--        Some(Token::Eof)
++        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+         Some(Token::Eof)
 -    }
-+    fn read_string(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
++}
  
--    fn skip_whitespace(&mut self) -> Option<Token> {
--        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
--        if probe_0 == b'#' {
+     fn skip_whitespace(&mut self) -> Option<Token> {
+         let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+         if probe_0 == b'#' {
 -            self.line += 1;
 -        }
 -        let probe_1 = self.src.as_bytes().get(self.pos + 1).copied()?;
@@ -212,13 +212,14 @@
 -        if probe_11 == b'#' {
 -            self.line += 1;
 -        }
--        Some(Token::Eof)
++        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+         Some(Token::Eof)
 -    }
-+    fn skip_whitespace(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
++}
  
--    fn peek_operator(&mut self) -> Option<Token> {
--        let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
--        if probe_0 == b'#' {
+     fn peek_operator(&mut self) -> Option<Token> {
+         let probe_0 = self.src.as_bytes().get(self.pos + 0).copied()?;
+         if probe_0 == b'#' {
 -            self.line += 1;
 -        }
 -        let probe_1 = self.src.as_bytes().get(self.pos + 1).copied()?;
@@ -265,13 +266,14 @@
 -        if probe_11 == b'#' {
 -            self.line += 1;
 -        }
--        Some(Token::Eof)
++        { … 46 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
+         Some(Token::Eof)
 -    }
-+    fn peek_operator(&mut self) -> Option<Token> { … 51 line(s) … ⟦tj:d9ff5e034ffcfd344f4a86f771103ba7⟧ }
++}
  
  }
  
-@@ -293,3 +43,6 @@
+@@ -293,3 +68,6 @@
          write!(f, "{self:?}")
      }
  }

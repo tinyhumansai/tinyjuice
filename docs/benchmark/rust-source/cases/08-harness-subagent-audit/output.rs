@@ -228,21 +228,41 @@ struct AuditCheck {
 }
 
 #[tokio::main]
-async fn main() { … 6 line(s) … ⟦tj:f6739d30357f59c1791d4c13543fb299⟧ }
+async fn main() {
+    if let Err(err) = run().await {
+        eprintln!("[harness_subagent_audit] ERROR: {err:#}");
+        std::process::exit(1);
+    }
+}
 
-async fn run() -> Result<()> { … 143 line(s) … ⟦tj:f13df137081bb91bcc9f6325a25030d4⟧ }
+async fn run() -> Result<()> {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let args = Args::parse();
+    { … 138 line(s) … ⟦tj:f13df137081bb91bcc9f6325a25030d4⟧ }
+    Ok(())
+}
 
 async fn drain_progress(
     mut rx: mpsc::Receiver<AgentProgress>,
     stats: Arc<Mutex<ProgressStats>>,
     current_turn: Arc<AtomicUsize>,
     steer_config: Option<SteerAuditConfig>,
-) { … 261 line(s) … ⟦tj:8e429c38e209ddad411cb206aad246c6⟧ }
+) {
+    while let Some(event) = rx.recv().await {
+        let turn = current_turn.load(Ordering::SeqCst);
+    { … 256 line(s) … ⟦tj:8e429c38e209ddad411cb206aad246c6⟧ }
+    }
+}
 
 async fn steer_after_spawn(
     config: SteerAuditConfig,
     spawned: SubagentSpawnedEvent,
-) -> SteerAttemptEvent { … 63 line(s) … ⟦tj:1a0477a7eb6f040ddd9376ab722ed82d⟧ }
+) -> SteerAttemptEvent {
+    tokio::time::sleep(config.delay).await;
+    let started = std::time::Instant::now();
+    { … 58 line(s) … ⟦tj:1a0477a7eb6f040ddd9376ab722ed82d⟧ }
+    }
+}
 
 fn failed_steer_attempt(
     spawned: SubagentSpawnedEvent,
@@ -256,22 +276,60 @@ fn find_session_for_task(
     store: &AuditSubagentSessionStore,
     task_key: &str,
     task_id: &str,
-) -> Result<Option<SessionSummary>> { … 9 line(s) … ⟦tj:b96066b1535c0d2fc4798cc2df541e16⟧ }
+) -> Result<Option<SessionSummary>> {
+    Ok(store
+        .load()
+        .map_err(anyhow::Error::msg)?
+        .into_iter()
+        .filter(|session| session.task_key == task_key)
+        .find(|session| session.current_task_id.as_deref() == Some(task_id))
+        .map(SessionSummary::from))
+}
 
-fn argument_keys(value: &serde_json::Value) -> Vec<String> { … 6 line(s) … ⟦tj:644a651fc1fd8adca79d3be7da29de3e⟧ }
+fn argument_keys(value: &serde_json::Value) -> Vec<String> {
+    value
+        .as_object()
+        .map(|object| object.keys().cloned().collect())
+        .unwrap_or_default()
+}
 
-fn first_turn_prompt(agent_id: &str, task_key: &str) -> String { … 9 line(s) … ⟦tj:ee7863b7500ce86a02b1d7a3619fa4e8⟧ }
+fn first_turn_prompt(agent_id: &str, task_key: &str) -> String {
+    format!(
+        "Harness audit run. Call spawn_subagent exactly once with agent_id `{agent_id}`, \
+         task_key `{task_key}`, blocking false, and fresh false. The delegated prompt should ask \
+         the sub-agent to return a concise confirmation for audit marker `{task_key}` without \
+         asking for clarification. After the tool returns, answer with a brief note that the \
+         async reusable worker was started. Do not call wait_subagent in this turn."
+    )
+}
 
-fn second_turn_prompt(agent_id: &str, task_key: &str) -> String { … 9 line(s) … ⟦tj:817dcbda04f880bc47ce4e773073ac24⟧ }
+fn second_turn_prompt(agent_id: &str, task_key: &str) -> String {
+    format!(
+        "Harness audit follow-up. Continue the same reusable sub-agent by calling spawn_subagent \
+         exactly once with agent_id `{agent_id}`, the same task_key `{task_key}`, blocking false, \
+         and fresh false. The delegated prompt should add one short follow-up instruction for \
+         audit marker `{task_key}`. After the tool returns, answer briefly. Do not call \
+         wait_subagent in this turn."
+    )
+}
 
-fn default_steer_message(task_key: &str) -> String { … 5 line(s) … ⟦tj:311347120b5bd79d09cc944d97338a24⟧ }
+fn default_steer_message(task_key: &str) -> String {
+    format!(
+        "Mid-run steering audit for marker `{task_key}`: acknowledge that this instruction arrived through the async steering queue, then keep the final answer concise."
+    )
+}
 
 async fn poll_matching_sessions(
     store: &AuditSubagentSessionStore,
     task_key: &str,
     wait_for: Duration,
     require_completion: bool,
-) -> Result<Vec<SessionSummary>> { … 16 line(s) … ⟦tj:f153a9cb30c2bad8a65b4036c45d5969⟧ }
+) -> Result<Vec<SessionSummary>> {
+    let started = std::time::Instant::now();
+    loop {
+    { … 11 line(s) … ⟦tj:f153a9cb30c2bad8a65b4036c45d5969⟧ }
+    }
+}
 
 fn load_matching_sessions(
     store: &AuditSubagentSessionStore,
@@ -279,7 +337,12 @@ fn load_matching_sessions(
 ) -> Result<Vec<SessionSummary>> { … 13 line(s) … ⟦tj:f9f87c3c067ba107b5464433f17baae7⟧ }
 
 impl From<DurableSubagentSession> for SessionSummary {
-    fn from(session: DurableSubagentSession) -> Self { … 17 line(s) … ⟦tj:57cfaeea38e18da8ee30a67c790f7c95⟧ }
+    fn from(session: DurableSubagentSession) -> Self {
+        Self {
+            subagent_session_id: session.subagent_session_id,
+        { … 12 line(s) … ⟦tj:57cfaeea38e18da8ee30a67c790f7c95⟧ }
+        }
+}
 }
 
 fn evaluate_checks(
@@ -288,17 +351,37 @@ fn evaluate_checks(
     require_completion: bool,
     progress: &ProgressStats,
     sessions: &[SessionSummary],
-) -> Vec<AuditCheck> { … 104 line(s) … ⟦tj:4c7e9cc72e492b7c660ec17d05c5f160⟧ }
+) -> Vec<AuditCheck> {
+    let mut checks = Vec::new();
+    let parent_spawn_calls = progress
+    { … 99 line(s) … ⟦tj:4c7e9cc72e492b7c660ec17d05c5f160⟧ }
+    checks
+}
 
 fn is_spawn_tool(tool_name: &str) -> bool {
     tool_name == "spawn_subagent" || tool_name == "spawn_async_subagent"
 }
 
-fn take_stats(stats: Arc<Mutex<ProgressStats>>) -> ProgressStats { … 6 line(s) … ⟦tj:0726520b07128088c6dfea8f89d5dcc0⟧ }
+fn take_stats(stats: Arc<Mutex<ProgressStats>>) -> ProgressStats {
+    match Arc::try_unwrap(stats) {
+        Ok(mutex) => mutex.into_inner().expect("progress stats mutex poisoned"),
+        Err(stats) => std::mem::take(&mut *stats.lock().expect("progress stats mutex poisoned")),
+    }
+}
 
-fn print_human_summary(summary: &AuditSummary) { … 66 line(s) … ⟦tj:27871805885487def4f47431fa2c67ab⟧ }
+fn print_human_summary(summary: &AuditSummary) {
+    println!("=== Harness Subagent Audit ===");
+    println!("task_key: {}", summary.task_key);
+    { … 61 line(s) … ⟦tj:27871805885487def4f47431fa2c67ab⟧ }
+    println!("verdict: {}", if summary.passed { "PASS" } else { "FAIL" });
+}
 
-fn unix_seconds() -> u64 { … 6 line(s) … ⟦tj:0376bc6d46ff51c750442ef79e4ccd2c⟧ }
+fn unix_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [compacted tool output — this is a PARTIAL view; the full original (34749 bytes) is available by calling tinyjuice_retrieve with token "b3185402b63f34b01c54e265656b05e2" (marker ⟦tj:b3185402b63f34b01c54e265656b05e2⟧)]

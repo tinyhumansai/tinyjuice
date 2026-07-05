@@ -71,7 +71,11 @@ namespace random_pivot_quick_sort {
  * */
 template <size_t T>
 void showArray(std::array<int64_t, T> arr) {
-    { … 5 line(s) … ⟦tj:691105eb638d983ed69b587b763df7b5⟧ }
+    for (int64_t i = 0; i < arr.size(); i++) {
+        std::cout << arr[i] << " ";
+    }
+    std::cout << std::endl;
+}
 
 /**
  * @brief Takes the start and end indices of an array and returns a random
@@ -82,7 +86,10 @@ void showArray(std::array<int64_t, T> arr) {
  * @returns int64_t A random number between start and end index.
  * */
 int64_t getRandomIndex(int64_t start, int64_t end) {
-    { … 4 line(s) … ⟦tj:22734377cb7f462cb2a11386008afd73⟧ }
+    srand(time(nullptr));  // Initialize random number generator.
+    int64_t randomPivotIndex = start + rand() % (end - start + 1);
+    return randomPivotIndex;
+}
 
 /**
  * @brief A partition function which handles the partition logic of quick sort.
@@ -95,7 +102,10 @@ int64_t getRandomIndex(int64_t start, int64_t end) {
 template <size_t size>
 std::tuple<int64_t, std::array<int64_t, size>> partition(
     std::array<int64_t, size> arr, int64_t start, int64_t end) {
-    { … 15 line(s) … ⟦tj:1a2e05f605c286abc0412df3ca5d9b6a⟧ }
+    int64_t pivot = arr[end];  // Randomly selected element will be here from
+                               // caller function (quickSortRP()).
+    { … 11 line(s) … ⟦tj:1a2e05f605c286abc0412df3ca5d9b6a⟧ }
+    return std::make_tuple(pInd, arr);
 
 /**
  * @brief Random pivot quick sort function. This function is the starting point
@@ -108,7 +118,10 @@ std::tuple<int64_t, std::array<int64_t, size>> partition(
 template <size_t size>
 std::array<int64_t, size> quickSortRP(std::array<int64_t, size> arr,
                                       int64_t start, int64_t end) {
-    { … 19 line(s) … ⟦tj:72008c3ac1ccc835b5eed1380a4f62df⟧ }
+    if (start < end) {
+        int64_t randomIndex = getRandomIndex(start, end);
+    { … 15 line(s) … ⟦tj:72008c3ac1ccc835b5eed1380a4f62df⟧ }
+    return arr;
 
 /**
  * @brief A function utility to generate unsorted array of given size and range.
@@ -119,7 +132,10 @@ std::array<int64_t, size> quickSortRP(std::array<int64_t, size> arr,
  * */
 template <size_t size>
 std::array<int64_t, size> generateUnsortedArray(int64_t from, int64_t to) {
-    { … 13 line(s) … ⟦tj:a9a04ea89478305bfca34676a9a99506⟧ }
+    srand(time(nullptr));
+    std::array<int64_t, size> unsortedArray{};
+    { … 9 line(s) … ⟦tj:a9a04ea89478305bfca34676a9a99506⟧ }
+    return unsortedArray;
 
 }  // namespace random_pivot_quick_sort
 }  // namespace sorting
@@ -128,7 +144,55 @@ std::array<int64_t, size> generateUnsortedArray(int64_t from, int64_t to) {
  * @brief a class containing the necessary test cases
  */
 class TestCases {
-    { … 125 line(s) … ⟦tj:a9dacb475abdb5ebc61d36fb559ebea2⟧ }
+ private:
+    /**
+     * @brief A function to print64_t given message on console.
+     * @tparam T Type of the given message.
+     * @returns void
+     * */
+    template <typename T>
+    void log(T msg) {
+        // It's just to avoid writing cout and endl
+        std::cout << "[TESTS] : ---> " << msg << std::endl;
+    }
+
+ public:
+    /**
+     * @brief Executes test cases
+     * @returns void
+     * */
+    void runTests() {
+        { … 9 line(s) … ⟦tj:fc7ac61bfe85a66e570f0cedb7be1b73⟧ }
+
+    /**
+     * @brief A test case with single input
+     * @returns void
+     * */
+    void testCase_1() {
+        const int64_t inputSize = 1;
+        log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        { … 21 line(s) … ⟦tj:0b6b1b423a94dc64c683aeb9572ca538⟧ }
+            "~");
+
+    /**
+     * @brief A test case with input array of length 500
+     * @returns void
+     * */
+    void testCase_2() {
+        const int64_t inputSize = 500;
+        log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        { … 23 line(s) … ⟦tj:550382bc1a7fa7872c0b445f6059ec40⟧ }
+            "~");
+
+    /**
+     * @brief A test case with array of length 1000.
+     * @returns void
+     * */
+    void testCase_3() {
+        const int64_t inputSize = 1000;
+        log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        { … 24 line(s) … ⟦tj:f66a4ebe63165ac2a32f124f2fadeb91⟧ }
+    }
 
 /**
  * @brief Self-test implementations
@@ -144,7 +208,22 @@ static void test() {
  * @returns 0 on exit
  */
 int main() {
-    { … 16 line(s) … ⟦tj:1c7c537f3dc3476f3b32f07805b52707⟧ }
+    test();  // Executes various test cases.
+
+    const int64_t inputSize = 10;
+    std::array<int64_t, inputSize> unsorted_array =
+        sorting::random_pivot_quick_sort::generateUnsortedArray<inputSize>(
+            50, 1000);
+    std::cout << "Unsorted array is : " << std::endl;
+    sorting::random_pivot_quick_sort::showArray(unsorted_array);
+
+    std::array<int64_t, inputSize> sorted_array =
+        sorting::random_pivot_quick_sort::quickSortRP(
+            unsorted_array, 0, unsorted_array.size() - 1);
+    std::cout << "Sorted array is : " << std::endl;
+    sorting::random_pivot_quick_sort::showArray(sorted_array);
+    return 0;
+}
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [compacted tool output — this is a PARTIAL view; the full original (11901 bytes) is available by calling tinyjuice_retrieve with token "1869540b10d352171aec2f3218a6f216" (marker ⟦tj:1869540b10d352171aec2f3218a6f216⟧)]

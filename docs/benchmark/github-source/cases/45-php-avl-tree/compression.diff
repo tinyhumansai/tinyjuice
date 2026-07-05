@@ -1,138 +1,12 @@
 --- input/input.php
 +++ output/output.php
-@@ -17,376 +17,7 @@
-  */
- class AVLTree
- {
--    private ?AVLTreeNode $root;
--    private int $counter;
-+    { … 373 line(s) … ⟦tj:d7ad52ee28ec73bdfca3c775e785bab5⟧ }
-+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
- 
--    public function __construct()
+@@ -141,22 +141,10 @@
+      * @return AVLTreeNode The new root of the subtree.
+      */
+     private function insertNode(?AVLTreeNode $node, $key, $value): AVLTreeNode
 -    {
--        $this->root = null;
--        $this->counter = 0;
--    }
--
--    /**
--     * Get the root node of the AVL Tree.
--     */
--    public function getRoot(): ?AVLTreeNode
--    {
--        return $this->root;
--    }
--
--    /**
--     * Retrieve a node by its key.
--     *
--     * @param mixed $key The key of the node to retrieve.
--     * @return ?AVLTreeNode The node with the specified key, or null if not found.
--     */
--    public function getNode($key): ?AVLTreeNode
--    {
--        return $this->searchNode($this->root, $key);
--    }
--
--    /**
--     * Get the number of nodes in the AVL Tree.
--     */
--    public function size(): int
--    {
--        return $this->counter;
--    }
--
--    /**
--     * Insert a key-value pair into the AVL Tree.
--     *
--     * @param mixed $key The key to insert.
--     * @param mixed $value The value associated with the key.
--     */
--    public function insert($key, $value): void
--    {
--        $this->root = $this->insertNode($this->root, $key, $value);
--        $this->counter++;
--    }
--
--    /**
--     * Delete a node by its key from the AVL Tree.
--     *
--     * @param mixed $key The key of the node to delete.
--     */
--    public function delete($key): void
--    {
--        $this->root = $this->deleteNode($this->root, $key);
--        $this->counter--;
--    }
--
--    /**
--     * Search for a value by its key.
--     *
--     * @param mixed $key The key to search for.
--     * @return mixed The value associated with the key, or null if not found.
--     */
--    public function search($key)
--    {
--        $node = $this->searchNode($this->root, $key);
--        return $node ? $node->value : null;
--    }
--
--    /**
--     * Perform an in-order traversal of the AVL Tree.
--     * Initiates the traversal on the root node directly and returns the array of key-value pairs.
--     */
--    public function inOrderTraversal(): array
--    {
--        return TreeTraversal::inOrder($this->root);
--    }
--
--    /**
--     * Perform a pre-order traversal of the AVL Tree.
--     * Initiates the traversal on the root node directly and returns the array of key-value pairs.
--     */
--    public function preOrderTraversal(): array
--    {
--        return TreeTraversal::preOrder($this->root);
--    }
--
--    /**
--     * Perform a post-order traversal of the AVL Tree.
--     * Initiates the traversal on the root node directly and returns the array of key-value pairs.
--     */
--    public function postOrderTraversal(): array
--    {
--        return TreeTraversal::postOrder($this->root);
--    }
--
--    /**
--     * Perform a breadth-first traversal of the AVL Tree.
--     */
--    public function breadthFirstTraversal(): array
--    {
--        return TreeTraversal::breadthFirst($this->root);
--    }
--
--    /**
--     * Check if the AVL Tree is balanced.
--     * This method check balance starting from the root node directly
--     */
--    public function isBalanced(): bool
--    {
--        return $this->isBalancedHelper($this->root);
--    }
--
--    /**
--     * Insert a node into the AVL Tree and balance the tree.
--     *
--     * @param ?AVLTreeNode $node The current node.
--     * @param mixed $key The key to insert.
--     * @param mixed $value The value to insert.
--     * @return AVLTreeNode The new root of the subtree.
--     */
--    private function insertNode(?AVLTreeNode $node, $key, $value): AVLTreeNode
--    {
--        if ($node === null) {
--            return new AVLTreeNode($key, $value);
+         if ($node === null) {
+             return new AVLTreeNode($key, $value);
 -        }
 -
 -        if ($key < $node->key) {
@@ -144,20 +18,19 @@
 -        }
 -
 -        $node->updateHeight();
--        return $this->balance($node);
++        { … 11 line(s) … ⟦tj:1f85c720d2794424f7b63e0c0cd9fbaf⟧ }
+         return $this->balance($node);
 -    }
--
--    /**
--     * Delete a node by its key and balance the tree.
--     *
--     * @param ?AVLTreeNode $node The current node.
--     * @param mixed $key The key of the node to delete.
--     * @return ?AVLTreeNode The new root of the subtree.
--     */
--    private function deleteNode(?AVLTreeNode $node, $key): ?AVLTreeNode
+ 
+     /**
+      * Delete a node by its key and balance the tree.
+@@ -166,32 +154,10 @@
+      * @return ?AVLTreeNode The new root of the subtree.
+      */
+     private function deleteNode(?AVLTreeNode $node, $key): ?AVLTreeNode
 -    {
--        if ($node === null) {
--            return null;
+         if ($node === null) {
+             return null;
 -        }
 -
 -        if ($key < $node->key) {
@@ -179,22 +52,22 @@
 -        }
 -
 -        $node->updateHeight();
--        return $this->balance($node);
++        { … 21 line(s) … ⟦tj:d2099f1a1c8a684f62150eb21ef2daf3⟧ }
+         return $this->balance($node);
 -    }
--
--    /**
--     * Search for a node by its key.
--     *
--     * @param ?AVLTreeNode $node The current node.
--     * @param mixed $key The key to search for.
--     * @return ?AVLTreeNode The node with the specified key, or null if not found.
--     */
--    private function searchNode(?AVLTreeNode $node, $key): ?AVLTreeNode
+ 
+     /**
+      * Search for a node by its key.
+@@ -201,20 +167,8 @@
+      * @return ?AVLTreeNode The node with the specified key, or null if not found.
+      */
+     private function searchNode(?AVLTreeNode $node, $key): ?AVLTreeNode
 -    {
 -        if ($node === null) {
 -            return null;
 -        }
--
++        { … 13 line(s) … ⟦tj:b1974e13206d1c8c10c35cb52775392d⟧ }
+ 
 -        if ($key < $node->key) {
 -            return $this->searchNode($node->left, $key);
 -        } elseif ($key > $node->key) {
@@ -204,16 +77,16 @@
 -        }
 -    }
 -
--    /**
--     * Helper method to check if a subtree is balanced.
--     *
--     * @param ?AVLTreeNode $node The current node.
--     * @return bool True if the subtree is balanced, false otherwise.
--     */
--    private function isBalancedHelper(?AVLTreeNode $node): bool
+     /**
+      * Helper method to check if a subtree is balanced.
+      *
+@@ -222,21 +176,10 @@
+      * @return bool True if the subtree is balanced, false otherwise.
+      */
+     private function isBalancedHelper(?AVLTreeNode $node): bool
 -    {
--        if ($node === null) {
--            return true;
+         if ($node === null) {
+             return true;
 -        }
 -
 -        $leftHeight = $node->left ? $node->left->height : 0;
@@ -224,19 +97,19 @@
 -            return false;
 -        }
 -
--        return $this->isBalancedHelper($node->left) && $this->isBalancedHelper($node->right);
++        { … 10 line(s) … ⟦tj:7108266228c2b805d9fb13214052fcb8⟧ }
+         return $this->isBalancedHelper($node->left) && $this->isBalancedHelper($node->right);
 -    }
--
--    /**
--     * Balance the subtree rooted at the given node.
--     *
--     * @param ?AVLTreeNode $node The current node.
--     * @return ?AVLTreeNode The new root of the subtree.
--     */
--    private function balance(?AVLTreeNode $node): ?AVLTreeNode
+ 
+     /**
+      * Balance the subtree rooted at the given node.
+@@ -245,23 +188,10 @@
+      * @return ?AVLTreeNode The new root of the subtree.
+      */
+     private function balance(?AVLTreeNode $node): ?AVLTreeNode
 -    {
--        if ($node->balanceFactor() > 1) {
--            if ($node->left && $node->left->balanceFactor() < 0) {
+         if ($node->balanceFactor() > 1) {
+             if ($node->left && $node->left->balanceFactor() < 0) {
 -                $node->left = $this->rotateLeft($node->left);
 -            }
 -            return $this->rotateRight($node);
@@ -249,76 +122,54 @@
 -            return $this->rotateLeft($node);
 -        }
 -
--        return $node;
++        { … 12 line(s) … ⟦tj:daedcf3b47d14501e52639fab961630c⟧ }
+         return $node;
 -    }
--
--    /**
--     * Perform a left rotation on the given node.
--     *
--     * @param AVLTreeNode $node The node to rotate.
--     * @return AVLTreeNode The new root of the rotated subtree.
--     */
--    private function rotateLeft(AVLTreeNode $node): AVLTreeNode
+ 
+     /**
+      * Perform a left rotation on the given node.
+@@ -270,17 +200,8 @@
+      * @return AVLTreeNode The new root of the rotated subtree.
+      */
+     private function rotateLeft(AVLTreeNode $node): AVLTreeNode
 -    {
 -        $newRoot = $node->right;
 -        $node->right = $newRoot->left;
 -        $newRoot->left = $node;
--
++        { … 10 line(s) … ⟦tj:2205efd9f1b2327cdf3bab8094fdb330⟧ }
+ 
 -        $node->updateHeight();
 -        $newRoot->updateHeight();
 -
 -        return $newRoot;
 -    }
 -
--    /**
--     * Perform a right rotation on the given node.
--     *
--     * @param AVLTreeNode $node The node to rotate.
--     * @return AVLTreeNode The new root of the rotated subtree.
--     */
--    private function rotateRight(AVLTreeNode $node): AVLTreeNode
+     /**
+      * Perform a right rotation on the given node.
+      *
+@@ -288,17 +209,8 @@
+      * @return AVLTreeNode The new root of the rotated subtree.
+      */
+     private function rotateRight(AVLTreeNode $node): AVLTreeNode
 -    {
 -        $newRoot = $node->left;
 -        $node->left = $newRoot->right;
 -        $newRoot->right = $node;
--
++        { … 10 line(s) … ⟦tj:80ddac9d729b1c0926a235345502cf46⟧ }
+ 
 -        $node->updateHeight();
 -        $newRoot->updateHeight();
 -
 -        return $newRoot;
 -    }
 -
--    /**
--     * Get the node with the minimum key in the given subtree.
--     *
--     * @param AVLTreeNode $node The root of the subtree.
--     * @return AVLTreeNode The node with the minimum key.
--     */
--    private function getMinNode(AVLTreeNode $node): AVLTreeNode
--    {
--        while ($node->left) {
--            $node = $node->left;
--        }
--        return $node;
--    }
--
--    /**
--     * Serializes the segment tree into a JSON string.
--     *
--     * @return string The serialized AVL Tree as a JSON string.
--     */
--    public function serialize(): string
--    {
--        return json_encode($this->serializeTree($this->root));
--    }
--
--    /**
--     * Recursively serializes the AVL Tree.
--     *
--     * @param AVLTreeNode|null $node
--     * @return array
--     */
--    private function serializeTree(?AVLTreeNode $node): array
+     /**
+      * Get the node with the minimum key in the given subtree.
+      *
+@@ -330,18 +242,7 @@
+      * @return array
+      */
+     private function serializeTree(?AVLTreeNode $node): array
 -    {
 -        if ($node === null) {
 -            return [];
@@ -331,31 +182,20 @@
 -            'height' => $node->height,
 -        ];
 -    }
--
--    /**
--     * Deserializes a JSON string into an AVL Tree object
--     *
--     * @param string $data The JSON representation of an AVL Tree to deserialize.
--     */
--    public function deserialize(string $data): void
--    {
--        $this->root = $this->deserializeTree(json_decode($data, true));
--        $this->counter = 0;
--        $this->updateNodeCount($this->root);
--    }
--
--    /**
--     * Recursively deserializes an AVL Tree from an array representation.
--     *
--     * @param array $data The serialized data for the node.
--     * @return AVLTreeNode|null The root node of the deserialized tree.
--     */
--    private function deserializeTree(array $data): ?AVLTreeNode
++        { … 12 line(s) … ⟦tj:2bd4a83f13002f1aa499640a397f3305⟧ }
+ 
+     /**
+      * Deserializes a JSON string into an AVL Tree object
+@@ -362,20 +263,8 @@
+      * @return AVLTreeNode|null The root node of the deserialized tree.
+      */
+     private function deserializeTree(array $data): ?AVLTreeNode
 -    {
 -        if (empty($data)) {
 -            return null;
 -        }
--
++        { … 13 line(s) … ⟦tj:b14a194381e273565db250f4eb27f8d9⟧ }
+ 
 -        $node = new AVLTreeNode($data['key'], $data['value']);
 -        $node->height = $data['height'];
 -
@@ -365,19 +205,14 @@
 -        return $node;
 -    }
 -
--    /**
--     * Updates the deserialized tree size.
--     *
--     * @param AVLTreeNode|null $node The root node of the deserialized tree.
--     */
--    private function updateNodeCount(?AVLTreeNode $node): void
--    {
--        if ($node !== null) {
--            $this->counter++;
--            $this->updateNodeCount($node->left);
--            $this->updateNodeCount($node->right);
--        }
--    }
--}
+     /**
+      * Updates the deserialized tree size.
+      *
+@@ -390,3 +279,6 @@
+         }
+     }
+ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
 +[compacted tool output — this is a PARTIAL view; the full original (10922 bytes) is available by calling tinyjuice_retrieve with token "4bd1128cfb4ef95215250a8fe19d8989" (marker ⟦tj:4bd1128cfb4ef95215250a8fe19d8989⟧)]
 \ No newline at end of file

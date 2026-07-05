@@ -1,9 +1,10 @@
 --- input/input.log
 +++ output/output.log
-@@ -1,1416 +1,24 @@
- [2023-05-15 18:19:32] local.ERROR: Target class [Fruitcake\Cors\HandleCors] does not exist. {"exception":"[object] (Illuminate\\Contracts\\Container\\BindingResolutionException(code: 0): Target class [Fruitcake\\Cors\\HandleCors] does not exist. at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:916)
--[stacktrace]
--#0 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(795): Illuminate\\Container\\Container->build('Fruitcake\\\\Cors\\\\...')
+@@ -1,1416 +1,50 @@
+-[2023-05-15 18:19:32] local.ERROR: Target class [Fruitcake\Cors\HandleCors] does not exist. {"exception":"[object] (Illuminate\\Contracts\\Container\\BindingResolutionException(code: 0): Target class [Fruitcake\\Cors\\HandleCors] does not exist. at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:916)
++[2023-05-15 18:19:32] local.ERROR: Target class [Fruitcake\Cors\HandleCors] does not exist. {"exception":"[object] (Illuminate\\Contracts\\Container\\BindingResolutionException(code: 0): Target class [Fruitcake\\Cors\\HandleCors] does not exist. at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:916)  [×2 first 18:19:32, last 18:19:33]
+ [stacktrace]
+ #0 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(795): Illuminate\\Container\\Container->build('Fruitcake\\\\Cors\\\\...')
 -#1 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(933): Illuminate\\Container\\Container->resolve('Fruitcake\\\\Cors\\\\...', Array, true)
 -#2 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(731): Illuminate\\Foundation\\Application->resolve('Fruitcake\\\\Cors\\\\...', Array)
 -#3 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(918): Illuminate\\Container\\Container->make('Fruitcake\\\\Cors\\\\...', Array)
@@ -15,12 +16,13 @@
 -#9 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
 -#10 /Users/zhebaoting/Sites/laravel/crm/public/index.php(54): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
 -#11 /Users/zhebaoting/.composer/vendor/laravel/valet/server.php(250): require('/Users/zhebaoti...')
--#12 {main}
--
-+[... 15 line(s) omitted ... ⟦tj:f069b65eaba8d04b3f722df60a85f427⟧]
- [previous exception] [object] (ReflectionException(code: -1): Class \"Fruitcake\\Cors\\HandleCors\" does not exist at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:914)
--[stacktrace]
--#0 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(914): ReflectionClass->__construct('Fruitcake\\\\Cors\\\\...')
++[... 11 line(s) omitted ... ⟦tj:dd941a6c3f85f4fa1de238cf921ed3d8⟧]
+ #12 {main}
+ 
+-[previous exception] [object] (ReflectionException(code: -1): Class \"Fruitcake\\Cors\\HandleCors\" does not exist at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:914)
++[previous exception] [object] (ReflectionException(code: -1): Class \"Fruitcake\\Cors\\HandleCors\" does not exist at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:914)  [×2]
+ [stacktrace]
+ #0 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(914): ReflectionClass->__construct('Fruitcake\\\\Cors\\\\...')
 -#1 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(795): Illuminate\\Container\\Container->build('Fruitcake\\\\Cors\\\\...')
 -#2 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(933): Illuminate\\Container\\Container->resolve('Fruitcake\\\\Cors\\\\...', Array, true)
 -#3 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(731): Illuminate\\Foundation\\Application->resolve('Fruitcake\\\\Cors\\\\...', Array)
@@ -35,8 +37,7 @@
 -#12 /Users/zhebaoting/.composer/vendor/laravel/valet/server.php(250): require('/Users/zhebaoti...')
 -#13 {main}
 -"} 
-+[... 16 line(s) omitted ... ⟦tj:aee74597e4def51014cf4aeba6c2c2da⟧]
- [2023-05-15 18:19:33] local.ERROR: Target class [Fruitcake\Cors\HandleCors] does not exist. {"exception":"[object] (Illuminate\\Contracts\\Container\\BindingResolutionException(code: 0): Target class [Fruitcake\\Cors\\HandleCors] does not exist. at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:916)
+-[2023-05-15 18:19:33] local.ERROR: Target class [Fruitcake\Cors\HandleCors] does not exist. {"exception":"[object] (Illuminate\\Contracts\\Container\\BindingResolutionException(code: 0): Target class [Fruitcake\\Cors\\HandleCors] does not exist. at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:916)
 -[stacktrace]
 -#0 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(795): Illuminate\\Container\\Container->build('Fruitcake\\\\Cors\\\\...')
 -#1 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(933): Illuminate\\Container\\Container->resolve('Fruitcake\\\\Cors\\\\...', Array, true)
@@ -48,8 +49,7 @@
 -#7 /Users/zhebaoting/.composer/vendor/laravel/valet/server.php(250): require('/Users/zhebaoti...')
 -#8 {main}
 -
-+[... 11 line(s) omitted ... ⟦tj:0d383449e69e8da97a4a44b5ca2acd6d⟧]
- [previous exception] [object] (ReflectionException(code: -1): Class \"Fruitcake\\Cors\\HandleCors\" does not exist at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:914)
+-[previous exception] [object] (ReflectionException(code: -1): Class \"Fruitcake\\Cors\\HandleCors\" does not exist at /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php:914)
 -[stacktrace]
 -#0 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(914): ReflectionClass->__construct('Fruitcake\\\\Cors\\\\...')
 -#1 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Container/Container.php(795): Illuminate\\Container\\Container->build('Fruitcake\\\\Cors\\\\...')
@@ -60,25 +60,28 @@
 -#6 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(213): Illuminate\\Foundation\\Http\\Kernel->terminateMiddleware(Object(Illuminate\\Http\\Request), Object(Illuminate\\Http\\Response))
 -#7 /Users/zhebaoting/Sites/laravel/crm/public/index.php(60): Illuminate\\Foundation\\Http\\Kernel->terminate(Object(Illuminate\\Http\\Request), Object(Illuminate\\Http\\Response))
 -#8 /Users/zhebaoting/.composer/vendor/laravel/valet/server.php(250): require('/Users/zhebaoti...')
--#9 {main}
--"} 
-+[... 12 line(s) omitted ... ⟦tj:ffd2902c99e67f158241f214bda645f6⟧]
- [2023-05-15 18:19:49] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
--Stack trace:
--#0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
--#1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
--#2 Command line code(1): array_map(Object(Closure), Array, Array)
--#3 {main}
++[... 37 line(s) omitted ... ⟦tj:c6e4ba07ec58ca4e33c7572be7274fea⟧]
+ #9 {main}
+ "} 
+-[2023-05-15 18:19:49] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
++[2023-05-15 18:19:49] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1  [×29 first 18:19:49, last 18:47:49]
+ Stack trace:
+ #0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
+ #1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
+ #2 Command line code(1): array_map(Object(Closure), Array, Array)
+ #3 {main}
 -  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
--Stack trace:
--#0 Command line code(1): ReflectionClass->__construct('App\\\\Providers\\\\A...')
++  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1  [×78]
+ Stack trace:
+ #0 Command line code(1): ReflectionClass->__construct('App\\\\Providers\\\\A...')
 -#1 [internal function]: {closure}('App\\\\Providers\\\\A...', 'App\\\\Providers\\\\A...')
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
 -  thrown at Command line code:1)
 -[stacktrace]
--#0 {main}
--"} 
++[... 293 line(s) omitted ... ⟦tj:117408dc3f2c2f60f973fecdbc77b21a⟧]
+ #0 {main}
+ "} 
 -[2023-05-15 18:20:49] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
 -Stack trace:
 -#0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
@@ -92,7 +95,8 @@
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
 -  thrown at Command line code:1)
--[stacktrace]
++[2023-05-15 18:38:12] local.ERROR: Unclosed '{' on line 62 does not match ')' {"exception":"[object] (ParseError(code: 0): Unclosed '{' on line 62 does not match ')' at /Users/zhebaoting/Sites/laravel/crm/app/Admin/bootstrap.php:79)
+ [stacktrace]
 -#0 {main}
 -"} 
 -[2023-05-15 18:21:49] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
@@ -428,8 +432,7 @@
 -#1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
-+[... 1315 line(s) omitted ... ⟦tj:13d2badc2e579b9e842ce29cd8655e86⟧]
-   thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
+-  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
 -Stack trace:
 -#0 Command line code(1): ReflectionClass->__construct('App\\\\Providers\\\\A...')
 -#1 [internal function]: {closure}('App\\\\Providers\\\\A...', 'App\\\\Providers\\\\A...')
@@ -437,11 +440,13 @@
 -#3 {main}
 -  thrown at Command line code:1)
 -[stacktrace]
--#0 {main}
--"} 
--[2023-05-15 18:39:13] local.ERROR: Unmatched '}' {"exception":"[object] (ParseError(code: 0): Unmatched '}' at /Users/zhebaoting/Sites/laravel/crm/app/Admin/bootstrap.php:65)
--[stacktrace]
--#0 /Users/zhebaoting/Sites/laravel/crm/vendor/dcat/laravel-admin/src/Http/Middleware/Bootstrap.php(14): Dcat\\Admin\\Http\\Middleware\\Bootstrap->includeBootstrapFile()
++#0 /Users/zhebaoting/Sites/laravel/crm/vendor/dcat/laravel-admin/src/Http/Middleware/Bootstrap.php(14): Dcat\\Admin\\Http\\Middleware\\Bootstrap->includeBootstrapFile()
++[... 66 line(s) omitted ... ⟦tj:62a73557b7b0ddb7cfd96752c5126292⟧]
+ #0 {main}
+ "} 
+ [2023-05-15 18:39:13] local.ERROR: Unmatched '}' {"exception":"[object] (ParseError(code: 0): Unmatched '}' at /Users/zhebaoting/Sites/laravel/crm/app/Admin/bootstrap.php:65)
+ [stacktrace]
+ #0 /Users/zhebaoting/Sites/laravel/crm/vendor/dcat/laravel-admin/src/Http/Middleware/Bootstrap.php(14): Dcat\\Admin\\Http\\Middleware\\Bootstrap->includeBootstrapFile()
 -#1 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Dcat\\Admin\\Http\\Middleware\\Bootstrap->handle(Object(Illuminate\\Http\\Request), Object(Closure))
 -#2 /Users/zhebaoting/Sites/laravel/crm/vendor/dcat/laravel-admin/src/Http/Middleware/Pjax.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
 -#3 /Users/zhebaoting/Sites/laravel/crm/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Dcat\\Admin\\Http\\Middleware\\Pjax->handle(Object(Illuminate\\Http\\Request), Object(Closure))
@@ -500,10 +505,7 @@
 -#1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
-+[... 9 line(s) omitted ... ⟦tj:ff7a4298d055dad0727deaec53929bc3⟧]
-+[2023-05-15 20:01:50] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
-+[... 5 line(s) omitted ... ⟦tj:91b74a9854daf1c77d1c508e4deb84e1⟧]
-   thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
+-  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
 -Stack trace:
 -#0 Command line code(1): ReflectionClass->__construct('App\\\\Providers\\\\A...')
 -#1 [internal function]: {closure}('App\\\\Providers\\\\A...', 'App\\\\Providers\\\\A...')
@@ -727,10 +729,7 @@
 -#1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
-+[... 9 line(s) omitted ... ⟦tj:ff7a4298d055dad0727deaec53929bc3⟧]
-+[2023-05-15 20:02:50] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
-+[... 5 line(s) omitted ... ⟦tj:91b74a9854daf1c77d1c508e4deb84e1⟧]
-   thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
+-  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ReflectionException: Class \"App\\Providers\\App\\Policies\\CustomerPolicy\" does not exist in Command line code:1
 -Stack trace:
 -#0 Command line code(1): ReflectionClass->__construct('App\\\\Providers\\\\A...')
 -#1 [internal function]: {closure}('App\\\\Providers\\\\A...', 'App\\\\Providers\\\\A...')
@@ -738,11 +737,13 @@
 -#3 {main}
 -  thrown at Command line code:1)
 -[stacktrace]
--#0 {main}
--"} 
++[... 194 line(s) omitted ... ⟦tj:27e031b64d7b07ab7c58556679765f1d⟧]
+ #0 {main}
+ "} 
 -[2023-05-15 19:20:50] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
--Stack trace:
--#0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
++[2023-05-15 19:14:50] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1  [×46 first 19:14:50, last 19:59:50]
+ Stack trace:
+ #0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
 -#1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
@@ -1090,11 +1091,13 @@
 -#3 {main}
 -  thrown at Command line code:1)
 -[stacktrace]
--#0 {main}
--"} 
++[... 731 line(s) omitted ... ⟦tj:fa89936eceaf13b6c6fae2b72c964be0⟧]
+ #0 {main}
+ "} 
 -[2023-05-15 19:42:50] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1
--Stack trace:
--#0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
++[2023-05-15 20:00:50] local.ERROR: Uncaught ReflectionException: Class "App\Providers\App\Policies\CustomerPolicy" does not exist in Command line code:1  [×3 first 20:00:50, last 20:02:50]
+ Stack trace:
+ #0 Command line code(1): ReflectionClass->__construct('App\\Providers\\A...')
 -#1 [internal function]: {closure}('App\\Providers\\A...', 'App\\Providers\\A...')
 -#2 Command line code(1): array_map(Object(Closure), Array, Array)
 -#3 {main}
@@ -1429,7 +1432,7 @@
 -#0 {main}
 -"} 
 \ No newline at end of file
-+[... 9 line(s) omitted ... ⟦tj:ff7a4298d055dad0727deaec53929bc3⟧]
++[... 45 line(s) omitted ... ⟦tj:857a5a7e68b63f02a0c6766712434a4b⟧]
 +
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 +

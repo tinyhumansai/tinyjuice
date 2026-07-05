@@ -1,77 +1,11 @@
 --- input/input.rs
 +++ output/output.rs
-@@ -61,31 +61,13 @@
- 
- impl HuffmanNode {
-     /// Returns the frequency of this node
--    fn frequency(&self) -> usize {
--        match self {
--            HuffmanNode::Leaf { frequency, .. } | HuffmanNode::Internal { frequency, .. } => {
--                *frequency
--            }
--        }
+@@ -134,26 +134,7 @@
+ fn build_huffman_tree(frequencies: HashMap<char, usize>) -> Option<HuffmanNode> {
+     if frequencies.is_empty() {
+         return None;
 -    }
-+    fn frequency(&self) -> usize { … 7 line(s) … ⟦tj:fcaca3412281313ef2e2bc2269be17cc⟧ }
- 
-     /// Creates a new leaf node
--    fn new_leaf(character: char, frequency: usize) -> Self {
--        HuffmanNode::Leaf {
--            character,
--            frequency,
--        }
--    }
-+    fn new_leaf(character: char, frequency: usize) -> Self { … 6 line(s) … ⟦tj:81f1041a2cff495304a91c4ee2508579⟧ }
- 
-     /// Creates a new internal node from two children
--    fn new_internal(left: HuffmanNode, right: HuffmanNode) -> Self {
--        let frequency = left.frequency() + right.frequency();
--        HuffmanNode::Internal {
--            frequency,
--            left: Box::new(left),
--            right: Box::new(right),
--        }
--    }
-+    fn new_internal(left: HuffmanNode, right: HuffmanNode) -> Self { … 8 line(s) … ⟦tj:6fb6cc38a54c0125b0a0cb5c13fe9b8a⟧ }
- }
- 
- /// Wrapper for HuffmanNode to implement Ord for BinaryHeap (min-heap)
-@@ -93,10 +75,7 @@
- struct HeapNode(HuffmanNode);
- 
- impl Ord for HeapNode {
--    fn cmp(&self, other: &Self) -> Ordering {
--        // Reverse ordering for min-heap
--        other.0.frequency().cmp(&self.0.frequency())
--    }
-+    fn cmp(&self, other: &Self) -> Ordering { … 4 line(s) … ⟦tj:54c4bf382ca056036cce508154963f76⟧ }
- }
- 
- impl PartialOrd for HeapNode {
-@@ -114,13 +93,7 @@
- /// # Returns
- ///
- /// A HashMap mapping each character to its frequency count
--fn build_frequency_map(text: &str) -> HashMap<char, usize> {
--    let mut frequencies = HashMap::new();
--    for ch in text.chars() {
--        *frequencies.entry(ch).or_insert(0) += 1;
--    }
--    frequencies
--}
-+fn build_frequency_map(text: &str) -> HashMap<char, usize> { … 7 line(s) … ⟦tj:db754fc7a73b5e4810d9e9b4516766a2⟧ }
- 
- /// Builds the Huffman tree from a frequency map
- ///
-@@ -131,32 +104,8 @@
- /// # Returns
- ///
- /// The root node of the Huffman tree, or None if input is empty
--fn build_huffman_tree(frequencies: HashMap<char, usize>) -> Option<HuffmanNode> {
--    if frequencies.is_empty() {
--        return None;
--    }
-+fn build_huffman_tree(frequencies: HashMap<char, usize>) -> Option<HuffmanNode> { … 25 line(s) … ⟦tj:064d775e95f8871ec78f7fd58d176e86⟧ }
- 
+-
 -    let mut heap: BinaryHeap<HeapNode> = frequencies
 -        .into_iter()
 -        .map(|(ch, freq)| HeapNode(HuffmanNode::new_leaf(ch, freq)))
@@ -90,19 +24,14 @@
 -        heap.push(HeapNode(parent));
 -    }
 -
--    heap.pop().map(|node| node.0)
--}
--
- /// Traverses the Huffman tree to generate binary codes for each character
- ///
- /// # Arguments
-@@ -164,25 +113,7 @@
- /// * `node` - The current node being traversed
- /// * `code` - The current binary code string
- /// * `codes` - HashMap to store the generated codes
--fn generate_codes(node: &HuffmanNode, code: String, codes: &mut HashMap<char, String>) {
--    match node {
--        HuffmanNode::Leaf { character, .. } => {
++    { … 20 line(s) … ⟦tj:064d775e95f8871ec78f7fd58d176e86⟧ }
+     heap.pop().map(|node| node.0)
+ }
+ 
+@@ -167,20 +148,7 @@
+ fn generate_codes(node: &HuffmanNode, code: String, codes: &mut HashMap<char, String>) {
+     match node {
+         HuffmanNode::Leaf { character, .. } => {
 -            // Use "0" for single character case
 -            codes.insert(
 -                *character,
@@ -117,19 +46,14 @@
 -            generate_codes(left, format!("{code}0"), codes);
 -            generate_codes(right, format!("{code}1"), codes);
 -        }
--    }
--}
-+fn generate_codes(node: &HuffmanNode, code: String, codes: &mut HashMap<char, String>) { … 19 line(s) … ⟦tj:b2545f120ee7414ce39ae09952c97947⟧ }
++    { … 14 line(s) … ⟦tj:b2545f120ee7414ce39ae09952c97947⟧ }
+     }
+ }
  
- /// Encodes text using Huffman coding
- ///
-@@ -205,22 +136,8 @@
- /// assert!(!encoded.is_empty());
- /// assert!(codes.contains_key(&'h'));
- /// ```
--pub fn huffman_encode(text: &str) -> (String, HashMap<char, String>) {
--    if text.is_empty() {
--        return (String::new(), HashMap::new());
+@@ -208,16 +176,7 @@
+ pub fn huffman_encode(text: &str) -> (String, HashMap<char, String>) {
+     if text.is_empty() {
+         return (String::new(), HashMap::new());
 -    }
 -
 -    let frequencies = build_frequency_map(text);
@@ -137,26 +61,19 @@
 -
 -    let mut codes = HashMap::new();
 -    generate_codes(&tree, String::new(), &mut codes);
-+pub fn huffman_encode(text: &str) -> (String, HashMap<char, String>) { … 15 line(s) … ⟦tj:c652b7d04a32ef25b2ab55585f8d6d18⟧ }
- 
+-
 -    let encoded: String = text.chars().map(|ch| codes[&ch].as_str()).collect();
 -
--    (encoded, codes)
--}
--
- /// Decodes a Huffman-encoded string
- ///
- /// # Arguments
-@@ -242,31 +159,8 @@
- /// let decoded = huffman_decode(&encoded, &codes);
- /// assert_eq!(text, decoded);
- /// ```
--pub fn huffman_decode(encoded: &str, codes: &HashMap<char, String>) -> String {
--    if encoded.is_empty() {
--        return String::new();
--    }
-+pub fn huffman_decode(encoded: &str, codes: &HashMap<char, String>) -> String { … 24 line(s) … ⟦tj:814c2f954559ff95c1e75e4dc73820c9⟧ }
++    { … 10 line(s) … ⟦tj:c652b7d04a32ef25b2ab55585f8d6d18⟧ }
+     (encoded, codes)
+ }
  
+@@ -245,25 +204,7 @@
+ pub fn huffman_decode(encoded: &str, codes: &HashMap<char, String>) -> String {
+     if encoded.is_empty() {
+         return String::new();
+-    }
+-
 -    // Reverse the code map for decoding
 -    let reverse_codes: HashMap<&str, char> = codes
 -        .iter()
@@ -174,19 +91,14 @@
 -        }
 -    }
 -
--    decoded
--}
--
- /// Demonstrates Huffman encoding by processing a file and displaying detailed results
- ///
- /// This function reads a file, encodes it using Huffman coding, and displays:
-@@ -300,231 +194,44 @@
- /// demonstrate_huffman_from_file("test.txt").unwrap();
- /// ```
- #[allow(dead_code)]
--pub fn demonstrate_huffman_from_file(file_path: &str) -> std::io::Result<()> {
--    // Read the file contents
--    let text = fs::read_to_string(file_path)?;
++    { … 19 line(s) … ⟦tj:814c2f954559ff95c1e75e4dc73820c9⟧ }
+     decoded
+ }
+ 
+@@ -303,90 +244,7 @@
+ pub fn demonstrate_huffman_from_file(file_path: &str) -> std::io::Result<()> {
+     // Read the file contents
+     let text = fs::read_to_string(file_path)?;
 -
 -    if text.is_empty() {
 -        println!("File is empty!");
@@ -262,8 +174,7 @@
 -        println!();
 -    }
 -    println!();
-+pub fn demonstrate_huffman_from_file(file_path: &str) -> std::io::Result<()> { … 89 line(s) … ⟦tj:7d015b08e96d0e5f84e4d4cc8aef60f7⟧ }
- 
+-
 -    // Verify decoding
 -    let decoded = huffman_decode(&encoded, &codes);
 -    if decoded == text {
@@ -272,28 +183,12 @@
 -        println!("✗ Decoding verification: FAILED");
 -    }
 -
--    Ok(())
--}
--
- #[cfg(test)]
- mod tests {
-     use super::*;
++    { … 84 line(s) … ⟦tj:7d015b08e96d0e5f84e4d4cc8aef60f7⟧ }
+     Ok(())
+ }
  
-     #[test]
--    fn test_empty_string() {
--        let (encoded, codes) = huffman_encode("");
--        assert_eq!(encoded, "");
--        assert!(codes.is_empty());
--    }
-+    fn test_empty_string() { … 5 line(s) … ⟦tj:4e778dccd16d1f7862a92cf401c0f195⟧ }
- 
-     #[test]
--    fn test_single_character() {
--        let (encoded, codes) = huffman_encode("aaaa");
--        assert_eq!(encoded, "0000");
--        assert_eq!(codes.get(&'a'), Some(&"0".to_string()));
--    }
-+    fn test_single_character() { … 5 line(s) … ⟦tj:aa6b982f5efa0b2a951505bf46c42815⟧ }
+@@ -409,50 +267,19 @@
+     }
  
      #[test]
 -    fn test_simple_string() {
@@ -312,23 +207,24 @@
 -    }
 -
      #[test]
--    fn test_encode_decode_roundtrip() {
--        let test_cases = vec![
--            "a",
+     fn test_encode_decode_roundtrip() {
+         let test_cases = vec![
+             "a",
 -            "ab",
 -            "hello world",
 -            "the quick brown fox jumps over the lazy dog",
 -            "aaaaabbbbbcccccdddddeeeeefffffggggghhhhhiiiii",
 -        ];
-+    fn test_encode_decode_roundtrip() { … 15 line(s) … ⟦tj:458b4802df972876258794181648e230⟧ }
- 
+-
 -        for text in test_cases {
 -            let (encoded, codes) = huffman_encode(text);
 -            let decoded = huffman_decode(&encoded, &codes);
 -            assert_eq!(decoded, text, "Failed roundtrip for: '{text}'");
--        }
++        { … 10 line(s) … ⟦tj:458b4802df972876258794181648e230⟧ }
+         }
 -    }
--
++}
+ 
      #[test]
 -    fn test_frequency_based_encoding() {
 -        // In "aaabbc", 'a' should have shorter code than 'b' or 'c'
@@ -344,17 +240,11 @@
 -    }
 -
      #[test]
--    fn test_compression_ratio() {
--        let text = "aaaaaaaaaa"; // 10 'a's
--        let (encoded, _) = huffman_encode(text);
-+    fn test_compression_ratio() { … 9 line(s) … ⟦tj:25618276f39d4ddf267eb526fa998b66⟧ }
+     fn test_compression_ratio() {
+         let text = "aaaaaaaaaa"; // 10 'a's
+@@ -465,18 +292,8 @@
+     }
  
--        // Original: 10 chars * 8 bits = 80 bits (in UTF-8)
--        // Huffman: 10 * 1 bit = 10 bits (single character gets code "0")
--        assert_eq!(encoded.len(), 10);
--        assert!(encoded.chars().all(|c| c == '0'));
--    }
--
      #[test]
 -    fn test_all_unique_characters() {
 -        let text = "abcdefg";
@@ -370,30 +260,13 @@
 -    }
 -
      #[test]
--    fn test_build_frequency_map() {
--        let frequencies = build_frequency_map("hello");
--        assert_eq!(frequencies.get(&'h'), Some(&1));
--        assert_eq!(frequencies.get(&'e'), Some(&1));
--        assert_eq!(frequencies.get(&'l'), Some(&2));
--        assert_eq!(frequencies.get(&'o'), Some(&1));
--    }
-+    fn test_build_frequency_map() { … 7 line(s) … ⟦tj:4a07e035aa8a4cc30bb538dd2933016f⟧ }
- 
-     #[test]
--    fn test_unicode_characters() {
--        let text = "Hello, 世界! 🌍";
--        let (encoded, codes) = huffman_encode(text);
--        let decoded = huffman_decode(&encoded, &codes);
--        assert_eq!(decoded, text);
--    }
-+    fn test_unicode_characters() { … 6 line(s) … ⟦tj:fe67215d186967a29297df4d484b3007⟧ }
- 
-     #[test]
--    fn test_demonstrate_huffman_from_file() {
--        use std::fs::File;
--        use std::io::Write;
-+    fn test_demonstrate_huffman_from_file() { … 17 line(s) … ⟦tj:fd25005adf28e082faa828e72fdc7e69⟧ }
- 
+     fn test_build_frequency_map() {
+         let frequencies = build_frequency_map("hello");
+@@ -498,33 +315,12 @@
+     fn test_demonstrate_huffman_from_file() {
+         use std::fs::File;
+         use std::io::Write;
+-
 -        // Create a temporary test file
 -        let test_file = "/tmp/huffman_test.txt";
 -        let test_content = "The quick brown fox jumps over the lazy dog";
@@ -405,9 +278,11 @@
 -
 -        // Test the demonstrate function
 -        let result = demonstrate_huffman_from_file(test_file);
--        assert!(result.is_ok());
++        { … 12 line(s) … ⟦tj:fd25005adf28e082faa828e72fdc7e69⟧ }
+         assert!(result.is_ok());
 -    }
--
++}
+ 
      #[test]
 -    fn test_demonstrate_empty_file() {
 -        use std::fs::File;
@@ -424,40 +299,11 @@
  }
  
  /// Main function for command-line usage
-@@ -536,32 +243,7 @@
- /// ```
- #[cfg(not(test))]
- #[allow(dead_code)]
--fn main() {
--    let args: Vec<String> = env::args().collect();
-+fn main() { … 29 line(s) … ⟦tj:48e3d59882f81dea3c39acb40ee31029⟧ }
+@@ -565,3 +361,6 @@
+         }
+     }
+ }
 +[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
- 
--    if args.len() < 2 {
--        eprintln!("Huffman Encoding - Lossless Data Compression");
--        eprintln!();
--        eprintln!("Usage: {} <file_path>", args[0]);
--        eprintln!();
--        eprintln!("Example:");
--        eprintln!("  {} sample.txt", args[0]);
--        eprintln!();
--        eprintln!("This will encode the file and display:");
--        eprintln!("  - Character code mappings");
--        eprintln!("  - Compression statistics");
--        eprintln!("  - Encoded binary output");
--        eprintln!("  - Verification of successful decoding");
--        std::process::exit(1);
--    }
--
--    let file_path = &args[1];
--
--    match demonstrate_huffman_from_file(file_path) {
--        Ok(()) => {}
--        Err(e) => {
--            eprintln!("Error processing file '{file_path}': {e}");
--            std::process::exit(1);
--        }
--    }
--}
++
 +[compacted tool output — this is a PARTIAL view; the full original (16293 bytes) is available by calling tinyjuice_retrieve with token "e84401ece504123913332f21543191c2" (marker ⟦tj:e84401ece504123913332f21543191c2⟧)]
 \ No newline at end of file

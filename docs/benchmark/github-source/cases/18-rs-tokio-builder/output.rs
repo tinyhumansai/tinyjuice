@@ -214,14 +214,25 @@ impl Builder {
     /// [`LocalSet`].
     ///
     /// [`LocalSet`]: crate::task::LocalSet
-    pub fn new_current_thread() -> Builder { … 9 line(s) … ⟦tj:805f74e759d04a90875988146b1853d3⟧ }
+    pub fn new_current_thread() -> Builder {
+        #[cfg(loom)]
+        const EVENT_INTERVAL: u32 = 4;
+        // The number `61` is fairly arbitrary. I believe this value was copied from golang.
+        #[cfg(not(loom))]
+        const EVENT_INTERVAL: u32 = 61;
+
+        Builder::new(Kind::CurrentThread, EVENT_INTERVAL)
+    }
 
     /// Returns a new builder with the multi thread scheduler selected.
     ///
     /// Configuration methods can be chained on the return value.
     #[cfg(feature = "rt-multi-thread")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rt-multi-thread")))]
-    pub fn new_multi_thread() -> Builder { … 4 line(s) … ⟦tj:96e62db8fbb7bcad39f70126a9f02a49⟧ }
+    pub fn new_multi_thread() -> Builder {
+        // The number `61` is fairly arbitrary. I believe this value was copied from golang.
+        Builder::new(Kind::MultiThread, 61)
+    }
 
     cfg_unstable! {
         /// Returns a new builder with the alternate multi thread scheduler
@@ -247,7 +258,63 @@ impl Builder {
     /// values.
     ///
     /// Configuration methods can be chained on the return value.
-    pub(crate) fn new(kind: Kind, event_interval: u32) -> Builder { … 57 line(s) … ⟦tj:a7dbfcbeae6d479d39df53882ef3bc72⟧ }
+    pub(crate) fn new(kind: Kind, event_interval: u32) -> Builder {
+        Builder {
+            kind,
+
+            // I/O defaults to "off"
+            enable_io: false,
+            nevents: 1024,
+
+            // Time defaults to "off"
+            enable_time: false,
+
+            // The clock starts not-paused
+            start_paused: false,
+
+            // Read from environment variable first in multi-threaded mode.
+            // Default to lazy auto-detection (one thread per CPU core)
+            worker_threads: None,
+
+            max_blocking_threads: 512,
+
+            // Default thread name
+            thread_name: std::sync::Arc::new(|| "tokio-runtime-worker".into()),
+
+            // Do not set a stack size by default
+            thread_stack_size: None,
+
+            // No worker thread callbacks
+            after_start: None,
+            before_stop: None,
+            before_park: None,
+            after_unpark: None,
+
+            keep_alive: None,
+
+            // Defaults for these values depend on the scheduler kind, so we get them
+            // as parameters.
+            global_queue_interval: None,
+            event_interval,
+
+            #[cfg(not(loom))]
+            local_queue_capacity: 256,
+
+            #[cfg(loom)]
+            local_queue_capacity: 4,
+
+            seed_generator: RngSeedGenerator::new(RngSeed::new()),
+
+            #[cfg(tokio_unstable)]
+            unhandled_panic: UnhandledPanic::Ignore,
+
+            metrics_poll_count_histogram_enable: false,
+
+            metrics_poll_count_histogram: HistogramBuilder::default(),
+
+            disable_lifo_slot: false,
+        }
+    }
 
     /// Enables both I/O and time drivers.
     ///
@@ -315,7 +382,11 @@ impl Builder {
     ///
     /// This will panic if `val` is not larger than `0`.
     #[track_caller]
-    pub fn worker_threads(&mut self, val: usize) -> &mut Self { … 5 line(s) … ⟦tj:cb8a62204cb6ae3489ca08a95b8232e4⟧ }
+    pub fn worker_threads(&mut self, val: usize) -> &mut Self {
+        assert!(val > 0, "Worker threads cannot be set to 0");
+        self.worker_threads = Some(val);
+        self
+    }
 
     /// Specifies the limit for additional threads spawned by the Runtime.
     ///
@@ -353,7 +424,11 @@ impl Builder {
     /// [`thread_keep_alive`]: Self::thread_keep_alive
     #[track_caller]
     #[cfg_attr(docsrs, doc(alias = "max_threads"))]
-    pub fn max_blocking_threads(&mut self, val: usize) -> &mut Self { … 5 line(s) … ⟦tj:9ba15eefeaa79311082a529509fa5112⟧ }
+    pub fn max_blocking_threads(&mut self, val: usize) -> &mut Self {
+        assert!(val > 0, "Max blocking threads cannot be set to 0");
+        self.max_blocking_threads = val;
+        self
+    }
 
     /// Sets name of threads spawned by the `Runtime`'s thread pool.
     ///
@@ -370,7 +445,11 @@ impl Builder {
     ///     .build();
     /// # }
     /// ```
-    pub fn thread_name(&mut self, val: impl Into<String>) -> &mut Self { … 5 line(s) … ⟦tj:c1b839fe6d662a5b8d11ca39ef6e2491⟧ }
+    pub fn thread_name(&mut self, val: impl Into<String>) -> &mut Self {
+        let val = val.into();
+        self.thread_name = std::sync::Arc::new(move || val.clone());
+        self
+    }
 
     /// Sets a function used to generate the name of threads spawned by the `Runtime`'s thread pool.
     ///
@@ -394,7 +473,10 @@ impl Builder {
     pub fn thread_name_fn<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn() -> String + Send + Sync + 'static,
-    { … 4 line(s) … ⟦tj:bcc38ffa4d4b3d04519d554006c8957e⟧ }
+    {
+        self.thread_name = std::sync::Arc::new(f);
+        self
+    }
 
     /// Sets the stack size (in bytes) for worker threads.
     ///
@@ -415,7 +497,10 @@ impl Builder {
     ///     .build();
     /// # }
     /// ```
-    pub fn thread_stack_size(&mut self, val: usize) -> &mut Self { … 4 line(s) … ⟦tj:8ac35a29333c30bc95de3d51b0b077ef⟧ }
+    pub fn thread_stack_size(&mut self, val: usize) -> &mut Self {
+        self.thread_stack_size = Some(val);
+        self
+    }
 
     /// Executes function `f` after each thread is started but before it starts
     /// doing work.
@@ -438,7 +523,10 @@ impl Builder {
     pub fn on_thread_start<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn() + Send + Sync + 'static,
-    { … 4 line(s) … ⟦tj:1fb11a311e805e743c780b9b9470e48d⟧ }
+    {
+        self.after_start = Some(std::sync::Arc::new(f));
+        self
+    }
 
     /// Executes function `f` before each thread stops.
     ///
@@ -460,7 +548,10 @@ impl Builder {
     pub fn on_thread_stop<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn() + Send + Sync + 'static,
-    { … 4 line(s) … ⟦tj:6005a1b7d04034a660e9f846e456712b⟧ }
+    {
+        self.before_stop = Some(std::sync::Arc::new(f));
+        self
+    }
 
     /// Executes function `f` just before a thread is parked (goes idle).
     /// `f` is called within the Tokio context, so functions like [`tokio::spawn`](crate::spawn)
@@ -535,7 +626,10 @@ impl Builder {
     pub fn on_thread_park<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn() + Send + Sync + 'static,
-    { … 4 line(s) … ⟦tj:dff6d67c79ee5b51efdc58c21ab6125d⟧ }
+    {
+        self.before_park = Some(std::sync::Arc::new(f));
+        self
+    }
 
     /// Executes function `f` just after a thread unparks (starts executing tasks).
     ///
@@ -567,7 +661,10 @@ impl Builder {
     pub fn on_thread_unpark<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn() + Send + Sync + 'static,
-    { … 4 line(s) … ⟦tj:1d6c6d8390e4362d11d3819ce7ebd41f⟧ }
+    {
+        self.after_unpark = Some(std::sync::Arc::new(f));
+        self
+    }
 
     /// Creates the configured `Runtime`.
     ///
@@ -584,9 +681,22 @@ impl Builder {
     ///     println!("Hello from the Tokio runtime");
     /// });
     /// ```
-    pub fn build(&mut self) -> io::Result<Runtime> { … 9 line(s) … ⟦tj:92cd7e852ebfcbaaa4b35ee224d61ddd⟧ }
+    pub fn build(&mut self) -> io::Result<Runtime> {
+        match &self.kind {
+            Kind::CurrentThread => self.build_current_thread_runtime(),
+            #[cfg(feature = "rt-multi-thread")]
+            Kind::MultiThread => self.build_threaded_runtime(),
+            #[cfg(all(tokio_unstable, feature = "rt-multi-thread"))]
+            Kind::MultiThreadAlt => self.build_alt_threaded_runtime(),
+        }
+    }
 
-    fn get_cfg(&self, workers: usize) -> driver::Cfg { … 16 line(s) … ⟦tj:42a32dbde6a9bcb66392a631f3991cb3⟧ }
+    fn get_cfg(&self, workers: usize) -> driver::Cfg {
+        driver::Cfg {
+            enable_pause_time: match self.kind {
+        { … 11 line(s) … ⟦tj:42a32dbde6a9bcb66392a631f3991cb3⟧ }
+        }
+}
 
     /// Sets a custom timeout for a thread in the blocking pool.
     ///
@@ -604,7 +714,10 @@ impl Builder {
     ///     .build();
     /// # }
     /// ```
-    pub fn thread_keep_alive(&mut self, duration: Duration) -> &mut Self { … 4 line(s) … ⟦tj:a3dc9a342e9bdde93752e3dcc535b366⟧ }
+    pub fn thread_keep_alive(&mut self, duration: Duration) -> &mut Self {
+        self.keep_alive = Some(duration);
+        self
+    }
 
     /// Sets the number of scheduler ticks after which the scheduler will poll the global
     /// task queue.
@@ -638,7 +751,11 @@ impl Builder {
     /// # }
     /// ```
     #[track_caller]
-    pub fn global_queue_interval(&mut self, val: u32) -> &mut Self { … 5 line(s) … ⟦tj:a23b27b4d8eac4c0dd2597f0fb283c15⟧ }
+    pub fn global_queue_interval(&mut self, val: u32) -> &mut Self {
+        assert!(val > 0, "global_queue_interval must be greater than 0");
+        self.global_queue_interval = Some(val);
+        self
+    }
 
     /// Sets the number of scheduler ticks after which the scheduler will poll for
     /// external events (timers, I/O, and so on).
@@ -667,7 +784,10 @@ impl Builder {
     ///     .build();
     /// # }
     /// ```
-    pub fn event_interval(&mut self, val: u32) -> &mut Self { … 4 line(s) … ⟦tj:4a801ff9934aafb2457c8fbb6a5745cc⟧ }
+    pub fn event_interval(&mut self, val: u32) -> &mut Self {
+        self.event_interval = val;
+        self
+    }
 
     cfg_unstable! {
         /// Configure how the runtime responds to an unhandled panic on a
@@ -951,9 +1071,20 @@ impl Builder {
         }
     }
 
-    fn build_current_thread_runtime(&mut self) -> io::Result<Runtime> { … 47 line(s) … ⟦tj:a67ca3b20a09f198494d810f4a64e69b⟧ }
+    fn build_current_thread_runtime(&mut self) -> io::Result<Runtime> {
+        use crate::runtime::scheduler::{self, CurrentThread};
+        use crate::runtime::{runtime::Scheduler, Config};
+        { … 42 line(s) … ⟦tj:a67ca3b20a09f198494d810f4a64e69b⟧ }
+        ))
+}
 
-    fn metrics_poll_count_histogram_builder(&self) -> Option<HistogramBuilder> { … 7 line(s) … ⟦tj:bef1c27b7a758d69608469ce2e6d9221⟧ }
+    fn metrics_poll_count_histogram_builder(&self) -> Option<HistogramBuilder> {
+        if self.metrics_poll_count_histogram_enable {
+            Some(self.metrics_poll_count_histogram.clone())
+        } else {
+            None
+        }
+    }
 }
 
 cfg_io_driver! {
@@ -1141,7 +1272,12 @@ cfg_rt_multi_thread! {
 }
 
 impl fmt::Debug for Builder {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result { … 15 line(s) … ⟦tj:aa25e650b963da5adbd3fe61945cca54⟧ }
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.debug_struct("Builder")
+            .field("worker_threads", &self.worker_threads)
+        { … 10 line(s) … ⟦tj:aa25e650b963da5adbd3fe61945cca54⟧ }
+            .finish()
+}
 }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
