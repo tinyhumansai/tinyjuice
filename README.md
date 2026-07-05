@@ -187,11 +187,11 @@ helpers still use the process-global `GlobalCcrStore` for compatibility. New
 tests and host adapters can use `MemoryCcrStore` to assert CCR behavior without
 touching the global cache.
 
-Shell-producing hosts can use `apply_shell_compaction_policy` with
-`ShellCompactionPolicy` before compacting command output. The default
-OpenHuman-facing path uses `AllowSafeInventory`: exact file-content reads,
-unsafe inventory actions, and mixed shell sequences stay raw, while repository
-inventory output can still be summarized.
+Shell-producing hosts can use the `route*_shell_policy` variants or call
+`apply_shell_compaction_policy` with `ShellCompactionPolicy` before compacting
+command output. The default OpenHuman-facing path uses `AllowSafeInventory`:
+exact file-content reads, unsafe inventory actions, and mixed shell sequences
+stay raw, while repository inventory output can still be summarized.
 
 Conversation-level helpers under `conversation::*` expose deterministic Hermes
 primitives without host runtime dependencies: token-budget tail selection,

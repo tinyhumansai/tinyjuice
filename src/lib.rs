@@ -35,7 +35,8 @@ pub use cache_hints::{
 };
 pub use compress::{
     compress_content, compress_content_with_store, compress_content_with_store_report, route,
-    route_with_store, route_with_store_report,
+    route_with_shell_policy, route_with_store, route_with_store_report,
+    route_with_store_report_shell_policy, route_with_store_shell_policy,
 };
 pub use compressor::{
     CompressionInput, CompressionOutput, CompressionReport, Compressor, PassthroughCompressor,

@@ -81,6 +81,17 @@ pub async fn route(input: CompressInput<'_>, opts: &CompressOptions) -> Compress
         .0
 }
 
+/// Policy-aware variant of [`route`] for hosts that expose shell-policy config.
+pub async fn route_with_shell_policy(
+    input: CompressInput<'_>,
+    opts: &CompressOptions,
+    shell_policy: ShellCompactionPolicy,
+) -> CompressedOutput {
+    route_with_store_report_shell_policy(input, opts, &cache::GlobalCcrStore, shell_policy)
+        .await
+        .0
+}
+
 /// Store-injected variant of [`route`].
 pub async fn route_with_store(
     input: CompressInput<'_>,
@@ -90,12 +101,40 @@ pub async fn route_with_store(
     route_with_store_report(input, opts, store).await.0
 }
 
+/// Store-injected, policy-aware variant of [`route`].
+pub async fn route_with_store_shell_policy(
+    input: CompressInput<'_>,
+    opts: &CompressOptions,
+    store: &dyn CcrStore,
+    shell_policy: ShellCompactionPolicy,
+) -> CompressedOutput {
+    route_with_store_report_shell_policy(input, opts, store, shell_policy)
+        .await
+        .0
+}
+
 /// Store-injected variant of [`route`] that also returns a redacted pipeline
 /// report.
 pub async fn route_with_store_report(
+    input: CompressInput<'_>,
+    opts: &CompressOptions,
+    store: &dyn CcrStore,
+) -> (CompressedOutput, PipelineReport) {
+    route_with_store_report_shell_policy(
+        input,
+        opts,
+        store,
+        ShellCompactionPolicy::AllowSafeInventory,
+    )
+    .await
+}
+
+/// Store-injected, policy-aware variant of [`route_with_store_report`].
+pub async fn route_with_store_report_shell_policy(
     mut input: CompressInput<'_>,
     opts: &CompressOptions,
     store: &dyn CcrStore,
+    shell_policy: ShellCompactionPolicy,
 ) -> (CompressedOutput, PipelineReport) {
     let content = input.content;
     let original_bytes = content.len();
@@ -143,7 +182,7 @@ pub async fn route_with_store_report(
             exit_code: input.exit_code,
             ..Default::default()
         },
-        ShellCompactionPolicy::AllowSafeInventory,
+        shell_policy,
     );
     if !matches!(shell_policy_decision, ShellPolicyDecision::Compact) {
         let res = CompressedOutput::passthrough(content.to_string(), kind);
@@ -328,6 +367,7 @@ fn is_exact_file_read(hint: &ContentHint) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ShellCompactionPolicy;
     use crate::types::CompressorKind;
 
     fn opts() -> CompressOptions {
@@ -551,6 +591,81 @@ mod tests {
             report.skip_reason,
             Some(PipelineSkipReason::Other("skip_file_content"))
         );
+    }
+
+    #[tokio::test]
+    async fn shell_policy_skip_all_keeps_command_output_raw() {
+        let content = "line one\nline two\n".repeat(120);
+        let hint = ContentHint {
+            source_tool: Some("shell".to_owned()),
+            ..Default::default()
+        };
+        let input = CompressInput {
+            content: &content,
+            kind: ContentKind::PlainText,
+            hint: &hint,
+            exit_code: None,
+            command: Some("rg --files".to_owned()),
+            argv: None,
+            original_bytes: content.len(),
+        };
+
+        let store = cache::MemoryCcrStore::new(10, 1_000_000);
+        let (res, report) = route_with_store_report_shell_policy(
+            input,
+            &opts(),
+            &store,
+            ShellCompactionPolicy::SkipAll,
+        )
+        .await;
+
+        assert!(!res.applied);
+        assert_eq!(res.text, content);
+        assert_eq!(
+            report.skip_reason,
+            Some(PipelineSkipReason::Other("skip_all"))
+        );
+    }
+
+    #[tokio::test]
+    async fn shell_policy_compact_all_allows_file_content_commands() {
+        let mut rows = Vec::new();
+        for i in 0..120 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"account_{i}","email":"a{i}@ex.com","tier":"gold"}}"#
+            ));
+        }
+        let content = format!("[{}]", rows.join(","));
+        let hint = ContentHint {
+            source_tool: Some("shell".to_owned()),
+            extension: Some("json".to_owned()),
+            ..Default::default()
+        };
+        let input = CompressInput {
+            content: &content,
+            kind: ContentKind::PlainText,
+            hint: &hint,
+            exit_code: None,
+            command: Some("cat src/lib.rs".to_owned()),
+            argv: None,
+            original_bytes: content.len(),
+        };
+
+        let mut opts = opts();
+        opts.ccr_min_tokens = 1;
+        let store = cache::MemoryCcrStore::new(10, 1_000_000);
+        let (res, report) = route_with_store_report_shell_policy(
+            input,
+            &opts,
+            &store,
+            ShellCompactionPolicy::CompactAll,
+        )
+        .await;
+
+        assert!(res.applied);
+        assert_eq!(res.content_kind, ContentKind::Json);
+        assert_ne!(res.text, content);
+        assert_eq!(report.skip_reason, None);
     }
 
     #[tokio::test]
