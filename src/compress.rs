@@ -421,11 +421,7 @@ mod tests {
         assert!(res.applied);
         assert!(res.lossy);
         assert_eq!(res.content_kind, ContentKind::Diff);
-        assert!(
-            res.text.contains("reason=lockfile_or_bundle"),
-            "{}",
-            res.text
-        );
+        assert!(res.text.contains("reason=lockfile"), "{}", res.text);
         let token = res.ccr_token.as_deref().expect("offloaded");
         assert_eq!(store.get(token).as_deref(), Some(original.as_str()));
     }

@@ -85,7 +85,8 @@ the original bytes unchanged.
 - **Search compressor** - groups grep/ripgrep output by file, ranks matches,
   and keeps top hits with per-file tallies.
 - **Diff compressor** - keeps patch structure and changed lines, collapses long
-  context and noisy lockfile/bundle hunks.
+  context, and marks omitted lockfile, generated-bundle, or configured noisy
+  hunks with explicit reasons.
 - **HTML compressor** - extracts readable text from rendered markup.
 - **Plain-text ML slot** - optional host-provided callback for learned text
   compression; disabled by default.

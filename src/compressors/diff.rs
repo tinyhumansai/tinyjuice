@@ -18,7 +18,7 @@ pub const CONTEXT_ANCHOR: usize = 3;
 /// A run of unchanged context longer than this collapses to a marker.
 pub const CONTEXT_COLLAPSE_THRESHOLD: usize = 8;
 
-const DEFAULT_NOISY_PATH_SUBSTRINGS: &[&str] = &[
+const DEFAULT_LOCKFILE_PATH_PATTERNS: &[&str] = &[
     "cargo.lock",
     "package-lock.json",
     "pnpm-lock.yaml",
@@ -26,11 +26,9 @@ const DEFAULT_NOISY_PATH_SUBSTRINGS: &[&str] = &[
     "composer.lock",
     "poetry.lock",
     "gemfile.lock",
-    ".min.js",
-    ".min.css",
-    ".map",
     "go.sum",
 ];
+const DEFAULT_GENERATED_BUNDLE_PATH_PATTERNS: &[&str] = &[".min.js", ".min.css", ".map"];
 
 /// Controls the low-value diff hunk offload policy.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -46,9 +44,14 @@ pub struct DiffNoiseOptions {
 impl Default for DiffNoiseOptions {
     fn default() -> Self {
         Self {
-            noisy_path_substrings: DEFAULT_NOISY_PATH_SUBSTRINGS
+            noisy_path_substrings: DEFAULT_LOCKFILE_PATH_PATTERNS
                 .iter()
                 .map(|value| value.to_string())
+                .chain(
+                    DEFAULT_GENERATED_BUNDLE_PATH_PATTERNS
+                        .iter()
+                        .map(|value| value.to_string()),
+                )
                 .collect(),
             drop_whitespace_only_hunks: false,
         }
@@ -91,14 +94,14 @@ pub fn compress_with_options(
 
     let mut out = String::with_capacity(stripped.len() / 2 + 64);
     let mut i = 0usize;
-    let mut current_file_is_noisy = false;
+    let mut current_file_noise_reason = None;
     let mut saw_hunk = false;
 
     while i < lines.len() {
         let line = lines[i];
 
         if line.starts_with("diff --git ") {
-            current_file_is_noisy = is_noisy_path(line, noise_options);
+            current_file_noise_reason = diff_noise_reason(line, noise_options);
             let _ = writeln!(out, "{line}");
             i += 1;
             continue;
@@ -110,8 +113,8 @@ pub fn compress_with_options(
                 let hunk_start = i + 1;
                 let hunk_end = hunk_body_end(&lines, hunk_start);
                 let hunk_body = &lines[hunk_start..hunk_end];
-                let reason = if current_file_is_noisy {
-                    Some("lockfile_or_bundle")
+                let reason = if let Some(reason) = current_file_noise_reason {
+                    Some(reason)
                 } else if noise_options.drop_whitespace_only_hunks
                     && hunk_is_whitespace_only(hunk_body)
                 {
@@ -245,12 +248,38 @@ fn strip_ascii_whitespace(s: &str) -> String {
     s.chars().filter(|c| !c.is_ascii_whitespace()).collect()
 }
 
-fn is_noisy_path(diff_git_line: &str, options: &DiffNoiseOptions) -> bool {
+fn diff_noise_reason(diff_git_line: &str, options: &DiffNoiseOptions) -> Option<&'static str> {
     let l = diff_git_line.to_ascii_lowercase();
-    options.noisy_path_substrings.iter().any(|p| {
-        let p = p.to_ascii_lowercase();
-        !p.is_empty() && l.contains(&p)
-    })
+    let paths = diff_git_paths(diff_git_line);
+    for pattern in &options.noisy_path_substrings {
+        let pattern = pattern.to_ascii_lowercase();
+        if pattern.is_empty()
+            || !(l.contains(&pattern) || paths.iter().any(|path| path.ends_with(&pattern)))
+        {
+            continue;
+        }
+        if pattern_matches_any_default(&pattern, DEFAULT_LOCKFILE_PATH_PATTERNS) {
+            return Some("lockfile");
+        }
+        if pattern_matches_any_default(&pattern, DEFAULT_GENERATED_BUNDLE_PATH_PATTERNS) {
+            return Some("generated_bundle");
+        }
+        return Some("configured_noisy_path");
+    }
+    None
+}
+
+fn pattern_matches_any_default(pattern: &str, defaults: &[&str]) -> bool {
+    defaults.contains(&pattern)
+}
+
+fn diff_git_paths(diff_git_line: &str) -> Vec<String> {
+    diff_git_line
+        .split_whitespace()
+        .skip(2)
+        .filter_map(|path| path.strip_prefix("a/").or_else(|| path.strip_prefix("b/")))
+        .map(|path| path.to_ascii_lowercase())
+        .collect()
 }
 
 #[cfg(test)]
@@ -287,11 +316,86 @@ mod tests {
         }
         let out = compress(&s).expect("compresses").text;
         assert!(
-            out.contains("diff-noise hunk omitted reason=lockfile_or_bundle"),
+            out.contains("diff-noise hunk omitted reason=lockfile"),
             "{out}"
         );
         assert!(!out.contains("new dep entry 7"), "{out}");
         assert!(out.len() < s.len());
+    }
+
+    #[test]
+    fn empty_noisy_path_patterns_disable_lockfile_omission() {
+        let mut s = String::from("diff --git a/Cargo.lock b/Cargo.lock\n@@ -1,60 +1,80 @@\n");
+        for i in 0..20 {
+            let _ = writeln!(s, " context before {i}");
+        }
+        for i in 0..20 {
+            let _ = writeln!(s, "+ new dep entry {i}");
+        }
+        for i in 0..20 {
+            let _ = writeln!(s, "- old dep entry {i}");
+        }
+        for i in 0..20 {
+            let _ = writeln!(s, " context after {i}");
+        }
+        let options = DiffNoiseOptions {
+            noisy_path_substrings: Vec::new(),
+            ..Default::default()
+        };
+
+        let out = compress_with_options(&s, &options)
+            .expect("compresses")
+            .text;
+
+        assert!(!out.contains("diff-noise hunk omitted"), "{out}");
+        assert!(out.contains("new dep entry 7"), "{out}");
+    }
+
+    #[test]
+    fn summarizes_generated_bundle_hunk_with_reason() {
+        let mut s =
+            String::from("diff --git a/dist/app.min.js b/dist/app.min.js\n@@ -1,80 +1,80 @@\n");
+        for i in 0..40 {
+            let _ = writeln!(s, "+ minified chunk payload {i}");
+        }
+        for i in 0..40 {
+            let _ = writeln!(s, "- previous minified payload {i}");
+        }
+
+        let out = compress(&s).expect("compresses").text;
+
+        assert!(
+            out.contains("diff-noise hunk omitted reason=generated_bundle"),
+            "{out}"
+        );
+        assert!(!out.contains("minified chunk payload 7"), "{out}");
+    }
+
+    #[test]
+    fn custom_noisy_path_patterns_get_configured_reason() {
+        let mut s = String::from(
+            "diff --git a/fixtures/snapshot.txt b/fixtures/snapshot.txt\n@@ -1,80 +1,80 @@\n",
+        );
+        for i in 0..40 {
+            let _ = writeln!(s, "+ snapshot chunk payload {i}");
+        }
+        for i in 0..40 {
+            let _ = writeln!(s, "- previous snapshot payload {i}");
+        }
+        let options = DiffNoiseOptions {
+            noisy_path_substrings: vec!["snapshot.txt".to_string()],
+            ..Default::default()
+        };
+
+        let out = compress_with_options(&s, &options)
+            .expect("compresses")
+            .text;
+
+        assert!(
+            out.contains("diff-noise hunk omitted reason=configured_noisy_path"),
+            "{out}"
+        );
+        assert!(!out.contains("snapshot chunk payload 7"), "{out}");
     }
 
     #[test]
