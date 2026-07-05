@@ -2,10 +2,10 @@
 
 TinyJuice currently ships first-class hook installers for Codex and Claude Code.
 
-| Agent | Install command | Hook file | Hook event |
-| --- | --- | --- | --- |
-| Codex | `tinyjuice install codex` | `~/.codex/hooks.json` | `PostToolUse` for `Bash` |
-| Claude Code | `tinyjuice install claude-code` | `~/.claude/settings.json` | `PostToolUse` for `Bash` |
+| Logo | Client | Command |
+| --- | --- | --- |
+| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` |
+| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` |
 
 ## Install The CLI
 
