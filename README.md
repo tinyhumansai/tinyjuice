@@ -242,23 +242,54 @@ cat payload.json | tinyjuice reduce-json --host generic-json -
 A bare `ToolExecutionInput` object is also accepted when the host, profile, and
 options can stay at defaults.
 
-### Codex and Claude Code Hooks
+### Agent Hooks
 
-Build or install a `tinyjuice` binary, then merge a hook into the host config:
+TinyJuice currently ships first-class hook installers for Codex and Claude Code:
+
+| Agent | Install command | Hook file | Hook event |
+| --- | --- | --- | --- |
+| Codex | `tinyjuice install codex` | `~/.codex/hooks.json` | `PostToolUse` for `Bash` |
+| Claude Code | `tinyjuice install claude-code` | `~/.claude/settings.json` | `PostToolUse` for `Bash` |
+
+Install the CLI first from crates.io:
+
+```sh
+cargo install tinyjuice --locked
+```
+
+For development builds, install from Git:
+
+```sh
+cargo install --git https://github.com/tinyhumansai/tinyjuice --locked --bin tinyjuice
+```
+
+Or install the exact code in a local checkout:
+
+```sh
+cargo install --path . --locked --bin tinyjuice
+```
+
+Make sure Cargo's bin directory is on `PATH` before installing hooks:
+
+```sh
+export PATH="$HOME/.cargo/bin:$PATH"
+tinyjuice --help
+```
+
+Then merge TinyJuice into the agent's hook config:
 
 ```sh
 tinyjuice install codex
 tinyjuice install claude-code
 ```
 
-The Codex installer updates `~/.codex/hooks.json` with a `PostToolUse` hook for
-`Bash` tool output. When TinyJuice compacts a large result, it emits
-`hookSpecificOutput.additionalContext`, matching Codex's hook output model.
+The Codex installer updates `~/.codex/hooks.json`. When TinyJuice compacts a
+large result, it emits `hookSpecificOutput.additionalContext`, matching Codex's
+hook output model.
 
-The Claude Code installer updates `~/.claude/settings.json` with a `PostToolUse`
-hook for `Bash` tool output. When TinyJuice compacts a large result, it emits
-`hookSpecificOutput.updatedToolOutput`, so Claude Code sees the compacted tool
-result rather than the noisy original.
+The Claude Code installer updates `~/.claude/settings.json`. When TinyJuice
+compacts a large result, it emits `hookSpecificOutput.updatedToolOutput`, so
+Claude Code sees the compacted tool result rather than the noisy original.
 
 Both installers:
 
@@ -270,7 +301,7 @@ Both installers:
 Examples:
 
 ```sh
-tinyjuice install codex --binary /usr/local/bin/tinyjuice
+tinyjuice install codex --binary "$HOME/.cargo/bin/tinyjuice"
 tinyjuice install claude-code --path ~/.claude/settings.json
 ```
 
