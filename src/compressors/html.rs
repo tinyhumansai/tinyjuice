@@ -84,6 +84,25 @@ pub fn html_to_text(html: &str) -> String {
 
     while i < bytes.len() {
         if bytes[i] == b'<' {
+            if let Some(skip_tag) = skip_until {
+                // Inside a dropped body only the matching close tag is markup.
+                // Anything else — comparison operators in inline JS, stray
+                // `<` in CSS or CDATA — is body text, so a lone `<` must not
+                // consume up to the next `>` (that could swallow the real
+                // close tag and drop the rest of the document).
+                if html[i + 1..].starts_with('/')
+                    && let Some(rel_end) = html[i..].find('>')
+                {
+                    let (name, is_close) = parse_tag_name(&html[i + 1..i + rel_end]);
+                    if is_close && name == skip_tag {
+                        skip_until = None;
+                        i += rel_end + 1;
+                        continue;
+                    }
+                }
+                i += 1;
+                continue;
+            }
             // Comment?
             if html[i..].starts_with("<!--") {
                 if let Some(end) = html[i..].find("-->") {
@@ -98,15 +117,6 @@ pub fn html_to_text(html: &str) -> String {
             };
             let tag_raw = &html[i + 1..i + rel_end];
             let (name, is_close) = parse_tag_name(tag_raw);
-
-            if let Some(skip_tag) = skip_until {
-                // We're inside a dropped body; only a matching close tag exits.
-                if is_close && name == skip_tag {
-                    skip_until = None;
-                }
-                i += rel_end + 1;
-                continue;
-            }
 
             if !is_close && DROP_BODY_TAGS.contains(&name.as_str()) && !tag_raw.ends_with('/') {
                 skip_until = Some(static_tag(&name));
@@ -228,6 +238,36 @@ mod tests {
             "script body must be dropped: {text}"
         );
         assert!(!text.contains("color:red"), "style body must be dropped");
+    }
+
+    #[test]
+    fn stray_lt_in_script_body_does_not_swallow_document() {
+        // `a<b` inside the script must not be parsed as a tag whose end is
+        // the `>` of `</script>` — that would leave skip mode armed forever
+        // and drop everything after the script.
+        let html = "<body><script>if(a<b){run()}</script><h1>Title</h1><p>Body text.</p></body>";
+        let text = html_to_text(html);
+        assert!(text.contains("Title"), "content after script lost: {text}");
+        assert!(text.contains("Body text."), "{text}");
+        assert!(!text.contains("run()"), "script body leaked: {text}");
+    }
+
+    #[test]
+    fn stray_lt_in_style_and_uppercase_close_tag() {
+        let html = "<style>a{width:calc(1<2?1px:2px)}</style><p>kept</p>\
+            <SCRIPT>x<y</SCRIPT><p>also kept</p>";
+        let text = html_to_text(html);
+        assert!(text.contains("kept"), "{text}");
+        assert!(text.contains("also kept"), "{text}");
+        assert!(!text.contains("calc"), "{text}");
+    }
+
+    #[test]
+    fn non_matching_close_tag_inside_script_stays_dropped() {
+        let html = "<script>document.write('</b>')</script><p>after</p>";
+        let text = html_to_text(html);
+        assert!(text.contains("after"), "{text}");
+        assert!(!text.contains("document.write"), "{text}");
     }
 
     #[test]
