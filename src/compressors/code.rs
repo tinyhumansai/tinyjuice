@@ -151,6 +151,8 @@ pub fn stub_code(
 
 #[derive(Debug, Clone)]
 struct StubBody {
+    declaration_start: usize,
+    declaration_range: LineRange,
     body_start: usize,
     body_end: usize,
     body_range: LineRange,
@@ -202,6 +204,26 @@ fn build_stub_from_bodies(
         if body.body_start < cursor {
             continue;
         }
+        if matches!(mode, StubMode::PublicApi) && !body.symbol.public {
+            out.push_str(&content[cursor..body.declaration_start]);
+            let lines = body
+                .body_range
+                .end
+                .saturating_sub(body.declaration_range.start)
+                + 1;
+            let _ = write!(
+                out,
+                "/* ... private declaration lines {}-{} elided ({lines} line(s)) ... */",
+                body.declaration_range.start, body.body_range.end
+            );
+            elisions.push(CodeElision {
+                start_line: body.declaration_range.start,
+                end_line: body.body_range.end,
+                reason: "public_api_private_declaration".to_string(),
+            });
+            cursor = body.body_end;
+            continue;
+        }
         symbols.push(body.symbol.clone());
         out.push_str(&content[cursor..body.body_start]);
         let body_text = &content[body.body_start..body.body_end];
@@ -234,6 +256,7 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
     let mut collapsed: Vec<(usize, &str)> = Vec::new();
     let mut elisions = Vec::new();
     let mut symbols = Vec::new();
+    let mut skipped_private_start: Option<usize> = None;
 
     let flush =
         |out: &mut String, collapsed: &mut Vec<(usize, &str)>, elisions: &mut Vec<CodeElision>| {
@@ -266,20 +289,69 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
         let (opens, closes) = brace_delta(line);
         let start_depth = depth;
         let force_keep = KEEP_MARKERS.iter().any(|m| line.contains(m));
+        let mut next_depth = depth + opens - closes;
+        if next_depth < 0 {
+            next_depth = 0;
+        }
+
+        if let Some(start_line) = skipped_private_start {
+            depth = next_depth;
+            if depth == 0 {
+                elisions.push(CodeElision {
+                    start_line,
+                    end_line: line_no,
+                    reason: "public_api_private_declaration".to_string(),
+                });
+                let _ = writeln!(
+                    out,
+                    "/* ... private declaration lines {start_line}-{line_no} elided ({} line(s)) ... */",
+                    line_no.saturating_sub(start_line) + 1
+                );
+                skipped_private_start = None;
+            }
+            continue;
+        }
 
         if start_depth == 0 || force_keep {
             flush(&mut out, &mut collapsed, &mut elisions);
             if let Some(symbol) = symbol_from_signature(line, line_no, line_no, "heuristic") {
+                if matches!(mode, StubMode::PublicApi) && !symbol.public {
+                    if next_depth == 0 {
+                        elisions.push(CodeElision {
+                            start_line: line_no,
+                            end_line: line_no,
+                            reason: "public_api_private_declaration".to_string(),
+                        });
+                        let _ = writeln!(
+                            out,
+                            "/* ... private declaration line {line_no} elided ... */"
+                        );
+                    } else {
+                        skipped_private_start = Some(line_no);
+                    }
+                    depth = next_depth;
+                    continue;
+                }
                 symbols.push(symbol);
             }
             let _ = writeln!(out, "{line}");
         } else {
             collapsed.push((line_no, line));
         }
-        depth += opens - closes;
-        if depth < 0 {
-            depth = 0;
-        }
+        depth = next_depth;
+    }
+    if let Some(start_line) = skipped_private_start {
+        let end_line = content.lines().count().max(start_line);
+        elisions.push(CodeElision {
+            start_line,
+            end_line,
+            reason: "public_api_private_declaration".to_string(),
+        });
+        let _ = writeln!(
+            out,
+            "/* ... private declaration lines {start_line}-{end_line} elided ({} line(s)) ... */",
+            end_line.saturating_sub(start_line) + 1
+        );
     }
     flush(&mut out, &mut collapsed, &mut elisions);
 
@@ -591,10 +663,15 @@ mod treesitter {
         {
             let body_start = body.start_byte();
             let body_end = body.end_byte();
+            let declaration_start = node.start_byte();
+            let declaration_start_line = byte_to_line(starts, declaration_start);
+            let declaration_end_line = byte_to_line(starts, body_start);
             let start_line = byte_to_line(starts, body_start);
             let end_line = byte_to_line(starts, body_end.saturating_sub(1));
             let symbol = symbol_for_node(content, node, body, starts);
             out.push(StubBody {
+                declaration_start,
+                declaration_range: LineRange::new(declaration_start_line, declaration_end_line),
                 body_start,
                 body_end,
                 body_range: LineRange::new(start_line, end_line),
@@ -767,6 +844,37 @@ mod tests {
     }
 
     #[test]
+    fn stub_code_public_api_omits_private_declarations() {
+        let mut src = String::from("use std::fmt;\n\npub fn visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"visible {i}\");\n"));
+        }
+        src.push_str("}\n\nfn hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"hidden {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("rs"), &StubMode::PublicApi, usize::MAX);
+
+        assert!(out.text.contains("use std::fmt;"), "{}", out.text);
+        assert!(out.text.contains("pub fn visible()"), "{}", out.text);
+        assert!(out.text.contains("private declaration"), "{}", out.text);
+        assert!(!out.text.contains("fn hidden"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 1);
+        assert_eq!(out.symbols[0].name, "visible");
+        assert!(out.symbols[0].public);
+        assert!(
+            out.elisions
+                .iter()
+                .any(|elision| elision.reason == "public_api_private_declaration"),
+            "{:?}",
+            out.elisions
+        );
+    }
+
+    #[test]
     fn stub_code_reports_heuristic_fallback_for_unknown_language() {
         let mut src = String::from("function f() {\n");
         for i in 0..12 {
@@ -779,5 +887,33 @@ mod tests {
         assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
         assert!(!out.elisions.is_empty());
         assert!(out.text.contains("lines"));
+    }
+
+    #[test]
+    fn stub_code_public_api_heuristic_omits_private_blocks() {
+        let mut src = String::from("export function visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"visible {i}\");\n"));
+        }
+        src.push_str("}\n\nfunction hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"hidden {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("unknown"), &StubMode::PublicApi, usize::MAX);
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(
+            out.text.contains("export function visible()"),
+            "{}",
+            out.text
+        );
+        assert!(out.text.contains("private declaration"), "{}", out.text);
+        assert!(!out.text.contains("function hidden"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 1);
+        assert_eq!(out.symbols[0].name, "visible");
+        assert!(out.symbols[0].public);
     }
 }
