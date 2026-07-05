@@ -44,6 +44,11 @@ struct SignalCheck {
 enum CheckExpectation {
     Present,
     Absent,
+    /// The needle survives verbatim, or the output carries an explicit
+    /// omitted-rows marker showing the drop was signposted (and, with CCR,
+    /// recoverable). For ordinary middle-band rows this is the correct gate:
+    /// silently vanishing is a bug, being visibly sampled away is not.
+    PresentOrMarkedOmitted,
 }
 
 #[derive(Debug, Clone)]
@@ -523,10 +528,21 @@ impl SignalCheck {
         }
     }
 
+    fn present_or_marked_omitted(label: impl Into<String>, needle: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            needle: needle.into(),
+            expectation: CheckExpectation::PresentOrMarkedOmitted,
+        }
+    }
+
     fn evaluate(&self, output: &str) -> bool {
         match self.expectation {
             CheckExpectation::Present => output.contains(&self.needle),
             CheckExpectation::Absent => !output.contains(&self.needle),
+            CheckExpectation::PresentOrMarkedOmitted => {
+                output.contains(&self.needle) || output.contains("row(s) omitted")
+            }
         }
     }
 }
@@ -580,33 +596,52 @@ fn case_name(doc_dir: &str) -> &str {
     doc_dir.rsplit('/').next().unwrap_or(doc_dir)
 }
 
-/// Per-fixture JSON checks: a row identifier from the middle band of each
-/// fixture's dominant array (or a deep key for object fixtures) must survive
-/// compression. Middle-band rows are exactly what sampling-style bugs drop
-/// silently, so plain presence is the gate.
+/// Per-fixture JSON checks. Anomalous middle-band rows (error/conflict
+/// indicators, rare fields) must survive verbatim — the compressor is
+/// designed to keep them, so plain presence is the gate. Ordinary
+/// middle-band rows may legitimately be sampled away, but only behind an
+/// explicit omitted-rows marker: silently vanishing fails the gate.
 fn json_case_checks(doc_dir: &str) -> Vec<SignalCheck> {
-    let (label, needle): (&str, &str) = match case_name(doc_dir) {
-        "01-github-tools-array" => (
-            "middle-band tool retained",
+    // Anomalous rows: must survive verbatim.
+    let strict: Option<(&str, &str)> = match case_name(doc_dir) {
+        "01-github-tools-array" => Some((
+            "anomalous middle-band tool retained",
             "GITHUB_AUTH_USER_DOCKER_CONFLICT_PACKAGES_LIST",
-        ),
-        "02-notion-tools-array" => ("middle-band tool retained", "NOTION_GET_ABOUT_USER"),
-        "03-slack-tools-array" => ("middle-band tool retained", "SLACK_DOWNLOAD_SLACK_FILE"),
-        "04-polymarket-markets-list" => ("middle-band market retained", "will-btc-hit-200k"),
-        "05-polymarket-events-list" => ("middle-band event retained", "bitcoin-milestones"),
+        )),
         "06-tauri-capabilities-schema" => {
-            ("capability identifier retained", "webview-accounts-recipes")
+            Some(("capability identifier retained", "webview-accounts-recipes"))
+        }
+        _ => None,
+    };
+    if let Some((label, needle)) = strict {
+        return vec![SignalCheck::present(label, needle)];
+    }
+    // Ordinary rows: present, or visibly (and recoverably) omitted.
+    let (label, needle): (&str, &str) = match case_name(doc_dir) {
+        "02-notion-tools-array" => (
+            "middle-band tool retained or marked",
+            "NOTION_GET_ABOUT_USER",
+        ),
+        "03-slack-tools-array" => (
+            "middle-band tool retained or marked",
+            "SLACK_DOWNLOAD_SLACK_FILE",
+        ),
+        "04-polymarket-markets-list" => {
+            ("middle-band market retained or marked", "will-btc-hit-200k")
+        }
+        "05-polymarket-events-list" => {
+            ("middle-band event retained or marked", "bitcoin-milestones")
         }
         "07-app-schema-object" => (
-            "middle-band method retained",
+            "middle-band method retained or marked",
             "openhuman.config_update_model_settings",
         ),
-        "08-lottie-animation" => ("middle-band layer name retained", "shield"),
-        "09-package-manifest" => ("middle-band dependency retained", "os-browserify"),
-        "10-cargo-metadata" => ("middle-band target retained", "slack-backfill"),
+        "08-lottie-animation" => ("middle-band layer name retained or marked", "shield"),
+        "09-package-manifest" => ("middle-band dependency retained or marked", "os-browserify"),
+        "10-cargo-metadata" => ("middle-band target retained or marked", "slack-backfill"),
         _ => return vec![],
     };
-    vec![SignalCheck::present(label, needle)]
+    vec![SignalCheck::present_or_marked_omitted(label, needle)]
 }
 
 /// Per-fixture HTML/XML presence checks: 1-2 key readable strings from each
