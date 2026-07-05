@@ -75,6 +75,7 @@ Both installers:
 - preserve existing hooks and settings
 - replace an older TinyJuice hook for the same host
 - write a `.bak` file next to the edited JSON file
+- set a small rotating TinyJuice/OpenHuman `statusMessage` for the host working indicator
 - expect `tinyjuice` to be on `PATH` unless `--binary` is supplied
 
 `update` uses the same merge logic as `install`, so it is safe to run repeatedly.

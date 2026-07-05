@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::compress::route;
 use crate::tokens::estimate_tokens;
@@ -17,8 +18,16 @@ use crate::types::{
     ContentKind, ToolExecutionInput,
 };
 
-const CODEX_HOOK_STATUS: &str = "compressing Bash output with TinyJuice";
-const CLAUDE_CODE_HOOK_STATUS: &str = "compressing Bash output with TinyJuice";
+const HOOK_STATUS_MESSAGES: &[&str] = &[
+    "TinyJuice is juicing OpenHuman context",
+    "TinyJuice is squeezing tool noise",
+    "TinyJuice is distilling Bash signal",
+    "TinyJuice is packing tiny context",
+    "TinyJuice is trimming OpenHuman traces",
+    "TinyJuice is polishing CCR memory",
+    "TinyJuice is crushing token sludge",
+    "TinyJuice is bottling compact context",
+];
 
 /// Supported host/plugin integration targets.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -402,6 +411,8 @@ pub fn host_install_spec(host: TinyJuiceHost) -> HostInstallSpec {
                 "Use `tinyjuice update codex` to refresh the hook after changing binaries."
                     .to_string(),
                 "Use `tinyjuice uninstall codex` to remove only TinyJuice hooks.".to_string(),
+                "The hook statusMessage rotates through small TinyJuice/OpenHuman working messages."
+                    .to_string(),
                 "The hook expects a tinyjuice binary on PATH.".to_string(),
             ],
         },
@@ -417,6 +428,8 @@ pub fn host_install_spec(host: TinyJuiceHost) -> HostInstallSpec {
                 "Use `tinyjuice update claude-code` to refresh the hook after changing binaries."
                     .to_string(),
                 "Use `tinyjuice uninstall claude-code` to remove only TinyJuice hooks.".to_string(),
+                "The hook statusMessage rotates through small TinyJuice/OpenHuman working messages."
+                    .to_string(),
                 "Claude Code supports updatedToolOutput, so TinyJuice can replace noisy output."
                     .to_string(),
             ],
@@ -439,6 +452,7 @@ pub fn host_install_spec(host: TinyJuiceHost) -> HostInstallSpec {
 
 /// Render a starter hook/template for a host.
 pub fn host_template(host: TinyJuiceHost, binary: &str) -> String {
+    let status_message = hook_status_message();
     match host {
         TinyJuiceHost::Codex => serde_json::to_string_pretty(&serde_json::json!({
             "hooks": {
@@ -449,7 +463,7 @@ pub fn host_template(host: TinyJuiceHost, binary: &str) -> String {
                             {
                                 "type": "command",
                                 "command": format!("{binary} codex-post-tool-use"),
-                                "statusMessage": CODEX_HOOK_STATUS,
+                                "statusMessage": status_message,
                                 "timeout": 10
                             }
                         ]
@@ -467,7 +481,7 @@ pub fn host_template(host: TinyJuiceHost, binary: &str) -> String {
                             {
                                 "type": "command",
                                 "command": format!("{binary} claude-code-post-tool-use"),
-                                "statusMessage": CLAUDE_CODE_HOOK_STATUS,
+                                "statusMessage": status_message,
                                 "timeout": 10
                             }
                         ]
@@ -518,6 +532,15 @@ let response = sdk.compress_tool_output(ToolExecutionInput {{
         }))
         .expect("template JSON serializes"),
     }
+}
+
+fn hook_status_message() -> &'static str {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let index = (nanos % HOOK_STATUS_MESSAGES.len() as u128) as usize;
+    HOOK_STATUS_MESSAGES[index]
 }
 
 fn response_from_output(
@@ -855,6 +878,13 @@ mod tests {
                 .expect("command")
                 .contains("codex-post-tool-use")
         );
+        let codex_status = codex["hooks"]["PostToolUse"][0]["hooks"][0]["statusMessage"]
+            .as_str()
+            .expect("codex status");
+        assert!(
+            HOOK_STATUS_MESSAGES.contains(&codex_status),
+            "unexpected status: {codex_status}"
+        );
 
         let claude =
             serde_json::from_str::<Value>(&host_template(TinyJuiceHost::ClaudeCode, "tinyjuice"))
@@ -864,6 +894,13 @@ mod tests {
                 .as_str()
                 .expect("command")
                 .contains("claude-code-post-tool-use")
+        );
+        let claude_status = claude["hooks"]["PostToolUse"][0]["hooks"][0]["statusMessage"]
+            .as_str()
+            .expect("claude status");
+        assert!(
+            HOOK_STATUS_MESSAGES.contains(&claude_status),
+            "unexpected status: {claude_status}"
         );
     }
 
