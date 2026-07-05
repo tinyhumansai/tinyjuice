@@ -4,6 +4,8 @@ Real TinyJuice and OpenHuman patches. The diff compressor keeps file headers, hu
 
 Each row links to the full raw input and the exact compacted output used by the benchmark.
 
+Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.
+
 ## Cases
 
 | Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |

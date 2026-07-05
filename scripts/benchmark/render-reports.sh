@@ -78,6 +78,35 @@ category_summary() {
 }
 
 input_lang() {
+  local input_name
+  input_name="$(input_file_name "$1" "${2:-}")"
+  lang_for_file "$input_name" "$1" "${2:-}"
+}
+
+output_lang() {
+  local output_name
+  output_name="$(output_file_name "$1")"
+  lang_for_file "$output_name" "$1" ""
+}
+
+lang_for_file() {
+  local file_name="$1"
+  local category="$2"
+  local doc_dir="${3:-}"
+
+  case "$file_name" in
+    *.diff|*.patch) echo "diff" ;;
+    *.json) echo "json" ;;
+    *.rs) echo "rust" ;;
+    *.md) echo "markdown" ;;
+    *.xml) echo "xml" ;;
+    *.html|*.htm) echo "html" ;;
+    *.log|*.rg|*.txt) echo "text" ;;
+    *) fallback_lang "$category" "$doc_dir" ;;
+  esac
+}
+
+fallback_lang() {
   if [[ "${2:-}" == *rss-* ]]; then
     echo "xml"
     return
@@ -87,15 +116,6 @@ input_lang() {
     json-smartcrusher) echo "json" ;;
     unified-diff) echo "diff" ;;
     html-status-report) echo "html" ;;
-    rust-source) echo "rust" ;;
-    plain-text) echo "markdown" ;;
-    *) echo "text" ;;
-  esac
-}
-
-output_lang() {
-  case "$1" in
-    unified-diff) echo "diff" ;;
     rust-source) echo "rust" ;;
     plain-text) echo "markdown" ;;
     *) echo "text" ;;
@@ -153,6 +173,9 @@ for category in "${categories[@]}"; do
     printf '# %s\n\n' "$title"
     printf '%s\n\n' "$(category_summary "$category")"
     printf 'Each row links to the full raw input and the exact compacted output used by the benchmark.\n\n'
+    if [[ "$category" == "unified-diff" ]]; then
+      printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
+    fi
     printf '## Cases\n\n'
     printf '| Case | Input | Output | Original | Compacted | Est. token reduction | Avg latency | CCR |\n'
     printf '| --- | --- | --- | ---: | ---: | ---: | ---: | --- |\n'
