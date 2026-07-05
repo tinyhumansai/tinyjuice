@@ -92,7 +92,7 @@ Termination Reason:  Namespace SIGNAL, Code 10, Bus error: 10
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5�...
+[compacted tool output — this is a PARTIAL view; the full original (26592 bytes) is available by calling tinyjuice_retrieve with token "c87f7d774040584706d28f7d9035b8d5" (marker ⟦tj:c87f7d774040584706d28f7d9035b8d5⟧)]
 
 ```
 
@@ -159,7 +159,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (29717 bytes) is available by calling tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09" (marker ⟦tj:b2a16dcca94e32f601f4c27a80236f09�...
+[compacted tool output — this is a PARTIAL view; the full original (29717 bytes) is available by calling tinyjuice_retrieve with token "b2a16dcca94e32f601f4c27a80236f09" (marker ⟦tj:b2a16dcca94e32f601f4c27a80236f09⟧)]
 
 ```
 
@@ -234,7 +234,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (46952 bytes) is available by calling tinyjuice_retrieve with token "68101d9a95ec3ff37b0d77c3cbc60a20" (marker ⟦tj:68101d9a95ec3ff37b0d77c3cbc60a20�...
+[compacted tool output — this is a PARTIAL view; the full original (46952 bytes) is available by calling tinyjuice_retrieve with token "68101d9a95ec3ff37b0d77c3cbc60a20" (marker ⟦tj:68101d9a95ec3ff37b0d77c3cbc60a20⟧)]
 
 ```
 
@@ -309,7 +309,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (45921 bytes) is available by calling tinyjuice_retrieve with token "30afbaeb44296119cf1f6a9da564a843" (marker ⟦tj:30afbaeb44296119cf1f6a9da564a843�...
+[compacted tool output — this is a PARTIAL view; the full original (45921 bytes) is available by calling tinyjuice_retrieve with token "30afbaeb44296119cf1f6a9da564a843" (marker ⟦tj:30afbaeb44296119cf1f6a9da564a843⟧)]
 
 ```
 
@@ -384,7 +384,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (44535 bytes) is available by calling tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6" (marker ⟦tj:e4ac41e578f1d783c441d7b17c420ad6�...
+[compacted tool output — this is a PARTIAL view; the full original (44535 bytes) is available by calling tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6" (marker ⟦tj:e4ac41e578f1d783c441d7b17c420ad6⟧)]
 
 ```
 
@@ -458,7 +458,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (40864 bytes) is available by calling tinyjuice_retrieve with token "86568fb7c4af4732716fbb38d5d077dc" (marker ⟦tj:86568fb7c4af4732716fbb38d5d077dc�...
+[compacted tool output — this is a PARTIAL view; the full original (40864 bytes) is available by calling tinyjuice_retrieve with token "86568fb7c4af4732716fbb38d5d077dc" (marker ⟦tj:86568fb7c4af4732716fbb38d5d077dc⟧)]
 
 ```
 
@@ -533,7 +533,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (40969 bytes) is available by calling tinyjuice_retrieve with token "7aa04dead4a225a1cf760c5752e89302" (marker ⟦tj:7aa04dead4a225a1cf760c5752e89302�...
+[compacted tool output — this is a PARTIAL view; the full original (40969 bytes) is available by calling tinyjuice_retrieve with token "7aa04dead4a225a1cf760c5752e89302" (marker ⟦tj:7aa04dead4a225a1cf760c5752e89302⟧)]
 
 ```
 
@@ -607,7 +607,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (41041 bytes) is available by calling tinyjuice_retrieve with token "2ad9146dc43ecec3eaadc280722eb802" (marker ⟦tj:2ad9146dc43ecec3eaadc280722eb802�...
+[compacted tool output — this is a PARTIAL view; the full original (41041 bytes) is available by calling tinyjuice_retrieve with token "2ad9146dc43ecec3eaadc280722eb802" (marker ⟦tj:2ad9146dc43ecec3eaadc280722eb802⟧)]
 
 ```
 
@@ -682,7 +682,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (38092 bytes) is available by calling tinyjuice_retrieve with token "6f9fb0f1edabd33489a2e8931a812b81" (marker ⟦tj:6f9fb0f1edabd33489a2e8931a812b81�...
+[compacted tool output — this is a PARTIAL view; the full original (38092 bytes) is available by calling tinyjuice_retrieve with token "6f9fb0f1edabd33489a2e8931a812b81" (marker ⟦tj:6f9fb0f1edabd33489a2e8931a812b81⟧)]
 
 ```
 
@@ -748,7 +748,7 @@ Output excerpt:
 
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (493358 bytes) is available by calling tinyjuice_retrieve with token "23c47ce58e1cf696d3aa8b0f9e9e54ce" (marker ⟦tj:23c47ce58e1cf696d3aa8b0f9e9e54ce�...
+[compacted tool output — this is a PARTIAL view; the full original (493358 bytes) is available by calling tinyjuice_retrieve with token "23c47ce58e1cf696d3aa8b0f9e9e54ce" (marker ⟦tj:23c47ce58e1cf696d3aa8b0f9e9e54ce⟧)]
 
 ```
 

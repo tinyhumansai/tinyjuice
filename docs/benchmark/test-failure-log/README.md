@@ -60,9 +60,9 @@ stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
 
  FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
-Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+Error: expect(element).not.toBeInTheDocument()
 
-[31mexpected document not to contain element, found <button
+expected document not to contain element, found <button
   class="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-no...
   disabled=""
   type="button"
@@ -71,7 +71,7 @@ Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
     class="w-3 h-3 border border-stone-400 border-t-transparent rounded-full animate-spin"
   />
   Run review now
-</button> instead[39m
+</button> instead
 
 ```
 
@@ -101,7 +101,7 @@ Error: expect(element).not.toBeInTheDocument()
    Start at  23:49:42
    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
-[compacted tool output — this is a PARTIAL view; the full original (5554 bytes) is available by calling tinyjuice_retrieve with token "6662f8a36798fc5c20e4a63b3b70c5fe" (marker ⟦tj:6662f8a36798fc5c20e4a63b3b70c5fe⟧...
+[compacted tool output — this is a PARTIAL view; the full original (5554 bytes) is available by calling tinyjuice_retrieve with token "6662f8a36798fc5c20e4a63b3b70c5fe" (marker ⟦tj:6662f8a36798fc5c20e4a63b3b70c5fe⟧)]
 
 ```
 
@@ -138,9 +138,9 @@ stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
 
  FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
-Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+Error: expect(element).not.toBeInTheDocument()
 
-[31mexpected document not to contain element, found <button
+expected document not to contain element, found <button
   class="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-no...
   disabled=""
   type="button"
@@ -149,7 +149,7 @@ Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
     class="w-3 h-3 border border-stone-400 border-t-transparent rounded-full animate-spin"
   />
   Run review now
-</button> instead[39m
+</button> instead
 
 ```
 
@@ -170,7 +170,7 @@ Error: expect(element).not.toBeInTheDocument()
    Start at  23:49:42
    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
 
-[compacted tool output — this is a PARTIAL view; the full original (2777 bytes) is available by calling tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5" (marker ⟦tj:86eb51aa134ea50382aa89d95827b1b5⟧...
+[compacted tool output — this is a PARTIAL view; the full original (2777 bytes) is available by calling tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5" (marker ⟦tj:86eb51aa134ea50382aa89d95827b1b5⟧)]
 
 ```
 

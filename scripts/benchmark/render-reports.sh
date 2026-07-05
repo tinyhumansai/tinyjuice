@@ -23,15 +23,29 @@ format_bytes() {
 
 snippet() {
   local file="$1"
-  awk 'NR <= 36 {
-    line = $0
-    gsub(/```/, "` ` `", line)
-    if (length(line) > 220) {
-      print substr(line, 1, 220) "..."
-    } else {
-      print line
-    }
-  }' "$file"
+  # Character-aware truncation: awk's substr counts bytes, which splits
+  # multi-byte UTF-8 sequences (… ⟦ ⟧) mid-character and corrupts the whole
+  # README — viewers then fall back to Latin-1 and every marker renders as
+  # mojibake (â€¦ âŸ¦). Also scrubs any invalid bytes from upstream fixtures.
+  python3 - "$file" <<'PY'
+import re
+import sys
+
+ansi = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b[@-Z\\-_]")
+ctrl = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+with open(sys.argv[1], encoding="utf-8", errors="replace") as f:
+    for i, line in enumerate(f):
+        if i >= 36:
+            break
+        line = line.rstrip("\n").replace("```", "` ` `")
+        # Colored tool output (vitest, cargo) carries ANSI escapes; raw
+        # control bytes render as garbage in Markdown viewers.
+        line = ctrl.sub("", ansi.sub("", line))
+        if len(line) > 220:
+            line = line[:220] + "..."
+        print(line)
+PY
 }
 
 category_title() {

@@ -139,7 +139,7 @@ class Container implements ArrayAccess, ContainerContract
     { … 523 line(s) … ⟦tj:540d303356ff5ed0cc8d66bb4ca09583⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (41037 bytes) is available by calling tinyjuice_retrieve with token "e551ccfb9fceb5f3a970a74a6aaeb70a" (marker ⟦tj:e551ccfb9fceb5f3a970a74a6aaeb70a�...
+[compacted tool output — this is a PARTIAL view; the full original (41037 bytes) is available by calling tinyjuice_retrieve with token "e551ccfb9fceb5f3a970a74a6aaeb70a" (marker ⟦tj:e551ccfb9fceb5f3a970a74a6aaeb70a⟧)]
 
 ```
 
@@ -306,7 +306,7 @@ class AVLTree
     { … 373 line(s) … ⟦tj:d7ad52ee28ec73bdfca3c775e785bab5⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (10922 bytes) is available by calling tinyjuice_retrieve with token "4bd1128cfb4ef95215250a8fe19d8989" (marker ⟦tj:4bd1128cfb4ef95215250a8fe19d8989�...
+[compacted tool output — this is a PARTIAL view; the full original (10922 bytes) is available by calling tinyjuice_retrieve with token "4bd1128cfb4ef95215250a8fe19d8989" (marker ⟦tj:4bd1128cfb4ef95215250a8fe19d8989⟧)]
 
 ```
 
@@ -466,7 +466,7 @@ class BellmanFord /*
     { … 172 line(s) … ⟦tj:a7ef979fc3946a404de4343c3e609ca7⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (6103 bytes) is available by calling tinyjuice_retrieve with token "9311b1cc15f9435d5f5e7dec82957066" (marker ⟦tj:9311b1cc15f9435d5f5e7dec82957066⟧...
+[compacted tool output — this is a PARTIAL view; the full original (6103 bytes) is available by calling tinyjuice_retrieve with token "9311b1cc15f9435d5f5e7dec82957066" (marker ⟦tj:9311b1cc15f9435d5f5e7dec82957066⟧)]
 
 ```
 
@@ -550,7 +550,7 @@ public class TopologicalSort<T> where T : IComparable<T>
     { … 337 line(s) … ⟦tj:c25d9fa7c8a6c92870e3030581976deb⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (14419 bytes) is available by calling tinyjuice_retrieve with token "5dc7491667a2d80f9805a7947293b5f7" (marker ⟦tj:5dc7491667a2d80f9805a7947293b5f7�...
+[compacted tool output — this is a PARTIAL view; the full original (14419 bytes) is available by calling tinyjuice_retrieve with token "5dc7491667a2d80f9805a7947293b5f7" (marker ⟦tj:5dc7491667a2d80f9805a7947293b5f7⟧)]
 
 ```
 
@@ -1536,7 +1536,7 @@ class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) 
     { … 188 line(s) … ⟦tj:b3efe7b712eccc77bc4127d9b072cc51⟧ }
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
-[compacted tool output — this is a PARTIAL view; the full original (7042 bytes) is available by calling tinyjuice_retrieve with token "37deb2d94e0ce17d38d563cf95df9d35" (marker ⟦tj:37deb2d94e0ce17d38d563cf95df9d35⟧...
+[compacted tool output — this is a PARTIAL view; the full original (7042 bytes) is available by calling tinyjuice_retrieve with token "37deb2d94e0ce17d38d563cf95df9d35" (marker ⟦tj:37deb2d94e0ce17d38d563cf95df9d35⟧)]
 
 ```
 
