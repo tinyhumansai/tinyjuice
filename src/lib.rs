@@ -33,6 +33,10 @@ pub use compress::{
 pub use compressor::{
     CompressionInput, CompressionOutput, CompressionReport, Compressor, PassthroughCompressor,
 };
+pub use compressors::web_extract::{
+    reduce_web_extract, reduce_web_extract_batch_with_store, reduce_web_extract_with_store,
+    replace_inline_base64_images,
+};
 pub use compressors::{compressor_for, generic_compressor};
 pub use config::CompressionConfig;
 pub use conversation::{
@@ -59,6 +63,8 @@ pub use tool_integration::{
 pub use types::{
     AgentTokenjuiceCompression, CompactResult, CompressInput, CompressOptions, CompressOutput,
     CompressedOutput, CompressorKind, ContentHint, ContentKind, ReduceOptions, ToolExecutionInput,
+    WebExtractBatchInput, WebExtractFormat, WebExtractOptions, WebExtractReduceInput,
+    WebExtractReduction,
 };
 
 #[cfg(test)]

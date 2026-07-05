@@ -90,6 +90,12 @@ that receives class-labeled `SavingsRecord` values (`counted`, `measured`, or
 and redacted rule or skip labels. The older four-argument
 `configure_recorder` callback remains as a compatibility wrapper.
 
+Already-extracted web pages can be passed through `reduce_web_extract` or
+`reduce_web_extract_with_store`. The reducer removes inline base64 image blobs,
+preserves ordinary markdown image URLs, and stores omitted middle content in CCR
+before emitting a head/tail truncation footer. If CCR cannot retain the full
+cleaned page, the reducer returns the cleaned page without lossy truncation.
+
 Run the local analytics interface:
 
 ```sh

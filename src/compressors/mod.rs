@@ -17,6 +17,7 @@ pub mod log;
 pub mod ml_text;
 pub mod search;
 pub mod signals;
+pub mod web_extract;
 
 use async_trait::async_trait;
 

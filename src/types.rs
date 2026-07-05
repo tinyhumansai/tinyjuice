@@ -395,6 +395,110 @@ pub struct ContentHint {
     pub explicit: Option<ContentKind>,
 }
 
+// ---------------------------------------------------------------------------
+// Web extraction reducer inputs
+// ---------------------------------------------------------------------------
+
+/// Format of already-extracted web content handed to the web reducer.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WebExtractFormat {
+    #[default]
+    Markdown,
+    Text,
+    Html,
+}
+
+impl WebExtractFormat {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Markdown => "markdown",
+            Self::Text => "text",
+            Self::Html => "html",
+        }
+    }
+}
+
+/// One already-extracted web page to reduce. Hosts own fetching and URL
+/// validation; TinyJuice receives only extracted content plus metadata.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebExtractReduceInput {
+    pub url: String,
+    #[serde(default)]
+    pub title: Option<String>,
+    pub content: String,
+    #[serde(default)]
+    pub format: WebExtractFormat,
+    #[serde(default)]
+    pub provider: Option<String>,
+    #[serde(default)]
+    pub char_limit: Option<usize>,
+    #[serde(default)]
+    pub metadata: serde_json::Map<String, serde_json::Value>,
+}
+
+/// Batch shape for multi-URL extractors. The reducer keeps page footers intact
+/// even when the combined output exceeds the inline budget.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebExtractBatchInput {
+    pub pages: Vec<WebExtractReduceInput>,
+    #[serde(default)]
+    pub default_char_limit: Option<usize>,
+    #[serde(default)]
+    pub max_combined_inline_chars: Option<usize>,
+}
+
+/// Web extraction truncation knobs. Defaults match the P1-2 plan.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WebExtractOptions {
+    pub char_limit: usize,
+    pub min_char_limit: usize,
+    pub max_char_limit: usize,
+    pub head_ratio: f32,
+    pub convert_base64_images: bool,
+    pub max_combined_inline_chars: usize,
+}
+
+impl Default for WebExtractOptions {
+    fn default() -> Self {
+        Self {
+            char_limit: 15_000,
+            min_char_limit: 2_000,
+            max_char_limit: 500_000,
+            head_ratio: 0.75,
+            convert_base64_images: true,
+            max_combined_inline_chars: 100_000,
+        }
+    }
+}
+
+/// Metadata-only reduction report for a web page.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebExtractReduction {
+    pub text: String,
+    pub body: String,
+    #[serde(default)]
+    pub recovery_footer: Option<String>,
+    #[serde(default)]
+    pub ccr_token: Option<String>,
+    pub source_host: Option<String>,
+    pub source_url_hash: String,
+    #[serde(default)]
+    pub title: Option<String>,
+    pub format: WebExtractFormat,
+    pub original_chars: usize,
+    pub inline_chars: usize,
+    pub head_chars: usize,
+    pub tail_chars: usize,
+    pub omitted_chars: usize,
+    pub truncated: bool,
+    pub full_text_retained: bool,
+    pub base64_images_replaced: usize,
+}
+
 impl ContentHint {
     /// Convenience: a hint carrying only the producing tool name.
     pub fn for_tool(tool_name: impl Into<String>) -> Self {
