@@ -1,7 +1,7 @@
 <h1 align="center">TinyJuice</h1>
 
 <p align="center">
- <img src="https://github.com/tinyhumansai/tinyjuice/raw/main/docs/juice.png" />
+ <img src="https://raw.githubusercontent.com/tinyhumansai/tinyjuice/refs/heads/main/docs/juice.png" />
 </p>
 
 <p align="center">
