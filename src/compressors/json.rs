@@ -30,6 +30,7 @@ use serde_json::{Map, Value};
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 
+use super::adaptive::compute_optimal_k;
 use super::anchors::extract_anchors;
 use super::signals::has_error_indicators;
 use super::{BLOCK_NOTE, Compressor, block_token};
@@ -39,10 +40,15 @@ use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKin
 pub const MIN_ROWS: usize = 3;
 /// Above this many rows the table is additionally row-dropped.
 pub const ROW_DROP_THRESHOLD: usize = 40;
-/// Rows kept from the head when row-dropping.
+/// At most this many rows are kept from the head when row-dropping (the
+/// adaptive selector may keep fewer for redundant tables).
 pub const HEAD_ROWS: usize = 20;
-/// Rows kept from the tail when row-dropping.
+/// At most this many rows are kept from the tail when row-dropping (the
+/// adaptive selector may keep fewer for redundant tables).
 pub const TAIL_ROWS: usize = 10;
+/// Adaptive floor: never keep fewer head+tail rows than this when the table
+/// has more rows than it.
+pub const MIN_KEPT_ROWS: usize = 8;
 /// Z-score beyond which a numeric cell is treated as an outlier worth keeping.
 pub const OUTLIER_SIGMA: f64 = 2.0;
 /// At most this many outlier rows are kept per column (the most extreme
@@ -574,15 +580,17 @@ fn render_out_cell(obj: &Map<String, Value>, oc: &OutCol, truncated: &mut bool) 
 // Row-keeping (row-drop must-keeps)
 // ---------------------------------------------------------------------------
 
-/// Pick the row indices to keep when row-dropping: head/tail windows plus every
-/// anomalous row — nested error text, numeric outliers, Pareto-rare categorical
-/// values, rare structural fields, and query-anchor hits. Ascending, de-duped.
+/// Pick the row indices to keep when row-dropping: adaptively sized head/tail
+/// windows plus every anomalous row — nested error text, numeric outliers,
+/// Pareto-rare categorical values, rare structural fields, and query-anchor
+/// hits. Ascending, de-duped.
 fn rows_to_keep(array: &[Value], columns: &[String], n: usize, anchors: &[String]) -> Vec<usize> {
+    let (head, tail) = adaptive_head_tail(array);
     let mut keep: BTreeSet<usize> = BTreeSet::new();
-    for i in 0..HEAD_ROWS.min(n) {
+    for i in 0..head.min(n) {
         keep.insert(i);
     }
-    for i in n.saturating_sub(TAIL_ROWS)..n {
+    for i in n.saturating_sub(tail)..n {
         keep.insert(i);
     }
 
@@ -610,6 +618,18 @@ fn rows_to_keep(array: &[Value], columns: &[String], n: usize, anchors: &[String
     }
 
     keep.into_iter().collect()
+}
+
+/// Size the head/tail keep windows from the rows themselves: highly redundant
+/// arrays collapse toward [`MIN_KEPT_ROWS`], diverse ones keep up to the full
+/// [`HEAD_ROWS`] + [`TAIL_ROWS`] budget. The total splits ~2/3 head (first
+/// rows) and ~1/3 tail (last rows).
+fn adaptive_head_tail(array: &[Value]) -> (usize, usize) {
+    let serialized: Vec<String> = array.iter().map(compact_json).collect();
+    let refs: Vec<&str> = serialized.iter().map(String::as_str).collect();
+    let k = compute_optimal_k(&refs, MIN_KEPT_ROWS, HEAD_ROWS + TAIL_ROWS);
+    let tail = (k / 3).max(1);
+    (k - tail, tail)
 }
 
 /// Recursively test for error indicators in string leaves down to `depth`.
@@ -1258,6 +1278,131 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&block).expect("valid JSON slice");
         let arr = parsed.as_array().expect("array slice");
         assert!(!arr.is_empty());
-        assert_eq!(arr[0]["name"], "row_20", "slice starts after the head rows");
+        // The slice starts exactly where the adaptive head window ends, and
+        // none of its rows also appear in the rendered table.
+        let first_id = arr[0]["id"].as_u64().expect("id") as usize;
+        assert!(first_id > 0, "head must keep at least one row");
+        assert_eq!(arr[0]["name"], format!("row_{first_id}"));
+        assert!(
+            out.contains(&format!("row_{}", first_id - 1)),
+            "row before the gap must be shown:\n{out}"
+        );
+        for row in arr {
+            let name = row["name"].as_str().expect("name");
+            assert!(
+                !out.contains(&format!("| {name} |")),
+                "omitted row {name} must not also be rendered:\n{out}"
+            );
+        }
+    }
+
+    /// Count rendered table body rows (data rows, excluding header/separator).
+    fn body_row_count(text: &str) -> usize {
+        text.lines()
+            .filter(|l| l.starts_with("| ") && !l.starts_with("| ---"))
+            .count()
+            .saturating_sub(1) // header
+    }
+
+    #[test]
+    fn redundant_rows_collapse_toward_floor() {
+        // 100 near-identical rows: adaptive selection should keep close to
+        // MIN_KEPT_ROWS, far below the fixed HEAD_ROWS+TAIL_ROWS budget.
+        let mut rows = Vec::new();
+        for i in 0..100 {
+            rows.push(format!(
+                r#"{{"id":{i},"msg":"connection timeout retrying request to upstream host","status":"ok"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let c = compress(&input, false, None).expect("compresses");
+        let kept = body_row_count(&c.text);
+        assert!(
+            kept >= MIN_KEPT_ROWS,
+            "never fewer than the floor, got {kept}:\n{}",
+            c.text
+        );
+        assert!(
+            kept <= MIN_KEPT_ROWS + 4,
+            "redundant rows must stay near the floor, got {kept}:\n{}",
+            c.text
+        );
+        assert!(c.text.contains("omitted"), "{}", c.text);
+    }
+
+    #[test]
+    fn diverse_rows_keep_full_budget() {
+        // 100 fully-diverse rows: adaptive selection should keep the full
+        // HEAD_ROWS + TAIL_ROWS budget.
+        let words = [
+            "database",
+            "login",
+            "cache",
+            "worker",
+            "handshake",
+            "latency",
+            "rollout",
+            "webhook",
+            "resolver",
+            "kernel",
+            "exporter",
+            "backlog",
+            "renewal",
+            "election",
+            "limiter",
+            "index",
+            "cookie",
+            "saturated",
+            "multipart",
+            "deadline",
+        ];
+        let mut rows = Vec::new();
+        for i in 0..100 {
+            rows.push(format!(
+                r#"{{"event":"{} {} {} incident {i}","code":"{}{}","weight":{}}}"#,
+                words[i % 20],
+                words[(i * 7 + 3) % 20],
+                words[(i * 13 + 11) % 20],
+                words[(i * 3 + 5) % 20],
+                i * 977,
+                i * i + 17,
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let c = compress(&input, false, None).expect("compresses");
+        let kept = body_row_count(&c.text);
+        assert!(
+            kept >= HEAD_ROWS + TAIL_ROWS,
+            "diverse rows should keep the full budget, got {kept}:\n{}",
+            c.text
+        );
+    }
+
+    #[test]
+    fn must_keep_rows_are_additive_over_adaptive_window() {
+        // Redundant array (small adaptive window) with an error row buried in
+        // the dropped middle: the error row is kept ON TOP of the window.
+        let mut rows = Vec::new();
+        for i in 0..100 {
+            let msg = if i == 60 {
+                "error: upstream exploded"
+            } else {
+                "connection timeout retrying request to upstream host"
+            };
+            rows.push(format!(r#"{{"id":{i},"msg":"{msg}","status":"ok"}}"#));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let c = compress(&input, false, None).expect("compresses");
+        assert!(
+            c.text.contains("error: upstream exploded"),
+            "must-keep error row must survive the adaptive window:\n{}",
+            c.text
+        );
+        let kept = body_row_count(&c.text);
+        assert!(
+            kept <= MIN_KEPT_ROWS + 5,
+            "window should stay small even with the extra must-keep, got {kept}:\n{}",
+            c.text
+        );
     }
 }
