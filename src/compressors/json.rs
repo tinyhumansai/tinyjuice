@@ -36,6 +36,8 @@ pub const OUTLIER_SIGMA: f64 = 2.0;
 /// Maximum distinct values for a full-present field to be treated as a
 /// discriminator bucket anchor.
 pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
+/// Maximum exact duplicate row clusters to anchor while row-dropping.
+pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
 /// Do not spend unbounded parse effort on huge string cells.
 const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
@@ -199,8 +201,9 @@ pub fn analyze(content: &str) -> Option<JsonAnalysis> {
 }
 
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
-/// rows flagged as anomalous, representative discriminator buckets, or
-/// query-relevant. Returns ascending, de-duplicated indices.
+/// rows flagged as anomalous, duplicate-cluster representatives,
+/// representative discriminator buckets, or query-relevant. Returns ascending,
+/// de-duplicated indices.
 fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
     let n = rows.len();
     let lossy = n > ROW_DROP_THRESHOLD;
@@ -216,6 +219,9 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
         keep.insert(i);
     }
     for i in n.saturating_sub(dynamic_tail_rows(n))..n {
+        keep.insert(i);
+    }
+    for i in duplicate_cluster_representatives(rows) {
         keep.insert(i);
     }
 
@@ -293,6 +299,27 @@ fn is_discriminator_field(field: &JsonFieldAnalysis, row_count: usize) -> bool {
     field.present == row_count
         && field.numeric.is_none()
         && (2..=MAX_DISCRIMINATOR_BUCKETS).contains(&field.unique_count)
+}
+
+fn duplicate_cluster_representatives(rows: &[FlatRow]) -> Vec<usize> {
+    let mut clusters: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    for (i, row) in rows.iter().enumerate() {
+        let entry = clusters.entry(row_text(row)).or_insert((i, 0));
+        entry.1 += 1;
+    }
+
+    let mut repeated = clusters
+        .into_values()
+        .filter(|(_, count)| *count > 1)
+        .collect::<Vec<_>>();
+    repeated.sort_by(|(a_first, a_count), (b_first, b_count)| {
+        b_count.cmp(a_count).then_with(|| a_first.cmp(b_first))
+    });
+    repeated
+        .into_iter()
+        .take(MAX_DUPLICATE_CLUSTER_ANCHORS)
+        .map(|(first, _)| first)
+        .collect()
 }
 
 #[derive(Debug, Clone)]
@@ -626,6 +653,30 @@ mod tests {
         assert!(c.lossy);
         assert!(c.text.contains("audit"), "{}", c.text);
         assert!(c.text.contains("audit bucket unique payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn duplicate_cluster_representative_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            if (72..=76).contains(&i) {
+                rows.push(
+                    r#"{"id":"retry-batch-17","status":"retry","message":"duplicate cluster payload"}"#
+                        .to_string(),
+                );
+            } else {
+                rows.push(format!(
+                    r#"{{"id":"job-{i}","status":"ok","message":"ordinary payload {i}"}}"#
+                ));
+            }
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("retry-batch-17"), "{}", c.text);
+        assert!(c.text.contains("duplicate cluster payload"), "{}", c.text);
     }
 
     #[test]
