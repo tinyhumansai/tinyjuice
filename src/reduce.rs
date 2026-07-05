@@ -10,6 +10,7 @@ use regex::Regex;
 
 use crate::{
     classify::classify_execution,
+    policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy},
     text::{
         clamp_text, clamp_text_middle, count_text_chars, dedupe_adjacent, head_tail,
         normalize_lines, pluralize, strip_ansi, trim_empty_edges,
@@ -98,21 +99,7 @@ pub fn normalize_execution_input(input: ToolExecutionInput) -> ToolExecutionInpu
     }
 }
 
-/// True when the command is a well-known file-content inspection tool.
-pub fn is_file_content_inspection_command(input: &ToolExecutionInput) -> bool {
-    static FILE_TOOLS: &[&str] = &[
-        "cat", "sed", "head", "tail", "nl", "bat", "batcat", "jq", "yq",
-    ];
-    let argv = input.argv.as_deref().unwrap_or(&[]);
-    if argv.is_empty() {
-        return false;
-    }
-    let argv0 = std::path::Path::new(&argv[0])
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_default();
-    FILE_TOOLS.contains(&argv0.as_str())
-}
+pub use crate::policy::is_file_content_inspection_command;
 
 // ---------------------------------------------------------------------------
 // Git-status post-processor
@@ -785,10 +772,12 @@ pub fn reduce_execution_with_rules(
         };
     }
 
-    // File-content inspection commands are never compacted
-    if classification.matched_reducer.as_deref() == Some("generic/fallback")
-        && is_file_content_inspection_command(&normalized_input)
-    {
+    // Shell output may be summarized only when the host policy says the command
+    // is safe for compaction. This runs before reducer selection so mixed
+    // command strings cannot accidentally match a specialised reducer prefix.
+    let shell_policy_decision =
+        apply_shell_compaction_policy(&normalized_input, ShellCompactionPolicy::AllowSafeInventory);
+    if !matches!(shell_policy_decision, ShellPolicyDecision::Compact) {
         return CompactResult {
             inline_text: raw_text,
             preview_text: None,

@@ -10,10 +10,13 @@ pub mod compress;
 pub mod compressor;
 pub mod compressors;
 pub mod config;
+pub mod conversation;
 pub mod detect;
 mod error;
 pub mod ml;
 pub mod openhuman;
+pub mod pipeline;
+pub mod policy;
 pub mod reduce;
 pub mod rules;
 pub mod savings;
@@ -23,14 +26,30 @@ pub mod tool_integration;
 pub mod types;
 mod util;
 
-pub use compress::{compress_content, route};
+pub use compress::{
+    compress_content, compress_content_with_store, compress_content_with_store_report, route,
+    route_with_store, route_with_store_report,
+};
 pub use compressor::{
     CompressionInput, CompressionOutput, CompressionReport, Compressor, PassthroughCompressor,
 };
 pub use compressors::{compressor_for, generic_compressor};
 pub use config::CompressionConfig;
+pub use conversation::{
+    ChatMessage, ConversationBudget, ConversationMessage, HeadProtection, TailBudgetSelection,
+    ToolCall, ToolDigestEntry, ToolDigestOptions, ToolDigestReport, ToolResultMessage,
+    align_tail_start_for_tool_boundaries, digest_old_tool_results, effective_input_window,
+    estimate_message_tokens, latest_real_user_index, latest_visible_assistant_index,
+    protected_head_end, redact_sensitive_json, sanitize_orphan_tool_messages,
+    select_tail_by_budget, shrink_json_string_leaves, threshold_tokens,
+};
 pub use detect::detect_content_kind;
 pub use error::{TinyJuiceError, TinyJuiceResult};
+pub use pipeline::{
+    OffloadOutput, OffloadTransform, PipelineInput, PipelineReport, PipelineSkipReason,
+    PipelineStep, ReformatTransform, TransformOutput,
+};
+pub use policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy};
 pub use reduce::reduce_execution_with_rules;
 pub use rules::{LoadRuleOptions, load_builtin_rules, load_rules};
 pub use tool_integration::{

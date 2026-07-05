@@ -29,6 +29,148 @@ pub const DEFAULT_MAX_BYTES: usize = 64 * 1024 * 1024;
 /// capability token.
 const HASH_BYTES: usize = 16;
 
+/// Result of attempting to store an original in CCR.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CcrPutResult {
+    token: String,
+    retained: bool,
+}
+
+impl CcrPutResult {
+    /// Build a put result. Invalid token shapes are never reported as retained.
+    pub fn new(token: String, retained: bool) -> Self {
+        let retained = retained && is_valid_token(&token);
+        Self { token, retained }
+    }
+
+    /// CCR token derived for the original.
+    pub fn token(&self) -> &str {
+        &self.token
+    }
+
+    /// True when the store retained the original and retrieval may be advertised.
+    pub fn retained(&self) -> bool {
+        self.retained
+    }
+}
+
+/// Injectable CCR store.
+pub trait CcrStore: Send + Sync {
+    fn put(&self, content: &str) -> CcrPutResult;
+    fn get(&self, token: &str) -> Option<String>;
+    fn get_range(&self, token: &str, start: usize, end: usize, unit: RangeUnit) -> Option<String> {
+        let original = self.get(token)?;
+        range_from_original(&original, start, end, unit)
+    }
+}
+
+/// Compatibility wrapper over the process-global CCR store.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct GlobalCcrStore;
+
+impl CcrStore for GlobalCcrStore {
+    fn put(&self, content: &str) -> CcrPutResult {
+        let (token, retained) = offload_checked(content);
+        CcrPutResult::new(token, retained)
+    }
+
+    fn get(&self, token: &str) -> Option<String> {
+        retrieve(token)
+    }
+
+    fn get_range(&self, token: &str, start: usize, end: usize, unit: RangeUnit) -> Option<String> {
+        retrieve_range(token, start, end, unit)
+    }
+}
+
+/// Isolated in-memory CCR store for tests and host-managed adapters.
+pub struct MemoryCcrStore {
+    inner: Mutex<Inner>,
+    max_entries: usize,
+    max_bytes: usize,
+    ttl: Option<Duration>,
+    disk_root: Option<PathBuf>,
+}
+
+impl Default for MemoryCcrStore {
+    fn default() -> Self {
+        Self::new(DEFAULT_MAX_ENTRIES, DEFAULT_MAX_BYTES)
+    }
+}
+
+impl MemoryCcrStore {
+    pub fn new(max_entries: usize, max_bytes: usize) -> Self {
+        Self {
+            inner: Mutex::new(Inner::default()),
+            max_entries: max_entries.max(1),
+            max_bytes: max_bytes.max(1),
+            ttl: None,
+            disk_root: None,
+        }
+    }
+
+    pub fn with_ttl(mut self, ttl: Option<Duration>) -> Self {
+        self.ttl = ttl;
+        self
+    }
+
+    pub fn with_disk_root(mut self, root: PathBuf) -> Self {
+        if std::fs::create_dir_all(&root).is_ok() {
+            self.disk_root = Some(root);
+        }
+        self
+    }
+
+    pub fn stats(&self) -> (usize, usize) {
+        let inner = self.inner.lock().unwrap_or_else(|p| p.into_inner());
+        (inner.map.len(), inner.total_bytes)
+    }
+}
+
+impl CcrStore for MemoryCcrStore {
+    fn put(&self, content: &str) -> CcrPutResult {
+        let token = short_hash(content);
+        let mem_retained = self.inner.lock().unwrap_or_else(|p| p.into_inner()).insert(
+            token.clone(),
+            content.to_string(),
+            self.max_entries,
+            self.max_bytes,
+        );
+        let mut disk_retained = false;
+        if let Some(root) = self.disk_root.as_ref() {
+            let path = root.join(&token);
+            if std::fs::write(path, content).is_ok() {
+                disk_retained = true;
+            }
+        }
+        CcrPutResult::new(token, mem_retained || disk_retained)
+    }
+
+    fn get(&self, token: &str) -> Option<String> {
+        if !is_valid_token(token) {
+            return None;
+        }
+        {
+            let mut inner = self.inner.lock().unwrap_or_else(|p| p.into_inner());
+            if let Some(entry) = inner.map.get(token) {
+                if self.ttl.is_none_or(|ttl| entry.created.elapsed() < ttl) {
+                    return Some(entry.content.clone());
+                }
+                if let Some(entry) = inner.map.remove(token) {
+                    inner.total_bytes = inner.total_bytes.saturating_sub(entry.content.len());
+                }
+            }
+        }
+        let root = self.disk_root.as_ref()?;
+        let path = root.join(token);
+        if disk_entry_expired(&path, self.ttl) {
+            let _ = std::fs::remove_file(path);
+            return None;
+        }
+        std::fs::read_to_string(path).ok()
+    }
+}
+
 /// Tunable limits, settable once at startup from the `[tokenjuice]` config.
 struct Limits {
     max_entries: usize,
@@ -269,14 +411,23 @@ pub enum RangeUnit {
 /// only when the original isn't available at all.
 pub fn retrieve_range(hash: &str, start: usize, end: usize, unit: RangeUnit) -> Option<String> {
     let original = retrieve(hash)?;
+    range_from_original(&original, start, end, unit)
+}
+
+fn range_from_original(
+    original: &str,
+    start: usize,
+    end: usize,
+    unit: RangeUnit,
+) -> Option<String> {
     if end <= start {
         return Some(String::new());
     }
     match unit {
         RangeUnit::Bytes => {
             // Clamp to char boundaries so we never split a UTF-8 sequence.
-            let s = floor_char_boundary(&original, start.min(original.len()));
-            let e = floor_char_boundary(&original, end.min(original.len()));
+            let s = floor_char_boundary(original, start.min(original.len()));
+            let e = floor_char_boundary(original, end.min(original.len()));
             Some(original[s..e].to_string())
         }
         RangeUnit::Lines => {
@@ -433,6 +584,46 @@ mod tests {
             retrieve_range(&hash, 4, 999, RangeUnit::Lines).as_deref(),
             Some("line4")
         );
+    }
+
+    #[test]
+    fn memory_store_is_isolated_from_global_cache() {
+        let store = MemoryCcrStore::new(10, 10_000);
+        let original = "isolated memory store payload delta ".repeat(20);
+        let put = store.put(&original);
+
+        assert!(put.retained());
+        assert_eq!(store.get(put.token()).as_deref(), Some(original.as_str()));
+        assert_eq!(retrieve(put.token()), None, "global cache must not see it");
+    }
+
+    #[test]
+    fn memory_store_rejects_oversized_originals() {
+        let store = MemoryCcrStore::new(10, 16);
+        let original = "oversized isolated payload echo ".repeat(20);
+        let put = store.put(&original);
+
+        assert!(!put.retained());
+        assert_eq!(store.get(put.token()), None);
+        assert_eq!(store.stats(), (0, 0));
+    }
+
+    #[test]
+    fn memory_store_rejects_malformed_tokens_before_disk_lookup() {
+        let dir = std::env::temp_dir().join(format!(
+            "tj-memory-ccr-{}",
+            short_hash("memory-store-malformed-token")
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        let store = MemoryCcrStore::new(10, 10_000).with_disk_root(dir.clone());
+
+        assert_eq!(store.get("../../state/config.toml"), None);
+        assert_eq!(
+            store.get_range("../../state/config.toml", 0, 1, RangeUnit::Lines),
+            None
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

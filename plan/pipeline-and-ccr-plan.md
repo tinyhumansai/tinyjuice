@@ -88,12 +88,24 @@ Skip reasons must not include raw content.
 - Move token validation into reusable store helpers.
 - Add isolated tests using an in-memory store.
 
+Status: implemented in the core crate. `CcrStore`, `GlobalCcrStore`,
+`MemoryCcrStore`, and compatibility wrappers exist; isolated memory-store tests
+cover global isolation, oversized rejection, range retrieval, and malformed
+token rejection.
+
 ### Step 2: Add Pipeline Compatibility Wrapper
 
 - Build a pipeline path that can run current compressors as compatibility
   transforms.
 - Keep `compress_content()` and `route()` signatures intact.
 - Assert current behavior is unchanged through existing fixtures.
+
+Status: partially implemented. `compress_content_with_store()` and
+`route_with_store()` are store-injected compatibility paths while the old APIs
+delegate to `GlobalCcrStore`. `_report` variants return `PipelineReport` with
+redacted skip reasons, cheap bloat estimates, and applied-step metadata. The
+typed transform traits exist, but current compressors have not been converted
+into pipeline transforms yet.
 
 ### Step 3: Convert Existing Compressors Gradually
 
@@ -120,6 +132,12 @@ Add cheap estimators for:
 The router can use estimators to decide whether to try transforms and to report
 why a transform was skipped.
 
+Status: first pass implemented. `pipeline::estimate_bloat` reports a redacted
+0-100 score plus categorical reason for JSON rows, diff context, log
+repetition, search fanout, HTML markup, code body bulk, and plain-text
+repetition. The router reports the estimate but does not yet use it to skip
+work.
+
 ## Acceptance Criteria
 
 - Existing public APIs continue to compile.
@@ -138,4 +156,3 @@ why a transform was skipped.
   complete.
 - Do not log raw content in pipeline reports.
 - Do not make all compressors implement the new traits in one large PR.
-

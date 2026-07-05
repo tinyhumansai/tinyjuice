@@ -1,0 +1,23 @@
+//! Provider-neutral conversation compaction primitives.
+//!
+//! This module is intentionally pure library code: it does not know about
+//! OpenHuman runtime types, provider payloads, filesystems, or model calls.
+
+mod boundary;
+mod budget;
+mod tool_digest;
+mod types;
+
+pub use boundary::{
+    align_tail_start_for_tool_boundaries, latest_real_user_index, latest_visible_assistant_index,
+    sanitize_orphan_tool_messages,
+};
+pub use budget::{
+    ConversationBudget, HeadProtection, TailBudgetSelection, effective_input_window,
+    estimate_message_tokens, protected_head_end, select_tail_by_budget, threshold_tokens,
+};
+pub use tool_digest::{
+    ToolDigestEntry, ToolDigestOptions, ToolDigestReport, digest_old_tool_results,
+    redact_sensitive_json, shrink_json_string_leaves,
+};
+pub use types::{ChatMessage, ConversationMessage, ToolCall, ToolResultMessage};

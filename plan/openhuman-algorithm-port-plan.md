@@ -59,12 +59,16 @@ the process-global cache.
 
 TinyJuice files (per pipeline-and-ccr-plan):
 
-- `src/pipeline/mod.rs`, `src/pipeline/transform.rs`, `src/pipeline/report.rs` (NEW)
-- `src/cache/store.rs` — extract `CcrStore` trait, keep global wrappers
+- `src/pipeline/mod.rs`, `src/pipeline/transform.rs`, `src/pipeline/report.rs`
+  — present with the first transform/report primitives.
+- `src/cache/store.rs` — `CcrStore`, `GlobalCcrStore`, and `MemoryCcrStore`
+  are present; global wrappers are preserved.
 
 OpenHuman files:
 
-- `vendor/tinyjuice` — submodule bump (currently `4b1a34f`, behind HEAD).
+- Current `../openhuman-4` has a local `src/openhuman/tokenjuice/` copy rather
+  than `vendor/tinyjuice`; mirror store/pipeline exports there until the crate
+  dependency boundary is restored.
 - `src/openhuman/tokenjuice/mod.rs` — re-export `CcrStore`, `PipelineReport`;
   `install_from_config` constructs the store explicitly instead of relying on
   global state, keeping the global as compatibility path.

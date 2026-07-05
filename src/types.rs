@@ -551,13 +551,22 @@ impl Default for CompressOptions {
     }
 }
 
-/// The result of the universal [`crate::compress_content`]
-/// entry point: the compacted text (with any CCR footer already appended), plus
-/// metadata for callers/stats.
+/// The result of the universal [`crate::compress_content`] entry point.
+///
+/// `text` preserves the original compatibility contract: it is the final
+/// model-facing string with any CCR recovery footer already appended. Hosts that
+/// apply their own downstream caps should use `body` and `recovery_footer`
+/// instead, truncate only `body`, then reattach `recovery_footer` so the
+/// recovery marker cannot be severed.
 #[derive(Debug, Clone)]
 pub struct CompressedOutput {
-    /// Final text to inline into context (includes the retrieval footer when lossy).
+    /// Final text to inline into context (includes the retrieval footer when present).
     pub text: String,
+    /// Compacted body without the recovery footer.
+    pub body: String,
+    /// Recovery footer to append after host-side truncation, if CCR retained the
+    /// original.
+    pub recovery_footer: Option<String>,
     /// The detected content kind.
     pub content_kind: ContentKind,
     /// Which compressor fired (`None` ⇒ pass-through).
@@ -579,7 +588,9 @@ impl CompressedOutput {
     pub fn passthrough(content: String, kind: ContentKind) -> Self {
         let len = content.len();
         Self {
-            text: content,
+            text: content.clone(),
+            body: content,
+            recovery_footer: None,
             content_kind: kind,
             compressor: CompressorKind::None,
             lossy: false,
