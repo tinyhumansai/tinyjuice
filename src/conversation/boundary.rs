@@ -162,6 +162,20 @@ mod tests {
     }
 
     #[test]
+    fn boundary_alignment_rechecks_after_moving_to_parent_call() {
+        let messages = vec![
+            ConversationMessage::user("ask"),
+            ConversationMessage::assistant_tool_calls(vec![ToolCall::new("a", "read_file", "{}")]),
+            ConversationMessage::assistant_tool_calls(vec![ToolCall::new("b", "shell", "{}")]),
+            ConversationMessage::tool_results(vec![ToolResultMessage::new("a", "file body")]),
+            ConversationMessage::tool_results(vec![ToolResultMessage::new("b", "shell body")]),
+            ConversationMessage::assistant("done"),
+        ];
+
+        assert_eq!(align_tail_start_for_tool_boundaries(&messages, 4), 1);
+    }
+
+    #[test]
     fn orphan_tool_result_is_removed() {
         let messages = vec![
             ConversationMessage::tool_results(vec![ToolResultMessage::new("missing", "body")]),
