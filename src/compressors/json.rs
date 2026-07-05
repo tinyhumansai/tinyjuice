@@ -133,7 +133,7 @@ fn compress_object(
     let found = find_best_nested(root)?;
     let container = found.container;
     let key = found.path.rsplit('.').next().unwrap_or(&found.path);
-    let preamble = sibling_preamble(container, key);
+    let preamble = sibling_preamble(container, key, block_tokens);
 
     match found.kind {
         CandidateKind::Objects => {
@@ -252,14 +252,17 @@ fn classify_array(arr: &[Value]) -> Option<CandidateKind> {
 /// Render the scalar siblings of the tabled array key as `key: value` preamble
 /// lines (truncated). Non-scalar siblings are skipped — the table/preamble is a
 /// summary, and the router keeps the original recoverable.
-fn sibling_preamble(container: &Map<String, Value>, array_key: &str) -> String {
+fn sibling_preamble(container: &Map<String, Value>, array_key: &str, allow_truncate: bool) -> String {
     let mut out = String::new();
     for (key, val) in container {
         if key == array_key {
             continue;
         }
         let rendered = match val {
-            Value::String(s) => truncate_plain(s, CELL_MAX),
+            // Without CCR the preamble must stay faithful, so long sibling
+            // strings are kept whole rather than truncated.
+            Value::String(s) if allow_truncate => truncate_plain(s, CELL_MAX),
+            Value::String(s) => s.clone(),
             Value::Bool(_) | Value::Number(_) | Value::Null => val.to_string(),
             _ => continue,
         };
@@ -396,12 +399,16 @@ fn build_object_table(
         let obj = item.as_object()?;
         let cells: Vec<String> = out_cols
             .iter()
-            .map(|oc| render_out_cell(obj, oc, &mut truncated))
+            .map(|oc| render_out_cell(obj, oc, block_tokens, &mut truncated))
             .collect();
         rows.push(render_markdown_row(&cells));
     }
 
-    let row_dropped = n > ROW_DROP_THRESHOLD;
+    // Row-dropping (sampling the middle away) is information loss, so it only
+    // happens when CCR can recover the dropped rows. Without CCR the table
+    // keeps every row: a full markdown table is still far smaller than the
+    // pretty-printed JSON, and it is a faithful, lossless reshape.
+    let row_dropped = block_tokens && n > ROW_DROP_THRESHOLD;
     let lossy = row_dropped || truncated;
 
     // Assemble output: sibling preamble, constant notes, header, body.
@@ -418,17 +425,24 @@ fn build_object_table(
             .join(", ");
         let _ = writeln!(out, "[all rows: {joined}]");
     }
+    // A lossy table samples rows/cells away and needs the retrieve footer for
+    // fidelity; a full table is a faithful reshape with nothing to recover.
+    let fidelity = if lossy {
+        "exact original via retrieve footer"
+    } else {
+        "faithful reshape — all rows and values preserved"
+    };
     match path {
         Some(p) => {
             let _ = writeln!(
                 out,
-                "[json table: {p} — {n} rows × {width} cols · blank=absent key · exact original via retrieve footer]"
+                "[json table: {p} — {n} rows × {width} cols · blank=absent key · {fidelity}]"
             );
         }
         None => {
             let _ = writeln!(
                 out,
-                "[json table: {n} rows × {width} cols · blank=absent key · exact original via retrieve footer]"
+                "[json table: {n} rows × {width} cols · blank=absent key · {fidelity}]"
             );
         }
     }
@@ -544,8 +558,16 @@ fn subkey_is_scalar(sub: &str, present: &[&Value]) -> bool {
     false
 }
 
-/// Render one output cell for a row, applying truncation.
-fn render_out_cell(obj: &Map<String, Value>, oc: &OutCol, truncated: &mut bool) -> String {
+/// Render one output cell for a row. Truncates over-long cells only when
+/// `allow_truncate` is set (CCR can recover the dropped tail); otherwise the
+/// full value is kept so the table stays a faithful, information-preserving
+/// reshape.
+fn render_out_cell(
+    obj: &Map<String, Value>,
+    oc: &OutCol,
+    allow_truncate: bool,
+    truncated: &mut bool,
+) -> String {
     let raw = match oc {
         OutCol::Plain(col) => obj.get(col).map(render_cell).unwrap_or_default(),
         OutCol::FlatSub(col, sub) => obj
@@ -571,6 +593,10 @@ fn render_out_cell(obj: &Map<String, Value>, oc: &OutCol, truncated: &mut bool) 
             None => obj.get(col).map(render_cell).unwrap_or_default(),
         },
     };
+    if !allow_truncate {
+        // No CCR to recover a cut cell — keep the full value (lossless).
+        return raw;
+    }
     let (cell, cut) = truncate_cell(&raw);
     *truncated |= cut;
     cell
@@ -1011,12 +1037,41 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
+        // Row-dropping is the CCR path: it only fires with block tokens on.
+        let c = compress(&input, true, None).expect("compresses");
         assert!(c.lossy, "row-dropped output must be lossy");
         assert!(c.text.contains("record number 0"), "{}", c.text);
         assert!(c.text.contains("record number 199"), "{}", c.text);
         assert!(c.text.contains("omitted"));
         assert!(c.text.len() < input.len());
+    }
+
+    /// Without CCR the same large array is reshaped into a full markdown table:
+    /// every row survives (lossless), nothing is dropped, and it still shrinks
+    /// well below the pretty-printed JSON — the "markdown trick".
+    #[test]
+    fn large_array_without_ccr_is_a_full_lossless_table() {
+        let mut rows = Vec::new();
+        for i in 0..200 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record number {i}","status":"s{i}","note":"some detail {i}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let c = compress(&input, false, None).expect("compresses");
+        assert!(!c.lossy, "full table is a faithful reshape: {}", c.text);
+        assert!(!c.text.contains("omitted"), "no rows dropped: {}", c.text);
+        assert!(c.text.contains("faithful reshape"), "{}", c.text);
+        // Every row's identifying values survive, including the middle ones a
+        // row-drop would have sampled away.
+        for i in [0usize, 75, 137, 199] {
+            assert!(
+                c.text.contains(&format!("record number {i}")),
+                "row {i} kept: {}",
+                c.text
+            );
+        }
+        assert!(c.text.len() < input.len(), "still shrinks vs pretty JSON");
     }
 
     #[test]
@@ -1029,7 +1084,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
+        let c = compress(&input, true, None).expect("compresses");
         assert!(c.lossy);
         assert!(
             c.text.contains("job 75"),
@@ -1315,7 +1370,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
+        let c = compress(&input, true, None).expect("compresses");
         let kept = body_row_count(&c.text);
         assert!(
             kept >= MIN_KEPT_ROWS,
@@ -1369,7 +1424,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
+        let c = compress(&input, true, None).expect("compresses");
         let kept = body_row_count(&c.text);
         assert!(
             kept >= HEAD_ROWS + TAIL_ROWS,
@@ -1392,7 +1447,7 @@ mod tests {
             rows.push(format!(r#"{{"id":{i},"msg":"{msg}","status":"ok"}}"#));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
+        let c = compress(&input, true, None).expect("compresses");
         assert!(
             c.text.contains("error: upstream exploded"),
             "must-keep error row must survive the adaptive window:\n{}",

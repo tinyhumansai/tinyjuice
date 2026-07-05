@@ -261,6 +261,31 @@ mod tests {
         format!("[{}]", rows.join(","))
     }
 
+    /// A log that the signal path *drops* down to its errors — a genuine
+    /// information-dropping payload (not a faithful reshape).
+    fn big_log() -> String {
+        let mut log = String::new();
+        for i in 0..200 {
+            if i == 137 {
+                log.push_str(&format!(
+                    "2026-07-05T09:00:00Z ERROR worker request failed: upstream timeout id={i}\n"
+                ));
+            } else {
+                log.push_str(&format!(
+                    "2026-07-05T09:00:00Z INFO worker handled request {i} in 20ms\n"
+                ));
+            }
+        }
+        log
+    }
+
+    fn log_hint() -> ContentHint {
+        ContentHint {
+            explicit: Some(ContentKind::Log),
+            ..Default::default()
+        }
+    }
+
     /// The opt-in escape hatch still works: a host that sets
     /// `lossy_without_ccr = true` gets marked-but-unrecoverable lossy output
     /// when CCR is off.
@@ -269,8 +294,9 @@ mod tests {
         let mut o = opts();
         o.ccr_enabled = false;
         o.lossy_without_ccr = true; // explicit opt-in, not the default
-        let original = big_json_array();
-        let res = compress_content(&original, None, &o).await;
+        let original = big_log();
+        let res = compress_content(&original, Some(log_hint()), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Log);
         assert!(res.applied, "opt-in lossy compression applies without CCR");
         assert!(res.text.len() < original.len());
         assert!(res.ccr_token.is_none(), "no recovery token without CCR");
@@ -288,10 +314,36 @@ mod tests {
         let mut o = opts();
         o.ccr_enabled = false;
         assert!(!o.lossy_without_ccr, "default is strict");
+        let original = big_log();
+        let res = compress_content(&original, Some(log_hint()), &o).await;
+        assert!(!res.applied, "default must decline unrecoverable lossy: {}", res.text);
+        assert_eq!(res.text, original);
+    }
+
+    /// A large JSON array with CCR off is reshaped into a full markdown table:
+    /// a faithful, lossless reshape (every row kept), so it ships even under the
+    /// strict default — the "markdown trick" the SmartCrusher uses without a
+    /// recovery cache.
+    #[tokio::test]
+    async fn json_is_a_full_lossless_table_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(!o.lossy_without_ccr, "strict default");
         let original = big_json_array();
         let res = compress_content(&original, None, &o).await;
-        assert!(!res.applied, "default must decline unrecoverable lossy");
-        assert_eq!(res.text, original);
+        assert_eq!(res.content_kind, ContentKind::Json);
+        assert!(res.applied, "faithful table ships without CCR: {}", res.text);
+        assert!(!res.lossy, "full table is a faithful reshape");
+        assert!(res.text.len() < original.len());
+        assert!(res.ccr_token.is_none(), "reshape needs no recovery");
+        // Every row's identity survives — nothing sampled away.
+        for i in [0, 59, 119] {
+            assert!(
+                res.text.contains(&format!("account_{i}")),
+                "row {i} kept: {}",
+                res.text
+            );
+        }
     }
 
     /// A faithful, information-preserving reshape (HTML extraction here) is not
