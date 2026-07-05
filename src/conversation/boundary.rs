@@ -176,6 +176,38 @@ mod tests {
     }
 
     #[test]
+    fn generated_tail_boundaries_retain_parent_tool_calls() {
+        for round_count in 1..=6 {
+            for grouped_results in [false, true] {
+                for trailing_assistant in [false, true] {
+                    let messages =
+                        generated_tool_history(round_count, grouped_results, trailing_assistant);
+
+                    for tail_start in 0..=messages.len() {
+                        let aligned = align_tail_start_for_tool_boundaries(&messages, tail_start);
+                        let retained_calls = call_ids_in_range(&messages, aligned, messages.len());
+
+                        for message in &messages[aligned..] {
+                            if let ConversationMessage::ToolResults(results) = message {
+                                for result in results {
+                                    assert!(
+                                        retained_calls.contains(&result.tool_call_id),
+                                        "missing parent for {} after aligning tail_start={} to {} in {:?}",
+                                        result.tool_call_id,
+                                        tail_start,
+                                        aligned,
+                                        messages
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn orphan_tool_result_is_removed() {
         let messages = vec![
             ConversationMessage::tool_results(vec![ToolResultMessage::new("missing", "body")]),
@@ -196,5 +228,51 @@ mod tests {
 
         assert_eq!(latest_real_user_index(&messages), Some(1));
         assert_eq!(latest_visible_assistant_index(&messages), Some(3));
+    }
+
+    fn generated_tool_history(
+        round_count: usize,
+        grouped_results: bool,
+        trailing_assistant: bool,
+    ) -> Vec<ConversationMessage> {
+        let mut messages = vec![
+            ConversationMessage::system("sys"),
+            ConversationMessage::user("ask"),
+        ];
+
+        if grouped_results {
+            for idx in 0..round_count {
+                messages.push(ConversationMessage::assistant_tool_calls(vec![
+                    ToolCall::new(
+                        format!("call-{idx}"),
+                        "shell",
+                        format!(r#"{{"command":"echo {idx}"}}"#),
+                    ),
+                ]));
+            }
+            messages.push(ConversationMessage::tool_results(
+                (0..round_count)
+                    .map(|idx| ToolResultMessage::new(format!("call-{idx}"), format!("out {idx}")))
+                    .collect(),
+            ));
+        } else {
+            for idx in 0..round_count {
+                messages.push(ConversationMessage::assistant_tool_calls(vec![
+                    ToolCall::new(
+                        format!("call-{idx}"),
+                        "shell",
+                        format!(r#"{{"command":"echo {idx}"}}"#),
+                    ),
+                ]));
+                messages.push(ConversationMessage::tool_results(vec![
+                    ToolResultMessage::new(format!("call-{idx}"), format!("out {idx}")),
+                ]));
+            }
+        }
+
+        if trailing_assistant {
+            messages.push(ConversationMessage::assistant("done"));
+        }
+        messages
     }
 }
