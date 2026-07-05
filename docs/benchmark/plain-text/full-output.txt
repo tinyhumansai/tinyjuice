@@ -1,0 +1,360 @@
+Decision record 0: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 1: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 2: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 3: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 4: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 5: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 6: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 7: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 8: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 9: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 10: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 11: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 12: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 13: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 14: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 15: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 16: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 17: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 18: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 19: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 20: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 21: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 22: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 23: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 24: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 25: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 26: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 27: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 28: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 29: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 30: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 31: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 32: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 33: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 34: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 35: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 36: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 37: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 38: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 39: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 40: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 41: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 42: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 43: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 44: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 45: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 46: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 47: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 48: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 49: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 50: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 51: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 52: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 53: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 54: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 55: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 56: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 57: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 58: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 59: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 60: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 61: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 62: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 63: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 64: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 65: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 66: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 67: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 68: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 69: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 70: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 71: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 72: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 73: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 74: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 75: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 76: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 77: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 78: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 79: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 80: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 81: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 82: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 83: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 84: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 85: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 86: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 87: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 88: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 89: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 90: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 91: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 92: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 93: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 94: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 95: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 96: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 97: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 98: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 99: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 100: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 101: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 102: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 103: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 104: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 105: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 106: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 107: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 108: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 109: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 110: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 111: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 112: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 113: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 114: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 115: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 116: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 117: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 118: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 119: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 120: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 121: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 122: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 123: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 124: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 125: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 126: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 127: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 128: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 129: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 130: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 131: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 132: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 133: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 134: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 135: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 136: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 137: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 138: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 139: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 140: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 141: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 142: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 143: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 144: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 145: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 146: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 147: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 148: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 149: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 150: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 151: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 152: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 153: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 154: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 155: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 156: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 157: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 158: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 159: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 160: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 161: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 162: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 163: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 164: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 165: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 166: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 167: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 168: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 169: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 170: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 171: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 172: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 173: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 174: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 175: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 176: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 177: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 178: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+
+Decision record 179: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.
+

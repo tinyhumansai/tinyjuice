@@ -1,0 +1,37 @@
+[json table: 260 rows × 8 cols · blank=absent key · exact original via retrieve footer]
+id | latency_ms | owner | region | replicas | service | status | updated_at
+0 | 20 | team-0 | us-east-1 | 2 | svc-000 | ok | 2026-07-01T12:00:00Z
+1 | 21 | team-1 | eu-west-1 | 3 | svc-001 | ok | 2026-07-02T12:01:00Z
+2 | 22 | team-2 | ap-south-1 | 4 | svc-002 | ok | 2026-07-03T12:02:00Z
+3 | 23 | team-3 | us-east-1 | 5 | svc-003 | ok | 2026-07-04T12:03:00Z
+4 | 24 | team-4 | eu-west-1 | 2 | svc-004 | ok | 2026-07-05T12:04:00Z
+5 | 25 | team-5 | ap-south-1 | 3 | svc-005 | ok | 2026-07-01T12:05:00Z
+6 | 26 | team-6 | us-east-1 | 4 | svc-006 | ok | 2026-07-02T12:06:00Z
+7 | 27 | team-7 | eu-west-1 | 5 | svc-007 | ok | 2026-07-03T12:07:00Z
+8 | 28 | team-8 | ap-south-1 | 2 | svc-008 | ok | 2026-07-04T12:08:00Z
+9 | 29 | team-0 | us-east-1 | 3 | svc-009 | ok | 2026-07-05T12:09:00Z
+10 | 30 | team-1 | eu-west-1 | 4 | svc-010 | ok | 2026-07-01T12:10:00Z
+11 | 31 | team-2 | ap-south-1 | 5 | svc-011 | ok | 2026-07-02T12:11:00Z
+12 | 32 | team-3 | us-east-1 | 2 | svc-012 | ok | 2026-07-03T12:12:00Z
+13 | 33 | team-4 | eu-west-1 | 3 | svc-013 | ok | 2026-07-04T12:13:00Z
+14 | 34 | team-5 | ap-south-1 | 4 | svc-014 | ok | 2026-07-05T12:14:00Z
+15 | 35 | team-6 | us-east-1 | 5 | svc-015 | ok | 2026-07-01T12:15:00Z
+16 | 36 | team-7 | eu-west-1 | 2 | svc-016 | ok | 2026-07-02T12:16:00Z
+17 | 37 | team-8 | ap-south-1 | 3 | svc-017 | ok | 2026-07-03T12:17:00Z
+18 | 38 | team-0 | us-east-1 | 4 | svc-018 | ok | 2026-07-04T12:18:00Z
+19 | 39 | team-1 | eu-west-1 | 5 | svc-019 | ok | 2026-07-05T12:19:00Z
+[... 117 row(s) omitted ...]
+137 | 9250 | team-2 | ap-south-1 | 3 | svc-137 | critical | 2026-07-03T12:17:00Z
+[... 112 row(s) omitted ...]
+250 | 45 | team-7 | eu-west-1 | 4 | svc-250 | ok | 2026-07-01T12:10:00Z
+251 | 46 | team-8 | ap-south-1 | 5 | svc-251 | ok | 2026-07-02T12:11:00Z
+252 | 47 | team-0 | us-east-1 | 2 | svc-252 | ok | 2026-07-03T12:12:00Z
+253 | 48 | team-1 | eu-west-1 | 3 | svc-253 | ok | 2026-07-04T12:13:00Z
+254 | 49 | team-2 | ap-south-1 | 4 | svc-254 | ok | 2026-07-05T12:14:00Z
+255 | 50 | team-3 | us-east-1 | 5 | svc-255 | ok | 2026-07-01T12:15:00Z
+256 | 51 | team-4 | eu-west-1 | 2 | svc-256 | ok | 2026-07-02T12:16:00Z
+257 | 52 | team-5 | ap-south-1 | 3 | svc-257 | ok | 2026-07-03T12:17:00Z
+258 | 53 | team-6 | us-east-1 | 4 | svc-258 | ok | 2026-07-04T12:18:00Z
+259 | 54 | team-7 | eu-west-1 | 5 | svc-259 | ok | 2026-07-05T12:19:00Z
+
+[compacted tool output — this is a PARTIAL view; the full original (52506 bytes) is available by calling tokenjuice_retrieve with token "15b2bafeebd0c38f6d7da11f535b96b1" (marker ⟦tj:15b2bafeebd0c38f6d7da11f535b96b1⟧)]

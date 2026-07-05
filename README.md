@@ -180,23 +180,23 @@ cargo run --release --example compression_benchmark -- --iterations 20 --format 
 Fixture benchmark snapshot from `cargo run --release --example
 compression_benchmark -- --iterations 20`:
 
-| Use case | Compressor | Byte reduction | Est. token reduction | Avg latency | Inline accuracy | CCR recovery | Gate |
-| --- | --- | ---: | ---: | ---: | ---: | --- | --- |
-| JSON service inventory | SmartCrusher | 94.9% | 94.9% | 0.440 ms | 100.0% | yes | pass |
-| Cargo test failure log | Log | 93.6% | 93.6% | 0.728 ms | 100.0% | yes | pass |
-| Docker service log | Log | 99.8% | 99.8% | 1.194 ms | 100.0% | yes | pass |
-| Ripgrep search results | Search | 75.3% | 75.3% | 0.036 ms | 100.0% | yes | pass |
-| Unified diff | Diff | 84.3% | 84.3% | 0.010 ms | 100.0% | yes | pass |
-| HTML status report | HTML | 61.2% | 61.2% | 0.074 ms | 100.0% | yes | pass |
-| Rust source file | Code | 88.4% | 88.6% | 0.216 ms | 100.0% | yes | pass |
-| Plain text with ML off | None | 0.0% | 0.0% | 0.000 ms | 100.0% | n/a | pass |
+| Use case | Compressor | Est. token reduction | Avg latency | CCR recovery |
+| --- | --- | ---: | ---: | --- |
+| JSON service inventory | SmartCrusher | 94.9% | 0.397 ms | yes |
+| Cargo test failure log | Log | 93.6% | 0.667 ms | yes |
+| Docker service log | Log | 99.8% | 1.110 ms | yes |
+| Ripgrep search results | Search | 75.3% | 0.034 ms | yes |
+| Unified diff | Diff | 84.3% | 0.008 ms | yes |
+| HTML status report | HTML | 61.2% | 0.063 ms | yes |
+| Rust source file | Code | 88.6% | 0.199 ms | yes |
+| Plain text with ML off | None | 0.0% | 0.000 ms | n/a |
 
-Inline accuracy combines fixture signal checks with task-style answer checks.
 CCR recovery byte-compares the retrieved original for every lossy compaction.
 These numbers are generated-fixture measurements, not production corpus claims.
 
 See [docs/benchmarking.md](docs/benchmarking.md) for benchmark scope,
-comparison targets, and reporting cautions.
+comparison targets, and reporting cautions. See [docs/benchmark](docs/benchmark)
+for human-readable before/after sample reports and accuracy-check details.
 
 Run the local analytics interface:
 

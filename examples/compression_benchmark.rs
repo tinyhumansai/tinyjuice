@@ -13,6 +13,7 @@
 use serde::Serialize;
 use serde_json::json;
 use std::fmt::Write as _;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use tinyjuice::cache;
 use tinyjuice::tokens::estimate_tokens;
@@ -28,6 +29,7 @@ enum ReportFormat {
 struct Args {
     iterations: usize,
     format: ReportFormat,
+    dump_samples: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +48,7 @@ enum CheckExpectation {
 #[derive(Debug, Clone)]
 struct BenchCase {
     id: &'static str,
+    doc_dir: &'static str,
     family: &'static str,
     description: &'static str,
     payload: String,
@@ -121,8 +124,14 @@ fn main() {
         .build()
         .expect("tokio runtime");
 
+    let cases = benchmark_cases();
+    if let Some(root) = args.dump_samples.as_deref() {
+        rt.block_on(dump_samples(root, &cases, &options));
+        return;
+    }
+
     let mut reports = Vec::new();
-    for case in benchmark_cases() {
+    for case in cases {
         let report = rt.block_on(run_case(case, &options, args.iterations));
         reports.push(report);
     }
@@ -241,6 +250,26 @@ async fn run_once(case: &BenchCase, options: &CompressOptions) -> tinyjuice::Com
     tinyjuice::route(input, options).await
 }
 
+async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOptions) {
+    for case in cases {
+        let result = run_once(case, options).await;
+        let dir = root.join(case.doc_dir);
+        std::fs::create_dir_all(&dir)
+            .unwrap_or_else(|e| panic!("cannot create {}: {e}", dir.display()));
+        let input_path = dir.join("full-input.txt");
+        let output_path = dir.join("full-output.txt");
+        std::fs::write(&input_path, &case.payload)
+            .unwrap_or_else(|e| panic!("cannot write {}: {e}", input_path.display()));
+        std::fs::write(&output_path, &result.text)
+            .unwrap_or_else(|e| panic!("cannot write {}: {e}", output_path.display()));
+        eprintln!(
+            "wrote {} and {}",
+            input_path.display(),
+            output_path.display()
+        );
+    }
+}
+
 impl SignalCheck {
     fn present(label: &'static str, needle: &'static str) -> Self {
         Self {
@@ -290,6 +319,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
     vec![
         BenchCase {
             id: "json_service_inventory",
+            doc_dir: "json-smartcrusher",
             family: "json",
             description: "Large API list with a rare error row and latency outlier.",
             payload: json_service_inventory(260),
@@ -321,6 +351,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "cargo_test_failure",
+            doc_dir: "cargo-test-log",
             family: "command_log",
             description: "Noisy cargo test output with one failing test and panic details.",
             payload: cargo_test_failure_log(360),
@@ -356,6 +387,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "docker_error_log",
+            doc_dir: "service-log",
             family: "log",
             description: "High-volume service log with sparse errors and warnings.",
             payload: docker_error_log(5_000),
@@ -387,6 +419,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "ripgrep_many_matches",
+            doc_dir: "search-results",
             family: "search",
             description: "Ripgrep-style output with many matches across files.",
             payload: ripgrep_results(150),
@@ -416,6 +449,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "unified_diff_router_change",
+            doc_dir: "unified-diff",
             family: "diff",
             description: "Patch with long unchanged context around a small router change.",
             payload: unified_diff(80),
@@ -440,6 +474,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "html_status_report",
+            doc_dir: "html-status-report",
             family: "html",
             description: "Rendered admin status page with repeated table markup.",
             payload: html_status_report(160),
@@ -464,6 +499,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "rust_source_large_file",
+            doc_dir: "rust-source",
             family: "code",
             description: "Rust source with long function bodies and important markers.",
             payload: rust_source_file(70),
@@ -496,6 +532,7 @@ fn benchmark_cases() -> Vec<BenchCase> {
         },
         BenchCase {
             id: "plain_text_decline",
+            doc_dir: "plain-text",
             family: "plain_text",
             description: "Natural-language notes should pass through while ML text compression is off.",
             payload: plain_text_notes(180),
@@ -685,6 +722,7 @@ fn parse_args() -> Args {
     let mut args = Args {
         iterations: 10,
         format: ReportFormat::Markdown,
+        dump_samples: None,
     };
     let mut iter = std::env::args().skip(1);
     while let Some(arg) = iter.next() {
@@ -711,6 +749,12 @@ fn parse_args() -> Args {
                     _ => panic!("invalid --format value: {value}; expected markdown or json"),
                 };
             }
+            "--dump-samples" => {
+                let value = iter
+                    .next()
+                    .unwrap_or_else(|| panic!("{arg} requires a directory"));
+                args.dump_samples = Some(PathBuf::from(value));
+            }
             "--help" | "-h" => {
                 print_help();
                 std::process::exit(0);
@@ -725,7 +769,7 @@ fn print_help() {
     println!(
         "TinyJuice compression benchmark\n\n\
 Usage:\n  cargo run --release --example compression_benchmark -- [OPTIONS]\n\n\
-Options:\n  -n, --iterations <N>       Timed iterations per fixture (default: 10)\n      --format <markdown|json>  Report format (default: markdown)\n  -h, --help                 Show this help"
+Options:\n  -n, --iterations <N>       Timed iterations per fixture (default: 10)\n      --format <markdown|json>  Report format (default: markdown)\n      --dump-samples <DIR>      Write full input/output files under DIR\n  -h, --help                 Show this help"
     );
 }
 
