@@ -46,6 +46,8 @@ pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
 pub const MAX_SPREAD_ANCHORS: usize = 8;
 /// Maximum information-dense middle rows to anchor.
 pub const MAX_INFORMATION_DENSE_ANCHORS: usize = 8;
+/// Extra positional rows to keep when query wording asks for a side of the list.
+pub const QUERY_DIRECTION_EXTRA_ROWS: usize = 10;
 /// Do not spend unbounded parse effort on huge string cells.
 const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
@@ -210,9 +212,9 @@ pub fn analyze(content: &str) -> Option<JsonAnalysis> {
 
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
 /// rows flagged as anomalous, numeric change points, duplicate-cluster
-/// representatives, spread anchors, information-dense rows, representative
-/// discriminator buckets, or query-relevant. Returns ascending, de-duplicated
-/// indices.
+/// representatives, spread anchors, information-dense rows, query-direction
+/// anchors, representative discriminator buckets, or query-relevant. Returns
+/// ascending, de-duplicated indices.
 fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
     let n = rows.len();
     let lossy = n > ROW_DROP_THRESHOLD;
@@ -237,6 +239,9 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
         keep.insert(i);
     }
     for i in information_dense_rows(rows, &keep) {
+        keep.insert(i);
+    }
+    for i in query_direction_rows(n, query) {
         keep.insert(i);
     }
 
@@ -499,6 +504,51 @@ fn information_dense_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> 
 fn median_usize(mut values: Vec<usize>) -> usize {
     values.sort_unstable();
     values[values.len() / 2]
+}
+
+fn query_direction_rows(row_count: usize, query: Option<&str>) -> Vec<usize> {
+    let Some(direction) = query.and_then(query_direction) else {
+        return Vec::new();
+    };
+    match direction {
+        QueryDirection::Front => {
+            let start = dynamic_head_rows(row_count).min(row_count);
+            let end = (start + QUERY_DIRECTION_EXTRA_ROWS).min(row_count);
+            (start..end).collect()
+        }
+        QueryDirection::Back => {
+            let tail_start = row_count.saturating_sub(dynamic_tail_rows(row_count));
+            let start = tail_start.saturating_sub(QUERY_DIRECTION_EXTRA_ROWS);
+            (start..tail_start).collect()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum QueryDirection {
+    Front,
+    Back,
+}
+
+fn query_direction(query: &str) -> Option<QueryDirection> {
+    let tokens = tokenize(query).into_iter().collect::<BTreeSet<_>>();
+    if tokens.iter().any(|token| {
+        matches!(
+            token.as_str(),
+            "latest" | "recent" | "current" | "newest" | "last"
+        )
+    }) {
+        return Some(QueryDirection::Back);
+    }
+    if tokens.iter().any(|token| {
+        matches!(
+            token.as_str(),
+            "first" | "oldest" | "earliest" | "initial" | "beginning"
+        )
+    }) {
+        return Some(QueryDirection::Front);
+    }
+    None
 }
 
 #[derive(Debug, Clone)]
@@ -782,6 +832,48 @@ mod tests {
 
         assert!(c.lossy);
         assert!(c.text.contains("special needle token"), "{}", c.text);
+    }
+
+    #[test]
+    fn latest_query_extends_tail_anchor_window() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 124 {
+                "latest positional context".to_string()
+            } else {
+                format!("ordinary row {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress_with_query(&input, Some("latest records")).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("latest positional context"), "{}", c.text);
+    }
+
+    #[test]
+    fn oldest_query_extends_head_anchor_window() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 24 {
+                "oldest positional context".to_string()
+            } else {
+                format!("ordinary row {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress_with_query(&input, Some("oldest records")).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("oldest positional context"), "{}", c.text);
     }
 
     #[test]

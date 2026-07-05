@@ -74,9 +74,9 @@ the original bytes unchanged.
 ## Compression Surfaces
 
 - **JSON SmartCrusher** - renders repeated object arrays as compact tables,
-  flattens safe nested cells, and keeps query, anomaly, numeric change-point,
-  information-dense, duplicate-cluster, and spread-anchor rows when large
-  arrays are row-dropped.
+  flattens safe nested cells, and keeps query-relevant, query-direction,
+  anomaly, numeric change-point, information-dense, duplicate-cluster, and
+  spread-anchor rows when large arrays are row-dropped.
 - **Code compressor** - keeps imports, signatures, shallow structure, and
   important markers while collapsing deep bodies.
 - **Log compressor** - preserves failures, warnings, summaries, stack traces,
