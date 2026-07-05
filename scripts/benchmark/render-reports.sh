@@ -44,6 +44,9 @@ category_title() {
     html-status-report) echo "HTML, RSS, And Page Snapshots" ;;
     rust-source) echo "Rust Source" ;;
     polyglot-source) echo "Polyglot Source And XML" ;;
+    github-source) echo "GitHub Source Files" ;;
+    github-logs) echo "GitHub Log Files" ;;
+    dockerfiles) echo "Dockerfiles" ;;
     plain-text) echo "Plain Text" ;;
     *) echo "$1" ;;
   esac
@@ -74,6 +77,15 @@ category_summary() {
       ;;
     polyglot-source)
       echo "Representative TypeScript, Python, C++, Go, and Rust sources plus an XML document. The language-agnostic code compressor collapses deep bodies across all of them (tree-sitter grammars refine Rust/TS/Python), and XML routes through the readable-text extractor."
+      ;;
+    github-source)
+      echo "Real source files fetched from popular public GitHub repositories (vscode, django, flask, requests, gin, cobra, leveldb, redis, curl, tokio, ripgrep, gson, guava, okhttp, rails, laravel, swift-argument-parser, Newtonsoft.Json, Maven POMs). Sources and licenses are listed in ATTRIBUTION.md."
+      ;;
+    github-logs)
+      echo "Real log files from public GitHub repositories: the loghub corpus (HDFS, Hadoop, Spark, Zookeeper, BGL, HPC, Thunderbird, Windows, Linux, Android, HealthApp, Apache, Proxifier, OpenSSH, OpenStack, macOS), Elastic example datasets (Apache/nginx access logs, auth.log), and CrowdSec parser test fixtures (WAF, Traefik, Authelia, GitLab, Suricata). Sources and licenses in ATTRIBUTION.md."
+      ;;
+    dockerfiles)
+      echo "Real Dockerfiles from official Docker library images and popular projects (postgres, redis, python, golang, mongo, nginx, kubernetes, moby, grafana, prometheus, airflow, and more). Sources and licenses in ATTRIBUTION.md."
       ;;
     plain-text)
       echo "Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged."
@@ -142,17 +154,27 @@ input_file_name() {
       fi
       ;;
     rust-source) echo "input.rs" ;;
-    polyglot-source)
+    polyglot-source|github-source)
       case "$doc_dir" in
         */??-ts-*) echo "input.ts" ;;
+        */??-js-*) echo "input.js" ;;
         */??-py-*) echo "input.py" ;;
         */??-cpp-*) echo "input.cpp" ;;
+        */??-c-*) echo "input.c" ;;
         */??-go-*) echo "input.go" ;;
         */??-rs-*) echo "input.rs" ;;
+        */??-java-*) echo "input.java" ;;
+        */??-kt-*) echo "input.kt" ;;
+        */??-rb-*) echo "input.rb" ;;
+        */??-php-*) echo "input.php" ;;
+        */??-swift-*) echo "input.swift" ;;
+        */??-cs-*) echo "input.cs" ;;
         */??-xml-*) echo "input.xml" ;;
         *) echo "input.txt" ;;
       esac
       ;;
+    github-logs) echo "input.log" ;;
+    dockerfiles) echo "input.dockerfile" ;;
     plain-text) echo "input.md" ;;
     *) echo "input.txt" ;;
   esac
@@ -166,16 +188,27 @@ output_file_name() {
     search-results) echo "output.rg" ;;
     unified-diff) echo "output.diff" ;;
     rust-source) echo "output.rs" ;;
-    polyglot-source)
+    polyglot-source|github-source)
       case "${2:-}" in
         */??-ts-*) echo "output.ts" ;;
+        */??-js-*) echo "output.js" ;;
         */??-py-*) echo "output.py" ;;
         */??-cpp-*) echo "output.cpp" ;;
+        */??-c-*) echo "output.c" ;;
         */??-go-*) echo "output.go" ;;
         */??-rs-*) echo "output.rs" ;;
+        */??-java-*) echo "output.java" ;;
+        */??-kt-*) echo "output.kt" ;;
+        */??-rb-*) echo "output.rb" ;;
+        */??-php-*) echo "output.php" ;;
+        */??-swift-*) echo "output.swift" ;;
+        */??-cs-*) echo "output.cs" ;;
+        */??-xml-*) echo "output.txt" ;;
         *) echo "output.txt" ;;
       esac
       ;;
+    github-logs) echo "output.log" ;;
+    dockerfiles) echo "output.dockerfile" ;;
     plain-text) echo "output.md" ;;
     *) echo "output.txt" ;;
   esac
@@ -190,6 +223,9 @@ categories=(
   html-status-report
   rust-source
   polyglot-source
+  github-source
+  github-logs
+  dockerfiles
   plain-text
 )
 
@@ -274,6 +310,15 @@ for category in "${categories[@]}"; do
         ;;
       rust-source)
         printf 'The code path keeps the navigation surface: imports, signatures, top-level items, and important comments. Large function bodies can be collapsed and recovered through CCR.\n'
+        ;;
+      github-source)
+        printf 'Real-world source compresses the same way as the synthetic corpus: signatures, imports, and top-level structure stay; deep bodies collapse behind per-block retrieval tokens. Languages without a tree-sitter grammar use the brace-depth heuristic; brace-less languages (Ruby) pass through.\n'
+        ;;
+      github-logs)
+        printf 'The signal-based log path keeps errors, warnings, stack frames, and summaries and collapses the rest behind per-gap retrieval tokens. Logs with no failure signal (pure access logs) are deliberately passed through rather than blindly truncated.\n'
+        ;;
+      dockerfiles)
+        printf 'Dockerfiles are a coverage/honesty category: they carry no collapsible structure the current compressors target, so the router should pass them through untouched rather than mangle them.\n'
         ;;
       polyglot-source)
         printf 'The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token.\n'

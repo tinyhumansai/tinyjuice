@@ -1,0 +1,13 @@
+[... 90 line(s) omitted ... ⟦tj:e6a134371088b452b7d09ee85c9237fb⟧]
+03-17 16:13:45.466  1702 17632 W ActivityManager: java.lang.ClassCastException: android.os.BinderProxy cannot be cast to com.android.server.am.ActivityRecord$Token
+[... 109 line(s) omitted ... ⟦tj:4d403f145498d58d3b3530e7fe02e426⟧]
+03-17 16:13:46.765  2227  2794 W KeyguardUpdateMonitor: android.util.AndroidRuntimeException: Must execute in UI
+[... 2 line(s) omitted ... ⟦tj:8b148736f578461fdccfa2cca5eb645d⟧]
+03-17 16:13:46.765  2227  2794 W KeyguardUpdateMonitor: android.util.AndroidRuntimeException: Must execute in UI
+[... 140 line(s) omitted ... ⟦tj:72b9f6d7a68cb15ecc72b0a0afc1420f⟧]
+03-17 16:13:47.743  2227  2794 W KeyguardUpdateMonitor: android.util.AndroidRuntimeException: Must execute in UI
+[... 1655 line(s) omitted ... ⟦tj:0b5c3e82b025cc2af22e2144a468559f⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (279076 bytes) is available by calling tinyjuice_retrieve with token "47641549915e662ff590291df266a45f" (marker ⟦tj:47641549915e662ff590291df266a45f⟧)]

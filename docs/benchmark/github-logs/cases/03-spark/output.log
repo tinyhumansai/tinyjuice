@@ -1,0 +1,11 @@
+[... 48 line(s) omitted ... ⟦tj:ad33c588dcc862c168be3fd2818e4068⟧]
+17/06/09 20:10:47 INFO Configuration.deprecation: mapred.tip.id is deprecated. Instead, use mapreduce.task.id
+17/06/09 20:10:47 INFO Configuration.deprecation: mapred.task.id is deprecated. Instead, use mapreduce.task.attempt.id
+17/06/09 20:10:47 INFO Configuration.deprecation: mapred.task.is.map is deprecated. Instead, use mapreduce.task.ismap
+17/06/09 20:10:47 INFO Configuration.deprecation: mapred.job.id is deprecated. Instead, use mapreduce.job.id
+17/06/09 20:10:47 INFO Configuration.deprecation: mapred.task.partition is deprecated. Instead, use mapreduce.task.partition
+[... 1947 line(s) omitted ... ⟦tj:667883944011647dc0f89a063f0b3056⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (196268 bytes) is available by calling tinyjuice_retrieve with token "2e8b9a37fc5c238253e0b8e18a8bd5e4" (marker ⟦tj:2e8b9a37fc5c238253e0b8e18a8bd5e4⟧)]

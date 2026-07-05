@@ -1,0 +1,24 @@
+[... 5 line(s) omitted ... ⟦tj:c872a0c89d808f2a493b48f15a630652⟧]
+2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+[... 1 line(s) omitted ... ⟦tj:76ee3eb69ea90ef0ffcbb7b52ea80681⟧]
+2015-07-29 19:13:27,721 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+[... 3 line(s) omitted ... ⟦tj:3d0ac8fc734768fe574aa8bfea3cb303⟧]
+2015-07-29 19:13:47,731 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+[... 1 line(s) omitted ... ⟦tj:4c2e9d9e8bf48166e6c1bee77cb4278a⟧]
+2015-07-29 19:13:54,399 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+[... 17 line(s) omitted ... ⟦tj:b82106d73c48db7a2873ed46b0c4b391⟧]
+2015-07-29 19:16:24,348 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+[... 1914 line(s) omitted ... ⟦tj:053df1b92e5a52bdc7ea1df770848377⟧]
+2015-07-30 16:21:13,810 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
+[... 7 line(s) omitted ... ⟦tj:35355ddc4a2ec3c549cb682237b34750⟧]
+2015-07-30 17:36:52,812 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
+2015-07-30 17:40:45,765 - WARN  [RecvWorker:1:QuorumCnxManager$RecvWorker@762] - Connection broken for id 1, my id = 3, error = 
+[... 17 line(s) omitted ... ⟦tj:c89b56349786a3ff416f3f552ba5a4b3⟧]
+2015-07-30 23:03:42,330 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
+[... 7 line(s) omitted ... ⟦tj:4abb0e6b27de556dfaac3ab8a4255127⟧]
+2015-07-31 00:16:12,152 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception
+[... 18 line(s) omitted ... ⟦tj:308905979430fc8694348571832e2a63⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (279891 bytes) is available by calling tinyjuice_retrieve with token "e40e0af5ef9eb6e4097200f260b9d1f6" (marker ⟦tj:e40e0af5ef9eb6e4097200f260b9d1f6⟧)]

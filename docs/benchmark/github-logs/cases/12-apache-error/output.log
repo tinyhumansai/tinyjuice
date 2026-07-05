@@ -1,0 +1,22 @@
+[... 1 line(s) omitted ... ⟦tj:5a68782b23ba362d588b43fec8fd90ab⟧]
+[Sun Dec 04 04:47:44 2005] [error] mod_jk child workerEnv in error state 6
+[... 6 line(s) omitted ... ⟦tj:13b7297934b4beb67c8b648d95bf094d⟧]
+[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
+[... 5 line(s) omitted ... ⟦tj:88d86852a47e586fec32405fc9478cb9⟧]
+[Sun Dec 04 04:51:55 2005] [error] mod_jk child workerEnv in error state 6
+[... 1971 line(s) omitted ... ⟦tj:a316609f77c9ff718ada11c8b3923bf3⟧]
+[Mon Dec 05 19:00:56 2005] [error] [client 68.228.3.15] Directory index forbidden by rule: /var/www/html/
+[... 2 line(s) omitted ... ⟦tj:01ac9d0a4564900b79e264664ae932b2⟧]
+[Mon Dec 05 19:11:04 2005] [error] mod_jk child workerEnv in error state 6
+[... 1 line(s) omitted ... ⟦tj:9433d6c97e90b9f60c823c88bf2ef870⟧]
+[Mon Dec 05 19:14:09 2005] [error] [client 61.220.139.68] Directory index forbidden by rule: /var/www/html/
+[... 1 line(s) omitted ... ⟦tj:67a7a206dfe64028b4563c30769649d2⟧]
+[Mon Dec 05 19:14:11 2005] [error] mod_jk child workerEnv in error state 6
+[... 3 line(s) omitted ... ⟦tj:0acde7f1f4c2653e6c9889d0f30bd586⟧]
+[Mon Dec 05 19:15:57 2005] [error] mod_jk child workerEnv in error state 6
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (171239 bytes) is available by calling tinyjuice_retrieve with token "c7efa3eb686e3a96bd2f8f4457b2a788" (marker ⟦tj:c7efa3eb686e3a96bd2f8f4457b2a788⟧)]

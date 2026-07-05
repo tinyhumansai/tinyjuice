@@ -1,0 +1,49 @@
+[... 252 line(s) omitted ... ⟦tj:9a59553424d0eeb8db0fb08be810ac22⟧]
+[10.30 17:15:42] QQ.exe - tcpconn6.tencent.com:443 error : A connection request was canceled before the completion.
+[10.30 17:16:10] QQ.exe - tcpconn4.tencent.com:80 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly. 
+[... 173 line(s) omitted ... ⟦tj:cf1f44176398766e921f131cd9e5b270⟧]
+[10.30 17:57:12] YodaoDict.exe - oimagec7.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[... 13 line(s) omitted ... ⟦tj:9ebb8258b4ee5462ed6e9837c9ae39ff⟧]
+[10.30 18:00:12] FlashPlayerPlugin_18_0_0_209.exe - formi.baidu.com:843 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[... 39 line(s) omitted ... ⟦tj:c438ec65a72d1bdd37627a0deae3eb61⟧]
+[10.30 18:04:14] Skype.exe - 86.99.222.235:443 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly.
+[... 1317 line(s) omitted ... ⟦tj:f4dae9bcb3f17ec82c87c45a280c8310⟧]
+[07.27 05:05:50] chrome.exe *64 - qa.sockets.stackexchange.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:51] chrome.exe *64 - 13.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:52] chrome.exe *64 - 13.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:52] chrome.exe *64 - 13.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:53] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:53] Dropbox.exe - client-cf.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:54] chrome.exe *64 - qa.sockets.stackexchange.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:54] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:56] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:01] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:08] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:09] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:13] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:15] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:22] chrome.exe *64 - mtalk.google.com:5228 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:32] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:40] Dropbox.exe - client-lb.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:07:02] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:07:06] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:08:27] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:08:29] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:09:52] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:10:59] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:11:29] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:11:34] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:12:56] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[... 18 line(s) omitted ... ⟦tj:509890842bac21d922df40af8975b6c9⟧]
+[07.27 06:19:08] chrome.exe *64 - mtalk.google.com:5228 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[07.27 06:34:38] chrome.exe *64 - mtalk.google.com:5228 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[... 78 line(s) omitted ... ⟦tj:568f48b8e22d8e23e8611091ec4235f6⟧]
+[07.27 09:49:48] SohuNews.exe - i2.itc.cn:80 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 503
+[... 27 line(s) omitted ... ⟦tj:6b8ca1f1c17127f1341aaaf1e6cd1f1d⟧]
+[07.27 10:05:05] QQProtectUpd.exe - qd-update.qq.com:8080 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[07.27 10:05:06] QQProtectUpd.exe - qd-update.qq.com:8080 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[... 47 line(s) omitted ... ⟦tj:80e2869fc00379422819d99927f3f9d2⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (236962 bytes) is available by calling tinyjuice_retrieve with token "94b6a9d98d76e7ad7841ed10caa463cd" (marker ⟦tj:94b6a9d98d76e7ad7841ed10caa463cd⟧)]

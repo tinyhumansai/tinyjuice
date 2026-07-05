@@ -1,0 +1,68 @@
+Jun 14 15:16:01 combo sshd(pam_unix)[19939]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=218.188.2.4 
+[... 1 line(s) omitted ... ⟦tj:ec82dddff7e657485704bf88ff382470⟧]
+Jun 14 15:16:02 combo sshd(pam_unix)[19937]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=218.188.2.4 
+Jun 15 02:04:59 combo sshd(pam_unix)[20882]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=220-135-151-1.hinet-ip.hinet.net  user=root
+Jun 15 02:04:59 combo sshd(pam_unix)[20884]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=220-135-151-1.hinet-ip.hinet.net  user=root
+Jun 15 02:04:59 combo sshd(pam_unix)[20883]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=220-135-151-1.hinet-ip.hinet.net  user=root
+[... 532 line(s) omitted ... ⟦tj:993d266eb971e6bf2df3861ba2a0a71c⟧]
+Jun 30 20:53:04 combo klogind[19272]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19272]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19287]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19287]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19286]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19286]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19271]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19271]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19270]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19270]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19269]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19269]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19268]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19288]: Authentication failed from 163.27.187.39 (163.27.187.39): Permission denied in replay cache code 
+Jun 30 20:53:04 combo klogind[19274]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:04 combo klogind[19268]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19288]: Kerberos authentication failed 
+Jun 30 20:53:04 combo klogind[19274]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19266]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19266]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19267]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19267]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19278]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19278]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19273]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19273]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19276]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19276]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19275]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19275]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19277]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19277]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19279]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19279]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19280]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19281]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19282]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19280]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19283]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19281]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19285]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19284]: Authentication failed from 163.27.187.39 (163.27.187.39): Software caused connection abort 
+Jun 30 20:53:06 combo klogind[19282]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19283]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19285]: Kerberos authentication failed 
+Jun 30 20:53:06 combo klogind[19284]: Kerberos authentication failed 
+[... 1243 line(s) omitted ... ⟦tj:08efe6f511b9ab966887a3ca037e56bb⟧]
+Jul 25 23:23:13 combo xinetd[26482]: warning: can't get client address: Connection reset by peer
+[... 71 line(s) omitted ... ⟦tj:ab4e37b488aa6d6ad014b25fa95e7803⟧]
+Jul 26 07:04:07 combo sshd(pam_unix)[28884]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=207.243.167.114  user=root
+Jul 26 07:04:12 combo sshd(pam_unix)[28886]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=207.243.167.114  user=root
+[... 45 line(s) omitted ... ⟦tj:c1f4b4790c6931007a744f782827f2b9⟧]
+Jul 27 14:41:58 combo kernel: There is already a security framework initialized, register_security failed.
+Jul 27 14:41:58 combo kernel: Failure registering capabilities with the kernel
+[... 12 line(s) omitted ... ⟦tj:11383824f2cb1f7794eaad5a027c252e⟧]
+Jul 27 14:41:58 combo kernel: Enabling unmasked SIMD FPU exception support... done.
+[... 39 line(s) omitted ... ⟦tj:57ffd19279dedc78fcf0f737394e1daa⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (216485 bytes) is available by calling tinyjuice_retrieve with token "b3e20bc1afe732ab1bf3ed1de4bf9c80" (marker ⟦tj:b3e20bc1afe732ab1bf3ed1de4bf9c80⟧)]

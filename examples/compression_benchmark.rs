@@ -90,8 +90,9 @@ fn category_name(doc_dir: &str) -> &str {
     doc_dir.split('/').next().unwrap_or(doc_dir)
 }
 
-/// Language tag for a polyglot-source case, taken from the segment after the
-/// `NN-` ordinal in the case dir name (e.g. `01-ts-api-client` → `ts`).
+/// Language tag for a polyglot-source / github-source case, taken from the
+/// segment after the `NN-` ordinal in the case dir name
+/// (e.g. `01-ts-api-client` → `ts`).
 fn polyglot_lang(doc_dir: &str) -> &str {
     doc_dir
         .rsplit('/')
@@ -100,6 +101,48 @@ fn polyglot_lang(doc_dir: &str) -> &str {
         .split('-')
         .nth(1)
         .unwrap_or("txt")
+}
+
+/// Input artifact extension for a source-file language tag.
+fn source_input_name(lang: &str) -> &'static str {
+    match lang {
+        "ts" => "input.ts",
+        "js" => "input.js",
+        "py" => "input.py",
+        "cpp" => "input.cpp",
+        "c" => "input.c",
+        "go" => "input.go",
+        "rs" => "input.rs",
+        "java" => "input.java",
+        "kt" => "input.kt",
+        "rb" => "input.rb",
+        "php" => "input.php",
+        "swift" => "input.swift",
+        "cs" => "input.cs",
+        "xml" => "input.xml",
+        _ => "input.txt",
+    }
+}
+
+/// Output artifact extension for a source-file language tag. XML output is
+/// extracted text, not markup, so it dumps as `.txt`.
+fn source_output_name(lang: &str) -> &'static str {
+    match lang {
+        "ts" => "output.ts",
+        "js" => "output.js",
+        "py" => "output.py",
+        "cpp" => "output.cpp",
+        "c" => "output.c",
+        "go" => "output.go",
+        "rs" => "output.rs",
+        "java" => "output.java",
+        "kt" => "output.kt",
+        "rb" => "output.rb",
+        "php" => "output.php",
+        "swift" => "output.swift",
+        "cs" => "output.cs",
+        _ => "output.txt",
+    }
 }
 
 fn input_artifact_name(doc_dir: &str) -> &'static str {
@@ -112,15 +155,9 @@ fn input_artifact_name(doc_dir: &str) -> &'static str {
         "html-status-report" if doc_dir.contains("-rss-") => "input.xml",
         "html-status-report" => "input.html",
         "rust-source" => "input.rs",
-        "polyglot-source" => match polyglot_lang(doc_dir) {
-            "ts" => "input.ts",
-            "py" => "input.py",
-            "cpp" => "input.cpp",
-            "go" => "input.go",
-            "rs" => "input.rs",
-            "xml" => "input.xml",
-            _ => "input.txt",
-        },
+        "polyglot-source" | "github-source" => source_input_name(polyglot_lang(doc_dir)),
+        "github-logs" => "input.log",
+        "dockerfiles" => "input.dockerfile",
         "plain-text" => "input.md",
         _ => "input.txt",
     }
@@ -134,15 +171,9 @@ fn output_artifact_name(doc_dir: &str) -> &'static str {
         "search-results" => "output.rg",
         "unified-diff" => "output.diff",
         "rust-source" => "output.rs",
-        "polyglot-source" => match polyglot_lang(doc_dir) {
-            "ts" => "output.ts",
-            "py" => "output.py",
-            "cpp" => "output.cpp",
-            "go" => "output.go",
-            "rs" => "output.rs",
-            "xml" => "output.txt",
-            _ => "output.txt",
-        },
+        "polyglot-source" | "github-source" => source_output_name(polyglot_lang(doc_dir)),
+        "github-logs" => "output.log",
+        "dockerfiles" => "output.dockerfile",
         "plain-text" => "output.md",
         _ => "output.txt",
     }
@@ -795,6 +826,80 @@ fn benchmark_cases() -> Vec<BenchCase> {
                     ..Default::default()
                 },
                 checks: vec![SignalCheck::present(check_label, needle)],
+                task_checks: vec![],
+            },
+        ));
+    }
+
+    for doc_dir in category_case_dirs("github-source") {
+        let lang = polyglot_lang(&doc_dir).to_string();
+        // Weak per-language needle that must survive signature-preserving
+        // compaction (imports and top-level declarations are always kept).
+        let needle = match lang.as_str() {
+            "ts" => "export",
+            // Some JS fixtures are CJS (require) and some ESM (import).
+            "js" => "port",
+            "py" => "def ",
+            "go" => "func ",
+            "cpp" | "c" => "#include",
+            "rs" => "fn ",
+            "java" => "public",
+            "kt" | "cs" => "class",
+            "rb" => "def ",
+            "php" => "namespace",
+            "swift" => "struct",
+            "xml" => "4.0.0",
+            _ => "fn",
+        };
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "github-source",
+                family: if lang == "xml" { "html" } else { "code" },
+                description: "Real source file fetched from a public GitHub repository.",
+                fallback: rust_source_file(70),
+                hint: ContentHint {
+                    extension: Some(lang.clone()),
+                    source_tool: Some("read_file".to_string()),
+                    ..Default::default()
+                },
+                checks: vec![SignalCheck::present("structure retained", needle)],
+                task_checks: vec![],
+            },
+        ));
+    }
+
+    for doc_dir in category_case_dirs("github-logs") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "github-logs",
+                family: "log",
+                description: "Real log file fetched from a public GitHub repository.",
+                fallback: docker_error_log(400),
+                hint: ContentHint {
+                    extension: Some("log".to_string()),
+                    ..Default::default()
+                },
+                checks: vec![],
+                task_checks: vec![],
+            },
+        ));
+    }
+
+    for doc_dir in category_case_dirs("dockerfiles") {
+        cases.push(make_case(
+            doc_dir,
+            CaseSeed {
+                category: "dockerfiles",
+                family: "dockerfile",
+                description: "Real Dockerfile fetched from a public GitHub repository.",
+                fallback: "FROM debian:bookworm-slim\nRUN apt-get update\n".repeat(40),
+                hint: ContentHint {
+                    source_tool: Some("read_file".to_string()),
+                    ..Default::default()
+                },
+                checks: vec![SignalCheck::present("base image retained", "FROM")],
                 task_checks: vec![],
             },
         ));

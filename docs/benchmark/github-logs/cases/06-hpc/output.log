@@ -1,0 +1,25 @@
+[... 172 line(s) omitted ... ⟦tj:8da68e68f0ce5433b4c0eb9752adcda9⟧]
+51338 node-3 node psu 1106496000 1 psu failure\ ambient=28
+191898 node-238 node psu 1131240275 1 psu failure\ ambient=28
+236618 node-104 node psu 1132434391 1 psu failure\ ambient=28
+341834 node-118 node psu 1140312091 1 psu failure\ ambient=28
+347972 node-118 node psu 1140430530 1 psu failure\ ambient=31
+147394 Interconnect-0N00 switch_module temphigh 1129812510 1 Temperature (41C) exceeds warning threshold
+[... 33 line(s) omitted ... ⟦tj:748e84d28b4a40c3f2fa4baa274beee7⟧]
+365140 node-69 unix.hw net.niff.down 1085075228 1 NIFF: node node-69 detected a failed network connection on network 5.5.224.0 via interface alt0
+401608 node-162 unix.hw net.niff.down 1142550442 1 NIFF: node node-162 detected a failed network connection on network 5.5.224.0 via interface alt0
+[... 499 line(s) omitted ... ⟦tj:4b688617163ceea8210bc9abc82a0ed0⟧]
+2556843 gige5 gige temperature 1072878243 1 warning
+[... 1127 line(s) omitted ... ⟦tj:c0c73b5ac05403c614131673b1d3dd16⟧]
+72725 3398 boot_cmd error 1108648264 1 Failed subcommands 3406
+[... 63 line(s) omitted ... ⟦tj:82917ae7aefd6e5e2dba49bd0985003a⟧]
+414569 Interconnect-1N02 switch_module error 1142843014 1 link errors remain current
+414493 Interconnect-1N02 switch_module error 1142837578 1 link errors remain current
+414390 Interconnect-1N00 switch_module error 1142825359 1 link errors remain current
+443580 Interconnect-1T01 switch_module error 1144142493 1 link errors remain current
+479886 Interconnect-1T02 switch_module error 1146011009 1 link errors remain current
+[... 91 line(s) omitted ... ⟦tj:360e4f8780a8f84fe8d37b7ac183e794⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (151178 bytes) is available by calling tinyjuice_retrieve with token "826e5957b461e65780a8bda5c186c2fc" (marker ⟦tj:826e5957b461e65780a8bda5c186c2fc⟧)]

@@ -84,19 +84,30 @@ pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<Compre
         collapsed.clear();
     };
 
+    let mut in_block_comment = false;
+    let mut namespace_pending = false;
     for line in &lines {
-        let (mut opens, closes) = brace_delta(line);
+        let was_in_comment = in_block_comment;
+        let (mut opens, closes) = brace_delta(line, &mut in_block_comment);
         let start_depth = depth;
         // Namespace-like containers wrap entire files (C++/C# `namespace`,
         // C `extern "C"`); treat them as transparent so classes and functions
-        // inside stay at top level instead of collapsing wholesale.
-        if start_depth == 0 && opens > closes {
-            let t = line.trim_start();
-            if t.starts_with("namespace ")
+        // inside stay at top level instead of collapsing wholesale. Handles
+        // both same-line braces and the C# style with `{` on the next line.
+        if start_depth == 0 && !was_in_comment {
+            let t = line.trim();
+            let is_container = t.starts_with("namespace ")
                 || t.starts_with("namespace{")
-                || t.starts_with("extern \"C\"")
-            {
+                || t.starts_with("extern \"C\"");
+            if is_container && opens > closes {
                 opens -= 1;
+            } else if is_container && opens == 0 {
+                namespace_pending = true;
+            } else if namespace_pending && !t.is_empty() {
+                if t == "{" {
+                    opens -= 1;
+                }
+                namespace_pending = false;
             }
         }
         // A line that carries signal is always kept, regardless of depth.
@@ -135,9 +146,11 @@ pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<Compre
     Some(CompressOutput::lossy(out, CompressorKind::Code))
 }
 
-/// Count `{`/`}` on a line, ignoring those inside string/char literals and
-/// line comments — a cheap approximation good enough for the depth heuristic.
-fn brace_delta(line: &str) -> (i32, i32) {
+/// Count `{`/`}` on a line, ignoring those inside string/char literals,
+/// line comments, and `/* … */` block comments (Javadoc is full of literal
+/// braces via `{@link …}` — counting them drifts the depth for the rest of
+/// the file). `in_block_comment` carries block-comment state across lines.
+fn brace_delta(line: &str, in_block_comment: &mut bool) -> (i32, i32) {
     // A char literal ('x', '\n', '{') closes within a few characters; a Rust
     // lifetime ('a in generics) or a stray apostrophe never does. Treating
     // every ' as a string opener would flip the rest of a lifetime-carrying
@@ -150,6 +163,13 @@ fn brace_delta(line: &str) -> (i32, i32) {
     let mut prev = '\0';
     let mut iter = line.char_indices().peekable();
     while let Some((i, c)) = iter.next() {
+        if *in_block_comment {
+            if c == '/' && prev == '*' {
+                *in_block_comment = false;
+            }
+            prev = c;
+            continue;
+        }
         match in_str {
             Some(q) => {
                 if c == q && prev != '\\' {
@@ -158,6 +178,12 @@ fn brace_delta(line: &str) -> (i32, i32) {
             }
             None => match c {
                 '"' | '`' => in_str = Some(c),
+                '/' if iter.peek().map(|&(_, ch)| ch) == Some('*') => {
+                    iter.next();
+                    *in_block_comment = true;
+                    prev = '\0';
+                    continue;
+                }
                 '\'' => {
                     let rest = &line[i + c.len_utf8()..];
                     let close = rest
@@ -396,17 +422,26 @@ mod tests {
     #[test]
     fn brace_delta_handles_lifetimes_and_char_literals() {
         // Lifetimes must not open phantom string mode.
-        assert_eq!(brace_delta("pub fn f<'a>(x: &'a str) {"), (1, 0));
-        assert_eq!(brace_delta("impl<'de> Deserialize<'de> for X {"), (1, 0));
         assert_eq!(
-            brace_delta("fn g<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {"),
+            brace_delta("pub fn f<'a>(x: &'a str) {", &mut false),
+            (1, 0)
+        );
+        assert_eq!(
+            brace_delta("impl<'de> Deserialize<'de> for X {", &mut false),
+            (1, 0)
+        );
+        assert_eq!(
+            brace_delta(
+                "fn g<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {",
+                &mut false
+            ),
             (1, 0)
         );
         // Real char literals still shield their contents.
-        assert_eq!(brace_delta("let c = '{';"), (0, 0));
-        assert_eq!(brace_delta("if c == '}' { close(); }"), (1, 1));
+        assert_eq!(brace_delta("let c = '{';", &mut false), (0, 0));
+        assert_eq!(brace_delta("if c == '}' { close(); }", &mut false), (1, 1));
         // Strings still shield braces.
-        assert_eq!(brace_delta(r#"let s = "{}"; f(|| {"#), (1, 0));
+        assert_eq!(brace_delta(r#"let s = "{}"; f(|| {"#, &mut false), (1, 0));
     }
 
     #[test]
@@ -528,6 +563,53 @@ mod tests {
         assert!(
             out.text.contains("class SceneNode"),
             "class inside namespace must stay visible: {}",
+            out.text
+        );
+    }
+
+    #[test]
+    fn block_comments_do_not_drift_depth() {
+        // Javadoc braces ({@link ...}) must not count.
+        let mut in_c = false;
+        assert_eq!(
+            brace_delta("/** see {@link Foo#bar} for details", &mut in_c),
+            (0, 0)
+        );
+        assert!(in_c);
+        assert_eq!(
+            brace_delta(" * more prose with { braces } inside", &mut in_c),
+            (0, 0)
+        );
+        assert_eq!(brace_delta(" */ fn real() {", &mut in_c), (1, 0));
+        assert!(!in_c);
+
+        let mut src = String::from("package com.example;\n\n");
+        src.push_str("/**\n * Uses {@link Widget} and {@code new Widget()}.\n */\n");
+        src.push_str("public final class Widget {\n");
+        for i in 0..14 {
+            src.push_str(&format!("    private int field_{i} = {i};\n"));
+        }
+        src.push_str("}\n");
+        let out = compress_heuristic(&src, false).expect("compresses");
+        assert!(
+            out.text.contains("public final class Widget"),
+            "class after javadoc must stay visible: {}",
+            out.text
+        );
+    }
+
+    #[test]
+    fn csharp_namespace_brace_on_next_line_is_transparent() {
+        let mut src = String::from("using System;\n\nnamespace Newtonsoft.Json\n{\n");
+        src.push_str("    public class JsonSerializer\n    {\n");
+        for i in 0..14 {
+            src.push_str(&format!("        private int _f{i} = {i};\n"));
+        }
+        src.push_str("    }\n}\n");
+        let out = compress_heuristic(&src, false).expect("compresses");
+        assert!(
+            out.text.contains("public class JsonSerializer"),
+            "class inside newline-brace namespace must stay visible: {}",
             out.text
         );
     }

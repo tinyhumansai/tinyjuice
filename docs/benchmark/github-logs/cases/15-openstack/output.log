@@ -1,0 +1,29 @@
+[... 56 line(s) omitted ... ⟦tj:f1cac8acac01b3338f648c30b01a2392⟧]
+nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:00:20.345 2931 WARNING nova.virt.libvirt.imagecache [req-addc1839-2ed5-4778-b57e-5854eb7b8b09 - - - - -] Unknown base file: /var/lib/nova/instances/_base/a489c868f0c37da93b76227c91bb03908ac0e742
+[... 2 line(s) omitted ... ⟦tj:5cc774c3e1cd3e19efae1d95b087d147⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:00:21.067 25746 INFO nova.api.openstack.wsgi [req-0b851395-2895-44b9-8265-a27d0bb52910 f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 90 line(s) omitted ... ⟦tj:722ba84ad96053f7b225144c009ae8fe⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:01:03.114 25746 INFO nova.api.openstack.wsgi [req-fff6fe1a-cbb6-4b38-806a-afee069d7c13 f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 84 line(s) omitted ... ⟦tj:135d15768d6b1bd81443061aa1a97e68⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:01:43.495 25746 INFO nova.api.openstack.wsgi [req-a0893d5a-dc60-4c49-82e5-b9f7dfc2f6ab f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 93 line(s) omitted ... ⟦tj:da3406d8e839f26fc729a6395a7b6665⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:02:25.212 25746 INFO nova.api.openstack.wsgi [req-3fa8a45e-031e-4f3b-b327-b9cd4210f3ba f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 92 line(s) omitted ... ⟦tj:fffac6dfc9dd3c0da727b63bf775cceb⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:03:07.021 25746 INFO nova.api.openstack.wsgi [req-c4d0c20c-cfe8-4e66-b280-b083419d4967 f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 873 line(s) omitted ... ⟦tj:4ec584a785a17eeb64617d4cfb03799b⟧]
+nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:09:41.850 2931 WARNING nova.compute.manager [req-addc1839-2ed5-4778-b57e-5854eb7b8b09 - - - - -] While synchronizing instance power states, found 1 instances in the database and 0 instances on the hypervisor.
+[... 232 line(s) omitted ... ⟦tj:f09b1e0a9894a467d9cf2108491a64ae⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:11:23.292 25746 INFO nova.api.openstack.wsgi [req-033d97b9-69e4-4acd-9029-f0d7b9370645 f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 104 line(s) omitted ... ⟦tj:1db2d9641d38a6ef7f6e41adde1c6b08⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:12:05.112 25746 INFO nova.api.openstack.wsgi [req-d6e9cfb8-d914-48c3-b677-72bc73329c69 f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 93 line(s) omitted ... ⟦tj:e119580769fb5fc6c7defbb923665317⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:12:45.461 25746 INFO nova.api.openstack.wsgi [req-ab2e766f-eee9-4e84-8171-8ba713a28f9f f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 90 line(s) omitted ... ⟦tj:643aeef1b0fe17af4b08230ed036e191⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:13:27.251 25746 INFO nova.api.openstack.wsgi [req-4beefba4-a928-45a5-90f6-6246e77bc2ce f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 87 line(s) omitted ... ⟦tj:599b4202e2aefdf20037592948af523b⟧]
+nova-api.log.1.2017-05-16_13:53:08 2017-05-16 00:14:09.186 25746 INFO nova.api.openstack.wsgi [req-8a5b19ff-20d8-40e7-94d3-29b89f9b6987 f7b8d1f1d4d44643b07fa10ca7d021fb e9746973ac574c6b8a9e8857f56a7608 - - -] HTTP exception thrown: No instances found for any event
+[... 92 line(s) omitted ... ⟦tj:e1875ed5f9c34a9a287c8857d828d203⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (595119 bytes) is available by calling tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5" (marker ⟦tj:025a1bc64ff5b2ef4a4bda6c4ad5c5c5⟧)]

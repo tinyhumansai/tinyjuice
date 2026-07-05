@@ -1,0 +1,15 @@
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+[... 134 line(s) omitted ... ⟦tj:4ce831f2e8c788c4183d06b461263e6d⟧]
+{"error":"duo auth result: deny, status: deny, message: Login request denied.","level":"error","method":"POST","msg":"Unsuccessful Duo authentication attempt by user 'realuser@example.com'","path":"/api/secondfactor/duo","remote_ip":"10.10.10.13","time":"2025-03-13T13:46:31+02:00"}
+{"error":"duo auth result: deny, status: deny, message: Login request denied.","level":"error","method":"POST","msg":"Unsuccessful Duo authentication attempt by user 'realuser@example.com'","path":"/api/secondfactor/duo","remote_ip":"10.10.10.13","time":"2025-03-13T13:46:31+02:00"}
+{"error":"duo auth result: deny, status: deny, message: Login request denied.","level":"error","method":"POST","msg":"Unsuccessful Duo authentication attempt by user 'realuser@example.com'","path":"/api/secondfactor/duo","remote_ip":"10.10.10.13","time":"2025-03-13T13:46:31+02:00"}
+{"error":"duo auth result: deny, status: deny, message: Login request denied.","level":"error","method":"POST","msg":"Unsuccessful Duo authentication attempt by user 'realuser@example.com'","path":"/api/secondfactor/duo","remote_ip":"10.10.10.13","time":"2025-03-13T13:46:31+02:00"}
+{"error":"duo auth result: deny, status: deny, message: Login request denied.","level":"error","method":"POST","msg":"Unsuccessful Duo authentication attempt by user 'realuser@example.com'","path":"/api/secondfactor/duo","remote_ip":"10.10.10.13","time":"2025-03-13T13:46:31+02:00"}
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[compacted tool output — this is a PARTIAL view; the full original (82668 bytes) is available by calling tinyjuice_retrieve with token "fd5b95737b66c5e69f3945b5bebd5f26" (marker ⟦tj:fd5b95737b66c5e69f3945b5bebd5f26⟧)]
