@@ -33,6 +33,8 @@ pub const HEAD_ROWS: usize = 20;
 pub const TAIL_ROWS: usize = 10;
 /// Z-score beyond which a numeric cell is treated as an outlier worth keeping.
 pub const OUTLIER_SIGMA: f64 = 2.0;
+/// Do not spend unbounded parse effort on huge string cells.
+const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
 pub struct JsonCompressor;
 
@@ -306,10 +308,40 @@ fn flatten_value(prefix: &str, value: &Value, out: &mut BTreeMap<String, Value>)
                 flatten_value(&format!("{prefix}.{key}"), child, out);
             }
         }
+        Value::String(text) => {
+            if let Some(parsed) = parse_stringified_json(text) {
+                match parsed {
+                    Value::Object(obj) if !obj.is_empty() => {
+                        for (key, child) in &obj {
+                            flatten_value(&format!("{prefix}.{key}"), child, out);
+                        }
+                    }
+                    Value::Array(_) => {
+                        out.insert(prefix.to_string(), parsed);
+                    }
+                    _ => {
+                        out.insert(prefix.to_string(), value.clone());
+                    }
+                }
+            } else {
+                out.insert(prefix.to_string(), value.clone());
+            }
+        }
         _ => {
             out.insert(prefix.to_string(), value.clone());
         }
     }
+}
+
+fn parse_stringified_json(text: &str) -> Option<Value> {
+    let trimmed = text.trim();
+    if trimmed.len() > MAX_STRINGIFIED_JSON_BYTES {
+        return None;
+    }
+    if !(trimmed.starts_with('{') || trimmed.starts_with('[')) {
+        return None;
+    }
+    serde_json::from_str(trimmed).ok()
 }
 
 fn analyze_flat_rows(rows: &[FlatRow]) -> JsonAnalysis {
@@ -563,6 +595,45 @@ mod tests {
         assert!(c.text.contains("user.name"), "{}", c.text);
         assert!(c.text.contains("user.team"), "{}", c.text);
         assert!(c.text.contains("user 7"), "{}", c.text);
+    }
+
+    #[test]
+    fn stringified_json_objects_flatten_to_dotted_columns() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            let metadata = serde_json::json!({
+                "owner": format!("team-{i}"),
+                "flags": { "retry": i % 2 == 0 }
+            })
+            .to_string()
+            .replace('"', "\\\"");
+            rows.push(format!(
+                r#"{{"id":{i},"metadata":"{metadata}","status":"active"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.text.contains("metadata.owner"), "{}", c.text);
+        assert!(c.text.contains("metadata.flags.retry"), "{}", c.text);
+        assert!(c.text.contains("team-7"), "{}", c.text);
+    }
+
+    #[test]
+    fn stringified_json_parsing_leaves_scalar_and_invalid_strings_opaque() {
+        let input = r#"[
+            {"id":1,"payload":"001","note":"{not json}"},
+            {"id":2,"payload":"002","note":"[also not json]"},
+            {"id":3,"payload":"003","note":"plain"}
+        ]"#;
+
+        let c = compress(input).expect("compresses");
+
+        assert!(c.text.contains("payload"), "{}", c.text);
+        assert!(c.text.contains("001"), "{}", c.text);
+        assert!(c.text.contains("{not json}"), "{}", c.text);
+        assert!(!c.text.contains("note."), "{}", c.text);
     }
 
     #[test]
