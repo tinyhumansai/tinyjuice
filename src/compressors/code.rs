@@ -257,6 +257,7 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
     let mut elisions = Vec::new();
     let mut symbols = Vec::new();
     let mut skipped_private_start: Option<usize> = None;
+    let mut expanding_body = false;
 
     let flush =
         |out: &mut String, collapsed: &mut Vec<(usize, &str)>, elisions: &mut Vec<CodeElision>| {
@@ -283,6 +284,12 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
             }
             collapsed.clear();
         };
+    let flush_verbatim = |out: &mut String, collapsed: &mut Vec<(usize, &str)>| {
+        for (_, line) in collapsed.iter() {
+            let _ = writeln!(out, "{line}");
+        }
+        collapsed.clear();
+    };
 
     for (idx, line) in content.lines().enumerate() {
         let line_no = idx + 1;
@@ -312,6 +319,15 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
             continue;
         }
 
+        if expanding_body {
+            let _ = writeln!(out, "{line}");
+            depth = next_depth;
+            if depth == 0 {
+                expanding_body = false;
+            }
+            continue;
+        }
+
         if start_depth == 0 || force_keep {
             flush(&mut out, &mut collapsed, &mut elisions);
             if let Some(symbol) = symbol_from_signature(line, line_no, line_no, "heuristic") {
@@ -332,10 +348,20 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
                     depth = next_depth;
                     continue;
                 }
+                if should_expand_heuristic_symbol(mode, &symbol, line_no) && next_depth > 0 {
+                    expanding_body = true;
+                }
                 symbols.push(symbol);
             }
             let _ = writeln!(out, "{line}");
         } else {
+            if should_expand_heuristic_line(mode, line_no) {
+                flush_verbatim(&mut out, &mut collapsed);
+                let _ = writeln!(out, "{line}");
+                expanding_body = next_depth > 0;
+                depth = next_depth;
+                continue;
+            }
             collapsed.push((line_no, line));
         }
         depth = next_depth;
@@ -360,6 +386,30 @@ fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
         symbols,
         elisions,
         parse_status: ParseStatus::HeuristicFallback,
+    }
+}
+
+fn should_expand_heuristic_symbol(mode: &StubMode, symbol: &SymbolSummary, line_no: usize) -> bool {
+    match mode {
+        StubMode::MatchedSymbols(symbols) => symbols.iter().any(|s| {
+            let wanted = s.trim();
+            !wanted.is_empty() && wanted == symbol.name
+        }),
+        StubMode::ExpandAroundLines(ranges) => ranges
+            .iter()
+            .copied()
+            .any(|range| range.intersects(LineRange::new(line_no, line_no))),
+        StubMode::SignaturesOnly | StubMode::PublicApi => false,
+    }
+}
+
+fn should_expand_heuristic_line(mode: &StubMode, line_no: usize) -> bool {
+    match mode {
+        StubMode::ExpandAroundLines(ranges) => ranges
+            .iter()
+            .copied()
+            .any(|range| range.intersects(LineRange::new(line_no, line_no))),
+        StubMode::SignaturesOnly | StubMode::PublicApi | StubMode::MatchedSymbols(_) => false,
     }
 }
 
@@ -915,5 +965,69 @@ mod tests {
         assert_eq!(out.symbols.len(), 1);
         assert_eq!(out.symbols[0].name, "visible");
         assert!(out.symbols[0].public);
+    }
+
+    #[test]
+    fn stub_code_matched_symbol_heuristic_expands_requested_body() {
+        let mut src = String::from("function visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"visible {i}\");\n"));
+        }
+        src.push_str("}\n\nfunction hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"hidden {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(
+            &src,
+            Some("unknown"),
+            &StubMode::MatchedSymbols(vec!["visible".to_string()]),
+            usize::MAX,
+        );
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(out.text.contains("visible 9"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 2);
+        assert!(
+            out.elisions
+                .iter()
+                .any(|elision| elision.reason.contains("MatchedSymbols")),
+            "{:?}",
+            out.elisions
+        );
+    }
+
+    #[test]
+    fn stub_code_expand_around_lines_heuristic_expands_containing_body() {
+        let mut src = String::from("function first() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"first {i}\");\n"));
+        }
+        src.push_str("}\n\nfunction second() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"second {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(
+            &src,
+            Some("unknown"),
+            &StubMode::ExpandAroundLines(vec![LineRange::new(7, 7)]),
+            usize::MAX,
+        );
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(out.text.contains("first 9"), "{}", out.text);
+        assert!(!out.text.contains("second 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 2);
+        assert!(
+            out.elisions
+                .iter()
+                .any(|elision| elision.reason.contains("ExpandAroundLines")),
+            "{:?}",
+            out.elisions
+        );
     }
 }

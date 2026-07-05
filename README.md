@@ -232,7 +232,9 @@ Source-code file reads are exact by default. Hosts that intentionally want a
 structural view can call `stub_code` with a `StubMode`; the returned
 `CodeStubOutput` includes symbols, elided line ranges, and whether tree-sitter
 or the heuristic fallback produced the stub. `PublicApi` stubs keep imports and
-public signatures while replacing private declarations with elision metadata.
+public signatures while replacing private declarations with elision metadata;
+matched-symbol and line-range expansion also work through the heuristic
+fallback.
 
 Run the local analytics interface:
 
