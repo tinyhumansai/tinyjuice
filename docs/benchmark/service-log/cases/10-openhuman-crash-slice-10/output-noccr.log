@@ -335,6 +335,4 @@ IO80211_driverkit-1561.3 "IO80211_driverkit-1561.3" Apr 18 2026 17:42:26
 AirPort: 
 Bluetooth: Version (null), 0 services, 0 devices, 0 incoming serial ports
 Network Service: Wi-Fi, AirPort, en0
-Thunderbolt Bus: MacBook Pro, Apple Inc.
-Thunderbolt Bus: MacBook Pro, Apple Inc.
-Thunderbolt Bus: MacBook Pro, Apple Inc.
+Thunderbolt Bus: MacBook Pro, Apple Inc. [×3]

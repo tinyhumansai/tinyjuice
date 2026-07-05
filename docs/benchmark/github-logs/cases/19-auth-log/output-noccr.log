@@ -1886,8 +1886,7 @@ Mar 29 14:39:52 ip-10-77-20-248 sshd[3668]: Received disconnect from 24.151.103.
 Mar 29 14:39:52 ip-10-77-20-248 sshd[3668]: Disconnected from 24.151.103.17 port 64733
 Mar 29 14:39:52 ip-10-77-20-248 sshd[3629]: pam_unix(sshd:session): session closed for user elastic_user_6
 Mar 29 14:39:52 ip-10-77-20-248 systemd-logind[1118]: Removed session 90.
-Mar 29 14:43:05 ip-10-77-20-248 sshd[3679]: Failed password for elastic_user_2 from 85.245.107.41 port 52498 ssh2
-Mar 29 14:43:05 ip-10-77-20-248 sshd[3679]: Failed password for elastic_user_2 from 85.245.107.41 port 52498 ssh2
+Mar 29 14:43:05 ip-10-77-20-248 sshd[3679]: Failed password for elastic_user_2 from 85.245.107.41 port 52498 ssh2 [×2]
 Mar 29 14:43:05 ip-10-77-20-248 sshd[3679]: Connection closed by 85.245.107.41 port 52498 [preauth]
 Mar 29 14:58:43 ip-10-77-20-248 sshd[3692]: Accepted password for elastic_user_5 from 85.245.107.41 port 52652 ssh2
 Mar 29 14:58:43 ip-10-77-20-248 sshd[3692]: pam_unix(sshd:session): session opened for user elastic_user_5 by (uid=0)
@@ -2080,8 +2079,7 @@ Mar 29 17:47:44 ip-10-77-20-248 sshd[4978]: Received disconnect from 85.245.107.
 Mar 29 17:47:44 ip-10-77-20-248 sshd[4978]: Disconnected from 85.245.107.41 port 55006
 Mar 29 17:47:44 ip-10-77-20-248 sshd[4939]: pam_unix(sshd:session): session closed for user elastic_user_1
 Mar 29 17:47:44 ip-10-77-20-248 systemd-logind[1118]: Removed session 116.
-Mar 29 17:48:33 ip-10-77-20-248 sshd[4988]: Failed password for elastic_user_3 from 24.151.103.17 port 50739 ssh2
-Mar 29 17:48:33 ip-10-77-20-248 sshd[4988]: Failed password for elastic_user_3 from 24.151.103.17 port 50739 ssh2
+Mar 29 17:48:33 ip-10-77-20-248 sshd[4988]: Failed password for elastic_user_3 from 24.151.103.17 port 50739 ssh2 [×2]
 Mar 29 17:48:33 ip-10-77-20-248 sshd[4988]: Connection closed by 24.151.103.17 port 50739 [preauth]
 Mar 29 17:59:54 ip-10-77-20-248 sshd[5001]: Accepted password for elastic_user_5 from 24.151.103.17 port 50831 ssh2
 Mar 29 17:59:54 ip-10-77-20-248 sshd[5001]: pam_unix(sshd:session): session opened for user elastic_user_5 by (uid=0)

@@ -331,8 +331,7 @@
 03-17 16:13:47.691  1702  1737 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =140
 03-17 16:13:47.694  1702 17632 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =144
 03-17 16:13:47.695  1702  1702 I NotificationManager: cancelNotification,index:-1
-03-17 16:13:47.700  1702  1702 I NotificationManager: cancelNotification,index:-1
-03-17 16:13:47.700  1702  1702 I NotificationManager: cancelNotification,index:-1
+03-17 16:13:47.700  1702  1702 I NotificationManager: cancelNotification,index:-1 [×2]
 03-17 16:13:47.707  1702 27357 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =193
 03-17 16:13:47.707  1702  1702 I NotificationManager: cancelNotification,index:-1
 03-17 16:13:47.709  1702  2113 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x0,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId=0
@@ -1479,8 +1478,7 @@
 03-17 16:15:49.539  2227  2227 I PhoneStatusBar: notifyUiVisibilityChanged:vis=0x40000500, SystemUiVisibility=0x40000500
 03-17 16:15:49.542  1702  2639 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =123
 03-17 16:15:49.545  1702 14638 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =129
-03-17 16:15:49.552  1702  1702 I NotificationManager: cancelNotification,index:-1
-03-17 16:15:49.552  1702  1702 I NotificationManager: cancelNotification,index:-1
+03-17 16:15:49.552  1702  1702 I NotificationManager: cancelNotification,index:-1 [×2]
 03-17 16:15:49.554  1702  2113 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =135
 03-17 16:15:49.555  1702  1702 I NotificationManager: cancelNotification,index:-1
 03-17 16:15:49.559  1702 17621 I NotificationManager: cancelNotificationWithTag pid 28601,uid = 10111,tag = null,pkg =com.tencent.mobileqq,id =140
@@ -1998,3 +1996,5 @@
 03-17 16:16:09.141  1702  1820 I DisplayPowerController: HBM brightnessIn =38
 03-17 16:16:09.141  1702  1820 I DisplayPowerController: HBM brightnessOut =38
 03-17 16:16:09.141  1702  1820 D DisplayPowerController: Animating brightness: target=38, rate=200
+
+[reformatted, no data lost — exact original (279076 bytes): call tinyjuice_retrieve with token "47641549915e662ff590291df266a45f"]

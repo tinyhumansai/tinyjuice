@@ -2,7 +2,7 @@
 
 Real OpenHuman runtime crash-log slices, with live Docker OpenHuman logs used first when a container is available. The log compressor keeps incident signals and collapses repeated low-value lines.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. Faithful reshapes (HTML->text) are identical in both passes (Pass 2 is marginally lower only for the recovery footer); pure information-dropping categories are 0% in Pass 1 and compress only in Pass 2; JSON is a hybrid — Pass 1 renders the full lossless markdown table (all rows), and Pass 2 additionally samples the middle away behind retrieval tokens. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. Faithful reshapes (HTML->text) are identical in both passes (Pass 2 is marginally lower only for the recovery footer); pure information-dropping categories (diffs, search, code) are 0% in Pass 1 and compress only in Pass 2. Two categories are hybrids that compress losslessly in Pass 1 and further in Pass 2: JSON renders the full lossless markdown table in Pass 1 (all rows) then samples the middle away in Pass 2; logs collapse runs of byte-identical lines to `line [x N]` in Pass 1 then drop low-signal lines in Pass 2. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,22 +10,92 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | 41.0 KB -> 916 B (-98%) | 0.0%<br>[output](cases/08-openhuman-crash-slice-8/output-noccr.log) - [diff](cases/08-openhuman-crash-slice-8/compression-noccr.diff) | 97.5%<br>[output](cases/08-openhuman-crash-slice-8/output.log) - [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 0.933 ms |
-| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | 41.0 KB -> 987 B (-98%) | 0.0%<br>[output](cases/06-openhuman-crash-slice-6/output-noccr.log) - [diff](cases/06-openhuman-crash-slice-6/compression-noccr.diff) | 97.3%<br>[output](cases/06-openhuman-crash-slice-6/output.log) - [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 0.931 ms |
-| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | 40.9 KB -> 987 B (-98%) | 0.0%<br>[output](cases/07-openhuman-crash-slice-7/output-noccr.log) - [diff](cases/07-openhuman-crash-slice-7/compression-noccr.diff) | 97.3%<br>[output](cases/07-openhuman-crash-slice-7/output.log) - [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 0.932 ms |
-| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | 38.1 KB -> 1.3 KB (-97%) | 0.0%<br>[output](cases/09-openhuman-crash-slice-9/output-noccr.log) - [diff](cases/09-openhuman-crash-slice-9/compression-noccr.diff) | 96.3%<br>[output](cases/09-openhuman-crash-slice-9/output.log) - [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 0.955 ms |
-| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | 45.9 KB -> 2.1 KB (-95%) | 0.0%<br>[output](cases/03-openhuman-crash-slice-3/output-noccr.log) - [diff](cases/03-openhuman-crash-slice-3/compression-noccr.diff) | 95.2%<br>[output](cases/03-openhuman-crash-slice-3/output.log) - [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 1.114 ms |
-| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | 26.6 KB -> 1.4 KB (-95%) | 0.0%<br>[output](cases/01-openhuman-crash-slice-1/output-noccr.log) - [diff](cases/01-openhuman-crash-slice-1/compression-noccr.diff) | 94.2%<br>[output](cases/01-openhuman-crash-slice-1/output.log) - [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 1.010 ms |
-| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | 47.0 KB -> 3.2 KB (-93%) | 0.0%<br>[output](cases/04-openhuman-crash-slice-4/output-noccr.log) - [diff](cases/04-openhuman-crash-slice-4/compression-noccr.diff) | 92.9%<br>[output](cases/04-openhuman-crash-slice-4/output.log) - [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 1.134 ms |
-| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | 29.7 KB -> 2.1 KB (-93%) | 0.0%<br>[output](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff) | 92.6%<br>[output](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 0.890 ms |
-| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | 44.5 KB -> 3.2 KB (-93%) | 0.0%<br>[output](cases/05-openhuman-crash-slice-5/output-noccr.log) - [diff](cases/05-openhuman-crash-slice-5/compression-noccr.diff) | 92.5%<br>[output](cases/05-openhuman-crash-slice-5/output.log) - [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 1.058 ms |
-| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | 493.4 KB -> 479.4 KB (-3%) | 0.0%<br>[output](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff) | 2.8%<br>[output](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 3.587 ms |
+| `08-openhuman-crash-slice-8` | [input](cases/08-openhuman-crash-slice-8/input.log) | 41.0 KB -> 916 B (-98%) | 0.0%<br>[output](cases/08-openhuman-crash-slice-8/output-noccr.log) - [diff](cases/08-openhuman-crash-slice-8/compression-noccr.diff) | 97.5%<br>[output](cases/08-openhuman-crash-slice-8/output.log) - [diff](cases/08-openhuman-crash-slice-8/compression.diff) | 1.033 ms |
+| `06-openhuman-crash-slice-6` | [input](cases/06-openhuman-crash-slice-6/input.log) | 41.0 KB -> 987 B (-98%) | 0.0%<br>[output](cases/06-openhuman-crash-slice-6/output-noccr.log) - [diff](cases/06-openhuman-crash-slice-6/compression-noccr.diff) | 97.3%<br>[output](cases/06-openhuman-crash-slice-6/output.log) - [diff](cases/06-openhuman-crash-slice-6/compression.diff) | 0.956 ms |
+| `07-openhuman-crash-slice-7` | [input](cases/07-openhuman-crash-slice-7/input.log) | 40.9 KB -> 987 B (-98%) | 0.0%<br>[output](cases/07-openhuman-crash-slice-7/output-noccr.log) - [diff](cases/07-openhuman-crash-slice-7/compression-noccr.diff) | 97.3%<br>[output](cases/07-openhuman-crash-slice-7/output.log) - [diff](cases/07-openhuman-crash-slice-7/compression.diff) | 0.935 ms |
+| `09-openhuman-crash-slice-9` | [input](cases/09-openhuman-crash-slice-9/input.log) | 38.1 KB -> 1.3 KB (-97%) | 0.0%<br>[output](cases/09-openhuman-crash-slice-9/output-noccr.log) - [diff](cases/09-openhuman-crash-slice-9/compression-noccr.diff) | 96.3%<br>[output](cases/09-openhuman-crash-slice-9/output.log) - [diff](cases/09-openhuman-crash-slice-9/compression.diff) | 0.950 ms |
+| `03-openhuman-crash-slice-3` | [input](cases/03-openhuman-crash-slice-3/input.log) | 45.9 KB -> 2.1 KB (-95%) | 0.0%<br>[output](cases/03-openhuman-crash-slice-3/output-noccr.log) - [diff](cases/03-openhuman-crash-slice-3/compression-noccr.diff) | 95.2%<br>[output](cases/03-openhuman-crash-slice-3/output.log) - [diff](cases/03-openhuman-crash-slice-3/compression.diff) | 1.203 ms |
+| `01-openhuman-crash-slice-1` | [input](cases/01-openhuman-crash-slice-1/input.log) | 26.6 KB -> 1.4 KB (-95%) | 0.0%<br>[output](cases/01-openhuman-crash-slice-1/output-noccr.log) - [diff](cases/01-openhuman-crash-slice-1/compression-noccr.diff) | 94.2%<br>[output](cases/01-openhuman-crash-slice-1/output.log) - [diff](cases/01-openhuman-crash-slice-1/compression.diff) | 0.962 ms |
+| `04-openhuman-crash-slice-4` | [input](cases/04-openhuman-crash-slice-4/input.log) | 47.0 KB -> 3.2 KB (-93%) | 0.0%<br>[output](cases/04-openhuman-crash-slice-4/output-noccr.log) - [diff](cases/04-openhuman-crash-slice-4/compression-noccr.diff) | 92.9%<br>[output](cases/04-openhuman-crash-slice-4/output.log) - [diff](cases/04-openhuman-crash-slice-4/compression.diff) | 1.068 ms |
+| `02-openhuman-crash-slice-2` | [input](cases/02-openhuman-crash-slice-2/input.log) | 29.7 KB -> 2.1 KB (-93%) | 0.0%<br>[output](cases/02-openhuman-crash-slice-2/output-noccr.log) - [diff](cases/02-openhuman-crash-slice-2/compression-noccr.diff) | 92.6%<br>[output](cases/02-openhuman-crash-slice-2/output.log) - [diff](cases/02-openhuman-crash-slice-2/compression.diff) | 1.741 ms |
+| `05-openhuman-crash-slice-5` | [input](cases/05-openhuman-crash-slice-5/input.log) | 44.5 KB -> 3.2 KB (-93%) | 0.0%<br>[output](cases/05-openhuman-crash-slice-5/output-noccr.log) - [diff](cases/05-openhuman-crash-slice-5/compression-noccr.diff) | 92.5%<br>[output](cases/05-openhuman-crash-slice-5/output.log) - [diff](cases/05-openhuman-crash-slice-5/compression.diff) | 1.006 ms |
+| `10-openhuman-crash-slice-10` | [input](cases/10-openhuman-crash-slice-10/input.log) | 493.4 KB -> 479.4 KB (-3%) | 0.0%<br>[output](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff) | 2.8%<br>[output](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff) | 3.749 ms |
 
 ## What TinyJuice Is Doing
 
 The log path scores lines by signal. Errors, warnings, exception metadata, stack frames, and summaries are favored; repetitive routine lines are collapsed behind omission markers.
 
 ## Syntax-Aware Samples
+
+### `10-openhuman-crash-slice-10`
+
+- [Full input](cases/10-openhuman-crash-slice-10/input.log)
+- [Output with CCR](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff)
+- [Output without CCR](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+External Modification Summary:
+  Calls made by other processes targeting this process:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+  Calls made by this process:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+  Calls made by all processes on this machine:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+
+VM Region Summary:
+ReadOnly portion of Libraries: Total=2.2G resident=0K(0%) swapped_out_or_unallocated=2.2G(100%)
+Writable regions: Total=756.0M written=1394K(0%) resident=1394K(0%) swapped_out=0K(0%) unallocated=754.7M(100%)
+
+                                VIRTUAL   REGION 
+REGION TYPE                        SIZE    COUNT (non-coalesced) 
+===========                     =======  ======= 
+Accelerate framework               128K        1 
+Activity Tracing                   256K        1 
+AttributeGraph Data               1024K        1 
+CG image                            48K        2 
+ColorSync                           16K        1 
+CoreAnimation                      368K       23 
+CoreGraphics                        32K        2 
+CoreServices                       288K        2 
+CoreUI image data                  256K        2 
+Foundation                          48K        2 
+Image IO                            96K        6 
+Kernel Alloc Once                   48K        2 
+MALLOC                            37.7M       18 
+MALLOC guard page                 3248K        4 
+Mach message                       256K       10 
+
+```
+
+Output excerpt:
+
+```text
+[... 113 line(s) omitted ... ⟦tj:a68fbc035877309605c925535a723e32⟧]
+  "sip" : "enabled",
+  "vmRegionInfo" : "0x3028534f0 is in 0x302850000-0x302854000;  bytes after start: 13552  bytes before end: 2831\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      St...
+  "exception" : {"codes":"0x0000000000000002, 0x00000003028534f0","message":"Could not determine thread index for stack guard region","rawCodes":[2,12927186160],"type":"EXC_BAD_ACCESS","signal":"SIGBUS","subtype":"KERN_P...
+  "termination" : {"flags":0,"code":10,"namespace":"SIGNAL","indicator":"Bus error: 10","byProc":"exc handler","byPid":90825},
+  "vmregioninfo" : "0x3028534f0 is in 0x302850000-0x302854000;  bytes after start: 13552  bytes before end: 2831\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      St...
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"w...
+  "faultingThread" : 46,
+  "threads" : [{"threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":28600187224064},{"value":0},{"value":28600187224064},{"value":2},{"value":4294967295},{"value":0},{"value":17179...
+  "usedImages" : [
+  {
+[... 217 line(s) omitted ... ⟦tj:8d84aa87c05fa9dc1eb372eea2023b87⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (493358 bytes): call tinyjuice_retrieve with token "23c47ce58e1cf696d3aa8b0f9e9e54ce"]
+
+```
 
 ### `08-openhuman-crash-slice-8`
 
@@ -679,76 +749,6 @@ Output excerpt:
 [omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
 
 [PARTIAL view — full original (44535 bytes): call tinyjuice_retrieve with token "e4ac41e578f1d783c441d7b17c420ad6"]
-
-```
-
-### `10-openhuman-crash-slice-10`
-
-- [Full input](cases/10-openhuman-crash-slice-10/input.log)
-- [Output with CCR](cases/10-openhuman-crash-slice-10/output.log) - [diff](cases/10-openhuman-crash-slice-10/compression.diff)
-- [Output without CCR](cases/10-openhuman-crash-slice-10/output-noccr.log) - [diff](cases/10-openhuman-crash-slice-10/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-External Modification Summary:
-  Calls made by other processes targeting this process:
-    task_for_pid: 0
-    thread_create: 0
-    thread_set_state: 0
-  Calls made by this process:
-    task_for_pid: 0
-    thread_create: 0
-    thread_set_state: 0
-  Calls made by all processes on this machine:
-    task_for_pid: 0
-    thread_create: 0
-    thread_set_state: 0
-
-VM Region Summary:
-ReadOnly portion of Libraries: Total=2.2G resident=0K(0%) swapped_out_or_unallocated=2.2G(100%)
-Writable regions: Total=756.0M written=1394K(0%) resident=1394K(0%) swapped_out=0K(0%) unallocated=754.7M(100%)
-
-                                VIRTUAL   REGION 
-REGION TYPE                        SIZE    COUNT (non-coalesced) 
-===========                     =======  ======= 
-Accelerate framework               128K        1 
-Activity Tracing                   256K        1 
-AttributeGraph Data               1024K        1 
-CG image                            48K        2 
-ColorSync                           16K        1 
-CoreAnimation                      368K       23 
-CoreGraphics                        32K        2 
-CoreServices                       288K        2 
-CoreUI image data                  256K        2 
-Foundation                          48K        2 
-Image IO                            96K        6 
-Kernel Alloc Once                   48K        2 
-MALLOC                            37.7M       18 
-MALLOC guard page                 3248K        4 
-Mach message                       256K       10 
-
-```
-
-Output excerpt:
-
-```text
-[... 113 line(s) omitted ... ⟦tj:a68fbc035877309605c925535a723e32⟧]
-  "sip" : "enabled",
-  "vmRegionInfo" : "0x3028534f0 is in 0x302850000-0x302854000;  bytes after start: 13552  bytes before end: 2831\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      St...
-  "exception" : {"codes":"0x0000000000000002, 0x00000003028534f0","message":"Could not determine thread index for stack guard region","rawCodes":[2,12927186160],"type":"EXC_BAD_ACCESS","signal":"SIGBUS","subtype":"KERN_P...
-  "termination" : {"flags":0,"code":10,"namespace":"SIGNAL","indicator":"Bus error: 10","byProc":"exc handler","byPid":90825},
-  "vmregioninfo" : "0x3028534f0 is in 0x302850000-0x302854000;  bytes after start: 13552  bytes before end: 2831\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      St...
-  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"w...
-  "faultingThread" : 46,
-  "threads" : [{"threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":28600187224064},{"value":0},{"value":28600187224064},{"value":2},{"value":4294967295},{"value":0},{"value":17179...
-  "usedImages" : [
-  {
-[... 217 line(s) omitted ... ⟦tj:8d84aa87c05fa9dc1eb372eea2023b87⟧]
-
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
-
-[PARTIAL view — full original (493358 bytes): call tinyjuice_retrieve with token "23c47ce58e1cf696d3aa8b0f9e9e54ce"]
 
 ```
 

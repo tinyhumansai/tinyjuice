@@ -2,7 +2,7 @@
 
 Real log files from public GitHub repositories: the loghub corpus (HDFS, Hadoop, Spark, Zookeeper, BGL, HPC, Thunderbird, Windows, Linux, Android, HealthApp, Apache, Proxifier, OpenSSH, OpenStack, macOS), Elastic example datasets (Apache/nginx access logs, auth.log), and CrowdSec parser test fixtures (WAF, Traefik, Authelia, GitLab, Suricata). Sources and licenses in ATTRIBUTION.md.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. Faithful reshapes (HTML->text) are identical in both passes (Pass 2 is marginally lower only for the recovery footer); pure information-dropping categories are 0% in Pass 1 and compress only in Pass 2; JSON is a hybrid — Pass 1 renders the full lossless markdown table (all rows), and Pass 2 additionally samples the middle away behind retrieval tokens. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR and is **lossless by construction**: faithful reshapes (JSON tables/minify, HTML->text) still ship because nothing is lost, but anything that *drops* detail (log lines, diff context, search matches, code bodies, sampled JSON rows) passes the original through untouched, since without the cache it could not be recovered. `Pass 2` enables CCR, so information-dropping compression is allowed — every dropped block is offloaded behind a retrieval token. Faithful reshapes (HTML->text) are identical in both passes (Pass 2 is marginally lower only for the recovery footer); pure information-dropping categories (diffs, search, code) are 0% in Pass 1 and compress only in Pass 2. Two categories are hybrids that compress losslessly in Pass 1 and further in Pass 2: JSON renders the full lossless markdown table in Pass 1 (all rows) then samples the middle away in Pass 2; logs collapse runs of byte-identical lines to `line [x N]` in Pass 1 then drop low-signal lines in Pass 2. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,45 +10,1095 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `15-openstack` | [input](cases/15-openstack/input.log) | 595.1 KB -> 906 B (-100%) | 0.0%<br>[output](cases/15-openstack/output-noccr.log) - [diff](cases/15-openstack/compression-noccr.diff) | 99.8%<br>[output](cases/15-openstack/output.log) - [diff](cases/15-openstack/compression.diff) | 3.048 ms |
-| `01-hdfs` | [input](cases/01-hdfs/input.log) | 287.8 KB -> 470 B (-100%) | 0.0%<br>[output](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff) | 99.8%<br>[output](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff) | 1.785 ms |
-| `17-apache-access` | [input](cases/17-apache-access/input.log) | 578.0 KB -> 1.7 KB (-100%) | 0.0%<br>[output](cases/17-apache-access/output-noccr.log) - [diff](cases/17-apache-access/compression-noccr.diff) | 99.7%<br>[output](cases/17-apache-access/output.log) - [diff](cases/17-apache-access/compression.diff) | 16.269 ms |
-| `11-healthapp` | [input](cases/11-healthapp/input.log) | 187.5 KB -> 1.1 KB (-99%) | 0.0%<br>[output](cases/11-healthapp/output-noccr.log) - [diff](cases/11-healthapp/compression-noccr.diff) | 99.4%<br>[output](cases/11-healthapp/output.log) - [diff](cases/11-healthapp/compression.diff) | 5.069 ms |
-| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | 235.6 KB -> 1.9 KB (-99%) | 0.0%<br>[output](cases/34-jvm-gc/output-noccr.log) - [diff](cases/34-jvm-gc/compression-noccr.diff) | 99.2%<br>[output](cases/34-jvm-gc/output.log) - [diff](cases/34-jvm-gc/compression.diff) | 11.146 ms |
-| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | 279.9 KB -> 4.6 KB (-98%) | 0.0%<br>[output](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff) | 98.3%<br>[output](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff) | 4.239 ms |
-| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | 104.5 KB -> 3.8 KB (-96%) | 0.0%<br>[output](cases/30-laravel-app/output-noccr.log) - [diff](cases/30-laravel-app/compression-noccr.diff) | 96.3%<br>[output](cases/30-laravel-app/output.log) - [diff](cases/30-laravel-app/compression.diff) | 3.147 ms |
-| `09-linux` | [input](cases/09-linux/input.log) | 216.5 KB -> 11.2 KB (-95%) | 0.0%<br>[output](cases/09-linux/output-noccr.log) - [diff](cases/09-linux/compression-noccr.diff) | 94.8%<br>[output](cases/09-linux/output.log) - [diff](cases/09-linux/compression.diff) | 6.395 ms |
-| `19-auth-log` | [input](cases/19-auth-log/input.log) | 282.2 KB -> 16.4 KB (-94%) | 0.0%<br>[output](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff) | 94.2%<br>[output](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff) | 8.046 ms |
-| `12-apache-error` | [input](cases/12-apache-error/input.log) | 171.2 KB -> 10.6 KB (-94%) | 0.0%<br>[output](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff) | 93.8%<br>[output](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff) | 2.532 ms |
-| `06-hpc` | [input](cases/06-hpc/input.log) | 151.2 KB -> 9.6 KB (-94%) | 0.0%<br>[output](cases/06-hpc/output-noccr.log) - [diff](cases/06-hpc/compression-noccr.diff) | 93.6%<br>[output](cases/06-hpc/output.log) - [diff](cases/06-hpc/compression.diff) | 5.002 ms |
-| `05-bgl` | [input](cases/05-bgl/input.log) | 317.1 KB -> 20.2 KB (-94%) | 0.0%<br>[output](cases/05-bgl/output-noccr.log) - [diff](cases/05-bgl/compression-noccr.diff) | 93.6%<br>[output](cases/05-bgl/output.log) - [diff](cases/05-bgl/compression.diff) | 2.960 ms |
-| `13-proxifier` | [input](cases/13-proxifier/input.log) | 237.0 KB -> 15.5 KB (-93%) | 0.0%<br>[output](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff) | 93.4%<br>[output](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff) | 7.157 ms |
-| `16-mac` | [input](cases/16-mac/input.log) | 319.4 KB -> 24.3 KB (-92%) | 0.0%<br>[output](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff) | 92.4%<br>[output](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff) | 10.622 ms |
-| `14-openssh` | [input](cases/14-openssh/input.log) | 225.2 KB -> 18.1 KB (-92%) | 0.0%<br>[output](cases/14-openssh/output-noccr.log) - [diff](cases/14-openssh/compression-noccr.diff) | 92.0%<br>[output](cases/14-openssh/output.log) - [diff](cases/14-openssh/compression.diff) | 7.199 ms |
-| `08-windows` | [input](cases/08-windows/input.log) | 285.4 KB -> 28.2 KB (-90%) | 0.0%<br>[output](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff) | 90.1%<br>[output](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff) | 6.754 ms |
-| `02-hadoop` | [input](cases/02-hadoop/input.log) | 384.9 KB -> 38.1 KB (-90%) | 0.0%<br>[output](cases/02-hadoop/output-noccr.log) - [diff](cases/02-hadoop/compression-noccr.diff) | 90.1%<br>[output](cases/02-hadoop/output.log) - [diff](cases/02-hadoop/compression.diff) | 4.392 ms |
-| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | 325.2 KB -> 32.3 KB (-90%) | 0.0%<br>[output](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff) | 90.0%<br>[output](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff) | 7.964 ms |
-| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | 427.0 KB -> 53.7 KB (-87%) | 0.0%<br>[output](cases/20-caddy-coraza-waf/output-noccr.log) - [diff](cases/20-caddy-coraza-waf/compression-noccr.diff) | 87.4%<br>[output](cases/20-caddy-coraza-waf/output.log) - [diff](cases/20-caddy-coraza-waf/compression.diff) | 10.113 ms |
-| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | 16.3 KB -> 3.8 KB (-76%) | 0.0%<br>[output](cases/33-postfix-mail/output-noccr.log) - [diff](cases/33-postfix-mail/compression-noccr.diff) | 75.8%<br>[output](cases/33-postfix-mail/output.log) - [diff](cases/33-postfix-mail/compression.diff) | 1.068 ms |
-| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | 82.7 KB -> 68.4 KB (-17%) | 0.0%<br>[output](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff) | 17.2%<br>[output](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff) | 0.879 ms |
-| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | 412.7 KB -> 353.5 KB (-14%) | 0.0%<br>[output](cases/29-spark-eventlog/output-noccr.log) - [diff](cases/29-spark-eventlog/compression-noccr.diff) | 14.3%<br>[output](cases/29-spark-eventlog/output.log) - [diff](cases/29-spark-eventlog/compression.diff) | 5.343 ms |
-| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | 47.4 KB -> 47.4 KB (-0%) | 0.0%<br>[output](cases/32-w3c-iis/output-noccr.log) - [diff](cases/32-w3c-iis/compression-noccr.diff) | 0.0%<br>[output](cases/32-w3c-iis/output.log) - [diff](cases/32-w3c-iis/compression.diff) | 0.773 ms |
-| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | 71.2 KB -> 71.2 KB (-0%) | 0.0%<br>[output](cases/31-zeek-http/output-noccr.log) - [diff](cases/31-zeek-http/compression-noccr.diff) | 0.0%<br>[output](cases/31-zeek-http/output.log) - [diff](cases/31-zeek-http/compression.diff) | 1.515 ms |
-| `27-suricata-eve` | [input](cases/27-suricata-eve/input.log) | 19.4 KB -> 19.4 KB (-0%) | 0.0%<br>[output](cases/27-suricata-eve/output-noccr.log) - [diff](cases/27-suricata-eve/compression-noccr.diff) | 0.0%<br>[output](cases/27-suricata-eve/output.log) - [diff](cases/27-suricata-eve/compression.diff) | 0.003 ms |
-| `26-gitlab-bf` | [input](cases/26-gitlab-bf/input.log) | 40.7 KB -> 40.7 KB (-0%) | 0.0%<br>[output](cases/26-gitlab-bf/output-noccr.log) - [diff](cases/26-gitlab-bf/compression-noccr.diff) | 0.0%<br>[output](cases/26-gitlab-bf/output.log) - [diff](cases/26-gitlab-bf/compression.diff) | 0.004 ms |
-| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | 42.1 KB -> 42.1 KB (-0%) | 0.0%<br>[output](cases/25-sshesame-honeypot/output-noccr.log) - [diff](cases/25-sshesame-honeypot/compression-noccr.diff) | 0.0%<br>[output](cases/25-sshesame-honeypot/output.log) - [diff](cases/25-sshesame-honeypot/compression.diff) | 1.071 ms |
-| `24-http-dos` | [input](cases/24-http-dos/input.log) | 73.0 KB -> 73.0 KB (-0%) | 0.0%<br>[output](cases/24-http-dos/output-noccr.log) - [diff](cases/24-http-dos/compression-noccr.diff) | 0.0%<br>[output](cases/24-http-dos/output.log) - [diff](cases/24-http-dos/compression.diff) | 1.149 ms |
-| `22-traefik-http` | [input](cases/22-traefik-http/input.log) | 116.4 KB -> 116.4 KB (-0%) | 0.0%<br>[output](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff) | 0.0%<br>[output](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff) | 0.011 ms |
-| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | 133.6 KB -> 133.6 KB (-0%) | 0.0%<br>[output](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff) | 0.0%<br>[output](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff) | 0.208 ms |
-| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | 337.5 KB -> 337.5 KB (-0%) | 0.0%<br>[output](cases/18-nginx-access/output-noccr.log) - [diff](cases/18-nginx-access/compression-noccr.diff) | 0.0%<br>[output](cases/18-nginx-access/output.log) - [diff](cases/18-nginx-access/compression.diff) | 6.449 ms |
-| `10-android` | [input](cases/10-android/input.log) | 279.1 KB -> 279.1 KB (-0%) | 0.0%<br>[output](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff) | 0.0%<br>[output](cases/10-android/output.log) - [diff](cases/10-android/compression.diff) | 5.916 ms |
-| `03-spark` | [input](cases/03-spark/input.log) | 196.3 KB -> 196.3 KB (-0%) | 0.0%<br>[output](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff) | 0.0%<br>[output](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff) | 0.325 ms |
+| `15-openstack` | [input](cases/15-openstack/input.log) | 595.1 KB -> 906 B (-100%) | 0.0%<br>[output](cases/15-openstack/output-noccr.log) - [diff](cases/15-openstack/compression-noccr.diff) | 99.8%<br>[output](cases/15-openstack/output.log) - [diff](cases/15-openstack/compression.diff) | 2.889 ms |
+| `01-hdfs` | [input](cases/01-hdfs/input.log) | 287.8 KB -> 470 B (-100%) | 0.0%<br>[output](cases/01-hdfs/output-noccr.log) - [diff](cases/01-hdfs/compression-noccr.diff) | 99.8%<br>[output](cases/01-hdfs/output.log) - [diff](cases/01-hdfs/compression.diff) | 2.006 ms |
+| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | 133.6 KB -> 339 B (-100%) | 99.7%<br>[output](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff) | 99.6%<br>[output](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff) | 0.267 ms |
+| `17-apache-access` | [input](cases/17-apache-access/input.log) | 578.0 KB -> 1.7 KB (-100%) | 0.0%<br>[output](cases/17-apache-access/output-noccr.log) - [diff](cases/17-apache-access/compression-noccr.diff) | 99.7%<br>[output](cases/17-apache-access/output.log) - [diff](cases/17-apache-access/compression.diff) | 16.460 ms |
+| `11-healthapp` | [input](cases/11-healthapp/input.log) | 187.5 KB -> 1.1 KB (-99%) | 0.0%<br>[output](cases/11-healthapp/output-noccr.log) - [diff](cases/11-healthapp/compression-noccr.diff) | 99.4%<br>[output](cases/11-healthapp/output.log) - [diff](cases/11-healthapp/compression.diff) | 5.052 ms |
+| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | 235.6 KB -> 1.9 KB (-99%) | 0.0%<br>[output](cases/34-jvm-gc/output-noccr.log) - [diff](cases/34-jvm-gc/compression-noccr.diff) | 99.2%<br>[output](cases/34-jvm-gc/output.log) - [diff](cases/34-jvm-gc/compression.diff) | 10.837 ms |
+| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | 279.9 KB -> 4.6 KB (-98%) | 0.0%<br>[output](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff) | 98.3%<br>[output](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff) | 5.617 ms |
+| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | 104.5 KB -> 3.8 KB (-96%) | 0.0%<br>[output](cases/30-laravel-app/output-noccr.log) - [diff](cases/30-laravel-app/compression-noccr.diff) | 96.3%<br>[output](cases/30-laravel-app/output.log) - [diff](cases/30-laravel-app/compression.diff) | 3.323 ms |
+| `09-linux` | [input](cases/09-linux/input.log) | 216.5 KB -> 11.2 KB (-95%) | 0.0%<br>[output](cases/09-linux/output-noccr.log) - [diff](cases/09-linux/compression-noccr.diff) | 94.8%<br>[output](cases/09-linux/output.log) - [diff](cases/09-linux/compression.diff) | 6.471 ms |
+| `19-auth-log` | [input](cases/19-auth-log/input.log) | 282.2 KB -> 16.4 KB (-94%) | 0.1%<br>[output](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff) | 94.2%<br>[output](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff) | 7.935 ms |
+| `12-apache-error` | [input](cases/12-apache-error/input.log) | 171.2 KB -> 10.6 KB (-94%) | 11.5%<br>[output](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff) | 93.8%<br>[output](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff) | 2.611 ms |
+| `06-hpc` | [input](cases/06-hpc/input.log) | 151.2 KB -> 9.6 KB (-94%) | 0.0%<br>[output](cases/06-hpc/output-noccr.log) - [diff](cases/06-hpc/compression-noccr.diff) | 93.6%<br>[output](cases/06-hpc/output.log) - [diff](cases/06-hpc/compression.diff) | 5.419 ms |
+| `05-bgl` | [input](cases/05-bgl/input.log) | 317.1 KB -> 20.2 KB (-94%) | 0.0%<br>[output](cases/05-bgl/output-noccr.log) - [diff](cases/05-bgl/compression-noccr.diff) | 93.6%<br>[output](cases/05-bgl/output.log) - [diff](cases/05-bgl/compression.diff) | 3.989 ms |
+| `13-proxifier` | [input](cases/13-proxifier/input.log) | 237.0 KB -> 15.5 KB (-93%) | 9.8%<br>[output](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff) | 93.4%<br>[output](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff) | 7.046 ms |
+| `16-mac` | [input](cases/16-mac/input.log) | 319.4 KB -> 24.3 KB (-92%) | 0.3%<br>[output](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff) | 92.4%<br>[output](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff) | 10.557 ms |
+| `14-openssh` | [input](cases/14-openssh/input.log) | 225.2 KB -> 18.1 KB (-92%) | 0.0%<br>[output](cases/14-openssh/output-noccr.log) - [diff](cases/14-openssh/compression-noccr.diff) | 92.0%<br>[output](cases/14-openssh/output.log) - [diff](cases/14-openssh/compression.diff) | 7.161 ms |
+| `08-windows` | [input](cases/08-windows/input.log) | 285.4 KB -> 28.2 KB (-90%) | 1.6%<br>[output](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff) | 90.1%<br>[output](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff) | 6.901 ms |
+| `02-hadoop` | [input](cases/02-hadoop/input.log) | 384.9 KB -> 38.1 KB (-90%) | 0.0%<br>[output](cases/02-hadoop/output-noccr.log) - [diff](cases/02-hadoop/compression-noccr.diff) | 90.1%<br>[output](cases/02-hadoop/output.log) - [diff](cases/02-hadoop/compression.diff) | 10.475 ms |
+| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | 325.2 KB -> 32.3 KB (-90%) | 1.5%<br>[output](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff) | 90.0%<br>[output](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff) | 8.162 ms |
+| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | 427.0 KB -> 53.7 KB (-87%) | 0.0%<br>[output](cases/20-caddy-coraza-waf/output-noccr.log) - [diff](cases/20-caddy-coraza-waf/compression-noccr.diff) | 87.4%<br>[output](cases/20-caddy-coraza-waf/output.log) - [diff](cases/20-caddy-coraza-waf/compression.diff) | 10.304 ms |
+| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | 16.3 KB -> 3.8 KB (-76%) | 0.0%<br>[output](cases/33-postfix-mail/output-noccr.log) - [diff](cases/33-postfix-mail/compression-noccr.diff) | 75.8%<br>[output](cases/33-postfix-mail/output.log) - [diff](cases/33-postfix-mail/compression.diff) | 0.617 ms |
+| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | 82.7 KB -> 68.4 KB (-17%) | 66.4%<br>[output](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff) | 17.2%<br>[output](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff) | 0.903 ms |
+| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | 412.7 KB -> 353.5 KB (-14%) | 0.0%<br>[output](cases/29-spark-eventlog/output-noccr.log) - [diff](cases/29-spark-eventlog/compression-noccr.diff) | 14.3%<br>[output](cases/29-spark-eventlog/output.log) - [diff](cases/29-spark-eventlog/compression.diff) | 5.083 ms |
+| `03-spark` | [input](cases/03-spark/input.log) | 196.3 KB -> 193.7 KB (-1%) | 1.3%<br>[output](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff) | 1.2%<br>[output](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff) | 0.746 ms |
+| `22-traefik-http` | [input](cases/22-traefik-http/input.log) | 116.4 KB -> 115.0 KB (-1%) | 1.3%<br>[output](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff) | 1.1%<br>[output](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff) | 0.078 ms |
+| `10-android` | [input](cases/10-android/input.log) | 279.1 KB -> 278.9 KB (-0%) | 0.1%<br>[output](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff) | 0.0%<br>[output](cases/10-android/output.log) - [diff](cases/10-android/compression.diff) | 6.496 ms |
+| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | 47.4 KB -> 47.4 KB (-0%) | 0.0%<br>[output](cases/32-w3c-iis/output-noccr.log) - [diff](cases/32-w3c-iis/compression-noccr.diff) | 0.0%<br>[output](cases/32-w3c-iis/output.log) - [diff](cases/32-w3c-iis/compression.diff) | 0.815 ms |
+| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | 71.2 KB -> 71.2 KB (-0%) | 0.0%<br>[output](cases/31-zeek-http/output-noccr.log) - [diff](cases/31-zeek-http/compression-noccr.diff) | 0.0%<br>[output](cases/31-zeek-http/output.log) - [diff](cases/31-zeek-http/compression.diff) | 1.473 ms |
+| `27-suricata-eve` | [input](cases/27-suricata-eve/input.log) | 19.4 KB -> 19.4 KB (-0%) | 0.0%<br>[output](cases/27-suricata-eve/output-noccr.log) - [diff](cases/27-suricata-eve/compression-noccr.diff) | 0.0%<br>[output](cases/27-suricata-eve/output.log) - [diff](cases/27-suricata-eve/compression.diff) | 0.006 ms |
+| `26-gitlab-bf` | [input](cases/26-gitlab-bf/input.log) | 40.7 KB -> 40.7 KB (-0%) | 0.0%<br>[output](cases/26-gitlab-bf/output-noccr.log) - [diff](cases/26-gitlab-bf/compression-noccr.diff) | 0.0%<br>[output](cases/26-gitlab-bf/output.log) - [diff](cases/26-gitlab-bf/compression.diff) | 0.008 ms |
+| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | 42.1 KB -> 42.1 KB (-0%) | 0.0%<br>[output](cases/25-sshesame-honeypot/output-noccr.log) - [diff](cases/25-sshesame-honeypot/compression-noccr.diff) | 0.0%<br>[output](cases/25-sshesame-honeypot/output.log) - [diff](cases/25-sshesame-honeypot/compression.diff) | 1.086 ms |
+| `24-http-dos` | [input](cases/24-http-dos/input.log) | 73.0 KB -> 73.0 KB (-0%) | 0.0%<br>[output](cases/24-http-dos/output-noccr.log) - [diff](cases/24-http-dos/compression-noccr.diff) | 0.0%<br>[output](cases/24-http-dos/output.log) - [diff](cases/24-http-dos/compression.diff) | 1.197 ms |
+| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | 337.5 KB -> 337.5 KB (-0%) | 0.0%<br>[output](cases/18-nginx-access/output-noccr.log) - [diff](cases/18-nginx-access/compression-noccr.diff) | 0.0%<br>[output](cases/18-nginx-access/output.log) - [diff](cases/18-nginx-access/compression.diff) | 6.563 ms |
 
 ## What TinyJuice Is Doing
 
-The signal-based log path keeps errors, warnings, stack frames, and summaries and collapses the rest behind per-gap retrieval tokens. Logs with no failure signal (pure access logs) are deliberately passed through rather than blindly truncated.
+The signal-based log path keeps errors, warnings, stack frames, and summaries and collapses the rest behind per-gap retrieval tokens (Pass 2). Without CCR the log falls back to a lossless run-length pass: runs of byte-identical lines collapse to `line [x N]`, dropping nothing — so duplicate-heavy logs (request floods, repeated frames) still shrink in Pass 1, while logs whose value is all in dropping low-signal lines wait for Pass 2.
 
 ## Syntax-Aware Samples
+
+### `21-traefik-flood`
+
+- [Full input](cases/21-traefik-flood/input.log)
+- [Output with CCR](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff)
+- [Output without CCR](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling TCP connection from 1.2.3.4:35501 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+
+```
+
+Output excerpt:
+
+```text
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling TCP connection from 1.2.3.4:35501 to 192.168.176.3:21116"
+time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116" [×1224]
+
+
+[reformatted, no data lost — exact original (133637 bytes): call tinyjuice_retrieve with token "1742922a962d26e2a174e3cb48cf86b2"]
+
+```
+
+### `23-authelia-bf`
+
+- [Full input](cases/23-authelia-bf/input.log)
+- [Output with CCR](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff)
+- [Output without CCR](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+
+```
+
+Output excerpt:
+
+```text
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"  [×6]
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"  [×6]
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"  [×6]
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"  [×6]
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
+
+```
+
+### `12-apache-error`
+
+- [Full input](cases/12-apache-error/input.log)
+- [Output with CCR](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff)
+- [Output without CCR](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+[Sun Dec 04 04:47:44 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:47:44 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:51:08 2005] [notice] jk2_init() Found child 6725 in scoreboard slot 10
+[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6726 in scoreboard slot 8
+[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6728 in scoreboard slot 6
+[Sun Dec 04 04:51:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:51:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:51:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:51:37 2005] [notice] jk2_init() Found child 6736 in scoreboard slot 10
+[Sun Dec 04 04:51:38 2005] [notice] jk2_init() Found child 6733 in scoreboard slot 7
+[Sun Dec 04 04:51:38 2005] [notice] jk2_init() Found child 6734 in scoreboard slot 9
+[Sun Dec 04 04:51:52 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:51:52 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:51:55 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:52:04 2005] [notice] jk2_init() Found child 6738 in scoreboard slot 6
+[Sun Dec 04 04:52:04 2005] [notice] jk2_init() Found child 6741 in scoreboard slot 9
+[Sun Dec 04 04:52:05 2005] [notice] jk2_init() Found child 6740 in scoreboard slot 7
+[Sun Dec 04 04:52:05 2005] [notice] jk2_init() Found child 6737 in scoreboard slot 8
+[Sun Dec 04 04:52:12 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:52:12 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:52:12 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:52:15 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:52:15 2005] [error] mod_jk child workerEnv in error state 7
+[Sun Dec 04 04:52:15 2005] [error] mod_jk child workerEnv in error state 7
+[Sun Dec 04 04:52:36 2005] [notice] jk2_init() Found child 6748 in scoreboard slot 6
+[Sun Dec 04 04:52:36 2005] [notice] jk2_init() Found child 6744 in scoreboard slot 10
+[Sun Dec 04 04:52:36 2005] [notice] jk2_init() Found child 6745 in scoreboard slot 8
+[Sun Dec 04 04:52:49 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:52:49 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:52:52 2005] [error] mod_jk child workerEnv in error state 7
+[Sun Dec 04 04:52:52 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 04:53:05 2005] [notice] jk2_init() Found child 6750 in scoreboard slot 7
+[Sun Dec 04 04:53:05 2005] [notice] jk2_init() Found child 6751 in scoreboard slot 9
+
+```
+
+Output excerpt:
+
+```text
+[Sun Dec 04 04:47:44 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:47:44 2005] [error] mod_jk child workerEnv in error state 6  [×26 first 04:47:44, last 04:59:38]
+[Sun Dec 04 04:51:08 2005] [notice] jk2_init() Found child 6725 in scoreboard slot 10
+[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6726 in scoreboard slot 8
+[... 81 line(s) omitted ... ⟦tj:b06490e7af17f4315cc2b62999ebc3f8⟧]
+[Sun Dec 04 05:00:03 2005] [notice] jk2_init() Found child 8560 in scoreboard slot 7
+[Sun Dec 04 05:00:09 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 05:00:09 2005] [error] mod_jk child workerEnv in error state 6  [×15 first 05:00:09, last 05:15:16]
+[Sun Dec 04 05:00:13 2005] [notice] jk2_init() Found child 8565 in scoreboard slot 9
+[Sun Dec 04 05:00:13 2005] [notice] jk2_init() Found child 8573 in scoreboard slot 10
+[... 39 line(s) omitted ... ⟦tj:72b34dbfb31c906d4cfa6743f6e903d7⟧]
+[Sun Dec 04 05:12:30 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 05:12:30 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 05:15:09 2005] [error] [client 222.166.160.184] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 05:15:13 2005] [notice] jk2_init() Found child 1000 in scoreboard slot 10
+[Sun Dec 04 05:15:16 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[... 3 line(s) omitted ... ⟦tj:0f73b4fe379f5290dd1876a82bcf8966⟧]
+[Sun Dec 04 06:01:21 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 06:01:21 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 06:01:30 2005] [error] mod_jk child workerEnv in error state 6  [×90 first 06:01:30, last 06:59:47]
+[Sun Dec 04 06:01:42 2005] [notice] jk2_init() Found child 32352 in scoreboard slot 9
+[Sun Dec 04 06:01:42 2005] [notice] jk2_init() Found child 32353 in scoreboard slot 10
+[... 347 line(s) omitted ... ⟦tj:641ad21650e7dbc449bdbb9a7b298027⟧]
+[Sun Dec 04 07:02:01 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 07:02:01 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 9  [×27 first 07:02:03, last 07:18:00]
+[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 8
+[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 8
+[... 83 line(s) omitted ... ⟦tj:572ddd2a04c74a497cb316fa99bc5610⟧]
+[Sun Dec 04 07:18:00 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 07:18:00 2005] [error] mod_jk child workerEnv in error state 7
+[Sun Dec 04 07:45:45 2005] [error] [client 63.13.186.196] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 08:54:17 2005] [error] [client 147.31.138.75] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 09:35:12 2005] [error] [client 207.203.80.15] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 10:53:30 2005] [error] [client 218.76.139.20] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 11:11:07 2005] [error] [client 24.147.151.74] Directory index forbidden by rule: /var/www/html/  [×3 first 11:11:07, last 11:42:43]
+
+```
+
+### `13-proxifier`
+
+- [Full input](cases/13-proxifier/input.log)
+- [Output with CCR](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff)
+- [Output without CCR](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime 00:01
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 403 bytes sent, 426 bytes received, lifetime <1 sec
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 451 bytes sent, 18846 bytes (18.4 KB) received, lifetime <1 sec
+[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 445 bytes sent, 5174 bytes (5.05 KB) received, lifetime <1 sec
+[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1190 bytes (1.16 KB) sent, 1671 bytes (1.63 KB) received, lifetime 00:02
+[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime <1 sec
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 3098 bytes (3.02 KB) received, lifetime 00:01
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 815 bytes received, lifetime <1 sec
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 783 bytes received, lifetime <1 sec
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 850 bytes sent, 10547 bytes (10.2 KB) received, lifetime 00:02
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 408 bytes sent, 421 bytes received, lifetime 00:03
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 0 bytes received, lifetime <1 sec
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime <1 sec
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 19904 bytes (19.4 KB) sent, 27629 bytes (26.9 KB) received, lifetime 02:19
+[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1118 bytes (1.09 KB) sent, 340 bytes received, lifetime <1 sec
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1143 bytes (1.11 KB) sent, 365 bytes received, lifetime 00:01
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1093 bytes (1.06 KB) sent, 1006 bytes received, lifetime 00:01
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 428 bytes sent, 5365 bytes (5.23 KB) received, lifetime <1 sec
+[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+
+```
+
+Output excerpt:
+
+```text
+[... 250 line(s) omitted ... ⟦tj:b42d1e05b1e35d07e652dda9a0ace2a0⟧]
+[10.30 17:14:20] Dropbox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 17:15:10] QQ.exe - tcpconn.tencent.com:80 close, 133 bytes sent, 0 bytes received, lifetime <1 sec
+[10.30 17:15:42] QQ.exe - tcpconn6.tencent.com:443 error : A connection request was canceled before the completion.
+[10.30 17:16:10] QQ.exe - tcpconn4.tencent.com:80 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly. 
+[10.30 17:17:09] SogouCloud.exe - get.sogou.com:80 close, 651 bytes sent, 346 bytes received, lifetime <1 sec
+[10.30 17:17:16] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 169 line(s) omitted ... ⟦tj:069740731f610afca67abe9705832c9a⟧]
+[10.30 17:56:23] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 17:56:23] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 close, 451 bytes sent, 353 bytes received, lifetime <1 sec
+[10.30 17:57:12] YodaoDict.exe - oimagec7.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 17:59:03] svchost.exe *64 - proxy.cse.cuhk.edu.hk:5070 close, 293 bytes sent, 514 bytes received, lifetime <1 sec
+[10.30 17:59:09] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[Template: [10.30 <*> <*> - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS] (8 lines, first 17:59:10, last 17:59:21)
+[... 9 line(s) omitted ... ⟦tj:59e46c945e439af449f484967c3efe46⟧]
+[10.30 18:00:10] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 18:00:10] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 950 bytes sent, 3559 bytes (3.47 KB) received, lifetime 01:01
+[10.30 18:00:12] FlashPlayerPlugin_18_0_0_209.exe - formi.baidu.com:843 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[10.30 18:00:13] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 1212 bytes (1.18 KB) sent, 11440 bytes (11.1 KB) received, lifetime 00:59
+[10.30 18:00:15] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 35 line(s) omitted ... ⟦tj:67f05a2d77d2b8076940178e60dbac2c⟧]
+[10.30 18:03:47] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 18:03:47] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 18:04:14] Skype.exe - 86.99.222.235:443 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly.
+[10.30 18:05:44] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 983 bytes sent, 308385 bytes (301 KB) received, lifetime 01:57
+[10.30 18:05:44] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 983 bytes sent, 268665 bytes (262 KB) received, lifetime 01:57
+[... 80 line(s) omitted ... ⟦tj:e4ff493529cc2cd9385df3924dcbec40⟧]
+[10.30 20:42:17] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 2464 bytes (2.40 KB) sent, 1010 bytes received, lifetime 02:01
+[10.30 20:42:31] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 20:42:33] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion.   [×6 first 20:42:33, last 20:59:47]
+[10.30 20:42:33] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 20:42:34] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1299 bytes (1.26 KB) sent, 1029 bytes (1.00 KB) received, lifetime <1 sec
+[... 293 line(s) omitted ... ⟦tj:9d89469f9fd0b5c76d5eba838e99dd2b⟧]
+[10.30 20:59:47] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 21:03:16] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 close, 259 bytes sent, 5197 bytes (5.07 KB) received, lifetime <1 sec
+[10.30 21:03:34] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion.   [×6 first 21:03:34, last 21:17:51]
+
+```
+
+### `08-windows`
+
+- [Full input](cases/08-windows/input.log)
+- [Output with CCR](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff)
+- [Output without CCR](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+2016-09-28 04:30:30, Info                  CBS    Loaded Servicing Stack v6.1.7601.23505 with Core: C:\Windows\winsxs\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_6.1.7601.23505_none_681aa442f6fed7f0\cbscore.d...
+2016-09-28 04:30:31, Info                  CSI    00000001@2016/9/27:20:30:31.455 WcpInitialize (wcp.dll version 0.0.0.6) called (stack @0x7fed806eb5d @0x7fef9fb9b6d @0x7fef9f8358f @0xff83e97c @0xff83d799 @0xff83db2f)
+2016-09-28 04:30:31, Info                  CSI    00000002@2016/9/27:20:30:31.458 WcpInitialize (wcp.dll version 0.0.0.6) called (stack @0x7fed806eb5d @0x7fefa006ade @0x7fef9fd2984 @0x7fef9f83665 @0xff83e97c @0xff83d799)
+2016-09-28 04:30:31, Info                  CSI    00000003@2016/9/27:20:30:31.458 WcpInitialize (wcp.dll version 0.0.0.6) called (stack @0x7fed806eb5d @0x7fefa1c8728 @0x7fefa1c8856 @0xff83e474 @0xff83d7de @0xff83db2f)
+2016-09-28 04:30:31, Info                  CBS    Ending TrustedInstaller initialization.
+2016-09-28 04:30:31, Info                  CBS    Starting the TrustedInstaller main loop.
+2016-09-28 04:30:31, Info                  CBS    TrustedInstaller service starts successfully.
+2016-09-28 04:30:31, Info                  CBS    SQM: Initializing online with Windows opt-in: False
+2016-09-28 04:30:31, Info                  CBS    SQM: Cleaning up report files older than 10 days.
+2016-09-28 04:30:31, Info                  CBS    SQM: Requesting upload of all unsent reports.
+2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start upload with file pattern: C:\Windows\servicing\sqm\*_std.sqm, flags: 0x2 [HRESULT = 0x80004005 - E_FAIL]
+2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start standard sample upload. [HRESULT = 0x80004005 - E_FAIL]
+2016-09-28 04:30:31, Info                  CBS    SQM: Queued 0 file(s) for upload with pattern: C:\Windows\servicing\sqm\*_all.sqm, flags: 0x6
+2016-09-28 04:30:31, Info                  CBS    SQM: Warning: Failed to upload all unsent reports. [HRESULT = 0x80004005 - E_FAIL]
+2016-09-28 04:30:31, Info                  CBS    No startup processing required, TrustedInstaller service was not set as autostart, or else a reboot is still pending.
+2016-09-28 04:30:31, Info                  CBS    NonStart: Checking to ensure startup processing was not required.
+2016-09-28 04:30:31, Info                  CSI    00000004 IAdvancedInstallerAwareStore_ResolvePendingTransactions (call 1) (flags = 00000004, progress = NULL, phase = 0, pdwDisposition = @0xb6fd90
+2016-09-28 04:30:31, Info                  CSI    00000005 Creating NT transaction (seq 1), objectname [6]"(null)"
+2016-09-28 04:30:31, Info                  CSI    00000006 Created NT transaction (seq 1) result 0x00000000, handle @0x214
+2016-09-28 04:30:31, Info                  CSI    00000007@2016/9/27:20:30:31.462 CSI perf trace:
+2016-09-28 04:30:31, Info                  CBS    NonStart: Success, startup processing not required as expected.
+2016-09-28 04:30:31, Info                  CBS    Startup processing thread terminated normally
+2016-09-28 04:30:31, Info                  CSI    00000008 CSI Store 4991456 (0x00000000004c29e0) initialized
+2016-09-28 04:30:31, Info                  CBS    Session: 30546173_4261722401 initialized by client WindowsUpdateAgent.
+2016-09-28 04:30:31, Info                  CBS    Session: 30546173_4262462443 initialized by client WindowsUpdateAgent.
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+
+```
+
+Output excerpt:
+
+```text
+[... 8 line(s) omitted ... ⟦tj:9f54e7ad069923e6fb445671f06d52ac⟧]
+2016-09-28 04:30:31, Info                  CBS    SQM: Cleaning up report files older than 10 days.
+2016-09-28 04:30:31, Info                  CBS    SQM: Requesting upload of all unsent reports.
+2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start upload with file pattern: C:\Windows\servicing\sqm\*_std.sqm, flags: 0x2 [HRESULT = 0x80004005 - E_FAIL]
+2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start standard sample upload. [HRESULT = 0x80004005 - E_FAIL]
+2016-09-28 04:30:31, Info                  CBS    SQM: Queued 0 file(s) for upload with pattern: C:\Windows\servicing\sqm\*_all.sqm, flags: 0x6
+2016-09-28 04:30:31, Info                  CBS    SQM: Warning: Failed to upload all unsent reports. [HRESULT = 0x80004005 - E_FAIL]
+2016-09-28 04:30:31, Info                  CBS    No startup processing required, TrustedInstaller service was not set as autostart, or else a reboot is still pending.
+2016-09-28 04:30:31, Info                  CBS    NonStart: Checking to ensure startup processing was not required.
+[... 9 line(s) omitted ... ⟦tj:eb027cf7e815ea5157343d5fd663af02⟧]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.  [×120 first 2016-09-28, last 2016-09-28]
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]  [×96 first 2016-09-28, last 2016-09-28]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+[... 3 line(s) omitted ... ⟦tj:d7dbf7c5d52999b51edd437b8f46637e⟧]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+[... 3 line(s) omitted ... ⟦tj:d7dbf7c5d52999b51edd437b8f46637e⟧]
+2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
+2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
+
+```
+
+### `07-thunderbird`
+
+- [Full input](cases/07-thunderbird/input.log)
+- [Output with CCR](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff)
+- [Output without CCR](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+- 1131566461 2005.11.09 dn228 Nov 9 12:01:01 dn228/dn228 crond(pam_unix)[2915]: session closed for user root
+- 1131566461 2005.11.09 dn228 Nov 9 12:01:01 dn228/dn228 crond(pam_unix)[2915]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn228 Nov 9 12:01:01 dn228/dn228 crond[2916]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn261 Nov 9 12:01:01 dn261/dn261 crond(pam_unix)[2907]: session closed for user root
+- 1131566461 2005.11.09 dn261 Nov 9 12:01:01 dn261/dn261 crond(pam_unix)[2907]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn261 Nov 9 12:01:01 dn261/dn261 crond[2908]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn3 Nov 9 12:01:01 dn3/dn3 crond(pam_unix)[2907]: session closed for user root
+- 1131566461 2005.11.09 dn3 Nov 9 12:01:01 dn3/dn3 crond(pam_unix)[2907]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn3 Nov 9 12:01:01 dn3/dn3 crond[2908]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn596 Nov 9 12:01:01 dn596/dn596 crond(pam_unix)[2727]: session closed for user root
+- 1131566461 2005.11.09 dn596 Nov 9 12:01:01 dn596/dn596 crond(pam_unix)[2727]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn596 Nov 9 12:01:01 dn596/dn596 crond[2728]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn700 Nov 9 12:01:01 dn700/dn700 crond(pam_unix)[2912]: session closed for user root
+- 1131566461 2005.11.09 dn700 Nov 9 12:01:01 dn700/dn700 crond(pam_unix)[2912]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn700 Nov 9 12:01:01 dn700/dn700 crond[2913]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn73 Nov 9 12:01:01 dn73/dn73 crond(pam_unix)[2917]: session closed for user root
+- 1131566461 2005.11.09 dn73 Nov 9 12:01:01 dn73/dn73 crond(pam_unix)[2917]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn73 Nov 9 12:01:01 dn73/dn73 crond[2918]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn731 Nov 9 12:01:01 dn731/dn731 crond(pam_unix)[2916]: session closed for user root
+- 1131566461 2005.11.09 dn731 Nov 9 12:01:01 dn731/dn731 crond(pam_unix)[2916]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn731 Nov 9 12:01:01 dn731/dn731 crond[2917]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn754 Nov 9 12:01:01 dn754/dn754 crond(pam_unix)[2913]: session closed for user root
+- 1131566461 2005.11.09 dn754 Nov 9 12:01:01 dn754/dn754 crond(pam_unix)[2913]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn754 Nov 9 12:01:01 dn754/dn754 crond[2914]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 dn978 Nov 9 12:01:01 dn978/dn978 crond(pam_unix)[2920]: session closed for user root
+- 1131566461 2005.11.09 dn978 Nov 9 12:01:01 dn978/dn978 crond(pam_unix)[2920]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 dn978 Nov 9 12:01:01 dn978/dn978 crond[2921]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 eadmin1 Nov 9 12:01:01 src@eadmin1 crond(pam_unix)[4307]: session closed for user root
+- 1131566461 2005.11.09 eadmin1 Nov 9 12:01:01 src@eadmin1 crond(pam_unix)[4307]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 eadmin1 Nov 9 12:01:01 src@eadmin1 crond[4308]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 eadmin2 Nov 9 12:01:01 src@eadmin2 crond(pam_unix)[12636]: session closed for user root
+- 1131566461 2005.11.09 eadmin2 Nov 9 12:01:01 src@eadmin2 crond(pam_unix)[12636]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 eadmin2 Nov 9 12:01:01 src@eadmin2 crond[12637]: (root) CMD (run-parts /etc/cron.hourly)
+- 1131566461 2005.11.09 en257 Nov 9 12:01:01 en257/en257 crond(pam_unix)[8950]: session closed for user root
+- 1131566461 2005.11.09 en257 Nov 9 12:01:01 en257/en257 crond(pam_unix)[8950]: session opened for user root by (uid=0)
+- 1131566461 2005.11.09 en257 Nov 9 12:01:01 en257/en257 crond[8951]: (root) CMD (run-parts /etc/cron.hourly)
+
+```
+
+Output excerpt:
+
+```text
+[... 1299 line(s) omitted ... ⟦tj:99c45489993dd6335892a3a86c4e5531⟧]
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 checking TSC synchronization across 4 CPUs: passed.
+[... 8 line(s) omitted ... ⟦tj:c2a494633b17fc6a35f00ef95f8493a5⟧]
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 floppy0: no floppy controllers found
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 hw_random: RNG not detected
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide0: Wait for ready failed before probe !  [×6]
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide1: Wait for ready failed before probe !
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide2: Wait for ready failed before probe !
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide3: Wait for ready failed before probe !
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide4: Wait for ready failed before probe !
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide5: Wait for ready failed before probe !
+[... 25 line(s) omitted ... ⟦tj:c94f52551492c47989be8ca8db23ca52⟧]
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 scsi[0]: scanning scsi channel 0 [Phy 0] for non-raid devices
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 scsi[0]: scanning scsi channel 1 [virtual] for logical drives
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 sda: asking for cache data failed
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 sda: assuming drive cache: write through
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 sda: sda1 sda2 sda3 sda4
+[... 11 line(s) omitted ... ⟦tj:56d11eeab7f0aac8e59f1b4be8faafd0⟧]
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 usbcore: registered new driver usbfs
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 usbcore: registered new driver usbhid
+- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 vesafb: probe of vesafb0 failed with error -6
+- 1131567044 2005.11.09 bn124 Nov 9 12:10:44 bn124/bn124 ntpd[22190]: synchronized to 10.100.22.250, stratum 3
+- 1131567044 2005.11.09 tbird-admin1 Nov 9 12:10:44 local@tbird-admin1 /apps/x86_64/system/ganglia-3.0.1/sbin/gmetad[1682]: data_thread() got not answer from any [Thunderbird_C1] datasource
+[... 19 line(s) omitted ... ⟦tj:e8adb754352b8c0ab963efacdbd12006⟧]
+- 1131567052 2005.11.09 #8# Nov 9 12:10:52 #8#/#8# sshd[4718]: connection lost: 'Connection closed.'
+- 1131567052 2005.11.09 tbird-admin1 Nov 9 12:10:52 local@tbird-admin1 netfs: Mounting NFS filesystems: succeeded
+- 1131567052 2005.11.09 tbird-admin1 Nov 9 12:10:52 local@tbird-admin1 netfs: Mounting other filesystems: failed
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 /apps/x86_64/system/ganglia-3.0.1/sbin/gmetad[1682]: data_thread() got not answer from any [Thunderbird_A2] datasource
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 /apps/x86_64/system/ganglia-3.0.1/sbin/gmetad[1682]: data_thread() got not answer from any [Thunderbird_B5] datasource
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an14 an15 an16 an17 an18 an19 an20 an21 an22 an23 an24 an25 an26 an27 an28 an29 an30 an31 an32...
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an14 an15 an16 an17 an18 an19 an20 an21 an22 an23 an24 an25 an26 an27 an28 an29 an30 an31 an32...
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an142 an143 an144 an145 an146 an147 an148 an149 an150 an151 an152 an153 an154 an155 an156 an15...
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an270 an271 an272 an273 an274 an275 an276 an277 an278 an279 an280 an281 an282 an283 an284 an28...
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an398 an399 an400 an401 an402 an403 an404 an405 an406 an407 an408 an409 an410 an411 an412 an41...
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an526 an527 an528 an529 an530 an531 an532 an533 an534 an535 an536 an537 an538 an539 an540 an54...
+- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an654 an655 an656 an657 an658 an659 an660 an661 an662 an663 an664 an665 an666 an667 an668 an66...
+
+```
+
+### `03-spark`
+
+- [Full input](cases/03-spark/input.log)
+- [Output with CCR](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff)
+- [Output without CCR](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+17/06/09 20:10:40 INFO executor.CoarseGrainedExecutorBackend: Registered signal handlers for [TERM, HUP, INT]
+17/06/09 20:10:40 INFO spark.SecurityManager: Changing view acls to: yarn,curi
+17/06/09 20:10:40 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
+17/06/09 20:10:40 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
+17/06/09 20:10:41 INFO spark.SecurityManager: Changing view acls to: yarn,curi
+17/06/09 20:10:41 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
+17/06/09 20:10:41 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
+17/06/09 20:10:41 INFO slf4j.Slf4jLogger: Slf4jLogger started
+17/06/09 20:10:41 INFO Remoting: Starting remoting
+17/06/09 20:10:41 INFO Remoting: Remoting started; listening on addresses :[akka.tcp://sparkExecutorActorSystem@mesos-slave-07:55904]
+17/06/09 20:10:41 INFO util.Utils: Successfully started service 'sparkExecutorActorSystem' on port 55904.
+17/06/09 20:10:41 INFO storage.DiskBlockManager: Created local directory at /opt/hdfs/nodemanager/usercache/curi/appcache/application_1485248649253_0147/blockmgr-70293f72-844a-4b39-9ad6-fb0ad7e364e4
+17/06/09 20:10:41 INFO storage.MemoryStore: MemoryStore started with capacity 17.7 GB
+17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Connecting to driver: spark://CoarseGrainedScheduler@10.10.34.11:48069
+17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Successfully registered with driver
+17/06/09 20:10:42 INFO executor.Executor: Starting executor ID 5 on host mesos-slave-07
+17/06/09 20:10:42 INFO util.Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 40984.
+17/06/09 20:10:42 INFO netty.NettyBlockTransferService: Server created on 40984
+17/06/09 20:10:42 INFO storage.BlockManagerMaster: Trying to register BlockManager
+17/06/09 20:10:42 INFO storage.BlockManagerMaster: Registered BlockManager
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 0
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 1
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 2
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 3
+17/06/09 20:10:45 INFO executor.Executor: Running task 0.0 in stage 0.0 (TID 0)
+17/06/09 20:10:45 INFO executor.Executor: Running task 2.0 in stage 0.0 (TID 2)
+17/06/09 20:10:45 INFO executor.Executor: Running task 1.0 in stage 0.0 (TID 1)
+17/06/09 20:10:45 INFO executor.Executor: Running task 3.0 in stage 0.0 (TID 3)
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 4
+17/06/09 20:10:45 INFO executor.Executor: Running task 4.0 in stage 0.0 (TID 4)
+17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Started reading broadcast variable 9
+17/06/09 20:10:45 INFO storage.MemoryStore: Block broadcast_9_piece0 stored as bytes in memory (estimated size 5.2 KB, free 5.2 KB)
+17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Reading broadcast variable 9 took 160 ms
+17/06/09 20:10:46 INFO storage.MemoryStore: Block broadcast_9 stored as values in memory (estimated size 8.8 KB, free 14.0 KB)
+17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_1 not found, computing it
+17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_3 not found, computing it
+
+```
+
+Output excerpt:
+
+```text
+17/06/09 20:10:40 INFO executor.CoarseGrainedExecutorBackend: Registered signal handlers for [TERM, HUP, INT]
+17/06/09 20:10:40 INFO spark.SecurityManager: Changing view acls to: yarn,curi
+17/06/09 20:10:40 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
+17/06/09 20:10:40 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
+17/06/09 20:10:41 INFO spark.SecurityManager: Changing view acls to: yarn,curi
+17/06/09 20:10:41 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
+17/06/09 20:10:41 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
+17/06/09 20:10:41 INFO slf4j.Slf4jLogger: Slf4jLogger started
+17/06/09 20:10:41 INFO Remoting: Starting remoting
+17/06/09 20:10:41 INFO Remoting: Remoting started; listening on addresses :[akka.tcp://sparkExecutorActorSystem@mesos-slave-07:55904]
+17/06/09 20:10:41 INFO util.Utils: Successfully started service 'sparkExecutorActorSystem' on port 55904.
+17/06/09 20:10:41 INFO storage.DiskBlockManager: Created local directory at /opt/hdfs/nodemanager/usercache/curi/appcache/application_1485248649253_0147/blockmgr-70293f72-844a-4b39-9ad6-fb0ad7e364e4
+17/06/09 20:10:41 INFO storage.MemoryStore: MemoryStore started with capacity 17.7 GB
+17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Connecting to driver: spark://CoarseGrainedScheduler@10.10.34.11:48069
+17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Successfully registered with driver
+17/06/09 20:10:42 INFO executor.Executor: Starting executor ID 5 on host mesos-slave-07
+17/06/09 20:10:42 INFO util.Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 40984.
+17/06/09 20:10:42 INFO netty.NettyBlockTransferService: Server created on 40984
+17/06/09 20:10:42 INFO storage.BlockManagerMaster: Trying to register BlockManager
+17/06/09 20:10:42 INFO storage.BlockManagerMaster: Registered BlockManager
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 0
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 1
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 2
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 3
+17/06/09 20:10:45 INFO executor.Executor: Running task 0.0 in stage 0.0 (TID 0)
+17/06/09 20:10:45 INFO executor.Executor: Running task 2.0 in stage 0.0 (TID 2)
+17/06/09 20:10:45 INFO executor.Executor: Running task 1.0 in stage 0.0 (TID 1)
+17/06/09 20:10:45 INFO executor.Executor: Running task 3.0 in stage 0.0 (TID 3)
+17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 4
+17/06/09 20:10:45 INFO executor.Executor: Running task 4.0 in stage 0.0 (TID 4)
+17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Started reading broadcast variable 9
+17/06/09 20:10:45 INFO storage.MemoryStore: Block broadcast_9_piece0 stored as bytes in memory (estimated size 5.2 KB, free 5.2 KB)
+17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Reading broadcast variable 9 took 160 ms
+17/06/09 20:10:46 INFO storage.MemoryStore: Block broadcast_9 stored as values in memory (estimated size 8.8 KB, free 14.0 KB)
+17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_1 not found, computing it
+17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_3 not found, computing it
+
+```
+
+### `22-traefik-http`
+
+- [Full input](cases/22-traefik-http/input.log)
+- [Output with CCR](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff)
+- [Output without CCR](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":215563,"OriginContentSize":356,"OriginDuration":204708,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":221071,"OriginContentSize":356,"OriginDuration":208300,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":293192,"OriginContentSize":356,"OriginDuration":282825,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":203756,"OriginContentSize":358,"OriginDuration":191877,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":236283,"OriginContentSize":356,"OriginDuration":222687,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":250311,"OriginContentSize":356,"OriginDuration":219964,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":862057,"OriginContentSize":358,"OriginDuration":826299,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":257280,"OriginContentSize":360,"OriginDuration":241167,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":670681,"OriginContentSize":357,"OriginDuration":655388,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":388748,"OriginContentSize":356,"OriginDuration":368461,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":371391,"OriginContentSize":357,"OriginDuration":340554,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":264620,"OriginContentSize":356,"OriginDuration":246002,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":363,"DownstreamStatus":404,"Duration":239035,"OriginContentSize":363,"OriginDuration":228234,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":243151,"OriginContentSize":356,"OriginDuration":228568,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":292339,"OriginContentSize":356,"OriginDuration":264921,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":396272,"OriginContentSize":356,"OriginDuration":374715,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":971590,"OriginContentSize":359,"OriginDuration":910516,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":346765,"OriginContentSize":357,"OriginDuration":327435,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":299828,"OriginContentSize":356,"OriginDuration":271004,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":227517,"OriginContentSize":359,"OriginDuration":215492,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":257161,"OriginContentSize":355,"OriginDuration":216910,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":201678,"OriginContentSize":356,"OriginDuration":192185,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":206623,"OriginContentSize":356,"OriginDuration":194507,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":362,"DownstreamStatus":404,"Duration":218407,"OriginContentSize":362,"OriginDuration":206047,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":238777,"OriginContentSize":357,"OriginDuration":227532,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":365,"DownstreamStatus":404,"Duration":727038,"OriginContentSize":365,"OriginDuration":666613,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":262803,"OriginContentSize":357,"OriginDuration":249790,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":379585,"OriginContentSize":360,"OriginDuration":363568,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":240376,"OriginContentSize":356,"OriginDuration":227041,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":217874,"OriginContentSize":356,"OriginDuration":207637,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":224377,"OriginContentSize":359,"OriginDuration":211392,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":361,"DownstreamStatus":404,"Duration":219219,"OriginContentSize":361,"OriginDuration":207830,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":224740,"OriginContentSize":355,"OriginDuration":209491,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":204472,"OriginContentSize":356,"OriginDuration":192116,"O...
+
+```
+
+Output excerpt:
+
+```text
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":215563,"OriginContentSize":356,"OriginDuration":204708,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":221071,"OriginContentSize":356,"OriginDuration":208300,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":293192,"OriginContentSize":356,"OriginDuration":282825,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":203756,"OriginContentSize":358,"OriginDuration":191877,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":236283,"OriginContentSize":356,"OriginDuration":222687,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":250311,"OriginContentSize":356,"OriginDuration":219964,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":862057,"OriginContentSize":358,"OriginDuration":826299,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":257280,"OriginContentSize":360,"OriginDuration":241167,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":670681,"OriginContentSize":357,"OriginDuration":655388,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":388748,"OriginContentSize":356,"OriginDuration":368461,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":371391,"OriginContentSize":357,"OriginDuration":340554,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":264620,"OriginContentSize":356,"OriginDuration":246002,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":363,"DownstreamStatus":404,"Duration":239035,"OriginContentSize":363,"OriginDuration":228234,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":243151,"OriginContentSize":356,"OriginDuration":228568,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":292339,"OriginContentSize":356,"OriginDuration":264921,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":396272,"OriginContentSize":356,"OriginDuration":374715,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":971590,"OriginContentSize":359,"OriginDuration":910516,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":346765,"OriginContentSize":357,"OriginDuration":327435,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":299828,"OriginContentSize":356,"OriginDuration":271004,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":227517,"OriginContentSize":359,"OriginDuration":215492,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":257161,"OriginContentSize":355,"OriginDuration":216910,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":201678,"OriginContentSize":356,"OriginDuration":192185,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":206623,"OriginContentSize":356,"OriginDuration":194507,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":362,"DownstreamStatus":404,"Duration":218407,"OriginContentSize":362,"OriginDuration":206047,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":238777,"OriginContentSize":357,"OriginDuration":227532,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":365,"DownstreamStatus":404,"Duration":727038,"OriginContentSize":365,"OriginDuration":666613,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":262803,"OriginContentSize":357,"OriginDuration":249790,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":379585,"OriginContentSize":360,"OriginDuration":363568,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":240376,"OriginContentSize":356,"OriginDuration":227041,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":217874,"OriginContentSize":356,"OriginDuration":207637,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":224377,"OriginContentSize":359,"OriginDuration":211392,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":361,"DownstreamStatus":404,"Duration":219219,"OriginContentSize":361,"OriginDuration":207830,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":224740,"OriginContentSize":355,"OriginDuration":209491,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":204472,"OriginContentSize":356,"OriginDuration":192116,"O...
+{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":362,"DownstreamStatus":404,"Duration":239644,"OriginContentSize":362,"OriginDuration":226585,"O...
+
+```
+
+### `16-mac`
+
+- [Full input](cases/16-mac/input.log)
+- [Output with CCR](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff)
+- [Output without CCR](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+Jul  1 09:00:55 calvisitor-10-105-160-95 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 11 unplug = 0
+Jul  1 09:01:05 calvisitor-10-105-160-95 com.apple.CDScheduler[43]: Thermal pressure state: 1 Memory pressure state: 0
+Jul  1 09:01:06 calvisitor-10-105-160-95 QQ[10018]: FA||Url||taskID[2019352994] dealloc
+Jul  1 09:02:26 calvisitor-10-105-160-95 kernel[0]: ARPT: 620701.011328: AirPort_Brcm43xx::syncPowerState: WWEN[enabled]
+Jul  1 09:02:26 authorMacBook-Pro kernel[0]: ARPT: 620702.879952: AirPort_Brcm43xx::platformWoWEnable: WWEN[disable]
+Jul  1 09:03:11 calvisitor-10-105-160-95 mDNSResponder[91]: mDNS_DeregisterInterface: Frequent transitions for interface awdl0 (FE80:0000:0000:0000:D8A5:90FF:FEF5:7FFF)
+Jul  1 09:03:13 calvisitor-10-105-160-95 kernel[0]: ARPT: 620749.901374: IOPMPowerSource Information: onSleep,  SleepType: Normal Sleep,  'ExternalConnected': Yes, 'TimeRemaining': 0,
+Jul  1 09:04:33 calvisitor-10-105-160-95 kernel[0]: ARPT: 620750.434035: wl0: wl_update_tcpkeep_seq: Original Seq: 3226706533, Ack: 3871687177, Win size: 4096
+Jul  1 09:04:33 authorMacBook-Pro kernel[0]: ARPT: 620752.337198: ARPT: Wake Reason: Wake on Scan offload
+Jul  1 09:04:37 authorMacBook-Pro symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
+Jul  1 09:12:20 authorMacBook-Pro kernel[0]: IO80211AWDLPeerManager::setAwdlAutoMode Resuming AWDL
+Jul  1 09:12:21 calvisitor-10-105-160-95 symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
+Jul  1 09:18:16 calvisitor-10-105-160-95 kernel[0]: ARPT: 620896.311264: wl0: MDNS: 0 SRV Recs, 0 TXT Recs
+Jul  1 09:19:03 calvisitor-10-105-160-95 kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
+Jul  1 09:19:03 authorMacBook-Pro configd[53]: setting hostname to "authorMacBook-Pro.local"
+Jul  1 09:19:13 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 439034 seconds.  Ignoring.
+Jul  1 09:21:57 authorMacBook-Pro corecaptured[31174]: CCIOReporterFormatter::addRegistryChildToChannelDictionary streams 7
+Jul  1 09:21:58 calvisitor-10-105-160-95 com.apple.WebKit.WebContent[25654]: [09:21:58.929] <<<< CRABS >>>> crabsFlumeHostAvailable: [0x7f961cf08cf0] Byte flume reports host available again.
+Jul  1 09:22:02 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2450 seconds.  Ignoring.
+Jul  1 09:22:25 calvisitor-10-105-160-95 kernel[0]: IO80211AWDLPeerManager::setAwdlAutoMode Resuming AWDL
+Jul  1 09:23:26 calvisitor-10-105-160-95 kernel[0]: AirPort: Link Down on awdl0. Reason 1 (Unspecified).
+Jul  1 09:23:26 calvisitor-10-105-160-95 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 11 unplug = 0
+Jul  1 09:24:13 calvisitor-10-105-160-95 kernel[0]: PM response took 2010 ms (54, powerd)
+Jul  1 09:25:21 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 438666 seconds.  Ignoring.
+Jul  1 09:25:45 calvisitor-10-105-160-95 kernel[0]: ARPT: 621131.293163: wl0: Roamed or switched channel, reason #8, bssid 5c:50:15:4c:18:13, last RSSI -64
+Jul  1 09:25:59 calvisitor-10-105-160-95 kernel[0]: ARPT: 621145.554555: IOPMPowerSource Information: onSleep,  SleepType: Normal Sleep,  'ExternalConnected': Yes, 'TimeRemaining': 0,
+Jul  1 09:26:41 calvisitor-10-105-160-95 kernel[0]: ARPT: 621146.080894: wl0: wl_update_tcpkeep_seq: Original Seq: 3014995849, Ack: 2590995288, Win size: 4096
+Jul  1 09:26:43 calvisitor-10-105-160-95 networkd[195]: nw_nat64_post_new_ifstate successfully changed NAT64 ifstate from 0x4 to 0x8000000000000000
+Jul  1 09:26:47 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2165 seconds.  Ignoring.
+Jul  1 09:27:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.EscrowSecurityAlert.daily: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 13090 seconds.  Ignoring.
+Jul  1 09:27:06 calvisitor-10-105-160-95 kernel[0]: IO80211AWDLPeerManager::setAwdlSuspendedMode() Suspending AWDL, enterQuietMode(true)
+Jul  1 09:28:41 authorMacBook-Pro netbiosd[31198]: network_reachability_changed : network is not reachable, netbiosd is shutting down
+Jul  1 09:28:41 authorMacBook-Pro corecaptured[31206]: CCFile::captureLogRun() Exiting CCFile::captureLogRun
+Jul  1 09:28:50 calvisitor-10-105-160-95 com.apple.CDScheduler[258]: Thermal pressure state: 1 Memory pressure state: 0
+Jul  1 09:28:53 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2039 seconds.  Ignoring.
+Jul  1 09:29:02 calvisitor-10-105-160-95 sandboxd[129] ([31211]): com.apple.Addres(31211) deny network-outbound /private/var/run/mDNSResponder
+
+```
+
+Output excerpt:
+
+```text
+[... 81 line(s) omitted ... ⟦tj:1eb31fe7bfeda68857ac48737e2203a2⟧]
+Jul  1 10:10:24 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31328) deny(1) network-outbound /private/var/run/mDNSResponder
+Jul  1 10:10:27 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31328) deny(1) network-outbound /private/var/run/mDNSResponder
+Jul  1 10:13:39 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=...
+Jul  1 10:13:43 calvisitor-10-105-160-95 SpotlightNetHelper[352]: CFPasteboardRef CFPasteboardCreate(CFAllocatorRef, CFStringRef) : failed to create global data
+Jul  1 10:13:57 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31346) deny(1) network-outbound /private/var/run/mDNSResponder
+Jul  1 10:38:53 calvisitor-10-105-160-95 sandboxd[129] ([31376]): com.apple.Addres(31376) deny network-outbound /private/var/run/mDNSResponder
+[... 3 line(s) omitted ... ⟦tj:dac81bf55aa63ad65a31370cff72b60f⟧]
+Jul  1 10:47:08 calvisitor-10-105-160-95 sandboxd[129] ([31382]): com.apple.Addres(31382) deny network-outbound /private/var/run/mDNSResponder
+Jul  1 11:20:51 calvisitor-10-105-160-95 sharingd[30299]: 11:20:51.293 : BTLE discovered device with hash <01faa200 00000000 0000>
+Jul  1 11:24:45 calvisitor-10-105-160-95 secd[276]:  securityd_xpc_dictionary_handler cloudd[326] copy_matching Error Domain=NSOSStatusErrorDomain Code=-50 "query missing class name" (paramErr: error in user parameter li...
+Jul  1 11:29:32 calvisitor-10-105-160-95 locationd[82]: Location icon should now be in state 'Inactive'
+Jul  1 11:38:18 calvisitor-10-105-160-95 kernel[0]: ARPT: 626126.086205: wl0: setup_keepalive: interval 900, retry_interval 30, retry_count 10
+[... 12 line(s) omitted ... ⟦tj:c72b03af9d48cb619f2a9f3091d87400⟧]
+Jul  1 11:44:25 authorMacBook-Pro kernel[0]: en0::IO80211Interface::postMessage bssid changed
+Jul  1 11:44:26 authorMacBook-Pro kernel[0]: IO80211AWDLPeerManager::setAwdlOperatingMode Setting the AWDL operation mode from SUSPENDED to AUTO
+Jul  1 11:46:16 calvisitor-10-105-160-95 symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
+Jul  1 11:46:16 authorMacBook-Pro kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
+Jul  1 11:46:19 authorMacBook-Pro sharingd[30299]: 11:46:19.229 : Finished generating hashes
+[... 4 line(s) omitted ... ⟦tj:aeea1019fd4f6b59810d77573f7786a7⟧]
+Jul  1 11:48:28 calvisitor-10-105-160-95 AddressBookSourceSync[31471]: Unrecognized attribute value: t:AbchPersonItemType
+Jul  1 11:48:43 calvisitor-10-105-160-95 kernel[0]: PM response took 1938 ms (54, powerd)
+Jul  1 11:49:29 calvisitor-10-105-160-95 QQ[10018]: tcp_connection_destination_perform_socket_connect 19110 connectx to 183.57.48.75:80@0 failed: [50] Network is down
+Jul  1 11:49:29 calvisitor-10-105-160-95 kernel[0]: AirPort: Link Down on en0. Reason 8 (Disassociated because station leaving).
+Jul  1 11:49:29 authorMacBook-Pro sharingd[30299]: 11:49:29.473 : BTLE scanner Powered On
+Jul  1 11:49:29 authorMacBook-Pro kernel[0]: USBMSC Identifier (non-unique): 000000000820 0x5ac 0x8406 0x820, 3
+Jul  1 11:49:29 authorMacBook-Pro symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
+Jul  1 11:49:30 authorMacBook-Pro corecaptured[31480]: CCXPCService::setStreamEventHandler Registered for notification callback.
+Jul  1 11:49:30 authorMacBook-Pro Dropbox[24019]: [0701/114930:WARNING:dns_config_service_posix.cc(306)] Failed to read DnsConfig.
+Jul  1 11:49:35 calvisitor-10-105-160-95 cdpd[11807]: Saw change in network reachability (isReachable=2)
+Jul  1 11:51:02 authorMacBook-Pro kernel[0]: [HID] [ATC] AppleDeviceManagementHIDEventService::processWakeReason Wake reason: Host (0x01)
+[... 12 line(s) omitted ... ⟦tj:e1ac24ae345c45db26187da7916dc651⟧]
+Jul  1 11:58:27 authorMacBook-Pro com.apple.cts[258]: com.apple.suggestions.harvest: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 15323 seconds.  Ignoring.
+Jul  1 12:12:04 calvisitor-10-105-160-95 kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
+Jul  1 12:12:21 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=...
+Jul  1 12:26:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 427826 seconds.  Ignoring.
+
+```
+
+### `19-auth-log`
+
+- [Full input](cases/19-auth-log/input.log)
+- [Output with CCR](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff)
+- [Output without CCR](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+Mar 27 13:06:56 ip-10-77-20-248 sshd[1291]: Server listening on 0.0.0.0 port 22.
+Mar 27 13:06:56 ip-10-77-20-248 sshd[1291]: Server listening on :: port 22.
+Mar 27 13:06:56 ip-10-77-20-248 systemd-logind[1118]: Watching system buttons on /dev/input/event0 (Power Button)
+Mar 27 13:06:56 ip-10-77-20-248 systemd-logind[1118]: Watching system buttons on /dev/input/event1 (Sleep Button)
+Mar 27 13:06:56 ip-10-77-20-248 systemd-logind[1118]: New seat seat0.
+Mar 27 13:08:09 ip-10-77-20-248 sshd[1361]: Accepted publickey for ubuntu from 85.245.107.41 port 54259 ssh2: RSA SHA256:Kl8kPGZrTiz7g4FO1hyqHdsSBBb5Fge6NWOobN03XJg
+Mar 27 13:08:09 ip-10-77-20-248 sshd[1361]: pam_unix(sshd:session): session opened for user ubuntu by (uid=0)
+Mar 27 13:08:09 ip-10-77-20-248 systemd: pam_unix(systemd-user:session): session opened for user ubuntu by (uid=0)
+Mar 27 13:08:09 ip-10-77-20-248 systemd-logind[1118]: New session 1 of user ubuntu.
+Mar 27 13:09:37 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-5.2.2-amd64.deb
+Mar 27 13:09:37 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:09:38 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:10:08 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-key add -
+Mar 27 13:10:08 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:10:09 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:10:14 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get install apt-transport-https
+Mar 27 13:10:14 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:10:14 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:10:18 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/tee -a /etc/apt/sources.list.d/elastic-5.x.list
+Mar 27 13:10:18 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:10:18 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:10:24 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get update
+Mar 27 13:10:24 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:10:28 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:10:28 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get install filebeat
+Mar 27 13:10:28 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:10:33 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:10:53 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/sbin/update-rc.d filebeat defaults 95 10
+Mar 27 13:10:53 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:10:53 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:11:31 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get update
+Mar 27 13:11:31 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:11:33 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 13:11:34 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get update
+Mar 27 13:11:34 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:11:35 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+
+```
+
+Output excerpt:
+
+```text
+[... 83 line(s) omitted ... ⟦tj:f8561e17c2dd04e4ed7f7a3734ebbb49⟧]
+Mar 27 13:44:29 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:44:29 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 14:01:39 ip-10-77-20-248 sshd[2938]: error: maximum authentication attempts exceeded for root from 122.176.37.221 port 37107 ssh2 [preauth]
+Mar 27 14:01:39 ip-10-77-20-248 sshd[2938]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 14:02:16 ip-10-77-20-248 sshd[2856]: Received disconnect from 85.245.107.41 port 54866:11: disconnected by user
+[... 7 line(s) omitted ... ⟦tj:9fc4a93e4c2e7b7b6430c4432ad78e02⟧]
+Mar 27 14:54:57 ip-10-77-20-248 sshd[2967]: Invalid user support from 95.152.57.58
+Mar 27 14:54:57 ip-10-77-20-248 sshd[2967]: input_userauth_request: invalid user support [preauth]
+Mar 27 14:54:58 ip-10-77-20-248 sshd[2967]: error: maximum authentication attempts exceeded for invalid user support from 95.152.57.58 port 53679 ssh2 [preauth]
+Mar 27 14:54:58 ip-10-77-20-248 sshd[2967]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 15:17:01 ip-10-77-20-248 CRON[2980]: pam_unix(cron:session): session opened for user root by (uid=0)
+Mar 27 15:17:01 ip-10-77-20-248 CRON[2980]: pam_unix(cron:session): session closed for user root
+Mar 27 15:30:59 ip-10-77-20-248 sshd[2995]: Did not receive identification string from 209.160.24.191
+Mar 27 15:46:53 ip-10-77-20-248 sshd[2996]: error: maximum authentication attempts exceeded for root from 90.144.183.19 port 57648 ssh2 [preauth]
+Mar 27 15:46:53 ip-10-77-20-248 sshd[2996]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 15:48:29 ip-10-77-20-248 sshd[2998]: Accepted publickey for ubuntu from 85.245.107.41 port 57684 ssh2: RSA SHA256:Kl8kPGZrTiz7g4FO1hyqHdsSBBb5Fge6NWOobN03XJg
+[... 4 line(s) omitted ... ⟦tj:2a72b07bda3207ac3f3fa293784799b2⟧]
+Mar 27 15:49:20 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 15:49:21 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 15:59:42 ip-10-77-20-248 sshd[3242]: error: maximum authentication attempts exceeded for root from 186.128.152.44 port 34605 ssh2 [preauth]
+Mar 27 15:59:42 ip-10-77-20-248 sshd[3242]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 16:02:57 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/usr/share/filebeat/bin ; USER=root ; COMMAND=/usr/bin/vim /etc/filebeat/filebeat.yml
+[... 203 line(s) omitted ... ⟦tj:d0db68e4424356ef5a18d56e7ac63f85⟧]
+Mar 27 18:22:24 ip-10-77-20-248 sshd[14922]: Invalid user admin from 201.177.23.130
+Mar 27 18:22:24 ip-10-77-20-248 sshd[14922]: input_userauth_request: invalid user admin [preauth]
+Mar 27 18:22:26 ip-10-77-20-248 sshd[14922]: error: maximum authentication attempts exceeded for invalid user admin from 201.177.23.130 port 46784 ssh2 [preauth]
+Mar 27 18:22:26 ip-10-77-20-248 sshd[14922]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:18 ip-10-77-20-248 sshd[14924]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56562 ssh2 [preauth]
+Mar 27 18:27:18 ip-10-77-20-248 sshd[14924]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:19 ip-10-77-20-248 sshd[14926]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56567 ssh2 [preauth]
+Mar 27 18:27:19 ip-10-77-20-248 sshd[14926]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:20 ip-10-77-20-248 sshd[14928]: Invalid user support from 190.178.62.6
+Mar 27 18:27:20 ip-10-77-20-248 sshd[14928]: input_userauth_request: invalid user support [preauth]
+Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: error: maximum authentication attempts exceeded for invalid user support from 190.178.62.6 port 56573 ssh2 [preauth]
+Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: Disconnecting: Too many authentication failures [preauth]
+
+```
+
+### `10-android`
+
+- [Full input](cases/10-android/input.log)
+- [Output with CCR](cases/10-android/output.log) - [diff](cases/10-android/compression.diff)
+- [Output without CCR](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+03-17 16:13:38.811  1702  2395 D WindowManager: printFreezingDisplayLogsopening app wtoken = AppWindowToken{9f4ef63 token=Token{a64f992 ActivityRecord{de9231d u0 com.tencent.qt.qtl/.activity.info.NewsDetailXmlActivity t7...
+03-17 16:13:38.819  1702  8671 D PowerManagerService: acquire lock=233570404, flags=0x1, tag="View Lock", name=com.android.systemui, ws=null, uid=10037, pid=2227
+03-17 16:13:38.820  1702  8671 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
+03-17 16:13:38.839  1702  2113 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
+03-17 16:13:38.859  2227  2227 D TextView: visible is system.time.showampm
+03-17 16:13:38.861  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.869  2227  2227 D TextView: visible is system.charge.show
+03-17 16:13:38.871  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.875  2227  2227 D TextView: visible is system.call.count gt 0
+03-17 16:13:38.877  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.881  2227  2227 D TextView: visible is system.message.count gt 0
+03-17 16:13:38.882  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.887  2227  2227 D TextView: visible is system.ownerinfo.show
+03-17 16:13:38.888  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.905  1702 10454 D PowerManagerService: release:lock=233570404, flg=0x0, tag="View Lock", name=com.android.systemui", ws=null, uid=10037, pid=2227
+03-17 16:13:38.907  1702 10454 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
+03-17 16:13:38.915  1702  3693 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
+03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateClipping isOverlap:false, getTopPadding=333.0, Translation=-24.0
+03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateDimmedActivatedHideSensitive overlap:false
+03-17 16:13:38.935  1702  3697 W ActivityManager: getRunningAppProcesses: caller 10113 does not hold REAL_GET_TASKS; limiting output
+03-17 16:13:38.936  1702 14638 D PowerManagerService: release:lock=189667585, flg=0x0, tag="*launch*", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
+03-17 16:13:38.938  1702 14638 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
+03-17 16:13:38.954  2227  2227 I PhoneStatusBar: setSystemUiVisibility vis=40000500 mask=ffffffff oldVal=508 newVal=40000500 diff=40000008 fullscreenStackVis=0 dockedStackVis=0, fullscreenStackBounds=Rect(0, 0 - 720, 128...
+03-17 16:13:38.955  2227  2227 I PhoneStatusBar: cancelAutohide
+03-17 16:13:38.955  2227  2227 I PhoneStatusBar: notifyUiVisibilityChanged:vis=0x40000500, SystemUiVisibility=0x40000500
+03-17 16:13:38.994  1702 27365 I WindowManager: Destroying surface Surface(name=SurfaceView - com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destr...
+03-17 16:13:39.006  1702  2639 I WindowManager: Destroying surface Surface(name=com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destroySurface:2060...
+03-17 16:13:39.010  1702  2639 D PowerManagerService: release:lock=62617001, flg=0x0, tag="WindowManager", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
+03-17 16:13:39.011  1702  2639 D PowerManagerService: userActivityNoUpdateLocked: eventTime=261843648, event=0, flags=0x1, uid=1000
+03-17 16:13:39.011  1702  2639 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
+03-17 16:13:39.069  1702  1815 I WindowManager: orientation change is complete, call stopFreezingDisplayLocked
+03-17 16:13:39.070  1702  1815 I WindowManager: Screen frozen for +1s0ms due to Window{ca98d5 u0 com.tencent.qt.qtl/com.tencent.qt.qtl.activity.info.NewsDetailXmlActivity}
+03-17 16:13:39.070  1702  1815 D WindowManager: startAnimation begin
+03-17 16:13:39.079  1702  1815 D WindowManager: startAnimation end
+03-17 16:13:39.080  1702  1815 D PowerManagerService: release:lock=226887582, flg=0x0, tag="SCREEN_FROZEN", name=android", ws=null, uid=1000, pid=1702
+03-17 16:13:39.080  1702  1815 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
+
+```
+
+Output excerpt:
+
+```text
+03-17 16:13:38.811  1702  2395 D WindowManager: printFreezingDisplayLogsopening app wtoken = AppWindowToken{9f4ef63 token=Token{a64f992 ActivityRecord{de9231d u0 com.tencent.qt.qtl/.activity.info.NewsDetailXmlActivity t7...
+03-17 16:13:38.819  1702  8671 D PowerManagerService: acquire lock=233570404, flags=0x1, tag="View Lock", name=com.android.systemui, ws=null, uid=10037, pid=2227
+03-17 16:13:38.820  1702  8671 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
+03-17 16:13:38.839  1702  2113 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
+03-17 16:13:38.859  2227  2227 D TextView: visible is system.time.showampm
+03-17 16:13:38.861  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.869  2227  2227 D TextView: visible is system.charge.show
+03-17 16:13:38.871  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.875  2227  2227 D TextView: visible is system.call.count gt 0
+03-17 16:13:38.877  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.881  2227  2227 D TextView: visible is system.message.count gt 0
+03-17 16:13:38.882  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.887  2227  2227 D TextView: visible is system.ownerinfo.show
+03-17 16:13:38.888  2227  2227 D TextView: mVisiblity.getValue is false
+03-17 16:13:38.905  1702 10454 D PowerManagerService: release:lock=233570404, flg=0x0, tag="View Lock", name=com.android.systemui", ws=null, uid=10037, pid=2227
+03-17 16:13:38.907  1702 10454 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
+03-17 16:13:38.915  1702  3693 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
+03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateClipping isOverlap:false, getTopPadding=333.0, Translation=-24.0
+03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateDimmedActivatedHideSensitive overlap:false
+03-17 16:13:38.935  1702  3697 W ActivityManager: getRunningAppProcesses: caller 10113 does not hold REAL_GET_TASKS; limiting output
+03-17 16:13:38.936  1702 14638 D PowerManagerService: release:lock=189667585, flg=0x0, tag="*launch*", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
+03-17 16:13:38.938  1702 14638 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
+03-17 16:13:38.954  2227  2227 I PhoneStatusBar: setSystemUiVisibility vis=40000500 mask=ffffffff oldVal=508 newVal=40000500 diff=40000008 fullscreenStackVis=0 dockedStackVis=0, fullscreenStackBounds=Rect(0, 0 - 720, 128...
+03-17 16:13:38.955  2227  2227 I PhoneStatusBar: cancelAutohide
+03-17 16:13:38.955  2227  2227 I PhoneStatusBar: notifyUiVisibilityChanged:vis=0x40000500, SystemUiVisibility=0x40000500
+03-17 16:13:38.994  1702 27365 I WindowManager: Destroying surface Surface(name=SurfaceView - com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destr...
+03-17 16:13:39.006  1702  2639 I WindowManager: Destroying surface Surface(name=com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destroySurface:2060...
+03-17 16:13:39.010  1702  2639 D PowerManagerService: release:lock=62617001, flg=0x0, tag="WindowManager", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
+03-17 16:13:39.011  1702  2639 D PowerManagerService: userActivityNoUpdateLocked: eventTime=261843648, event=0, flags=0x1, uid=1000
+03-17 16:13:39.011  1702  2639 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
+03-17 16:13:39.069  1702  1815 I WindowManager: orientation change is complete, call stopFreezingDisplayLocked
+03-17 16:13:39.070  1702  1815 I WindowManager: Screen frozen for +1s0ms due to Window{ca98d5 u0 com.tencent.qt.qtl/com.tencent.qt.qtl.activity.info.NewsDetailXmlActivity}
+03-17 16:13:39.070  1702  1815 D WindowManager: startAnimation begin
+03-17 16:13:39.079  1702  1815 D WindowManager: startAnimation end
+03-17 16:13:39.080  1702  1815 D PowerManagerService: release:lock=226887582, flg=0x0, tag="SCREEN_FROZEN", name=android", ws=null, uid=1000, pid=1702
+03-17 16:13:39.080  1702  1815 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
+
+```
+
+### `04-zookeeper`
+
+- [Full input](cases/04-zookeeper/input.log)
+- [Output with CCR](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff)
+- [Output without CCR](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200
+2015-07-29 19:04:12,394 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45307
+2015-07-29 19:04:29,071 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:04:29,079 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:13:17,524 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+2015-07-29 19:13:24,370 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.13:57707
+2015-07-29 19:13:27,721 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+2015-07-29 19:13:34,382 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:13:37,626 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:13:44,301 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:13:47,731 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+2015-07-29 19:13:54,220 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45382
+2015-07-29 19:13:54,399 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+2015-07-29 19:14:04,406 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:14:07,559 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
+2015-07-29 19:14:07,653 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:14:24,329 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
+2015-07-29 19:14:37,585 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:14:44,256 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45440
+2015-07-29 19:14:47,593 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
+2015-07-29 19:14:54,354 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:15:24,476 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:15:37,647 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
+2015-07-29 19:15:37,648 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:15:54,407 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:15:57,854 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.13:57895
+2015-07-29 19:16:04,412 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:16:04,414 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:16:07,659 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
+2015-07-29 19:16:14,520 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:16:24,348 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+2015-07-29 19:16:27,865 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
+2015-07-29 19:16:27,865 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:16:34,433 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
+2015-07-29 19:16:44,440 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.12:47727
+
+```
+
+Output excerpt:
+
+```text
+2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200
+2015-07-29 19:04:12,394 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45307
+2015-07-29 19:04:29,071 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread  [×262 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:04:29,079 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue  [×314 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:13:17,524 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
+2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error =   [×289 first 2015-07-29, last 2015-07-29]
+[... 9 line(s) omitted ... ⟦tj:29fc0d80898573eb60dc6da52c19392c⟧]
+2015-07-29 19:14:07,559 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker  [×265 first 2015-07-29, last 2015-07-29]
+[... 479 line(s) omitted ... ⟦tj:4c3e6cc2b5264f5e2b43e6e617b35df4⟧]
+2015-07-29 19:52:05,118 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×4 first 2015-07-29, last 2015-07-29]
+[... 7 line(s) omitted ... ⟦tj:935197bb725fffd2a7a66daa9ac317cb⟧]
+2015-07-29 21:39:28,234 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.26:56952
+2015-07-29 23:44:21,576 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001] - Closed socket connection for client /10.10.34.11:49557 which had sessionid 0x14ed93111f20048
+2015-07-29 23:44:28,903 - ERROR [CommitProcessor:1:NIOServerCnxn@180] - Unexpected Exception: 
+2015-07-29 23:52:08,962 - INFO  [CommitProcessor:1:ZooKeeperServer@595] - Established session 0x14ed93111f2005b with negotiated timeout 10000 for client /10.10.34.28:52117
+2015-07-29 23:52:09,163 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.30:38562
+[... 14 line(s) omitted ... ⟦tj:77254eefea70d6c61dba1dfd7b5508ca⟧]
+2015-07-30 16:12:01,554 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.19:33442; will be dropped if server is in r-o mode  [×8 first 2015-07-30, las...
+[... 12 line(s) omitted ... ⟦tj:de2f7541ced04ff3e049a4e599a7d8f0⟧]
+2015-07-30 17:11:54,937 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×6 first 2015-07-30, last 2015-07-30]
+[... 4 line(s) omitted ... ⟦tj:183ab4005a7776f3e90fd774855b5a7b⟧]
+2015-07-30 17:49:05,943 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.12:45728; will be dropped if server is in r-o mode  [×5 first 2015-07-30, las...
+2015-07-30 17:55:26,200 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 2 at election address /10.10.34.12:3888  [×2 first 2015-07-30, last 2015-07-29]
+[... 5 line(s) omitted ... ⟦tj:6d3265b7b0a5d49ab5d51955d6348d3a⟧]
+2015-07-30 19:59:02,538 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.13:38053; will be dropped if server is in r-o mode  [×4 first 2015-07-30, las...
+[... 204 line(s) omitted ... ⟦tj:6c9aeb079d74b5ca62c30b9ad5e68166⟧]
+2015-08-25 11:21:22,561 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 3 at election address /10.10.34.13:3888
+2015-07-29 17:42:30,405 - INFO  [QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:Environment@100] - Server environment:java.vendor=Oracle Corporation
+2015-07-29 19:03:35,413 - ERROR [LearnerHandler-/10.10.34.11:52225:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open  [×12 first 2015-07-29, last 2015-07-29]
+2015-07-29 19:03:54,584 - ERROR [LearnerHandler-/10.10.34.11:52241:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open
+2015-07-29 19:04:30,989 - WARN  [LearnerHandler-/10.10.34.11:52264:LearnerHandler@575] - ******* GOODBYE /10.10.34.11:52264 ********
+[... 1243 line(s) omitted ... ⟦tj:778a3f8773e49f521a217ca2b493ff9e⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (279891 bytes): call tinyjuice_retrieve with token "e40e0af5ef9eb6e4097200f260b9d1f6"]
+
+```
 
 ### `15-openstack`
 
@@ -396,96 +1446,6 @@ Output excerpt:
 
 ```
 
-### `04-zookeeper`
-
-- [Full input](cases/04-zookeeper/input.log)
-- [Output with CCR](cases/04-zookeeper/output.log) - [diff](cases/04-zookeeper/compression.diff)
-- [Output without CCR](cases/04-zookeeper/output-noccr.log) - [diff](cases/04-zookeeper/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200
-2015-07-29 19:04:12,394 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45307
-2015-07-29 19:04:29,071 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:04:29,079 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:13:17,524 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-2015-07-29 19:13:24,370 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.13:57707
-2015-07-29 19:13:27,721 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-2015-07-29 19:13:34,382 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:13:37,626 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:13:44,301 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:13:47,731 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-2015-07-29 19:13:54,220 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45382
-2015-07-29 19:13:54,399 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-2015-07-29 19:14:04,406 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:14:07,559 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
-2015-07-29 19:14:07,653 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:14:24,329 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
-2015-07-29 19:14:37,585 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:14:44,256 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45440
-2015-07-29 19:14:47,593 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
-2015-07-29 19:14:54,354 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:15:24,476 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:15:37,647 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
-2015-07-29 19:15:37,648 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:15:54,407 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:15:57,854 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.13:57895
-2015-07-29 19:16:04,412 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:16:04,414 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:16:07,659 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker
-2015-07-29 19:16:14,520 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:16:24,348 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-2015-07-29 19:16:27,865 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue
-2015-07-29 19:16:27,865 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:16:34,433 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error = 
-2015-07-29 19:16:44,440 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.12:47727
-
-```
-
-Output excerpt:
-
-```text
-2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200
-2015-07-29 19:04:12,394 - INFO  [/10.10.34.11:3888:QuorumCnxManager$Listener@493] - Received connection request /10.10.34.11:45307
-2015-07-29 19:04:29,071 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread  [×262 first 2015-07-29, last 2015-07-29]
-2015-07-29 19:04:29,079 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@679] - Interrupted while waiting for message on queue  [×314 first 2015-07-29, last 2015-07-29]
-2015-07-29 19:13:17,524 - WARN  [SendWorker:188978561024:QuorumCnxManager$SendWorker@688] - Send worker leaving thread
-2015-07-29 19:13:24,282 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762] - Connection broken for id 188978561024, my id = 1, error =   [×289 first 2015-07-29, last 2015-07-29]
-[... 9 line(s) omitted ... ⟦tj:29fc0d80898573eb60dc6da52c19392c⟧]
-2015-07-29 19:14:07,559 - WARN  [RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765] - Interrupting SendWorker  [×265 first 2015-07-29, last 2015-07-29]
-[... 479 line(s) omitted ... ⟦tj:4c3e6cc2b5264f5e2b43e6e617b35df4⟧]
-2015-07-29 19:52:05,118 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×4 first 2015-07-29, last 2015-07-29]
-[... 7 line(s) omitted ... ⟦tj:935197bb725fffd2a7a66daa9ac317cb⟧]
-2015-07-29 21:39:28,234 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.26:56952
-2015-07-29 23:44:21,576 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001] - Closed socket connection for client /10.10.34.11:49557 which had sessionid 0x14ed93111f20048
-2015-07-29 23:44:28,903 - ERROR [CommitProcessor:1:NIOServerCnxn@180] - Unexpected Exception: 
-2015-07-29 23:52:08,962 - INFO  [CommitProcessor:1:ZooKeeperServer@595] - Established session 0x14ed93111f2005b with negotiated timeout 10000 for client /10.10.34.28:52117
-2015-07-29 23:52:09,163 - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197] - Accepted socket connection from /10.10.34.30:38562
-[... 14 line(s) omitted ... ⟦tj:77254eefea70d6c61dba1dfd7b5508ca⟧]
-2015-07-30 16:12:01,554 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.19:33442; will be dropped if server is in r-o mode  [×8 first 2015-07-30, las...
-[... 12 line(s) omitted ... ⟦tj:de2f7541ced04ff3e049a4e599a7d8f0⟧]
-2015-07-30 17:11:54,937 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349] - caught end of stream exception  [×6 first 2015-07-30, last 2015-07-30]
-[... 4 line(s) omitted ... ⟦tj:183ab4005a7776f3e90fd774855b5a7b⟧]
-2015-07-30 17:49:05,943 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.12:45728; will be dropped if server is in r-o mode  [×5 first 2015-07-30, las...
-2015-07-30 17:55:26,200 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 2 at election address /10.10.34.12:3888  [×2 first 2015-07-30, last 2015-07-29]
-[... 5 line(s) omitted ... ⟦tj:6d3265b7b0a5d49ab5d51955d6348d3a⟧]
-2015-07-30 19:59:02,538 - WARN  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793] - Connection request from old client /10.10.34.13:38053; will be dropped if server is in r-o mode  [×4 first 2015-07-30, las...
-[... 204 line(s) omitted ... ⟦tj:6c9aeb079d74b5ca62c30b9ad5e68166⟧]
-2015-08-25 11:21:22,561 - WARN  [WorkerSender[myid=1]:QuorumCnxManager@368] - Cannot open channel to 3 at election address /10.10.34.13:3888
-2015-07-29 17:42:30,405 - INFO  [QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:Environment@100] - Server environment:java.vendor=Oracle Corporation
-2015-07-29 19:03:35,413 - ERROR [LearnerHandler-/10.10.34.11:52225:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open  [×12 first 2015-07-29, last 2015-07-29]
-2015-07-29 19:03:54,584 - ERROR [LearnerHandler-/10.10.34.11:52241:LearnerHandler@562] - Unexpected exception causing shutdown while sock still open
-2015-07-29 19:04:30,989 - WARN  [LearnerHandler-/10.10.34.11:52264:LearnerHandler@575] - ******* GOODBYE /10.10.34.11:52264 ********
-[... 1243 line(s) omitted ... ⟦tj:778a3f8773e49f521a217ca2b493ff9e⟧]
-
-[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
-
-[PARTIAL view — full original (279891 bytes): call tinyjuice_retrieve with token "e40e0af5ef9eb6e4097200f260b9d1f6"]
-
-```
-
 ### `30-laravel-app`
 
 - [Full input](cases/30-laravel-app/input.log)
@@ -663,186 +1623,6 @@ Jun 15 12:12:34 combo sshd(pam_unix)[23403]: check pass; user unknown
 Jun 15 12:12:34 combo sshd(pam_unix)[23396]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=218.188.2.4 
 Jun 15 12:12:34 combo sshd(pam_unix)[23407]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=218.188.2.4 
 Jun 15 12:12:34 combo sshd(pam_unix)[23403]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=218.188.2.4 
-
-```
-
-### `19-auth-log`
-
-- [Full input](cases/19-auth-log/input.log)
-- [Output with CCR](cases/19-auth-log/output.log) - [diff](cases/19-auth-log/compression.diff)
-- [Output without CCR](cases/19-auth-log/output-noccr.log) - [diff](cases/19-auth-log/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-Mar 27 13:06:56 ip-10-77-20-248 sshd[1291]: Server listening on 0.0.0.0 port 22.
-Mar 27 13:06:56 ip-10-77-20-248 sshd[1291]: Server listening on :: port 22.
-Mar 27 13:06:56 ip-10-77-20-248 systemd-logind[1118]: Watching system buttons on /dev/input/event0 (Power Button)
-Mar 27 13:06:56 ip-10-77-20-248 systemd-logind[1118]: Watching system buttons on /dev/input/event1 (Sleep Button)
-Mar 27 13:06:56 ip-10-77-20-248 systemd-logind[1118]: New seat seat0.
-Mar 27 13:08:09 ip-10-77-20-248 sshd[1361]: Accepted publickey for ubuntu from 85.245.107.41 port 54259 ssh2: RSA SHA256:Kl8kPGZrTiz7g4FO1hyqHdsSBBb5Fge6NWOobN03XJg
-Mar 27 13:08:09 ip-10-77-20-248 sshd[1361]: pam_unix(sshd:session): session opened for user ubuntu by (uid=0)
-Mar 27 13:08:09 ip-10-77-20-248 systemd: pam_unix(systemd-user:session): session opened for user ubuntu by (uid=0)
-Mar 27 13:08:09 ip-10-77-20-248 systemd-logind[1118]: New session 1 of user ubuntu.
-Mar 27 13:09:37 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-5.2.2-amd64.deb
-Mar 27 13:09:37 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:09:38 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:10:08 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-key add -
-Mar 27 13:10:08 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:10:09 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:10:14 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get install apt-transport-https
-Mar 27 13:10:14 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:10:14 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:10:18 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/tee -a /etc/apt/sources.list.d/elastic-5.x.list
-Mar 27 13:10:18 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:10:18 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:10:24 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get update
-Mar 27 13:10:24 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:10:28 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:10:28 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get install filebeat
-Mar 27 13:10:28 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:10:33 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:10:53 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/sbin/update-rc.d filebeat defaults 95 10
-Mar 27 13:10:53 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:10:53 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:11:31 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get update
-Mar 27 13:11:31 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:11:33 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 13:11:34 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/apt-get update
-Mar 27 13:11:34 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:11:35 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-
-```
-
-Output excerpt:
-
-```text
-[... 83 line(s) omitted ... ⟦tj:f8561e17c2dd04e4ed7f7a3734ebbb49⟧]
-Mar 27 13:44:29 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 13:44:29 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 14:01:39 ip-10-77-20-248 sshd[2938]: error: maximum authentication attempts exceeded for root from 122.176.37.221 port 37107 ssh2 [preauth]
-Mar 27 14:01:39 ip-10-77-20-248 sshd[2938]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 14:02:16 ip-10-77-20-248 sshd[2856]: Received disconnect from 85.245.107.41 port 54866:11: disconnected by user
-[... 7 line(s) omitted ... ⟦tj:9fc4a93e4c2e7b7b6430c4432ad78e02⟧]
-Mar 27 14:54:57 ip-10-77-20-248 sshd[2967]: Invalid user support from 95.152.57.58
-Mar 27 14:54:57 ip-10-77-20-248 sshd[2967]: input_userauth_request: invalid user support [preauth]
-Mar 27 14:54:58 ip-10-77-20-248 sshd[2967]: error: maximum authentication attempts exceeded for invalid user support from 95.152.57.58 port 53679 ssh2 [preauth]
-Mar 27 14:54:58 ip-10-77-20-248 sshd[2967]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 15:17:01 ip-10-77-20-248 CRON[2980]: pam_unix(cron:session): session opened for user root by (uid=0)
-Mar 27 15:17:01 ip-10-77-20-248 CRON[2980]: pam_unix(cron:session): session closed for user root
-Mar 27 15:30:59 ip-10-77-20-248 sshd[2995]: Did not receive identification string from 209.160.24.191
-Mar 27 15:46:53 ip-10-77-20-248 sshd[2996]: error: maximum authentication attempts exceeded for root from 90.144.183.19 port 57648 ssh2 [preauth]
-Mar 27 15:46:53 ip-10-77-20-248 sshd[2996]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 15:48:29 ip-10-77-20-248 sshd[2998]: Accepted publickey for ubuntu from 85.245.107.41 port 57684 ssh2: RSA SHA256:Kl8kPGZrTiz7g4FO1hyqHdsSBBb5Fge6NWOobN03XJg
-[... 4 line(s) omitted ... ⟦tj:2a72b07bda3207ac3f3fa293784799b2⟧]
-Mar 27 15:49:20 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
-Mar 27 15:49:21 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
-Mar 27 15:59:42 ip-10-77-20-248 sshd[3242]: error: maximum authentication attempts exceeded for root from 186.128.152.44 port 34605 ssh2 [preauth]
-Mar 27 15:59:42 ip-10-77-20-248 sshd[3242]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 16:02:57 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/usr/share/filebeat/bin ; USER=root ; COMMAND=/usr/bin/vim /etc/filebeat/filebeat.yml
-[... 203 line(s) omitted ... ⟦tj:d0db68e4424356ef5a18d56e7ac63f85⟧]
-Mar 27 18:22:24 ip-10-77-20-248 sshd[14922]: Invalid user admin from 201.177.23.130
-Mar 27 18:22:24 ip-10-77-20-248 sshd[14922]: input_userauth_request: invalid user admin [preauth]
-Mar 27 18:22:26 ip-10-77-20-248 sshd[14922]: error: maximum authentication attempts exceeded for invalid user admin from 201.177.23.130 port 46784 ssh2 [preauth]
-Mar 27 18:22:26 ip-10-77-20-248 sshd[14922]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 18:27:18 ip-10-77-20-248 sshd[14924]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56562 ssh2 [preauth]
-Mar 27 18:27:18 ip-10-77-20-248 sshd[14924]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 18:27:19 ip-10-77-20-248 sshd[14926]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56567 ssh2 [preauth]
-Mar 27 18:27:19 ip-10-77-20-248 sshd[14926]: Disconnecting: Too many authentication failures [preauth]
-Mar 27 18:27:20 ip-10-77-20-248 sshd[14928]: Invalid user support from 190.178.62.6
-Mar 27 18:27:20 ip-10-77-20-248 sshd[14928]: input_userauth_request: invalid user support [preauth]
-Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: error: maximum authentication attempts exceeded for invalid user support from 190.178.62.6 port 56573 ssh2 [preauth]
-Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: Disconnecting: Too many authentication failures [preauth]
-
-```
-
-### `12-apache-error`
-
-- [Full input](cases/12-apache-error/input.log)
-- [Output with CCR](cases/12-apache-error/output.log) - [diff](cases/12-apache-error/compression.diff)
-- [Output without CCR](cases/12-apache-error/output-noccr.log) - [diff](cases/12-apache-error/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-[Sun Dec 04 04:47:44 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:47:44 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:51:08 2005] [notice] jk2_init() Found child 6725 in scoreboard slot 10
-[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6726 in scoreboard slot 8
-[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6728 in scoreboard slot 6
-[Sun Dec 04 04:51:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:51:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:51:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:51:18 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:51:37 2005] [notice] jk2_init() Found child 6736 in scoreboard slot 10
-[Sun Dec 04 04:51:38 2005] [notice] jk2_init() Found child 6733 in scoreboard slot 7
-[Sun Dec 04 04:51:38 2005] [notice] jk2_init() Found child 6734 in scoreboard slot 9
-[Sun Dec 04 04:51:52 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:51:52 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:51:55 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:52:04 2005] [notice] jk2_init() Found child 6738 in scoreboard slot 6
-[Sun Dec 04 04:52:04 2005] [notice] jk2_init() Found child 6741 in scoreboard slot 9
-[Sun Dec 04 04:52:05 2005] [notice] jk2_init() Found child 6740 in scoreboard slot 7
-[Sun Dec 04 04:52:05 2005] [notice] jk2_init() Found child 6737 in scoreboard slot 8
-[Sun Dec 04 04:52:12 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:52:12 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:52:12 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:52:15 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:52:15 2005] [error] mod_jk child workerEnv in error state 7
-[Sun Dec 04 04:52:15 2005] [error] mod_jk child workerEnv in error state 7
-[Sun Dec 04 04:52:36 2005] [notice] jk2_init() Found child 6748 in scoreboard slot 6
-[Sun Dec 04 04:52:36 2005] [notice] jk2_init() Found child 6744 in scoreboard slot 10
-[Sun Dec 04 04:52:36 2005] [notice] jk2_init() Found child 6745 in scoreboard slot 8
-[Sun Dec 04 04:52:49 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:52:49 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:52:52 2005] [error] mod_jk child workerEnv in error state 7
-[Sun Dec 04 04:52:52 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 04:53:05 2005] [notice] jk2_init() Found child 6750 in scoreboard slot 7
-[Sun Dec 04 04:53:05 2005] [notice] jk2_init() Found child 6751 in scoreboard slot 9
-
-```
-
-Output excerpt:
-
-```text
-[Sun Dec 04 04:47:44 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 04:47:44 2005] [error] mod_jk child workerEnv in error state 6  [×26 first 04:47:44, last 04:59:38]
-[Sun Dec 04 04:51:08 2005] [notice] jk2_init() Found child 6725 in scoreboard slot 10
-[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6726 in scoreboard slot 8
-[... 81 line(s) omitted ... ⟦tj:b06490e7af17f4315cc2b62999ebc3f8⟧]
-[Sun Dec 04 05:00:03 2005] [notice] jk2_init() Found child 8560 in scoreboard slot 7
-[Sun Dec 04 05:00:09 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 05:00:09 2005] [error] mod_jk child workerEnv in error state 6  [×15 first 05:00:09, last 05:15:16]
-[Sun Dec 04 05:00:13 2005] [notice] jk2_init() Found child 8565 in scoreboard slot 9
-[Sun Dec 04 05:00:13 2005] [notice] jk2_init() Found child 8573 in scoreboard slot 10
-[... 39 line(s) omitted ... ⟦tj:72b34dbfb31c906d4cfa6743f6e903d7⟧]
-[Sun Dec 04 05:12:30 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 05:12:30 2005] [error] mod_jk child workerEnv in error state 6
-[Sun Dec 04 05:15:09 2005] [error] [client 222.166.160.184] Directory index forbidden by rule: /var/www/html/
-[Sun Dec 04 05:15:13 2005] [notice] jk2_init() Found child 1000 in scoreboard slot 10
-[Sun Dec 04 05:15:16 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[... 3 line(s) omitted ... ⟦tj:0f73b4fe379f5290dd1876a82bcf8966⟧]
-[Sun Dec 04 06:01:21 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 06:01:21 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 06:01:30 2005] [error] mod_jk child workerEnv in error state 6  [×90 first 06:01:30, last 06:59:47]
-[Sun Dec 04 06:01:42 2005] [notice] jk2_init() Found child 32352 in scoreboard slot 9
-[Sun Dec 04 06:01:42 2005] [notice] jk2_init() Found child 32353 in scoreboard slot 10
-[... 347 line(s) omitted ... ⟦tj:641ad21650e7dbc449bdbb9a7b298027⟧]
-[Sun Dec 04 07:02:01 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 07:02:01 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 9  [×27 first 07:02:03, last 07:18:00]
-[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 8
-[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 8
-[... 83 line(s) omitted ... ⟦tj:572ddd2a04c74a497cb316fa99bc5610⟧]
-[Sun Dec 04 07:18:00 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
-[Sun Dec 04 07:18:00 2005] [error] mod_jk child workerEnv in error state 7
-[Sun Dec 04 07:45:45 2005] [error] [client 63.13.186.196] Directory index forbidden by rule: /var/www/html/
-[Sun Dec 04 08:54:17 2005] [error] [client 147.31.138.75] Directory index forbidden by rule: /var/www/html/
-[Sun Dec 04 09:35:12 2005] [error] [client 207.203.80.15] Directory index forbidden by rule: /var/www/html/
-[Sun Dec 04 10:53:30 2005] [error] [client 218.76.139.20] Directory index forbidden by rule: /var/www/html/
-[Sun Dec 04 11:11:07 2005] [error] [client 24.147.151.74] Directory index forbidden by rule: /var/www/html/  [×3 first 11:11:07, last 11:42:43]
 
 ```
 
@@ -1026,186 +1806,6 @@ KERNDTLB 1118539141 2005.06.11 R30-M0-N9-C:J16-U01 2005-06-11-18.19.01.277745 R3
 
 ```
 
-### `13-proxifier`
-
-- [Full input](cases/13-proxifier/input.log)
-- [Output with CCR](cases/13-proxifier/output.log) - [diff](cases/13-proxifier/compression.diff)
-- [Output without CCR](cases/13-proxifier/output-noccr.log) - [diff](cases/13-proxifier/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime 00:01
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 403 bytes sent, 426 bytes received, lifetime <1 sec
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 451 bytes sent, 18846 bytes (18.4 KB) received, lifetime <1 sec
-[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 445 bytes sent, 5174 bytes (5.05 KB) received, lifetime <1 sec
-[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1190 bytes (1.16 KB) sent, 1671 bytes (1.63 KB) received, lifetime 00:02
-[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:08] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime <1 sec
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 3098 bytes (3.02 KB) received, lifetime 00:01
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 815 bytes received, lifetime <1 sec
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 783 bytes received, lifetime <1 sec
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 850 bytes sent, 10547 bytes (10.2 KB) received, lifetime 00:02
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 408 bytes sent, 421 bytes received, lifetime 00:03
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1165 bytes (1.13 KB) sent, 0 bytes received, lifetime <1 sec
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime <1 sec
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 19904 bytes (19.4 KB) sent, 27629 bytes (26.9 KB) received, lifetime 02:19
-[10.30 16:49:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1118 bytes (1.09 KB) sent, 340 bytes received, lifetime <1 sec
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1143 bytes (1.11 KB) sent, 365 bytes received, lifetime 00:01
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1093 bytes (1.06 KB) sent, 1006 bytes received, lifetime 00:01
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 428 bytes sent, 5365 bytes (5.23 KB) received, lifetime <1 sec
-[10.30 16:49:10] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-
-```
-
-Output excerpt:
-
-```text
-[... 250 line(s) omitted ... ⟦tj:b42d1e05b1e35d07e652dda9a0ace2a0⟧]
-[10.30 17:14:20] Dropbox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 17:15:10] QQ.exe - tcpconn.tencent.com:80 close, 133 bytes sent, 0 bytes received, lifetime <1 sec
-[10.30 17:15:42] QQ.exe - tcpconn6.tencent.com:443 error : A connection request was canceled before the completion.
-[10.30 17:16:10] QQ.exe - tcpconn4.tencent.com:80 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly. 
-[10.30 17:17:09] SogouCloud.exe - get.sogou.com:80 close, 651 bytes sent, 346 bytes received, lifetime <1 sec
-[10.30 17:17:16] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[... 169 line(s) omitted ... ⟦tj:069740731f610afca67abe9705832c9a⟧]
-[10.30 17:56:23] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 17:56:23] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 close, 451 bytes sent, 353 bytes received, lifetime <1 sec
-[10.30 17:57:12] YodaoDict.exe - oimagec7.ydstatic.com:80 error : A connection request was canceled before the completion. 
-[10.30 17:59:03] svchost.exe *64 - proxy.cse.cuhk.edu.hk:5070 close, 293 bytes sent, 514 bytes received, lifetime <1 sec
-[10.30 17:59:09] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[Template: [10.30 <*> <*> - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS] (8 lines, first 17:59:10, last 17:59:21)
-[... 9 line(s) omitted ... ⟦tj:59e46c945e439af449f484967c3efe46⟧]
-[10.30 18:00:10] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 18:00:10] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 950 bytes sent, 3559 bytes (3.47 KB) received, lifetime 01:01
-[10.30 18:00:12] FlashPlayerPlugin_18_0_0_209.exe - formi.baidu.com:843 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
-[10.30 18:00:13] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 1212 bytes (1.18 KB) sent, 11440 bytes (11.1 KB) received, lifetime 00:59
-[10.30 18:00:15] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[... 35 line(s) omitted ... ⟦tj:67f05a2d77d2b8076940178e60dbac2c⟧]
-[10.30 18:03:47] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 18:03:47] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 18:04:14] Skype.exe - 86.99.222.235:443 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly.
-[10.30 18:05:44] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 983 bytes sent, 308385 bytes (301 KB) received, lifetime 01:57
-[10.30 18:05:44] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 983 bytes sent, 268665 bytes (262 KB) received, lifetime 01:57
-[... 80 line(s) omitted ... ⟦tj:e4ff493529cc2cd9385df3924dcbec40⟧]
-[10.30 20:42:17] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 2464 bytes (2.40 KB) sent, 1010 bytes received, lifetime 02:01
-[10.30 20:42:31] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 20:42:33] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion.   [×6 first 20:42:33, last 20:59:47]
-[10.30 20:42:33] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[10.30 20:42:34] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1299 bytes (1.26 KB) sent, 1029 bytes (1.00 KB) received, lifetime <1 sec
-[... 293 line(s) omitted ... ⟦tj:9d89469f9fd0b5c76d5eba838e99dd2b⟧]
-[10.30 20:59:47] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion. 
-[10.30 21:03:16] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 close, 259 bytes sent, 5197 bytes (5.07 KB) received, lifetime <1 sec
-[10.30 21:03:34] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion.   [×6 first 21:03:34, last 21:17:51]
-
-```
-
-### `16-mac`
-
-- [Full input](cases/16-mac/input.log)
-- [Output with CCR](cases/16-mac/output.log) - [diff](cases/16-mac/compression.diff)
-- [Output without CCR](cases/16-mac/output-noccr.log) - [diff](cases/16-mac/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-Jul  1 09:00:55 calvisitor-10-105-160-95 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 11 unplug = 0
-Jul  1 09:01:05 calvisitor-10-105-160-95 com.apple.CDScheduler[43]: Thermal pressure state: 1 Memory pressure state: 0
-Jul  1 09:01:06 calvisitor-10-105-160-95 QQ[10018]: FA||Url||taskID[2019352994] dealloc
-Jul  1 09:02:26 calvisitor-10-105-160-95 kernel[0]: ARPT: 620701.011328: AirPort_Brcm43xx::syncPowerState: WWEN[enabled]
-Jul  1 09:02:26 authorMacBook-Pro kernel[0]: ARPT: 620702.879952: AirPort_Brcm43xx::platformWoWEnable: WWEN[disable]
-Jul  1 09:03:11 calvisitor-10-105-160-95 mDNSResponder[91]: mDNS_DeregisterInterface: Frequent transitions for interface awdl0 (FE80:0000:0000:0000:D8A5:90FF:FEF5:7FFF)
-Jul  1 09:03:13 calvisitor-10-105-160-95 kernel[0]: ARPT: 620749.901374: IOPMPowerSource Information: onSleep,  SleepType: Normal Sleep,  'ExternalConnected': Yes, 'TimeRemaining': 0,
-Jul  1 09:04:33 calvisitor-10-105-160-95 kernel[0]: ARPT: 620750.434035: wl0: wl_update_tcpkeep_seq: Original Seq: 3226706533, Ack: 3871687177, Win size: 4096
-Jul  1 09:04:33 authorMacBook-Pro kernel[0]: ARPT: 620752.337198: ARPT: Wake Reason: Wake on Scan offload
-Jul  1 09:04:37 authorMacBook-Pro symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
-Jul  1 09:12:20 authorMacBook-Pro kernel[0]: IO80211AWDLPeerManager::setAwdlAutoMode Resuming AWDL
-Jul  1 09:12:21 calvisitor-10-105-160-95 symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
-Jul  1 09:18:16 calvisitor-10-105-160-95 kernel[0]: ARPT: 620896.311264: wl0: MDNS: 0 SRV Recs, 0 TXT Recs
-Jul  1 09:19:03 calvisitor-10-105-160-95 kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
-Jul  1 09:19:03 authorMacBook-Pro configd[53]: setting hostname to "authorMacBook-Pro.local"
-Jul  1 09:19:13 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 439034 seconds.  Ignoring.
-Jul  1 09:21:57 authorMacBook-Pro corecaptured[31174]: CCIOReporterFormatter::addRegistryChildToChannelDictionary streams 7
-Jul  1 09:21:58 calvisitor-10-105-160-95 com.apple.WebKit.WebContent[25654]: [09:21:58.929] <<<< CRABS >>>> crabsFlumeHostAvailable: [0x7f961cf08cf0] Byte flume reports host available again.
-Jul  1 09:22:02 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2450 seconds.  Ignoring.
-Jul  1 09:22:25 calvisitor-10-105-160-95 kernel[0]: IO80211AWDLPeerManager::setAwdlAutoMode Resuming AWDL
-Jul  1 09:23:26 calvisitor-10-105-160-95 kernel[0]: AirPort: Link Down on awdl0. Reason 1 (Unspecified).
-Jul  1 09:23:26 calvisitor-10-105-160-95 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 11 unplug = 0
-Jul  1 09:24:13 calvisitor-10-105-160-95 kernel[0]: PM response took 2010 ms (54, powerd)
-Jul  1 09:25:21 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 438666 seconds.  Ignoring.
-Jul  1 09:25:45 calvisitor-10-105-160-95 kernel[0]: ARPT: 621131.293163: wl0: Roamed or switched channel, reason #8, bssid 5c:50:15:4c:18:13, last RSSI -64
-Jul  1 09:25:59 calvisitor-10-105-160-95 kernel[0]: ARPT: 621145.554555: IOPMPowerSource Information: onSleep,  SleepType: Normal Sleep,  'ExternalConnected': Yes, 'TimeRemaining': 0,
-Jul  1 09:26:41 calvisitor-10-105-160-95 kernel[0]: ARPT: 621146.080894: wl0: wl_update_tcpkeep_seq: Original Seq: 3014995849, Ack: 2590995288, Win size: 4096
-Jul  1 09:26:43 calvisitor-10-105-160-95 networkd[195]: nw_nat64_post_new_ifstate successfully changed NAT64 ifstate from 0x4 to 0x8000000000000000
-Jul  1 09:26:47 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2165 seconds.  Ignoring.
-Jul  1 09:27:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.EscrowSecurityAlert.daily: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 13090 seconds.  Ignoring.
-Jul  1 09:27:06 calvisitor-10-105-160-95 kernel[0]: IO80211AWDLPeerManager::setAwdlSuspendedMode() Suspending AWDL, enterQuietMode(true)
-Jul  1 09:28:41 authorMacBook-Pro netbiosd[31198]: network_reachability_changed : network is not reachable, netbiosd is shutting down
-Jul  1 09:28:41 authorMacBook-Pro corecaptured[31206]: CCFile::captureLogRun() Exiting CCFile::captureLogRun
-Jul  1 09:28:50 calvisitor-10-105-160-95 com.apple.CDScheduler[258]: Thermal pressure state: 1 Memory pressure state: 0
-Jul  1 09:28:53 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2039 seconds.  Ignoring.
-Jul  1 09:29:02 calvisitor-10-105-160-95 sandboxd[129] ([31211]): com.apple.Addres(31211) deny network-outbound /private/var/run/mDNSResponder
-
-```
-
-Output excerpt:
-
-```text
-[... 81 line(s) omitted ... ⟦tj:1eb31fe7bfeda68857ac48737e2203a2⟧]
-Jul  1 10:10:24 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31328) deny(1) network-outbound /private/var/run/mDNSResponder
-Jul  1 10:10:27 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31328) deny(1) network-outbound /private/var/run/mDNSResponder
-Jul  1 10:13:39 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=...
-Jul  1 10:13:43 calvisitor-10-105-160-95 SpotlightNetHelper[352]: CFPasteboardRef CFPasteboardCreate(CFAllocatorRef, CFStringRef) : failed to create global data
-Jul  1 10:13:57 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31346) deny(1) network-outbound /private/var/run/mDNSResponder
-Jul  1 10:38:53 calvisitor-10-105-160-95 sandboxd[129] ([31376]): com.apple.Addres(31376) deny network-outbound /private/var/run/mDNSResponder
-[... 3 line(s) omitted ... ⟦tj:dac81bf55aa63ad65a31370cff72b60f⟧]
-Jul  1 10:47:08 calvisitor-10-105-160-95 sandboxd[129] ([31382]): com.apple.Addres(31382) deny network-outbound /private/var/run/mDNSResponder
-Jul  1 11:20:51 calvisitor-10-105-160-95 sharingd[30299]: 11:20:51.293 : BTLE discovered device with hash <01faa200 00000000 0000>
-Jul  1 11:24:45 calvisitor-10-105-160-95 secd[276]:  securityd_xpc_dictionary_handler cloudd[326] copy_matching Error Domain=NSOSStatusErrorDomain Code=-50 "query missing class name" (paramErr: error in user parameter li...
-Jul  1 11:29:32 calvisitor-10-105-160-95 locationd[82]: Location icon should now be in state 'Inactive'
-Jul  1 11:38:18 calvisitor-10-105-160-95 kernel[0]: ARPT: 626126.086205: wl0: setup_keepalive: interval 900, retry_interval 30, retry_count 10
-[... 12 line(s) omitted ... ⟦tj:c72b03af9d48cb619f2a9f3091d87400⟧]
-Jul  1 11:44:25 authorMacBook-Pro kernel[0]: en0::IO80211Interface::postMessage bssid changed
-Jul  1 11:44:26 authorMacBook-Pro kernel[0]: IO80211AWDLPeerManager::setAwdlOperatingMode Setting the AWDL operation mode from SUSPENDED to AUTO
-Jul  1 11:46:16 calvisitor-10-105-160-95 symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
-Jul  1 11:46:16 authorMacBook-Pro kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
-Jul  1 11:46:19 authorMacBook-Pro sharingd[30299]: 11:46:19.229 : Finished generating hashes
-[... 4 line(s) omitted ... ⟦tj:aeea1019fd4f6b59810d77573f7786a7⟧]
-Jul  1 11:48:28 calvisitor-10-105-160-95 AddressBookSourceSync[31471]: Unrecognized attribute value: t:AbchPersonItemType
-Jul  1 11:48:43 calvisitor-10-105-160-95 kernel[0]: PM response took 1938 ms (54, powerd)
-Jul  1 11:49:29 calvisitor-10-105-160-95 QQ[10018]: tcp_connection_destination_perform_socket_connect 19110 connectx to 183.57.48.75:80@0 failed: [50] Network is down
-Jul  1 11:49:29 calvisitor-10-105-160-95 kernel[0]: AirPort: Link Down on en0. Reason 8 (Disassociated because station leaving).
-Jul  1 11:49:29 authorMacBook-Pro sharingd[30299]: 11:49:29.473 : BTLE scanner Powered On
-Jul  1 11:49:29 authorMacBook-Pro kernel[0]: USBMSC Identifier (non-unique): 000000000820 0x5ac 0x8406 0x820, 3
-Jul  1 11:49:29 authorMacBook-Pro symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
-Jul  1 11:49:30 authorMacBook-Pro corecaptured[31480]: CCXPCService::setStreamEventHandler Registered for notification callback.
-Jul  1 11:49:30 authorMacBook-Pro Dropbox[24019]: [0701/114930:WARNING:dns_config_service_posix.cc(306)] Failed to read DnsConfig.
-Jul  1 11:49:35 calvisitor-10-105-160-95 cdpd[11807]: Saw change in network reachability (isReachable=2)
-Jul  1 11:51:02 authorMacBook-Pro kernel[0]: [HID] [ATC] AppleDeviceManagementHIDEventService::processWakeReason Wake reason: Host (0x01)
-[... 12 line(s) omitted ... ⟦tj:e1ac24ae345c45db26187da7916dc651⟧]
-Jul  1 11:58:27 authorMacBook-Pro com.apple.cts[258]: com.apple.suggestions.harvest: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 15323 seconds.  Ignoring.
-Jul  1 12:12:04 calvisitor-10-105-160-95 kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
-Jul  1 12:12:21 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=...
-Jul  1 12:26:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 427826 seconds.  Ignoring.
-
-```
-
 ### `14-openssh`
 
 - [Full input](cases/14-openssh/input.log)
@@ -1296,96 +1896,6 @@ Dec 10 07:27:52 LabSZ sshd[24235]: Received disconnect from 112.95.230.3: 11: By
 
 ```
 
-### `08-windows`
-
-- [Full input](cases/08-windows/input.log)
-- [Output with CCR](cases/08-windows/output.log) - [diff](cases/08-windows/compression.diff)
-- [Output without CCR](cases/08-windows/output-noccr.log) - [diff](cases/08-windows/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-2016-09-28 04:30:30, Info                  CBS    Loaded Servicing Stack v6.1.7601.23505 with Core: C:\Windows\winsxs\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_6.1.7601.23505_none_681aa442f6fed7f0\cbscore.d...
-2016-09-28 04:30:31, Info                  CSI    00000001@2016/9/27:20:30:31.455 WcpInitialize (wcp.dll version 0.0.0.6) called (stack @0x7fed806eb5d @0x7fef9fb9b6d @0x7fef9f8358f @0xff83e97c @0xff83d799 @0xff83db2f)
-2016-09-28 04:30:31, Info                  CSI    00000002@2016/9/27:20:30:31.458 WcpInitialize (wcp.dll version 0.0.0.6) called (stack @0x7fed806eb5d @0x7fefa006ade @0x7fef9fd2984 @0x7fef9f83665 @0xff83e97c @0xff83d799)
-2016-09-28 04:30:31, Info                  CSI    00000003@2016/9/27:20:30:31.458 WcpInitialize (wcp.dll version 0.0.0.6) called (stack @0x7fed806eb5d @0x7fefa1c8728 @0x7fefa1c8856 @0xff83e474 @0xff83d7de @0xff83db2f)
-2016-09-28 04:30:31, Info                  CBS    Ending TrustedInstaller initialization.
-2016-09-28 04:30:31, Info                  CBS    Starting the TrustedInstaller main loop.
-2016-09-28 04:30:31, Info                  CBS    TrustedInstaller service starts successfully.
-2016-09-28 04:30:31, Info                  CBS    SQM: Initializing online with Windows opt-in: False
-2016-09-28 04:30:31, Info                  CBS    SQM: Cleaning up report files older than 10 days.
-2016-09-28 04:30:31, Info                  CBS    SQM: Requesting upload of all unsent reports.
-2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start upload with file pattern: C:\Windows\servicing\sqm\*_std.sqm, flags: 0x2 [HRESULT = 0x80004005 - E_FAIL]
-2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start standard sample upload. [HRESULT = 0x80004005 - E_FAIL]
-2016-09-28 04:30:31, Info                  CBS    SQM: Queued 0 file(s) for upload with pattern: C:\Windows\servicing\sqm\*_all.sqm, flags: 0x6
-2016-09-28 04:30:31, Info                  CBS    SQM: Warning: Failed to upload all unsent reports. [HRESULT = 0x80004005 - E_FAIL]
-2016-09-28 04:30:31, Info                  CBS    No startup processing required, TrustedInstaller service was not set as autostart, or else a reboot is still pending.
-2016-09-28 04:30:31, Info                  CBS    NonStart: Checking to ensure startup processing was not required.
-2016-09-28 04:30:31, Info                  CSI    00000004 IAdvancedInstallerAwareStore_ResolvePendingTransactions (call 1) (flags = 00000004, progress = NULL, phase = 0, pdwDisposition = @0xb6fd90
-2016-09-28 04:30:31, Info                  CSI    00000005 Creating NT transaction (seq 1), objectname [6]"(null)"
-2016-09-28 04:30:31, Info                  CSI    00000006 Created NT transaction (seq 1) result 0x00000000, handle @0x214
-2016-09-28 04:30:31, Info                  CSI    00000007@2016/9/27:20:30:31.462 CSI perf trace:
-2016-09-28 04:30:31, Info                  CBS    NonStart: Success, startup processing not required as expected.
-2016-09-28 04:30:31, Info                  CBS    Startup processing thread terminated normally
-2016-09-28 04:30:31, Info                  CSI    00000008 CSI Store 4991456 (0x00000000004c29e0) initialized
-2016-09-28 04:30:31, Info                  CBS    Session: 30546173_4261722401 initialized by client WindowsUpdateAgent.
-2016-09-28 04:30:31, Info                  CBS    Session: 30546173_4262462443 initialized by client WindowsUpdateAgent.
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-
-```
-
-Output excerpt:
-
-```text
-[... 8 line(s) omitted ... ⟦tj:9f54e7ad069923e6fb445671f06d52ac⟧]
-2016-09-28 04:30:31, Info                  CBS    SQM: Cleaning up report files older than 10 days.
-2016-09-28 04:30:31, Info                  CBS    SQM: Requesting upload of all unsent reports.
-2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start upload with file pattern: C:\Windows\servicing\sqm\*_std.sqm, flags: 0x2 [HRESULT = 0x80004005 - E_FAIL]
-2016-09-28 04:30:31, Info                  CBS    SQM: Failed to start standard sample upload. [HRESULT = 0x80004005 - E_FAIL]
-2016-09-28 04:30:31, Info                  CBS    SQM: Queued 0 file(s) for upload with pattern: C:\Windows\servicing\sqm\*_all.sqm, flags: 0x6
-2016-09-28 04:30:31, Info                  CBS    SQM: Warning: Failed to upload all unsent reports. [HRESULT = 0x80004005 - E_FAIL]
-2016-09-28 04:30:31, Info                  CBS    No startup processing required, TrustedInstaller service was not set as autostart, or else a reboot is still pending.
-2016-09-28 04:30:31, Info                  CBS    NonStart: Checking to ensure startup processing was not required.
-[... 9 line(s) omitted ... ⟦tj:eb027cf7e815ea5157343d5fd663af02⟧]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.  [×120 first 2016-09-28, last 2016-09-28]
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]  [×96 first 2016-09-28, last 2016-09-28]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-[... 3 line(s) omitted ... ⟦tj:d7dbf7c5d52999b51edd437b8f46637e⟧]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-2016-09-28 04:30:31, Info                  CBS    Expecting attribute name [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-[... 3 line(s) omitted ... ⟦tj:d7dbf7c5d52999b51edd437b8f46637e⟧]
-2016-09-28 04:30:31, Info                  CBS    Failed to get next element [HRESULT = 0x800f080d - CBS_E_MANIFEST_INVALID_ITEM]
-2016-09-28 04:30:31, Info                  CBS    Warning: Unrecognized packageExtended attribute.
-
-```
-
 ### `02-hadoop`
 
 - [Full input](cases/02-hadoop/input.log)
@@ -1473,96 +1983,6 @@ Output excerpt:
 2015-10-18 18:05:40,617 WARN [LeaseRenewer:msrabi@msra-sa-41:9000] org.apache.hadoop.ipc.Client: Address change detected. Old: msra-sa-41/10.190.173.170:9000 New: msra-sa-41:9000
 2015-10-18 18:05:40,617 WARN [LeaseRenewer:msrabi@msra-sa-41:9000] org.apache.hadoop.hdfs.LeaseRenewer: Failed to renew lease for [DFSClient_NONMAPREDUCE_1537864556_1] for 43 seconds.  Will retry shortly ...
 2015-10-18 18:05:41,617 WARN [LeaseRenewer:msrabi@msra-sa-41:9000] org.apache.hadoop.ipc.Client: Address change detected. Old: msra-sa-41/10.190.173.170:9000 New: msra-sa-41:9000
-
-```
-
-### `07-thunderbird`
-
-- [Full input](cases/07-thunderbird/input.log)
-- [Output with CCR](cases/07-thunderbird/output.log) - [diff](cases/07-thunderbird/compression.diff)
-- [Output without CCR](cases/07-thunderbird/output-noccr.log) - [diff](cases/07-thunderbird/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-- 1131566461 2005.11.09 dn228 Nov 9 12:01:01 dn228/dn228 crond(pam_unix)[2915]: session closed for user root
-- 1131566461 2005.11.09 dn228 Nov 9 12:01:01 dn228/dn228 crond(pam_unix)[2915]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn228 Nov 9 12:01:01 dn228/dn228 crond[2916]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn261 Nov 9 12:01:01 dn261/dn261 crond(pam_unix)[2907]: session closed for user root
-- 1131566461 2005.11.09 dn261 Nov 9 12:01:01 dn261/dn261 crond(pam_unix)[2907]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn261 Nov 9 12:01:01 dn261/dn261 crond[2908]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn3 Nov 9 12:01:01 dn3/dn3 crond(pam_unix)[2907]: session closed for user root
-- 1131566461 2005.11.09 dn3 Nov 9 12:01:01 dn3/dn3 crond(pam_unix)[2907]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn3 Nov 9 12:01:01 dn3/dn3 crond[2908]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn596 Nov 9 12:01:01 dn596/dn596 crond(pam_unix)[2727]: session closed for user root
-- 1131566461 2005.11.09 dn596 Nov 9 12:01:01 dn596/dn596 crond(pam_unix)[2727]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn596 Nov 9 12:01:01 dn596/dn596 crond[2728]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn700 Nov 9 12:01:01 dn700/dn700 crond(pam_unix)[2912]: session closed for user root
-- 1131566461 2005.11.09 dn700 Nov 9 12:01:01 dn700/dn700 crond(pam_unix)[2912]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn700 Nov 9 12:01:01 dn700/dn700 crond[2913]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn73 Nov 9 12:01:01 dn73/dn73 crond(pam_unix)[2917]: session closed for user root
-- 1131566461 2005.11.09 dn73 Nov 9 12:01:01 dn73/dn73 crond(pam_unix)[2917]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn73 Nov 9 12:01:01 dn73/dn73 crond[2918]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn731 Nov 9 12:01:01 dn731/dn731 crond(pam_unix)[2916]: session closed for user root
-- 1131566461 2005.11.09 dn731 Nov 9 12:01:01 dn731/dn731 crond(pam_unix)[2916]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn731 Nov 9 12:01:01 dn731/dn731 crond[2917]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn754 Nov 9 12:01:01 dn754/dn754 crond(pam_unix)[2913]: session closed for user root
-- 1131566461 2005.11.09 dn754 Nov 9 12:01:01 dn754/dn754 crond(pam_unix)[2913]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn754 Nov 9 12:01:01 dn754/dn754 crond[2914]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 dn978 Nov 9 12:01:01 dn978/dn978 crond(pam_unix)[2920]: session closed for user root
-- 1131566461 2005.11.09 dn978 Nov 9 12:01:01 dn978/dn978 crond(pam_unix)[2920]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 dn978 Nov 9 12:01:01 dn978/dn978 crond[2921]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 eadmin1 Nov 9 12:01:01 src@eadmin1 crond(pam_unix)[4307]: session closed for user root
-- 1131566461 2005.11.09 eadmin1 Nov 9 12:01:01 src@eadmin1 crond(pam_unix)[4307]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 eadmin1 Nov 9 12:01:01 src@eadmin1 crond[4308]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 eadmin2 Nov 9 12:01:01 src@eadmin2 crond(pam_unix)[12636]: session closed for user root
-- 1131566461 2005.11.09 eadmin2 Nov 9 12:01:01 src@eadmin2 crond(pam_unix)[12636]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 eadmin2 Nov 9 12:01:01 src@eadmin2 crond[12637]: (root) CMD (run-parts /etc/cron.hourly)
-- 1131566461 2005.11.09 en257 Nov 9 12:01:01 en257/en257 crond(pam_unix)[8950]: session closed for user root
-- 1131566461 2005.11.09 en257 Nov 9 12:01:01 en257/en257 crond(pam_unix)[8950]: session opened for user root by (uid=0)
-- 1131566461 2005.11.09 en257 Nov 9 12:01:01 en257/en257 crond[8951]: (root) CMD (run-parts /etc/cron.hourly)
-
-```
-
-Output excerpt:
-
-```text
-[... 1299 line(s) omitted ... ⟦tj:99c45489993dd6335892a3a86c4e5531⟧]
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 checking TSC synchronization across 4 CPUs: passed.
-[... 8 line(s) omitted ... ⟦tj:c2a494633b17fc6a35f00ef95f8493a5⟧]
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 floppy0: no floppy controllers found
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 hw_random: RNG not detected
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide0: Wait for ready failed before probe !  [×6]
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide1: Wait for ready failed before probe !
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide2: Wait for ready failed before probe !
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide3: Wait for ready failed before probe !
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide4: Wait for ready failed before probe !
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 ide5: Wait for ready failed before probe !
-[... 25 line(s) omitted ... ⟦tj:c94f52551492c47989be8ca8db23ca52⟧]
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 scsi[0]: scanning scsi channel 0 [Phy 0] for non-raid devices
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 scsi[0]: scanning scsi channel 1 [virtual] for logical drives
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 sda: asking for cache data failed
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 sda: assuming drive cache: write through
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 sda: sda1 sda2 sda3 sda4
-[... 11 line(s) omitted ... ⟦tj:56d11eeab7f0aac8e59f1b4be8faafd0⟧]
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 usbcore: registered new driver usbfs
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 usbcore: registered new driver usbhid
-- 1131567043 2005.11.09 tbird-admin1 Nov 9 12:10:43 local@tbird-admin1 vesafb: probe of vesafb0 failed with error -6
-- 1131567044 2005.11.09 bn124 Nov 9 12:10:44 bn124/bn124 ntpd[22190]: synchronized to 10.100.22.250, stratum 3
-- 1131567044 2005.11.09 tbird-admin1 Nov 9 12:10:44 local@tbird-admin1 /apps/x86_64/system/ganglia-3.0.1/sbin/gmetad[1682]: data_thread() got not answer from any [Thunderbird_C1] datasource
-[... 19 line(s) omitted ... ⟦tj:e8adb754352b8c0ab963efacdbd12006⟧]
-- 1131567052 2005.11.09 #8# Nov 9 12:10:52 #8#/#8# sshd[4718]: connection lost: 'Connection closed.'
-- 1131567052 2005.11.09 tbird-admin1 Nov 9 12:10:52 local@tbird-admin1 netfs: Mounting NFS filesystems: succeeded
-- 1131567052 2005.11.09 tbird-admin1 Nov 9 12:10:52 local@tbird-admin1 netfs: Mounting other filesystems: failed
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 /apps/x86_64/system/ganglia-3.0.1/sbin/gmetad[1682]: data_thread() got not answer from any [Thunderbird_A2] datasource
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 /apps/x86_64/system/ganglia-3.0.1/sbin/gmetad[1682]: data_thread() got not answer from any [Thunderbird_B5] datasource
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an14 an15 an16 an17 an18 an19 an20 an21 an22 an23 an24 an25 an26 an27 an28 an29 an30 an31 an32...
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an14 an15 an16 an17 an18 an19 an20 an21 an22 an23 an24 an25 an26 an27 an28 an29 an30 an31 an32...
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an142 an143 an144 an145 an146 an147 an148 an149 an150 an151 an152 an153 an154 an155 an156 an15...
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an270 an271 an272 an273 an274 an275 an276 an277 an278 an279 an280 an281 an282 an283 an284 an28...
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an398 an399 an400 an401 an402 an403 an404 an405 an406 an407 an408 an409 an410 an411 an412 an41...
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an526 an527 an528 an529 an530 an531 an532 an533 an534 an535 an536 an537 an538 an539 an540 an54...
-- 1131567053 2005.11.09 tbird-admin1 Nov 9 12:10:53 local@tbird-admin1 gmetad: Warning: we failed to resolve data source name an654 an655 an656 an657 an658 an659 an660 an661 an662 an663 an664 an665 an666 an667 an668 an66...
 
 ```
 
@@ -1743,96 +2163,6 @@ Nov  4 09:11:01 mail postfix/submission/smtpd[27133]: warning: unknown[192.0.2.1
 #6 Example to ignore because due to a failed attempt to connect to authentication service - no malicious activities whatsoever
 # failJSON: { "match": false }
 Feb  3 08:29:28 mail postfix/smtpd[21022]: warning: unknown[1.1.1.1]: SASL LOGIN authentication failed: Connection lost to authentication server
-
-```
-
-### `23-authelia-bf`
-
-- [Full input](cases/23-authelia-bf/input.log)
-- [Output with CCR](cases/23-authelia-bf/output.log) - [diff](cases/23-authelia-bf/compression.diff)
-- [Output without CCR](cases/23-authelia-bf/output-noccr.log) - [diff](cases/23-authelia-bf/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-
-```
-
-Output excerpt:
-
-```text
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"  [×6]
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.1 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser1@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"  [×6]
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser2@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser3@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser4@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser5@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2022-02-14T13:47:54+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'fakeuser6@example.com': user not found" method=POST path=/api/firstfactor remote_ip=1.1.1.2 stack="longstacktrace"
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser' which usually indicates they do not exist" error="user not found" method=POST path=/api/firstfactor...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2025-03-13T14:01:02+02:00" level=error msg="Error occurred getting details for user with username input 'fakeuser@example.com' which usually indicates they do not exist" error="user not found" method=POST path=/api...
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"  [×6]
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser'" method=POST path=/api/firstfactor remote_ip=2.2.2.2 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"  [×6]
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
-time="2022-02-14T13:49:12+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'realuser@example.com'" method=POST path=/api/firstfactor remote_ip=2.2.2.3 stack="longstacktrace"
 
 ```
 
@@ -2374,186 +2704,6 @@ Output excerpt:
 
 ```
 
-### `22-traefik-http`
-
-- [Full input](cases/22-traefik-http/input.log)
-- [Output with CCR](cases/22-traefik-http/output.log) - [diff](cases/22-traefik-http/compression.diff)
-- [Output without CCR](cases/22-traefik-http/output-noccr.log) - [diff](cases/22-traefik-http/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":215563,"OriginContentSize":356,"OriginDuration":204708,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":221071,"OriginContentSize":356,"OriginDuration":208300,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":293192,"OriginContentSize":356,"OriginDuration":282825,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":203756,"OriginContentSize":358,"OriginDuration":191877,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":236283,"OriginContentSize":356,"OriginDuration":222687,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":250311,"OriginContentSize":356,"OriginDuration":219964,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":862057,"OriginContentSize":358,"OriginDuration":826299,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":257280,"OriginContentSize":360,"OriginDuration":241167,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":670681,"OriginContentSize":357,"OriginDuration":655388,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":388748,"OriginContentSize":356,"OriginDuration":368461,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":371391,"OriginContentSize":357,"OriginDuration":340554,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":264620,"OriginContentSize":356,"OriginDuration":246002,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":363,"DownstreamStatus":404,"Duration":239035,"OriginContentSize":363,"OriginDuration":228234,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":243151,"OriginContentSize":356,"OriginDuration":228568,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":292339,"OriginContentSize":356,"OriginDuration":264921,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":396272,"OriginContentSize":356,"OriginDuration":374715,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":971590,"OriginContentSize":359,"OriginDuration":910516,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":346765,"OriginContentSize":357,"OriginDuration":327435,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":299828,"OriginContentSize":356,"OriginDuration":271004,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":227517,"OriginContentSize":359,"OriginDuration":215492,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":257161,"OriginContentSize":355,"OriginDuration":216910,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":201678,"OriginContentSize":356,"OriginDuration":192185,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":206623,"OriginContentSize":356,"OriginDuration":194507,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":362,"DownstreamStatus":404,"Duration":218407,"OriginContentSize":362,"OriginDuration":206047,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":238777,"OriginContentSize":357,"OriginDuration":227532,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":365,"DownstreamStatus":404,"Duration":727038,"OriginContentSize":365,"OriginDuration":666613,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":262803,"OriginContentSize":357,"OriginDuration":249790,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":379585,"OriginContentSize":360,"OriginDuration":363568,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":240376,"OriginContentSize":356,"OriginDuration":227041,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":217874,"OriginContentSize":356,"OriginDuration":207637,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":224377,"OriginContentSize":359,"OriginDuration":211392,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":361,"DownstreamStatus":404,"Duration":219219,"OriginContentSize":361,"OriginDuration":207830,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":224740,"OriginContentSize":355,"OriginDuration":209491,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":204472,"OriginContentSize":356,"OriginDuration":192116,"O...
-
-```
-
-Output excerpt:
-
-```text
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":215563,"OriginContentSize":356,"OriginDuration":204708,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":221071,"OriginContentSize":356,"OriginDuration":208300,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":293192,"OriginContentSize":356,"OriginDuration":282825,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":203756,"OriginContentSize":358,"OriginDuration":191877,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":236283,"OriginContentSize":356,"OriginDuration":222687,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":250311,"OriginContentSize":356,"OriginDuration":219964,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":358,"DownstreamStatus":404,"Duration":862057,"OriginContentSize":358,"OriginDuration":826299,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":257280,"OriginContentSize":360,"OriginDuration":241167,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":670681,"OriginContentSize":357,"OriginDuration":655388,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":388748,"OriginContentSize":356,"OriginDuration":368461,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":371391,"OriginContentSize":357,"OriginDuration":340554,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":264620,"OriginContentSize":356,"OriginDuration":246002,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":363,"DownstreamStatus":404,"Duration":239035,"OriginContentSize":363,"OriginDuration":228234,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":243151,"OriginContentSize":356,"OriginDuration":228568,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":292339,"OriginContentSize":356,"OriginDuration":264921,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":396272,"OriginContentSize":356,"OriginDuration":374715,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":971590,"OriginContentSize":359,"OriginDuration":910516,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":346765,"OriginContentSize":357,"OriginDuration":327435,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":299828,"OriginContentSize":356,"OriginDuration":271004,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":227517,"OriginContentSize":359,"OriginDuration":215492,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":257161,"OriginContentSize":355,"OriginDuration":216910,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":201678,"OriginContentSize":356,"OriginDuration":192185,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":206623,"OriginContentSize":356,"OriginDuration":194507,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":229777,"OriginContentSize":359,"OriginDuration":211769,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":362,"DownstreamStatus":404,"Duration":218407,"OriginContentSize":362,"OriginDuration":206047,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":238777,"OriginContentSize":357,"OriginDuration":227532,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":365,"DownstreamStatus":404,"Duration":727038,"OriginContentSize":365,"OriginDuration":666613,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":357,"DownstreamStatus":404,"Duration":262803,"OriginContentSize":357,"OriginDuration":249790,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":360,"DownstreamStatus":404,"Duration":379585,"OriginContentSize":360,"OriginDuration":363568,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":240376,"OriginContentSize":356,"OriginDuration":227041,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":217874,"OriginContentSize":356,"OriginDuration":207637,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":359,"DownstreamStatus":404,"Duration":224377,"OriginContentSize":359,"OriginDuration":211392,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":361,"DownstreamStatus":404,"Duration":219219,"OriginContentSize":361,"OriginDuration":207830,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":355,"DownstreamStatus":404,"Duration":224740,"OriginContentSize":355,"OriginDuration":209491,"O...
-{"ClientAddr":"172.17.0.1:39490","ClientHost":"172.17.0.1","ClientPort":"39490","ClientUsername":"-","DownstreamContentSize":356,"DownstreamStatus":404,"Duration":204472,"OriginContentSize":356,"OriginDuration":192116,"O...
-
-```
-
-### `21-traefik-flood`
-
-- [Full input](cases/21-traefik-flood/input.log)
-- [Output with CCR](cases/21-traefik-flood/output.log) - [diff](cases/21-traefik-flood/compression.diff)
-- [Output without CCR](cases/21-traefik-flood/output-noccr.log) - [diff](cases/21-traefik-flood/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling TCP connection from 1.2.3.4:35501 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-
-```
-
-Output excerpt:
-
-```text
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling TCP connection from 1.2.3.4:35501 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-time="2024-01-15T18:43:09Z" level=debug msg="Handling UDP stream from 1.2.3.44:34871 to 192.168.176.3:21116"
-
-```
-
 ### `18-nginx-access`
 
 - [Full input](cases/18-nginx-access/input.log)
@@ -2641,186 +2791,6 @@ Output excerpt:
 80.91.33.133 - - [17/May/2015:08:05:59 +0000] "GET /downloads/product_1 HTTP/1.1" 304 0 "-" "Debian APT-HTTP/1.3 (0.8.16~exp12ubuntu10.17)"
 200.6.73.40 - - [17/May/2015:08:05:42 +0000] "GET /downloads/product_1 HTTP/1.1" 304 0 "-" "Debian APT-HTTP/1.3 (0.9.7.9)"
 80.91.33.133 - - [17/May/2015:08:05:48 +0000] "GET /downloads/product_1 HTTP/1.1" 404 324 "-" "Debian APT-HTTP/1.3 (0.8.16~exp12ubuntu10.17)"
-
-```
-
-### `10-android`
-
-- [Full input](cases/10-android/input.log)
-- [Output with CCR](cases/10-android/output.log) - [diff](cases/10-android/compression.diff)
-- [Output without CCR](cases/10-android/output-noccr.log) - [diff](cases/10-android/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-03-17 16:13:38.811  1702  2395 D WindowManager: printFreezingDisplayLogsopening app wtoken = AppWindowToken{9f4ef63 token=Token{a64f992 ActivityRecord{de9231d u0 com.tencent.qt.qtl/.activity.info.NewsDetailXmlActivity t7...
-03-17 16:13:38.819  1702  8671 D PowerManagerService: acquire lock=233570404, flags=0x1, tag="View Lock", name=com.android.systemui, ws=null, uid=10037, pid=2227
-03-17 16:13:38.820  1702  8671 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
-03-17 16:13:38.839  1702  2113 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
-03-17 16:13:38.859  2227  2227 D TextView: visible is system.time.showampm
-03-17 16:13:38.861  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.869  2227  2227 D TextView: visible is system.charge.show
-03-17 16:13:38.871  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.875  2227  2227 D TextView: visible is system.call.count gt 0
-03-17 16:13:38.877  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.881  2227  2227 D TextView: visible is system.message.count gt 0
-03-17 16:13:38.882  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.887  2227  2227 D TextView: visible is system.ownerinfo.show
-03-17 16:13:38.888  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.905  1702 10454 D PowerManagerService: release:lock=233570404, flg=0x0, tag="View Lock", name=com.android.systemui", ws=null, uid=10037, pid=2227
-03-17 16:13:38.907  1702 10454 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
-03-17 16:13:38.915  1702  3693 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
-03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateClipping isOverlap:false, getTopPadding=333.0, Translation=-24.0
-03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateDimmedActivatedHideSensitive overlap:false
-03-17 16:13:38.935  1702  3697 W ActivityManager: getRunningAppProcesses: caller 10113 does not hold REAL_GET_TASKS; limiting output
-03-17 16:13:38.936  1702 14638 D PowerManagerService: release:lock=189667585, flg=0x0, tag="*launch*", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
-03-17 16:13:38.938  1702 14638 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
-03-17 16:13:38.954  2227  2227 I PhoneStatusBar: setSystemUiVisibility vis=40000500 mask=ffffffff oldVal=508 newVal=40000500 diff=40000008 fullscreenStackVis=0 dockedStackVis=0, fullscreenStackBounds=Rect(0, 0 - 720, 128...
-03-17 16:13:38.955  2227  2227 I PhoneStatusBar: cancelAutohide
-03-17 16:13:38.955  2227  2227 I PhoneStatusBar: notifyUiVisibilityChanged:vis=0x40000500, SystemUiVisibility=0x40000500
-03-17 16:13:38.994  1702 27365 I WindowManager: Destroying surface Surface(name=SurfaceView - com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destr...
-03-17 16:13:39.006  1702  2639 I WindowManager: Destroying surface Surface(name=com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destroySurface:2060...
-03-17 16:13:39.010  1702  2639 D PowerManagerService: release:lock=62617001, flg=0x0, tag="WindowManager", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
-03-17 16:13:39.011  1702  2639 D PowerManagerService: userActivityNoUpdateLocked: eventTime=261843648, event=0, flags=0x1, uid=1000
-03-17 16:13:39.011  1702  2639 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
-03-17 16:13:39.069  1702  1815 I WindowManager: orientation change is complete, call stopFreezingDisplayLocked
-03-17 16:13:39.070  1702  1815 I WindowManager: Screen frozen for +1s0ms due to Window{ca98d5 u0 com.tencent.qt.qtl/com.tencent.qt.qtl.activity.info.NewsDetailXmlActivity}
-03-17 16:13:39.070  1702  1815 D WindowManager: startAnimation begin
-03-17 16:13:39.079  1702  1815 D WindowManager: startAnimation end
-03-17 16:13:39.080  1702  1815 D PowerManagerService: release:lock=226887582, flg=0x0, tag="SCREEN_FROZEN", name=android", ws=null, uid=1000, pid=1702
-03-17 16:13:39.080  1702  1815 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
-
-```
-
-Output excerpt:
-
-```text
-03-17 16:13:38.811  1702  2395 D WindowManager: printFreezingDisplayLogsopening app wtoken = AppWindowToken{9f4ef63 token=Token{a64f992 ActivityRecord{de9231d u0 com.tencent.qt.qtl/.activity.info.NewsDetailXmlActivity t7...
-03-17 16:13:38.819  1702  8671 D PowerManagerService: acquire lock=233570404, flags=0x1, tag="View Lock", name=com.android.systemui, ws=null, uid=10037, pid=2227
-03-17 16:13:38.820  1702  8671 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
-03-17 16:13:38.839  1702  2113 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
-03-17 16:13:38.859  2227  2227 D TextView: visible is system.time.showampm
-03-17 16:13:38.861  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.869  2227  2227 D TextView: visible is system.charge.show
-03-17 16:13:38.871  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.875  2227  2227 D TextView: visible is system.call.count gt 0
-03-17 16:13:38.877  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.881  2227  2227 D TextView: visible is system.message.count gt 0
-03-17 16:13:38.882  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.887  2227  2227 D TextView: visible is system.ownerinfo.show
-03-17 16:13:38.888  2227  2227 D TextView: mVisiblity.getValue is false
-03-17 16:13:38.905  1702 10454 D PowerManagerService: release:lock=233570404, flg=0x0, tag="View Lock", name=com.android.systemui", ws=null, uid=10037, pid=2227
-03-17 16:13:38.907  1702 10454 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
-03-17 16:13:38.915  1702  3693 V WindowManager: Skipping AppWindowToken{df0798e token=Token{78af589 ActivityRecord{3b04890 u0 com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity t761}}} -- going to hide
-03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateClipping isOverlap:false, getTopPadding=333.0, Translation=-24.0
-03-17 16:13:38.928  2227  2227 I StackScrollAlgorithm: updateDimmedActivatedHideSensitive overlap:false
-03-17 16:13:38.935  1702  3697 W ActivityManager: getRunningAppProcesses: caller 10113 does not hold REAL_GET_TASKS; limiting output
-03-17 16:13:38.936  1702 14638 D PowerManagerService: release:lock=189667585, flg=0x0, tag="*launch*", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
-03-17 16:13:38.938  1702 14638 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x23,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userI...
-03-17 16:13:38.954  2227  2227 I PhoneStatusBar: setSystemUiVisibility vis=40000500 mask=ffffffff oldVal=508 newVal=40000500 diff=40000008 fullscreenStackVis=0 dockedStackVis=0, fullscreenStackBounds=Rect(0, 0 - 720, 128...
-03-17 16:13:38.955  2227  2227 I PhoneStatusBar: cancelAutohide
-03-17 16:13:38.955  2227  2227 I PhoneStatusBar: notifyUiVisibilityChanged:vis=0x40000500, SystemUiVisibility=0x40000500
-03-17 16:13:38.994  1702 27365 I WindowManager: Destroying surface Surface(name=SurfaceView - com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destr...
-03-17 16:13:39.006  1702  2639 I WindowManager: Destroying surface Surface(name=com.tencent.qt.qtl/com.tencent.video.player.activity.PlayerActivity) called by com.android.server.wm.WindowStateAnimator.destroySurface:2060...
-03-17 16:13:39.010  1702  2639 D PowerManagerService: release:lock=62617001, flg=0x0, tag="WindowManager", name=android", ws=WorkSource{10113}, uid=1000, pid=1702
-03-17 16:13:39.011  1702  2639 D PowerManagerService: userActivityNoUpdateLocked: eventTime=261843648, event=0, flags=0x1, uid=1000
-03-17 16:13:39.011  1702  2639 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
-03-17 16:13:39.069  1702  1815 I WindowManager: orientation change is complete, call stopFreezingDisplayLocked
-03-17 16:13:39.070  1702  1815 I WindowManager: Screen frozen for +1s0ms due to Window{ca98d5 u0 com.tencent.qt.qtl/com.tencent.qt.qtl.activity.info.NewsDetailXmlActivity}
-03-17 16:13:39.070  1702  1815 D WindowManager: startAnimation begin
-03-17 16:13:39.079  1702  1815 D WindowManager: startAnimation end
-03-17 16:13:39.080  1702  1815 D PowerManagerService: release:lock=226887582, flg=0x0, tag="SCREEN_FROZEN", name=android", ws=null, uid=1000, pid=1702
-03-17 16:13:39.080  1702  1815 D PowerManagerService: ready=true,policy=3,wakefulness=1,wksummary=0x1,uasummary=0x1,bootcompleted=true,boostinprogress=false,waitmodeenable=false,mode=false,manual=38,auto=-1,adj=0.0userId...
-
-```
-
-### `03-spark`
-
-- [Full input](cases/03-spark/input.log)
-- [Output with CCR](cases/03-spark/output.log) - [diff](cases/03-spark/compression.diff)
-- [Output without CCR](cases/03-spark/output-noccr.log) - [diff](cases/03-spark/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-17/06/09 20:10:40 INFO executor.CoarseGrainedExecutorBackend: Registered signal handlers for [TERM, HUP, INT]
-17/06/09 20:10:40 INFO spark.SecurityManager: Changing view acls to: yarn,curi
-17/06/09 20:10:40 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
-17/06/09 20:10:40 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
-17/06/09 20:10:41 INFO spark.SecurityManager: Changing view acls to: yarn,curi
-17/06/09 20:10:41 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
-17/06/09 20:10:41 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
-17/06/09 20:10:41 INFO slf4j.Slf4jLogger: Slf4jLogger started
-17/06/09 20:10:41 INFO Remoting: Starting remoting
-17/06/09 20:10:41 INFO Remoting: Remoting started; listening on addresses :[akka.tcp://sparkExecutorActorSystem@mesos-slave-07:55904]
-17/06/09 20:10:41 INFO util.Utils: Successfully started service 'sparkExecutorActorSystem' on port 55904.
-17/06/09 20:10:41 INFO storage.DiskBlockManager: Created local directory at /opt/hdfs/nodemanager/usercache/curi/appcache/application_1485248649253_0147/blockmgr-70293f72-844a-4b39-9ad6-fb0ad7e364e4
-17/06/09 20:10:41 INFO storage.MemoryStore: MemoryStore started with capacity 17.7 GB
-17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Connecting to driver: spark://CoarseGrainedScheduler@10.10.34.11:48069
-17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Successfully registered with driver
-17/06/09 20:10:42 INFO executor.Executor: Starting executor ID 5 on host mesos-slave-07
-17/06/09 20:10:42 INFO util.Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 40984.
-17/06/09 20:10:42 INFO netty.NettyBlockTransferService: Server created on 40984
-17/06/09 20:10:42 INFO storage.BlockManagerMaster: Trying to register BlockManager
-17/06/09 20:10:42 INFO storage.BlockManagerMaster: Registered BlockManager
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 0
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 1
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 2
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 3
-17/06/09 20:10:45 INFO executor.Executor: Running task 0.0 in stage 0.0 (TID 0)
-17/06/09 20:10:45 INFO executor.Executor: Running task 2.0 in stage 0.0 (TID 2)
-17/06/09 20:10:45 INFO executor.Executor: Running task 1.0 in stage 0.0 (TID 1)
-17/06/09 20:10:45 INFO executor.Executor: Running task 3.0 in stage 0.0 (TID 3)
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 4
-17/06/09 20:10:45 INFO executor.Executor: Running task 4.0 in stage 0.0 (TID 4)
-17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Started reading broadcast variable 9
-17/06/09 20:10:45 INFO storage.MemoryStore: Block broadcast_9_piece0 stored as bytes in memory (estimated size 5.2 KB, free 5.2 KB)
-17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Reading broadcast variable 9 took 160 ms
-17/06/09 20:10:46 INFO storage.MemoryStore: Block broadcast_9 stored as values in memory (estimated size 8.8 KB, free 14.0 KB)
-17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_1 not found, computing it
-17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_3 not found, computing it
-
-```
-
-Output excerpt:
-
-```text
-17/06/09 20:10:40 INFO executor.CoarseGrainedExecutorBackend: Registered signal handlers for [TERM, HUP, INT]
-17/06/09 20:10:40 INFO spark.SecurityManager: Changing view acls to: yarn,curi
-17/06/09 20:10:40 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
-17/06/09 20:10:40 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
-17/06/09 20:10:41 INFO spark.SecurityManager: Changing view acls to: yarn,curi
-17/06/09 20:10:41 INFO spark.SecurityManager: Changing modify acls to: yarn,curi
-17/06/09 20:10:41 INFO spark.SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(yarn, curi); users with modify permissions: Set(yarn, curi)
-17/06/09 20:10:41 INFO slf4j.Slf4jLogger: Slf4jLogger started
-17/06/09 20:10:41 INFO Remoting: Starting remoting
-17/06/09 20:10:41 INFO Remoting: Remoting started; listening on addresses :[akka.tcp://sparkExecutorActorSystem@mesos-slave-07:55904]
-17/06/09 20:10:41 INFO util.Utils: Successfully started service 'sparkExecutorActorSystem' on port 55904.
-17/06/09 20:10:41 INFO storage.DiskBlockManager: Created local directory at /opt/hdfs/nodemanager/usercache/curi/appcache/application_1485248649253_0147/blockmgr-70293f72-844a-4b39-9ad6-fb0ad7e364e4
-17/06/09 20:10:41 INFO storage.MemoryStore: MemoryStore started with capacity 17.7 GB
-17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Connecting to driver: spark://CoarseGrainedScheduler@10.10.34.11:48069
-17/06/09 20:10:42 INFO executor.CoarseGrainedExecutorBackend: Successfully registered with driver
-17/06/09 20:10:42 INFO executor.Executor: Starting executor ID 5 on host mesos-slave-07
-17/06/09 20:10:42 INFO util.Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 40984.
-17/06/09 20:10:42 INFO netty.NettyBlockTransferService: Server created on 40984
-17/06/09 20:10:42 INFO storage.BlockManagerMaster: Trying to register BlockManager
-17/06/09 20:10:42 INFO storage.BlockManagerMaster: Registered BlockManager
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 0
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 1
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 2
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 3
-17/06/09 20:10:45 INFO executor.Executor: Running task 0.0 in stage 0.0 (TID 0)
-17/06/09 20:10:45 INFO executor.Executor: Running task 2.0 in stage 0.0 (TID 2)
-17/06/09 20:10:45 INFO executor.Executor: Running task 1.0 in stage 0.0 (TID 1)
-17/06/09 20:10:45 INFO executor.Executor: Running task 3.0 in stage 0.0 (TID 3)
-17/06/09 20:10:45 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 4
-17/06/09 20:10:45 INFO executor.Executor: Running task 4.0 in stage 0.0 (TID 4)
-17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Started reading broadcast variable 9
-17/06/09 20:10:45 INFO storage.MemoryStore: Block broadcast_9_piece0 stored as bytes in memory (estimated size 5.2 KB, free 5.2 KB)
-17/06/09 20:10:45 INFO broadcast.TorrentBroadcast: Reading broadcast variable 9 took 160 ms
-17/06/09 20:10:46 INFO storage.MemoryStore: Block broadcast_9 stored as values in memory (estimated size 8.8 KB, free 14.0 KB)
-17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_1 not found, computing it
-17/06/09 20:10:46 INFO spark.CacheManager: Partition rdd_2_3 not found, computing it
 
 ```
 

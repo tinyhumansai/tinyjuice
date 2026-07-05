@@ -139,8 +139,7 @@
 17/06/09 20:10:52 INFO storage.BlockManager: Found block rdd_2_2 locally
 17/06/09 20:10:52 INFO storage.BlockManager: Found block rdd_2_0 locally
 17/06/09 20:10:52 INFO storage.BlockManager: Found block rdd_2_1 locally
-17/06/09 20:10:52 INFO python.PythonRunner: Times: total = 39, boot = -147, init = 186, finish = 0
-17/06/09 20:10:52 INFO python.PythonRunner: Times: total = 39, boot = -147, init = 186, finish = 0
+17/06/09 20:10:52 INFO python.PythonRunner: Times: total = 39, boot = -147, init = 186, finish = 0 [×2]
 17/06/09 20:10:52 INFO python.PythonRunner: Times: total = 41, boot = -139, init = 179, finish = 1
 17/06/09 20:10:52 INFO python.PythonRunner: Times: total = 38, boot = -156, init = 194, finish = 0
 17/06/09 20:10:52 INFO python.PythonRunner: Times: total = 39, boot = -159, init = 198, finish = 0
@@ -504,8 +503,7 @@
 17/06/09 20:10:55 INFO storage.BlockManager: Found block rdd_2_2 locally
 17/06/09 20:10:55 INFO storage.BlockManager: Found block rdd_2_1 locally
 17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 39, boot = -76, init = 114, finish = 1
-17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 42, boot = -73, init = 114, finish = 1
-17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 42, boot = -73, init = 114, finish = 1
+17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 42, boot = -73, init = 114, finish = 1 [×2]
 17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 41, boot = -67, init = 107, finish = 1
 17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 40, boot = -74, init = 113, finish = 1
 17/06/09 20:10:55 INFO executor.Executor: Finished task 0.0 in stage 13.0 (TID 528). 2256 bytes result sent to driver
@@ -607,8 +605,7 @@
 17/06/09 20:10:55 INFO storage.BlockManager: Found block rdd_21_1 locally
 17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 39, boot = -104, init = 143, finish = 0
 17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 41, boot = -104, init = 145, finish = 0
-17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 39, boot = -106, init = 145, finish = 0
-17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 39, boot = -106, init = 145, finish = 0
+17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 39, boot = -106, init = 145, finish = 0 [×2]
 17/06/09 20:10:55 INFO python.PythonRunner: Times: total = 43, boot = -104, init = 146, finish = 1
 17/06/09 20:10:55 INFO executor.Executor: Finished task 2.0 in stage 16.0 (TID 671). 2163 bytes result sent to driver
 17/06/09 20:10:55 INFO executor.Executor: Finished task 3.0 in stage 16.0 (TID 678). 2151 bytes result sent to driver
@@ -698,8 +695,7 @@
 17/06/09 20:10:56 INFO storage.BlockManager: Found block rdd_2_2 locally
 17/06/09 20:10:56 INFO storage.BlockManager: Found block rdd_2_1 locally
 17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 40, boot = -79, init = 119, finish = 0
-17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 41, boot = -82, init = 123, finish = 0
-17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 41, boot = -82, init = 123, finish = 0
+17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 41, boot = -82, init = 123, finish = 0 [×2]
 17/06/09 20:10:56 INFO storage.MemoryStore: Block rdd_26_0 stored as bytes in memory (estimated size 16.0 B, free 419.6 KB)
 17/06/09 20:10:56 INFO storage.MemoryStore: Block rdd_26_3 stored as bytes in memory (estimated size 16.0 B, free 419.6 KB)
 17/06/09 20:10:56 INFO storage.MemoryStore: Block rdd_26_4 stored as bytes in memory (estimated size 16.0 B, free 419.6 KB)
@@ -713,8 +709,7 @@
 17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 41, boot = 23, init = 18, finish = 0
 17/06/09 20:10:56 INFO executor.Executor: Finished task 3.0 in stage 19.0 (TID 798). 2667 bytes result sent to driver
 17/06/09 20:10:56 INFO executor.Executor: Finished task 4.0 in stage 19.0 (TID 799). 2667 bytes result sent to driver
-17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 39, boot = 18, init = 21, finish = 0
-17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 39, boot = 18, init = 21, finish = 0
+17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 39, boot = 18, init = 21, finish = 0 [×2]
 17/06/09 20:10:56 INFO executor.Executor: Finished task 1.0 in stage 19.0 (TID 776). 2667 bytes result sent to driver
 17/06/09 20:10:56 INFO executor.Executor: Finished task 2.0 in stage 19.0 (TID 789). 2667 bytes result sent to driver
 17/06/09 20:10:56 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 807
@@ -736,8 +731,7 @@
 17/06/09 20:10:56 INFO storage.BlockManager: Found block rdd_26_3 locally
 17/06/09 20:10:56 INFO storage.BlockManager: Found block rdd_26_2 locally
 17/06/09 20:10:56 INFO storage.BlockManager: Found block rdd_26_1 locally
-17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 38, boot = -119, init = 157, finish = 0
-17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 38, boot = -119, init = 157, finish = 0
+17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 38, boot = -119, init = 157, finish = 0 [×2]
 17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 39, boot = -126, init = 165, finish = 0
 17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 40, boot = -111, init = 151, finish = 0
 17/06/09 20:10:56 INFO python.PythonRunner: Times: total = 41, boot = -110, init = 151, finish = 0
@@ -867,11 +861,7 @@
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_6_2 locally
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_6_1 locally
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_6_0 locally
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×5]
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 40, boot = -340, init = 380, finish = 0
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 40, boot = -337, init = 376, finish = 1
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 42, boot = -343, init = 384, finish = 1
@@ -907,11 +897,7 @@
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_11_2 locally
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_11_3 locally
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_11_4 locally
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×5]
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 39, boot = -397, init = 436, finish = 0
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 38, boot = -405, init = 443, finish = 0
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 40, boot = -400, init = 440, finish = 0
@@ -947,11 +933,7 @@
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_16_2 locally
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_16_3 locally
 17/06/09 20:10:57 INFO storage.BlockManager: Found block rdd_16_4 locally
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:57 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×5]
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 37, boot = -87, init = 124, finish = 0
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 39, boot = -79, init = 118, finish = 0
 17/06/09 20:10:57 INFO python.PythonRunner: Times: total = 39, boot = -86, init = 125, finish = 0
@@ -992,10 +974,7 @@
 17/06/09 20:10:58 INFO output.FileOutputCommitter: Saved output of task 'attempt_201706092018_0024_m_000124_1151' to hdfs://10.10.34.11:9000/pjhe/test/1/_temporary/0/task_201706092018_0024_m_000124
 17/06/09 20:10:58 INFO mapred.SparkHadoopMapRedUtil: attempt_201706092018_0024_m_000124_1151: Committed
 17/06/09 20:10:58 INFO executor.Executor: Finished task 124.0 in stage 24.0 (TID 1151). 2364 bytes result sent to driver
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×4]
 17/06/09 20:10:58 INFO executor.CoarseGrainedExecutorBackend: Got assigned task 1155
 17/06/09 20:10:58 INFO executor.Executor: Running task 160.0 in stage 24.0 (TID 1155)
 17/06/09 20:10:58 INFO python.PythonRunner: Times: total = 39, boot = -102, init = 141, finish = 0
@@ -1034,8 +1013,7 @@
 17/06/09 20:10:58 INFO executor.Executor: Finished task 160.0 in stage 24.0 (TID 1155). 2364 bytes result sent to driver
 17/06/09 20:10:58 INFO python.PythonRunner: Times: total = 38, boot = -45, init = 83, finish = 0
 17/06/09 20:10:58 INFO python.PythonRunner: Times: total = 38, boot = -37, init = 75, finish = 0
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×2]
 17/06/09 20:10:58 INFO output.FileOutputCommitter: Saved output of task 'attempt_201706092018_0024_m_000163_1158' to hdfs://10.10.34.11:9000/pjhe/test/1/_temporary/0/task_201706092018_0024_m_000163
 17/06/09 20:10:58 INFO mapred.SparkHadoopMapRedUtil: attempt_201706092018_0024_m_000163_1158: Committed
 17/06/09 20:10:58 INFO output.FileOutputCommitter: Saved output of task 'attempt_201706092018_0024_m_000164_1159' to hdfs://10.10.34.11:9000/pjhe/test/1/_temporary/0/task_201706092018_0024_m_000164
@@ -1044,8 +1022,7 @@
 17/06/09 20:10:58 INFO executor.Executor: Finished task 164.0 in stage 24.0 (TID 1159). 2364 bytes result sent to driver
 17/06/09 20:10:58 INFO python.PythonRunner: Times: total = 37, boot = -54, init = 91, finish = 0
 17/06/09 20:10:58 INFO python.PythonRunner: Times: total = 37, boot = -62, init = 99, finish = 0
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:58 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×2]
 17/06/09 20:10:58 INFO output.FileOutputCommitter: Saved output of task 'attempt_201706092018_0024_m_000162_1157' to hdfs://10.10.34.11:9000/pjhe/test/1/_temporary/0/task_201706092018_0024_m_000162
 17/06/09 20:10:58 INFO mapred.SparkHadoopMapRedUtil: attempt_201706092018_0024_m_000162_1157: Committed
 17/06/09 20:10:58 INFO output.FileOutputCommitter: Saved output of task 'attempt_201706092018_0024_m_000161_1156' to hdfs://10.10.34.11:9000/pjhe/test/1/_temporary/0/task_201706092018_0024_m_000161
@@ -1071,12 +1048,9 @@
 17/06/09 20:10:58 INFO storage.BlockManager: Found block rdd_30_2 locally
 17/06/09 20:10:58 INFO storage.BlockManager: Found block rdd_30_1 locally
 17/06/09 20:10:58 INFO storage.BlockManager: Found block rdd_30_0 locally
-17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×3]
 17/06/09 20:10:59 INFO python.PythonRunner: Times: total = 38, boot = -727, init = 765, finish = 0
-17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
-17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+17/06/09 20:10:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1 [×2]
 17/06/09 20:10:59 INFO python.PythonRunner: Times: total = 41, boot = -707, init = 748, finish = 0
 17/06/09 20:10:59 INFO python.PythonRunner: Times: total = 39, boot = -700, init = 739, finish = 0
 17/06/09 20:10:59 INFO python.PythonRunner: Times: total = 39, boot = -690, init = 729, finish = 0
@@ -1926,8 +1900,7 @@
 17/06/09 20:11:10 INFO storage.BlockManager: Found block rdd_42_17 locally
 17/06/09 20:11:10 INFO storage.BlockManager: Found block rdd_42_18 locally
 17/06/09 20:11:10 INFO storage.BlockManager: Found block rdd_42_19 locally
-17/06/09 20:11:11 INFO python.PythonRunner: Times: total = 40, boot = 20, init = 19, finish = 1
-17/06/09 20:11:11 INFO python.PythonRunner: Times: total = 40, boot = 20, init = 19, finish = 1
+17/06/09 20:11:11 INFO python.PythonRunner: Times: total = 40, boot = 20, init = 19, finish = 1 [×2]
 17/06/09 20:11:11 INFO python.PythonRunner: Times: total = 39, boot = 18, init = 20, finish = 1
 17/06/09 20:11:11 INFO python.PythonRunner: Times: total = 41, boot = 27, init = 14, finish = 0
 17/06/09 20:11:11 INFO executor.Executor: Finished task 15.0 in stage 29.0 (TID 1335). 2171 bytes result sent to driver
