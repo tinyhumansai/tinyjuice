@@ -611,6 +611,8 @@ pub enum CompressorKind {
     Html,
     /// ML (Python/ModernBERT) plain-text compressor.
     MlText,
+    /// Deterministic extractive plain-text compressor.
+    TextCrusher,
     /// Line-oriented head/tail fallback.
     Generic,
     /// No compressor fired — pass-through.
@@ -628,6 +630,7 @@ impl CompressorKind {
             CompressorKind::Diff => "diff",
             CompressorKind::Html => "html",
             CompressorKind::MlText => "ml_text",
+            CompressorKind::TextCrusher => "textcrusher",
             CompressorKind::Generic => "generic",
             CompressorKind::None => "none",
         }

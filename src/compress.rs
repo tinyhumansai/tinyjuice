@@ -391,6 +391,46 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn textcrusher_output_offloads_original_for_recovery() {
+        let mut original = String::new();
+        for i in 0..80 {
+            original.push_str(&format!(
+                "routine service note {i} describes ordinary progress through the worker queue.\n\n"
+            ));
+        }
+        original.push_str(
+            "ERROR sync.worker.v2 failed for REQUEST_ID 9F42 after retry 17 in api.worker.example.\n\n",
+        );
+        for i in 80..160 {
+            original.push_str(&format!(
+                "routine service note {i} describes ordinary progress through the worker queue.\n\n"
+            ));
+        }
+        let hint = ContentHint {
+            explicit: Some(ContentKind::PlainText),
+            query: Some("sync.worker.v2 REQUEST_ID".to_string()),
+            ..Default::default()
+        };
+        let store = cache::MemoryCcrStore::new(10, 1_000_000);
+        let mut opts = opts();
+        opts.ccr_min_tokens = 1;
+
+        let res = compress_content_with_store(&original, Some(hint), &opts, &store).await;
+
+        assert!(res.applied);
+        assert!(res.lossy);
+        assert_eq!(res.content_kind, ContentKind::PlainText);
+        assert_eq!(res.compressor, CompressorKind::TextCrusher);
+        assert!(
+            res.body.contains("ERROR sync.worker.v2 failed"),
+            "{}",
+            res.body
+        );
+        let token = res.ccr_token.as_deref().expect("offloaded");
+        assert_eq!(store.get(token).as_deref(), Some(original.as_str()));
+    }
+
+    #[tokio::test]
     async fn exposes_body_and_recovery_footer_separately() {
         let mut rows = Vec::new();
         for i in 0..120 {

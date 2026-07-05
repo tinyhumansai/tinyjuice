@@ -17,6 +17,7 @@ pub mod log;
 pub mod ml_text;
 pub mod search;
 pub mod signals;
+pub mod text;
 pub mod web_extract;
 
 use async_trait::async_trait;
@@ -47,16 +48,13 @@ static LOG_COMPRESSOR: log::LogCompressor = log::LogCompressor;
 static SEARCH_COMPRESSOR: search::SearchCompressor = search::SearchCompressor;
 static DIFF_COMPRESSOR: diff::DiffCompressor = diff::DiffCompressor;
 static HTML_COMPRESSOR: html::HtmlCompressor = html::HtmlCompressor;
-static ML_TEXT_COMPRESSOR: ml_text::MlTextCompressor = ml_text::MlTextCompressor;
+static TEXT_COMPRESSOR: text::TextCompressor = text::TextCompressor;
 static GENERIC_COMPRESSOR: generic::GenericCompressor = generic::GenericCompressor;
 
 /// Map a detected [`ContentKind`] to the compressor that handles it.
 ///
-/// `PlainText` routes to the ML compressor; whether it actually runs is gated
-/// by `opts.ml_text_enabled` (and runtime Python/runtime_python_server
-/// availability), and it falls back to [`generic::GenericCompressor`] otherwise
-/// — that gating lives in [`crate::compress`], so this
-/// function is a pure static mapping.
+/// `PlainText` routes to the text compressor, which tries the optional ML path
+/// first and then the deterministic extractive TextCrusher fallback.
 pub fn compressor_for(kind: ContentKind) -> &'static dyn Compressor {
     match kind {
         ContentKind::Json => &JSON_COMPRESSOR,
@@ -65,7 +63,7 @@ pub fn compressor_for(kind: ContentKind) -> &'static dyn Compressor {
         ContentKind::Search => &SEARCH_COMPRESSOR,
         ContentKind::Diff => &DIFF_COMPRESSOR,
         ContentKind::Html => &HTML_COMPRESSOR,
-        ContentKind::PlainText => &ML_TEXT_COMPRESSOR,
+        ContentKind::PlainText => &TEXT_COMPRESSOR,
     }
 }
 
