@@ -113,16 +113,21 @@ pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
     Some(CompressOutput::lossy(out, CompressorKind::Code))
 }
 
-/// Count `{`/`}` (and `(`/`)`) on a line, ignoring those inside string/char
-/// literals and line comments — a cheap approximation good enough for the
-/// depth heuristic.
+/// Count `{`/`}` on a line, ignoring those inside string/char literals and
+/// line comments — a cheap approximation good enough for the depth heuristic.
 fn brace_delta(line: &str) -> (i32, i32) {
+    // A char literal ('x', '\n', '{') closes within a few characters; a Rust
+    // lifetime ('a in generics) or a stray apostrophe never does. Treating
+    // every ' as a string opener would flip the rest of a lifetime-carrying
+    // line into phantom string mode and stop counting its braces.
+    const CHAR_LITERAL_WINDOW: usize = 10;
+
     let mut opens = 0i32;
     let mut closes = 0i32;
     let mut in_str: Option<char> = None;
     let mut prev = '\0';
-    let mut chars = line.chars().peekable();
-    while let Some(c) = chars.next() {
+    let mut iter = line.char_indices().peekable();
+    while let Some((i, c)) = iter.next() {
         match in_str {
             Some(q) => {
                 if c == q && prev != '\\' {
@@ -130,9 +135,24 @@ fn brace_delta(line: &str) -> (i32, i32) {
                 }
             }
             None => match c {
-                '"' | '\'' | '`' => in_str = Some(c),
-                '/' if chars.peek() == Some(&'/') => break, // line comment
-                '#' => break,                               // python/shell comment
+                '"' | '`' => in_str = Some(c),
+                '\'' => {
+                    let rest = &line[i + c.len_utf8()..];
+                    let close = rest
+                        .char_indices()
+                        .take_while(|(off, _)| *off <= CHAR_LITERAL_WINDOW)
+                        .find(|&(_, ch)| ch == '\'')
+                        .map(|(off, _)| off);
+                    if let Some(off) = close {
+                        // Real char literal: skip past it wholesale so a
+                        // brace inside (e.g. '{') isn't counted.
+                        let end = i + c.len_utf8() + off;
+                        while iter.next_if(|&(j, _)| j <= end).is_some() {}
+                    }
+                    // No close nearby: a lifetime/apostrophe — ignore it.
+                }
+                '/' if iter.peek().map(|&(_, ch)| ch) == Some('/') => break, // line comment
+                '#' => break,                                                // python/shell comment
                 '{' => opens += 1,
                 '}' => closes += 1,
                 _ => {}
@@ -338,6 +358,48 @@ mod tests {
         assert!(out.text.contains("def handler(event):"), "{}", out.text);
         assert!(out.text.contains("collapsed"), "{}", out.text);
         assert!(!out.text.contains("x_15"));
+    }
+
+    #[test]
+    fn brace_delta_handles_lifetimes_and_char_literals() {
+        // Lifetimes must not open phantom string mode.
+        assert_eq!(brace_delta("pub fn f<'a>(x: &'a str) {"), (1, 0));
+        assert_eq!(brace_delta("impl<'de> Deserialize<'de> for X {"), (1, 0));
+        assert_eq!(
+            brace_delta("fn g<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {"),
+            (1, 0)
+        );
+        // Real char literals still shield their contents.
+        assert_eq!(brace_delta("let c = '{';"), (0, 0));
+        assert_eq!(brace_delta("if c == '}' { close(); }"), (1, 1));
+        // Strings still shield braces.
+        assert_eq!(brace_delta(r#"let s = "{}"; f(|| {"#), (1, 0));
+    }
+
+    #[test]
+    fn lifetime_heavy_rust_keeps_signatures() {
+        let mut src = String::from("use serde::Deserialize;\n\n");
+        src.push_str("impl<'de> Deserialize<'de> for Config {\n");
+        for i in 0..20 {
+            src.push_str(&format!("        let field_{i} = map.next_value()?;\n"));
+        }
+        src.push_str("}\n\n");
+        src.push_str("pub fn lookup<'a>(map: &'a Map, key: &str) -> Option<&'a str> {\n");
+        for i in 0..20 {
+            src.push_str(&format!("        let probe_{i} = map.get(key);\n"));
+        }
+        src.push_str("}\n\n");
+        src.push_str("pub struct Cursor<'a> {\n    buf: &'a [u8],\n    pos: usize,\n}\n");
+        let out = compress_heuristic(&src).expect("compresses");
+        // Both signatures after the first lifetime-carrying line must survive
+        // at top level — depth drift used to collapse them.
+        assert!(out.text.contains("pub fn lookup<'a>"), "{}", out.text);
+        assert!(out.text.contains("pub struct Cursor<'a>"), "{}", out.text);
+        assert!(
+            !out.text.contains("probe_15"),
+            "body collapsed: {}",
+            out.text
+        );
     }
 
     #[test]
