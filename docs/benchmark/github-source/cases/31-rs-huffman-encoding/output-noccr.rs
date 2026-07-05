@@ -134,7 +134,26 @@ fn build_frequency_map(text: &str) -> HashMap<char, usize> {
 fn build_huffman_tree(frequencies: HashMap<char, usize>) -> Option<HuffmanNode> {
     if frequencies.is_empty() {
         return None;
-    { … 20 line(s) … }
+    }
+
+    let mut heap: BinaryHeap<HeapNode> = frequencies
+        .into_iter()
+        .map(|(ch, freq)| HeapNode(HuffmanNode::new_leaf(ch, freq)))
+        .collect();
+
+    // Special case: only one unique character
+    if heap.len() == 1 {
+        return heap.pop().map(|node| node.0);
+    }
+
+    // Build the tree by combining nodes
+    while heap.len() > 1 {
+        let left = heap.pop().unwrap().0;
+        let right = heap.pop().unwrap().0;
+        let parent = HuffmanNode::new_internal(left, right);
+        heap.push(HeapNode(parent));
+    }
+
     heap.pop().map(|node| node.0)
 }
 
@@ -148,7 +167,20 @@ fn build_huffman_tree(frequencies: HashMap<char, usize>) -> Option<HuffmanNode> 
 fn generate_codes(node: &HuffmanNode, code: String, codes: &mut HashMap<char, String>) {
     match node {
         HuffmanNode::Leaf { character, .. } => {
-    { … 14 line(s) … }
+            // Use "0" for single character case
+            codes.insert(
+                *character,
+                if code.is_empty() {
+                    "0".to_string()
+                } else {
+                    code
+                },
+            );
+        }
+        HuffmanNode::Internal { left, right, .. } => {
+            generate_codes(left, format!("{code}0"), codes);
+            generate_codes(right, format!("{code}1"), codes);
+        }
     }
 }
 
@@ -176,7 +208,16 @@ fn generate_codes(node: &HuffmanNode, code: String, codes: &mut HashMap<char, St
 pub fn huffman_encode(text: &str) -> (String, HashMap<char, String>) {
     if text.is_empty() {
         return (String::new(), HashMap::new());
-    { … 10 line(s) … }
+    }
+
+    let frequencies = build_frequency_map(text);
+    let tree = build_huffman_tree(frequencies).expect("Failed to build Huffman tree");
+
+    let mut codes = HashMap::new();
+    generate_codes(&tree, String::new(), &mut codes);
+
+    let encoded: String = text.chars().map(|ch| codes[&ch].as_str()).collect();
+
     (encoded, codes)
 }
 
@@ -204,7 +245,25 @@ pub fn huffman_encode(text: &str) -> (String, HashMap<char, String>) {
 pub fn huffman_decode(encoded: &str, codes: &HashMap<char, String>) -> String {
     if encoded.is_empty() {
         return String::new();
-    { … 19 line(s) … }
+    }
+
+    // Reverse the code map for decoding
+    let reverse_codes: HashMap<&str, char> = codes
+        .iter()
+        .map(|(ch, code)| (code.as_str(), *ch))
+        .collect();
+
+    let mut decoded = String::new();
+    let mut current_code = String::new();
+
+    for bit in encoded.chars() {
+        current_code.push(bit);
+        if let Some(&character) = reverse_codes.get(current_code.as_str()) {
+            decoded.push(character);
+            current_code.clear();
+        }
+    }
+
     decoded
 }
 
@@ -244,7 +303,90 @@ pub fn huffman_decode(encoded: &str, codes: &HashMap<char, String>) -> String {
 pub fn demonstrate_huffman_from_file(file_path: &str) -> std::io::Result<()> {
     // Read the file contents
     let text = fs::read_to_string(file_path)?;
-    { … 84 line(s) … }
+
+    if text.is_empty() {
+        println!("File is empty!");
+        return Ok(());
+    }
+
+    // Encode using Huffman coding
+    let (encoded, codes) = huffman_encode(&text);
+
+    // Display the results
+    println!("Huffman Coding of {file_path}: ");
+    println!();
+
+    // Show the code table
+    println!("Character Codes:");
+    println!("{:-<40}", "");
+    let mut sorted_codes: Vec<_> = codes.iter().collect();
+    sorted_codes.sort_by_key(|(ch, _)| *ch);
+
+    for (ch, code) in sorted_codes {
+        let display_char = if ch.is_whitespace() {
+            format!("'{}' (space/whitespace)", ch.escape_default())
+        } else {
+            format!("'{ch}'")
+        };
+        println!("{display_char:20} -> {code}");
+    }
+    println!("{:-<40}", "");
+    println!();
+
+    // Show encoding statistics
+    let original_bits = text.len() * 8; // Assuming 8-bit characters
+    let compressed_bits = encoded.len();
+    let compression_ratio = if original_bits > 0 {
+        (1.0 - (compressed_bits as f64 / original_bits as f64)) * 100.0
+    } else {
+        0.0
+    };
+
+    println!("Statistics:");
+    println!(
+        "  Original size:    {} characters ({} bits)",
+        text.len(),
+        original_bits
+    );
+    println!("  Encoded size:     {compressed_bits} bits");
+    println!("  Compression:      {compression_ratio:.2}%");
+    println!();
+
+    // Show the encoded output (limited to avoid overwhelming the terminal)
+    println!("Encoded output:");
+    if encoded.len() <= 500 {
+        // Split into chunks of 50 for readability
+        for (i, chunk) in encoded.as_bytes().chunks(50).enumerate() {
+            print!("{:4}: ", i * 50);
+            for &byte in chunk {
+                print!("{}", byte as char);
+            }
+            println!();
+        }
+    } else {
+        // Show first and last portions for very long outputs
+        println!("  (showing first and last 200 bits)");
+        print!("  Start: ");
+        for &byte in &encoded.as_bytes()[..200] {
+            print!("{}", byte as char);
+        }
+        println!();
+        print!("  End:   ");
+        for &byte in &encoded.as_bytes()[encoded.len() - 200..] {
+            print!("{}", byte as char);
+        }
+        println!();
+    }
+    println!();
+
+    // Verify decoding
+    let decoded = huffman_decode(&encoded, &codes);
+    if decoded == text {
+        println!("✓ Decoding verification: SUCCESS");
+    } else {
+        println!("✗ Decoding verification: FAILED");
+    }
+
     Ok(())
 }
 
@@ -267,18 +409,49 @@ mod tests {
     }
 
     #[test]
-    fn test_simple_string() { … 13 line(s) … }
+    fn test_simple_string() {
+        let text = "hello";
+        let (encoded, codes) = huffman_encode(text);
+
+        // Verify all characters have codes
+        for ch in text.chars() {
+            assert!(codes.contains_key(&ch), "Missing code for '{ch}'");
+        }
+
+        // Verify decoding returns original text
+        let decoded = huffman_decode(&encoded, &codes);
+        assert_eq!(decoded, text);
+    }
 
     #[test]
     fn test_encode_decode_roundtrip() {
         let test_cases = vec![
             "a",
-        { … 10 line(s) … }
+            "ab",
+            "hello world",
+            "the quick brown fox jumps over the lazy dog",
+            "aaaaabbbbbcccccdddddeeeeefffffggggghhhhhiiiii",
+        ];
+
+        for text in test_cases {
+            let (encoded, codes) = huffman_encode(text);
+            let decoded = huffman_decode(&encoded, &codes);
+            assert_eq!(decoded, text, "Failed roundtrip for: '{text}'");
         }
-}
+    }
 
     #[test]
-    fn test_frequency_based_encoding() { … 11 line(s) … }
+    fn test_frequency_based_encoding() {
+        // In "aaabbc", 'a' should have shorter code than 'b' or 'c'
+        let (_, codes) = huffman_encode("aaabbc");
+        let a_len = codes[&'a'].len();
+        let b_len = codes[&'b'].len();
+        let c_len = codes[&'c'].len();
+
+        // 'a' appears most frequently, so should have shortest or equal code
+        assert!(a_len <= b_len);
+        assert!(a_len <= c_len);
+    }
 
     #[test]
     fn test_compression_ratio() {
@@ -292,7 +465,17 @@ mod tests {
     }
 
     #[test]
-    fn test_all_unique_characters() { … 11 line(s) … }
+    fn test_all_unique_characters() {
+        let text = "abcdefg";
+        let (encoded, codes) = huffman_encode(text);
+
+        // All characters should have codes
+        assert_eq!(codes.len(), 7);
+
+        // Verify roundtrip
+        let decoded = huffman_decode(&encoded, &codes);
+        assert_eq!(decoded, text);
+    }
 
     #[test]
     fn test_build_frequency_map() {
@@ -315,12 +498,33 @@ mod tests {
     fn test_demonstrate_huffman_from_file() {
         use std::fs::File;
         use std::io::Write;
-        { … 12 line(s) … }
+
+        // Create a temporary test file
+        let test_file = "/tmp/huffman_test.txt";
+        let test_content = "The quick brown fox jumps over the lazy dog";
+
+        {
+            let mut file = File::create(test_file).unwrap();
+            file.write_all(test_content.as_bytes()).unwrap();
+        }
+
+        // Test the demonstrate function
+        let result = demonstrate_huffman_from_file(test_file);
         assert!(result.is_ok());
-}
+    }
 
     #[test]
-    fn test_demonstrate_empty_file() { … 11 line(s) … }
+    fn test_demonstrate_empty_file() {
+        use std::fs::File;
+
+        // Create an empty test file
+        let test_file = "/tmp/huffman_empty.txt";
+        File::create(test_file).unwrap();
+
+        // Test with empty file
+        let result = demonstrate_huffman_from_file(test_file);
+        assert!(result.is_ok());
+    }
 }
 
 /// Main function for command-line usage

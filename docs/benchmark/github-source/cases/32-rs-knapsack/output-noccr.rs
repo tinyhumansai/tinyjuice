@@ -45,7 +45,21 @@ pub struct KnapsackSolution {
 pub fn knapsack(capacity: usize, items: Vec<Item>) -> KnapsackSolution {
     let num_items = items.len();
     let item_weights: Vec<usize> = items.iter().map(|item| item.weight).collect();
-    { … 15 line(s) … }
+    let item_values: Vec<usize> = items.iter().map(|item| item.value).collect();
+
+    let knapsack_matrix = generate_knapsack_matrix(capacity, &item_weights, &item_values);
+    let items_included =
+        retrieve_knapsack_items(&item_weights, &knapsack_matrix, num_items, capacity);
+
+    let total_weight = items_included
+        .iter()
+        .map(|&index| item_weights[index - 1])
+        .sum();
+
+    KnapsackSolution {
+        optimal_profit: knapsack_matrix[num_items][capacity],
+        total_weight,
+        item_indices: items_included,
     }
 }
 
@@ -62,7 +76,25 @@ fn generate_knapsack_matrix(
 ) -> Vec<Vec<usize>> {
     let num_items = item_weights.len();
 
-    { … 19 line(s) … }
+    (0..=num_items).fold(
+        vec![vec![0; capacity + 1]; num_items + 1],
+        |mut matrix, item_index| {
+            (0..=capacity).for_each(|current_capacity| {
+                matrix[item_index][current_capacity] = if item_index == 0 || current_capacity == 0 {
+                    0
+                } else if item_weights[item_index - 1] <= current_capacity {
+                    usize::max(
+                        item_values[item_index - 1]
+                            + matrix[item_index - 1]
+                                [current_capacity - item_weights[item_index - 1]],
+                        matrix[item_index - 1][current_capacity],
+                    )
+                } else {
+                    matrix[item_index - 1][current_capacity]
+                };
+            });
+            matrix
+        },
     )
 }
 
@@ -84,7 +116,29 @@ fn retrieve_knapsack_items(
 ) -> Vec<usize> {
     match item_index {
         0 => vec![],
-    { … 23 line(s) … }
+        _ => {
+            let current_value = knapsack_matrix[item_index][remaining_capacity];
+            let previous_value = knapsack_matrix[item_index - 1][remaining_capacity];
+
+            match current_value.cmp(&previous_value) {
+                Ordering::Greater => {
+                    let mut knap = retrieve_knapsack_items(
+                        item_weights,
+                        knapsack_matrix,
+                        item_index - 1,
+                        remaining_capacity - item_weights[item_index - 1],
+                    );
+                    knap.push(item_index);
+                    knap
+                }
+                Ordering::Equal | Ordering::Less => retrieve_knapsack_items(
+                    item_weights,
+                    knapsack_matrix,
+                    item_index - 1,
+                    remaining_capacity,
+                ),
+            }
+        }
     }
 }
 

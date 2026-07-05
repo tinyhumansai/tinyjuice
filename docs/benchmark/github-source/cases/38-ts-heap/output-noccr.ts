@@ -69,14 +69,35 @@ export abstract class Heap<T> {
     ;[this.heap[a], this.heap[b]] = [this.heap[b], this.heap[a]]
   }
 
-  protected bubbleUp(index: number = this.size() - 1): void { … 10 line(s) … }
+  protected bubbleUp(index: number = this.size() - 1): void {
+    let parentIndex
+
+    while (index > 0) {
+      parentIndex = Math.floor((index - 1) / 2)
+      if (this.isRightlyPlaced(index, parentIndex)) break
+      this.swap(parentIndex, index)
+      index = parentIndex
+    }
+  }
 
   private sinkDown(): void {
     let index = 0
     let leftChildIndex = this.getLeftChildIndex(index)
-    { … 13 line(s) … }
+    let rightChildIndex = this.getRightChildIndex(index)
+    let childIndexToSwap
+
+    while (this.heap[leftChildIndex] || this.heap[rightChildIndex]) {
+      childIndexToSwap = this.getChildIndexToSwap(
+        leftChildIndex,
+        rightChildIndex
+      )
+      if (this.isRightlyPlaced(childIndexToSwap, index)) break
+      this.swap(childIndexToSwap, index)
+      index = childIndexToSwap
+      leftChildIndex = this.getLeftChildIndex(index)
+      rightChildIndex = this.getRightChildIndex(index)
     }
-}
+  }
 
   private getLeftChildIndex(index: number): number {
     return index * 2 + 1
@@ -166,7 +187,16 @@ export class PriorityQueue<T> extends MinHeap<T> {
   public increasePriority(idx: number, value: T): void {
     if (this.keys[idx] === -1) {
       // If the key does not exist, insert the value.
-    { … 10 line(s) … }
+      this.insert(value)
+      return
+    }
+    const key = this.keys[idx]
+    if (this.compare(this.heap[key], value)) {
+      // Do not do anything if the value in the heap already has a higher priority.
+      return
+    }
+    // Increase the priority and bubble it up the heap.
+    this.heap[key] = value
     this.bubbleUp(key)
-}
+  }
 }

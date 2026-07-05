@@ -47,22 +47,77 @@ func NewRouter() *Router {
 type Router struct {
 	// Configurable Handler to be used when no route matches.
 	// This can be used to render your own 404 Not Found errors.
-	{ … 21 line(s) … }
+	NotFoundHandler http.Handler
+
+	// Configurable Handler to be used when the request method does not match the route.
+	// This can be used to render your own 405 Method Not Allowed errors.
+	MethodNotAllowedHandler http.Handler
+
+	// Routes to be matched, in order.
+	routes []*Route
+
+	// Routes by name for URL building.
+	namedRoutes map[string]*Route
+
+	// If true, do not clear the request context after handling the request.
+	//
+	// Deprecated: No effect, since the context is stored on the request itself.
+	KeepContext bool
+
+	// Slice of middlewares to be called after a match is found
+	middlewares []middleware
+
+	// configuration shared with `Route`
 	routeConf
+}
 
 // common route configuration shared between `Router` and `Route`
 type routeConf struct {
 	// If true, "/path/foo%2Fbar/to" will match the path "/path/{var}/to"
 	useEncodedPath bool
-	{ … 18 line(s) … }
+
+	// If true, when the path pattern is "/path/", accessing "/path" will
+	// redirect to the former and vice versa.
+	strictSlash bool
+
+	// If true, when the path pattern is "/path//to", accessing "/path//to"
+	// will not redirect
+	skipClean bool
+
+	// Manager for the variables from host and path.
+	regexp routeRegexpGroup
+
+	// List of matchers.
+	matchers []matcher
+
+	// The scheme used when building URLs.
+	buildScheme string
+
 	buildVarsFunc BuildVarsFunc
+}
 
 // returns an effective deep copy of `routeConf`
 func copyRouteConf(r routeConf) routeConf {
 	c := r
 
-	{ … 16 line(s) … }
+	if r.regexp.path != nil {
+		c.regexp.path = copyRouteRegexp(r.regexp.path)
+	}
+
+	if r.regexp.host != nil {
+		c.regexp.host = copyRouteRegexp(r.regexp.host)
+	}
+
+	c.regexp.queries = make([]*routeRegexp, 0, len(r.regexp.queries))
+	for _, q := range r.regexp.queries {
+		c.regexp.queries = append(c.regexp.queries, copyRouteRegexp(q))
+	}
+
+	c.matchers = make([]matcher, len(r.matchers))
+	copy(c.matchers, r.matchers)
+
 	return c
+}
 
 func copyRouteRegexp(r *routeRegexp) *routeRegexp {
 	c := *r
@@ -83,8 +138,35 @@ func copyRouteRegexp(r *routeRegexp) *routeRegexp {
 func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 	for _, route := range r.routes {
 		if route.Match(req, match) {
-	{ … 27 line(s) … }
+			// Build middleware chain if no error was found
+			if match.MatchErr == nil {
+				for i := len(r.middlewares) - 1; i >= 0; i-- {
+					match.Handler = r.middlewares[i].Middleware(match.Handler)
+				}
+			}
+			return true
+		}
+	}
+
+	if match.MatchErr == ErrMethodMismatch {
+		if r.MethodNotAllowedHandler != nil {
+			match.Handler = r.MethodNotAllowedHandler
+			return true
+		}
+
+		return false
+	}
+
+	// Closest match for a router (includes sub-routers)
+	if r.NotFoundHandler != nil {
+		match.Handler = r.NotFoundHandler
+		match.MatchErr = ErrNotFound
+		return true
+	}
+
+	match.MatchErr = ErrNotFound
 	return false
+}
 
 // ServeHTTP dispatches the handler registered in the matched route.
 //
@@ -93,8 +175,42 @@ func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !r.skipClean {
 		path := req.URL.Path
-	{ … 34 line(s) … }
+		if r.useEncodedPath {
+			path = req.URL.EscapedPath()
+		}
+		// Clean path to canonical form and redirect.
+		if p := cleanPath(path); p != path {
+
+			// Added 3 lines (Philip Schlump) - It was dropping the query string and #whatever from query.
+			// This matches with fix in go 1.2 r.c. 4 for same problem.  Go Issue:
+			// http://code.google.com/p/go/issues/detail?id=5252
+			url := *req.URL
+			url.Path = p
+			p = url.String()
+
+			w.Header().Set("Location", p)
+			w.WriteHeader(http.StatusMovedPermanently)
+			return
+		}
+	}
+	var match RouteMatch
+	var handler http.Handler
+	if r.Match(req, &match) {
+		handler = match.Handler
+		req = requestWithVars(req, match.Vars)
+		req = requestWithRoute(req, match.Route)
+	}
+
+	if handler == nil && match.MatchErr == ErrMethodMismatch {
+		handler = methodNotAllowedHandler()
+	}
+
+	if handler == nil {
+		handler = http.NotFoundHandler()
+	}
+
 	handler.ServeHTTP(w, req)
+}
 
 // Get returns a route registered with the given name.
 func (r *Router) Get(name string) *Route {
@@ -293,7 +409,15 @@ func (r *Router) walk(walkFn WalkFunc, ancestors []*Route) error {
 
 // RouteMatch stores information about a matched route.
 type RouteMatch struct {
-	{ … 9 line(s) … }
+	Route   *Route
+	Handler http.Handler
+	Vars    map[string]string
+
+	// MatchErr is set to appropriate matching error
+	// It is set to ErrMethodMismatch if there is a mismatch in
+	// the request method and route method
+	MatchErr error
+}
 
 type contextKey int
 
@@ -340,12 +464,31 @@ func requestWithRoute(r *http.Request, route *Route) *http.Request {
 func cleanPath(p string) string {
 	if p == "" {
 		return "/"
-	{ … 11 line(s) … }
+	}
+	if p[0] != '/' {
+		p = "/" + p
+	}
+	np := path.Clean(p)
+	// path.Clean removes trailing slash except for root;
+	// put the trailing slash back if necessary.
+	if p[len(p)-1] == '/' && np != "/" {
+		np += "/"
+	}
+
 	return np
+}
 
 // uniqueVars returns an error if two slices contain duplicated strings.
 func uniqueVars(s1, s2 []string) error {
-	{ … 9 line(s) … }
+	for _, v1 := range s1 {
+		for _, v2 := range s2 {
+			if v1 == v2 {
+				return fmt.Errorf("mux: duplicated route variable %q", v2)
+			}
+		}
+	}
+	return nil
+}
 
 // checkPairs returns the count of strings passed in, and an error if
 // the count is not an even number.
@@ -361,15 +504,34 @@ func checkPairs(pairs ...string) (int, error) {
 // mapFromPairsToString converts variadic string parameters to a
 // string to string map.
 func mapFromPairsToString(pairs ...string) (map[string]string, error) {
-	{ … 10 line(s) … }
+	length, err := checkPairs(pairs...)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]string, length/2)
+	for i := 0; i < length; i += 2 {
+		m[pairs[i]] = pairs[i+1]
+	}
+	return m, nil
+}
 
 // mapFromPairsToRegex converts variadic string parameters to a
 // string to regex map.
 func mapFromPairsToRegex(pairs ...string) (map[string]*regexp.Regexp, error) {
 	length, err := checkPairs(pairs...)
 	if err != nil {
-	{ … 10 line(s) … }
+		return nil, err
+	}
+	m := make(map[string]*regexp.Regexp, length/2)
+	for i := 0; i < length; i += 2 {
+		regex, err := regexp.Compile(pairs[i+1])
+		if err != nil {
+			return nil, err
+		}
+		m[pairs[i]] = regex
+	}
 	return m, nil
+}
 
 // matchInArray returns true if the given string value is in the array.
 func matchInArray(arr []string, value string) bool {
@@ -385,16 +547,56 @@ func matchInArray(arr []string, value string) bool {
 func matchMapWithString(toCheck map[string]string, toMatch map[string][]string, canonicalKey bool) bool {
 	for k, v := range toCheck {
 		// Check if key exists.
-	{ … 20 line(s) … }
+		if canonicalKey {
+			k = http.CanonicalHeaderKey(k)
+		}
+		if values := toMatch[k]; values == nil {
+			return false
+		} else if v != "" {
+			// If value was defined as an empty string we only check that the
+			// key exists. Otherwise we also check for equality.
+			valueExists := false
+			for _, value := range values {
+				if v == value {
+					valueExists = true
+					break
+				}
+			}
+			if !valueExists {
+				return false
+			}
+		}
+	}
 	return true
+}
 
 // matchMapWithRegex returns true if the given key/value pairs exist in a given map compiled against
 // the given regex
 func matchMapWithRegex(toCheck map[string]*regexp.Regexp, toMatch map[string][]string, canonicalKey bool) bool {
 	for k, v := range toCheck {
 		// Check if key exists.
-	{ … 20 line(s) … }
+		if canonicalKey {
+			k = http.CanonicalHeaderKey(k)
+		}
+		if values := toMatch[k]; values == nil {
+			return false
+		} else if v != nil {
+			// If value was defined as an empty string we only check that the
+			// key exists. Otherwise we also check for equality.
+			valueExists := false
+			for _, value := range values {
+				if v.MatchString(value) {
+					valueExists = true
+					break
+				}
+			}
+			if !valueExists {
+				return false
+			}
+		}
+	}
 	return true
+}
 
 // methodNotAllowed replies to the request with an HTTP status code 405.
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {

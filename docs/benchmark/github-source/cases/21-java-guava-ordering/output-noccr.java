@@ -338,15 +338,40 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
     private Integer getUid(Object obj) {
       Integer uid = uids.get(obj);
       if (uid == null) {
-      { … 9 line(s) … }
+        // One or more integer values could be skipped in the event of a race
+        // to generate a UID for the same object from multiple threads, but
+        // that shouldn't be a problem.
+        uid = counter.getAndIncrement();
+        Integer alreadySet = uids.putIfAbsent(obj, uid);
+        if (alreadySet != null) {
+          uid = alreadySet;
+        }
+      }
       return uid;
+    }
 
     @Override
     public int compare(@CheckForNull Object left, @CheckForNull Object right) {
       if (left == right) {
         return 0;
-      { … 16 line(s) … }
+      } else if (left == null) {
+        return -1;
+      } else if (right == null) {
+        return 1;
+      }
+      int leftCode = identityHashCode(left);
+      int rightCode = identityHashCode(right);
+      if (leftCode != rightCode) {
+        return leftCode < rightCode ? -1 : 1;
+      }
+
+      // identityHashCode collision (rare, but not as rare as you'd think)
+      int result = getUid(left).compareTo(getUid(right));
+      if (result == 0) {
+        throw new AssertionError(); // extremely, extremely unlikely.
+      }
       return result;
+    }
 
     @Override
     public String toString() {
@@ -509,7 +534,15 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
   // Ordering<Iterable<String>> o =
   //     Ordering.<String>natural().lexicographical();
   public <S extends T> Ordering<Iterable<S>> lexicographical() {
-    { … 9 line(s) … }
+    /*
+     * Note that technically the returned ordering should be capable of
+     * handling not just {@code Iterable<S>} instances, but also any {@code
+     * Iterable<? extends S>}. However, the need for this comes up so rarely
+     * that it doesn't justify making everyone else deal with the very ugly
+     * wildcard.
+     */
+    return new LexicographicalOrdering<S>(this);
+  }
 
   // Regular instance methods
 
@@ -532,7 +565,15 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   @ParametricNullness
   public <E extends T> E min(Iterator<E> iterator) {
-    { … 9 line(s) … }
+    // let this throw NoSuchElementException as necessary
+    E minSoFar = iterator.next();
+
+    while (iterator.hasNext()) {
+      minSoFar = this.<E>min(minSoFar, iterator.next());
+    }
+
+    return minSoFar;
+  }
 
   /**
    * Returns the least of the specified values according to this ordering. If there are multiple
@@ -615,7 +656,15 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   @ParametricNullness
   public <E extends T> E max(Iterator<E> iterator) {
-    { … 9 line(s) … }
+    // let this throw NoSuchElementException as necessary
+    E maxSoFar = iterator.next();
+
+    while (iterator.hasNext()) {
+      maxSoFar = this.<E>max(maxSoFar, iterator.next());
+    }
+
+    return maxSoFar;
+  }
 
   /**
    * Returns the greatest of the specified values according to this ordering. If there are multiple
@@ -702,8 +751,22 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
   public <E extends T> List<E> leastOf(Iterable<E> iterable, int k) {
     if (iterable instanceof Collection) {
       Collection<E> collection = (Collection<E>) iterable;
-    { … 14 line(s) … }
+      if (collection.size() <= 2L * k) {
+        // In this case, just dumping the collection to an array and sorting is
+        // faster than using the implementation for Iterator, which is
+        // specialized for k much smaller than n.
+
+        @SuppressWarnings("unchecked") // c only contains E's and doesn't escape
+        E[] array = (E[]) collection.toArray();
+        Arrays.sort(array, this);
+        if (array.length > k) {
+          array = Arrays.copyOf(array, k);
+        }
+        return Collections.unmodifiableList(Arrays.asList(array));
+      }
+    }
     return leastOf(iterable.iterator(), k);
+  }
 
   /**
    * Returns the {@code k} least elements from the given iterator according to this ordering, in
@@ -724,8 +787,24 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
   public <E extends T> List<E> leastOf(Iterator<E> iterator, int k) {
     checkNotNull(iterator);
     checkNonnegative(k, "k");
-    { … 16 line(s) … }
+
+    if (k == 0 || !iterator.hasNext()) {
+      return Collections.emptyList();
+    } else if (k >= Integer.MAX_VALUE / 2) {
+      // k is really large; just do a straightforward sorted-copy-and-sublist
+      ArrayList<E> list = Lists.newArrayList(iterator);
+      Collections.sort(list, this);
+      if (list.size() > k) {
+        list.subList(k, list.size()).clear();
+      }
+      list.trimToSize();
+      return Collections.unmodifiableList(list);
+    } else {
+      TopKSelector<E> selector = TopKSelector.least(k, this);
+      selector.offerAll(iterator);
+      return selector.topK();
     }
+  }
 
   /**
    * Returns the {@code k} greatest elements of the given iterable according to this ordering, in
@@ -825,8 +904,17 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
   public boolean isOrdered(Iterable<? extends T> iterable) {
     Iterator<? extends T> it = iterable.iterator();
     if (it.hasNext()) {
-    { … 9 line(s) … }
+      T prev = it.next();
+      while (it.hasNext()) {
+        T next = it.next();
+        if (compare(prev, next) > 0) {
+          return false;
+        }
+        prev = next;
+      }
+    }
     return true;
+  }
 
   /**
    * Returns {@code true} if each element in {@code iterable} after the first is <i>strictly</i>
@@ -840,8 +928,17 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
   public boolean isStrictlyOrdered(Iterable<? extends T> iterable) {
     Iterator<? extends T> it = iterable.iterator();
     if (it.hasNext()) {
-    { … 9 line(s) … }
+      T prev = it.next();
+      while (it.hasNext()) {
+        T next = it.next();
+        if (compare(prev, next) >= 0) {
+          return false;
+        }
+        prev = next;
+      }
+    }
     return true;
+  }
 
   /**
    * {@link Collections#binarySearch(List, Object, Comparator) Searches} {@code sortedList} for

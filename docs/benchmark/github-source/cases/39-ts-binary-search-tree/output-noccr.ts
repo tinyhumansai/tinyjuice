@@ -55,9 +55,27 @@ export class BinarySearchTree<T> {
   has(data: T): boolean {
     if (!this.rootNode) {
       return false
-    { … 19 line(s) … }
+    }
+
+    let currentNode = this.rootNode
+    while (currentNode.data !== data) {
+      if (data > currentNode.data) {
+        if (!currentNode.rightChild) {
+          return false
+        }
+
+        currentNode = currentNode.rightChild
+      } else {
+        if (!currentNode.leftChild) {
+          return false
+        }
+
+        currentNode = currentNode.leftChild
+      }
+    }
+
     return true
-}
+  }
 
   /**
    * Inserts the given data into the binary search tree.
@@ -68,23 +86,62 @@ export class BinarySearchTree<T> {
   insert(data: T): void {
     if (!this.rootNode) {
       this.rootNode = new TreeNode<T>(data)
-    { … 20 line(s) … }
+      return
     }
-}
+
+    let currentNode: TreeNode<T> = this.rootNode
+    while (true) {
+      if (data > currentNode.data) {
+        if (currentNode.rightChild) {
+          currentNode = currentNode.rightChild
+        } else {
+          currentNode.rightChild = new TreeNode<T>(data)
+          return
+        }
+      } else {
+        if (currentNode.leftChild) {
+          currentNode = currentNode.leftChild
+        } else {
+          currentNode.leftChild = new TreeNode<T>(data)
+          return
+        }
+      }
+    }
+  }
 
   /**
    * Finds the minimum value of the binary search tree.
    *
    * @returns The minimum value of the binary search tree
    */
-  findMin(): T { … 11 line(s) … }
+  findMin(): T {
+    if (!this.rootNode) {
+      throw new Error('Empty tree.')
+    }
+
+    const traverse = (node: TreeNode<T>): T => {
+      return !node.leftChild ? node.data : traverse(node.leftChild)
+    }
+
+    return traverse(this.rootNode)
+  }
 
   /**
    * Finds the maximum value of the binary search tree.
    *
    * @returns The maximum value of the binary search tree
    */
-  findMax(): T { … 11 line(s) … }
+  findMax(): T {
+    if (!this.rootNode) {
+      throw new Error('Empty tree.')
+    }
+
+    const traverse = (node: TreeNode<T>): T => {
+      return !node.rightChild ? node.data : traverse(node.rightChild)
+    }
+
+    return traverse(this.rootNode)
+  }
 
   /**
    * Traverses to the binary search tree in in-order, i. e. it follow the schema of:
@@ -96,9 +153,21 @@ export class BinarySearchTree<T> {
   inOrderTraversal(array: T[] = []): T[] {
     if (!this.rootNode) {
       return array
-    { … 13 line(s) … }
+    }
+
+    const traverse = (node?: TreeNode<T>, array: T[] = []): T[] => {
+      if (!node) {
+        return array
+      }
+
+      traverse(node.leftChild, array)
+      array.push(node.data)
+      traverse(node.rightChild, array)
+      return array
+    }
+
     return traverse(this.rootNode)
-}
+  }
 
   /**
    * Traverses to the binary search tree in pre-order, i. e. it follow the schema of:
@@ -110,9 +179,22 @@ export class BinarySearchTree<T> {
   preOrderTraversal(array: T[] = []): T[] {
     if (!this.rootNode) {
       return array
-    { … 14 line(s) … }
+    }
+
+    const traverse = (node?: TreeNode<T>, array: T[] = []): T[] => {
+      if (!node) {
+        return array
+      }
+
+      array.push(node.data)
+      traverse(node.leftChild, array)
+      traverse(node.rightChild, array)
+
+      return array
+    }
+
     return traverse(this.rootNode)
-}
+  }
 
   /**
    * Traverses to the binary search tree in post-order, i. e. it follow the schema of:
@@ -124,7 +206,20 @@ export class BinarySearchTree<T> {
   postOrderTraversal(array: T[] = []): T[] {
     if (!this.rootNode) {
       return array
-    { … 14 line(s) … }
+    }
+
+    const traverse = (node?: TreeNode<T>, array: T[] = []): T[] => {
+      if (!node) {
+        return array
+      }
+
+      traverse(node.leftChild, array)
+      traverse(node.rightChild, array)
+      array.push(node.data)
+
+      return array
+    }
+
     return traverse(this.rootNode)
-}
+  }
 }

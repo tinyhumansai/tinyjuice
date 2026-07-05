@@ -109,16 +109,16 @@ through because they are too small or a shape the compressor declines.
 <!-- bench:table -->
 | Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 86.7% | 85.9% | 1.243 ms |
-| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 80.4% | 76.6% | 0.454 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 77.9% | 69.6% | 0.085 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 75.8% | 0.172 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 68.9% | 0.269 ms |
-| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 58.0% | 57.7% | 4.375 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 35.4% | 35.3% | 1.428 ms |
-| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 34.5% | 30.8% | 0.563 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 32.4% | 31.5% | 0.946 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 29.0% | 26.6% | 0.776 ms |
+| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 86.7% | 85.9% | 1.233 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 77.9% | 69.6% | 0.083 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 75.8% | 0.173 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 68.9% | 0.271 ms |
+| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 58.0% | 57.7% | 4.487 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 35.4% | 35.3% | 1.595 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 32.4% | 31.5% | 0.949 ms |
+| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 12.8% | 76.6% | 0.445 ms |
+| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 3.4% | 30.8% | 0.571 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 0.0% | 26.6% | 0.801 ms |
 | [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
 
 Across the whole corpus TinyJuice cut 15.4 MB of content down to

@@ -8,14 +8,14 @@ Percentages are **token reduction: higher is better** (90% means the output shra
 
 | Category | Cases | Applied | Token reduction (mean) | Avg latency | Report |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Service And Docker Logs | 10 | 10 | 86.2% | 1.243 ms | [report](service-log/README.md) |
-| Polyglot Source And XML | 6 | 6 | 77.6% | 0.454 ms | [report](polyglot-source/README.md) |
-| HTML, RSS, And Page Snapshots | 10 | 10 | 77.0% | 0.172 ms | [report](html-status-report/README.md) |
-| Unified Diffs | 10 | 10 | 69.1% | 0.269 ms | [report](unified-diff/README.md) |
-| GitHub Log Files | 33 | 22 | 57.8% | 4.375 ms | [report](github-logs/README.md) |
-| JSON SmartCrusher | 10 | 4 | 35.3% | 1.428 ms | [report](json-smartcrusher/README.md) |
-| Search Results | 10 | 10 | 31.7% | 0.946 ms | [report](search-results/README.md) |
-| GitHub Source Files | 47 | 43 | 31.6% | 0.563 ms | [report](github-source/README.md) |
-| Rust Source | 10 | 7 | 27.2% | 0.776 ms | [report](rust-source/README.md) |
-| Test Failure Logs | 10 | 10 | 15.3% | 0.085 ms | [report](test-failure-log/README.md) |
+| Service And Docker Logs | 10 | 10 | 86.2% | 1.233 ms | [report](service-log/README.md) |
+| Polyglot Source And XML | 6 | 6 | 77.6% | 0.445 ms | [report](polyglot-source/README.md) |
+| HTML, RSS, And Page Snapshots | 10 | 10 | 77.0% | 0.173 ms | [report](html-status-report/README.md) |
+| Unified Diffs | 10 | 10 | 69.1% | 0.271 ms | [report](unified-diff/README.md) |
+| GitHub Log Files | 33 | 22 | 57.8% | 4.487 ms | [report](github-logs/README.md) |
+| JSON SmartCrusher | 10 | 4 | 35.3% | 1.595 ms | [report](json-smartcrusher/README.md) |
+| Search Results | 10 | 10 | 31.7% | 0.949 ms | [report](search-results/README.md) |
+| GitHub Source Files | 47 | 43 | 31.6% | 0.571 ms | [report](github-source/README.md) |
+| Rust Source | 10 | 7 | 27.2% | 0.801 ms | [report](rust-source/README.md) |
+| Test Failure Logs | 10 | 10 | 15.3% | 0.083 ms | [report](test-failure-log/README.md) |
 | Plain Text | 10 | 0 | 0.0% | 0.000 ms | [report](plain-text/README.md) |

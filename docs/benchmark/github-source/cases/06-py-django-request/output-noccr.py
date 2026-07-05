@@ -98,18 +98,56 @@ class HttpRequest:
         )
 
     def _set_content_type_params(self, meta):
-        ...  # 11 line(s) collapsed
+        """Set content_type, content_params, and encoding."""
+        self.content_type, self.content_params = parse_header_parameters(
+            meta.get("CONTENT_TYPE", "")
+        )
+        if "charset" in self.content_params:
+            try:
+                codecs.lookup(self.content_params["charset"])
+            except LookupError:
+                pass
+            else:
+                self.encoding = self.content_params["charset"]
 
     def _get_raw_host(self):
         """
         Return the HTTP host using the environment or request headers. Skip
-...  # 13 line(s) collapsed
+        allowed hosts protection, so may return an insecure host.
+        """
+        # We try three options, in order of decreasing preference.
+        if settings.USE_X_FORWARDED_HOST and ("HTTP_X_FORWARDED_HOST" in self.META):
+            host = self.META["HTTP_X_FORWARDED_HOST"]
+        elif "HTTP_HOST" in self.META:
+            host = self.META["HTTP_HOST"]
+        else:
+            # Reconstruct the host using the algorithm from PEP 333.
+            host = self.META["SERVER_NAME"]
+            server_port = self.get_port()
+            if server_port != ("443" if self.is_secure() else "80"):
+                host = "%s:%s" % (host, server_port)
         return host
 
     def get_host(self):
         """Return the HTTP host using the environment or request headers."""
         host = self._get_raw_host()
-...  # 17 line(s) collapsed
+
+        # Allow variants of localhost if ALLOWED_HOSTS is empty and DEBUG=True.
+        allowed_hosts = settings.ALLOWED_HOSTS
+        if settings.DEBUG and not allowed_hosts:
+            allowed_hosts = [".localhost", "127.0.0.1", "[::1]"]
+
+        domain, port = split_domain_port(host)
+        if domain and validate_host(domain, allowed_hosts):
+            return host
+        else:
+            msg = "Invalid HTTP_HOST header: %r." % host
+            if domain:
+                msg += " You may need to add %r to ALLOWED_HOSTS." % domain
+            else:
+                msg += (
+                    " The domain name provided is not valid according to RFC 1034/1035."
+                )
             raise DisallowedHost(msg)
 
     def get_port(self):
@@ -129,7 +167,15 @@ class HttpRequest:
     def _get_full_path(self, path, force_append_slash):
         # RFC 3986 requires query string arguments to be in the ASCII range.
         # Rather than crash if this doesn't happen, we encode defensively.
-        ...  # 9 line(s) collapsed
+        return "%s%s%s" % (
+            escape_uri_path(path),
+            "/" if force_append_slash and not path.endswith("/") else "",
+            (
+                ("?" + iri_to_uri(self.META.get("QUERY_STRING", "")))
+                if self.META.get("QUERY_STRING", "")
+                else ""
+            ),
+        )
 
     def get_signed_cookie(self, key, default=RAISE_ERROR, salt="", max_age=None):
         """
@@ -158,7 +204,40 @@ class HttpRequest:
     def build_absolute_uri(self, location=None):
         """
         Build an absolute URI from the location and the variables available in
-...  # 34 line(s) collapsed
+        this request. If no ``location`` is specified, build the absolute URI
+        using request.get_full_path(). If the location is absolute, convert it
+        to an RFC 3987 compliant URI and return it. If location is relative or
+        is scheme-relative (i.e., ``//example.com/``), urljoin() it to a base
+        URL constructed from the request variables.
+        """
+        if location is None:
+            # Make it an absolute url (but schemeless and domainless) for the
+            # edge case that the path starts with '//'.
+            location = "//%s" % self.get_full_path()
+        else:
+            # Coerce lazy locations.
+            location = str(location)
+        bits = urlsplit(location)
+        if not (bits.scheme and bits.netloc):
+            # Handle the simple, most common case. If the location is absolute
+            # and a scheme or host (netloc) isn't provided, skip an expensive
+            # urljoin() as long as no path segments are '.' or '..'.
+            if (
+                bits.path.startswith("/")
+                and not bits.scheme
+                and not bits.netloc
+                and "/./" not in bits.path
+                and "/../" not in bits.path
+            ):
+                # If location starts with '//' but has no netloc, reuse the
+                # schema and netloc from the current request. Strip the double
+                # slashes and continue as if it wasn't specified.
+                location = self._current_scheme_host + location.removeprefix("//")
+            else:
+                # Join the constructed URL with the provided location, which
+                # allows the provided location to apply query strings to the
+                # base path.
+                location = urljoin(self._current_scheme_host + self.path, location)
         return iri_to_uri(location)
 
     @cached_property
@@ -197,7 +276,16 @@ class HttpRequest:
 
     @encoding.setter
     def encoding(self, val):
-        ...  # 10 line(s) collapsed
+        """
+        Set the encoding used for GET/POST accesses. If the GET or POST
+        dictionary has already been created, remove and recreate it on the
+        next access (so that it is decoded correctly).
+        """
+        self._encoding = val
+        if hasattr(self, "GET"):
+            del self.GET
+        if hasattr(self, "_post"):
+            del self._post
 
     def _initialize_handlers(self):
         self._upload_handlers = [
@@ -222,7 +310,16 @@ class HttpRequest:
         self._upload_handlers = upload_handlers
 
     def parse_file_upload(self, META, post_data):
-        ...  # 10 line(s) collapsed
+        """Return a tuple of (POST QueryDict, FILES MultiValueDict)."""
+        self.upload_handlers = ImmutableList(
+            self.upload_handlers,
+            warning=(
+                "You cannot alter upload handlers after the upload has been "
+                "processed."
+            ),
+        )
+        parser = MultiPartParser(META, post_data, self.upload_handlers, self.encoding)
+        return parser.parse()
 
     @property
     def body(self):
@@ -436,7 +533,16 @@ class QueryDict(MultiValueDict):
 
     @classmethod
     def fromkeys(cls, iterable, value="", mutable=False, encoding=None):
-        ...  # 10 line(s) collapsed
+        """
+        Return a new QueryDict with keys (may be repeated) from an iterable and
+        values from value.
+        """
+        q = cls("", mutable=True, encoding=encoding)
+        for key in iterable:
+            q.appendlist(key, value)
+        if not mutable:
+            q._mutable = False
+        return q
 
     @property
     def encoding(self):
@@ -516,7 +622,33 @@ class QueryDict(MultiValueDict):
     def urlencode(self, safe=None):
         """
         Return an encoded string of all query string arguments.
-...  # 27 line(s) collapsed
+
+        `safe` specifies characters which don't require quoting, for example::
+
+            >>> q = QueryDict(mutable=True)
+            >>> q['next'] = '/a&b/'
+            >>> q.urlencode()
+            'next=%2Fa%26b%2F'
+            >>> q.urlencode(safe='/')
+            'next=/a%26b/'
+        """
+        output = []
+        if safe:
+            safe = safe.encode(self.encoding)
+
+            def encode(k, v):
+                return "%s=%s" % ((quote(k, safe), quote(v, safe)))
+
+        else:
+
+            def encode(k, v):
+                return urlencode({k: v})
+
+        for k, list_ in self.lists():
+            output.extend(
+                encode(k.encode(self.encoding), str(v).encode(self.encoding))
+                for v in list_
+            )
         return "&".join(output)
 
 
@@ -555,17 +687,50 @@ class MediaType:
 # django.utils.encoding.force_str() for parsing URLs and form inputs. Thus,
 # this slightly more restricted function, used by QueryDict.
 def bytes_to_text(s, encoding):
-    ...  # 11 line(s) collapsed
+    """
+    Convert bytes objects to strings, using the given encoding. Illegally
+    encoded input characters are replaced with Unicode "unknown" codepoint
+    (\ufffd).
+
+    Return any non-bytes objects without change.
+    """
+    if isinstance(s, bytes):
+        return str(s, encoding, "replace")
+    else:
+        return s
 
 
 def split_domain_port(host):
-    ...  # 11 line(s) collapsed
+    """
+    Return a (domain, port) tuple from a given host.
+
+    Returned domain is lowercased. If the host is invalid, the domain will be
+    empty.
+    """
+    if match := host_validation_re.fullmatch(host.lower()):
+        domain, port = match.groups(default="")
+        # Remove a trailing dot (if present) from the domain.
+        return domain.removesuffix("."), port
+    return "", ""
 
 
 def validate_host(host, allowed_hosts):
     """
     Validate the given host for this site.
-...  # 14 line(s) collapsed
+
+    Check that the host looks valid and matches a host or host pattern in the
+    given list of ``allowed_hosts``. Any pattern beginning with a period
+    matches a domain and all its subdomains (e.g. ``.example.com`` matches
+    ``example.com`` and any subdomain), ``*`` matches anything, and anything
+    else must match exactly.
+
+    Note: This function assumes that the given host is lowercased and has
+    already had the port, if any, stripped off.
+
+    Return ``True`` for a valid host, ``False`` otherwise.
+    """
+    return any(
+        pattern == "*" or is_same_domain(host, pattern) for pattern in allowed_hosts
     )
 
 

@@ -12,7 +12,16 @@ pub fn bearer_authorization_value(token: &str) -> String {
 }
 
 /// Best-effort decode of a JWT payload without verifying the signature.
-pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> { … 10 line(s) … }
+pub fn decode_jwt_payload(token: &str) -> Option<serde_json::Value> {
+    // JWT = header.payload.signature (base64url, no padding). Only the payload
+    // segment is needed.
+    let payload_b64 = token.trim().split('.').nth(1)?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload_b64)
+        .or_else(|_| base64::engine::general_purpose::URL_SAFE.decode(payload_b64))
+        .ok()?;
+    serde_json::from_slice(&bytes).ok()
+}
 
 /// Best-effort decode of a JWT's `exp` (expiry) claim into a UTC timestamp.
 ///
@@ -45,9 +54,25 @@ mod tests {
     fn test_bearer_authorization_value() {
         // Standard token
         assert_eq!(bearer_authorization_value("my_token"), "Bearer my_token");
-        { … 17 line(s) … }
+
+        // Token with leading/trailing spaces
+        assert_eq!(
+            bearer_authorization_value("  spaced_token  "),
+            "Bearer spaced_token"
         );
-}
+
+        // Empty string
+        assert_eq!(bearer_authorization_value(""), "Bearer ");
+
+        // Whitespace only string
+        assert_eq!(bearer_authorization_value("   "), "Bearer ");
+
+        // Token with internal spaces (should not be trimmed)
+        assert_eq!(
+            bearer_authorization_value("token with spaces"),
+            "Bearer token with spaces"
+        );
+    }
 
     fn jwt_with_payload(payload_json: &str) -> String {
         let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload_json);

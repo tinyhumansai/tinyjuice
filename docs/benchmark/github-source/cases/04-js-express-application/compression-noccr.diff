@@ -1,9 +1,0 @@
---- input/input.js
-+++ output/output-noccr.js
-@@ -658,4 +658,4 @@
-   } catch (err) {
-     callback(err);
-   }
--}
-+}
-\ No newline at end of file

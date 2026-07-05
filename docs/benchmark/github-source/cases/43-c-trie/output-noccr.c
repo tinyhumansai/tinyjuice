@@ -137,8 +137,19 @@ void trie_print (
     for (int i = 0; i < ALPHABET_SIZE; i++) {
 
         // No words on this character
-{ … 11 line(s) … }
+        if (NULL == trie->children[i]) {
+            continue;
+        }
+
+        // If you have a separate index mapping, then you'd need the inverse of
+        // the map here. Since we subtracted 'a' for the index, we can just add
+        // 'a' to get the inverse map function.
+        prefix[prefix_len] = i + 'a';
+
+        // traverse the print into the child
+        trie_print(trie->children[i], prefix, prefix_len + 1);
     }
+}
 
 
 /*------Demonstrate purposes uses text file called dictionary -------*/

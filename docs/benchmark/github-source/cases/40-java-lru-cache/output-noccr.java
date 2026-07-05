@@ -75,7 +75,15 @@ public class LRUCache<K, V> {
      * @return the evicted entry
      */
     private Entry<K, V> evict() {
-        { … 9 line(s) … }
+        if (head == null) {
+            throw new RuntimeException("cache cannot be empty!");
+        }
+        Entry<K, V> evicted = head;
+        head = evicted.getNextEntry();
+        head.setPreEntry(null);
+        evicted.setNextEntry(null);
+        return evicted;
+    }
 
     /**
      * Checks if the capacity is valid.
@@ -113,8 +121,23 @@ public class LRUCache<K, V> {
     private void moveNodeToLast(Entry<K, V> entry) {
         if (tail == entry) {
             return;
-        { … 15 line(s) … }
+        }
+        final Entry<K, V> preEntry = entry.getPreEntry();
+        final Entry<K, V> nextEntry = entry.getNextEntry();
+        if (preEntry != null) {
+            preEntry.setNextEntry(nextEntry);
+        }
+        if (nextEntry != null) {
+            nextEntry.setPreEntry(preEntry);
+        }
+        if (head == entry) {
+            head = nextEntry;
+        }
+        tail.setNextEntry(entry);
+        entry.setPreEntry(tail);
+        entry.setNextEntry(null);
         tail = entry;
+    }
 
     /**
      * Associates the specified value with the specified key in this cache.
@@ -125,8 +148,23 @@ public class LRUCache<K, V> {
     public void put(K key, V value) {
         if (data.containsKey(key)) {
             final Entry<K, V> existingEntry = data.get(key);
-        { … 15 line(s) … }
+            existingEntry.setValue(value);
+            moveNodeToLast(existingEntry);
+            return;
+        }
+        Entry<K, V> newEntry;
+        if (data.size() == cap) {
+            newEntry = evict();
+            data.remove(newEntry.getKey());
+        } else {
+            newEntry = new Entry<>();
+        }
+
+        newEntry.setKey(key);
+        newEntry.setValue(value);
+        addNewEntry(newEntry);
         data.put(key, newEntry);
+    }
 
     /**
      * Adds a new entry to the end of the list.
@@ -134,7 +172,16 @@ public class LRUCache<K, V> {
      * @param newEntry the entry to add
      */
     private void addNewEntry(Entry<K, V> newEntry) {
-        { … 10 line(s) … }
+        if (data.isEmpty()) {
+            head = newEntry;
+            tail = newEntry;
+            return;
+        }
+        tail.setNextEntry(newEntry);
+        newEntry.setPreEntry(tail);
+        newEntry.setNextEntry(null);
+        tail = newEntry;
+    }
 
     static final class Entry<I, J> {
 

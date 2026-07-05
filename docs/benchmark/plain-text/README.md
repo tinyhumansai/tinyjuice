@@ -2,7 +2,7 @@
 
 Real OpenHuman Markdown/prose. With deterministic ML text compression disabled, TinyJuice passes plain text through unchanged.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.
 
 ## Cases
 

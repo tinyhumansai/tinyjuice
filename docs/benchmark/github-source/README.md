@@ -2,7 +2,7 @@
 
 Real source files fetched from popular public GitHub repositories (vscode, django, flask, requests, gin, cobra, leveldb, redis, curl, tokio, ripgrep, gson, guava, okhttp, rails, laravel, swift-argument-parser, Newtonsoft.Json, Maven POMs). Sources and licenses are listed in ATTRIBUTION.md.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,57 +10,57 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `27-xml-gson-pom` | [input](cases/27-xml-gson-pom/input.xml) | 26.0 KB -> 4.3 KB (-84%) | 83.5%<br>[output](cases/27-xml-gson-pom/output-noccr.txt) - [diff](cases/27-xml-gson-pom/compression-noccr.diff) | 83.1%<br>[output](cases/27-xml-gson-pom/output.txt) - [diff](cases/27-xml-gson-pom/compression.diff) | 0.092 ms |
-| `28-xml-maven-pom` | [input](cases/28-xml-maven-pom/input.xml) | 29.0 KB -> 7.3 KB (-75%) | 74.8%<br>[output](cases/28-xml-maven-pom/output-noccr.txt) - [diff](cases/28-xml-maven-pom/compression-noccr.diff) | 74.4%<br>[output](cases/28-xml-maven-pom/output.txt) - [diff](cases/28-xml-maven-pom/compression.diff) | 0.134 ms |
-| `14-cpp-leveldb-dbimpl` | [input](cases/14-cpp-leveldb-dbimpl/input.cpp) | 49.1 KB -> 14.6 KB (-70%) | 73.7%<br>[output](cases/14-cpp-leveldb-dbimpl/output-noccr.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression-noccr.diff) | 70.6%<br>[output](cases/14-cpp-leveldb-dbimpl/output.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression.diff) | 0.391 ms |
-| `30-py-dijkstra` | [input](cases/30-py-dijkstra/input.py) | 14.6 KB -> 5.4 KB (-63%) | 67.9%<br>[output](cases/30-py-dijkstra/output-noccr.py) - [diff](cases/30-py-dijkstra/compression-noccr.diff) | 62.5%<br>[output](cases/30-py-dijkstra/output.py) - [diff](cases/30-py-dijkstra/compression.diff) | 0.563 ms |
-| `33-rs-floyd-warshall` | [input](cases/33-rs-floyd-warshall/input.rs) | 6.3 KB -> 2.4 KB (-62%) | 66.7%<br>[output](cases/33-rs-floyd-warshall/output-noccr.rs) - [diff](cases/33-rs-floyd-warshall/compression-noccr.diff) | 60.8%<br>[output](cases/33-rs-floyd-warshall/output.rs) - [diff](cases/33-rs-floyd-warshall/compression.diff) | 0.388 ms |
-| `15-cpp-leveldb-versionset` | [input](cases/15-cpp-leveldb-versionset/input.cpp) | 51.4 KB -> 21.7 KB (-58%) | 61.9%<br>[output](cases/15-cpp-leveldb-versionset/output-noccr.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression-noccr.diff) | 58.1%<br>[output](cases/15-cpp-leveldb-versionset/output.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression.diff) | 0.419 ms |
-| `41-java-bellman-ford` | [input](cases/41-java-bellman-ford/input.java) | 6.1 KB -> 2.6 KB (-58%) | 61.8%<br>[output](cases/41-java-bellman-ford/output-noccr.java) - [diff](cases/41-java-bellman-ford/compression-noccr.diff) | 56.4%<br>[output](cases/41-java-bellman-ford/output.java) - [diff](cases/41-java-bellman-ford/compression.diff) | 0.038 ms |
-| `29-py-red-black-tree` | [input](cases/29-py-red-black-tree/input.py) | 25.5 KB -> 10.9 KB (-57%) | 61.8%<br>[output](cases/29-py-red-black-tree/output-noccr.py) - [diff](cases/29-py-red-black-tree/compression-noccr.diff) | 57.2%<br>[output](cases/29-py-red-black-tree/output.py) - [diff](cases/29-py-red-black-tree/compression.diff) | 1.354 ms |
-| `16-c-redis-sds` | [input](cases/16-c-redis-sds/input.c) | 49.8 KB -> 23.1 KB (-54%) | 56.2%<br>[output](cases/16-c-redis-sds/output-noccr.c) - [diff](cases/16-c-redis-sds/compression-noccr.diff) | 53.8%<br>[output](cases/16-c-redis-sds/output.c) - [diff](cases/16-c-redis-sds/compression.diff) | 0.314 ms |
-| `25-swift-argparser-argumentset` | [input](cases/25-swift-argparser-argumentset/input.swift) | 21.7 KB -> 10.1 KB (-54%) | 56.7%<br>[output](cases/25-swift-argparser-argumentset/output-noccr.swift) - [diff](cases/25-swift-argparser-argumentset/compression-noccr.diff) | 53.4%<br>[output](cases/25-swift-argparser-argumentset/output.swift) - [diff](cases/25-swift-argparser-argumentset/compression.diff) | 0.142 ms |
-| `36-cpp-a-star-search` | [input](cases/36-cpp-a-star-search/input.cpp) | 26.5 KB -> 12.6 KB (-53%) | 55.2%<br>[output](cases/36-cpp-a-star-search/output-noccr.cpp) - [diff](cases/36-cpp-a-star-search/compression-noccr.diff) | 52.5%<br>[output](cases/36-cpp-a-star-search/output.cpp) - [diff](cases/36-cpp-a-star-search/compression.diff) | 0.149 ms |
-| `10-go-gin-gin` | [input](cases/10-go-gin-gin/input.go) | 23.8 KB -> 13.6 KB (-43%) | 47.4%<br>[output](cases/10-go-gin-gin/output-noccr.go) - [diff](cases/10-go-gin-gin/compression-noccr.diff) | 43.2%<br>[output](cases/10-go-gin-gin/output.go) - [diff](cases/10-go-gin-gin/compression.diff) | 0.166 ms |
-| `09-py-requests-sessions` | [input](cases/09-py-requests-sessions/input.py) | 30.5 KB -> 17.3 KB (-43%) | 46.3%<br>[output](cases/09-py-requests-sessions/output-noccr.py) - [diff](cases/09-py-requests-sessions/compression-noccr.diff) | 43.0%<br>[output](cases/09-py-requests-sessions/output.py) - [diff](cases/09-py-requests-sessions/compression.diff) | 1.132 ms |
-| `12-go-cobra-command` | [input](cases/12-go-cobra-command/input.go) | 55.2 KB -> 32.3 KB (-41%) | 45.3%<br>[output](cases/12-go-cobra-command/output-noccr.go) - [diff](cases/12-go-cobra-command/compression-noccr.diff) | 41.8%<br>[output](cases/12-go-cobra-command/output.go) - [diff](cases/12-go-cobra-command/compression.diff) | 0.401 ms |
-| `17-c-curl-url` | [input](cases/17-c-curl-url/input.c) | 120.5 KB -> 73.4 KB (-39%) | 41.5%<br>[output](cases/17-c-curl-url/output-noccr.c) - [diff](cases/17-c-curl-url/compression-noccr.diff) | 39.4%<br>[output](cases/17-c-curl-url/output.c) - [diff](cases/17-c-curl-url/compression.diff) | 0.816 ms |
-| `26-cs-newtonsoft-serializer` | [input](cases/26-cs-newtonsoft-serializer/input.cs) | 50.8 KB -> 31.1 KB (-39%) | 41.2%<br>[output](cases/26-cs-newtonsoft-serializer/output-noccr.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression-noccr.diff) | 38.9%<br>[output](cases/26-cs-newtonsoft-serializer/output.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression.diff) | 0.256 ms |
-| `35-go-segment-tree` | [input](cases/35-go-segment-tree/input.go) | 4.5 KB -> 2.8 KB (-38%) | 45.6%<br>[output](cases/35-go-segment-tree/output-noccr.go) - [diff](cases/35-go-segment-tree/compression-noccr.diff) | 35.8%<br>[output](cases/35-go-segment-tree/output.go) - [diff](cases/35-go-segment-tree/compression.diff) | 0.028 ms |
-| `42-js-kruskal-mst` | [input](cases/42-js-kruskal-mst/input.js) | 3.1 KB -> 1.9 KB (-37%) | 46.2%<br>[output](cases/42-js-kruskal-mst/output-noccr.js) - [diff](cases/42-js-kruskal-mst/compression-noccr.diff) | 34.3%<br>[output](cases/42-js-kruskal-mst/output.js) - [diff](cases/42-js-kruskal-mst/compression.diff) | 0.165 ms |
-| `03-ts-vscode-uri` | [input](cases/03-ts-vscode-uri/input.ts) | 22.6 KB -> 14.3 KB (-37%) | 40.5%<br>[output](cases/03-ts-vscode-uri/output-noccr.ts) - [diff](cases/03-ts-vscode-uri/compression-noccr.diff) | 36.7%<br>[output](cases/03-ts-vscode-uri/output.ts) - [diff](cases/03-ts-vscode-uri/compression.diff) | 1.110 ms |
-| `19-rs-ripgrep-walk` | [input](cases/19-rs-ripgrep-walk/input.rs) | 77.9 KB -> 50.5 KB (-35%) | 37.9%<br>[output](cases/19-rs-ripgrep-walk/output-noccr.rs) - [diff](cases/19-rs-ripgrep-walk/compression-noccr.diff) | 35.5%<br>[output](cases/19-rs-ripgrep-walk/output.rs) - [diff](cases/19-rs-ripgrep-walk/compression.diff) | 3.479 ms |
-| `31-rs-huffman-encoding` | [input](cases/31-rs-huffman-encoding/input.rs) | 16.3 KB -> 10.7 KB (-34%) | 38.4%<br>[output](cases/31-rs-huffman-encoding/output-noccr.rs) - [diff](cases/31-rs-huffman-encoding/compression-noccr.diff) | 34.2%<br>[output](cases/31-rs-huffman-encoding/output.rs) - [diff](cases/31-rs-huffman-encoding/compression.diff) | 0.770 ms |
-| `37-cpp-random-pivot-quicksort` | [input](cases/37-cpp-random-pivot-quicksort/input.cpp) | 11.9 KB -> 8.2 KB (-31%) | 34.9%<br>[output](cases/37-cpp-random-pivot-quicksort/output-noccr.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression-noccr.diff) | 30.5%<br>[output](cases/37-cpp-random-pivot-quicksort/output.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression.diff) | 0.063 ms |
-| `39-ts-binary-search-tree` | [input](cases/39-ts-binary-search-tree/input.ts) | 5.2 KB -> 3.7 KB (-30%) | 38.5%<br>[output](cases/39-ts-binary-search-tree/output-noccr.ts) - [diff](cases/39-ts-binary-search-tree/compression-noccr.diff) | 28.5%<br>[output](cases/39-ts-binary-search-tree/output.ts) - [diff](cases/39-ts-binary-search-tree/compression.diff) | 0.214 ms |
-| `08-py-flask-app` | [input](cases/08-py-flask-app/input.py) | 60.1 KB -> 42.1 KB (-30%) | 32.0%<br>[output](cases/08-py-flask-app/output-noccr.py) - [diff](cases/08-py-flask-app/compression-noccr.diff) | 30.0%<br>[output](cases/08-py-flask-app/output.py) - [diff](cases/08-py-flask-app/compression.diff) | 1.736 ms |
-| `34-go-avl-tree` | [input](cases/34-go-avl-tree/input.go) | 7.7 KB -> 5.5 KB (-29%) | 34.6%<br>[output](cases/34-go-avl-tree/output-noccr.go) - [diff](cases/34-go-avl-tree/compression-noccr.diff) | 28.3%<br>[output](cases/34-go-avl-tree/output.go) - [diff](cases/34-go-avl-tree/compression.diff) | 0.060 ms |
-| `07-py-django-paginator` | [input](cases/07-py-django-paginator/input.py) | 7.9 KB -> 5.6 KB (-29%) | 33.5%<br>[output](cases/07-py-django-paginator/output-noccr.py) - [diff](cases/07-py-django-paginator/compression-noccr.diff) | 27.9%<br>[output](cases/07-py-django-paginator/output.py) - [diff](cases/07-py-django-paginator/compression.diff) | 0.388 ms |
-| `46-cs-topological-sort` | [input](cases/46-cs-topological-sort/input.cs) | 14.4 KB -> 10.7 KB (-26%) | 28.9%<br>[output](cases/46-cs-topological-sort/output-noccr.cs) - [diff](cases/46-cs-topological-sort/compression-noccr.diff) | 25.3%<br>[output](cases/46-cs-topological-sort/output.cs) - [diff](cases/46-cs-topological-sort/compression.diff) | 0.065 ms |
-| `06-py-django-request` | [input](cases/06-py-django-request/input.py) | 25.8 KB -> 19.6 KB (-24%) | 26.3%<br>[output](cases/06-py-django-request/output-noccr.py) - [diff](cases/06-py-django-request/compression-noccr.diff) | 23.5%<br>[output](cases/06-py-django-request/output.py) - [diff](cases/06-py-django-request/compression.diff) | 1.266 ms |
-| `24-php-laravel-container` | [input](cases/24-php-laravel-container/input.php) | 41.0 KB -> 31.7 KB (-23%) | 25.2%<br>[output](cases/24-php-laravel-container/output-noccr.php) - [diff](cases/24-php-laravel-container/compression-noccr.diff) | 22.8%<br>[output](cases/24-php-laravel-container/output.php) - [diff](cases/24-php-laravel-container/compression.diff) | 0.226 ms |
-| `13-go-mux-mux` | [input](cases/13-go-mux-mux/input.go) | 17.8 KB -> 13.8 KB (-22%) | 26.1%<br>[output](cases/13-go-mux-mux/output-noccr.go) - [diff](cases/13-go-mux-mux/compression-noccr.diff) | 22.1%<br>[output](cases/13-go-mux-mux/output.go) - [diff](cases/13-go-mux-mux/compression.diff) | 0.103 ms |
-| `45-php-avl-tree` | [input](cases/45-php-avl-tree/input.php) | 10.9 KB -> 8.6 KB (-21%) | 26.0%<br>[output](cases/45-php-avl-tree/output-noccr.php) - [diff](cases/45-php-avl-tree/compression-noccr.diff) | 20.6%<br>[output](cases/45-php-avl-tree/output.php) - [diff](cases/45-php-avl-tree/compression.diff) | 0.067 ms |
-| `01-ts-vscode-async` | [input](cases/01-ts-vscode-async/input.ts) | 56.4 KB -> 45.4 KB (-19%) | 22.6%<br>[output](cases/01-ts-vscode-async/output-noccr.ts) - [diff](cases/01-ts-vscode-async/compression-noccr.diff) | 19.7%<br>[output](cases/01-ts-vscode-async/output.ts) - [diff](cases/01-ts-vscode-async/compression.diff) | 2.973 ms |
-| `02-ts-vscode-strings` | [input](cases/02-ts-vscode-strings/input.ts) | 88.4 KB -> 74.6 KB (-16%) | 17.3%<br>[output](cases/02-ts-vscode-strings/output-noccr.ts) - [diff](cases/02-ts-vscode-strings/compression-noccr.diff) | 15.7%<br>[output](cases/02-ts-vscode-strings/output.ts) - [diff](cases/02-ts-vscode-strings/compression.diff) | 2.060 ms |
-| `32-rs-knapsack` | [input](cases/32-rs-knapsack/input.rs) | 12.4 KB -> 10.5 KB (-16%) | 17.8%<br>[output](cases/32-rs-knapsack/output-noccr.rs) - [diff](cases/32-rs-knapsack/compression-noccr.diff) | 14.9%<br>[output](cases/32-rs-knapsack/output.rs) - [diff](cases/32-rs-knapsack/compression.diff) | 0.819 ms |
-| `40-java-lru-cache` | [input](cases/40-java-lru-cache/input.java) | 6.7 KB -> 5.7 KB (-15%) | 20.0%<br>[output](cases/40-java-lru-cache/output-noccr.java) - [diff](cases/40-java-lru-cache/compression-noccr.diff) | 13.9%<br>[output](cases/40-java-lru-cache/output.java) - [diff](cases/40-java-lru-cache/compression.diff) | 0.043 ms |
-| `20-java-gson-gson` | [input](cases/20-java-gson-gson/input.java) | 68.5 KB -> 59.0 KB (-14%) | 15.0%<br>[output](cases/20-java-gson-gson/output-noccr.java) - [diff](cases/20-java-gson-gson/compression-noccr.diff) | 13.8%<br>[output](cases/20-java-gson-gson/output.java) - [diff](cases/20-java-gson-gson/compression.diff) | 0.284 ms |
-| `11-go-gin-context` | [input](cases/11-go-gin-context/input.go) | 39.0 KB -> 34.1 KB (-13%) | 14.9%<br>[output](cases/11-go-gin-context/output-noccr.go) - [diff](cases/11-go-gin-context/compression-noccr.diff) | 12.6%<br>[output](cases/11-go-gin-context/output.go) - [diff](cases/11-go-gin-context/compression.diff) | 0.213 ms |
-| `38-ts-heap` | [input](cases/38-ts-heap/input.ts) | 5.7 KB -> 5.0 KB (-12%) | 17.0%<br>[output](cases/38-ts-heap/output-noccr.ts) - [diff](cases/38-ts-heap/compression-noccr.diff) | 10.6%<br>[output](cases/38-ts-heap/output.ts) - [diff](cases/38-ts-heap/compression.diff) | 0.328 ms |
-| `21-java-guava-ordering` | [input](cases/21-java-guava-ordering/input.java) | 40.4 KB -> 37.8 KB (-6%) | 7.7%<br>[output](cases/21-java-guava-ordering/output-noccr.java) - [diff](cases/21-java-guava-ordering/compression-noccr.diff) | 6.2%<br>[output](cases/21-java-guava-ordering/output.java) - [diff](cases/21-java-guava-ordering/compression.diff) | 0.143 ms |
-| `18-rs-tokio-builder` | [input](cases/18-rs-tokio-builder/input.rs) | 48.2 KB -> 45.6 KB (-5%) | 6.1%<br>[output](cases/18-rs-tokio-builder/output-noccr.rs) - [diff](cases/18-rs-tokio-builder/compression-noccr.diff) | 5.3%<br>[output](cases/18-rs-tokio-builder/output.rs) - [diff](cases/18-rs-tokio-builder/compression.diff) | 1.684 ms |
-| `47-kt-indexed-priority-queue` | [input](cases/47-kt-indexed-priority-queue/input.kt) | 7.0 KB -> 6.7 KB (-5%) | 8.1%<br>[output](cases/47-kt-indexed-priority-queue/output-noccr.kt) - [diff](cases/47-kt-indexed-priority-queue/compression-noccr.diff) | 3.4%<br>[output](cases/47-kt-indexed-priority-queue/output.kt) - [diff](cases/47-kt-indexed-priority-queue/compression.diff) | 0.037 ms |
-| `22-kt-okhttp-client` | [input](cases/22-kt-okhttp-client/input.kt) | 44.0 KB -> 41.9 KB (-5%) | 5.6%<br>[output](cases/22-kt-okhttp-client/output-noccr.kt) - [diff](cases/22-kt-okhttp-client/compression-noccr.diff) | 4.6%<br>[output](cases/22-kt-okhttp-client/output.kt) - [diff](cases/22-kt-okhttp-client/compression.diff) | 0.164 ms |
-| `43-c-trie` | [input](cases/43-c-trie/input.c) | 5.2 KB -> 5.0 KB (-4%) | 7.9%<br>[output](cases/43-c-trie/output-noccr.c) - [diff](cases/43-c-trie/compression-noccr.diff) | 2.4%<br>[output](cases/43-c-trie/output.c) - [diff](cases/43-c-trie/compression.diff) | 0.028 ms |
-| `05-js-axios-core` | [input](cases/05-js-axios-core/input.js) | 6.4 KB -> 6.3 KB (-1%) | 3.8%<br>[output](cases/05-js-axios-core/output-noccr.js) - [diff](cases/05-js-axios-core/compression-noccr.diff) | 0.0%<br>[output](cases/05-js-axios-core/output.js) - [diff](cases/05-js-axios-core/compression.diff) | 0.317 ms |
-| `44-rb-avl-tree` | [input](cases/44-rb-avl-tree/input.rb) | 7.5 KB -> 7.5 KB (-0%) | 0.1%<br>[output](cases/44-rb-avl-tree/output-noccr.rb) - [diff](cases/44-rb-avl-tree/compression-noccr.diff) | 0.0%<br>[output](cases/44-rb-avl-tree/output.rb) - [diff](cases/44-rb-avl-tree/compression.diff) | 0.035 ms |
-| `04-js-express-application` | [input](cases/04-js-express-application/input.js) | 14.6 KB -> 14.6 KB (-0%) | 0.0%<br>[output](cases/04-js-express-application/output-noccr.js) - [diff](cases/04-js-express-application/compression-noccr.diff) | 0.0%<br>[output](cases/04-js-express-application/output.js) - [diff](cases/04-js-express-application/compression.diff) | 0.717 ms |
-| `23-rb-rails-cache` | [input](cases/23-rb-rails-cache/input.rb) | 42.6 KB -> 42.6 KB (-0%) | 0.0%<br>[output](cases/23-rb-rails-cache/output-noccr.rb) - [diff](cases/23-rb-rails-cache/compression-noccr.diff) | 0.0%<br>[output](cases/23-rb-rails-cache/output.rb) - [diff](cases/23-rb-rails-cache/compression.diff) | 0.138 ms |
+| `27-xml-gson-pom` | [input](cases/27-xml-gson-pom/input.xml) | 26.0 KB -> 4.3 KB (-84%) | 83.5%<br>[output](cases/27-xml-gson-pom/output-noccr.txt) - [diff](cases/27-xml-gson-pom/compression-noccr.diff) | 83.1%<br>[output](cases/27-xml-gson-pom/output.txt) - [diff](cases/27-xml-gson-pom/compression.diff) | 0.091 ms |
+| `28-xml-maven-pom` | [input](cases/28-xml-maven-pom/input.xml) | 29.0 KB -> 7.3 KB (-75%) | 74.8%<br>[output](cases/28-xml-maven-pom/output-noccr.txt) - [diff](cases/28-xml-maven-pom/compression-noccr.diff) | 74.4%<br>[output](cases/28-xml-maven-pom/output.txt) - [diff](cases/28-xml-maven-pom/compression.diff) | 0.136 ms |
+| `14-cpp-leveldb-dbimpl` | [input](cases/14-cpp-leveldb-dbimpl/input.cpp) | 49.1 KB -> 14.6 KB (-70%) | 0.0%<br>[output](cases/14-cpp-leveldb-dbimpl/output-noccr.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression-noccr.diff) | 70.6%<br>[output](cases/14-cpp-leveldb-dbimpl/output.cpp) - [diff](cases/14-cpp-leveldb-dbimpl/compression.diff) | 0.397 ms |
+| `30-py-dijkstra` | [input](cases/30-py-dijkstra/input.py) | 14.6 KB -> 5.4 KB (-63%) | 0.0%<br>[output](cases/30-py-dijkstra/output-noccr.py) - [diff](cases/30-py-dijkstra/compression-noccr.diff) | 62.5%<br>[output](cases/30-py-dijkstra/output.py) - [diff](cases/30-py-dijkstra/compression.diff) | 0.593 ms |
+| `33-rs-floyd-warshall` | [input](cases/33-rs-floyd-warshall/input.rs) | 6.3 KB -> 2.4 KB (-62%) | 0.0%<br>[output](cases/33-rs-floyd-warshall/output-noccr.rs) - [diff](cases/33-rs-floyd-warshall/compression-noccr.diff) | 60.8%<br>[output](cases/33-rs-floyd-warshall/output.rs) - [diff](cases/33-rs-floyd-warshall/compression.diff) | 0.379 ms |
+| `15-cpp-leveldb-versionset` | [input](cases/15-cpp-leveldb-versionset/input.cpp) | 51.4 KB -> 21.7 KB (-58%) | 0.0%<br>[output](cases/15-cpp-leveldb-versionset/output-noccr.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression-noccr.diff) | 58.1%<br>[output](cases/15-cpp-leveldb-versionset/output.cpp) - [diff](cases/15-cpp-leveldb-versionset/compression.diff) | 0.402 ms |
+| `41-java-bellman-ford` | [input](cases/41-java-bellman-ford/input.java) | 6.1 KB -> 2.6 KB (-58%) | 0.0%<br>[output](cases/41-java-bellman-ford/output-noccr.java) - [diff](cases/41-java-bellman-ford/compression-noccr.diff) | 56.4%<br>[output](cases/41-java-bellman-ford/output.java) - [diff](cases/41-java-bellman-ford/compression.diff) | 0.036 ms |
+| `29-py-red-black-tree` | [input](cases/29-py-red-black-tree/input.py) | 25.5 KB -> 10.9 KB (-57%) | 0.0%<br>[output](cases/29-py-red-black-tree/output-noccr.py) - [diff](cases/29-py-red-black-tree/compression-noccr.diff) | 57.2%<br>[output](cases/29-py-red-black-tree/output.py) - [diff](cases/29-py-red-black-tree/compression.diff) | 1.358 ms |
+| `16-c-redis-sds` | [input](cases/16-c-redis-sds/input.c) | 49.8 KB -> 23.1 KB (-54%) | 0.0%<br>[output](cases/16-c-redis-sds/output-noccr.c) - [diff](cases/16-c-redis-sds/compression-noccr.diff) | 53.8%<br>[output](cases/16-c-redis-sds/output.c) - [diff](cases/16-c-redis-sds/compression.diff) | 0.319 ms |
+| `25-swift-argparser-argumentset` | [input](cases/25-swift-argparser-argumentset/input.swift) | 21.7 KB -> 10.1 KB (-54%) | 0.0%<br>[output](cases/25-swift-argparser-argumentset/output-noccr.swift) - [diff](cases/25-swift-argparser-argumentset/compression-noccr.diff) | 53.4%<br>[output](cases/25-swift-argparser-argumentset/output.swift) - [diff](cases/25-swift-argparser-argumentset/compression.diff) | 0.140 ms |
+| `36-cpp-a-star-search` | [input](cases/36-cpp-a-star-search/input.cpp) | 26.5 KB -> 12.6 KB (-53%) | 0.0%<br>[output](cases/36-cpp-a-star-search/output-noccr.cpp) - [diff](cases/36-cpp-a-star-search/compression-noccr.diff) | 52.5%<br>[output](cases/36-cpp-a-star-search/output.cpp) - [diff](cases/36-cpp-a-star-search/compression.diff) | 0.151 ms |
+| `10-go-gin-gin` | [input](cases/10-go-gin-gin/input.go) | 23.8 KB -> 13.6 KB (-43%) | 0.0%<br>[output](cases/10-go-gin-gin/output-noccr.go) - [diff](cases/10-go-gin-gin/compression-noccr.diff) | 43.2%<br>[output](cases/10-go-gin-gin/output.go) - [diff](cases/10-go-gin-gin/compression.diff) | 0.168 ms |
+| `09-py-requests-sessions` | [input](cases/09-py-requests-sessions/input.py) | 30.5 KB -> 17.3 KB (-43%) | 0.0%<br>[output](cases/09-py-requests-sessions/output-noccr.py) - [diff](cases/09-py-requests-sessions/compression-noccr.diff) | 43.0%<br>[output](cases/09-py-requests-sessions/output.py) - [diff](cases/09-py-requests-sessions/compression.diff) | 1.181 ms |
+| `12-go-cobra-command` | [input](cases/12-go-cobra-command/input.go) | 55.2 KB -> 32.3 KB (-41%) | 0.0%<br>[output](cases/12-go-cobra-command/output-noccr.go) - [diff](cases/12-go-cobra-command/compression-noccr.diff) | 41.8%<br>[output](cases/12-go-cobra-command/output.go) - [diff](cases/12-go-cobra-command/compression.diff) | 0.408 ms |
+| `17-c-curl-url` | [input](cases/17-c-curl-url/input.c) | 120.5 KB -> 73.4 KB (-39%) | 0.0%<br>[output](cases/17-c-curl-url/output-noccr.c) - [diff](cases/17-c-curl-url/compression-noccr.diff) | 39.4%<br>[output](cases/17-c-curl-url/output.c) - [diff](cases/17-c-curl-url/compression.diff) | 0.804 ms |
+| `26-cs-newtonsoft-serializer` | [input](cases/26-cs-newtonsoft-serializer/input.cs) | 50.8 KB -> 31.1 KB (-39%) | 0.0%<br>[output](cases/26-cs-newtonsoft-serializer/output-noccr.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression-noccr.diff) | 38.9%<br>[output](cases/26-cs-newtonsoft-serializer/output.cs) - [diff](cases/26-cs-newtonsoft-serializer/compression.diff) | 0.261 ms |
+| `35-go-segment-tree` | [input](cases/35-go-segment-tree/input.go) | 4.5 KB -> 2.8 KB (-38%) | 0.0%<br>[output](cases/35-go-segment-tree/output-noccr.go) - [diff](cases/35-go-segment-tree/compression-noccr.diff) | 35.8%<br>[output](cases/35-go-segment-tree/output.go) - [diff](cases/35-go-segment-tree/compression.diff) | 0.027 ms |
+| `42-js-kruskal-mst` | [input](cases/42-js-kruskal-mst/input.js) | 3.1 KB -> 1.9 KB (-37%) | 0.0%<br>[output](cases/42-js-kruskal-mst/output-noccr.js) - [diff](cases/42-js-kruskal-mst/compression-noccr.diff) | 34.3%<br>[output](cases/42-js-kruskal-mst/output.js) - [diff](cases/42-js-kruskal-mst/compression.diff) | 0.162 ms |
+| `03-ts-vscode-uri` | [input](cases/03-ts-vscode-uri/input.ts) | 22.6 KB -> 14.3 KB (-37%) | 0.0%<br>[output](cases/03-ts-vscode-uri/output-noccr.ts) - [diff](cases/03-ts-vscode-uri/compression-noccr.diff) | 36.7%<br>[output](cases/03-ts-vscode-uri/output.ts) - [diff](cases/03-ts-vscode-uri/compression.diff) | 1.040 ms |
+| `19-rs-ripgrep-walk` | [input](cases/19-rs-ripgrep-walk/input.rs) | 77.9 KB -> 50.5 KB (-35%) | 0.0%<br>[output](cases/19-rs-ripgrep-walk/output-noccr.rs) - [diff](cases/19-rs-ripgrep-walk/compression-noccr.diff) | 35.5%<br>[output](cases/19-rs-ripgrep-walk/output.rs) - [diff](cases/19-rs-ripgrep-walk/compression.diff) | 3.588 ms |
+| `31-rs-huffman-encoding` | [input](cases/31-rs-huffman-encoding/input.rs) | 16.3 KB -> 10.7 KB (-34%) | 0.0%<br>[output](cases/31-rs-huffman-encoding/output-noccr.rs) - [diff](cases/31-rs-huffman-encoding/compression-noccr.diff) | 34.2%<br>[output](cases/31-rs-huffman-encoding/output.rs) - [diff](cases/31-rs-huffman-encoding/compression.diff) | 0.758 ms |
+| `37-cpp-random-pivot-quicksort` | [input](cases/37-cpp-random-pivot-quicksort/input.cpp) | 11.9 KB -> 8.2 KB (-31%) | 0.0%<br>[output](cases/37-cpp-random-pivot-quicksort/output-noccr.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression-noccr.diff) | 30.5%<br>[output](cases/37-cpp-random-pivot-quicksort/output.cpp) - [diff](cases/37-cpp-random-pivot-quicksort/compression.diff) | 0.062 ms |
+| `39-ts-binary-search-tree` | [input](cases/39-ts-binary-search-tree/input.ts) | 5.2 KB -> 3.7 KB (-30%) | 0.0%<br>[output](cases/39-ts-binary-search-tree/output-noccr.ts) - [diff](cases/39-ts-binary-search-tree/compression-noccr.diff) | 28.5%<br>[output](cases/39-ts-binary-search-tree/output.ts) - [diff](cases/39-ts-binary-search-tree/compression.diff) | 0.218 ms |
+| `08-py-flask-app` | [input](cases/08-py-flask-app/input.py) | 60.1 KB -> 42.1 KB (-30%) | 0.0%<br>[output](cases/08-py-flask-app/output-noccr.py) - [diff](cases/08-py-flask-app/compression-noccr.diff) | 30.0%<br>[output](cases/08-py-flask-app/output.py) - [diff](cases/08-py-flask-app/compression.diff) | 1.847 ms |
+| `34-go-avl-tree` | [input](cases/34-go-avl-tree/input.go) | 7.7 KB -> 5.5 KB (-29%) | 0.0%<br>[output](cases/34-go-avl-tree/output-noccr.go) - [diff](cases/34-go-avl-tree/compression-noccr.diff) | 28.3%<br>[output](cases/34-go-avl-tree/output.go) - [diff](cases/34-go-avl-tree/compression.diff) | 0.063 ms |
+| `07-py-django-paginator` | [input](cases/07-py-django-paginator/input.py) | 7.9 KB -> 5.6 KB (-29%) | 0.0%<br>[output](cases/07-py-django-paginator/output-noccr.py) - [diff](cases/07-py-django-paginator/compression-noccr.diff) | 27.9%<br>[output](cases/07-py-django-paginator/output.py) - [diff](cases/07-py-django-paginator/compression.diff) | 0.401 ms |
+| `46-cs-topological-sort` | [input](cases/46-cs-topological-sort/input.cs) | 14.4 KB -> 10.7 KB (-26%) | 0.0%<br>[output](cases/46-cs-topological-sort/output-noccr.cs) - [diff](cases/46-cs-topological-sort/compression-noccr.diff) | 25.3%<br>[output](cases/46-cs-topological-sort/output.cs) - [diff](cases/46-cs-topological-sort/compression.diff) | 0.066 ms |
+| `06-py-django-request` | [input](cases/06-py-django-request/input.py) | 25.8 KB -> 19.6 KB (-24%) | 0.0%<br>[output](cases/06-py-django-request/output-noccr.py) - [diff](cases/06-py-django-request/compression-noccr.diff) | 23.5%<br>[output](cases/06-py-django-request/output.py) - [diff](cases/06-py-django-request/compression.diff) | 1.244 ms |
+| `24-php-laravel-container` | [input](cases/24-php-laravel-container/input.php) | 41.0 KB -> 31.7 KB (-23%) | 0.0%<br>[output](cases/24-php-laravel-container/output-noccr.php) - [diff](cases/24-php-laravel-container/compression-noccr.diff) | 22.8%<br>[output](cases/24-php-laravel-container/output.php) - [diff](cases/24-php-laravel-container/compression.diff) | 0.225 ms |
+| `13-go-mux-mux` | [input](cases/13-go-mux-mux/input.go) | 17.8 KB -> 13.8 KB (-22%) | 0.0%<br>[output](cases/13-go-mux-mux/output-noccr.go) - [diff](cases/13-go-mux-mux/compression-noccr.diff) | 22.1%<br>[output](cases/13-go-mux-mux/output.go) - [diff](cases/13-go-mux-mux/compression.diff) | 0.100 ms |
+| `45-php-avl-tree` | [input](cases/45-php-avl-tree/input.php) | 10.9 KB -> 8.6 KB (-21%) | 0.0%<br>[output](cases/45-php-avl-tree/output-noccr.php) - [diff](cases/45-php-avl-tree/compression-noccr.diff) | 20.6%<br>[output](cases/45-php-avl-tree/output.php) - [diff](cases/45-php-avl-tree/compression.diff) | 0.069 ms |
+| `01-ts-vscode-async` | [input](cases/01-ts-vscode-async/input.ts) | 56.4 KB -> 45.4 KB (-19%) | 0.0%<br>[output](cases/01-ts-vscode-async/output-noccr.ts) - [diff](cases/01-ts-vscode-async/compression-noccr.diff) | 19.7%<br>[output](cases/01-ts-vscode-async/output.ts) - [diff](cases/01-ts-vscode-async/compression.diff) | 2.976 ms |
+| `02-ts-vscode-strings` | [input](cases/02-ts-vscode-strings/input.ts) | 88.4 KB -> 74.6 KB (-16%) | 0.0%<br>[output](cases/02-ts-vscode-strings/output-noccr.ts) - [diff](cases/02-ts-vscode-strings/compression-noccr.diff) | 15.7%<br>[output](cases/02-ts-vscode-strings/output.ts) - [diff](cases/02-ts-vscode-strings/compression.diff) | 2.125 ms |
+| `32-rs-knapsack` | [input](cases/32-rs-knapsack/input.rs) | 12.4 KB -> 10.5 KB (-16%) | 0.0%<br>[output](cases/32-rs-knapsack/output-noccr.rs) - [diff](cases/32-rs-knapsack/compression-noccr.diff) | 14.9%<br>[output](cases/32-rs-knapsack/output.rs) - [diff](cases/32-rs-knapsack/compression.diff) | 0.834 ms |
+| `40-java-lru-cache` | [input](cases/40-java-lru-cache/input.java) | 6.7 KB -> 5.7 KB (-15%) | 0.0%<br>[output](cases/40-java-lru-cache/output-noccr.java) - [diff](cases/40-java-lru-cache/compression-noccr.diff) | 13.9%<br>[output](cases/40-java-lru-cache/output.java) - [diff](cases/40-java-lru-cache/compression.diff) | 0.043 ms |
+| `20-java-gson-gson` | [input](cases/20-java-gson-gson/input.java) | 68.5 KB -> 59.0 KB (-14%) | 0.0%<br>[output](cases/20-java-gson-gson/output-noccr.java) - [diff](cases/20-java-gson-gson/compression-noccr.diff) | 13.8%<br>[output](cases/20-java-gson-gson/output.java) - [diff](cases/20-java-gson-gson/compression.diff) | 0.271 ms |
+| `11-go-gin-context` | [input](cases/11-go-gin-context/input.go) | 39.0 KB -> 34.1 KB (-13%) | 0.0%<br>[output](cases/11-go-gin-context/output-noccr.go) - [diff](cases/11-go-gin-context/compression-noccr.diff) | 12.6%<br>[output](cases/11-go-gin-context/output.go) - [diff](cases/11-go-gin-context/compression.diff) | 0.213 ms |
+| `38-ts-heap` | [input](cases/38-ts-heap/input.ts) | 5.7 KB -> 5.0 KB (-12%) | 0.0%<br>[output](cases/38-ts-heap/output-noccr.ts) - [diff](cases/38-ts-heap/compression-noccr.diff) | 10.6%<br>[output](cases/38-ts-heap/output.ts) - [diff](cases/38-ts-heap/compression.diff) | 0.330 ms |
+| `21-java-guava-ordering` | [input](cases/21-java-guava-ordering/input.java) | 40.4 KB -> 37.8 KB (-6%) | 0.0%<br>[output](cases/21-java-guava-ordering/output-noccr.java) - [diff](cases/21-java-guava-ordering/compression-noccr.diff) | 6.2%<br>[output](cases/21-java-guava-ordering/output.java) - [diff](cases/21-java-guava-ordering/compression.diff) | 0.146 ms |
+| `18-rs-tokio-builder` | [input](cases/18-rs-tokio-builder/input.rs) | 48.2 KB -> 45.6 KB (-5%) | 0.0%<br>[output](cases/18-rs-tokio-builder/output-noccr.rs) - [diff](cases/18-rs-tokio-builder/compression-noccr.diff) | 5.3%<br>[output](cases/18-rs-tokio-builder/output.rs) - [diff](cases/18-rs-tokio-builder/compression.diff) | 1.736 ms |
+| `47-kt-indexed-priority-queue` | [input](cases/47-kt-indexed-priority-queue/input.kt) | 7.0 KB -> 6.7 KB (-5%) | 0.0%<br>[output](cases/47-kt-indexed-priority-queue/output-noccr.kt) - [diff](cases/47-kt-indexed-priority-queue/compression-noccr.diff) | 3.4%<br>[output](cases/47-kt-indexed-priority-queue/output.kt) - [diff](cases/47-kt-indexed-priority-queue/compression.diff) | 0.036 ms |
+| `22-kt-okhttp-client` | [input](cases/22-kt-okhttp-client/input.kt) | 44.0 KB -> 41.9 KB (-5%) | 0.0%<br>[output](cases/22-kt-okhttp-client/output-noccr.kt) - [diff](cases/22-kt-okhttp-client/compression-noccr.diff) | 4.6%<br>[output](cases/22-kt-okhttp-client/output.kt) - [diff](cases/22-kt-okhttp-client/compression.diff) | 0.160 ms |
+| `43-c-trie` | [input](cases/43-c-trie/input.c) | 5.2 KB -> 5.0 KB (-4%) | 0.0%<br>[output](cases/43-c-trie/output-noccr.c) - [diff](cases/43-c-trie/compression-noccr.diff) | 2.4%<br>[output](cases/43-c-trie/output.c) - [diff](cases/43-c-trie/compression.diff) | 0.028 ms |
+| `05-js-axios-core` | [input](cases/05-js-axios-core/input.js) | 6.4 KB -> 6.3 KB (-1%) | 0.0%<br>[output](cases/05-js-axios-core/output-noccr.js) - [diff](cases/05-js-axios-core/compression-noccr.diff) | 0.0%<br>[output](cases/05-js-axios-core/output.js) - [diff](cases/05-js-axios-core/compression.diff) | 0.316 ms |
+| `44-rb-avl-tree` | [input](cases/44-rb-avl-tree/input.rb) | 7.5 KB -> 7.5 KB (-0%) | 0.0%<br>[output](cases/44-rb-avl-tree/output-noccr.rb) - [diff](cases/44-rb-avl-tree/compression-noccr.diff) | 0.0%<br>[output](cases/44-rb-avl-tree/output.rb) - [diff](cases/44-rb-avl-tree/compression.diff) | 0.034 ms |
+| `04-js-express-application` | [input](cases/04-js-express-application/input.js) | 14.6 KB -> 14.6 KB (-0%) | 0.0%<br>[output](cases/04-js-express-application/output-noccr.js) - [diff](cases/04-js-express-application/compression-noccr.diff) | 0.0%<br>[output](cases/04-js-express-application/output.js) - [diff](cases/04-js-express-application/compression.diff) | 0.757 ms |
+| `23-rb-rails-cache` | [input](cases/23-rb-rails-cache/input.rb) | 42.6 KB -> 42.6 KB (-0%) | 0.0%<br>[output](cases/23-rb-rails-cache/output-noccr.rb) - [diff](cases/23-rb-rails-cache/compression-noccr.diff) | 0.0%<br>[output](cases/23-rb-rails-cache/output.rb) - [diff](cases/23-rb-rails-cache/compression.diff) | 0.135 ms |
 
 ## What TinyJuice Is Doing
 
-Real-world source compresses the same way as the synthetic corpus: signatures, imports, and top-level structure stay; deep bodies collapse behind per-block retrieval tokens. Languages without a tree-sitter grammar use the brace-depth heuristic; brace-less languages (Ruby) pass through.
+Real-world source compresses the same way as the synthetic corpus: signatures, imports, and top-level structure stay; deep bodies collapse behind per-block retrieval tokens. Languages without a tree-sitter grammar use the brace-depth heuristic; brace-less languages (Ruby) pass through. Because a collapsed body is only recoverable through CCR, Pass 1 (no CCR) passes every source file through untouched; collapse happens only in Pass 2.
 
 ## Syntax-Aware Samples
 
@@ -784,96 +784,6 @@ class BellmanFord /*
 
 ```
 
-### `25-swift-argparser-argumentset`
-
-- [Full input](cases/25-swift-argparser-argumentset/input.swift)
-- [Output with CCR](cases/25-swift-argparser-argumentset/output.swift) - [diff](cases/25-swift-argparser-argumentset/compression.diff)
-- [Output without CCR](cases/25-swift-argparser-argumentset/output-noccr.swift) - [diff](cases/25-swift-argparser-argumentset/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-//===----------------------------------------------------------*- swift -*-===//
-//
-// This source file is part of the Swift Argument Parser open source project
-//
-// Copyright (c) 2020 Apple Inc. and the Swift project authors
-// Licensed under Apache License v2.0 with Runtime Library Exception
-//
-// See https://swift.org/LICENSE.txt for license information
-//
-//===----------------------------------------------------------------------===//
-
-/// A nested tree of argument definitions.
-///
-/// The main reason for having a nested representation is to build help output.
-/// For output like:
-///
-///     Usage: mytool [-v | -f] <input> <output>
-///
-/// The `-v | -f` part is one *set* that’s optional, `<input> <output>` is
-/// another. Both of these can then be combined into a third set.
-struct ArgumentSet {
-  var content: [ArgumentDefinition] = []
-  var namePositions: [Name: Int] = [:]
-  
-  init<S: Sequence>(_ arguments: S) where S.Element == ArgumentDefinition {
-    self.content = Array(arguments)
-    self.namePositions = Dictionary(
-      content.enumerated().flatMap { i, arg in arg.names.map { ($0.nameToMatch, i) } },
-      uniquingKeysWith: { first, _ in first })
-  }
-  
-  init() {}
-  
-  init(_ arg: ArgumentDefinition) {
-    self.init([arg])
-  }
-
-```
-
-Output excerpt:
-
-```text
-//===----------------------------------------------------------*- swift -*-===//
-//
-// This source file is part of the Swift Argument Parser open source project
-//
-// Copyright (c) 2020 Apple Inc. and the Swift project authors
-// Licensed under Apache License v2.0 with Runtime Library Exception
-//
-// See https://swift.org/LICENSE.txt for license information
-//
-//===----------------------------------------------------------------------===//
-
-/// A nested tree of argument definitions.
-///
-/// The main reason for having a nested representation is to build help output.
-/// For output like:
-///
-///     Usage: mytool [-v | -f] <input> <output>
-///
-/// The `-v | -f` part is one *set* that’s optional, `<input> <output>` is
-/// another. Both of these can then be combined into a third set.
-struct ArgumentSet {
-  var content: [ArgumentDefinition] = []
-  var namePositions: [Name: Int] = [:]
-  
-  init<S: Sequence>(_ arguments: S) where S.Element == ArgumentDefinition {
-    self.content = Array(arguments)
-    self.namePositions = Dictionary(
-      content.enumerated().flatMap { i, arg in arg.names.map { ($0.nameToMatch, i) } },
-      uniquingKeysWith: { first, _ in first })
-  }
-  
-  init() {}
-  
-  init(_ arg: ArgumentDefinition) {
-    self.init([arg])
-  }
-
-```
-
 ### `16-c-redis-sds`
 
 - [Full input](cases/16-c-redis-sds/input.c)
@@ -961,6 +871,96 @@ Output excerpt:
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+```
+
+### `25-swift-argparser-argumentset`
+
+- [Full input](cases/25-swift-argparser-argumentset/input.swift)
+- [Output with CCR](cases/25-swift-argparser-argumentset/output.swift) - [diff](cases/25-swift-argparser-argumentset/compression.diff)
+- [Output without CCR](cases/25-swift-argparser-argumentset/output-noccr.swift) - [diff](cases/25-swift-argparser-argumentset/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+//===----------------------------------------------------------*- swift -*-===//
+//
+// This source file is part of the Swift Argument Parser open source project
+//
+// Copyright (c) 2020 Apple Inc. and the Swift project authors
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+//
+//===----------------------------------------------------------------------===//
+
+/// A nested tree of argument definitions.
+///
+/// The main reason for having a nested representation is to build help output.
+/// For output like:
+///
+///     Usage: mytool [-v | -f] <input> <output>
+///
+/// The `-v | -f` part is one *set* that’s optional, `<input> <output>` is
+/// another. Both of these can then be combined into a third set.
+struct ArgumentSet {
+  var content: [ArgumentDefinition] = []
+  var namePositions: [Name: Int] = [:]
+  
+  init<S: Sequence>(_ arguments: S) where S.Element == ArgumentDefinition {
+    self.content = Array(arguments)
+    self.namePositions = Dictionary(
+      content.enumerated().flatMap { i, arg in arg.names.map { ($0.nameToMatch, i) } },
+      uniquingKeysWith: { first, _ in first })
+  }
+  
+  init() {}
+  
+  init(_ arg: ArgumentDefinition) {
+    self.init([arg])
+  }
+
+```
+
+Output excerpt:
+
+```text
+//===----------------------------------------------------------*- swift -*-===//
+//
+// This source file is part of the Swift Argument Parser open source project
+//
+// Copyright (c) 2020 Apple Inc. and the Swift project authors
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+//
+//===----------------------------------------------------------------------===//
+
+/// A nested tree of argument definitions.
+///
+/// The main reason for having a nested representation is to build help output.
+/// For output like:
+///
+///     Usage: mytool [-v | -f] <input> <output>
+///
+/// The `-v | -f` part is one *set* that’s optional, `<input> <output>` is
+/// another. Both of these can then be combined into a third set.
+struct ArgumentSet {
+  var content: [ArgumentDefinition] = []
+  var namePositions: [Name: Int] = [:]
+  
+  init<S: Sequence>(_ arguments: S) where S.Element == ArgumentDefinition {
+    self.content = Array(arguments)
+    self.namePositions = Dictionary(
+      content.enumerated().flatMap { i, arg in arg.names.map { ($0.nameToMatch, i) } },
+      uniquingKeysWith: { first, _ in first })
+  }
+  
+  init() {}
+  
+  init(_ arg: ArgumentDefinition) {
+    self.init([arg])
+  }
 
 ```
 
@@ -1231,186 +1231,6 @@ from .models import (  # noqa: F401
     DEFAULT_REDIRECT_LIMIT,
     REDIRECT_STATI,
     PreparedRequest,
-
-```
-
-### `42-js-kruskal-mst`
-
-- [Full input](cases/42-js-kruskal-mst/input.js)
-- [Output with CCR](cases/42-js-kruskal-mst/output.js) - [diff](cases/42-js-kruskal-mst/compression.diff)
-- [Output without CCR](cases/42-js-kruskal-mst/output-noccr.js) - [diff](cases/42-js-kruskal-mst/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-class DisjointSetTreeNode {
-  // Disjoint Set Node to store the parent and rank
-  constructor(key) {
-    this.key = key
-    this.parent = this
-    this.rank = 0
-  }
-}
-
-class DisjointSetTree {
-  // Disjoint Set DataStructure
-  constructor() {
-    // map to from node name to the node object
-    this.map = {}
-  }
-
-  makeSet(x) {
-    // Function to create a new set with x as its member
-    this.map[x] = new DisjointSetTreeNode(x)
-  }
-
-  findSet(x) {
-    // Function to find the set x belongs to (with path-compression)
-    if (this.map[x] !== this.map[x].parent) {
-      this.map[x].parent = this.findSet(this.map[x].parent.key)
-    }
-    return this.map[x].parent
-  }
-
-  union(x, y) {
-    // Function to merge 2 disjoint sets
-    this.link(this.findSet(x), this.findSet(y))
-  }
-
-  link(x, y) {
-    // Helper function for union operation
-
-```
-
-Output excerpt:
-
-```text
-class DisjointSetTreeNode {
-  // Disjoint Set Node to store the parent and rank
-  constructor(key) {
-    this.key = key
-    this.parent = this
-    this.rank = 0
-  }
-}
-
-class DisjointSetTree {
-  // Disjoint Set DataStructure
-  constructor() {
-    // map to from node name to the node object
-    this.map = {}
-  }
-
-  makeSet(x) {
-    // Function to create a new set with x as its member
-    this.map[x] = new DisjointSetTreeNode(x)
-  }
-
-  findSet(x) {
-    // Function to find the set x belongs to (with path-compression)
-    if (this.map[x] !== this.map[x].parent) {
-      this.map[x].parent = this.findSet(this.map[x].parent.key)
-    }
-    return this.map[x].parent
-  }
-
-  union(x, y) {
-    // Function to merge 2 disjoint sets
-    this.link(this.findSet(x), this.findSet(y))
-  }
-
-  link(x, y) { … 11 line(s) … ⟦tj:9f99af8cff2f922138fd7f3a02ff748b⟧ }
-}
-
-```
-
-### `35-go-segment-tree`
-
-- [Full input](cases/35-go-segment-tree/input.go)
-- [Output with CCR](cases/35-go-segment-tree/output.go) - [diff](cases/35-go-segment-tree/compression.diff)
-- [Output without CCR](cases/35-go-segment-tree/output-noccr.go) - [diff](cases/35-go-segment-tree/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-// Segment Tree Data Structure for efficient range queries on an array of integers.
-// It can query the sum and update the elements to a new value of any range of the array.
-// Build: O(n*log(n))
-// Query: O(log(n))
-// Update: O(log(n))
-// reference: https://cp-algorithms.com/data_structures/segment_tree.html
-package segmenttree
-
-import (
-	"github.com/TheAlgorithms/Go/math/max"
-	"github.com/TheAlgorithms/Go/math/min"
-)
-
-const emptyLazyNode = 0
-
-// SegmentTree represents the data structure of a segment tree with lazy propagation
-type SegmentTree struct {
-	Array       []int // The original array
-	SegmentTree []int // Stores the sum of different ranges
-	LazyTree    []int // Stores the values of lazy propagation
-}
-
-// Propagate propagates the lazy updates to the child nodes
-func (s *SegmentTree) Propagate(node int, leftNode int, rightNode int) {
-	if s.LazyTree[node] != emptyLazyNode {
-		//add lazy node value multiplied by (right-left+1), which represents all interval
-		//this is the same of adding a value on each node
-		s.SegmentTree[node] += (rightNode - leftNode + 1) * s.LazyTree[node]
-
-		if leftNode == rightNode {
-			//leaf node
-			s.Array[leftNode] += s.LazyTree[node]
-		} else {
-			//propagate lazy node value for children nodes
-			//may propagate multiple times, children nodes should accumulate lazy node value
-			s.LazyTree[2*node] += s.LazyTree[node]
-
-```
-
-Output excerpt:
-
-```text
-// Segment Tree Data Structure for efficient range queries on an array of integers.
-// It can query the sum and update the elements to a new value of any range of the array.
-// Build: O(n*log(n))
-// Query: O(log(n))
-// Update: O(log(n))
-// reference: https://cp-algorithms.com/data_structures/segment_tree.html
-package segmenttree
-
-import (
-	"github.com/TheAlgorithms/Go/math/max"
-	"github.com/TheAlgorithms/Go/math/min"
-)
-
-const emptyLazyNode = 0
-
-// SegmentTree represents the data structure of a segment tree with lazy propagation
-type SegmentTree struct {
-	Array       []int // The original array
-	SegmentTree []int // Stores the sum of different ranges
-	LazyTree    []int // Stores the values of lazy propagation
-}
-
-// Propagate propagates the lazy updates to the child nodes
-func (s *SegmentTree) Propagate(node int, leftNode int, rightNode int) {
-	if s.LazyTree[node] != emptyLazyNode {
-		//add lazy node value multiplied by (right-left+1), which represents all interval
-	{ … 15 line(s) … ⟦tj:275c6a6ade52bfab833e0cef116197e2⟧ }
-	}
-
-// Query returns the sum of elements of the array in the interval [firstIndex, leftIndex].
-// node, leftNode and rightNode should always start with 1, 0 and len(Array)-1, respectively.
-func (s *SegmentTree) Query(node int, leftNode int, rightNode int, firstIndex int, lastIndex int) int {
-	if (firstIndex > lastIndex) || (leftNode > rightNode) {
-		//outside the interval
-	{ … 17 line(s) … ⟦tj:c4903fc762fa139e9c248aa15c751f78⟧ }
-	return leftNodeSum + rightNodeSum
 
 ```
 
@@ -1774,183 +1594,93 @@ function _validateUri(ret: URI, _strict?: boolean): void {
 
 ```
 
-### `39-ts-binary-search-tree`
+### `35-go-segment-tree`
 
-- [Full input](cases/39-ts-binary-search-tree/input.ts)
-- [Output with CCR](cases/39-ts-binary-search-tree/output.ts) - [diff](cases/39-ts-binary-search-tree/compression.diff)
-- [Output without CCR](cases/39-ts-binary-search-tree/output-noccr.ts) - [diff](cases/39-ts-binary-search-tree/compression-noccr.diff)
+- [Full input](cases/35-go-segment-tree/input.go)
+- [Output with CCR](cases/35-go-segment-tree/output.go) - [diff](cases/35-go-segment-tree/compression.diff)
+- [Output without CCR](cases/35-go-segment-tree/output-noccr.go) - [diff](cases/35-go-segment-tree/compression-noccr.diff)
 
 Input excerpt:
 
 ```text
-/**
- * Represents a node of a binary search tree.
- *
- * @template T The type of the value stored in the node.
- */
-class TreeNode<T> {
-  constructor(
-    public data: T,
-    public leftChild?: TreeNode<T>,
-    public rightChild?: TreeNode<T>
-  ) {}
+// Segment Tree Data Structure for efficient range queries on an array of integers.
+// It can query the sum and update the elements to a new value of any range of the array.
+// Build: O(n*log(n))
+// Query: O(log(n))
+// Update: O(log(n))
+// reference: https://cp-algorithms.com/data_structures/segment_tree.html
+package segmenttree
+
+import (
+	"github.com/TheAlgorithms/Go/math/max"
+	"github.com/TheAlgorithms/Go/math/min"
+)
+
+const emptyLazyNode = 0
+
+// SegmentTree represents the data structure of a segment tree with lazy propagation
+type SegmentTree struct {
+	Array       []int // The original array
+	SegmentTree []int // Stores the sum of different ranges
+	LazyTree    []int // Stores the values of lazy propagation
 }
 
-/**
- * An implementation of a binary search tree.
- *
- * A binary tree is a tree with only two children per node. A binary search tree on top sorts the children according
- * to following rules:
- * - left child < parent node
- * - right child > parent node
- * - all children on the left side < root node
- * - all children on the right side > root node
- *
- * For profound information about trees
- * @see https://www.geeksforgeeks.org/introduction-to-tree-data-structure-and-algorithm-tutorials/
- *
- * @template T The data type of the values in the binary tree.
- */
-export class BinarySearchTree<T> {
-  rootNode?: TreeNode<T>
+// Propagate propagates the lazy updates to the child nodes
+func (s *SegmentTree) Propagate(node int, leftNode int, rightNode int) {
+	if s.LazyTree[node] != emptyLazyNode {
+		//add lazy node value multiplied by (right-left+1), which represents all interval
+		//this is the same of adding a value on each node
+		s.SegmentTree[node] += (rightNode - leftNode + 1) * s.LazyTree[node]
 
-  /**
-   * Instantiates the binary search tree.
-   *
-   * @param rootNode The root node.
-   */
+		if leftNode == rightNode {
+			//leaf node
+			s.Array[leftNode] += s.LazyTree[node]
+		} else {
+			//propagate lazy node value for children nodes
+			//may propagate multiple times, children nodes should accumulate lazy node value
+			s.LazyTree[2*node] += s.LazyTree[node]
 
 ```
 
 Output excerpt:
 
 ```text
-/**
- * Represents a node of a binary search tree.
- *
- * @template T The type of the value stored in the node.
- */
-class TreeNode<T> {
-  constructor(
-    public data: T,
-    public leftChild?: TreeNode<T>,
-    public rightChild?: TreeNode<T>
-  ) {}
+// Segment Tree Data Structure for efficient range queries on an array of integers.
+// It can query the sum and update the elements to a new value of any range of the array.
+// Build: O(n*log(n))
+// Query: O(log(n))
+// Update: O(log(n))
+// reference: https://cp-algorithms.com/data_structures/segment_tree.html
+package segmenttree
+
+import (
+	"github.com/TheAlgorithms/Go/math/max"
+	"github.com/TheAlgorithms/Go/math/min"
+)
+
+const emptyLazyNode = 0
+
+// SegmentTree represents the data structure of a segment tree with lazy propagation
+type SegmentTree struct {
+	Array       []int // The original array
+	SegmentTree []int // Stores the sum of different ranges
+	LazyTree    []int // Stores the values of lazy propagation
 }
 
-/**
- * An implementation of a binary search tree.
- *
- * A binary tree is a tree with only two children per node. A binary search tree on top sorts the children according
- * to following rules:
- * - left child < parent node
- * - right child > parent node
- * - all children on the left side < root node
- * - all children on the right side > root node
- *
- * For profound information about trees
- * @see https://www.geeksforgeeks.org/introduction-to-tree-data-structure-and-algorithm-tutorials/
- *
- * @template T The data type of the values in the binary tree.
- */
-export class BinarySearchTree<T> {
-  rootNode?: TreeNode<T>
+// Propagate propagates the lazy updates to the child nodes
+func (s *SegmentTree) Propagate(node int, leftNode int, rightNode int) {
+	if s.LazyTree[node] != emptyLazyNode {
+		//add lazy node value multiplied by (right-left+1), which represents all interval
+	{ … 15 line(s) … ⟦tj:275c6a6ade52bfab833e0cef116197e2⟧ }
+	}
 
-  /**
-   * Instantiates the binary search tree.
-   *
-   * @param rootNode The root node.
-   */
-
-```
-
-### `31-rs-huffman-encoding`
-
-- [Full input](cases/31-rs-huffman-encoding/input.rs)
-- [Output with CCR](cases/31-rs-huffman-encoding/output.rs) - [diff](cases/31-rs-huffman-encoding/compression.diff)
-- [Output without CCR](cases/31-rs-huffman-encoding/output-noccr.rs) - [diff](cases/31-rs-huffman-encoding/compression-noccr.diff)
-
-Input excerpt:
-
-```rust
-//! Huffman Encoding implementation
-//!
-//! Huffman coding is a lossless data compression algorithm that assigns variable-length codes
-//! to characters based on their frequency of occurrence. Characters that occur more frequently
-//! are assigned shorter codes, while less frequent characters get longer codes.
-//!
-//! # Algorithm Overview
-//!
-//! 1. Count the frequency of each character in the input
-//! 2. Build a min-heap (priority queue) of nodes based on frequency
-//! 3. Build the Huffman tree by repeatedly:
-//!    - Remove two nodes with minimum frequency
-//!    - Create a parent node with combined frequency
-//!    - Insert the parent back into the heap
-//! 4. Traverse the tree to assign binary codes to each character
-//! 5. Encode the input using the generated codes
-//!
-//! # Time Complexity
-//!
-//! - Building frequency map: O(n) where n is input length
-//! - Building Huffman tree: O(m log m) where m is number of unique characters
-//! - Encoding: O(n)
-//!
-//! # Usage
-//!
-//! As a library:
-//! ` ` `no_run
-//! use the_algorithms_rust::compression::huffman_encode;
-//!
-//! let text = "hello world";
-//! let (encoded, codes) = huffman_encode(text);
-//! println!("Original: {}", text);
-//! println!("Encoded: {}", encoded);
-//! ` ` `
-//!
-//! As a command-line tool:
-
-```
-
-Output excerpt:
-
-```rust
-//! Huffman Encoding implementation
-//!
-//! Huffman coding is a lossless data compression algorithm that assigns variable-length codes
-//! to characters based on their frequency of occurrence. Characters that occur more frequently
-//! are assigned shorter codes, while less frequent characters get longer codes.
-//!
-//! # Algorithm Overview
-//!
-//! 1. Count the frequency of each character in the input
-//! 2. Build a min-heap (priority queue) of nodes based on frequency
-//! 3. Build the Huffman tree by repeatedly:
-//!    - Remove two nodes with minimum frequency
-//!    - Create a parent node with combined frequency
-//!    - Insert the parent back into the heap
-//! 4. Traverse the tree to assign binary codes to each character
-//! 5. Encode the input using the generated codes
-//!
-//! # Time Complexity
-//!
-//! - Building frequency map: O(n) where n is input length
-//! - Building Huffman tree: O(m log m) where m is number of unique characters
-//! - Encoding: O(n)
-//!
-//! # Usage
-//!
-//! As a library:
-//! ` ` `no_run
-//! use the_algorithms_rust::compression::huffman_encode;
-//!
-//! let text = "hello world";
-//! let (encoded, codes) = huffman_encode(text);
-//! println!("Original: {}", text);
-//! println!("Encoded: {}", encoded);
-//! ` ` `
-//!
-//! As a command-line tool:
+// Query returns the sum of elements of the array in the interval [firstIndex, leftIndex].
+// node, leftNode and rightNode should always start with 1, 0 and len(Array)-1, respectively.
+func (s *SegmentTree) Query(node int, leftNode int, rightNode int, firstIndex int, lastIndex int) int {
+	if (firstIndex > lastIndex) || (leftNode > rightNode) {
+		//outside the interval
+	{ … 17 line(s) … ⟦tj:c4903fc762fa139e9c248aa15c751f78⟧ }
+	return leftNodeSum + rightNodeSum
 
 ```
 
@@ -2044,6 +1774,186 @@ impl DirEntry {
 
 ```
 
+### `42-js-kruskal-mst`
+
+- [Full input](cases/42-js-kruskal-mst/input.js)
+- [Output with CCR](cases/42-js-kruskal-mst/output.js) - [diff](cases/42-js-kruskal-mst/compression.diff)
+- [Output without CCR](cases/42-js-kruskal-mst/output-noccr.js) - [diff](cases/42-js-kruskal-mst/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+class DisjointSetTreeNode {
+  // Disjoint Set Node to store the parent and rank
+  constructor(key) {
+    this.key = key
+    this.parent = this
+    this.rank = 0
+  }
+}
+
+class DisjointSetTree {
+  // Disjoint Set DataStructure
+  constructor() {
+    // map to from node name to the node object
+    this.map = {}
+  }
+
+  makeSet(x) {
+    // Function to create a new set with x as its member
+    this.map[x] = new DisjointSetTreeNode(x)
+  }
+
+  findSet(x) {
+    // Function to find the set x belongs to (with path-compression)
+    if (this.map[x] !== this.map[x].parent) {
+      this.map[x].parent = this.findSet(this.map[x].parent.key)
+    }
+    return this.map[x].parent
+  }
+
+  union(x, y) {
+    // Function to merge 2 disjoint sets
+    this.link(this.findSet(x), this.findSet(y))
+  }
+
+  link(x, y) {
+    // Helper function for union operation
+
+```
+
+Output excerpt:
+
+```text
+class DisjointSetTreeNode {
+  // Disjoint Set Node to store the parent and rank
+  constructor(key) {
+    this.key = key
+    this.parent = this
+    this.rank = 0
+  }
+}
+
+class DisjointSetTree {
+  // Disjoint Set DataStructure
+  constructor() {
+    // map to from node name to the node object
+    this.map = {}
+  }
+
+  makeSet(x) {
+    // Function to create a new set with x as its member
+    this.map[x] = new DisjointSetTreeNode(x)
+  }
+
+  findSet(x) {
+    // Function to find the set x belongs to (with path-compression)
+    if (this.map[x] !== this.map[x].parent) {
+      this.map[x].parent = this.findSet(this.map[x].parent.key)
+    }
+    return this.map[x].parent
+  }
+
+  union(x, y) {
+    // Function to merge 2 disjoint sets
+    this.link(this.findSet(x), this.findSet(y))
+  }
+
+  link(x, y) { … 11 line(s) … ⟦tj:9f99af8cff2f922138fd7f3a02ff748b⟧ }
+}
+
+```
+
+### `31-rs-huffman-encoding`
+
+- [Full input](cases/31-rs-huffman-encoding/input.rs)
+- [Output with CCR](cases/31-rs-huffman-encoding/output.rs) - [diff](cases/31-rs-huffman-encoding/compression.diff)
+- [Output without CCR](cases/31-rs-huffman-encoding/output-noccr.rs) - [diff](cases/31-rs-huffman-encoding/compression-noccr.diff)
+
+Input excerpt:
+
+```rust
+//! Huffman Encoding implementation
+//!
+//! Huffman coding is a lossless data compression algorithm that assigns variable-length codes
+//! to characters based on their frequency of occurrence. Characters that occur more frequently
+//! are assigned shorter codes, while less frequent characters get longer codes.
+//!
+//! # Algorithm Overview
+//!
+//! 1. Count the frequency of each character in the input
+//! 2. Build a min-heap (priority queue) of nodes based on frequency
+//! 3. Build the Huffman tree by repeatedly:
+//!    - Remove two nodes with minimum frequency
+//!    - Create a parent node with combined frequency
+//!    - Insert the parent back into the heap
+//! 4. Traverse the tree to assign binary codes to each character
+//! 5. Encode the input using the generated codes
+//!
+//! # Time Complexity
+//!
+//! - Building frequency map: O(n) where n is input length
+//! - Building Huffman tree: O(m log m) where m is number of unique characters
+//! - Encoding: O(n)
+//!
+//! # Usage
+//!
+//! As a library:
+//! ` ` `no_run
+//! use the_algorithms_rust::compression::huffman_encode;
+//!
+//! let text = "hello world";
+//! let (encoded, codes) = huffman_encode(text);
+//! println!("Original: {}", text);
+//! println!("Encoded: {}", encoded);
+//! ` ` `
+//!
+//! As a command-line tool:
+
+```
+
+Output excerpt:
+
+```rust
+//! Huffman Encoding implementation
+//!
+//! Huffman coding is a lossless data compression algorithm that assigns variable-length codes
+//! to characters based on their frequency of occurrence. Characters that occur more frequently
+//! are assigned shorter codes, while less frequent characters get longer codes.
+//!
+//! # Algorithm Overview
+//!
+//! 1. Count the frequency of each character in the input
+//! 2. Build a min-heap (priority queue) of nodes based on frequency
+//! 3. Build the Huffman tree by repeatedly:
+//!    - Remove two nodes with minimum frequency
+//!    - Create a parent node with combined frequency
+//!    - Insert the parent back into the heap
+//! 4. Traverse the tree to assign binary codes to each character
+//! 5. Encode the input using the generated codes
+//!
+//! # Time Complexity
+//!
+//! - Building frequency map: O(n) where n is input length
+//! - Building Huffman tree: O(m log m) where m is number of unique characters
+//! - Encoding: O(n)
+//!
+//! # Usage
+//!
+//! As a library:
+//! ` ` `no_run
+//! use the_algorithms_rust::compression::huffman_encode;
+//!
+//! let text = "hello world";
+//! let (encoded, codes) = huffman_encode(text);
+//! println!("Original: {}", text);
+//! println!("Encoded: {}", encoded);
+//! ` ` `
+//!
+//! As a command-line tool:
+
+```
+
 ### `37-cpp-random-pivot-quicksort`
 
 - [Full input](cases/37-cpp-random-pivot-quicksort/input.cpp)
@@ -2131,6 +2041,186 @@ Output excerpt:
  * to < end). (Inside the loop) :-
  *                   * Check if the current element (arr[i]) is less than the
  * pivot element in each iteration.
+
+```
+
+### `08-py-flask-app`
+
+- [Full input](cases/08-py-flask-app/input.py)
+- [Output with CCR](cases/08-py-flask-app/output.py) - [diff](cases/08-py-flask-app/compression.diff)
+- [Output without CCR](cases/08-py-flask-app/output-noccr.py) - [diff](cases/08-py-flask-app/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+from __future__ import annotations
+
+import collections.abc as cabc
+import os
+import sys
+import typing as t
+import weakref
+from datetime import timedelta
+from inspect import iscoroutinefunction
+from itertools import chain
+from types import TracebackType
+from urllib.parse import quote as _url_quote
+
+import click
+from werkzeug.datastructures import Headers
+from werkzeug.datastructures import ImmutableDict
+from werkzeug.exceptions import BadRequestKeyError
+from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import InternalServerError
+from werkzeug.routing import BuildError
+from werkzeug.routing import MapAdapter
+from werkzeug.routing import RequestRedirect
+from werkzeug.routing import RoutingException
+from werkzeug.routing import Rule
+from werkzeug.serving import is_running_from_reloader
+from werkzeug.wrappers import Response as BaseResponse
+
+from . import cli
+from . import typing as ft
+from .ctx import AppContext
+from .ctx import RequestContext
+from .globals import _cv_app
+from .globals import _cv_request
+from .globals import current_app
+from .globals import g
+from .globals import request
+
+```
+
+Output excerpt:
+
+```text
+from __future__ import annotations
+
+import collections.abc as cabc
+import os
+import sys
+import typing as t
+import weakref
+from datetime import timedelta
+from inspect import iscoroutinefunction
+from itertools import chain
+from types import TracebackType
+from urllib.parse import quote as _url_quote
+
+import click
+from werkzeug.datastructures import Headers
+from werkzeug.datastructures import ImmutableDict
+from werkzeug.exceptions import BadRequestKeyError
+from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import InternalServerError
+from werkzeug.routing import BuildError
+from werkzeug.routing import MapAdapter
+from werkzeug.routing import RequestRedirect
+from werkzeug.routing import RoutingException
+from werkzeug.routing import Rule
+from werkzeug.serving import is_running_from_reloader
+from werkzeug.wrappers import Response as BaseResponse
+
+from . import cli
+from . import typing as ft
+from .ctx import AppContext
+from .ctx import RequestContext
+from .globals import _cv_app
+from .globals import _cv_request
+from .globals import current_app
+from .globals import g
+from .globals import request
+
+```
+
+### `39-ts-binary-search-tree`
+
+- [Full input](cases/39-ts-binary-search-tree/input.ts)
+- [Output with CCR](cases/39-ts-binary-search-tree/output.ts) - [diff](cases/39-ts-binary-search-tree/compression.diff)
+- [Output without CCR](cases/39-ts-binary-search-tree/output-noccr.ts) - [diff](cases/39-ts-binary-search-tree/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+/**
+ * Represents a node of a binary search tree.
+ *
+ * @template T The type of the value stored in the node.
+ */
+class TreeNode<T> {
+  constructor(
+    public data: T,
+    public leftChild?: TreeNode<T>,
+    public rightChild?: TreeNode<T>
+  ) {}
+}
+
+/**
+ * An implementation of a binary search tree.
+ *
+ * A binary tree is a tree with only two children per node. A binary search tree on top sorts the children according
+ * to following rules:
+ * - left child < parent node
+ * - right child > parent node
+ * - all children on the left side < root node
+ * - all children on the right side > root node
+ *
+ * For profound information about trees
+ * @see https://www.geeksforgeeks.org/introduction-to-tree-data-structure-and-algorithm-tutorials/
+ *
+ * @template T The data type of the values in the binary tree.
+ */
+export class BinarySearchTree<T> {
+  rootNode?: TreeNode<T>
+
+  /**
+   * Instantiates the binary search tree.
+   *
+   * @param rootNode The root node.
+   */
+
+```
+
+Output excerpt:
+
+```text
+/**
+ * Represents a node of a binary search tree.
+ *
+ * @template T The type of the value stored in the node.
+ */
+class TreeNode<T> {
+  constructor(
+    public data: T,
+    public leftChild?: TreeNode<T>,
+    public rightChild?: TreeNode<T>
+  ) {}
+}
+
+/**
+ * An implementation of a binary search tree.
+ *
+ * A binary tree is a tree with only two children per node. A binary search tree on top sorts the children according
+ * to following rules:
+ * - left child < parent node
+ * - right child > parent node
+ * - all children on the left side < root node
+ * - all children on the right side > root node
+ *
+ * For profound information about trees
+ * @see https://www.geeksforgeeks.org/introduction-to-tree-data-structure-and-algorithm-tutorials/
+ *
+ * @template T The data type of the values in the binary tree.
+ */
+export class BinarySearchTree<T> {
+  rootNode?: TreeNode<T>
+
+  /**
+   * Instantiates the binary search tree.
+   *
+   * @param rootNode The root node.
+   */
 
 ```
 
@@ -2314,96 +2404,6 @@ class Paginator:
 
 ```
 
-### `08-py-flask-app`
-
-- [Full input](cases/08-py-flask-app/input.py)
-- [Output with CCR](cases/08-py-flask-app/output.py) - [diff](cases/08-py-flask-app/compression.diff)
-- [Output without CCR](cases/08-py-flask-app/output-noccr.py) - [diff](cases/08-py-flask-app/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-from __future__ import annotations
-
-import collections.abc as cabc
-import os
-import sys
-import typing as t
-import weakref
-from datetime import timedelta
-from inspect import iscoroutinefunction
-from itertools import chain
-from types import TracebackType
-from urllib.parse import quote as _url_quote
-
-import click
-from werkzeug.datastructures import Headers
-from werkzeug.datastructures import ImmutableDict
-from werkzeug.exceptions import BadRequestKeyError
-from werkzeug.exceptions import HTTPException
-from werkzeug.exceptions import InternalServerError
-from werkzeug.routing import BuildError
-from werkzeug.routing import MapAdapter
-from werkzeug.routing import RequestRedirect
-from werkzeug.routing import RoutingException
-from werkzeug.routing import Rule
-from werkzeug.serving import is_running_from_reloader
-from werkzeug.wrappers import Response as BaseResponse
-
-from . import cli
-from . import typing as ft
-from .ctx import AppContext
-from .ctx import RequestContext
-from .globals import _cv_app
-from .globals import _cv_request
-from .globals import current_app
-from .globals import g
-from .globals import request
-
-```
-
-Output excerpt:
-
-```text
-from __future__ import annotations
-
-import collections.abc as cabc
-import os
-import sys
-import typing as t
-import weakref
-from datetime import timedelta
-from inspect import iscoroutinefunction
-from itertools import chain
-from types import TracebackType
-from urllib.parse import quote as _url_quote
-
-import click
-from werkzeug.datastructures import Headers
-from werkzeug.datastructures import ImmutableDict
-from werkzeug.exceptions import BadRequestKeyError
-from werkzeug.exceptions import HTTPException
-from werkzeug.exceptions import InternalServerError
-from werkzeug.routing import BuildError
-from werkzeug.routing import MapAdapter
-from werkzeug.routing import RequestRedirect
-from werkzeug.routing import RoutingException
-from werkzeug.routing import Rule
-from werkzeug.serving import is_running_from_reloader
-from werkzeug.wrappers import Response as BaseResponse
-
-from . import cli
-from . import typing as ft
-from .ctx import AppContext
-from .ctx import RequestContext
-from .globals import _cv_app
-from .globals import _cv_request
-from .globals import current_app
-from .globals import g
-from .globals import request
-
-```
-
 ### `46-cs-topological-sort`
 
 - [Full input](cases/46-cs-topological-sort/input.cs)
@@ -2581,6 +2581,96 @@ host_validation_re = _lazy_re_compile(
     r"^([a-z0-9.-]+|\[[a-f0-9]*:[a-f0-9.:]+\])(?::([0-9]+))?$"
 )
 
+
+```
+
+### `24-php-laravel-container`
+
+- [Full input](cases/24-php-laravel-container/input.php)
+- [Output with CCR](cases/24-php-laravel-container/output.php) - [diff](cases/24-php-laravel-container/compression.diff)
+- [Output without CCR](cases/24-php-laravel-container/output-noccr.php) - [diff](cases/24-php-laravel-container/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+<?php
+
+namespace Illuminate\Container;
+
+use ArrayAccess;
+use Closure;
+use Exception;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Container\CircularDependencyException;
+use Illuminate\Contracts\Container\Container as ContainerContract;
+use LogicException;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionFunction;
+use ReflectionParameter;
+use TypeError;
+
+class Container implements ArrayAccess, ContainerContract
+{
+    /**
+     * The current globally available container (if any).
+     *
+     * @var static
+     */
+    protected static $instance;
+
+    /**
+     * An array of the types that have been resolved.
+     *
+     * @var bool[]
+     */
+    protected $resolved = [];
+
+    /**
+     * The container's bindings.
+     *
+
+```
+
+Output excerpt:
+
+```text
+<?php
+
+namespace Illuminate\Container;
+
+use ArrayAccess;
+use Closure;
+use Exception;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Container\CircularDependencyException;
+use Illuminate\Contracts\Container\Container as ContainerContract;
+use LogicException;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionFunction;
+use ReflectionParameter;
+use TypeError;
+
+class Container implements ArrayAccess, ContainerContract
+{
+    /**
+     * The current globally available container (if any).
+     *
+     * @var static
+     */
+    protected static $instance;
+
+    /**
+     * An array of the types that have been resolved.
+     *
+     * @var bool[]
+     */
+    protected $resolved = [];
+
+    /**
+     * The container's bindings.
+     *
 
 ```
 
@@ -2764,96 +2854,6 @@ class AVLTree
 
 ```
 
-### `24-php-laravel-container`
-
-- [Full input](cases/24-php-laravel-container/input.php)
-- [Output with CCR](cases/24-php-laravel-container/output.php) - [diff](cases/24-php-laravel-container/compression.diff)
-- [Output without CCR](cases/24-php-laravel-container/output-noccr.php) - [diff](cases/24-php-laravel-container/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-<?php
-
-namespace Illuminate\Container;
-
-use ArrayAccess;
-use Closure;
-use Exception;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Contracts\Container\CircularDependencyException;
-use Illuminate\Contracts\Container\Container as ContainerContract;
-use LogicException;
-use ReflectionClass;
-use ReflectionException;
-use ReflectionFunction;
-use ReflectionParameter;
-use TypeError;
-
-class Container implements ArrayAccess, ContainerContract
-{
-    /**
-     * The current globally available container (if any).
-     *
-     * @var static
-     */
-    protected static $instance;
-
-    /**
-     * An array of the types that have been resolved.
-     *
-     * @var bool[]
-     */
-    protected $resolved = [];
-
-    /**
-     * The container's bindings.
-     *
-
-```
-
-Output excerpt:
-
-```text
-<?php
-
-namespace Illuminate\Container;
-
-use ArrayAccess;
-use Closure;
-use Exception;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Contracts\Container\CircularDependencyException;
-use Illuminate\Contracts\Container\Container as ContainerContract;
-use LogicException;
-use ReflectionClass;
-use ReflectionException;
-use ReflectionFunction;
-use ReflectionParameter;
-use TypeError;
-
-class Container implements ArrayAccess, ContainerContract
-{
-    /**
-     * The current globally available container (if any).
-     *
-     * @var static
-     */
-    protected static $instance;
-
-    /**
-     * An array of the types that have been resolved.
-     *
-     * @var bool[]
-     */
-    protected $resolved = [];
-
-    /**
-     * The container's bindings.
-     *
-
-```
-
 ### `01-ts-vscode-async`
 
 - [Full input](cases/01-ts-vscode-async/input.ts)
@@ -2941,186 +2941,6 @@ export function createCancelablePromise<T>(callback: (token: CancellationToken) 
  */
 export function raceCancellation<T>(promise: Promise<T>, token: CancellationToken): Promise<T | undefined>;
 
-
-```
-
-### `40-java-lru-cache`
-
-- [Full input](cases/40-java-lru-cache/input.java)
-- [Output with CCR](cases/40-java-lru-cache/output.java) - [diff](cases/40-java-lru-cache/compression.diff)
-- [Output without CCR](cases/40-java-lru-cache/output-noccr.java) - [diff](cases/40-java-lru-cache/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-package com.thealgorithms.datastructures.caches;
-
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * A Least Recently Used (LRU) Cache implementation.
- *
- * <p>An LRU cache is a fixed-size cache that maintains items in order of use. When the cache reaches
- * its capacity and a new item needs to be added, it removes the least recently used item first.
- * This implementation provides O(1) time complexity for both get and put operations.</p>
- *
- * <p>Features:</p>
- * <ul>
- *   <li>Fixed-size cache with configurable capacity</li>
- *   <li>Constant time O(1) operations for get and put</li>
- *   <li>Thread-unsafe - should be externally synchronized if used in concurrent environments</li>
- *   <li>Supports null values but not null keys</li>
- * </ul>
- *
- * <p>Implementation Details:</p>
- * <ul>
- *   <li>Uses a HashMap for O(1) key-value lookups</li>
- *   <li>Maintains a doubly-linked list for tracking access order</li>
- *   <li>The head of the list contains the least recently used item</li>
- *   <li>The tail of the list contains the most recently used item</li>
- * </ul>
- *
- * <p>Example usage:</p>
- * <pre>
- * LRUCache<String, Integer> cache = new LRUCache<>(3); // Create cache with capacity 3
- * cache.put("A", 1); // Cache: A=1
- * cache.put("B", 2); // Cache: A=1, B=2
- * cache.put("C", 3); // Cache: A=1, B=2, C=3
- * cache.get("A");    // Cache: B=2, C=3, A=1 (A moved to end)
- * cache.put("D", 4); // Cache: C=3, A=1, D=4 (B evicted)
-
-```
-
-Output excerpt:
-
-```text
-package com.thealgorithms.datastructures.caches;
-
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * A Least Recently Used (LRU) Cache implementation.
- *
- * <p>An LRU cache is a fixed-size cache that maintains items in order of use. When the cache reaches
- * its capacity and a new item needs to be added, it removes the least recently used item first.
- * This implementation provides O(1) time complexity for both get and put operations.</p>
- *
- * <p>Features:</p>
- * <ul>
- *   <li>Fixed-size cache with configurable capacity</li>
- *   <li>Constant time O(1) operations for get and put</li>
- *   <li>Thread-unsafe - should be externally synchronized if used in concurrent environments</li>
- *   <li>Supports null values but not null keys</li>
- * </ul>
- *
- * <p>Implementation Details:</p>
- * <ul>
- *   <li>Uses a HashMap for O(1) key-value lookups</li>
- *   <li>Maintains a doubly-linked list for tracking access order</li>
- *   <li>The head of the list contains the least recently used item</li>
- *   <li>The tail of the list contains the most recently used item</li>
- * </ul>
- *
- * <p>Example usage:</p>
- * <pre>
- * LRUCache<String, Integer> cache = new LRUCache<>(3); // Create cache with capacity 3
- * cache.put("A", 1); // Cache: A=1
- * cache.put("B", 2); // Cache: A=1, B=2
- * cache.put("C", 3); // Cache: A=1, B=2, C=3
- * cache.get("A");    // Cache: B=2, C=3, A=1 (A moved to end)
- * cache.put("D", 4); // Cache: C=3, A=1, D=4 (B evicted)
-
-```
-
-### `32-rs-knapsack`
-
-- [Full input](cases/32-rs-knapsack/input.rs)
-- [Output with CCR](cases/32-rs-knapsack/output.rs) - [diff](cases/32-rs-knapsack/compression.diff)
-- [Output without CCR](cases/32-rs-knapsack/output-noccr.rs) - [diff](cases/32-rs-knapsack/compression-noccr.diff)
-
-Input excerpt:
-
-```rust
-//! This module provides functionality to solve the knapsack problem using dynamic programming.
-//! It includes structures for items and solutions, and functions to compute the optimal solution.
-
-use std::cmp::Ordering;
-
-/// Represents an item with a weight and a value.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Item {
-    weight: usize,
-    value: usize,
-}
-
-/// Represents the solution to the knapsack problem.
-#[derive(Debug, PartialEq, Eq)]
-pub struct KnapsackSolution {
-    /// The optimal profit obtained.
-    optimal_profit: usize,
-    /// The total weight of items included in the solution.
-    total_weight: usize,
-    /// The indices of items included in the solution. Indices might not be unique.
-    item_indices: Vec<usize>,
-}
-
-/// Solves the knapsack problem and returns the optimal profit, total weight, and indices of items included.
-///
-/// # Arguments:
-/// * `capacity` - The maximum weight capacity of the knapsack.
-/// * `items` - A vector of `Item` structs, each representing an item with weight and value.
-///
-/// # Returns:
-/// A `KnapsackSolution` struct containing:
-/// - `optimal_profit` - The maximum profit achievable with the given capacity and items.
-/// - `total_weight` - The total weight of items included in the solution.
-/// - `item_indices` - Indices of items included in the solution. Indices might not be unique.
-///
-/// # Note:
-
-```
-
-Output excerpt:
-
-```rust
-//! This module provides functionality to solve the knapsack problem using dynamic programming.
-//! It includes structures for items and solutions, and functions to compute the optimal solution.
-
-use std::cmp::Ordering;
-
-/// Represents an item with a weight and a value.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Item {
-    weight: usize,
-    value: usize,
-}
-
-/// Represents the solution to the knapsack problem.
-#[derive(Debug, PartialEq, Eq)]
-pub struct KnapsackSolution {
-    /// The optimal profit obtained.
-    optimal_profit: usize,
-    /// The total weight of items included in the solution.
-    total_weight: usize,
-    /// The indices of items included in the solution. Indices might not be unique.
-    item_indices: Vec<usize>,
-}
-
-/// Solves the knapsack problem and returns the optimal profit, total weight, and indices of items included.
-///
-/// # Arguments:
-/// * `capacity` - The maximum weight capacity of the knapsack.
-/// * `items` - A vector of `Item` structs, each representing an item with weight and value.
-///
-/// # Returns:
-/// A `KnapsackSolution` struct containing:
-/// - `optimal_profit` - The maximum profit achievable with the given capacity and items.
-/// - `total_weight` - The total weight of items included in the solution.
-/// - `item_indices` - Indices of items included in the solution. Indices might not be unique.
-///
-/// # Note:
 
 ```
 
@@ -3214,93 +3034,183 @@ export function format2(template: string, values: Record<string, unknown>): stri
 
 ```
 
-### `38-ts-heap`
+### `32-rs-knapsack`
 
-- [Full input](cases/38-ts-heap/input.ts)
-- [Output with CCR](cases/38-ts-heap/output.ts) - [diff](cases/38-ts-heap/compression.diff)
-- [Output without CCR](cases/38-ts-heap/output-noccr.ts) - [diff](cases/38-ts-heap/compression-noccr.diff)
+- [Full input](cases/32-rs-knapsack/input.rs)
+- [Output with CCR](cases/32-rs-knapsack/output.rs) - [diff](cases/32-rs-knapsack/compression.diff)
+- [Output without CCR](cases/32-rs-knapsack/output-noccr.rs) - [diff](cases/32-rs-knapsack/compression-noccr.diff)
+
+Input excerpt:
+
+```rust
+//! This module provides functionality to solve the knapsack problem using dynamic programming.
+//! It includes structures for items and solutions, and functions to compute the optimal solution.
+
+use std::cmp::Ordering;
+
+/// Represents an item with a weight and a value.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Item {
+    weight: usize,
+    value: usize,
+}
+
+/// Represents the solution to the knapsack problem.
+#[derive(Debug, PartialEq, Eq)]
+pub struct KnapsackSolution {
+    /// The optimal profit obtained.
+    optimal_profit: usize,
+    /// The total weight of items included in the solution.
+    total_weight: usize,
+    /// The indices of items included in the solution. Indices might not be unique.
+    item_indices: Vec<usize>,
+}
+
+/// Solves the knapsack problem and returns the optimal profit, total weight, and indices of items included.
+///
+/// # Arguments:
+/// * `capacity` - The maximum weight capacity of the knapsack.
+/// * `items` - A vector of `Item` structs, each representing an item with weight and value.
+///
+/// # Returns:
+/// A `KnapsackSolution` struct containing:
+/// - `optimal_profit` - The maximum profit achievable with the given capacity and items.
+/// - `total_weight` - The total weight of items included in the solution.
+/// - `item_indices` - Indices of items included in the solution. Indices might not be unique.
+///
+/// # Note:
+
+```
+
+Output excerpt:
+
+```rust
+//! This module provides functionality to solve the knapsack problem using dynamic programming.
+//! It includes structures for items and solutions, and functions to compute the optimal solution.
+
+use std::cmp::Ordering;
+
+/// Represents an item with a weight and a value.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Item {
+    weight: usize,
+    value: usize,
+}
+
+/// Represents the solution to the knapsack problem.
+#[derive(Debug, PartialEq, Eq)]
+pub struct KnapsackSolution {
+    /// The optimal profit obtained.
+    optimal_profit: usize,
+    /// The total weight of items included in the solution.
+    total_weight: usize,
+    /// The indices of items included in the solution. Indices might not be unique.
+    item_indices: Vec<usize>,
+}
+
+/// Solves the knapsack problem and returns the optimal profit, total weight, and indices of items included.
+///
+/// # Arguments:
+/// * `capacity` - The maximum weight capacity of the knapsack.
+/// * `items` - A vector of `Item` structs, each representing an item with weight and value.
+///
+/// # Returns:
+/// A `KnapsackSolution` struct containing:
+/// - `optimal_profit` - The maximum profit achievable with the given capacity and items.
+/// - `total_weight` - The total weight of items included in the solution.
+/// - `item_indices` - Indices of items included in the solution. Indices might not be unique.
+///
+/// # Note:
+
+```
+
+### `40-java-lru-cache`
+
+- [Full input](cases/40-java-lru-cache/input.java)
+- [Output with CCR](cases/40-java-lru-cache/output.java) - [diff](cases/40-java-lru-cache/compression.diff)
+- [Output without CCR](cases/40-java-lru-cache/output-noccr.java) - [diff](cases/40-java-lru-cache/compression-noccr.diff)
 
 Input excerpt:
 
 ```text
+package com.thealgorithms.datastructures.caches;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * A heap is a complete binary tree
- * In a complete binary tree each level is filled before lower levels are added
- * Each level is filled from left to right
+ * A Least Recently Used (LRU) Cache implementation.
  *
- * In a (min|max) heap the value of every node is (less|greater) than that of its children
+ * <p>An LRU cache is a fixed-size cache that maintains items in order of use. When the cache reaches
+ * its capacity and a new item needs to be added, it removes the least recently used item first.
+ * This implementation provides O(1) time complexity for both get and put operations.</p>
  *
- * The heap is often implemented using an array structure.
- * In the array implementation, the relationship between a parent index and its two children
- * are ((parentindex * 2) + 1) and ((parentindex * 2) + 2)
- */
-export abstract class Heap<T> {
-  protected heap: T[]
-  // A comparison function. Returns true if a should be the parent of b.
-  protected compare: (a: T, b: T) => boolean
-
-  constructor(compare: (a: T, b: T) => boolean) {
-    this.heap = []
-    this.compare = compare
-  }
-
-  /**
-   * Compares the value at parentIndex with the value at childIndex
-   * In a maxHeap, the value at parentIndex should be larger than the value at childIndex
-   * In a minHeap, the value at parentIndex should be smaller than the value at childIndex
-   */
-  private isRightlyPlaced(childIndex: number, parentIndex: number): boolean {
-    return this.compare(this.heap[parentIndex], this.heap[childIndex])
-  }
-
-  /**
-   * In a maxHeap, the index with the larger value is returned
-   * In a minHeap, the index with the smaller value is returned
-   */
-  private getChildIndexToSwap(
-    leftChildIndex: number,
+ * <p>Features:</p>
+ * <ul>
+ *   <li>Fixed-size cache with configurable capacity</li>
+ *   <li>Constant time O(1) operations for get and put</li>
+ *   <li>Thread-unsafe - should be externally synchronized if used in concurrent environments</li>
+ *   <li>Supports null values but not null keys</li>
+ * </ul>
+ *
+ * <p>Implementation Details:</p>
+ * <ul>
+ *   <li>Uses a HashMap for O(1) key-value lookups</li>
+ *   <li>Maintains a doubly-linked list for tracking access order</li>
+ *   <li>The head of the list contains the least recently used item</li>
+ *   <li>The tail of the list contains the most recently used item</li>
+ * </ul>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * LRUCache<String, Integer> cache = new LRUCache<>(3); // Create cache with capacity 3
+ * cache.put("A", 1); // Cache: A=1
+ * cache.put("B", 2); // Cache: A=1, B=2
+ * cache.put("C", 3); // Cache: A=1, B=2, C=3
+ * cache.get("A");    // Cache: B=2, C=3, A=1 (A moved to end)
+ * cache.put("D", 4); // Cache: C=3, A=1, D=4 (B evicted)
 
 ```
 
 Output excerpt:
 
 ```text
+package com.thealgorithms.datastructures.caches;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * A heap is a complete binary tree
- * In a complete binary tree each level is filled before lower levels are added
- * Each level is filled from left to right
+ * A Least Recently Used (LRU) Cache implementation.
  *
- * In a (min|max) heap the value of every node is (less|greater) than that of its children
+ * <p>An LRU cache is a fixed-size cache that maintains items in order of use. When the cache reaches
+ * its capacity and a new item needs to be added, it removes the least recently used item first.
+ * This implementation provides O(1) time complexity for both get and put operations.</p>
  *
- * The heap is often implemented using an array structure.
- * In the array implementation, the relationship between a parent index and its two children
- * are ((parentindex * 2) + 1) and ((parentindex * 2) + 2)
- */
-export abstract class Heap<T> {
-  protected heap: T[]
-  // A comparison function. Returns true if a should be the parent of b.
-  protected compare: (a: T, b: T) => boolean
-
-  constructor(compare: (a: T, b: T) => boolean) {
-    this.heap = []
-    this.compare = compare
-  }
-
-  /**
-   * Compares the value at parentIndex with the value at childIndex
-   * In a maxHeap, the value at parentIndex should be larger than the value at childIndex
-   * In a minHeap, the value at parentIndex should be smaller than the value at childIndex
-   */
-  private isRightlyPlaced(childIndex: number, parentIndex: number): boolean {
-    return this.compare(this.heap[parentIndex], this.heap[childIndex])
-  }
-
-  /**
-   * In a maxHeap, the index with the larger value is returned
-   * In a minHeap, the index with the smaller value is returned
-   */
-  private getChildIndexToSwap(
-    leftChildIndex: number,
+ * <p>Features:</p>
+ * <ul>
+ *   <li>Fixed-size cache with configurable capacity</li>
+ *   <li>Constant time O(1) operations for get and put</li>
+ *   <li>Thread-unsafe - should be externally synchronized if used in concurrent environments</li>
+ *   <li>Supports null values but not null keys</li>
+ * </ul>
+ *
+ * <p>Implementation Details:</p>
+ * <ul>
+ *   <li>Uses a HashMap for O(1) key-value lookups</li>
+ *   <li>Maintains a doubly-linked list for tracking access order</li>
+ *   <li>The head of the list contains the least recently used item</li>
+ *   <li>The tail of the list contains the most recently used item</li>
+ * </ul>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * LRUCache<String, Integer> cache = new LRUCache<>(3); // Create cache with capacity 3
+ * cache.put("A", 1); // Cache: A=1
+ * cache.put("B", 2); // Cache: A=1, B=2
+ * cache.put("C", 3); // Cache: A=1, B=2, C=3
+ * cache.get("A");    // Cache: B=2, C=3, A=1 (A moved to end)
+ * cache.put("D", 4); // Cache: C=3, A=1, D=4 (B evicted)
 
 ```
 
@@ -3484,183 +3394,93 @@ const (
 
 ```
 
-### `47-kt-indexed-priority-queue`
+### `38-ts-heap`
 
-- [Full input](cases/47-kt-indexed-priority-queue/input.kt)
-- [Output with CCR](cases/47-kt-indexed-priority-queue/output.kt) - [diff](cases/47-kt-indexed-priority-queue/compression.diff)
-- [Output without CCR](cases/47-kt-indexed-priority-queue/output-noccr.kt) - [diff](cases/47-kt-indexed-priority-queue/compression-noccr.diff)
+- [Full input](cases/38-ts-heap/input.ts)
+- [Output with CCR](cases/38-ts-heap/output.ts) - [diff](cases/38-ts-heap/compression.diff)
+- [Output without CCR](cases/38-ts-heap/output-noccr.ts) - [diff](cases/38-ts-heap/compression-noccr.diff)
 
 Input excerpt:
 
 ```text
-/*
- * Copyright (c) 2017 Kotlin Algorithm Club
+/**
+ * A heap is a complete binary tree
+ * In a complete binary tree each level is filled before lower levels are added
+ * Each level is filled from left to right
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * In a (min|max) heap the value of every node is (less|greater) than that of its children
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * The heap is often implemented using an array structure.
+ * In the array implementation, the relationship between a parent index and its two children
+ * are ((parentindex * 2) + 1) and ((parentindex * 2) + 2)
  */
+export abstract class Heap<T> {
+  protected heap: T[]
+  // A comparison function. Returns true if a should be the parent of b.
+  protected compare: (a: T, b: T) => boolean
 
-package io.uuddlrlrba.ktalgs.datastructures
+  constructor(compare: (a: T, b: T) => boolean) {
+    this.heap = []
+    this.compare = compare
+  }
 
-import java.util.NoSuchElementException
+  /**
+   * Compares the value at parentIndex with the value at childIndex
+   * In a maxHeap, the value at parentIndex should be larger than the value at childIndex
+   * In a minHeap, the value at parentIndex should be smaller than the value at childIndex
+   */
+  private isRightlyPlaced(childIndex: number, parentIndex: number): boolean {
+    return this.compare(this.heap[parentIndex], this.heap[childIndex])
+  }
 
-// TODO: resize
-class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) : Collection<T> {
-    /**
-     * maximum number of elements on PQ
-     */
-    private val maxN: Int = size
-
-    /**
-     * number of elements on PQ
-     */
+  /**
+   * In a maxHeap, the index with the larger value is returned
+   * In a minHeap, the index with the smaller value is returned
+   */
+  private getChildIndexToSwap(
+    leftChildIndex: number,
 
 ```
 
 Output excerpt:
 
 ```text
-/*
- * Copyright (c) 2017 Kotlin Algorithm Club
+/**
+ * A heap is a complete binary tree
+ * In a complete binary tree each level is filled before lower levels are added
+ * Each level is filled from left to right
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * In a (min|max) heap the value of every node is (less|greater) than that of its children
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * The heap is often implemented using an array structure.
+ * In the array implementation, the relationship between a parent index and its two children
+ * are ((parentindex * 2) + 1) and ((parentindex * 2) + 2)
  */
+export abstract class Heap<T> {
+  protected heap: T[]
+  // A comparison function. Returns true if a should be the parent of b.
+  protected compare: (a: T, b: T) => boolean
 
-package io.uuddlrlrba.ktalgs.datastructures
+  constructor(compare: (a: T, b: T) => boolean) {
+    this.heap = []
+    this.compare = compare
+  }
 
-import java.util.NoSuchElementException
+  /**
+   * Compares the value at parentIndex with the value at childIndex
+   * In a maxHeap, the value at parentIndex should be larger than the value at childIndex
+   * In a minHeap, the value at parentIndex should be smaller than the value at childIndex
+   */
+  private isRightlyPlaced(childIndex: number, parentIndex: number): boolean {
+    return this.compare(this.heap[parentIndex], this.heap[childIndex])
+  }
 
-// TODO: resize
-class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) : Collection<T> {
-    /**
-     * maximum number of elements on PQ
-     */
-    private val maxN: Int = size
-
-    /**
-     * number of elements on PQ
-     */
-
-```
-
-### `43-c-trie`
-
-- [Full input](cases/43-c-trie/input.c)
-- [Output with CCR](cases/43-c-trie/output.c) - [diff](cases/43-c-trie/compression.diff)
-- [Output without CCR](cases/43-c-trie/output-noccr.c) - [diff](cases/43-c-trie/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-/*------------------Trie Data Structure----------------------------------*/
-/*-------------Implimented for search a word in dictionary---------------*/
-
-/*-----character - 97 used for get the character from the ASCII value-----*/
-
-// needed for strnlen
-#define _POSIX_C_SOURCE 200809L
-
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define ALPHABET_SIZE 26
-
-/*--Node in the Trie--*/
-struct trie {
-    struct trie *children[ALPHABET_SIZE];
-    bool end_of_word;
-};
-
-
-/*--Create new trie node--*/
-int trie_new (
-    struct trie ** trie
-)
-{
-    *trie = calloc(1, sizeof(struct trie));
-    if (NULL == *trie) {
-        // memory allocation failed
-        return -1;
-    }
-    return 0;
-}
-
-
-
-```
-
-Output excerpt:
-
-```text
-/*------------------Trie Data Structure----------------------------------*/
-/*-------------Implimented for search a word in dictionary---------------*/
-
-/*-----character - 97 used for get the character from the ASCII value-----*/
-
-// needed for strnlen
-#define _POSIX_C_SOURCE 200809L
-
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define ALPHABET_SIZE 26
-
-/*--Node in the Trie--*/
-struct trie {
-    struct trie *children[ALPHABET_SIZE];
-    bool end_of_word;
-};
-
-
-/*--Create new trie node--*/
-int trie_new (
-    struct trie ** trie
-)
-{
-    *trie = calloc(1, sizeof(struct trie));
-    if (NULL == *trie) {
-        // memory allocation failed
-        return -1;
-    }
-    return 0;
-}
-
-
+  /**
+   * In a maxHeap, the index with the larger value is returned
+   * In a minHeap, the index with the smaller value is returned
+   */
+  private getChildIndexToSwap(
+    leftChildIndex: number,
 
 ```
 
@@ -3934,93 +3754,183 @@ import okhttp3.internal.connection.RealCall
 
 ```
 
-### `05-js-axios-core`
+### `47-kt-indexed-priority-queue`
 
-- [Full input](cases/05-js-axios-core/input.js)
-- [Output with CCR](cases/05-js-axios-core/output.js) - [diff](cases/05-js-axios-core/compression.diff)
-- [Output without CCR](cases/05-js-axios-core/output-noccr.js) - [diff](cases/05-js-axios-core/compression-noccr.diff)
+- [Full input](cases/47-kt-indexed-priority-queue/input.kt)
+- [Output with CCR](cases/47-kt-indexed-priority-queue/output.kt) - [diff](cases/47-kt-indexed-priority-queue/compression.diff)
+- [Output without CCR](cases/47-kt-indexed-priority-queue/output-noccr.kt) - [diff](cases/47-kt-indexed-priority-queue/compression-noccr.diff)
 
 Input excerpt:
 
 ```text
-'use strict';
-
-import utils from './../utils.js';
-import buildURL from '../helpers/buildURL.js';
-import InterceptorManager from './InterceptorManager.js';
-import dispatchRequest from './dispatchRequest.js';
-import mergeConfig from './mergeConfig.js';
-import buildFullPath from './buildFullPath.js';
-import validator from '../helpers/validator.js';
-import AxiosHeaders from './AxiosHeaders.js';
-
-const validators = validator.validators;
-
-/**
- * Create a new instance of Axios
+/*
+ * Copyright (c) 2017 Kotlin Algorithm Club
  *
- * @param {Object} instanceConfig The default config for the instance
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * @return {Axios} A new instance of Axios
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
-class Axios {
-  constructor(instanceConfig) {
-    this.defaults = instanceConfig;
-    this.interceptors = {
-      request: new InterceptorManager(),
-      response: new InterceptorManager()
-    };
-  }
 
-  /**
-   * Dispatch a request
-   *
-   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
-   * @param {?Object} config
-   *
-   * @returns {Promise} The Promise to be fulfilled
+package io.uuddlrlrba.ktalgs.datastructures
+
+import java.util.NoSuchElementException
+
+// TODO: resize
+class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) : Collection<T> {
+    /**
+     * maximum number of elements on PQ
+     */
+    private val maxN: Int = size
+
+    /**
+     * number of elements on PQ
+     */
 
 ```
 
 Output excerpt:
 
 ```text
-'use strict';
-
-import utils from './../utils.js';
-import buildURL from '../helpers/buildURL.js';
-import InterceptorManager from './InterceptorManager.js';
-import dispatchRequest from './dispatchRequest.js';
-import mergeConfig from './mergeConfig.js';
-import buildFullPath from './buildFullPath.js';
-import validator from '../helpers/validator.js';
-import AxiosHeaders from './AxiosHeaders.js';
-
-const validators = validator.validators;
-
-/**
- * Create a new instance of Axios
+/*
+ * Copyright (c) 2017 Kotlin Algorithm Club
  *
- * @param {Object} instanceConfig The default config for the instance
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * @return {Axios} A new instance of Axios
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
-class Axios {
-  constructor(instanceConfig) {
-    this.defaults = instanceConfig;
-    this.interceptors = {
-      request: new InterceptorManager(),
-      response: new InterceptorManager()
-    };
-  }
 
-  /**
-   * Dispatch a request
-   *
-   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
-   * @param {?Object} config
-   *
-   * @returns {Promise} The Promise to be fulfilled
+package io.uuddlrlrba.ktalgs.datastructures
+
+import java.util.NoSuchElementException
+
+// TODO: resize
+class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) : Collection<T> {
+    /**
+     * maximum number of elements on PQ
+     */
+    private val maxN: Int = size
+
+    /**
+     * number of elements on PQ
+     */
+
+```
+
+### `43-c-trie`
+
+- [Full input](cases/43-c-trie/input.c)
+- [Output with CCR](cases/43-c-trie/output.c) - [diff](cases/43-c-trie/compression.diff)
+- [Output without CCR](cases/43-c-trie/output-noccr.c) - [diff](cases/43-c-trie/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+/*------------------Trie Data Structure----------------------------------*/
+/*-------------Implimented for search a word in dictionary---------------*/
+
+/*-----character - 97 used for get the character from the ASCII value-----*/
+
+// needed for strnlen
+#define _POSIX_C_SOURCE 200809L
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+
+/*--Node in the Trie--*/
+struct trie {
+    struct trie *children[ALPHABET_SIZE];
+    bool end_of_word;
+};
+
+
+/*--Create new trie node--*/
+int trie_new (
+    struct trie ** trie
+)
+{
+    *trie = calloc(1, sizeof(struct trie));
+    if (NULL == *trie) {
+        // memory allocation failed
+        return -1;
+    }
+    return 0;
+}
+
+
+
+```
+
+Output excerpt:
+
+```text
+/*------------------Trie Data Structure----------------------------------*/
+/*-------------Implimented for search a word in dictionary---------------*/
+
+/*-----character - 97 used for get the character from the ASCII value-----*/
+
+// needed for strnlen
+#define _POSIX_C_SOURCE 200809L
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+
+/*--Node in the Trie--*/
+struct trie {
+    struct trie *children[ALPHABET_SIZE];
+    bool end_of_word;
+};
+
+
+/*--Create new trie node--*/
+int trie_new (
+    struct trie ** trie
+)
+{
+    *trie = calloc(1, sizeof(struct trie));
+    if (NULL == *trie) {
+        // memory allocation failed
+        return -1;
+    }
+    return 0;
+}
+
+
 
 ```
 
@@ -4114,96 +4024,6 @@ class AvlTree
 
 ```
 
-### `04-js-express-application`
-
-- [Full input](cases/04-js-express-application/input.js)
-- [Output with CCR](cases/04-js-express-application/output.js) - [diff](cases/04-js-express-application/compression.diff)
-- [Output without CCR](cases/04-js-express-application/output-noccr.js) - [diff](cases/04-js-express-application/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-'use strict';
-
-/**
- * Module dependencies.
- * @private
- */
-
-var finalhandler = require('finalhandler');
-var Router = require('./router');
-var methods = require('methods');
-var middleware = require('./middleware/init');
-var query = require('./middleware/query');
-var debug = require('debug')('express:application');
-var View = require('./view');
-var http = require('http');
-var compileETag = require('./utils').compileETag;
-var compileQueryParser = require('./utils').compileQueryParser;
-var compileTrust = require('./utils').compileTrust;
-var deprecate = require('depd')('express');
-var flatten = require('array-flatten');
-var merge = require('utils-merge');
-var resolve = require('path').resolve;
-var setPrototypeOf = require('setprototypeof')
-
-/**
- * Module variables.
- * @private
- */
-
-```
-
-Output excerpt:
-
-```text
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-'use strict';
-
-/**
- * Module dependencies.
- * @private
- */
-
-var finalhandler = require('finalhandler');
-var Router = require('./router');
-var methods = require('methods');
-var middleware = require('./middleware/init');
-var query = require('./middleware/query');
-var debug = require('debug')('express:application');
-var View = require('./view');
-var http = require('http');
-var compileETag = require('./utils').compileETag;
-var compileQueryParser = require('./utils').compileQueryParser;
-var compileTrust = require('./utils').compileTrust;
-var deprecate = require('depd')('express');
-var flatten = require('array-flatten');
-var merge = require('utils-merge');
-var resolve = require('path').resolve;
-var setPrototypeOf = require('setprototypeof')
-
-/**
- * Module variables.
- * @private
- */
-
-```
-
 ### `23-rb-rails-cache`
 
 - [Full input](cases/23-rb-rails-cache/input.rb)
@@ -4291,6 +4111,186 @@ module ActiveSupport
       :namespace,
       :race_condition_ttl,
       :serializer,
+
+```
+
+### `05-js-axios-core`
+
+- [Full input](cases/05-js-axios-core/input.js)
+- [Output with CCR](cases/05-js-axios-core/output.js) - [diff](cases/05-js-axios-core/compression.diff)
+- [Output without CCR](cases/05-js-axios-core/output-noccr.js) - [diff](cases/05-js-axios-core/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+'use strict';
+
+import utils from './../utils.js';
+import buildURL from '../helpers/buildURL.js';
+import InterceptorManager from './InterceptorManager.js';
+import dispatchRequest from './dispatchRequest.js';
+import mergeConfig from './mergeConfig.js';
+import buildFullPath from './buildFullPath.js';
+import validator from '../helpers/validator.js';
+import AxiosHeaders from './AxiosHeaders.js';
+
+const validators = validator.validators;
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ *
+ * @return {Axios} A new instance of Axios
+ */
+class Axios {
+  constructor(instanceConfig) {
+    this.defaults = instanceConfig;
+    this.interceptors = {
+      request: new InterceptorManager(),
+      response: new InterceptorManager()
+    };
+  }
+
+  /**
+   * Dispatch a request
+   *
+   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
+   * @param {?Object} config
+   *
+   * @returns {Promise} The Promise to be fulfilled
+
+```
+
+Output excerpt:
+
+```text
+'use strict';
+
+import utils from './../utils.js';
+import buildURL from '../helpers/buildURL.js';
+import InterceptorManager from './InterceptorManager.js';
+import dispatchRequest from './dispatchRequest.js';
+import mergeConfig from './mergeConfig.js';
+import buildFullPath from './buildFullPath.js';
+import validator from '../helpers/validator.js';
+import AxiosHeaders from './AxiosHeaders.js';
+
+const validators = validator.validators;
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ *
+ * @return {Axios} A new instance of Axios
+ */
+class Axios {
+  constructor(instanceConfig) {
+    this.defaults = instanceConfig;
+    this.interceptors = {
+      request: new InterceptorManager(),
+      response: new InterceptorManager()
+    };
+  }
+
+  /**
+   * Dispatch a request
+   *
+   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
+   * @param {?Object} config
+   *
+   * @returns {Promise} The Promise to be fulfilled
+
+```
+
+### `04-js-express-application`
+
+- [Full input](cases/04-js-express-application/input.js)
+- [Output with CCR](cases/04-js-express-application/output.js) - [diff](cases/04-js-express-application/compression.diff)
+- [Output without CCR](cases/04-js-express-application/output-noccr.js) - [diff](cases/04-js-express-application/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+/*!
+ * express
+ * Copyright(c) 2009-2013 TJ Holowaychuk
+ * Copyright(c) 2013 Roman Shtylman
+ * Copyright(c) 2014-2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict';
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var finalhandler = require('finalhandler');
+var Router = require('./router');
+var methods = require('methods');
+var middleware = require('./middleware/init');
+var query = require('./middleware/query');
+var debug = require('debug')('express:application');
+var View = require('./view');
+var http = require('http');
+var compileETag = require('./utils').compileETag;
+var compileQueryParser = require('./utils').compileQueryParser;
+var compileTrust = require('./utils').compileTrust;
+var deprecate = require('depd')('express');
+var flatten = require('array-flatten');
+var merge = require('utils-merge');
+var resolve = require('path').resolve;
+var setPrototypeOf = require('setprototypeof')
+
+/**
+ * Module variables.
+ * @private
+ */
+
+```
+
+Output excerpt:
+
+```text
+/*!
+ * express
+ * Copyright(c) 2009-2013 TJ Holowaychuk
+ * Copyright(c) 2013 Roman Shtylman
+ * Copyright(c) 2014-2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict';
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var finalhandler = require('finalhandler');
+var Router = require('./router');
+var methods = require('methods');
+var middleware = require('./middleware/init');
+var query = require('./middleware/query');
+var debug = require('debug')('express:application');
+var View = require('./view');
+var http = require('http');
+var compileETag = require('./utils').compileETag;
+var compileQueryParser = require('./utils').compileQueryParser;
+var compileTrust = require('./utils').compileTrust;
+var deprecate = require('depd')('express');
+var flatten = require('array-flatten');
+var merge = require('utils-merge');
+var resolve = require('path').resolve;
+var setPrototypeOf = require('setprototypeof')
+
+/**
+ * Module variables.
+ * @private
+ */
 
 ```
 

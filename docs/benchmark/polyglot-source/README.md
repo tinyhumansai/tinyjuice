@@ -2,7 +2,7 @@
 
 Representative TypeScript, Python, C++, Go, and Rust sources plus an XML document. The language-agnostic code compressor collapses deep bodies across all of them (tree-sitter grammars refine Rust/TS/Python), and XML routes through the readable-text extractor.
 
-Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.
+Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.
 
 ## Cases
 
@@ -10,18 +10,108 @@ Every case links to the raw input; each pass column carries its percentage plus 
 
 | Case | Input | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `02-py-etl-pipeline` | [input](cases/02-py-etl-pipeline/input.py) | 11.9 KB -> 2.1 KB (-82%) | 85.4%<br>[output](cases/02-py-etl-pipeline/output-noccr.py) - [diff](cases/02-py-etl-pipeline/compression-noccr.diff) | 81.6%<br>[output](cases/02-py-etl-pipeline/output.py) - [diff](cases/02-py-etl-pipeline/compression.diff) | 0.837 ms |
-| `05-rs-lexer` | [input](cases/05-rs-lexer/input.rs) | 9.3 KB -> 2.0 KB (-79%) | 82.7%<br>[output](cases/05-rs-lexer/output-noccr.rs) - [diff](cases/05-rs-lexer/compression-noccr.diff) | 77.9%<br>[output](cases/05-rs-lexer/output.rs) - [diff](cases/05-rs-lexer/compression.diff) | 0.617 ms |
-| `06-xml-maven-pom` | [input](cases/06-xml-maven-pom/input.xml) | 14.2 KB -> 3.3 KB (-77%) | 76.8%<br>[output](cases/06-xml-maven-pom/output-noccr.txt) - [diff](cases/06-xml-maven-pom/compression-noccr.diff) | 76.0%<br>[output](cases/06-xml-maven-pom/output.txt) - [diff](cases/06-xml-maven-pom/compression.diff) | 0.073 ms |
-| `04-go-http-server` | [input](cases/04-go-http-server/input.go) | 8.8 KB -> 2.2 KB (-76%) | 79.7%<br>[output](cases/04-go-http-server/output-noccr.go) - [diff](cases/04-go-http-server/compression-noccr.diff) | 74.7%<br>[output](cases/04-go-http-server/output.go) - [diff](cases/04-go-http-server/compression.diff) | 0.054 ms |
-| `01-ts-api-client` | [input](cases/01-ts-api-client/input.ts) | 17.1 KB -> 4.2 KB (-75%) | 78.7%<br>[output](cases/01-ts-api-client/output-noccr.ts) - [diff](cases/01-ts-api-client/compression-noccr.diff) | 75.2%<br>[output](cases/01-ts-api-client/output.ts) - [diff](cases/01-ts-api-client/compression.diff) | 1.082 ms |
-| `03-cpp-geometry-engine` | [input](cases/03-cpp-geometry-engine/input.cpp) | 12.5 KB -> 3.2 KB (-74%) | 79.2%<br>[output](cases/03-cpp-geometry-engine/output-noccr.cpp) - [diff](cases/03-cpp-geometry-engine/compression-noccr.diff) | 74.1%<br>[output](cases/03-cpp-geometry-engine/output.cpp) - [diff](cases/03-cpp-geometry-engine/compression.diff) | 0.063 ms |
+| `02-py-etl-pipeline` | [input](cases/02-py-etl-pipeline/input.py) | 11.9 KB -> 2.1 KB (-82%) | 0.0%<br>[output](cases/02-py-etl-pipeline/output-noccr.py) - [diff](cases/02-py-etl-pipeline/compression-noccr.diff) | 81.6%<br>[output](cases/02-py-etl-pipeline/output.py) - [diff](cases/02-py-etl-pipeline/compression.diff) | 0.839 ms |
+| `05-rs-lexer` | [input](cases/05-rs-lexer/input.rs) | 9.3 KB -> 2.0 KB (-79%) | 0.0%<br>[output](cases/05-rs-lexer/output-noccr.rs) - [diff](cases/05-rs-lexer/compression-noccr.diff) | 77.9%<br>[output](cases/05-rs-lexer/output.rs) - [diff](cases/05-rs-lexer/compression.diff) | 0.614 ms |
+| `06-xml-maven-pom` | [input](cases/06-xml-maven-pom/input.xml) | 14.2 KB -> 3.3 KB (-77%) | 76.8%<br>[output](cases/06-xml-maven-pom/output-noccr.txt) - [diff](cases/06-xml-maven-pom/compression-noccr.diff) | 76.0%<br>[output](cases/06-xml-maven-pom/output.txt) - [diff](cases/06-xml-maven-pom/compression.diff) | 0.069 ms |
+| `04-go-http-server` | [input](cases/04-go-http-server/input.go) | 8.8 KB -> 2.2 KB (-76%) | 0.0%<br>[output](cases/04-go-http-server/output-noccr.go) - [diff](cases/04-go-http-server/compression-noccr.diff) | 74.7%<br>[output](cases/04-go-http-server/output.go) - [diff](cases/04-go-http-server/compression.diff) | 0.055 ms |
+| `01-ts-api-client` | [input](cases/01-ts-api-client/input.ts) | 17.1 KB -> 4.2 KB (-75%) | 0.0%<br>[output](cases/01-ts-api-client/output-noccr.ts) - [diff](cases/01-ts-api-client/compression-noccr.diff) | 75.2%<br>[output](cases/01-ts-api-client/output.ts) - [diff](cases/01-ts-api-client/compression.diff) | 1.030 ms |
+| `03-cpp-geometry-engine` | [input](cases/03-cpp-geometry-engine/input.cpp) | 12.5 KB -> 3.2 KB (-74%) | 0.0%<br>[output](cases/03-cpp-geometry-engine/output-noccr.cpp) - [diff](cases/03-cpp-geometry-engine/compression-noccr.diff) | 74.1%<br>[output](cases/03-cpp-geometry-engine/output.cpp) - [diff](cases/03-cpp-geometry-engine/compression.diff) | 0.065 ms |
 
 ## What TinyJuice Is Doing
 
-The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token.
+The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token — and because that token is the only way back to the original, Pass 1 (no CCR) passes source through untouched, collapsing bodies only in Pass 2. (XML still extracts in both passes; text extraction is lossless.)
 
 ## Syntax-Aware Samples
+
+### `06-xml-maven-pom`
+
+- [Full input](cases/06-xml-maven-pom/input.xml)
+- [Output with CCR](cases/06-xml-maven-pom/output.txt) - [diff](cases/06-xml-maven-pom/compression.diff)
+- [Output without CCR](cases/06-xml-maven-pom/output-noccr.txt) - [diff](cases/06-xml-maven-pom/compression-noccr.diff)
+
+Input excerpt:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ai.tinyhumans</groupId>
+  <artifactId>orchestrator</artifactId>
+  <version>2.14.3</version>
+  <packaging>jar</packaging>
+  <name>TinyHumans Orchestrator</name>
+  <description>Coordinates agent workloads across regional clusters with retry and backpressure.</description>
+  <properties>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <kafka.version>3.7.0</kafka.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>${kafka.version}</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.17.1</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+
+```
+
+Output excerpt:
+
+```text
+4.0.0
+ai.tinyhumans
+orchestrator
+2.14.3
+jar
+TinyHumans Orchestrator
+Coordinates agent workloads across regional clusters with retry and backpressure.
+
+21
+21
+3.7.0
+
+org.apache.kafka
+kafka-clients
+${kafka.version}
+compile
+
+commons-logging
+commons-logging
+
+com.fasterxml.jackson.core
+jackson-databind
+2.17.1
+compile
+
+commons-logging
+commons-logging
+
+io.micrometer
+micrometer-registry-prometheus
+1.13.0
+compile
+
+commons-logging
+commons-logging
+
+
+```
 
 ### `02-py-etl-pipeline`
 
@@ -203,6 +293,96 @@ impl<'a> Lexer<'a> {
 
 ```
 
+### `01-ts-api-client`
+
+- [Full input](cases/01-ts-api-client/input.ts)
+- [Output with CCR](cases/01-ts-api-client/output.ts) - [diff](cases/01-ts-api-client/compression.diff)
+- [Output without CCR](cases/01-ts-api-client/output-noccr.ts) - [diff](cases/01-ts-api-client/compression-noccr.diff)
+
+Input excerpt:
+
+```text
+// api-client.ts — typed HTTP client with retry, cache, and telemetry.
+import { EventEmitter } from 'node:events';
+
+export interface RequestOptions {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  headers?: Record<string, string>;
+  body?: unknown;
+  timeoutMs?: number;
+  retries?: number;
+}
+
+export interface CacheEntry {
+  value: unknown;
+  expiresAt: number;
+  etag?: string;
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, public url: string, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export async function fetchJson<T>(url: string, opts: RequestOptions = { method: "GET" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+    console.debug(`giving up after 0 attempts for ${url}`);
+  }
+  const attempt_1 = opts.retries !== undefined && opts.retries > 1;
+  if (!attempt_1 && 1 > 0) {
+    console.debug(`giving up after 1 attempts for ${url}`);
+  }
+  const attempt_2 = opts.retries !== undefined && opts.retries > 2;
+  if (!attempt_2 && 2 > 0) {
+    console.debug(`giving up after 2 attempts for ${url}`);
+
+```
+
+Output excerpt:
+
+```text
+// api-client.ts — typed HTTP client with retry, cache, and telemetry.
+import { EventEmitter } from 'node:events';
+
+export interface RequestOptions {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  headers?: Record<string, string>;
+  body?: unknown;
+  timeoutMs?: number;
+  retries?: number;
+}
+
+export interface CacheEntry {
+  value: unknown;
+  expiresAt: number;
+  etag?: string;
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, public url: string, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export async function fetchJson<T>(url: string, opts: RequestOptions = { method: "GET" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+  { … 58 line(s) … ⟦tj:2c1d11b9e98fc15768ffbeb235d218f7⟧ }
+  return (await res.json()) as T;
+}
+
+export async function postJson<T>(url: string, opts: RequestOptions = { method: "POST" }): Promise<T> {
+  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
+  if (!attempt_0 && 0 > 0) {
+  { … 58 line(s) … ⟦tj:2c1d11b9e98fc15768ffbeb235d218f7⟧ }
+  return (await res.json()) as T;
+
+```
+
 ### `04-go-http-server`
 
 - [Full input](cases/04-go-http-server/input.go)
@@ -380,186 +560,6 @@ public:
 
     Transform compose(const Vec3& v) const {
         double t_0 = std::fma(v.x, 0.0, v.y * 0.5) + v.z;
-
-```
-
-### `01-ts-api-client`
-
-- [Full input](cases/01-ts-api-client/input.ts)
-- [Output with CCR](cases/01-ts-api-client/output.ts) - [diff](cases/01-ts-api-client/compression.diff)
-- [Output without CCR](cases/01-ts-api-client/output-noccr.ts) - [diff](cases/01-ts-api-client/compression-noccr.diff)
-
-Input excerpt:
-
-```text
-// api-client.ts — typed HTTP client with retry, cache, and telemetry.
-import { EventEmitter } from 'node:events';
-
-export interface RequestOptions {
-  method: "GET" | "POST" | "PUT" | "DELETE";
-  headers?: Record<string, string>;
-  body?: unknown;
-  timeoutMs?: number;
-  retries?: number;
-}
-
-export interface CacheEntry {
-  value: unknown;
-  expiresAt: number;
-  etag?: string;
-}
-
-export class ApiError extends Error {
-  constructor(public status: number, public url: string, message: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-export async function fetchJson<T>(url: string, opts: RequestOptions = { method: "GET" }): Promise<T> {
-  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
-  if (!attempt_0 && 0 > 0) {
-    console.debug(`giving up after 0 attempts for ${url}`);
-  }
-  const attempt_1 = opts.retries !== undefined && opts.retries > 1;
-  if (!attempt_1 && 1 > 0) {
-    console.debug(`giving up after 1 attempts for ${url}`);
-  }
-  const attempt_2 = opts.retries !== undefined && opts.retries > 2;
-  if (!attempt_2 && 2 > 0) {
-    console.debug(`giving up after 2 attempts for ${url}`);
-
-```
-
-Output excerpt:
-
-```text
-// api-client.ts — typed HTTP client with retry, cache, and telemetry.
-import { EventEmitter } from 'node:events';
-
-export interface RequestOptions {
-  method: "GET" | "POST" | "PUT" | "DELETE";
-  headers?: Record<string, string>;
-  body?: unknown;
-  timeoutMs?: number;
-  retries?: number;
-}
-
-export interface CacheEntry {
-  value: unknown;
-  expiresAt: number;
-  etag?: string;
-}
-
-export class ApiError extends Error {
-  constructor(public status: number, public url: string, message: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-export async function fetchJson<T>(url: string, opts: RequestOptions = { method: "GET" }): Promise<T> {
-  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
-  if (!attempt_0 && 0 > 0) {
-  { … 58 line(s) … ⟦tj:2c1d11b9e98fc15768ffbeb235d218f7⟧ }
-  return (await res.json()) as T;
-}
-
-export async function postJson<T>(url: string, opts: RequestOptions = { method: "POST" }): Promise<T> {
-  const attempt_0 = opts.retries !== undefined && opts.retries > 0;
-  if (!attempt_0 && 0 > 0) {
-  { … 58 line(s) … ⟦tj:2c1d11b9e98fc15768ffbeb235d218f7⟧ }
-  return (await res.json()) as T;
-
-```
-
-### `06-xml-maven-pom`
-
-- [Full input](cases/06-xml-maven-pom/input.xml)
-- [Output with CCR](cases/06-xml-maven-pom/output.txt) - [diff](cases/06-xml-maven-pom/compression.diff)
-- [Output without CCR](cases/06-xml-maven-pom/output-noccr.txt) - [diff](cases/06-xml-maven-pom/compression-noccr.diff)
-
-Input excerpt:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>ai.tinyhumans</groupId>
-  <artifactId>orchestrator</artifactId>
-  <version>2.14.3</version>
-  <packaging>jar</packaging>
-  <name>TinyHumans Orchestrator</name>
-  <description>Coordinates agent workloads across regional clusters with retry and backpressure.</description>
-  <properties>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
-    <kafka.version>3.7.0</kafka.version>
-  </properties>
-  <dependencies>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <version>${kafka.version}</version>
-      <scope>compile</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.17.1</version>
-      <scope>compile</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-
-```
-
-Output excerpt:
-
-```text
-4.0.0
-ai.tinyhumans
-orchestrator
-2.14.3
-jar
-TinyHumans Orchestrator
-Coordinates agent workloads across regional clusters with retry and backpressure.
-
-21
-21
-3.7.0
-
-org.apache.kafka
-kafka-clients
-${kafka.version}
-compile
-
-commons-logging
-commons-logging
-
-com.fasterxml.jackson.core
-jackson-databind
-2.17.1
-compile
-
-commons-logging
-commons-logging
-
-io.micrometer
-micrometer-registry-prometheus
-1.13.0
-compile
-
-commons-logging
-commons-logging
-
 
 ```
 

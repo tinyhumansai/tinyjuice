@@ -104,8 +104,19 @@ std::tuple<int64_t, std::array<int64_t, size>> partition(
     std::array<int64_t, size> arr, int64_t start, int64_t end) {
     int64_t pivot = arr[end];  // Randomly selected element will be here from
                                // caller function (quickSortRP()).
-    { … 11 line(s) … }
+    int64_t pInd = start;
+
+    for (int64_t i = start; i < end; i++) {
+        if (arr[i] <= pivot) {
+            std::swap(arr[i], arr[pInd]);  // swapping the elements from current
+                                           // index to pInd.
+            pInd++;
+        }
+    }
+    std::swap(arr[pInd],
+              arr[end]);  // swapping the pivot element to its sorted position
     return std::make_tuple(pInd, arr);
+}
 
 /**
  * @brief Random pivot quick sort function. This function is the starting point
@@ -120,8 +131,23 @@ std::array<int64_t, size> quickSortRP(std::array<int64_t, size> arr,
                                       int64_t start, int64_t end) {
     if (start < end) {
         int64_t randomIndex = getRandomIndex(start, end);
-    { … 15 line(s) … }
+
+        // switching the pivot with right most bound.
+        std::swap(arr[end], arr[randomIndex]);
+
+        int64_t pivotIndex = 0;
+        // getting pivot index and pivot sorted array.
+        std::tie(pivotIndex, arr) = partition(arr, start, end);
+
+        // Recursively calling
+        std::array<int64_t, arr.size()> rightSortingLeft =
+            quickSortRP(arr, start, pivotIndex - 1);
+        std::array<int64_t, arr.size()> full_sorted =
+            quickSortRP(rightSortingLeft, pivotIndex + 1, end);
+        arr = full_sorted;
+    }
     return arr;
+}
 
 /**
  * @brief A function utility to generate unsorted array of given size and range.
@@ -134,8 +160,17 @@ template <size_t size>
 std::array<int64_t, size> generateUnsortedArray(int64_t from, int64_t to) {
     srand(time(nullptr));
     std::array<int64_t, size> unsortedArray{};
-    { … 9 line(s) … }
+    assert(from < to);
+    int64_t i = 0;
+    while (i < size) {
+        int64_t randomNum = from + rand() % (to - from + 1);
+        if (randomNum) {
+            unsortedArray[i] = randomNum;
+            i++;
+        }
+    }
     return unsortedArray;
+}
 
 }  // namespace random_pivot_quick_sort
 }  // namespace sorting
@@ -162,7 +197,15 @@ class TestCases {
      * @returns void
      * */
     void runTests() {
-        { … 9 line(s) … }
+        log("Running Tests...");
+
+        testCase_1();
+        testCase_2();
+        testCase_3();
+
+        log("Test Cases over!");
+        std::cout << std::endl;
+    }
 
     /**
      * @brief A test case with single input
@@ -171,8 +214,29 @@ class TestCases {
     void testCase_1() {
         const int64_t inputSize = 1;
         log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        { … 21 line(s) … }
             "~");
+        log("This is test case 1 for Random Pivot Quick Sort Algorithm : ");
+        log("Description:");
+        log("   EDGE CASE : Only contains one element");
+        std::array<int64_t, inputSize> unsorted_arr{2};
+
+        int64_t start = 0;
+        int64_t end = unsorted_arr.size() - 1;  // length - 1
+
+        log("Running algorithm of data of length 50 ...");
+        std::array<int64_t, unsorted_arr.size()> sorted_arr =
+            sorting::random_pivot_quick_sort::quickSortRP(unsorted_arr, start,
+                                                          end);
+        log("Algorithm finished!");
+
+        log("Checking assert expression...");
+        assert(std::is_sorted(sorted_arr.begin(), sorted_arr.end()));
+        log("Assertion check passed!");
+
+        log("[PASS] : TEST CASE 1 PASS!");
+        log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            "~");
+    }
 
     /**
      * @brief A test case with input array of length 500
@@ -181,8 +245,31 @@ class TestCases {
     void testCase_2() {
         const int64_t inputSize = 500;
         log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        { … 23 line(s) … }
             "~");
+        log("Description:");
+        log("   BIG INPUT : Contains 500 elements and repeated elements");
+        log("This is test case 2 for Random Pivot Quick Sort Algorithm : ");
+        std::array<int64_t, inputSize> unsorted_arr =
+            sorting::random_pivot_quick_sort::generateUnsortedArray<inputSize>(
+                1, 10000);
+
+        int64_t start = 0;
+        int64_t end = unsorted_arr.size() - 1;  // length - 1
+
+        log("Running algorithm of data of length 500 ...");
+        std::array<int64_t, unsorted_arr.size()> sorted_arr =
+            sorting::random_pivot_quick_sort::quickSortRP(unsorted_arr, start,
+                                                          end);
+        log("Algorithm finished!");
+
+        log("Checking assert expression...");
+        assert(std::is_sorted(sorted_arr.begin(), sorted_arr.end()));
+        log("Assertion check passed!");
+
+        log("[PASS] : TEST CASE 2 PASS!");
+        log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            "~");
+    }
 
     /**
      * @brief A test case with array of length 1000.
@@ -191,8 +278,32 @@ class TestCases {
     void testCase_3() {
         const int64_t inputSize = 1000;
         log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        { … 24 line(s) … }
+            "~");
+        log("This is test case 3 for Random Pivot Quick Sort Algorithm : ");
+        log("Description:");
+        log("   LARGE INPUT : Contains 1000 elements and repeated elements");
+        std::array<int64_t, inputSize> unsorted_arr =
+            sorting::random_pivot_quick_sort::generateUnsortedArray<inputSize>(
+                1, 10000);
+
+        int64_t start = 0;
+        int64_t end = unsorted_arr.size() - 1;  // length - 1
+
+        log("Running algorithm...");
+        std::array<int64_t, unsorted_arr.size()> sorted_arr =
+            sorting::random_pivot_quick_sort::quickSortRP(unsorted_arr, start,
+                                                          end);
+        log("Algorithm finished!");
+
+        log("Checking assert expression...");
+        assert(std::is_sorted(sorted_arr.begin(), sorted_arr.end()));
+        log("Assertion check passed!");
+
+        log("[PASS] : TEST CASE 3 PASS!");
+        log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            "~");
     }
+};
 
 /**
  * @brief Self-test implementations

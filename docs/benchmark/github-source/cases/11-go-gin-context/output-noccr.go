@@ -55,8 +55,40 @@ const abortIndex int8 = math.MaxInt8 >> 1
 type Context struct {
 	writermem responseWriter
 	Request   *http.Request
-	{ … 32 line(s) … }
+	Writer    ResponseWriter
+
+	Params   Params
+	handlers HandlersChain
+	index    int8
+	fullPath string
+
+	engine       *Engine
+	params       *Params
+	skippedNodes *[]skippedNode
+
+	// This mutex protects Keys map.
+	mu sync.RWMutex
+
+	// Keys is a key/value pair exclusively for the context of each request.
+	Keys map[string]any
+
+	// Errors is a list of errors attached to all the handlers/middlewares who used this context.
+	Errors errorMsgs
+
+	// Accepted defines a list of manually accepted formats for content negotiation.
+	Accepted []string
+
+	// queryCache caches the query result from c.Request.URL.Query().
+	queryCache url.Values
+
+	// formCache caches c.Request.PostForm, which contains the parsed form data from POST, PATCH,
+	// or PUT body parameters.
+	formCache url.Values
+
+	// SameSite allows a server to define a cookie attribute making it impossible for
+	// the browser to send this cookie along with cross-site requests.
 	sameSite http.SameSite
+}
 
 /************************************/
 /********** CONTEXT CREATION ********/
@@ -65,16 +97,49 @@ type Context struct {
 func (c *Context) reset() {
 	c.Writer = &c.writermem
 	c.Params = c.Params[:0]
-	{ … 11 line(s) … }
+	c.handlers = nil
+	c.index = -1
+
+	c.fullPath = ""
+	c.Keys = nil
+	c.Errors = c.Errors[:0]
+	c.Accepted = nil
+	c.queryCache = nil
+	c.formCache = nil
+	c.sameSite = 0
+	*c.params = (*c.params)[:0]
 	*c.skippedNodes = (*c.skippedNodes)[:0]
+}
 
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
 // This has to be used when the context has to be passed to a goroutine.
 func (c *Context) Copy() *Context {
 	cp := Context{
 		writermem: c.writermem,
-	{ … 22 line(s) … }
+		Request:   c.Request,
+		engine:    c.engine,
+	}
+
+	cp.writermem.ResponseWriter = nil
+	cp.Writer = &cp.writermem
+	cp.index = abortIndex
+	cp.handlers = nil
+	cp.fullPath = c.fullPath
+
+	cKeys := c.Keys
+	cp.Keys = make(map[string]any, len(cKeys))
+	c.mu.RLock()
+	for k, v := range cKeys {
+		cp.Keys[k] = v
+	}
+	c.mu.RUnlock()
+
+	cParams := c.Params
+	cp.Params = make([]Param, len(cParams))
+	copy(cp.Params, cParams)
+
 	return &cp
+}
 
 // HandlerName returns the main handler's name. For example if the handler is "handleGetUsers()",
 // this function will return "main.handleGetUsers".
@@ -171,8 +236,20 @@ func (c *Context) AbortWithError(code int, err error) *Error {
 func (c *Context) Error(err error) *Error {
 	if err == nil {
 		panic("err is nil")
-	{ … 12 line(s) … }
+	}
+
+	var parsedError *Error
+	ok := errors.As(err, &parsedError)
+	if !ok {
+		parsedError = &Error{
+			Err:  err,
+			Type: ErrorTypePrivate,
+		}
+	}
+
+	c.Errors = append(c.Errors, parsedError)
 	return parsedError
+}
 
 /************************************/
 /******** METADATA MANAGEMENT********/
@@ -460,7 +537,17 @@ func (c *Context) PostFormArray(key string) (values []string) {
 }
 
 func (c *Context) initFormCache() {
-	{ … 11 line(s) … }
+	if c.formCache == nil {
+		c.formCache = make(url.Values)
+		req := c.Request
+		if err := req.ParseMultipartForm(c.engine.MaxMultipartMemory); err != nil {
+			if !errors.Is(err, http.ErrNotMultipart) {
+				debugPrint("error on parse multipart form array: %v", err)
+			}
+		}
+		c.formCache = req.PostForm
+	}
+}
 
 // GetPostFormArray returns a slice of strings for a given form key, plus
 // a boolean value whether at least one value exists for the given key.
@@ -485,11 +572,33 @@ func (c *Context) GetPostFormMap(key string) (map[string]string, bool) {
 
 // get is an internal method and returns a map which satisfies conditions.
 func (c *Context) get(m map[string][]string, key string) (map[string]string, bool) {
-	{ … 12 line(s) … }
+	dicts := make(map[string]string)
+	exist := false
+	for k, v := range m {
+		if i := strings.IndexByte(k, '['); i >= 1 && k[0:i] == key {
+			if j := strings.IndexByte(k[i+1:], ']'); j >= 1 {
+				exist = true
+				dicts[k[i+1:][:j]] = v[0]
+			}
+		}
+	}
+	return dicts, exist
+}
 
 // FormFile returns the first file for the provided form key.
 func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
-	{ … 12 line(s) … }
+	if c.Request.MultipartForm == nil {
+		if err := c.Request.ParseMultipartForm(c.engine.MaxMultipartMemory); err != nil {
+			return nil, err
+		}
+	}
+	f, fh, err := c.Request.FormFile(name)
+	if err != nil {
+		return nil, err
+	}
+	f.Close()
+	return fh, err
+}
 
 // MultipartForm is the parsed multipart form, including file uploads.
 func (c *Context) MultipartForm() (*multipart.Form, error) {
@@ -651,8 +760,19 @@ func (c *Context) ShouldBindWith(obj any, b binding.Binding) error {
 func (c *Context) ShouldBindBodyWith(obj any, bb binding.BindingBody) (err error) {
 	var body []byte
 	if cb, ok := c.Get(BodyBytesKey); ok {
-	{ … 11 line(s) … }
+		if cbb, ok := cb.([]byte); ok {
+			body = cbb
+		}
+	}
+	if body == nil {
+		body, err = io.ReadAll(c.Request.Body)
+		if err != nil {
+			return err
+		}
+		c.Set(BodyBytesKey, body)
+	}
 	return bb.BindBody(body, obj)
+}
 
 // ShouldBindBodyWithJSON is a shortcut for c.ShouldBindBodyWith(obj, binding.JSON).
 func (c *Context) ShouldBindBodyWithJSON(obj any) error {
@@ -682,8 +802,39 @@ func (c *Context) ShouldBindBodyWithTOML(obj any) error {
 func (c *Context) ClientIP() string {
 	// Check if we're running on a trusted platform, continue running backwards if error
 	if c.engine.TrustedPlatform != "" {
-	{ … 31 line(s) … }
+		// Developers can define their own header of Trusted Platform or use predefined constants
+		if addr := c.requestHeader(c.engine.TrustedPlatform); addr != "" {
+			return addr
+		}
+	}
+
+	// Legacy "AppEngine" flag
+	if c.engine.AppEngine {
+		log.Println(`The AppEngine flag is going to be deprecated. Please check issues #2723 and #2739 and use 'TrustedPlatform: gin.PlatformGoogleAppEngine' instead.`)
+		if addr := c.requestHeader("X-Appengine-Remote-Addr"); addr != "" {
+			return addr
+		}
+	}
+
+	// It also checks if the remoteIP is a trusted proxy or not.
+	// In order to perform this validation, it will see if the IP is contained within at least one of the CIDR blocks
+	// defined by Engine.SetTrustedProxies()
+	remoteIP := net.ParseIP(c.RemoteIP())
+	if remoteIP == nil {
+		return ""
+	}
+	trusted := c.engine.isTrustedProxy(remoteIP)
+
+	if trusted && c.engine.ForwardedByClientIP && c.engine.RemoteIPHeaders != nil {
+		for _, headerName := range c.engine.RemoteIPHeaders {
+			ip, valid := c.engine.validateHeader(c.requestHeader(headerName))
+			if valid {
+				return ip
+			}
+		}
+	}
 	return remoteIP.String()
+}
 
 // RemoteIP parses the IP from Request.RemoteAddr, normalizes and returns the IP (without the port).
 func (c *Context) RemoteIP() string {
@@ -719,7 +870,16 @@ func (c *Context) requestHeader(key string) string {
 
 // bodyAllowedForStatus is a copy of http.bodyAllowedForStatus non-exported function.
 func bodyAllowedForStatus(status int) bool {
-	{ … 10 line(s) … }
+	switch {
+	case status >= 100 && status <= 199:
+		return false
+	case status == http.StatusNoContent:
+		return false
+	case status == http.StatusNotModified:
+		return false
+	}
+	return true
+}
 
 // Status sets the HTTP response code.
 func (c *Context) Status(code int) {
@@ -761,8 +921,18 @@ func (c *Context) SetSameSite(samesite http.SameSite) {
 func (c *Context) SetCookie(name, value string, maxAge int, path, domain string, secure, httpOnly bool) {
 	if path == "" {
 		path = "/"
-	{ … 10 line(s) … }
+	}
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    url.QueryEscape(value),
+		MaxAge:   maxAge,
+		Path:     path,
+		Domain:   domain,
+		SameSite: c.sameSite,
+		Secure:   secure,
+		HttpOnly: httpOnly,
 	})
+}
 
 // Cookie returns the named cookie provided in the request or
 // ErrNoCookie if not found. And return the named cookie is unescaped.
@@ -781,8 +951,18 @@ func (c *Context) Cookie(name string) (string, error) {
 func (c *Context) Render(code int, r render.Render) {
 	c.Status(code)
 
-	{ … 10 line(s) … }
+	if !bodyAllowedForStatus(code) {
+		r.WriteContentType(c.Writer)
+		c.Writer.WriteHeaderNow()
+		return
 	}
+
+	if err := r.Render(c.Writer); err != nil {
+		// Pushing error to c.Errors
+		_ = c.Error(err)
+		c.Abort()
+	}
+}
 
 // HTML renders the HTTP template specified by its file name.
 // It also updates the HTTP code and sets the Content-Type as "text/html".
@@ -936,8 +1116,19 @@ func (c *Context) SSEvent(name string, message any) {
 func (c *Context) Stream(step func(w io.Writer) bool) bool {
 	w := c.Writer
 	clientGone := w.CloseNotify()
-	{ … 11 line(s) … }
+	for {
+		select {
+		case <-clientGone:
+			return true
+		default:
+			keepOpen := step(w)
+			w.Flush()
+			if !keepOpen {
+				return false
+			}
+		}
 	}
+}
 
 /************************************/
 /******** CONTENT NEGOTIATION *******/
@@ -945,21 +1136,74 @@ func (c *Context) Stream(step func(w io.Writer) bool) bool {
 
 // Negotiate contains all negotiations data.
 type Negotiate struct {
-	{ … 9 line(s) … }
+	Offered  []string
+	HTMLName string
+	HTMLData any
+	JSONData any
+	XMLData  any
+	YAMLData any
+	Data     any
+	TOMLData any
+}
 
 // Negotiate calls different Render according to acceptable Accept format.
 func (c *Context) Negotiate(code int, config Negotiate) {
 	switch c.NegotiateFormat(config.Offered...) {
 	case binding.MIMEJSON:
-	{ … 21 line(s) … }
+		data := chooseData(config.JSONData, config.Data)
+		c.JSON(code, data)
+
+	case binding.MIMEHTML:
+		data := chooseData(config.HTMLData, config.Data)
+		c.HTML(code, config.HTMLName, data)
+
+	case binding.MIMEXML:
+		data := chooseData(config.XMLData, config.Data)
+		c.XML(code, data)
+
+	case binding.MIMEYAML:
+		data := chooseData(config.YAMLData, config.Data)
+		c.YAML(code, data)
+
+	case binding.MIMETOML:
+		data := chooseData(config.TOMLData, config.Data)
+		c.TOML(code, data)
+
+	default:
+		c.AbortWithError(http.StatusNotAcceptable, errors.New("the accepted formats are not offered by the server")) //nolint: errcheck
 	}
+}
 
 // NegotiateFormat returns an acceptable Accept format.
 func (c *Context) NegotiateFormat(offered ...string) string {
 	assert1(len(offered) > 0, "you must provide at least one offer")
 
-	{ … 24 line(s) … }
+	if c.Accepted == nil {
+		c.Accepted = parseAccept(c.requestHeader("Accept"))
+	}
+	if len(c.Accepted) == 0 {
+		return offered[0]
+	}
+	for _, accepted := range c.Accepted {
+		for _, offer := range offered {
+			// According to RFC 2616 and RFC 2396, non-ASCII characters are not allowed in headers,
+			// therefore we can just iterate over the string without casting it into []rune
+			i := 0
+			for ; i < len(accepted) && i < len(offer); i++ {
+				if accepted[i] == '*' || offer[i] == '*' {
+					return offer
+				}
+				if accepted[i] != offer[i] {
+					break
+				}
+			}
+			if i == len(accepted) {
+				return offer
+			}
+		}
+	}
 	return ""
+}
 
 // SetAccepted sets Accept header data.
 func (c *Context) SetAccepted(formats ...string) {
@@ -1007,5 +1251,17 @@ func (c *Context) Err() error {
 func (c *Context) Value(key any) any {
 	if key == ContextRequestKey {
 		return c.Request
-	{ … 12 line(s) … }
+	}
+	if key == ContextKey {
+		return c
+	}
+	if keyAsString, ok := key.(string); ok {
+		if val, exists := c.Get(keyAsString); exists {
+			return val
+		}
+	}
+	if !c.hasRequestContext() {
+		return nil
+	}
 	return c.Request.Context().Value(key)
+}

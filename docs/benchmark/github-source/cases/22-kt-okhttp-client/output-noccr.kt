@@ -224,8 +224,25 @@ open class OkHttpClient internal constructor(
   init {
     if (connectionSpecs.none { it.isTls }) {
       this.sslSocketFactoryOrNull = null
-    { … 17 line(s) … }
+      this.certificateChainCleaner = null
+      this.x509TrustManager = null
+      this.certificatePinner = CertificatePinner.DEFAULT
+    } else if (builder.sslSocketFactoryOrNull != null) {
+      this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
+      this.certificateChainCleaner = builder.certificateChainCleaner!!
+      this.x509TrustManager = builder.x509TrustManagerOrNull!!
+      this.certificatePinner = builder.certificatePinner
+          .withCertificateChainCleaner(certificateChainCleaner!!)
+    } else {
+      this.x509TrustManager = Platform.get().platformTrustManager()
+      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
+      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+      this.certificatePinner = builder.certificatePinner
+          .withCertificateChainCleaner(certificateChainCleaner!!)
+    }
+
     verifyClientState()
+  }
 
   private fun verifyClientState() {
     check(null !in (interceptors as List<Interceptor?>)) {
@@ -234,15 +251,36 @@ open class OkHttpClient internal constructor(
     check(null !in (networkInterceptors as List<Interceptor?>)) {
       "Null network interceptor: $networkInterceptors"
     }
-      { … 10 line(s) … }
+
+    if (connectionSpecs.none { it.isTls }) {
+      check(sslSocketFactoryOrNull == null)
+      check(certificateChainCleaner == null)
+      check(x509TrustManager == null)
+      check(certificatePinner == CertificatePinner.DEFAULT)
+    } else {
+      checkNotNull(sslSocketFactoryOrNull) { "sslSocketFactory == null" }
+      checkNotNull(certificateChainCleaner) { "certificateChainCleaner == null" }
+      checkNotNull(x509TrustManager) { "x509TrustManager == null" }
     }
+  }
 
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call = RealCall(this, request, forWebSocket = false)
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
-    { … 12 line(s) … }
+    val webSocket = RealWebSocket(
+        taskRunner = TaskRunner.INSTANCE,
+        originalRequest = request,
+        listener = listener,
+        random = Random(),
+        pingIntervalMillis = pingIntervalMillis.toLong(),
+        extensions = null, // Always null for clients.
+        minimumDeflateSize = minWebSocketMessageToCompress
+    )
+    webSocket.connect(this)
+    return webSocket
+  }
 
   open fun newBuilder(): Builder = Builder(this)
 
@@ -705,7 +743,16 @@ open class OkHttpClient internal constructor(
         level = DeprecationLevel.ERROR
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
-      { … 10 line(s) … }
+      if (sslSocketFactory != this.sslSocketFactoryOrNull) {
+        this.routeDatabase = null
+      }
+
+      this.sslSocketFactoryOrNull = sslSocketFactory
+      this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
+          "Unable to extract the trust manager on ${Platform.get()}, " +
+              "sslSocketFactory is ${sslSocketFactory.javaClass}")
+      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
+    }
 
     /**
      * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
@@ -821,8 +868,18 @@ open class OkHttpClient internal constructor(
       require(null !in (protocolsCopy as List<Protocol?>)) {
         "protocols must not contain null"
       }
-        { … 10 line(s) … }
+
+      // Remove protocols that we no longer support.
+      @Suppress("DEPRECATION")
+      protocolsCopy.remove(Protocol.SPDY_3)
+
+      if (protocolsCopy != this.protocols) {
+        this.routeDatabase = null
+      }
+
+      // Assign as an unmodifiable list. This is effectively immutable.
       this.protocols = Collections.unmodifiableList(protocolsCopy)
+    }
 
     /**
      * Sets the verifier used to confirm that response certificates apply to requested hostnames for

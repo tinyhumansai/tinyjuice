@@ -126,7 +126,17 @@ class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) 
      * @throws NoSuchElementException if this priority queue is empty
      */
     fun poll(): Pair<Int, T> {
-        { … 11 line(s) … }
+        if (size == 0) throw NoSuchElementException("Priority queue underflow")
+        val min = pq[1]
+        val element = keys[min]
+        exch(1, size--)
+        sink(1)
+        assert(min == pq[size + 1])
+        qp[min] = -1        // delete
+        keys[min] = null    // to help with garbage collection
+        pq[size + 1] = -1   // not needed
+        return Pair(min, element!!)
+    }
 
     private fun less(x: T, y: T): Boolean {
         return if (comparator != null) {
@@ -167,7 +177,15 @@ class IndexedPriorityQueue<T>(size: Int, val comparator: Comparator<T>? = null) 
     }
 
     private fun sink(n: Int) {
-        { … 9 line(s) … }
+        var k = n
+        while (2 * k <= size) {
+            var j = 2 * k
+            if (j < size && greater(j, j + 1)) j++
+            if (!greater(k, j)) break
+            exch(k, j)
+            k = j
+        }
+    }
 
     public fun contains(i: Int): Boolean {
         if (i < 0 || i >= maxN) throw IndexOutOfBoundsException()

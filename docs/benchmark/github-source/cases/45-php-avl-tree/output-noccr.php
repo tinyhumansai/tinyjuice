@@ -141,10 +141,22 @@ class AVLTree
      * @return AVLTreeNode The new root of the subtree.
      */
     private function insertNode(?AVLTreeNode $node, $key, $value): AVLTreeNode
+    {
         if ($node === null) {
             return new AVLTreeNode($key, $value);
-        { … 11 line(s) … }
+        }
+
+        if ($key < $node->key) {
+            $node->left = $this->insertNode($node->left, $key, $value);
+        } elseif ($key > $node->key) {
+            $node->right = $this->insertNode($node->right, $key, $value);
+        } else {
+            $node->value = $value; // Update existing value
+        }
+
+        $node->updateHeight();
         return $this->balance($node);
+    }
 
     /**
      * Delete a node by its key and balance the tree.
@@ -154,10 +166,32 @@ class AVLTree
      * @return ?AVLTreeNode The new root of the subtree.
      */
     private function deleteNode(?AVLTreeNode $node, $key): ?AVLTreeNode
+    {
         if ($node === null) {
             return null;
-        { … 21 line(s) … }
+        }
+
+        if ($key < $node->key) {
+            $node->left = $this->deleteNode($node->left, $key);
+        } elseif ($key > $node->key) {
+            $node->right = $this->deleteNode($node->right, $key);
+        } else {
+            if (!$node->left) {
+                return $node->right;
+            }
+            if (!$node->right) {
+                return $node->left;
+            }
+
+            $minNode = $this->getMinNode($node->right);
+            $node->key = $minNode->key;
+            $node->value = $minNode->value;
+            $node->right = $this->deleteNode($node->right, $minNode->key);
+        }
+
+        $node->updateHeight();
         return $this->balance($node);
+    }
 
     /**
      * Search for a node by its key.
@@ -167,7 +201,19 @@ class AVLTree
      * @return ?AVLTreeNode The node with the specified key, or null if not found.
      */
     private function searchNode(?AVLTreeNode $node, $key): ?AVLTreeNode
-        { … 13 line(s) … }
+    {
+        if ($node === null) {
+            return null;
+        }
+
+        if ($key < $node->key) {
+            return $this->searchNode($node->left, $key);
+        } elseif ($key > $node->key) {
+            return $this->searchNode($node->right, $key);
+        } else {
+            return $node;
+        }
+    }
 
     /**
      * Helper method to check if a subtree is balanced.
@@ -176,10 +222,21 @@ class AVLTree
      * @return bool True if the subtree is balanced, false otherwise.
      */
     private function isBalancedHelper(?AVLTreeNode $node): bool
+    {
         if ($node === null) {
             return true;
-        { … 10 line(s) … }
+        }
+
+        $leftHeight = $node->left ? $node->left->height : 0;
+        $rightHeight = $node->right ? $node->right->height : 0;
+
+        $balanceFactor = abs($leftHeight - $rightHeight);
+        if ($balanceFactor > 1) {
+            return false;
+        }
+
         return $this->isBalancedHelper($node->left) && $this->isBalancedHelper($node->right);
+    }
 
     /**
      * Balance the subtree rooted at the given node.
@@ -188,10 +245,23 @@ class AVLTree
      * @return ?AVLTreeNode The new root of the subtree.
      */
     private function balance(?AVLTreeNode $node): ?AVLTreeNode
+    {
         if ($node->balanceFactor() > 1) {
             if ($node->left && $node->left->balanceFactor() < 0) {
-        { … 12 line(s) … }
+                $node->left = $this->rotateLeft($node->left);
+            }
+            return $this->rotateRight($node);
+        }
+
+        if ($node->balanceFactor() < -1) {
+            if ($node->right && $node->right->balanceFactor() > 0) {
+                $node->right = $this->rotateRight($node->right);
+            }
+            return $this->rotateLeft($node);
+        }
+
         return $node;
+    }
 
     /**
      * Perform a left rotation on the given node.
@@ -200,7 +270,16 @@ class AVLTree
      * @return AVLTreeNode The new root of the rotated subtree.
      */
     private function rotateLeft(AVLTreeNode $node): AVLTreeNode
-        { … 10 line(s) … }
+    {
+        $newRoot = $node->right;
+        $node->right = $newRoot->left;
+        $newRoot->left = $node;
+
+        $node->updateHeight();
+        $newRoot->updateHeight();
+
+        return $newRoot;
+    }
 
     /**
      * Perform a right rotation on the given node.
@@ -209,7 +288,16 @@ class AVLTree
      * @return AVLTreeNode The new root of the rotated subtree.
      */
     private function rotateRight(AVLTreeNode $node): AVLTreeNode
-        { … 10 line(s) … }
+    {
+        $newRoot = $node->left;
+        $node->left = $newRoot->right;
+        $newRoot->right = $node;
+
+        $node->updateHeight();
+        $newRoot->updateHeight();
+
+        return $newRoot;
+    }
 
     /**
      * Get the node with the minimum key in the given subtree.
@@ -242,7 +330,18 @@ class AVLTree
      * @return array
      */
     private function serializeTree(?AVLTreeNode $node): array
-        { … 12 line(s) … }
+    {
+        if ($node === null) {
+            return [];
+        }
+        return [
+            'key' => $node->key,
+            'value' => $node->value,
+            'left' => $this->serializeTree($node->left),
+            'right' => $this->serializeTree($node->right),
+            'height' => $node->height,
+        ];
+    }
 
     /**
      * Deserializes a JSON string into an AVL Tree object
@@ -263,7 +362,19 @@ class AVLTree
      * @return AVLTreeNode|null The root node of the deserialized tree.
      */
     private function deserializeTree(array $data): ?AVLTreeNode
-        { … 13 line(s) … }
+    {
+        if (empty($data)) {
+            return null;
+        }
+
+        $node = new AVLTreeNode($data['key'], $data['value']);
+        $node->height = $data['height'];
+
+        $node->left = $this->deserializeTree($data['left']);
+        $node->right = $this->deserializeTree($data['right']);
+
+        return $node;
+    }
 
     /**
      * Updates the deserialized tree size.

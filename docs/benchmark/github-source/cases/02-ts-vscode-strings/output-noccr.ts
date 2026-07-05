@@ -23,7 +23,17 @@ const _formatRegexp = /{(\d+)}/g;
  * @param value string to which formatting is applied
  * @param args replacements for {n}-entries
  */
-export function format(value: string, ...args: any[]): string { … 11 line(s) … }
+export function format(value: string, ...args: any[]): string {
+	if (args.length === 0) {
+		return value;
+	}
+	return value.replace(_formatRegexp, function (match, group) {
+		const idx = parseInt(group, 10);
+		return isNaN(idx) || idx < 0 || idx >= args.length ?
+			match :
+			args[idx];
+	});
+}
 
 const _format2Regexp = /{([^}]+)}/g;
 
@@ -44,13 +54,33 @@ export function format2(template: string, values: Record<string, unknown>): stri
  * In other words, computes `$val`, such that `attr` in `<div attr="$val" />` has the runtime value `value`.
  * This prevents XSS injection.
  */
-export function htmlAttributeEncodeValue(value: string): string { … 12 line(s) … }
+export function htmlAttributeEncodeValue(value: string): string {
+	return value.replace(/[<>"'&]/g, ch => {
+		switch (ch) {
+			case '<': return '&lt;';
+			case '>': return '&gt;';
+			case '"': return '&quot;';
+			case '\'': return '&apos;';
+			case '&': return '&amp;';
+		}
+		return ch;
+	});
+}
 
 /**
  * Converts HTML characters inside the string to use entities instead. Makes the string safe from
  * being used e.g. in HTMLElement.innerHTML.
  */
-export function escape(html: string): string { … 10 line(s) … }
+export function escape(html: string): string {
+	return html.replace(/[<>&]/g, function (match) {
+		switch (match) {
+			case '<': return '&lt;';
+			case '>': return '&gt;';
+			case '&': return '&amp;';
+			default: return match;
+		}
+	});
+}
 
 /**
  * Escapes regular expression characters in a given string
@@ -80,7 +110,16 @@ export function truncate(value: string, maxLength: number, suffix = '…'): stri
 	return `${value.substr(0, maxLength)}${suffix}`;
 }
 
-export function truncateMiddle(value: string, maxLength: number, suffix = '…'): string { … 10 line(s) … }
+export function truncateMiddle(value: string, maxLength: number, suffix = '…'): string {
+	if (value.length <= maxLength) {
+		return value;
+	}
+
+	const prefixLength = Math.ceil(maxLength / 2) - suffix.length / 2;
+	const suffixLength = Math.floor(maxLength / 2) - suffix.length / 2;
+
+	return `${value.substr(0, prefixLength)}${suffix}${value.substr(value.length - suffixLength)}`;
+}
 
 /**
  * Removes all occurrences of needle from the beginning and end of haystack.
@@ -100,7 +139,18 @@ export function trim(haystack: string, needle: string = ' '): string {
 export function ltrim(haystack: string, needle: string): string {
 	if (!haystack || !needle) {
 		return haystack;
-	{ … 12 line(s) … }
+	}
+
+	const needleLen = needle.length;
+	if (needleLen === 0 || haystack.length === 0) {
+		return haystack;
+	}
+
+	let offset = 0;
+
+	while (haystack.indexOf(needle, offset) === offset) {
+		offset = offset + needleLen;
+	}
 	return haystack.substring(offset);
 }
 
@@ -112,7 +162,29 @@ export function ltrim(haystack: string, needle: string): string {
 export function rtrim(haystack: string, needle: string): string {
 	if (!haystack || !needle) {
 		return haystack;
-	{ … 23 line(s) … }
+	}
+
+	const needleLen = needle.length,
+		haystackLen = haystack.length;
+
+	if (needleLen === 0 || haystackLen === 0) {
+		return haystack;
+	}
+
+	let offset = haystackLen,
+		idx = -1;
+
+	while (true) {
+		idx = haystack.lastIndexOf(needle, offset - 1);
+		if (idx === -1 || idx + needleLen !== offset) {
+			break;
+		}
+		if (idx === 0) {
+			return '';
+		}
+		offset = idx;
+	}
+
 	return haystack.substring(0, offset);
 }
 
@@ -135,11 +207,47 @@ export interface RegExpOptions {
 export function createRegExp(searchString: string, isRegex: boolean, options: RegExpOptions = {}): RegExp {
 	if (!searchString) {
 		throw new Error('Cannot create regex from empty string');
-	{ … 26 line(s) … }
+	}
+	if (!isRegex) {
+		searchString = escapeRegExpCharacters(searchString);
+	}
+	if (options.wholeWord) {
+		if (!/\B/.test(searchString.charAt(0))) {
+			searchString = '\\b' + searchString;
+		}
+		if (!/\B/.test(searchString.charAt(searchString.length - 1))) {
+			searchString = searchString + '\\b';
+		}
+	}
+	let modifiers = '';
+	if (options.global) {
+		modifiers += 'g';
+	}
+	if (!options.matchCase) {
+		modifiers += 'i';
+	}
+	if (options.multiline) {
+		modifiers += 'm';
+	}
+	if (options.unicode) {
+		modifiers += 'u';
+	}
+
 	return new RegExp(searchString, modifiers);
 }
 
-export function regExpLeadsToEndlessLoop(regexp: RegExp): boolean { … 12 line(s) … }
+export function regExpLeadsToEndlessLoop(regexp: RegExp): boolean {
+	// Exit early if it's one of these special cases which are meant to match
+	// against an empty string
+	if (regexp.source === '^' || regexp.source === '^$' || regexp.source === '$' || regexp.source === '^\\s*$') {
+		return false;
+	}
+
+	// We check against an empty string. If the regular expression doesn't advance
+	// (e.g. ends in an endless loop) it will match an empty string.
+	const match = regexp.exec('');
+	return !!(match && regexp.lastIndex === 0);
+}
 
 export function joinStrings(items: (string | undefined | null | false)[], separator: string): string {
 	return items.filter(item => item !== undefined && item !== null && item !== false).join(separator);
@@ -213,7 +321,19 @@ export function getIndentationLength(str: string): number {
 export function replaceAsync(str: string, search: RegExp, replacer: (match: string, ...args: any[]) => Promise<string>): Promise<string> {
 	const parts: (string | Promise<string>)[] = [];
 
-	{ … 13 line(s) … }
+	let last = 0;
+	for (const match of str.matchAll(search)) {
+		parts.push(str.slice(last, match.index));
+		if (match.index === undefined) {
+			throw new Error('match.index should be defined');
+		}
+
+		last = match.index + match[0].length;
+		parts.push(replacer(match[0], ...match.slice(1), match.index, str, match.groups));
+	}
+
+	parts.push(str.slice(last));
+
 	return Promise.all(parts).then(p => p.join(''));
 }
 
@@ -230,7 +350,20 @@ export function compare(a: string, b: string): number {
 export function compareSubstring(a: string, b: string, aStart: number = 0, aEnd: number = a.length, bStart: number = 0, bEnd: number = b.length): number {
 	for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
 		const codeA = a.charCodeAt(aStart);
-	{ … 14 line(s) … }
+		const codeB = b.charCodeAt(bStart);
+		if (codeA < codeB) {
+			return -1;
+		} else if (codeA > codeB) {
+			return 1;
+		}
+	}
+	const aLen = aEnd - aStart;
+	const bLen = bEnd - bStart;
+	if (aLen < bLen) {
+		return -1;
+	} else if (aLen > bLen) {
+		return 1;
+	}
 	return 0;
 }
 
@@ -241,7 +374,47 @@ export function compareIgnoreCase(a: string, b: string): number {
 export function compareSubstringIgnoreCase(a: string, b: string, aStart: number = 0, aEnd: number = a.length, bStart: number = 0, bEnd: number = b.length): number {
 
 	for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
-{ … 41 line(s) … }
+
+		let codeA = a.charCodeAt(aStart);
+		let codeB = b.charCodeAt(bStart);
+
+		if (codeA === codeB) {
+			// equal
+			continue;
+		}
+
+		if (codeA >= 128 || codeB >= 128) {
+			// not ASCII letters -> fallback to lower-casing strings
+			return compareSubstring(a.toLowerCase(), b.toLowerCase(), aStart, aEnd, bStart, bEnd);
+		}
+
+		// mapper lower-case ascii letter onto upper-case varinats
+		// [97-122] (lower ascii) --> [65-90] (upper ascii)
+		if (isLowerAsciiLetter(codeA)) {
+			codeA -= 32;
+		}
+		if (isLowerAsciiLetter(codeB)) {
+			codeB -= 32;
+		}
+
+		// compare both code points
+		const diff = codeA - codeB;
+		if (diff === 0) {
+			continue;
+		}
+
+		return diff;
+	}
+
+	const aLen = aEnd - aStart;
+	const bLen = bEnd - bStart;
+
+	if (aLen < bLen) {
+		return -1;
+	} else if (aLen > bLen) {
+		return 1;
+	}
+
 	return 0;
 }
 
@@ -273,7 +446,19 @@ export function startsWithIgnoreCase(str: string, candidate: string): boolean {
 /**
  * @returns the length of the common prefix of the two strings.
  */
-export function commonPrefixLength(a: string, b: string): number { … 13 line(s) … }
+export function commonPrefixLength(a: string, b: string): number {
+
+	const len = Math.min(a.length, b.length);
+	let i: number;
+
+	for (i = 0; i < len; i++) {
+		if (a.charCodeAt(i) !== b.charCodeAt(i)) {
+			return i;
+		}
+	}
+
+	return len;
+}
 
 /**
  * @returns the length of the common suffix of the two strings.
@@ -281,7 +466,17 @@ export function commonPrefixLength(a: string, b: string): number { … 13 line(s
 export function commonSuffixLength(a: string, b: string): number {
 
 	const len = Math.min(a.length, b.length);
-{ … 11 line(s) … }
+	let i: number;
+
+	const aLastIndex = a.length - 1;
+	const bLastIndex = b.length - 1;
+
+	for (i = 0; i < len; i++) {
+		if (a.charCodeAt(aLastIndex - i) !== b.charCodeAt(bLastIndex - i)) {
+			return i;
+		}
+	}
+
 	return len;
 }
 
@@ -309,12 +504,30 @@ export function computeCodePoint(highSurrogate: number, lowSurrogate: number): n
 /**
  * get the code point that begins at offset `offset`
  */
-export function getNextCodePoint(str: string, len: number, offset: number): number { … 10 line(s) … }
+export function getNextCodePoint(str: string, len: number, offset: number): number {
+	const charCode = str.charCodeAt(offset);
+	if (isHighSurrogate(charCode) && offset + 1 < len) {
+		const nextCharCode = str.charCodeAt(offset + 1);
+		if (isLowSurrogate(nextCharCode)) {
+			return computeCodePoint(charCode, nextCharCode);
+		}
+	}
+	return charCode;
+}
 
 /**
  * get the code point that ends right before offset `offset`
  */
-function getPrevCodePoint(str: string, offset: number): number { … 10 line(s) … }
+function getPrevCodePoint(str: string, offset: number): number {
+	const charCode = str.charCodeAt(offset - 1);
+	if (isLowSurrogate(charCode) && offset > 1) {
+		const prevCharCode = str.charCodeAt(offset - 2);
+		if (isHighSurrogate(prevCharCode)) {
+			return computeCodePoint(prevCharCode, charCode);
+		}
+	}
+	return charCode;
+}
 
 export class CodePointIterator {
 
@@ -368,16 +581,40 @@ export class GraphemeIterator {
 	public nextGraphemeLength(): number {
 		const graphemeBreakTree = GraphemeBreakTree.getInstance();
 		const iterator = this._iterator;
-		{ … 13 line(s) … }
+		const initialOffset = iterator.offset;
+
+		let graphemeBreakType = graphemeBreakTree.getGraphemeBreakType(iterator.nextCodePoint());
+		while (!iterator.eol()) {
+			const offset = iterator.offset;
+			const nextGraphemeBreakType = graphemeBreakTree.getGraphemeBreakType(iterator.nextCodePoint());
+			if (breakBetweenGraphemeBreakType(graphemeBreakType, nextGraphemeBreakType)) {
+				// move iterator back
+				iterator.setOffset(offset);
+				break;
+			}
+			graphemeBreakType = nextGraphemeBreakType;
+		}
 		return (iterator.offset - initialOffset);
-}
+	}
 
 	public prevGraphemeLength(): number {
 		const graphemeBreakTree = GraphemeBreakTree.getInstance();
 		const iterator = this._iterator;
-		{ … 13 line(s) … }
+		const initialOffset = iterator.offset;
+
+		let graphemeBreakType = graphemeBreakTree.getGraphemeBreakType(iterator.prevCodePoint());
+		while (iterator.offset > 0) {
+			const offset = iterator.offset;
+			const prevGraphemeBreakType = graphemeBreakTree.getGraphemeBreakType(iterator.prevCodePoint());
+			if (breakBetweenGraphemeBreakType(prevGraphemeBreakType, graphemeBreakType)) {
+				// move iterator back
+				iterator.setOffset(offset);
+				break;
+			}
+			graphemeBreakType = prevGraphemeBreakType;
+		}
 		return (initialOffset - iterator.offset);
-}
+	}
 
 	public eol(): boolean {
 		return this._iterator.eol();
@@ -450,7 +687,46 @@ export function containsUnusualLineTerminators(str: string): boolean {
 export function isFullWidthCharacter(charCode: number): boolean {
 	// Do a cheap trick to better support wrapping of wide characters, treat them as 2 columns
 	// http://jrgraphix.net/research/unicode_blocks.php
-	{ … 40 line(s) … }
+	//          2E80 - 2EFF   CJK Radicals Supplement
+	//          2F00 - 2FDF   Kangxi Radicals
+	//          2FF0 - 2FFF   Ideographic Description Characters
+	//          3000 - 303F   CJK Symbols and Punctuation
+	//          3040 - 309F   Hiragana
+	//          30A0 - 30FF   Katakana
+	//          3100 - 312F   Bopomofo
+	//          3130 - 318F   Hangul Compatibility Jamo
+	//          3190 - 319F   Kanbun
+	//          31A0 - 31BF   Bopomofo Extended
+	//          31F0 - 31FF   Katakana Phonetic Extensions
+	//          3200 - 32FF   Enclosed CJK Letters and Months
+	//          3300 - 33FF   CJK Compatibility
+	//          3400 - 4DBF   CJK Unified Ideographs Extension A
+	//          4DC0 - 4DFF   Yijing Hexagram Symbols
+	//          4E00 - 9FFF   CJK Unified Ideographs
+	//          A000 - A48F   Yi Syllables
+	//          A490 - A4CF   Yi Radicals
+	//          AC00 - D7AF   Hangul Syllables
+	// [IGNORE] D800 - DB7F   High Surrogates
+	// [IGNORE] DB80 - DBFF   High Private Use Surrogates
+	// [IGNORE] DC00 - DFFF   Low Surrogates
+	// [IGNORE] E000 - F8FF   Private Use Area
+	//          F900 - FAFF   CJK Compatibility Ideographs
+	// [IGNORE] FB00 - FB4F   Alphabetic Presentation Forms
+	// [IGNORE] FB50 - FDFF   Arabic Presentation Forms-A
+	// [IGNORE] FE00 - FE0F   Variation Selectors
+	// [IGNORE] FE20 - FE2F   Combining Half Marks
+	// [IGNORE] FE30 - FE4F   CJK Compatibility Forms
+	// [IGNORE] FE50 - FE6F   Small Form Variants
+	// [IGNORE] FE70 - FEFF   Arabic Presentation Forms-B
+	//          FF00 - FFEF   Halfwidth and Fullwidth Forms
+	//               [https://en.wikipedia.org/wiki/Halfwidth_and_fullwidth_forms]
+	//               of which FF01 - FF5E fullwidth ASCII of 21 to 7E
+	// [IGNORE]    and FF65 - FFDC halfwidth of Katakana and Hangul
+	// [IGNORE] FFF0 - FFFF   Specials
+	return (
+		(charCode >= 0x2E80 && charCode <= 0xD7AF)
+		|| (charCode >= 0xF900 && charCode <= 0xFAFF)
+		|| (charCode >= 0xFF01 && charCode <= 0xFF5E)
 	);
 }
 
@@ -476,7 +752,25 @@ export function isEmojiImprecise(x: number): boolean {
 export function lcut(text: string, n: number, prefix = '') {
 	const trimmed = text.trimStart();
 
-	{ … 19 line(s) … }
+	if (trimmed.length < n) {
+		return trimmed;
+	}
+
+	const re = /\b/g;
+	let i = 0;
+	while (re.test(trimmed)) {
+		if (trimmed.length - re.lastIndex < n) {
+			break;
+		}
+
+		i = re.lastIndex;
+		re.lastIndex += 1;
+	}
+
+	if (i === 0) {
+		return trimmed;
+	}
+
 	return prefix + trimmed.substring(i).trimStart();
 }
 
@@ -488,7 +782,16 @@ const CSI_SEQUENCE = /(?:(?:\x1b\[|\x9B)[=?>!]?[\d;:]*["$#'* ]?[a-zA-Z@^`{}|~])|
 export function* forAnsiStringParts(str: string) {
 	let last = 0;
 	for (const match of str.matchAll(CSI_SEQUENCE)) {
-	{ … 10 line(s) … }
+		if (last !== match.index) {
+			yield { isCode: false, str: str.substring(last, match.index) };
+		}
+
+		yield { isCode: true, str: match[0] };
+		last = match.index + match[0].length;
+	}
+
+	if (last !== str.length) {
+		yield { isCode: false, str: str.substring(last) };
 	}
 }
 
@@ -542,11 +845,42 @@ export function stripUTF8BOM(str: string): string {
 export function fuzzyContains(target: string, query: string): boolean {
 	if (!target || !query) {
 		return false; // return early if target or query are undefined
-	{ … 22 line(s) … }
+	}
+
+	if (target.length < query.length) {
+		return false; // impossible for query to be contained in target
+	}
+
+	const queryLen = query.length;
+	const targetLower = target.toLowerCase();
+
+	let index = 0;
+	let lastIndexOf = -1;
+	while (index < queryLen) {
+		const indexOf = targetLower.indexOf(query[index], lastIndexOf + 1);
+		if (indexOf < 0) {
+			return false;
+		}
+
+		lastIndexOf = indexOf;
+
+		index++;
+	}
+
 	return true;
 }
 
-export function containsUppercaseCharacter(target: string, ignoreEscapedChars = false): boolean { … 11 line(s) … }
+export function containsUppercaseCharacter(target: string, ignoreEscapedChars = false): boolean {
+	if (!target) {
+		return false;
+	}
+
+	if (ignoreEscapedChars) {
+		target = target.replace(/\\./g, '');
+	}
+
+	return target.toLowerCase() !== target;
+}
 
 export function uppercaseFirstLetter(str: string): string {
 	return str.charAt(0).toUpperCase() + str.slice(1);
@@ -555,14 +889,39 @@ export function uppercaseFirstLetter(str: string): string {
 export function getNLines(str: string, n = 1): string {
 	if (n === 0) {
 		return '';
-	{ … 16 line(s) … }
+	}
+
+	let idx = -1;
+	do {
+		idx = str.indexOf('\n', idx + 1);
+		n--;
+	} while (n > 0 && idx >= 0);
+
+	if (idx === -1) {
+		return str;
+	}
+
+	if (str[idx - 1] === '\r') {
+		idx--;
+	}
+
 	return str.substr(0, idx);
 }
 
 /**
  * Produces 'a'-'z', followed by 'A'-'Z'... followed by 'a'-'z', etc.
  */
-export function singleLetterHash(n: number): string { … 11 line(s) … }
+export function singleLetterHash(n: number): string {
+	const LETTERS_CNT = (CharCode.Z - CharCode.A + 1);
+
+	n = n % (2 * LETTERS_CNT);
+
+	if (n < LETTERS_CNT) {
+		return String.fromCharCode(CharCode.a + n);
+	}
+
+	return String.fromCharCode(CharCode.A + n - LETTERS_CNT);
+}
 
 //#region Unicode Grapheme Break
 
@@ -574,7 +933,80 @@ export function getGraphemeBreakType(codePoint: number): GraphemeBreakType {
 function breakBetweenGraphemeBreakType(breakTypeA: GraphemeBreakType, breakTypeB: GraphemeBreakType): boolean {
 	// http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundary_Rules
 
-	{ … 74 line(s) … }
+	// !!! Let's make the common case a bit faster
+	if (breakTypeA === GraphemeBreakType.Other) {
+		// see https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest-13.0.0d10.html#table
+		return (breakTypeB !== GraphemeBreakType.Extend && breakTypeB !== GraphemeBreakType.SpacingMark);
+	}
+
+	// Do not break between a CR and LF. Otherwise, break before and after controls.
+	// GB3                                        CR × LF
+	// GB4                       (Control | CR | LF) ÷
+	// GB5                                           ÷ (Control | CR | LF)
+	if (breakTypeA === GraphemeBreakType.CR) {
+		if (breakTypeB === GraphemeBreakType.LF) {
+			return false; // GB3
+		}
+	}
+	if (breakTypeA === GraphemeBreakType.Control || breakTypeA === GraphemeBreakType.CR || breakTypeA === GraphemeBreakType.LF) {
+		return true; // GB4
+	}
+	if (breakTypeB === GraphemeBreakType.Control || breakTypeB === GraphemeBreakType.CR || breakTypeB === GraphemeBreakType.LF) {
+		return true; // GB5
+	}
+
+	// Do not break Hangul syllable sequences.
+	// GB6                                         L × (L | V | LV | LVT)
+	// GB7                                  (LV | V) × (V | T)
+	// GB8                                 (LVT | T) × T
+	if (breakTypeA === GraphemeBreakType.L) {
+		if (breakTypeB === GraphemeBreakType.L || breakTypeB === GraphemeBreakType.V || breakTypeB === GraphemeBreakType.LV || breakTypeB === GraphemeBreakType.LVT) {
+			return false; // GB6
+		}
+	}
+	if (breakTypeA === GraphemeBreakType.LV || breakTypeA === GraphemeBreakType.V) {
+		if (breakTypeB === GraphemeBreakType.V || breakTypeB === GraphemeBreakType.T) {
+			return false; // GB7
+		}
+	}
+	if (breakTypeA === GraphemeBreakType.LVT || breakTypeA === GraphemeBreakType.T) {
+		if (breakTypeB === GraphemeBreakType.T) {
+			return false; // GB8
+		}
+	}
+
+	// Do not break before extending characters or ZWJ.
+	// GB9                                           × (Extend | ZWJ)
+	if (breakTypeB === GraphemeBreakType.Extend || breakTypeB === GraphemeBreakType.ZWJ) {
+		return false; // GB9
+	}
+
+	// The GB9a and GB9b rules only apply to extended grapheme clusters:
+	// Do not break before SpacingMarks, or after Prepend characters.
+	// GB9a                                          × SpacingMark
+	// GB9b                                  Prepend ×
+	if (breakTypeB === GraphemeBreakType.SpacingMark) {
+		return false; // GB9a
+	}
+	if (breakTypeA === GraphemeBreakType.Prepend) {
+		return false; // GB9b
+	}
+
+	// Do not break within emoji modifier sequences or emoji zwj sequences.
+	// GB11    \p{Extended_Pictographic} Extend* ZWJ × \p{Extended_Pictographic}
+	if (breakTypeA === GraphemeBreakType.ZWJ && breakTypeB === GraphemeBreakType.Extended_Pictographic) {
+		// Note: we are not implementing the rule entirely here to avoid introducing states
+		return false; // GB11
+	}
+
+	// GB12                          sot (RI RI)* RI × RI
+	// GB13                        [^RI] (RI RI)* RI × RI
+	if (breakTypeA === GraphemeBreakType.Regional_Indicator && breakTypeB === GraphemeBreakType.Regional_Indicator) {
+		// Note: we are not implementing the rule entirely here to avoid introducing states
+		return false; // GB12 & GB13
+	}
+
+	// GB999                                     Any ÷ Any
 	return true;
 }
 
@@ -615,9 +1047,37 @@ class GraphemeBreakTree {
 	public getGraphemeBreakType(codePoint: number): GraphemeBreakType {
 		// !!! Let's make 7bit ASCII a bit faster: 0..31
 		if (codePoint < 32) {
-		{ … 29 line(s) … }
+			if (codePoint === CharCode.LineFeed) {
+				return GraphemeBreakType.LF;
+			}
+			if (codePoint === CharCode.CarriageReturn) {
+				return GraphemeBreakType.CR;
+			}
+			return GraphemeBreakType.Control;
+		}
+		// !!! Let's make 7bit ASCII a bit faster: 32..126
+		if (codePoint < 127) {
+			return GraphemeBreakType.Other;
+		}
+
+		const data = this._data;
+		const nodeCount = data.length / 3;
+		let nodeIndex = 1;
+		while (nodeIndex <= nodeCount) {
+			if (codePoint < data[3 * nodeIndex]) {
+				// go left
+				nodeIndex = 2 * nodeIndex;
+			} else if (codePoint > data[3 * nodeIndex + 1]) {
+				// go right
+				nodeIndex = 2 * nodeIndex + 1;
+			} else {
+				// hit
+				return data[3 * nodeIndex + 2];
+			}
+		}
+
 		return GraphemeBreakType.Other;
-}
+	}
 }
 
 function getGraphemeBreakRawData(): number[] {
@@ -634,14 +1094,53 @@ function getGraphemeBreakRawData(): number[] {
 export function getLeftDeleteOffset(offset: number, str: string): number {
 	if (offset === 0) {
 		return 0;
-	{ … 11 line(s) … }
+	}
+
+	// Try to delete emoji part.
+	const emojiOffset = getOffsetBeforeLastEmojiComponent(offset, str);
+	if (emojiOffset !== undefined) {
+		return emojiOffset;
+	}
+
+	// Otherwise, just skip a single code point.
+	const iterator = new CodePointIterator(str, offset);
+	iterator.prevCodePoint();
 	return iterator.offset;
 }
 
 function getOffsetBeforeLastEmojiComponent(initialOffset: number, str: string): number | undefined {
 	// See https://www.unicode.org/reports/tr51/tr51-14.html#EBNF_and_Regex for the
 	// structure of emojis.
-	{ … 30 line(s) … }
+	const iterator = new CodePointIterator(str, initialOffset);
+	let codePoint = iterator.prevCodePoint();
+
+	// Skip modifiers
+	while ((isEmojiModifier(codePoint) || codePoint === CodePoint.emojiVariantSelector || codePoint === CodePoint.enclosingKeyCap)) {
+		if (iterator.offset === 0) {
+			// Cannot skip modifier, no preceding emoji base.
+			return undefined;
+		}
+		codePoint = iterator.prevCodePoint();
+	}
+
+	// Expect base emoji
+	if (!isEmojiImprecise(codePoint)) {
+		// Unexpected code point, not a valid emoji.
+		return undefined;
+	}
+
+	let resultOffset = iterator.offset;
+
+	if (resultOffset > 0) {
+		// Skip optional ZWJ code points that combine multiple emojis.
+		// In theory, we should check if that ZWJ actually combines multiple emojis
+		// to prevent deleting ZWJs in situations we didn't account for.
+		const optionalZwjCodePoint = iterator.prevCodePoint();
+		if (optionalZwjCodePoint === CodePoint.zwj) {
+			resultOffset = iterator.offset;
+		}
+	}
+
 	return resultOffset;
 }
 
@@ -685,9 +1184,59 @@ export class AmbiguousCharacters {
 	>({ getCacheKey: JSON.stringify }, (locales) => {
 		function arrayToMap(arr: number[]): Map<number, number> {
 			const result = new Map<number, number>();
-		{ … 51 line(s) … }
+			for (let i = 0; i < arr.length; i += 2) {
+				result.set(arr[i], arr[i + 1]);
+			}
+			return result;
+		}
+
+		function mergeMaps(
+			map1: Map<number, number>,
+			map2: Map<number, number>
+		): Map<number, number> {
+			const result = new Map<number, number>(map1);
+			for (const [key, value] of map2) {
+				result.set(key, value);
+			}
+			return result;
+		}
+
+		function intersectMaps(
+			map1: Map<number, number> | undefined,
+			map2: Map<number, number>
+		) {
+			if (!map1) {
+				return map2;
+			}
+			const result = new Map<number, number>();
+			for (const [key, value] of map1) {
+				if (map2.has(key)) {
+					result.set(key, value);
+				}
+			}
+			return result;
+		}
+
+		const data = this.ambiguousCharacterData.value;
+
+		let filteredLocales = locales.filter(
+			(l) => !l.startsWith('_') && l in data
+		);
+		if (filteredLocales.length === 0) {
+			filteredLocales = ['_default'];
+		}
+
+		let languageSpecificMap: Map<number, number> | undefined = undefined;
+		for (const locale of filteredLocales) {
+			const map = arrayToMap(data[locale]);
+			languageSpecificMap = intersectMaps(languageSpecificMap, map);
+		}
+
+		const commonMap = arrayToMap(data['_common']);
+		const map = mergeMaps(commonMap, languageSpecificMap!);
+
 		return new AmbiguousCharacters(map);
-});
+	});
 
 	public static getInstance(locales: Set<string>): AmbiguousCharacters {
 		return AmbiguousCharacters.cache.get(Array.from(locales));
@@ -752,7 +1301,16 @@ export class InvisibleCharacters {
 		return InvisibleCharacters.getData().has(codePoint);
 	}
 
-	public static containsInvisibleCharacter(str: string): boolean { … 10 line(s) … }
+	public static containsInvisibleCharacter(str: string): boolean {
+		for (let i = 0; i < str.length; i++) {
+			const codePoint = str.codePointAt(i);
+			if (typeof codePoint === 'number' && InvisibleCharacters.isInvisibleCharacter(codePoint)) {
+				return true;
+			}
+		}
+		return false;
+
+	}
 
 	public static get codePoints(): ReadonlySet<number> {
 		return InvisibleCharacters.getData();

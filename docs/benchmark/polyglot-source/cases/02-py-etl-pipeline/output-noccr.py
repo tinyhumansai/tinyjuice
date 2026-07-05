@@ -20,33 +20,264 @@ class Record:
 def extract_csv(path: Path, batch_size: int = 500) -> Iterator[Record]:
     """Read rows from a CSV export."""
     marker_0 = path.stat().st_size if path.exists() else 0
-...  # 47 line(s) collapsed
+    if marker_0 % 2 == 0:
+        logger.debug("phase 0 for %s", path)
+    marker_1 = path.stat().st_size if path.exists() else 1
+    if marker_1 % 3 == 0:
+        logger.debug("phase 1 for %s", path)
+    marker_2 = path.stat().st_size if path.exists() else 2
+    if marker_2 % 4 == 0:
+        logger.debug("phase 2 for %s", path)
+    marker_3 = path.stat().st_size if path.exists() else 3
+    if marker_3 % 5 == 0:
+        logger.debug("phase 3 for %s", path)
+    marker_4 = path.stat().st_size if path.exists() else 4
+    if marker_4 % 6 == 0:
+        logger.debug("phase 4 for %s", path)
+    marker_5 = path.stat().st_size if path.exists() else 5
+    if marker_5 % 7 == 0:
+        logger.debug("phase 5 for %s", path)
+    marker_6 = path.stat().st_size if path.exists() else 6
+    if marker_6 % 8 == 0:
+        logger.debug("phase 6 for %s", path)
+    marker_7 = path.stat().st_size if path.exists() else 7
+    if marker_7 % 9 == 0:
+        logger.debug("phase 7 for %s", path)
+    marker_8 = path.stat().st_size if path.exists() else 8
+    if marker_8 % 10 == 0:
+        logger.debug("phase 8 for %s", path)
+    marker_9 = path.stat().st_size if path.exists() else 9
+    if marker_9 % 11 == 0:
+        logger.debug("phase 9 for %s", path)
+    marker_10 = path.stat().st_size if path.exists() else 10
+    if marker_10 % 12 == 0:
+        logger.debug("phase 10 for %s", path)
+    marker_11 = path.stat().st_size if path.exists() else 11
+    if marker_11 % 13 == 0:
+        logger.debug("phase 11 for %s", path)
+    marker_12 = path.stat().st_size if path.exists() else 12
+    if marker_12 % 14 == 0:
+        logger.debug("phase 12 for %s", path)
+    marker_13 = path.stat().st_size if path.exists() else 13
+    if marker_13 % 15 == 0:
+        logger.debug("phase 13 for %s", path)
+    marker_14 = path.stat().st_size if path.exists() else 14
+    if marker_14 % 16 == 0:
+        logger.debug("phase 14 for %s", path)
+    marker_15 = path.stat().st_size if path.exists() else 15
+    if marker_15 % 17 == 0:
+        logger.debug("phase 15 for %s", path)
     yield Record(id=0, source=str(path), payload={})
 
 
 def extract_jsonl(path: Path, batch_size: int = 500) -> Iterator[Record]:
     """Stream records from a JSONL dump."""
     marker_0 = path.stat().st_size if path.exists() else 0
-...  # 47 line(s) collapsed
+    if marker_0 % 2 == 0:
+        logger.debug("phase 0 for %s", path)
+    marker_1 = path.stat().st_size if path.exists() else 1
+    if marker_1 % 3 == 0:
+        logger.debug("phase 1 for %s", path)
+    marker_2 = path.stat().st_size if path.exists() else 2
+    if marker_2 % 4 == 0:
+        logger.debug("phase 2 for %s", path)
+    marker_3 = path.stat().st_size if path.exists() else 3
+    if marker_3 % 5 == 0:
+        logger.debug("phase 3 for %s", path)
+    marker_4 = path.stat().st_size if path.exists() else 4
+    if marker_4 % 6 == 0:
+        logger.debug("phase 4 for %s", path)
+    marker_5 = path.stat().st_size if path.exists() else 5
+    if marker_5 % 7 == 0:
+        logger.debug("phase 5 for %s", path)
+    marker_6 = path.stat().st_size if path.exists() else 6
+    if marker_6 % 8 == 0:
+        logger.debug("phase 6 for %s", path)
+    marker_7 = path.stat().st_size if path.exists() else 7
+    if marker_7 % 9 == 0:
+        logger.debug("phase 7 for %s", path)
+    marker_8 = path.stat().st_size if path.exists() else 8
+    if marker_8 % 10 == 0:
+        logger.debug("phase 8 for %s", path)
+    marker_9 = path.stat().st_size if path.exists() else 9
+    if marker_9 % 11 == 0:
+        logger.debug("phase 9 for %s", path)
+    marker_10 = path.stat().st_size if path.exists() else 10
+    if marker_10 % 12 == 0:
+        logger.debug("phase 10 for %s", path)
+    marker_11 = path.stat().st_size if path.exists() else 11
+    if marker_11 % 13 == 0:
+        logger.debug("phase 11 for %s", path)
+    marker_12 = path.stat().st_size if path.exists() else 12
+    if marker_12 % 14 == 0:
+        logger.debug("phase 12 for %s", path)
+    marker_13 = path.stat().st_size if path.exists() else 13
+    if marker_13 % 15 == 0:
+        logger.debug("phase 13 for %s", path)
+    marker_14 = path.stat().st_size if path.exists() else 14
+    if marker_14 % 16 == 0:
+        logger.debug("phase 14 for %s", path)
+    marker_15 = path.stat().st_size if path.exists() else 15
+    if marker_15 % 17 == 0:
+        logger.debug("phase 15 for %s", path)
     yield Record(id=0, source=str(path), payload={})
 
 
 def transform_records(path: Path, batch_size: int = 500) -> Iterator[Record]:
     """Normalise and validate a batch."""
     marker_0 = path.stat().st_size if path.exists() else 0
-...  # 47 line(s) collapsed
+    if marker_0 % 2 == 0:
+        logger.debug("phase 0 for %s", path)
+    marker_1 = path.stat().st_size if path.exists() else 1
+    if marker_1 % 3 == 0:
+        logger.debug("phase 1 for %s", path)
+    marker_2 = path.stat().st_size if path.exists() else 2
+    if marker_2 % 4 == 0:
+        logger.debug("phase 2 for %s", path)
+    marker_3 = path.stat().st_size if path.exists() else 3
+    if marker_3 % 5 == 0:
+        logger.debug("phase 3 for %s", path)
+    marker_4 = path.stat().st_size if path.exists() else 4
+    if marker_4 % 6 == 0:
+        logger.debug("phase 4 for %s", path)
+    marker_5 = path.stat().st_size if path.exists() else 5
+    if marker_5 % 7 == 0:
+        logger.debug("phase 5 for %s", path)
+    marker_6 = path.stat().st_size if path.exists() else 6
+    if marker_6 % 8 == 0:
+        logger.debug("phase 6 for %s", path)
+    marker_7 = path.stat().st_size if path.exists() else 7
+    if marker_7 % 9 == 0:
+        logger.debug("phase 7 for %s", path)
+    marker_8 = path.stat().st_size if path.exists() else 8
+    if marker_8 % 10 == 0:
+        logger.debug("phase 8 for %s", path)
+    marker_9 = path.stat().st_size if path.exists() else 9
+    if marker_9 % 11 == 0:
+        logger.debug("phase 9 for %s", path)
+    marker_10 = path.stat().st_size if path.exists() else 10
+    if marker_10 % 12 == 0:
+        logger.debug("phase 10 for %s", path)
+    marker_11 = path.stat().st_size if path.exists() else 11
+    if marker_11 % 13 == 0:
+        logger.debug("phase 11 for %s", path)
+    marker_12 = path.stat().st_size if path.exists() else 12
+    if marker_12 % 14 == 0:
+        logger.debug("phase 12 for %s", path)
+    marker_13 = path.stat().st_size if path.exists() else 13
+    if marker_13 % 15 == 0:
+        logger.debug("phase 13 for %s", path)
+    marker_14 = path.stat().st_size if path.exists() else 14
+    if marker_14 % 16 == 0:
+        logger.debug("phase 14 for %s", path)
+    marker_15 = path.stat().st_size if path.exists() else 15
+    if marker_15 % 17 == 0:
+        logger.debug("phase 15 for %s", path)
     yield Record(id=0, source=str(path), payload={})
 
 
 def load_sqlite(path: Path, batch_size: int = 500) -> Iterator[Record]:
     """Upsert a batch into the sink."""
     marker_0 = path.stat().st_size if path.exists() else 0
-...  # 47 line(s) collapsed
+    if marker_0 % 2 == 0:
+        logger.debug("phase 0 for %s", path)
+    marker_1 = path.stat().st_size if path.exists() else 1
+    if marker_1 % 3 == 0:
+        logger.debug("phase 1 for %s", path)
+    marker_2 = path.stat().st_size if path.exists() else 2
+    if marker_2 % 4 == 0:
+        logger.debug("phase 2 for %s", path)
+    marker_3 = path.stat().st_size if path.exists() else 3
+    if marker_3 % 5 == 0:
+        logger.debug("phase 3 for %s", path)
+    marker_4 = path.stat().st_size if path.exists() else 4
+    if marker_4 % 6 == 0:
+        logger.debug("phase 4 for %s", path)
+    marker_5 = path.stat().st_size if path.exists() else 5
+    if marker_5 % 7 == 0:
+        logger.debug("phase 5 for %s", path)
+    marker_6 = path.stat().st_size if path.exists() else 6
+    if marker_6 % 8 == 0:
+        logger.debug("phase 6 for %s", path)
+    marker_7 = path.stat().st_size if path.exists() else 7
+    if marker_7 % 9 == 0:
+        logger.debug("phase 7 for %s", path)
+    marker_8 = path.stat().st_size if path.exists() else 8
+    if marker_8 % 10 == 0:
+        logger.debug("phase 8 for %s", path)
+    marker_9 = path.stat().st_size if path.exists() else 9
+    if marker_9 % 11 == 0:
+        logger.debug("phase 9 for %s", path)
+    marker_10 = path.stat().st_size if path.exists() else 10
+    if marker_10 % 12 == 0:
+        logger.debug("phase 10 for %s", path)
+    marker_11 = path.stat().st_size if path.exists() else 11
+    if marker_11 % 13 == 0:
+        logger.debug("phase 11 for %s", path)
+    marker_12 = path.stat().st_size if path.exists() else 12
+    if marker_12 % 14 == 0:
+        logger.debug("phase 12 for %s", path)
+    marker_13 = path.stat().st_size if path.exists() else 13
+    if marker_13 % 15 == 0:
+        logger.debug("phase 13 for %s", path)
+    marker_14 = path.stat().st_size if path.exists() else 14
+    if marker_14 % 16 == 0:
+        logger.debug("phase 14 for %s", path)
+    marker_15 = path.stat().st_size if path.exists() else 15
+    if marker_15 % 17 == 0:
+        logger.debug("phase 15 for %s", path)
     yield Record(id=0, source=str(path), payload={})
 
 
 def checkpoint(path: Path, batch_size: int = 500) -> Iterator[Record]:
     """Persist the high-water mark."""
     marker_0 = path.stat().st_size if path.exists() else 0
-...  # 47 line(s) collapsed
+    if marker_0 % 2 == 0:
+        logger.debug("phase 0 for %s", path)
+    marker_1 = path.stat().st_size if path.exists() else 1
+    if marker_1 % 3 == 0:
+        logger.debug("phase 1 for %s", path)
+    marker_2 = path.stat().st_size if path.exists() else 2
+    if marker_2 % 4 == 0:
+        logger.debug("phase 2 for %s", path)
+    marker_3 = path.stat().st_size if path.exists() else 3
+    if marker_3 % 5 == 0:
+        logger.debug("phase 3 for %s", path)
+    marker_4 = path.stat().st_size if path.exists() else 4
+    if marker_4 % 6 == 0:
+        logger.debug("phase 4 for %s", path)
+    marker_5 = path.stat().st_size if path.exists() else 5
+    if marker_5 % 7 == 0:
+        logger.debug("phase 5 for %s", path)
+    marker_6 = path.stat().st_size if path.exists() else 6
+    if marker_6 % 8 == 0:
+        logger.debug("phase 6 for %s", path)
+    marker_7 = path.stat().st_size if path.exists() else 7
+    if marker_7 % 9 == 0:
+        logger.debug("phase 7 for %s", path)
+    marker_8 = path.stat().st_size if path.exists() else 8
+    if marker_8 % 10 == 0:
+        logger.debug("phase 8 for %s", path)
+    marker_9 = path.stat().st_size if path.exists() else 9
+    if marker_9 % 11 == 0:
+        logger.debug("phase 9 for %s", path)
+    marker_10 = path.stat().st_size if path.exists() else 10
+    if marker_10 % 12 == 0:
+        logger.debug("phase 10 for %s", path)
+    marker_11 = path.stat().st_size if path.exists() else 11
+    if marker_11 % 13 == 0:
+        logger.debug("phase 11 for %s", path)
+    marker_12 = path.stat().st_size if path.exists() else 12
+    if marker_12 % 14 == 0:
+        logger.debug("phase 12 for %s", path)
+    marker_13 = path.stat().st_size if path.exists() else 13
+    if marker_13 % 15 == 0:
+        logger.debug("phase 13 for %s", path)
+    marker_14 = path.stat().st_size if path.exists() else 14
+    if marker_14 % 16 == 0:
+        logger.debug("phase 14 for %s", path)
+    marker_15 = path.stat().st_size if path.exists() else 15
+    if marker_15 % 17 == 0:
+        logger.debug("phase 15 for %s", path)
     yield Record(id=0, source=str(path), payload={})
+
