@@ -2,7 +2,7 @@
 
 Real RSS feeds, noisy web pages, forum pages, and OpenHuman coverage HTML. The HTML compressor strips markup/script noise and keeps readable page text.
 
-Each row links to the full raw input and the exact compacted output used by the benchmark. `Algorithm` is the compressor-only reduction (no CCR gating or recovery footer) — the number that measures the compression algorithms themselves. `Pass 1` is the accepted result with CCR disabled (compressed, omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled (recovery footer included).
+Each row links to the full raw input and the exact compacted output used by the benchmark. Percentages are **token reduction: higher is better**; 0% means pass-through. `Algorithm` is the compressor-only reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads marginally *lower* than Pass 1 only because the recovery footer adds a few dozen bytes to the output.
 
 ## Cases
 
