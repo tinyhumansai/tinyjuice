@@ -361,6 +361,36 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn diff_noise_output_offloads_original_for_recovery() {
+        let mut original = String::from("diff --git a/Cargo.lock b/Cargo.lock\n");
+        original.push_str("@@ -1,800 +1,900 @@\n");
+        for i in 0..700 {
+            original.push_str(&format!("+ new dependency entry {i} checksum {}\n", i * 17));
+        }
+        for i in 0..350 {
+            original.push_str(&format!("- old dependency entry {i} checksum {}\n", i * 19));
+        }
+        let hint = ContentHint {
+            explicit: Some(ContentKind::Diff),
+            ..Default::default()
+        };
+        let store = cache::MemoryCcrStore::new(10, 1_000_000);
+
+        let res = compress_content_with_store(&original, Some(hint), &opts(), &store).await;
+
+        assert!(res.applied);
+        assert!(res.lossy);
+        assert_eq!(res.content_kind, ContentKind::Diff);
+        assert!(
+            res.text.contains("reason=lockfile_or_bundle"),
+            "{}",
+            res.text
+        );
+        let token = res.ccr_token.as_deref().expect("offloaded");
+        assert_eq!(store.get(token).as_deref(), Some(original.as_str()));
+    }
+
+    #[tokio::test]
     async fn exposes_body_and_recovery_footer_separately() {
         let mut rows = Vec::new();
         for i in 0..120 {

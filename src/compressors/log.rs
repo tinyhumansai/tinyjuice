@@ -33,6 +33,7 @@ pub const MAX_WARNINGS: usize = 5;
 pub const MAX_STACK_TRACES: usize = 3;
 pub const STACK_TRACE_MAX_LINES: usize = 20;
 pub const MAX_TOTAL_LINES: usize = 100;
+pub const TEMPLATE_MIN_RUN: usize = 8;
 
 static BUILTIN_RULES: Lazy<Vec<CompiledRule>> = Lazy::new(load_builtin_rules);
 
@@ -54,7 +55,7 @@ impl Compressor for LogCompressor {
         if has_command {
             compress_command(input, opts)
         } else {
-            compress_signal(input.content)
+            compress_templates(input.content).or_else(|| compress_signal(input.content))
         }
     }
 }
@@ -224,6 +225,145 @@ pub fn compress_signal(content: &str) -> Option<CompressOutput> {
     ))
 }
 
+/// Lossless reformat for repetitive non-command logs. Consecutive runs of the
+/// same line template are represented as one template plus captured variants.
+pub fn compress_templates(content: &str) -> Option<CompressOutput> {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.len() < TEMPLATE_MIN_RUN {
+        return None;
+    }
+
+    let mut out = String::with_capacity(content.len() / 2 + 128);
+    let mut i = 0usize;
+    let mut emitted_block = false;
+
+    while i < lines.len() {
+        let Some(first) = line_template(lines[i]) else {
+            let _ = writeln!(out, "{}", lines[i]);
+            i += 1;
+            continue;
+        };
+
+        let start = i;
+        let mut captures = vec![first.captures];
+        i += 1;
+        while i < lines.len() {
+            let Some(next) = line_template(lines[i]) else {
+                break;
+            };
+            if next.template != first.template || next.captures.len() != captures[0].len() {
+                break;
+            }
+            captures.push(next.captures);
+            i += 1;
+        }
+
+        if captures.len() >= TEMPLATE_MIN_RUN {
+            write_template_block(&mut out, &first.template, &captures);
+            emitted_block = true;
+        } else {
+            for line in &lines[start..i] {
+                let _ = writeln!(out, "{line}");
+            }
+        }
+    }
+
+    let out = out.trim_end().to_string();
+    if !emitted_block || out.len() >= content.len() {
+        return None;
+    }
+    log::debug!(
+        "[tokenjuice][log] template reformat {} -> {} bytes",
+        content.len(),
+        out.len(),
+    );
+    Some(CompressOutput::reformatted(out, CompressorKind::Log))
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct LineTemplate {
+    template: String,
+    captures: Vec<String>,
+}
+
+fn line_template(line: &str) -> Option<LineTemplate> {
+    let mut template = String::with_capacity(line.len());
+    let mut captures = Vec::new();
+    let mut chars = line.char_indices().peekable();
+
+    while let Some((idx, ch)) = chars.next() {
+        if ch == '0' && chars.peek().is_some_and(|(_, next)| *next == 'x') {
+            let start = idx;
+            let mut end = idx + ch.len_utf8();
+            if let Some((x_idx, x_ch)) = chars.next() {
+                end = x_idx + x_ch.len_utf8();
+            }
+            while let Some((next_idx, next_ch)) = chars.peek().copied() {
+                if next_ch.is_ascii_hexdigit() {
+                    chars.next();
+                    end = next_idx + next_ch.len_utf8();
+                } else {
+                    break;
+                }
+            }
+            template.push_str("{}");
+            captures.push(line[start..end].to_string());
+        } else if ch.is_ascii_digit() {
+            let start = idx;
+            let mut end = idx + ch.len_utf8();
+            while let Some((next_idx, next_ch)) = chars.peek().copied() {
+                if next_ch.is_ascii_digit() {
+                    chars.next();
+                    end = next_idx + next_ch.len_utf8();
+                } else {
+                    break;
+                }
+            }
+            template.push_str("{}");
+            captures.push(line[start..end].to_string());
+        } else {
+            template.push(ch);
+        }
+    }
+
+    if captures.len() < 2 || template.trim().len() < 12 {
+        return None;
+    }
+    Some(LineTemplate { template, captures })
+}
+
+fn write_template_block(out: &mut String, template: &str, captures: &[Vec<String>]) {
+    let fields = captures.first().map_or(0, Vec::len);
+    let _ = writeln!(
+        out,
+        "[TOKENJUICE LOG TEMPLATE run={} fields={fields}]",
+        captures.len()
+    );
+    let _ = writeln!(out, "{template}");
+    for row in captures {
+        let rendered = row
+            .iter()
+            .map(|capture| escape_capture(capture))
+            .collect::<Vec<_>>()
+            .join("\t");
+        let _ = writeln!(out, "{rendered}");
+    }
+    let _ = writeln!(out, "[/TOKENJUICE LOG TEMPLATE]");
+}
+
+fn escape_capture(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        match ch {
+            '\\' => out.push_str("\\\\"),
+            '\t' => out.push_str("\\t"),
+            '\r' => out.push_str("\\r"),
+            _ => out.push(ch),
+        }
+    }
+    out
+}
+
 fn select_first_last(idx: &[usize], cap: usize) -> Vec<usize> {
     if idx.len() <= cap {
         return idx.to_vec();
@@ -285,6 +425,7 @@ fn normalize_for_dedupe(line: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::{CompressOptions, ContentHint, ContentKind};
 
     fn noisy_log() -> String {
         let mut s = String::new();
@@ -296,6 +437,127 @@ mod tests {
         let _ = writeln!(s, "error: aborting due to previous error");
         let _ = writeln!(s, "test result: FAILED. 3 passed; 1 failed");
         s
+    }
+
+    fn repetitive_template_log() -> String {
+        let mut s = String::new();
+        for i in 0..80 {
+            let _ = writeln!(
+                s,
+                "2026-07-05T12:{:02}:00Z worker-{i} processed item id={} shard={}",
+                i % 60,
+                10_000 + i,
+                i % 8
+            );
+        }
+        s
+    }
+
+    fn reconstruct_template_reformat(output: &str) -> String {
+        let mut out = String::new();
+        let lines: Vec<&str> = output.lines().collect();
+        let mut i = 0usize;
+        while i < lines.len() {
+            if lines[i].starts_with("[TOKENJUICE LOG TEMPLATE ") {
+                let template = lines[i + 1];
+                i += 2;
+                while i < lines.len() && lines[i] != "[/TOKENJUICE LOG TEMPLATE]" {
+                    let captures = lines[i]
+                        .split('\t')
+                        .map(unescape_capture_for_test)
+                        .collect::<Vec<_>>();
+                    let _ = writeln!(out, "{}", apply_template_for_test(template, &captures));
+                    i += 1;
+                }
+                i += 1;
+            } else {
+                let _ = writeln!(out, "{}", lines[i]);
+                i += 1;
+            }
+        }
+        out
+    }
+
+    fn unescape_capture_for_test(value: &str) -> String {
+        let mut out = String::new();
+        let mut chars = value.chars();
+        while let Some(ch) = chars.next() {
+            if ch == '\\' {
+                match chars.next() {
+                    Some('\\') => out.push('\\'),
+                    Some('t') => out.push('\t'),
+                    Some('r') => out.push('\r'),
+                    Some(other) => {
+                        out.push('\\');
+                        out.push(other);
+                    }
+                    None => out.push('\\'),
+                }
+            } else {
+                out.push(ch);
+            }
+        }
+        out
+    }
+
+    fn apply_template_for_test(template: &str, captures: &[String]) -> String {
+        let mut out = String::new();
+        let mut rest = template;
+        for capture in captures {
+            let Some((head, tail)) = rest.split_once("{}") else {
+                break;
+            };
+            out.push_str(head);
+            out.push_str(capture);
+            rest = tail;
+        }
+        out.push_str(rest);
+        out
+    }
+
+    #[test]
+    fn template_reformat_is_lossless_and_smaller() {
+        let input = repetitive_template_log();
+        let out = compress_templates(&input).expect("template reformat");
+
+        assert!(!out.lossy);
+        assert!(out.text.contains("[TOKENJUICE LOG TEMPLATE run=80"));
+        assert!(out.text.len() < input.len(), "{}", out.text);
+        assert_eq!(
+            reconstruct_template_reformat(&out.text).trim_end(),
+            input.trim_end()
+        );
+    }
+
+    #[tokio::test]
+    async fn template_reformat_routes_without_ccr() {
+        let input = repetitive_template_log();
+        let hint = ContentHint {
+            explicit: Some(ContentKind::Log),
+            ..Default::default()
+        };
+        let opts = CompressOptions {
+            min_bytes_to_compress: 64,
+            ccr_min_tokens: usize::MAX,
+            ..Default::default()
+        };
+
+        let out = crate::compress_content(&input, Some(hint), &opts).await;
+
+        assert!(out.applied);
+        assert!(!out.lossy);
+        assert!(out.ccr_token.is_none());
+        assert!(out.text.contains("[TOKENJUICE LOG TEMPLATE"));
+    }
+
+    #[test]
+    fn template_reformat_declines_without_dynamic_fields() {
+        let mut input = String::new();
+        for _ in 0..40 {
+            let _ = writeln!(input, "plain repeated line without dynamic fields");
+        }
+
+        assert!(compress_templates(&input).is_none());
     }
 
     #[test]
