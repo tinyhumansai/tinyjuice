@@ -704,6 +704,7 @@ mod tests {
 
     #[tokio::test]
     async fn ml_path_restores_custom_tags_byte_for_byte() {
+        let _guard = crate::ml::callback_test_guard().await;
         crate::ml::configure_callback(Some(Arc::new(|text, _opts| {
             Box::pin(async move {
                 assert!(!text.contains("<workflow"));
@@ -729,6 +730,7 @@ mod tests {
 
     #[tokio::test]
     async fn ml_path_declines_when_callback_drops_placeholder() {
+        let _guard = crate::ml::callback_test_guard().await;
         crate::ml::configure_callback(Some(Arc::new(|_text, _opts| {
             Box::pin(async move { Ok(Some("compressed without protected marker".to_string())) })
         })));
