@@ -81,26 +81,31 @@ attribution for agent-created commits.
 The checked-in benchmark corpus is 6.4 MB of real tool output — 10 real
 snapshots per category. Percentages are **token reduction: higher is better**
 (90% means the output shrank to a tenth of its size; 0% means it passed
-through untouched). `Applied` counts the cases where compression actually
-fired — the rest pass through because they are too small or a shape the
-compressor declines.
+through untouched). Two passes are measured:
 
-| Category | Cases | Applied | Token reduction (mean) | Avg latency |
-| --- | ---: | ---: | ---: | ---: |
-| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 10 | 86.9% | 0.193 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.5% | 0.184 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 0.182 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 8 | 53.7% | 0.702 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 48.3% | 0.401 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 3 | 20.1% | 0.535 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 2 | 15.3% | 0.041 ms |
-| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.000 ms |
+- **Pass 1 — compression without CCR**: compacted output with omission
+  markers, but no recovery footer. The dropped detail is not retrievable.
+- **Pass 2 — compression with CCR**: the same compaction plus a retrieval
+  footer that lets the agent pull back the exact original on demand. It reads
+  marginally lower than Pass 1 only because the footer adds a few dozen
+  bytes — the compression itself is identical.
 
-Across the whole corpus TinyJuice cut 6.4 MB of tool output down to 3.9 MB.
-Enabling CCR recovery costs well under 1% of the savings — the retrieval
-footer adds a few dozen bytes per compacted output, which is why "with CCR"
-numbers in the detailed reports read marginally lower than the raw algorithm
-numbers. Every case passes its accuracy gates: signal checks (errors, changed
+`Applied` counts the cases where compression actually fired — the rest pass
+through because they are too small or a shape the compressor declines.
+
+| Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| [Service and Docker logs](docs/benchmark/service-log/README.md) | 10 | 10 | 86.9% | 86.3% | 0.193 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.5% | 75.3% | 0.184 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 70.0% | 0.182 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 8 | 53.7% | 51.9% | 0.702 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 48.3% | 48.0% | 0.401 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 3 | 20.1% | 20.0% | 0.535 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 2 | 15.3% | 14.1% | 0.041 ms |
+| [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
+
+Across the whole corpus TinyJuice cut 6.4 MB of tool output down to 3.9 MB,
+and every case passes its accuracy gates: signal checks (errors, changed
 lines, matches survive), task checks, and a byte-exact CCR recovery compare.
 
 These are local real-snapshot corpus measurements, not production-wide claims.
