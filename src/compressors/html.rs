@@ -36,10 +36,14 @@ const BLOCK_TAGS: &[&str] = &[
     "blockquote",
     "pre",
     "hr",
+    "title",
 ];
 
-/// Tags whose entire body is dropped (non-content).
-const DROP_BODY_TAGS: &[&str] = &["script", "style", "head", "noscript", "svg"];
+/// Tags whose entire body is dropped (non-content). `head` is deliberately
+/// not here: dropping it would lose `<title>` — often the highest-signal
+/// string on the page — while scripts/styles inside the head are still
+/// dropped by their own tags and meta/link carry no text.
+const DROP_BODY_TAGS: &[&str] = &["script", "style", "noscript", "svg"];
 
 pub struct HtmlCompressor;
 
@@ -140,7 +144,7 @@ pub fn html_to_text(html: &str) -> String {
         if bytes[i] == b'&'
             && let Some((decoded, consumed)) = decode_entity(&html[i..])
         {
-            out.push_str(decoded);
+            out.push_str(&decoded);
             i += consumed;
             continue;
         }
@@ -178,7 +182,7 @@ fn static_tag(name: &str) -> &'static str {
 
 /// Decode a leading HTML entity at the start of `s`. Returns the decoded text
 /// and the number of bytes consumed (including `&` and `;`).
-fn decode_entity(s: &str) -> Option<(&'static str, usize)> {
+fn decode_entity(s: &str) -> Option<(std::borrow::Cow<'static, str>, usize)> {
     const ENTITIES: &[(&str, &str)] = &[
         ("&amp;", "&"),
         ("&lt;", "<"),
@@ -194,10 +198,28 @@ fn decode_entity(s: &str) -> Option<(&'static str, usize)> {
     ];
     for (ent, decoded) in ENTITIES {
         if s.starts_with(ent) {
-            return Some((decoded, ent.len()));
+            return Some(((*decoded).into(), ent.len()));
         }
     }
-    None
+    // Numeric character references: &#8212; and &#x27;
+    let rest = s.strip_prefix("&#")?;
+    let (digits, radix) = match rest.strip_prefix(['x', 'X']) {
+        Some(hex) => (hex, 16),
+        None => (rest, 10),
+    };
+    let end = digits
+        .char_indices()
+        .take(8)
+        .take_while(|(_, c)| c.is_ascii_hexdigit())
+        .last()
+        .map(|(i, c)| i + c.len_utf8())?;
+    if !digits[end..].starts_with(';') {
+        return None;
+    }
+    let code = u32::from_str_radix(&digits[..end], radix).ok()?;
+    let ch = char::from_u32(code).filter(|c| !c.is_control() || *c == '\n' || *c == '\t')?;
+    let consumed = s.len() - digits.len() + end + 1;
+    Some((ch.to_string().into(), consumed))
 }
 
 /// Collapse runs of blank lines and trim trailing whitespace per line.
@@ -274,6 +296,28 @@ mod tests {
     fn decodes_entities() {
         let text = html_to_text("<p>a &amp; b &lt; c &gt; d &nbsp;e</p>");
         assert!(text.contains("a & b < c > d"), "{text}");
+    }
+
+    #[test]
+    fn decodes_numeric_entities() {
+        let text = html_to_text("<p>em&#8212;dash it&#x27;s &#169;</p>");
+        assert!(text.contains("em—dash"), "{text}");
+        assert!(text.contains("it's"), "{text}");
+        assert!(text.contains("©"), "{text}");
+        // Malformed references pass through as text rather than panicking.
+        let text = html_to_text("<p>&#xZZ; &#; &#999999999;</p>");
+        assert!(text.contains("&#xZZ;"), "{text}");
+    }
+
+    #[test]
+    fn title_survives_head() {
+        let html = "<html><head><title>Deploy Status — prod</title>\
+            <meta charset=\"utf-8\"><style>.x{}</style></head>\
+            <body><p>body text</p></body></html>";
+        let text = html_to_text(html);
+        assert!(text.contains("Deploy Status"), "title dropped: {text}");
+        assert!(text.contains("body text"), "{text}");
+        assert!(!text.contains(".x{}"), "style leaked: {text}");
     }
 
     #[test]

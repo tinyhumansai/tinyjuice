@@ -103,6 +103,15 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
 
     // Offload the original and append a recovery footer when CCR is in play.
     let (text, ccr_token) = if ccr_for_call {
+        // The token is the content hash, so the footer is computable before
+        // storing anything. If the footer tips the result to at least the
+        // original size we pass through — checked first so the cache isn't
+        // left holding an entry no output references.
+        let token = cache::short_hash(content);
+        let footer = cache::recovery_footer(&token, original_bytes, out.lossy);
+        if out.text.len() + footer.len() >= original_bytes {
+            return CompressedOutput::passthrough(content.to_string(), kind);
+        }
         let (token, retained) = cache::offload_checked(content);
         if !retained {
             // The original is too large to keep in memory (over the byte cap)
@@ -114,13 +123,8 @@ pub async fn route(mut input: CompressInput<'_>, opts: &CompressOptions) -> Comp
             }
             (out.text, None)
         } else {
-            let footer = cache::recovery_footer(&token, original_bytes, out.lossy);
             let mut text = out.text;
             text.push_str(&footer);
-            // The footer adds bytes — if it tipped us over the original size, bail.
-            if text.len() >= original_bytes {
-                return CompressedOutput::passthrough(content.to_string(), kind);
-            }
             (text, Some(token))
         }
     } else {

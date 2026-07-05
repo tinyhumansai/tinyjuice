@@ -168,12 +168,12 @@ pub fn pluralize(count: usize, noun: &str) -> String {
     {
         return format!("{} {}es", count, noun);
     }
-    // [^aeiou]y → -ies
+    // [^aeiou]y → -ies. Inspect the second-to-last *char* — indexing chars by
+    // byte length breaks on non-ASCII counter names.
     let ends_consonant_y = noun.ends_with('y')
-        && noun.len() >= 2
         && !matches!(
-            noun.chars().nth(noun.len() - 2),
-            Some('a' | 'e' | 'i' | 'o' | 'u')
+            noun.chars().rev().nth(1),
+            None | Some('a' | 'e' | 'i' | 'o' | 'u')
         );
     if ends_consonant_y {
         let stem = &noun[..noun.len() - 1];
