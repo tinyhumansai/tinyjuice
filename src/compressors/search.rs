@@ -15,6 +15,7 @@
 //! lossless by the CCR offload — and is enabled by default per project decision.
 
 use async_trait::async_trait;
+use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use super::Compressor;
@@ -57,7 +58,11 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     // group match lines by file in first-seen order.
     let mut preamble: Vec<&str> = Vec::new();
     let mut files: Vec<(&str, Vec<Match<'_>>)> = Vec::new();
+    // Index alongside the Vec (which preserves first-seen file order):
+    // a linear scan per match is quadratic on repo-wide result sets.
+    let mut file_index: HashMap<&str, usize> = HashMap::new();
     let mut match_count = 0usize;
+    let mut unparsed_dropped = 0usize;
 
     let query_terms: Vec<String> = query
         .map(|q| {
@@ -79,16 +84,24 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
                     score,
                     raw: line,
                 };
-                if let Some((_, v)) = files.iter_mut().find(|(p, _)| *p == path) {
-                    v.push(m);
+                if let Some(&idx) = file_index.get(path) {
+                    files[idx].1.push(m);
                 } else {
+                    file_index.insert(path, files.len());
                     files.push((path, vec![m]));
                 }
             }
             None => {
-                if !line.trim().is_empty() && files.is_empty() {
-                    // Only keep preamble that appears before any match.
-                    preamble.push(line);
+                if !line.trim().is_empty() {
+                    if files.is_empty() {
+                        // Only keep preamble that appears before any match.
+                        preamble.push(line);
+                    } else {
+                        // Context lines (grep -C), separators, trailing
+                        // summaries — dropped, but tallied so the reader
+                        // knows they existed.
+                        unparsed_dropped += 1;
+                    }
                 }
             }
         }
@@ -102,12 +115,18 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     for line in &preamble {
         let _ = writeln!(out, "{line}");
     }
+    let omitted_note = if unparsed_dropped > 0 {
+        format!(" · {unparsed_dropped} context/summary line(s) omitted")
+    } else {
+        String::new()
+    };
     let _ = writeln!(
         out,
-        "[search: {} match(es) across {} file(s) · top {} per file · full set via retrieve footer]",
+        "[search: {} match(es) across {} file(s) · top {} per file{} · full set via retrieve footer]",
         match_count,
         files.len(),
-        TOP_K_PER_FILE
+        TOP_K_PER_FILE,
+        omitted_note
     );
 
     for (path, mut matches) in files {
@@ -215,5 +234,23 @@ mod tests {
     fn small_result_set_passes_through() {
         let s = "a.rs:1:hit\nb.rs:2:hit\n";
         assert!(compress(s, None).is_none());
+    }
+
+    #[test]
+    fn context_lines_are_tallied_not_silently_dropped() {
+        // rg -C style output: context lines use `path-NN-body` and `--`
+        // separators, which don't parse as matches.
+        let mut s = String::new();
+        for i in 0..50 {
+            let _ = writeln!(s, "src/a.rs:{}:let matched_line_{i} = f();", i * 4 + 2);
+            let _ = writeln!(s, "src/a.rs-{}-context line above", i * 4 + 1);
+            let _ = writeln!(s, "src/a.rs-{}-context line below", i * 4 + 3);
+            let _ = writeln!(s, "--");
+        }
+        let out = compress(&s, None).expect("compresses").text;
+        assert!(
+            out.contains("context/summary line(s) omitted"),
+            "omission tally missing:\n{out}"
+        );
     }
 }

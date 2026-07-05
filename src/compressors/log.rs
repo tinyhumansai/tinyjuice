@@ -266,10 +266,19 @@ fn is_stack_frame(line: &str) -> bool {
         return false;
     }
     let indented = line.starts_with(' ') || line.starts_with('\t');
+    // Rust backtrace frames: "  12: core::panicking::panic"
+    let rust_frame = || {
+        let digits = trimmed.chars().take_while(char::is_ascii_digit).count();
+        digits > 0 && trimmed[digits..].starts_with(": ")
+    };
+    // Go goroutine frames: "\t/path/file.go:42 +0x1b"
+    let go_frame = || trimmed.contains(".go:");
     indented
         && (trimmed.starts_with("at ")
             || trimmed.starts_with("File \"")
-            || (trimmed.starts_with('#') && trimmed[1..].starts_with(|c: char| c.is_ascii_digit())))
+            || (trimmed.starts_with('#') && trimmed[1..].starts_with(|c: char| c.is_ascii_digit()))
+            || rust_frame()
+            || go_frame())
 }
 
 fn normalize_for_dedupe(line: &str) -> String {
@@ -307,6 +316,45 @@ mod tests {
         assert!(out.contains("test result: FAILED"), "{out}");
         assert!(out.len() < input.len());
         assert!(out.contains("omitted"));
+    }
+
+    #[test]
+    fn recognizes_rust_and_go_stack_frames() {
+        // Rust backtrace
+        assert!(is_stack_frame("  12: core::panicking::panic"));
+        assert!(is_stack_frame("   3: tinyjuice::compress::route"));
+        // Go goroutine trace
+        assert!(is_stack_frame("\t/srv/app/main.go:42 +0x1b"));
+        // JS / Python / gdb still recognized
+        assert!(is_stack_frame(
+            "    at Object.<anonymous> (/app/index.js:1:1)"
+        ));
+        assert!(is_stack_frame(
+            "  File \"/app/main.py\", line 3, in <module>"
+        ));
+        assert!(is_stack_frame("  #4 0x0000 in main ()"));
+        // Non-frames
+        assert!(!is_stack_frame("12: not indented so not a frame"));
+        assert!(!is_stack_frame("    ordinary indented prose"));
+    }
+
+    #[test]
+    fn rust_backtrace_frames_survive_signal_compression() {
+        let mut s = String::new();
+        for i in 0..200 {
+            let _ = writeln!(s, "request handled id={i} status=200");
+        }
+        let _ = writeln!(s, "thread 'main' panicked at 'boom', src/main.rs:10:5");
+        let _ = writeln!(s, "stack backtrace:");
+        for i in 0..6 {
+            let _ = writeln!(s, "  {i}: some_crate::module::function_{i}");
+        }
+        let out = compress_signal(&s).expect("compresses").text;
+        assert!(out.contains("panicked"), "{out}");
+        assert!(
+            out.contains("some_crate::module::function_2"),
+            "backtrace frames dropped:\n{out}"
+        );
     }
 
     #[test]

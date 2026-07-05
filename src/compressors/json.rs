@@ -32,6 +32,9 @@ pub const HEAD_ROWS: usize = 20;
 pub const TAIL_ROWS: usize = 10;
 /// Z-score beyond which a numeric cell is treated as an outlier worth keeping.
 pub const OUTLIER_SIGMA: f64 = 2.0;
+/// At most this many outlier rows are kept per column (the most extreme
+/// first), so a heavy-tailed column can't defeat the point of row-dropping.
+pub const MAX_OUTLIERS_PER_COLUMN: usize = 8;
 
 pub struct JsonCompressor;
 
@@ -187,22 +190,24 @@ fn rows_to_keep(array: &[Value], columns: &[String], n: usize) -> Vec<usize> {
         keep.insert(i);
     }
 
-    // Error-text rows: any string/scalar cell carrying an error indicator.
+    // Error-text rows: string cells carrying an error indicator. Only string
+    // leaves realistically carry error text — stringifying every nested
+    // object/number per row just to substring-scan is pure allocation churn.
     for (i, item) in array.iter().enumerate() {
         if let Some(obj) = item.as_object() {
-            let row_has_error = obj.values().any(|v| match v {
-                Value::String(s) => has_error_indicators(s),
-                other => has_error_indicators(&other.to_string()),
-            });
+            let row_has_error = obj
+                .values()
+                .any(|v| matches!(v, Value::String(s) if has_error_indicators(s)));
             if row_has_error {
                 keep.insert(i);
             }
         }
     }
 
-    // Numeric outliers: for each column, compute mean/std over numeric cells and
-    // keep rows whose value is beyond OUTLIER_SIGMA. Bounded by a cap so a wide
-    // anomalous tail can't defeat the point of dropping.
+    // Numeric outliers: for each column, compute mean/std over numeric cells
+    // and keep rows beyond OUTLIER_SIGMA — capped at the most extreme
+    // MAX_OUTLIERS_PER_COLUMN so a heavy-tailed distribution (which flags a
+    // wide band of rows at |z| ≥ 2) can't keep most of the table.
     for col in columns {
         let nums: Vec<(usize, f64)> = array
             .iter()
@@ -223,10 +228,14 @@ fn rows_to_keep(array: &[Value], columns: &[String], n: usize) -> Vec<usize> {
         if std <= f64::EPSILON {
             continue;
         }
-        for (i, x) in nums {
-            if ((x - mean) / std).abs() >= OUTLIER_SIGMA {
-                keep.insert(i);
-            }
+        let mut outliers: Vec<(usize, f64)> = nums
+            .into_iter()
+            .map(|(i, x)| (i, ((x - mean) / std).abs()))
+            .filter(|(_, z)| *z >= OUTLIER_SIGMA)
+            .collect();
+        outliers.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        for (i, _) in outliers.into_iter().take(MAX_OUTLIERS_PER_COLUMN) {
+            keep.insert(i);
         }
     }
 
