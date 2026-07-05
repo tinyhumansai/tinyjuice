@@ -33,6 +33,10 @@ pub const HEAD_ROWS: usize = 20;
 pub const TAIL_ROWS: usize = 10;
 /// Z-score beyond which a numeric cell is treated as an outlier worth keeping.
 pub const OUTLIER_SIGMA: f64 = 2.0;
+/// Delta multiplier beyond which a numeric transition is treated as a change point.
+pub const CHANGE_POINT_DELTA_MULTIPLIER: f64 = 4.0;
+/// Maximum numeric change-point rows to anchor per field.
+pub const MAX_CHANGE_POINT_ANCHORS: usize = 20;
 /// Maximum distinct values for a full-present field to be treated as a
 /// discriminator bucket anchor.
 pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
@@ -203,9 +207,9 @@ pub fn analyze(content: &str) -> Option<JsonAnalysis> {
 }
 
 /// Pick the row indices to keep when row-dropping: the head/tail windows plus
-/// rows flagged as anomalous, duplicate-cluster representatives, spread
-/// anchors, representative discriminator buckets, or query-relevant. Returns
-/// ascending, de-duplicated indices.
+/// rows flagged as anomalous, numeric change points, duplicate-cluster
+/// representatives, spread anchors, representative discriminator buckets, or
+/// query-relevant. Returns ascending, de-duplicated indices.
 fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
     let n = rows.len();
     let lossy = n > ROW_DROP_THRESHOLD;
@@ -254,6 +258,11 @@ fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> 
                 {
                     keep.insert(i);
                 }
+            }
+        }
+        if field.numeric.is_some() {
+            for i in numeric_change_point_rows(rows, &field.key) {
+                keep.insert(i);
             }
         }
         if field.sparse {
@@ -381,6 +390,58 @@ fn nearest_unseen_row(
         }
     }
     None
+}
+
+fn numeric_change_point_rows(rows: &[FlatRow], key: &str) -> Vec<usize> {
+    let mut deltas: Vec<(usize, f64)> = Vec::new();
+    let mut prev: Option<f64> = None;
+    for (i, row) in rows.iter().enumerate() {
+        let Some(current) = row.values.get(key).and_then(Value::as_f64) else {
+            prev = None;
+            continue;
+        };
+        if let Some(previous) = prev {
+            let delta = (current - previous).abs();
+            if delta > f64::EPSILON {
+                deltas.push((i, delta));
+            }
+        }
+        prev = Some(current);
+    }
+    if deltas.is_empty() {
+        return Vec::new();
+    }
+
+    let baseline = if deltas.len() >= 3 {
+        median_delta(deltas.iter().map(|(_, delta)| *delta).collect())
+    } else {
+        f64::EPSILON
+    };
+    let threshold = if baseline > f64::EPSILON {
+        baseline * CHANGE_POINT_DELTA_MULTIPLIER
+    } else {
+        f64::EPSILON
+    };
+
+    deltas.sort_by(|(a_index, a_delta), (b_index, b_delta)| {
+        b_delta
+            .partial_cmp(a_delta)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a_index.cmp(b_index))
+    });
+    let mut anchors = deltas
+        .into_iter()
+        .filter(|(_, delta)| *delta >= threshold)
+        .take(MAX_CHANGE_POINT_ANCHORS)
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    anchors.sort_unstable();
+    anchors
+}
+
+fn median_delta(mut deltas: Vec<f64>) -> f64 {
+    deltas.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    deltas[deltas.len() / 2]
 }
 
 #[derive(Debug, Clone)]
@@ -763,6 +824,28 @@ mod tests {
             "{}",
             c.text
         );
+    }
+
+    #[test]
+    fn numeric_change_point_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let phase = if i < 72 { 10 } else { 30 };
+            let message = if i == 72 {
+                "phase transition payload".to_string()
+            } else {
+                format!("ordinary payload {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"phase_score":{phase},"status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("phase transition payload"), "{}", c.text);
     }
 
     #[test]
