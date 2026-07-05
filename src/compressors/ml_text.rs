@@ -14,6 +14,7 @@
 use async_trait::async_trait;
 
 use super::Compressor;
+use crate::compressors::text::compress_ml_with_tag_protection;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 pub struct MlTextCompressor;
@@ -29,18 +30,6 @@ impl Compressor for MlTextCompressor {
         input: &CompressInput<'_>,
         opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        if !opts.ml_text_enabled {
-            return None;
-        }
-        match crate::ml::compress(input.content, opts).await {
-            Ok(Some(text)) if text.len() < input.content.len() => {
-                Some(CompressOutput::lossy(text, CompressorKind::MlText))
-            }
-            Ok(_) => None,
-            Err(e) => {
-                log::debug!("[tokenjuice][ml] unavailable, falling back: {e:#}");
-                None
-            }
-        }
+        compress_ml_with_tag_protection(input.content, opts).await
     }
 }

@@ -28,16 +28,8 @@ impl Compressor for TextCompressor {
         input: &CompressInput<'_>,
         opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        if opts.ml_text_enabled {
-            match crate::ml::compress(input.content, opts).await {
-                Ok(Some(text)) if text.len() < input.content.len() => {
-                    return Some(CompressOutput::lossy(text, CompressorKind::MlText));
-                }
-                Ok(_) => {}
-                Err(e) => {
-                    log::debug!("[tokenjuice][ml] unavailable, falling back: {e:#}");
-                }
-            }
+        if let Some(out) = compress_ml_with_tag_protection(input.content, opts).await {
+            return Some(out);
         }
 
         compress_textcrusher(input.content, input.hint.query.as_deref(), opts)
@@ -51,6 +43,32 @@ struct Segment {
     terms: Vec<String>,
     score: f32,
     salience: f32,
+}
+
+pub async fn compress_ml_with_tag_protection(
+    content: &str,
+    opts: &CompressOptions,
+) -> Option<CompressOutput> {
+    if !opts.ml_text_enabled {
+        return None;
+    }
+
+    let protected = protect_custom_tags(content);
+    match crate::ml::compress(&protected.text, opts).await {
+        Ok(Some(text)) => {
+            let text = protected.restore(&text)?;
+            if text.len() < content.len() {
+                Some(CompressOutput::lossy(text, CompressorKind::MlText))
+            } else {
+                None
+            }
+        }
+        Ok(_) => None,
+        Err(e) => {
+            log::debug!("[tokenjuice][ml] unavailable, falling back: {e:#}");
+            None
+        }
+    }
 }
 
 pub fn compress_textcrusher(
@@ -147,6 +165,327 @@ pub fn compress_textcrusher(
         return None;
     }
     Some(CompressOutput::lossy(out, CompressorKind::TextCrusher))
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ProtectedText {
+    text: String,
+    replacements: Vec<TagReplacement>,
+}
+
+impl ProtectedText {
+    fn restore(&self, candidate: &str) -> Option<String> {
+        for replacement in &self.replacements {
+            if !candidate.contains(&replacement.placeholder) {
+                return None;
+            }
+        }
+
+        let mut restored = candidate.to_string();
+        for replacement in &self.replacements {
+            restored = restored.replace(&replacement.placeholder, &replacement.original);
+        }
+        Some(restored)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TagReplacement {
+    placeholder: String,
+    original: String,
+}
+
+fn protect_custom_tags(content: &str) -> ProtectedText {
+    let ranges = custom_tag_ranges(content);
+    if ranges.is_empty() {
+        return ProtectedText {
+            text: content.to_string(),
+            replacements: Vec::new(),
+        };
+    }
+
+    let prefix = safe_placeholder_prefix(content);
+    let mut text = String::with_capacity(content.len());
+    let mut replacements = Vec::new();
+    let mut cursor = 0usize;
+
+    for (i, range) in ranges.into_iter().enumerate() {
+        if range.start < cursor {
+            continue;
+        }
+        text.push_str(&content[cursor..range.start]);
+        let placeholder = format!("{prefix}{i}__");
+        text.push_str(&placeholder);
+        replacements.push(TagReplacement {
+            placeholder,
+            original: content[range.start..range.end].to_string(),
+        });
+        cursor = range.end;
+    }
+    text.push_str(&content[cursor..]);
+
+    ProtectedText { text, replacements }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ByteRange {
+    start: usize,
+    end: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct OpenTag {
+    name: String,
+    start: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TagKind {
+    Open,
+    Close,
+    SelfClosing,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParsedTag {
+    range: ByteRange,
+    name: String,
+    kind: TagKind,
+    custom: bool,
+}
+
+fn custom_tag_ranges(content: &str) -> Vec<ByteRange> {
+    let mut ranges = Vec::new();
+    let mut stack: Vec<OpenTag> = Vec::new();
+    let mut cursor = 0usize;
+
+    while let Some(relative) = content[cursor..].find('<') {
+        let start = cursor + relative;
+        let Some(tag) = parse_tag_at(content, start) else {
+            cursor = start + 1;
+            continue;
+        };
+        cursor = tag.range.end;
+
+        if !tag.custom {
+            continue;
+        }
+
+        match tag.kind {
+            TagKind::SelfClosing => ranges.push(tag.range),
+            TagKind::Open => stack.push(OpenTag {
+                name: tag.name,
+                start: tag.range.start,
+            }),
+            TagKind::Close => {
+                if let Some(pos) = stack.iter().rposition(|open| open.name == tag.name) {
+                    let open = stack.remove(pos);
+                    stack.truncate(pos);
+                    ranges.push(ByteRange {
+                        start: open.start,
+                        end: tag.range.end,
+                    });
+                }
+            }
+        }
+    }
+
+    ranges.sort_by(|a, b| a.start.cmp(&b.start).then_with(|| b.end.cmp(&a.end)));
+    let mut non_overlapping = Vec::new();
+    let mut covered_end = 0usize;
+    for range in ranges {
+        if range.start >= covered_end {
+            covered_end = range.end;
+            non_overlapping.push(range);
+        }
+    }
+    non_overlapping
+}
+
+fn parse_tag_at(content: &str, start: usize) -> Option<ParsedTag> {
+    let tail = content.get(start..)?;
+    if !tail.starts_with('<')
+        || tail.starts_with("<!--")
+        || tail.starts_with("<!")
+        || tail.starts_with("<?")
+    {
+        return None;
+    }
+
+    let end = start + tail.find('>')? + 1;
+    let mut inner = content[start + 1..end - 1].trim();
+    if inner.is_empty() {
+        return None;
+    }
+
+    let closing = inner.starts_with('/');
+    if closing {
+        inner = inner[1..].trim_start();
+    }
+    let self_closing = !closing && inner.trim_end().ends_with('/');
+    if self_closing {
+        inner = inner.trim_end_matches('/').trim_end();
+    }
+
+    let name_end = inner
+        .char_indices()
+        .find_map(|(idx, ch)| (!is_tag_name_char(ch)).then_some(idx))
+        .unwrap_or(inner.len());
+    let name = &inner[..name_end];
+    if !valid_tag_name(name) {
+        return None;
+    }
+
+    let lower = name.to_ascii_lowercase();
+    Some(ParsedTag {
+        range: ByteRange { start, end },
+        name: lower.clone(),
+        kind: if closing {
+            TagKind::Close
+        } else if self_closing {
+            TagKind::SelfClosing
+        } else {
+            TagKind::Open
+        },
+        custom: !is_html_tag(&lower),
+    })
+}
+
+fn valid_tag_name(name: &str) -> bool {
+    let mut chars = name.chars();
+    chars
+        .next()
+        .is_some_and(|ch| ch.is_ascii_alphabetic() || ch == '_')
+        && chars.all(is_tag_name_char)
+}
+
+fn is_tag_name_char(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || ch == '_' || ch == '-' || ch == ':'
+}
+
+fn safe_placeholder_prefix(content: &str) -> String {
+    for salt in 0..1024usize {
+        let prefix = format!("__TOKENJUICE_TAG_{salt}_");
+        if !content.contains(&prefix) {
+            return prefix;
+        }
+    }
+    "__TOKENJUICE_TAG_FALLBACK_".to_string()
+}
+
+fn is_html_tag(name: &str) -> bool {
+    matches!(
+        name,
+        "a" | "abbr"
+            | "address"
+            | "area"
+            | "article"
+            | "aside"
+            | "audio"
+            | "b"
+            | "base"
+            | "bdi"
+            | "bdo"
+            | "blockquote"
+            | "body"
+            | "br"
+            | "button"
+            | "canvas"
+            | "caption"
+            | "cite"
+            | "code"
+            | "col"
+            | "colgroup"
+            | "data"
+            | "datalist"
+            | "dd"
+            | "del"
+            | "details"
+            | "dfn"
+            | "dialog"
+            | "div"
+            | "dl"
+            | "dt"
+            | "em"
+            | "embed"
+            | "fieldset"
+            | "figcaption"
+            | "figure"
+            | "footer"
+            | "form"
+            | "h1"
+            | "h2"
+            | "h3"
+            | "h4"
+            | "h5"
+            | "h6"
+            | "head"
+            | "header"
+            | "hr"
+            | "html"
+            | "i"
+            | "iframe"
+            | "img"
+            | "input"
+            | "ins"
+            | "kbd"
+            | "label"
+            | "legend"
+            | "li"
+            | "link"
+            | "main"
+            | "map"
+            | "mark"
+            | "menu"
+            | "meta"
+            | "meter"
+            | "nav"
+            | "noscript"
+            | "object"
+            | "ol"
+            | "optgroup"
+            | "option"
+            | "output"
+            | "p"
+            | "picture"
+            | "pre"
+            | "progress"
+            | "q"
+            | "rp"
+            | "rt"
+            | "ruby"
+            | "s"
+            | "samp"
+            | "script"
+            | "section"
+            | "select"
+            | "slot"
+            | "small"
+            | "source"
+            | "span"
+            | "strong"
+            | "style"
+            | "sub"
+            | "summary"
+            | "sup"
+            | "table"
+            | "tbody"
+            | "td"
+            | "template"
+            | "textarea"
+            | "tfoot"
+            | "th"
+            | "thead"
+            | "time"
+            | "title"
+            | "tr"
+            | "track"
+            | "u"
+            | "ul"
+            | "var"
+            | "video"
+            | "wbr"
+    )
 }
 
 fn split_segments(content: &str) -> Vec<Segment> {
@@ -279,6 +618,8 @@ fn jaccard(a: &HashSet<String>, b: &HashSet<String>) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
+
     use crate::types::CompressOptions;
 
     fn opts() -> CompressOptions {
@@ -287,6 +628,116 @@ mod tests {
             ccr_min_tokens: 1,
             ..Default::default()
         }
+    }
+
+    fn ml_opts() -> CompressOptions {
+        CompressOptions {
+            ml_text_enabled: true,
+            ..opts()
+        }
+    }
+
+    #[test]
+    fn protector_ignores_normal_html_tags() {
+        let protected = protect_custom_tags("<div><span>hello</span><br /></div>");
+
+        assert_eq!(protected.text, "<div><span>hello</span><br /></div>");
+        assert!(protected.replacements.is_empty());
+    }
+
+    #[test]
+    fn protector_handles_nested_and_self_closing_custom_tags() {
+        let tag = "<workflow id=\"a\">\n<context-item value=\"1\" />\n</workflow>";
+        let input = format!("before {tag} after");
+        let protected = protect_custom_tags(&input);
+
+        assert_eq!(protected.replacements.len(), 1);
+        assert!(!protected.text.contains(tag));
+        assert_eq!(
+            protected.restore(&protected.text).as_deref(),
+            Some(input.as_str())
+        );
+    }
+
+    #[test]
+    fn protector_restores_duplicate_blocks_independently() {
+        let input = "<task>first</task>\nbody\n<task>second</task>";
+        let protected = protect_custom_tags(input);
+
+        assert_eq!(protected.replacements.len(), 2);
+        assert_ne!(
+            protected.replacements[0].placeholder,
+            protected.replacements[1].placeholder
+        );
+        let candidate = format!(
+            "{} then {}",
+            protected.replacements[1].placeholder, protected.replacements[0].placeholder
+        );
+        let restored = protected.restore(&candidate).expect("restore");
+
+        assert_eq!(restored, "<task>second</task> then <task>first</task>");
+    }
+
+    #[test]
+    fn protector_chooses_uncollided_placeholder_prefix() {
+        let input = "__TOKENJUICE_TAG_0_ already exists <custom-tag />";
+        let protected = protect_custom_tags(input);
+
+        assert_eq!(protected.replacements.len(), 1);
+        assert!(
+            protected.replacements[0]
+                .placeholder
+                .starts_with("__TOKENJUICE_TAG_1_"),
+            "{protected:?}"
+        );
+        assert_eq!(protected.restore(&protected.text).as_deref(), Some(input));
+    }
+
+    #[test]
+    fn malformed_custom_tag_passes_without_panic() {
+        let input = "before <workflow><inner> missing close";
+        let protected = protect_custom_tags(input);
+
+        assert_eq!(protected.text, input);
+        assert!(protected.replacements.is_empty());
+    }
+
+    #[tokio::test]
+    async fn ml_path_restores_custom_tags_byte_for_byte() {
+        crate::ml::configure_callback(Some(Arc::new(|text, _opts| {
+            Box::pin(async move {
+                assert!(!text.contains("<workflow"));
+                let placeholder = text
+                    .split_whitespace()
+                    .find(|part| part.contains("__TOKENJUICE_TAG_"))
+                    .expect("placeholder")
+                    .to_string();
+                Ok(Some(format!("compressed {placeholder}")))
+            })
+        })));
+
+        let tag = "<workflow id=\"alpha\">\n<context-item value=\"1\" />\n</workflow>";
+        let input = format!("{tag}\n{}", "ordinary filler ".repeat(200));
+        let out = compress_ml_with_tag_protection(&input, &ml_opts())
+            .await
+            .expect("ml output");
+        crate::ml::configure_callback(None);
+
+        assert_eq!(out.kind, CompressorKind::MlText);
+        assert!(out.text.contains(tag), "{}", out.text);
+    }
+
+    #[tokio::test]
+    async fn ml_path_declines_when_callback_drops_placeholder() {
+        crate::ml::configure_callback(Some(Arc::new(|_text, _opts| {
+            Box::pin(async move { Ok(Some("compressed without protected marker".to_string())) })
+        })));
+
+        let input = format!("<workflow>keep me</workflow>\n{}", "filler ".repeat(200));
+        let out = compress_ml_with_tag_protection(&input, &ml_opts()).await;
+        crate::ml::configure_callback(None);
+
+        assert!(out.is_none());
     }
 
     #[test]
