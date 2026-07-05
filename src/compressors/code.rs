@@ -15,8 +15,7 @@
 use async_trait::async_trait;
 use std::fmt::Write as _;
 
-use super::Compressor;
-use crate::cache;
+use super::{BLOCK_NOTE, Compressor, block_token};
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 /// Bodies with more than this many collapsed lines get a placeholder; shorter
@@ -54,25 +53,6 @@ impl Compressor for CodeCompressor {
     }
 }
 
-/// One-line note appended when any collapsed body carries its own token, so
-/// the model knows the placeholders are individually expandable.
-const PER_BODY_NOTE: &str = "\n[collapsed bodies are individually retrievable: call tinyjuice_retrieve with the token inside a placeholder to expand just that body]";
-
-/// Offload a collapsed body to CCR and return the placeholder token text
-/// (e.g. `⟦tj:abc123⟧`), or an empty string when tokens are disabled or the
-/// body couldn't be retained.
-fn body_token(body: &str, enabled: bool) -> String {
-    if !enabled {
-        return String::new();
-    }
-    let (token, retained) = cache::offload_checked(body);
-    if retained {
-        format!(" {}", cache::format_marker(&token))
-    } else {
-        String::new()
-    }
-}
-
 /// Language-agnostic brace-depth compressor. Keeps lines at depth ≤ 1, collapses
 /// deeper runs. With `per_body_tokens`, each collapsed body is offloaded to CCR
 /// and its placeholder carries a token that retrieves exactly that body.
@@ -93,7 +73,7 @@ pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<Compre
             return;
         }
         if collapsed.len() >= MIN_BODY_LINES_TO_COLLAPSE {
-            let token = body_token(&collapsed.join("\n"), per_body_tokens);
+            let token = block_token(&collapsed.join("\n"), per_body_tokens);
             *any_token |= !token.is_empty();
             let _ = writeln!(out, "    {{ … {} line(s) …{token} }}", collapsed.len());
         } else {
@@ -129,7 +109,7 @@ pub fn compress_heuristic(content: &str, per_body_tokens: bool) -> Option<Compre
 
     let mut out = out.trim_end().to_string();
     if any_token {
-        out.push_str(PER_BODY_NOTE);
+        out.push_str(BLOCK_NOTE);
     }
     if out.len() >= content.len() {
         return None;
@@ -200,7 +180,7 @@ fn brace_delta(line: &str) -> (i32, i32) {
 #[cfg(feature = "tinyjuice-treesitter")]
 mod treesitter {
     use super::{
-        CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE, PER_BODY_NOTE, body_token,
+        BLOCK_NOTE, CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE, block_token,
     };
     use tree_sitter::{Node, Parser};
 
@@ -272,7 +252,7 @@ mod treesitter {
             if n_lines < MIN_BODY_LINES_TO_COLLAPSE {
                 out.push_str(body);
             } else {
-                let token = body_token(body, per_body_tokens);
+                let token = block_token(body, per_body_tokens);
                 any_token |= !token.is_empty();
                 if braced {
                     out.push_str(&format!("{{ … {n_lines} line(s) …{token} }}"));
@@ -287,7 +267,7 @@ mod treesitter {
 
         let mut out = out.trim_end().to_string();
         if any_token {
-            out.push_str(PER_BODY_NOTE);
+            out.push_str(BLOCK_NOTE);
         }
         if out.len() >= content.len() {
             return None;
@@ -321,6 +301,7 @@ mod treesitter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache;
 
     #[test]
     fn keeps_signatures_collapses_bodies() {

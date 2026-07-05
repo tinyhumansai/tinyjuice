@@ -3,10 +3,12 @@
 //!
 //! Each compressor preserves the signal its kind carries — errors in logs,
 //! changed hunks in diffs, signatures in code, anomalous rows in JSON — and
-//! drops the rest. Lossy compressors leave recovery to the router
-//! ([`crate::compress`]), which offloads the original to
-//! the CCR cache and appends a retrieval marker. Compressors therefore return
-//! only the compacted body and a `lossy` flag; they never touch the cache.
+//! drops the rest. Whole-payload recovery belongs to the router
+//! ([`crate::compress`]), which offloads the original to the CCR cache and
+//! appends a retrieval footer. In addition, compressors may offload each
+//! *omitted block* individually (via [`block_token`]) so its omission marker
+//! carries a token that retrieves exactly that block — gated on
+//! `opts.ccr_enabled`.
 
 pub mod code;
 pub mod diff;
@@ -72,6 +74,26 @@ pub fn compressor_for(kind: ContentKind) -> &'static dyn Compressor {
 /// by the router when a specialised compressor declines or is disabled.
 pub fn generic_compressor() -> &'static dyn Compressor {
     &GENERIC_COMPRESSOR
+}
+
+/// One-line note appended to compacted output when any omitted block carries
+/// its own retrieval token.
+pub(crate) const BLOCK_NOTE: &str = "\n[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]";
+
+/// Offload an omitted block to CCR and return the marker text to embed in the
+/// omission placeholder (` ⟦tj:<hash>⟧`), or an empty string when per-block
+/// tokens are disabled or the block couldn't be retained. The store is
+/// content-addressed and idempotent, so identical blocks share one entry.
+pub(crate) fn block_token(block: &str, enabled: bool) -> String {
+    if !enabled {
+        return String::new();
+    }
+    let (token, retained) = crate::cache::offload_checked(block);
+    if retained {
+        format!(" {}", crate::cache::format_marker(&token))
+    } else {
+        String::new()
+    }
 }
 
 #[cfg(test)]

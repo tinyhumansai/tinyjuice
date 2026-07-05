@@ -18,8 +18,8 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 use std::fmt::Write as _;
 
-use super::Compressor;
 use super::signals::{Severity, severity};
+use super::{BLOCK_NOTE, Compressor, block_token};
 use crate::reduce::reduce_execution_with_rules;
 use crate::rules::cached_overlay_rules;
 use crate::types::{
@@ -51,7 +51,7 @@ impl Compressor for LogCompressor {
         if has_command {
             compress_command(input, opts)
         } else {
-            compress_signal(input.content)
+            compress_signal(input.content, opts.ccr_enabled)
         }
     }
 }
@@ -115,8 +115,10 @@ fn run_rule_engine(
     Some(CompressOutput::lossy(result.inline_text, kind))
 }
 
-/// Signal-based log compression for non-command blobs detected as logs.
-pub fn compress_signal(content: &str) -> Option<CompressOutput> {
+/// Signal-based log compression for non-command blobs detected as logs. With
+/// `block_tokens`, each omitted gap is offloaded to CCR and its marker carries
+/// a token that retrieves exactly those lines.
+pub fn compress_signal(content: &str, block_tokens: bool) -> Option<CompressOutput> {
     let lines: Vec<&str> = content.lines().collect();
     if lines.len() <= MAX_TOTAL_LINES {
         return None;
@@ -190,26 +192,34 @@ pub fn compress_signal(content: &str) -> Option<CompressOutput> {
     let kept_set: std::collections::BTreeSet<usize> = kept_vec.into_iter().collect();
 
     let mut out = String::with_capacity(content.len() / 2 + 64);
+    let mut any_token = false;
+    let mut gap_marker = |out: &mut String, start: usize, end: usize| {
+        let token = block_token(&lines[start..end].join("\n"), block_tokens);
+        any_token |= !token.is_empty();
+        let _ = writeln!(out, "[... {} line(s) omitted ...{token}]", end - start);
+    };
     let mut prev: Option<usize> = None;
     for &i in &kept_set {
         if let Some(p) = prev {
-            let gap = i - p - 1;
-            if gap > 0 {
-                let _ = writeln!(out, "[... {gap} line(s) omitted ...]");
+            if i > p + 1 {
+                gap_marker(&mut out, p + 1, i);
             }
         } else if i > 0 {
-            let _ = writeln!(out, "[... {i} line(s) omitted ...]");
+            gap_marker(&mut out, 0, i);
         }
         let _ = writeln!(out, "{}", lines[i]);
         prev = Some(i);
     }
-    if let Some(p) = prev {
-        let tail = lines.len().saturating_sub(p + 1);
-        if tail > 0 {
-            let _ = writeln!(out, "[... {tail} line(s) omitted ...]");
-        }
+    if let Some(p) = prev
+        && p + 1 < lines.len()
+    {
+        gap_marker(&mut out, p + 1, lines.len());
     }
 
+    if any_token {
+        out.push_str(BLOCK_NOTE);
+        out.push('\n');
+    }
     if out.len() >= content.len() {
         return None;
     }
@@ -310,7 +320,7 @@ mod tests {
     #[test]
     fn signal_keeps_errors_and_summary_drops_noise() {
         let input = noisy_log();
-        let out = compress_signal(&input).expect("compresses").text;
+        let out = compress_signal(&input, false).expect("compresses").text;
         assert!(out.contains("error[E0382]"), "{out}");
         assert!(out.contains("error: aborting"), "{out}");
         assert!(out.contains("test result: FAILED"), "{out}");
@@ -349,7 +359,7 @@ mod tests {
         for i in 0..6 {
             let _ = writeln!(s, "  {i}: some_crate::module::function_{i}");
         }
-        let out = compress_signal(&s).expect("compresses").text;
+        let out = compress_signal(&s, false).expect("compresses").text;
         assert!(out.contains("panicked"), "{out}");
         assert!(
             out.contains("some_crate::module::function_2"),
@@ -363,6 +373,20 @@ mod tests {
         for i in 0..400 {
             let _ = writeln!(s, "/var/data/file_{i:04}.bin\t{i}\trwxr-xr-x");
         }
-        assert!(compress_signal(&s).is_none());
+        assert!(compress_signal(&s, false).is_none());
+    }
+
+    #[test]
+    fn gap_token_retrieves_omitted_lines() {
+        use crate::cache;
+        let input = noisy_log();
+        let out = compress_signal(&input, true).expect("compresses").text;
+        let tokens = cache::parse_markers(&out);
+        assert!(!tokens.is_empty(), "gap markers should carry tokens: {out}");
+        let block = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(
+            block.contains("Compiling crate_"),
+            "gap block should hold the omitted noise: {block}"
+        );
     }
 }

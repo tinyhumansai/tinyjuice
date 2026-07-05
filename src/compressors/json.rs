@@ -18,8 +18,8 @@ use serde_json::Value;
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
 
-use super::Compressor;
 use super::signals::has_error_indicators;
+use super::{BLOCK_NOTE, Compressor, block_token};
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
 /// Minimum rows before tabular rendering is worth the header overhead.
@@ -47,15 +47,17 @@ impl Compressor for JsonCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        _opts: &CompressOptions,
+        opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content)
+        compress(input.content, opts.ccr_enabled)
     }
 }
 
-/// Compress a JSON array-of-objects into a compact table. Returns `None` when
-/// the content isn't a uniform-enough array of objects or wouldn't shrink.
-pub fn compress(content: &str) -> Option<CompressOutput> {
+/// Compress a JSON array-of-objects into a compact table. With `block_tokens`,
+/// each omitted row range is offloaded to CCR (as a JSON array slice) and its
+/// marker carries a token that retrieves exactly those rows. Returns `None`
+/// when the content isn't a uniform-enough array of objects or wouldn't shrink.
+pub fn compress(content: &str, block_tokens: bool) -> Option<CompressOutput> {
     let value: Value = serde_json::from_str(content.trim()).ok()?;
     let array = value.as_array()?;
     if array.len() < MIN_ROWS {
@@ -109,28 +111,34 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
     let _ = writeln!(out, "{}", render_markdown_row(&header_cells));
     let _ = writeln!(out, "{}", render_markdown_separator(columns.len()));
 
+    let mut any_token = false;
     if lossy {
         // Keep head + tail PLUS any anomalous rows (errors / numeric outliers)
         // so the signal in a large homogeneous array survives row-dropping.
+        // Each omitted range is offloaded as a JSON slice behind its own token.
         let keep = rows_to_keep(array, &columns, rows.len());
+        let mut gap_marker = |out: &mut String, start: usize, end: usize| {
+            let slice = serde_json::to_string(&array[start..end]).unwrap_or_default();
+            let token = block_token(&slice, block_tokens && !slice.is_empty());
+            any_token |= !token.is_empty();
+            let _ = writeln!(out, "[... {} row(s) omitted ...{token}]", end - start);
+        };
         let mut prev: Option<usize> = None;
         for &i in &keep {
             if let Some(p) = prev {
-                let gap = i - p - 1;
-                if gap > 0 {
-                    let _ = writeln!(out, "[... {gap} row(s) omitted ...]");
+                if i > p + 1 {
+                    gap_marker(&mut out, p + 1, i);
                 }
             } else if i > 0 {
-                let _ = writeln!(out, "[... {i} row(s) omitted ...]");
+                gap_marker(&mut out, 0, i);
             }
             let _ = writeln!(out, "{}", rows[i]);
             prev = Some(i);
         }
-        if let Some(p) = prev {
-            let tail = rows.len().saturating_sub(p + 1);
-            if tail > 0 {
-                let _ = writeln!(out, "[... {tail} row(s) omitted ...]");
-            }
+        if let Some(p) = prev
+            && p + 1 < rows.len()
+        {
+            gap_marker(&mut out, p + 1, rows.len());
         }
     } else {
         for row in &rows {
@@ -138,7 +146,10 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
         }
     }
 
-    let table = out.trim_end().to_string();
+    let mut table = out.trim_end().to_string();
+    if any_token {
+        table.push_str(BLOCK_NOTE);
+    }
     let minified = serde_json::to_string(&value).ok()?;
     let output = if minified.len() < content.len() && minified.len() < table.len() {
         log::debug!(
@@ -279,7 +290,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let out = compress(&input).expect("compresses").text;
+        let out = compress(&input, false).expect("compresses").text;
         assert_eq!(out.matches("status").count(), 1, "{out}");
         assert!(out.contains("| id | name | owner | status |"), "{out}");
         assert!(out.contains("| --- | --- | --- | --- |"), "{out}");
@@ -296,7 +307,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input).expect("compresses");
+        let c = compress(&input, false).expect("compresses");
         assert!(c.lossy, "row-dropped output must be lossy");
         assert!(c.text.contains("record number 0"), "{}", c.text);
         assert!(c.text.contains("record number 199"), "{}", c.text);
@@ -316,7 +327,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input).expect("compresses");
+        let c = compress(&input, false).expect("compresses");
         assert!(c.lossy);
         assert!(
             c.text.contains("job 75"),
@@ -337,7 +348,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input).expect("compresses");
+        let c = compress(&input, false).expect("compresses");
         assert!(
             c.text.contains("9999"),
             "outlier row must survive:\n{}",
@@ -347,9 +358,9 @@ mod tests {
 
     #[test]
     fn non_array_returns_none() {
-        assert!(compress(r#"{"a":1}"#).is_none());
-        assert!(compress("[1,2,3]").is_none());
-        assert!(compress(r#"[{"a":1}]"#).is_none());
+        assert!(compress(r#"{"a":1}"#, false).is_none());
+        assert!(compress("[1,2,3]", false).is_none());
+        assert!(compress(r#"[{"a":1}]"#, false).is_none());
     }
 
     #[test]
@@ -361,7 +372,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let out = compress(&input).expect("compresses").text;
+        let out = compress(&input, false).expect("compresses").text;
         assert!(out.contains("| id | meta | text |"), "{out}");
         assert!(out.contains("alpha \\| beta"), "{out}");
         assert!(out.contains(r#"{"note":"x\|y"}"#), "{out}");
@@ -374,7 +385,7 @@ mod tests {
           {"a": 3, "b": 4},
           {"a": 5, "b": 6}
         ]"#;
-        let out = compress(input).expect("minifies").text;
+        let out = compress(input, false).expect("minifies").text;
         assert_eq!(out, r#"[{"a":1,"b":2},{"a":3,"b":4},{"a":5,"b":6}]"#);
     }
 
@@ -387,10 +398,28 @@ mod tests {
           {"enabled": false, "id": 4},
           {"enabled": true, "id": 5}
         ]"#;
-        let out = compress(input).expect("minifies").text;
+        let out = compress(input, false).expect("minifies").text;
         assert_eq!(
             out,
             r#"[{"enabled":true,"id":1},{"enabled":false,"id":2},{"enabled":true,"id":3},{"enabled":false,"id":4},{"enabled":true,"id":5}]"#
         );
+    }
+
+    #[test]
+    fn omitted_rows_token_retrieves_json_slice() {
+        use crate::cache;
+        let mut items = Vec::new();
+        for i in 0..120 {
+            items.push(format!(r#"{{"id":{i},"name":"row_{i}","status":"ok"}}"#));
+        }
+        let input = format!("[{}]", items.join(","));
+        let out = compress(&input, true).expect("compresses").text;
+        let tokens = cache::parse_markers(&out);
+        assert!(!tokens.is_empty(), "row gaps should carry tokens: {out}");
+        let block = cache::retrieve(&tokens[0]).expect("stored");
+        let parsed: serde_json::Value = serde_json::from_str(&block).expect("valid JSON slice");
+        let arr = parsed.as_array().expect("array slice");
+        assert!(!arr.is_empty());
+        assert_eq!(arr[0]["name"], "row_20", "slice starts after the head rows");
     }
 }

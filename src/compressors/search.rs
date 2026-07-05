@@ -18,8 +18,8 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-use super::Compressor;
 use super::signals::line_score;
+use super::{BLOCK_NOTE, Compressor, block_token};
 use crate::detect::parse_search_line;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
@@ -39,9 +39,9 @@ impl Compressor for SearchCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        _opts: &CompressOptions,
+        opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content, input.hint.query.as_deref())
+        compress(input.content, input.hint.query.as_deref(), opts.ccr_enabled)
     }
 }
 
@@ -53,7 +53,9 @@ struct Match<'a> {
 }
 
 /// Compress search output. `query` (when known) ranks matches by term density.
-pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
+/// With `block_tokens`, each per-file `+N more` tally carries a token that
+/// retrieves exactly the omitted matches for that file.
+pub fn compress(content: &str, query: Option<&str>, block_tokens: bool) -> Option<CompressOutput> {
     // Preserve any non-match preamble/summary lines (e.g. "80 match(es)") and
     // group match lines by file in first-seen order.
     let mut preamble: Vec<&str> = Vec::new();
@@ -129,6 +131,7 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
         omitted_note
     );
 
+    let mut any_token = false;
     for (path, mut matches) in files {
         let total = matches.len();
         if total <= TOP_K_PER_FILE {
@@ -151,14 +154,23 @@ pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
         for m in &kept {
             let _ = writeln!(out, "{}:{}:{}", path, m.line_no, m.body);
         }
+        // Offload this file's omitted matches (line order) behind one token.
+        let mut omitted: Vec<&Match<'_>> = matches.iter().skip(TOP_K_PER_FILE).collect();
+        omitted.sort_by_key(|m| m.line_no);
+        let omitted_raw = omitted.iter().map(|m| m.raw).collect::<Vec<_>>().join("\n");
+        let token = block_token(&omitted_raw, block_tokens);
+        any_token |= !token.is_empty();
         let _ = writeln!(
             out,
-            "[+{} more match(es) in {path}]",
+            "[+{} more match(es) in {path}{token}]",
             total - TOP_K_PER_FILE
         );
     }
 
-    let out = out.trim_end().to_string();
+    let mut out = out.trim_end().to_string();
+    if any_token {
+        out.push_str(BLOCK_NOTE);
+    }
     if out.len() >= content.len() {
         return None;
     }
@@ -204,7 +216,7 @@ mod tests {
     #[test]
     fn keeps_top_k_per_file_and_tally() {
         let input = big_results();
-        let out = compress(&input, None).expect("compresses").text;
+        let out = compress(&input, None, false).expect("compresses").text;
         assert!(out.contains("more match(es) in src/a.rs"), "{out}");
         assert!(out.contains("more match(es) in src/b.rs"));
         // Preamble survives.
@@ -223,7 +235,9 @@ mod tests {
             };
             let _ = writeln!(s, "src/x.rs:{i}:{body}");
         }
-        let out = compress(&s, Some("needle token")).expect("compresses").text;
+        let out = compress(&s, Some("needle token"), false)
+            .expect("compresses")
+            .text;
         assert!(
             out.contains("special needle token"),
             "ranked-in match missing:\n{out}"
@@ -233,7 +247,7 @@ mod tests {
     #[test]
     fn small_result_set_passes_through() {
         let s = "a.rs:1:hit\nb.rs:2:hit\n";
-        assert!(compress(s, None).is_none());
+        assert!(compress(s, None, false).is_none());
     }
 
     #[test]
@@ -247,10 +261,25 @@ mod tests {
             let _ = writeln!(s, "src/a.rs-{}-context line below", i * 4 + 3);
             let _ = writeln!(s, "--");
         }
-        let out = compress(&s, None).expect("compresses").text;
+        let out = compress(&s, None, false).expect("compresses").text;
         assert!(
             out.contains("context/summary line(s) omitted"),
             "omission tally missing:\n{out}"
         );
+    }
+
+    #[test]
+    fn more_matches_token_retrieves_omitted_matches() {
+        use crate::cache;
+        let input = big_results();
+        let out = compress(&input, None, true).expect("compresses").text;
+        let tokens = cache::parse_markers(&out);
+        assert!(!tokens.is_empty(), "tallies should carry tokens: {out}");
+        let block = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(
+            block.contains("src/a.rs:"),
+            "omitted matches for a.rs: {block}"
+        );
+        assert!(!block.contains("src/b.rs:"), "must not mix files: {block}");
     }
 }

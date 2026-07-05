@@ -9,7 +9,7 @@
 use async_trait::async_trait;
 use std::fmt::Write as _;
 
-use super::Compressor;
+use super::{BLOCK_NOTE, Compressor, block_token};
 use crate::text::ansi::strip_ansi;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
 
@@ -29,15 +29,17 @@ impl Compressor for DiffCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        _opts: &CompressOptions,
+        opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content)
+        compress(input.content, opts.ccr_enabled)
     }
 }
 
-/// Compress a unified diff. Returns `None` when there's nothing structural to
-/// work with or compression wouldn't shrink it.
-pub fn compress(content: &str) -> Option<CompressOutput> {
+/// Compress a unified diff. With `block_tokens`, each omitted block (collapsed
+/// context run, summarized lockfile hunk) is offloaded to CCR and its marker
+/// carries a token retrieving exactly that block. Returns `None` when there's
+/// nothing structural to work with or compression wouldn't shrink it.
+pub fn compress(content: &str, block_tokens: bool) -> Option<CompressOutput> {
     let stripped = strip_ansi(content);
     let lines: Vec<&str> = stripped.lines().collect();
     if lines.is_empty() {
@@ -48,6 +50,7 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
     let mut i = 0usize;
     let mut current_file_is_noisy = false;
     let mut saw_hunk = false;
+    let mut any_token = false;
 
     while i < lines.len() {
         let line = lines[i];
@@ -64,9 +67,11 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
                 let _ = writeln!(out, "{line}");
                 i += 1;
                 let (added, removed, consumed) = summarize_hunk_body(&lines[i..]);
+                let token = block_token(&lines[i..i + consumed].join("\n"), block_tokens);
+                any_token |= !token.is_empty();
                 let _ = writeln!(
                     out,
-                    "[... lockfile/bundle hunk: +{added}/-{removed} line(s) omitted ...]"
+                    "[... lockfile/bundle hunk: +{added}/-{removed} line(s) omitted ...{token}]"
                 );
                 i += consumed;
                 continue;
@@ -87,7 +92,12 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
                     let _ = writeln!(out, "{l}");
                 }
                 let omitted = run.len() - 2 * CONTEXT_ANCHOR;
-                let _ = writeln!(out, "[... {omitted} context line(s) omitted ...]");
+                let token = block_token(
+                    &run[CONTEXT_ANCHOR..run.len() - CONTEXT_ANCHOR].join("\n"),
+                    block_tokens,
+                );
+                any_token |= !token.is_empty();
+                let _ = writeln!(out, "[... {omitted} context line(s) omitted ...{token}]");
                 for l in &run[run.len() - CONTEXT_ANCHOR..] {
                     let _ = writeln!(out, "{l}");
                 }
@@ -105,6 +115,11 @@ pub fn compress(content: &str) -> Option<CompressOutput> {
 
     if !saw_hunk {
         return None;
+    }
+    let mut out = out;
+    if any_token {
+        out.push_str(BLOCK_NOTE);
+        out.push('\n');
     }
     if out.len() >= content.len() {
         return None;
@@ -200,7 +215,7 @@ mod tests {
         for i in 0..20 {
             let _ = writeln!(s, " more context {i} unchanged");
         }
-        let out = compress(&s).expect("compresses").text;
+        let out = compress(&s, false).expect("compresses").text;
         assert!(out.contains("-old changed line"), "{out}");
         assert!(out.contains("+new changed line"), "{out}");
         assert!(out.contains("context line(s) omitted"), "{out}");
@@ -217,7 +232,7 @@ mod tests {
         for i in 0..20 {
             let _ = writeln!(s, "- old dep entry {i}");
         }
-        let out = compress(&s).expect("compresses").text;
+        let out = compress(&s, false).expect("compresses").text;
         assert!(out.contains("lockfile/bundle hunk"), "{out}");
         assert!(!out.contains("new dep entry 7"), "{out}");
         assert!(out.len() < s.len());
@@ -225,7 +240,7 @@ mod tests {
 
     #[test]
     fn non_diff_returns_none() {
-        assert!(compress("just some text\nno hunks here").is_none());
+        assert!(compress("just some text\nno hunks here", false).is_none());
     }
 
     #[test]
@@ -266,8 +281,31 @@ mod tests {
         for i in 0..20 {
             let _ = writeln!(s, " more context {i} unchanged");
         }
-        let out = compress(&s).expect("compresses").text;
+        let out = compress(&s, false).expect("compresses").text;
         assert!(out.contains("+export function newMap7()"), "{out}");
         assert!(!out.contains("lockfile/bundle hunk"), "{out}");
+    }
+
+    #[test]
+    fn context_block_token_retrieves_omitted_lines() {
+        use crate::cache;
+        let mut s = String::from("diff --git a/x.rs b/x.rs\n@@ -1,40 +1,41 @@\n");
+        for i in 0..20 {
+            let _ = writeln!(s, " context line {i} unchanged here");
+        }
+        let _ = writeln!(s, "-old changed line");
+        let _ = writeln!(s, "+new changed line");
+        for i in 0..20 {
+            let _ = writeln!(s, " more context {i} unchanged");
+        }
+        let out = compress(&s, true).expect("compresses").text;
+        let tokens = cache::parse_markers(&out);
+        assert!(
+            !tokens.is_empty(),
+            "context marker should carry a token: {out}"
+        );
+        let block = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(block.contains("context line 10 unchanged here"), "{block}");
+        assert!(out.contains("individually retrievable"), "{out}");
     }
 }
