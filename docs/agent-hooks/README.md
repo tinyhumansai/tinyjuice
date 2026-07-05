@@ -2,10 +2,10 @@
 
 TinyJuice currently ships first-class hook installers for Codex and Claude Code.
 
-| Logo | Client | Command |
-| --- | --- | --- |
-| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` |
-| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` |
+| Logo | Client | Install | Update | Uninstall |
+| --- | --- | --- | --- | --- |
+| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` | `tinyjuice update codex` | `tinyjuice uninstall codex` |
+| <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` | `tinyjuice update claude-code` | `tinyjuice uninstall claude-code` |
 
 ## Install The CLI
 
@@ -48,6 +48,20 @@ Install the Claude Code hook:
 tinyjuice install claude-code
 ```
 
+Refresh an existing hook after upgrading TinyJuice or changing the binary path:
+
+```sh
+tinyjuice update codex
+tinyjuice update claude-code --binary "$HOME/.cargo/bin/tinyjuice"
+```
+
+Remove TinyJuice hooks while preserving unrelated hooks and settings:
+
+```sh
+tinyjuice uninstall codex
+tinyjuice uninstall claude-code
+```
+
 The Codex installer updates `~/.codex/hooks.json`. When TinyJuice compacts a
 large result, it emits `hookSpecificOutput.additionalContext`, matching Codex's
 hook output model.
@@ -62,6 +76,10 @@ Both installers:
 - replace an older TinyJuice hook for the same host
 - write a `.bak` file next to the edited JSON file
 - expect `tinyjuice` to be on `PATH` unless `--binary` is supplied
+
+`update` uses the same merge logic as `install`, so it is safe to run repeatedly.
+`uninstall` removes only TinyJuice hook entries for the selected host and is a
+no-op when no TinyJuice hook is present.
 
 ## Custom Paths
 

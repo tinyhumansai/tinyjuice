@@ -34,6 +34,8 @@ fn run() -> Result<(), String> {
         "codex-post-tool-use" => post_tool_use_hook(TinyJuiceHost::Codex),
         "claude-code-post-tool-use" => post_tool_use_hook(TinyJuiceHost::ClaudeCode),
         "install" => install_command(args),
+        "update" => update_command(args),
+        "uninstall" => uninstall_command(args),
         "retrieve" => retrieve_command(args),
         "hosts" => {
             println!(
@@ -127,6 +129,18 @@ fn post_tool_use_hook(host: TinyJuiceHost) -> Result<(), String> {
 }
 
 fn install_command(args: Vec<String>) -> Result<(), String> {
+    install_or_update_command(args, "install", "installed")
+}
+
+fn update_command(args: Vec<String>) -> Result<(), String> {
+    install_or_update_command(args, "update", "updated")
+}
+
+fn install_or_update_command(
+    args: Vec<String>,
+    command_name: &str,
+    action: &str,
+) -> Result<(), String> {
     let mut binary = "tinyjuice".to_string();
     let mut path = None;
     let mut host = None;
@@ -160,24 +174,22 @@ fn install_command(args: Vec<String>) -> Result<(), String> {
                 return Ok(());
             }
             value if value.starts_with('-') => {
-                return Err(format!("unknown install flag '{value}'"));
+                return Err(format!("unknown {command_name} flag '{value}'"));
             }
             value => {
                 if host.replace(TinyJuiceHost::from_str(value)?).is_some() {
-                    return Err("install accepts exactly one host".to_string());
+                    return Err(format!("{command_name} accepts exactly one host"));
                 }
                 index += 1;
             }
         }
     }
-    let host = host.ok_or_else(|| "install requires a host".to_string())?;
-    if !matches!(host, TinyJuiceHost::Codex | TinyJuiceHost::ClaudeCode) {
-        return Err(format!("install is not implemented for {}", host.id()));
-    }
+    let host = host.ok_or_else(|| format!("{command_name} requires a host"))?;
+    ensure_hook_host_supported(command_name, host)?;
     let install_path = path.unwrap_or_else(|| default_hook_path(host));
     let backup_path = install_hook_config(host, &install_path, &binary)?;
     println!(
-        "installed {} hook at {}{}",
+        "{action} {} hook at {}{}",
         host.id(),
         install_path.display(),
         backup_path
@@ -186,6 +198,66 @@ fn install_command(args: Vec<String>) -> Result<(), String> {
             .unwrap_or_default()
     );
     Ok(())
+}
+
+fn uninstall_command(args: Vec<String>) -> Result<(), String> {
+    let mut path = None;
+    let mut host = None;
+    let mut index = 0;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--path" => {
+                path = Some(PathBuf::from(
+                    args.get(index + 1)
+                        .ok_or_else(|| "--path requires a value".to_string())?,
+                ));
+                index += 2;
+            }
+            value if value.starts_with("--path=") => {
+                path = Some(PathBuf::from(&value["--path=".len()..]));
+                index += 1;
+            }
+            "--help" | "-h" => {
+                print_usage();
+                return Ok(());
+            }
+            value if value.starts_with('-') => {
+                return Err(format!("unknown uninstall flag '{value}'"));
+            }
+            value => {
+                if host.replace(TinyJuiceHost::from_str(value)?).is_some() {
+                    return Err("uninstall accepts exactly one host".to_string());
+                }
+                index += 1;
+            }
+        }
+    }
+    let host = host.ok_or_else(|| "uninstall requires a host".to_string())?;
+    ensure_hook_host_supported("uninstall", host)?;
+    let install_path = path.unwrap_or_else(|| default_hook_path(host));
+    let (backup_path, removed) = uninstall_hook_config(host, &install_path)?;
+    if removed {
+        println!(
+            "uninstalled {} hook from {}{}",
+            host.id(),
+            install_path.display(),
+            backup_path
+                .as_ref()
+                .map(|path| format!(" (backup: {})", path.display()))
+                .unwrap_or_default()
+        );
+    } else {
+        println!("no {} hook found at {}", host.id(), install_path.display());
+    }
+    Ok(())
+}
+
+fn ensure_hook_host_supported(action: &str, host: TinyJuiceHost) -> Result<(), String> {
+    if matches!(host, TinyJuiceHost::Codex | TinyJuiceHost::ClaudeCode) {
+        Ok(())
+    } else {
+        Err(format!("{action} is not implemented for {}", host.id()))
+    }
 }
 
 fn retrieve_command(args: Vec<String>) -> Result<(), String> {
@@ -328,6 +400,33 @@ fn install_hook_config(
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| error.to_string())?;
     }
+    write_json_config(path, &config)?;
+    Ok(backup_path)
+}
+
+fn uninstall_hook_config(
+    host: TinyJuiceHost,
+    path: &Path,
+) -> Result<(Option<PathBuf>, bool), String> {
+    let existing = match fs::read_to_string(path) {
+        Ok(existing) => existing,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok((None, false)),
+        Err(error) => return Err(error.to_string()),
+    };
+    let mut config = serde_json::from_str(&existing).unwrap_or_else(|_| Value::Object(Map::new()));
+    if !remove_tinyjuice_hooks(&mut config, host) {
+        return Ok((None, false));
+    }
+    let backup_path = path.with_extension("bak");
+    fs::write(&backup_path, existing).map_err(|error| error.to_string())?;
+    write_json_config(path, &config)?;
+    Ok((Some(backup_path), true))
+}
+
+fn write_json_config(path: &Path, config: &Value) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    }
     let temp_path = path.with_extension("tmp");
     fs::write(
         &temp_path,
@@ -338,7 +437,7 @@ fn install_hook_config(
     )
     .map_err(|error| error.to_string())?;
     fs::rename(&temp_path, path).map_err(|error| error.to_string())?;
-    Ok(backup_path)
+    Ok(())
 }
 
 fn load_or_empty_json(path: &Path) -> Result<(Value, Option<PathBuf>), String> {
@@ -417,6 +516,37 @@ fn prune_tinyjuice_hook_groups(groups: &mut Vec<Value>, host: TinyJuiceHost) {
     });
 }
 
+fn remove_tinyjuice_hooks(config: &mut Value, host: TinyJuiceHost) -> bool {
+    let Some(hooks) = config.get_mut("hooks").and_then(Value::as_object_mut) else {
+        return false;
+    };
+    let mut removed = false;
+    let mut empty_events = Vec::new();
+    for (event, value) in hooks.iter_mut() {
+        let Some(groups) = value.as_array_mut() else {
+            continue;
+        };
+        groups.retain_mut(|group| {
+            let Some(group_hooks) = group.get_mut("hooks").and_then(Value::as_array_mut) else {
+                return true;
+            };
+            let before = group_hooks.len();
+            group_hooks.retain(|hook| !is_tinyjuice_hook(hook, host));
+            if group_hooks.len() != before {
+                removed = true;
+            }
+            !group_hooks.is_empty()
+        });
+        if groups.is_empty() {
+            empty_events.push(event.clone());
+        }
+    }
+    for event in empty_events {
+        hooks.remove(&event);
+    }
+    removed
+}
+
 fn is_tinyjuice_hook(hook: &Value, host: TinyJuiceHost) -> bool {
     let status = hook
         .get("statusMessage")
@@ -443,6 +573,8 @@ fn print_usage() {
   tinyjuice codex-post-tool-use
   tinyjuice claude-code-post-tool-use
   tinyjuice install HOST [--path PATH] [--binary PATH]
+  tinyjuice update HOST [--path PATH] [--binary PATH]
+  tinyjuice uninstall HOST [--path PATH]
   tinyjuice retrieve TOKEN
   tinyjuice hosts
   tinyjuice host-template HOST [--binary PATH]
@@ -505,5 +637,79 @@ mod tests {
             groups[0]["hooks"][0]["command"].as_str(),
             Some("/opt/tinyjuice claude-code-post-tool-use")
         );
+    }
+
+    #[test]
+    fn update_replaces_existing_tinyjuice_hook_binary() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("hooks.json");
+
+        install_hook_config(TinyJuiceHost::Codex, &path, "tinyjuice").expect("install");
+        install_hook_config(TinyJuiceHost::Codex, &path, "/usr/local/bin/tinyjuice")
+            .expect("update");
+
+        let installed: Value =
+            serde_json::from_str(&fs::read_to_string(path).expect("read")).expect("json");
+        let groups = installed["hooks"]["PostToolUse"]
+            .as_array()
+            .expect("groups");
+        assert_eq!(groups.len(), 1);
+        assert_eq!(
+            groups[0]["hooks"][0]["command"].as_str(),
+            Some("/usr/local/bin/tinyjuice codex-post-tool-use")
+        );
+    }
+
+    #[test]
+    fn uninstall_removes_tinyjuice_hook_but_preserves_other_hooks() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("hooks.json");
+        fs::write(
+            &path,
+            r#"{"hooks":{"PostToolUse":[{"matcher":"Edit","hooks":[{"type":"command","command":"echo keep"}]}]}}"#,
+        )
+        .expect("write");
+
+        install_hook_config(TinyJuiceHost::Codex, &path, "tinyjuice").expect("install");
+        let (backup, removed) =
+            uninstall_hook_config(TinyJuiceHost::Codex, &path).expect("uninstall");
+
+        assert!(removed);
+        assert!(backup.expect("backup").exists());
+        let installed: Value =
+            serde_json::from_str(&fs::read_to_string(path).expect("read")).expect("json");
+        let groups = installed["hooks"]["PostToolUse"]
+            .as_array()
+            .expect("groups");
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0]["hooks"][0]["command"].as_str(), Some("echo keep"));
+    }
+
+    #[test]
+    fn uninstall_without_tinyjuice_hook_is_noop() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("hooks.json");
+        let original = r#"{"hooks":{"PostToolUse":[{"matcher":"Edit","hooks":[{"type":"command","command":"echo keep"}]}]}}"#;
+        fs::write(&path, original).expect("write");
+
+        let (backup, removed) =
+            uninstall_hook_config(TinyJuiceHost::Codex, &path).expect("uninstall");
+
+        assert!(!removed);
+        assert!(backup.is_none());
+        assert_eq!(fs::read_to_string(path).expect("read"), original);
+    }
+
+    #[test]
+    fn uninstall_missing_file_is_noop() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("hooks.json");
+
+        let (backup, removed) =
+            uninstall_hook_config(TinyJuiceHost::Codex, &path).expect("uninstall");
+
+        assert!(!removed);
+        assert!(backup.is_none());
+        assert!(!path.exists());
     }
 }

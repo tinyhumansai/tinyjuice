@@ -399,6 +399,9 @@ pub fn host_install_spec(host: TinyJuiceHost) -> HostInstallSpec {
             description: "Install a Codex PostToolUse hook for Bash output.".to_string(),
             notes: vec![
                 "The installer merges with existing hooks and writes a backup.".to_string(),
+                "Use `tinyjuice update codex` to refresh the hook after changing binaries."
+                    .to_string(),
+                "Use `tinyjuice uninstall codex` to remove only TinyJuice hooks.".to_string(),
                 "The hook expects a tinyjuice binary on PATH.".to_string(),
             ],
         },
@@ -411,6 +414,9 @@ pub fn host_install_spec(host: TinyJuiceHost) -> HostInstallSpec {
             description: "Install a Claude Code PostToolUse hook for Bash output.".to_string(),
             notes: vec![
                 "The installer merges with existing settings and writes a backup.".to_string(),
+                "Use `tinyjuice update claude-code` to refresh the hook after changing binaries."
+                    .to_string(),
+                "Use `tinyjuice uninstall claude-code` to remove only TinyJuice hooks.".to_string(),
                 "Claude Code supports updatedToolOutput, so TinyJuice can replace noisy output."
                     .to_string(),
             ],
