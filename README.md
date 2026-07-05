@@ -95,6 +95,14 @@ through untouched). Two passes are measured:
   marginally lower than Pass 1 only because the footer adds a few dozen
   bytes — the compression itself is identical.
 
+Source code is the exception. A collapsed function body is only recoverable
+through CCR, so without CCR there is no safe way to cut it. Rather than eat
+code the caller can't get back, TinyJuice passes source through untouched in
+Pass 1 (0% reduction) and only compresses it in Pass 2, where every collapsed
+body carries a per-block retrieval token. That is why the source-code
+categories read *higher* with CCR than without — the opposite of every other
+row.
+
 `Applied` counts the cases where compression actually fired — the rest pass
 through because they are too small or a shape the compressor declines.
 

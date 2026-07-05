@@ -250,7 +250,7 @@ for category in "${categories[@]}"; do
   {
     printf '# %s\n\n' "$title"
     printf '%s\n\n' "$(category_summary "$category")"
-    printf 'Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0%% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR (compressed with omission markers, no recovery footer). `Pass 2` is the final model-facing result with CCR enabled — it reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes; the compression itself is identical. Each pass links its own output and its own diff against the input.\n\n'
+    printf 'Each row links to the full raw input and both compacted outputs. Percentages are **token reduction: higher is better**; 0%% means pass-through. `Bytes` shows the raw input size -> compressor-only output size and its byte reduction. `Pass 1` disables CCR. For most content it still compresses (omission markers, but no recovery footer), so `Pass 2` (CCR enabled) reads *lower* than Pass 1 only because the recovery footer and per-block retrieval tokens add bytes — the compression itself is identical. **Code is the exception:** a collapsed function body is only recoverable through CCR, so with CCR off the source is passed through untouched (0%%) and only Pass 2 compresses it. Each pass links its own output and its own diff against the input.\n\n'
     if [[ "$category" == "unified-diff" ]]; then
       printf 'Inline previews are fenced as `diff`, so GitHub highlights additions and removals directly in the report.\n\n'
     fi
@@ -336,16 +336,16 @@ for category in "${categories[@]}"; do
         printf 'HTML snapshots are converted into readable text. Script/style payloads and repeated markup disappear; the output keeps the content an agent would normally inspect.\n'
         ;;
       rust-source)
-        printf 'The code path keeps the navigation surface: imports, signatures, top-level items, and important comments. Large function bodies can be collapsed and recovered through CCR.\n'
+        printf 'The code path keeps the navigation surface: imports, signatures, top-level items, and important comments. Large function bodies collapse only when CCR can recover them, so Pass 1 (no CCR) passes the file through untouched — code is never cut without a recovery path.\n'
         ;;
       github-source)
-        printf 'Real-world source compresses the same way as the synthetic corpus: signatures, imports, and top-level structure stay; deep bodies collapse behind per-block retrieval tokens. Languages without a tree-sitter grammar use the brace-depth heuristic; brace-less languages (Ruby) pass through.\n'
+        printf 'Real-world source compresses the same way as the synthetic corpus: signatures, imports, and top-level structure stay; deep bodies collapse behind per-block retrieval tokens. Languages without a tree-sitter grammar use the brace-depth heuristic; brace-less languages (Ruby) pass through. Because a collapsed body is only recoverable through CCR, Pass 1 (no CCR) passes every source file through untouched; collapse happens only in Pass 2.\n'
         ;;
       github-logs)
         printf 'The signal-based log path keeps errors, warnings, stack frames, and summaries and collapses the rest behind per-gap retrieval tokens. Logs with no failure signal (pure access logs) are deliberately passed through rather than blindly truncated.\n'
         ;;
       polyglot-source)
-        printf 'The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token.\n'
+        printf 'The brace-depth heuristic is language-agnostic, so TypeScript, C++, and Go compress with the same signature-preserving collapse as Rust; tree-sitter grammars refine Rust, TypeScript, and Python. XML goes through the readable-text extractor, keeping element text while dropping markup. Every collapsed block carries its own retrieval token — and because that token is the only way back to the original, Pass 1 (no CCR) passes source through untouched, collapsing bodies only in Pass 2. (XML still extracts in both passes; text extraction is lossless.)\n'
         ;;
       plain-text)
         printf 'Plain text is the control group. With ML text compression off, the router declines compression and returns the original unchanged whenever deterministic structure is not available.\n'
