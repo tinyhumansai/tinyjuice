@@ -162,3 +162,41 @@ async fn exit_code_and_command_reach_the_rule_engine() {
         "unexpected stats shape: {stats:?}"
     );
 }
+
+#[tokio::test]
+async fn generic_command_fallback_is_recoverable_end_to_end() {
+    common::install_test_config();
+    let payload = (0..900)
+        .map(|i| format!("ordinary long-running command output line {i}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let (text, stats) = compact_tool_output_with_policy(
+        "shell",
+        Some(&json!({ "command": "custom-report --verbose" })),
+        &payload,
+        Some(0),
+        AgentTokenjuiceCompression::Full,
+    )
+    .await;
+
+    assert!(
+        stats.applied,
+        "generic fallback should compact command output"
+    );
+    assert!(
+        stats.compacted_bytes < stats.original_bytes,
+        "compaction must shrink: {} -> {}",
+        stats.original_bytes,
+        stats.compacted_bytes
+    );
+
+    let tokens = cache::parse_markers(&text);
+    assert_eq!(
+        tokens.len(),
+        1,
+        "lossy fallback must emit one recovery marker"
+    );
+    let original = cache::retrieve(&tokens[0]).expect("footer token must be retrievable");
+    assert_eq!(original, payload);
+}

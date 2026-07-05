@@ -181,7 +181,7 @@ pub fn record_event(record: SavingsRecord) {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
     use super::*;
 
@@ -257,5 +257,35 @@ mod tests {
             legacy.as_slice(),
             &[(ContentKind::Json, CompressorKind::SmartCrusher, 100, 25)]
         );
+    }
+
+    #[test]
+    fn no_recorder_is_a_noop() {
+        configure_recorder(None);
+        record(ContentKind::Json, CompressorKind::SmartCrusher, 100, 25);
+    }
+
+    #[test]
+    fn configured_recorder_receives_compaction_event() {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let captured = Arc::clone(&events);
+        configure_recorder(Some(Arc::new(
+            move |kind, compressor, original, compacted| {
+                captured
+                    .lock()
+                    .unwrap()
+                    .push((kind, compressor, original, compacted));
+            },
+        )));
+
+        record(ContentKind::Log, CompressorKind::Log, 400, 120);
+
+        assert!(events.lock().unwrap().contains(&(
+            ContentKind::Log,
+            CompressorKind::Log,
+            400,
+            120
+        )));
+        configure_recorder(None);
     }
 }

@@ -1,7 +1,7 @@
 <h1 align="center">TinyJuice</h1>
 
 <p align="center">
- <img src="https://github.com/tinyhumansai/tinyjuice/raw/main/docs/juice.png" />
+ <img src="https://raw.githubusercontent.com/tinyhumansai/tinyjuice/refs/heads/main/docs/juice.png" />
 </p>
 
 <p align="center">
@@ -11,25 +11,88 @@
  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3" /></a>
 </p>
 
-**TinyJuice is a pluggable token compression crate for OpenHuman.** The goal is
-to provide a small Rust boundary where OpenHuman can route prompt, context, and
-conversation inputs through interchangeable compression strategies before model
-execution.
+**TinyJuice is a Rust token-compression engine for agent context.** It gives
+OpenHuman and other Rust hosts a small, inspectable boundary for shrinking large
+tool outputs before they enter a model context, while keeping exact originals
+recoverable when a lossy view is shown.
 
-The crate now includes deterministic reducers, content-aware compressors, and
-CCR-backed recovery primitives. The scaffold remains intentionally small while
-the OpenHuman adapter migration and typed pipeline work continue.
+Most agent systems pay the same context tax over and over: 5,000-line logs,
+huge JSON lists, repeated grep output, lockfile diffs, rendered HTML, and full
+source files all land in the model as raw text. TinyJuice routes those blobs by
+content kind, applies a deterministic compressor tuned to the signal in that
+kind, and reports what changed.
 
-## Direction
+The result is not a magic "make prompts smaller" black box. It is a pluggable,
+auditable compression layer with conservative pass-through behavior, recovery
+markers for partial views, and host-owned policy for cost attribution.
 
-TinyJuice supports and is growing toward:
+## Why TinyJuice
 
-- provider-neutral token input compression
-- pluggable compression strategies
-- configurable compression targets for lossless and recoverable lossy modes
-- inspectable compression reports for cost, quality, and safety review
-- OpenHuman integration points that can be enabled without coupling the core
-  crate to the full OpenHuman runtime
+- **Content-aware by default** - JSON, code, logs, search results, diffs, HTML,
+  and plain text take different paths instead of one generic truncation rule.
+- **Recoverable lossy views** - the CCR cache stores exact originals and appends
+  a `tokenjuice_retrieve` footer whenever data is dropped.
+- **Agent-profile policy** - hosts can run `full`, `light`, `off`, or runtime
+  `auto` profiles per agent instead of using one global behavior.
+- **Command-aware reduction** - built-in rules compact common shell, git, cargo,
+  npm, docker, kubectl, database, cloud, lint, and test outputs.
+- **OpenHuman-ready boundary** - the core crate avoids OpenHuman runtime
+  dependencies; adapters install configuration, ML callbacks, and savings
+  recorders from the host side.
+- **No raw-content analytics requirement** - the dashboard consumes metadata,
+  token and byte counts, latency, status, and strategy labels, not prompt text.
+
+TinyJuice is designed for the work agents actually do: reading too much,
+searching broadly, running noisy commands, and needing a compact but reversible
+view that keeps failures, anomalies, changed hunks, signatures, and matching
+lines visible.
+
+## How It Works
+
+```text
+tool output / file / web payload
+        |
+        v
+ContentHint + structural detection
+        |
+        v
+JSON | Code | Log | Search | Diff | HTML | PlainText
+        |
+        v
+specialized compressor or command-rule reducer
+        |
+        v
+pass-through if unsafe, too small, disabled, or not smaller
+        |
+        v
+CCR offload + retrieval footer when the view is lossy
+```
+
+The router is intentionally fail-soft. If it cannot shrink safely, it returns
+the original bytes unchanged.
+
+## Compression Surfaces
+
+- **JSON SmartCrusher** - renders repeated object arrays as compact tables and
+  keeps anomaly rows when large arrays are row-dropped.
+- **Code compressor** - keeps imports, signatures, shallow structure, and
+  important markers while collapsing deep bodies.
+- **Log compressor** - preserves failures, warnings, summaries, stack traces,
+  and command-rule outputs while dropping passing noise.
+- **Search compressor** - groups grep/ripgrep output by file, ranks matches,
+  and keeps top hits with per-file tallies.
+- **Diff compressor** - keeps patch structure and changed lines, collapses long
+  context and noisy lockfile/bundle hunks.
+- **HTML compressor** - extracts readable text from rendered markup.
+- **Plain-text ML slot** - optional host-provided callback for learned text
+  compression; disabled by default.
+- **Generic command fallback** - line-oriented head/tail reduction for command
+  output when no specialized rule wins.
+
+TinyJuice does not publish compression percentage claims yet. Throughput
+benchmarks exist for hot paths, but ratio and quality claims require benchmark
+fixtures that prove retained facts, latency, reversibility, and regression
+safety.
 
 ## Quick Start
 
@@ -40,19 +103,71 @@ Add TinyJuice to a Rust project once published:
 tinyjuice = "0.1"
 ```
 
-For local development:
+Use the small public trait scaffold when you want a simple strategy boundary:
+
+```rust
+use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
+
+fn main() -> Result<(), tinyjuice::TinyJuiceError> {
+    let compressor = PassthroughCompressor;
+    let output = compressor.compress(
+        CompressionInput::new("Keep this text unchanged for now."),
+        &CompressionConfig::default(),
+    )?;
+
+    assert_eq!(output.report.strategy, "passthrough");
+    Ok(())
+}
+```
+
+Use the content router for real tool-output compaction:
+
+```rust
+use tinyjuice::{CompressOptions, ContentHint, compress_content};
+
+async fn compact_payload(big_payload: &str) {
+    let hint = ContentHint {
+        source_tool: Some("read_file".to_string()),
+        extension: Some("json".to_string()),
+        ..Default::default()
+    };
+
+    let result = compress_content(big_payload, Some(hint), &CompressOptions::default()).await;
+    if result.applied {
+        println!("{} -> {} bytes", result.original_bytes, result.compacted_bytes);
+    }
+}
+```
+
+OpenHuman-style tool output integration goes through:
+
+```rust
+use tinyjuice::{AgentTokenjuiceCompression, compact_tool_output_with_policy};
+
+async fn compact_command_output(command_output: &str) {
+    let (_text, _stats) = compact_tool_output_with_policy(
+        "shell",
+        Some(&serde_json::json!({ "command": "cargo test" })),
+        command_output,
+        Some(101),
+        AgentTokenjuiceCompression::Full,
+    ).await;
+}
+```
+
+## Local Development
 
 ```sh
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
-cargo build --all-targets
 cargo test
+cargo run --example passthrough
 ```
 
-Run the placeholder example:
+Run hot-path benchmarks:
 
 ```sh
-cargo run --example passthrough
+cargo bench
 ```
 
 ## API Notes
@@ -109,6 +224,9 @@ npm install
 npm run dev
 ```
 
+The interface accepts metadata-oriented compression records. Do not feed raw
+prompt, context, tool output, or credentials into analytics datasets.
+
 ## Crate Layout
 
 ```text
@@ -118,18 +236,41 @@ src/
   compressors/  Content-aware compressor implementations
   config/       Compression target and policy configuration
   conversation/ Provider-neutral conversation compaction helpers
+  detect/       Content-kind hints and structural detection
   pipeline/     Typed transform/report primitives
   policy/       Host compaction policy helpers
   reduce/       Rule-engine reducers and command normalization
+  rules/        Built-in, user, and project command reduction rules
+  savings.rs    Host-installed savings attribution hook
+  tool_integration.rs OpenHuman-style tool-output adapter
   openhuman/    Placeholder OpenHuman integration boundary
   error.rs      Shared error type
 interface/      Self-hostable analytics UI for compression run metadata
+wiki/                Technical GitHub wiki source
+docs/references/     Design references and candidate strategy specs
 ```
+
+## Documentation
+
+- [Wiki home](wiki/Home.md)
+- [Quick Start](wiki/Quick-Start.md)
+- [Capabilities](wiki/Capabilities.md)
+- [Architecture](wiki/Architecture.md)
+- [Router and Compressors](wiki/Router-and-Compressors.md)
+- [Rule Engine](wiki/Rule-Engine.md)
+- [CCR Recovery](wiki/CCR-Recovery.md)
+- [OpenHuman Integration](wiki/OpenHuman-Integration.md)
+- [Agent Guide](wiki/Agent-Guide.md)
 
 ## Status
 
-TinyJuice includes deterministic reducers, content-aware compressors, and CCR
-recovery plumbing. The first typed-pipeline primitives, injectable CCR store,
-report-producing router compatibility path, and cheap bloat estimators exist;
-full transform conversion is still in progress. Some legacy scaffold modules
-remain while the OpenHuman adapter migration continues.
+TinyJuice is pre-1.0. The router, command-rule engine, CCR recovery store,
+content detectors, several native compressors, the OpenHuman-style tool adapter,
+typed-pipeline primitives, injectable CCR store, report-producing router path,
+savings metadata, deterministic conversation helpers, and the analytics
+interface are implemented. Public API names may still move as OpenHuman
+integration hardens.
+
+The project boundary is deliberate: keep the core crate small, do not add
+OpenHuman runtime dependencies without a feature or adapter boundary, and do not
+claim compression percentages until benchmark fixtures exist.
