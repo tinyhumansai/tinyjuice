@@ -10,14 +10,14 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB -> 11.3 KB (-68%) | 69.2% | 67.2% | 1.308 ms |
-| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB -> 3.9 KB (-53%) | 56.2% | 51.1% | 0.353 ms |
-| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB -> 15.7 KB (-41%) | 44.0% | 40.3% | 1.162 ms |
-| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB -> 35.0 KB (-35%) | 39.7% | 36.6% | 1.651 ms |
-| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB -> 32.6 KB (-32%) | 34.9% | 32.2% | 1.855 ms |
-| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB -> 13.3 KB (-24%) | 26.2% | 23.2% | 0.678 ms |
-| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB -> 3.8 KB (-15%) | 20.1% | 10.4% | 0.160 ms |
-| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB -> 3.4 KB (-0%) | 0.0% | 0.0% | 0.138 ms |
+| `08-harness-subagent-audit` | [input](cases/08-harness-subagent-audit/input.rs) | [output](cases/08-harness-subagent-audit/output.rs) | [diff](cases/08-harness-subagent-audit/compression.diff) | 34.7 KB -> 11.3 KB (-68%) | 69.2% | 67.2% | 1.412 ms |
+| `09-inference-probe` | [input](cases/09-inference-probe/input.rs) | [output](cases/09-inference-probe/output.rs) | [diff](cases/09-inference-probe/compression.diff) | 8.4 KB -> 3.9 KB (-53%) | 56.2% | 51.1% | 0.387 ms |
+| `05-rest-tests` | [input](cases/05-rest-tests/input.rs) | [output](cases/05-rest-tests/output.rs) | [diff](cases/05-rest-tests/compression.diff) | 26.4 KB -> 15.7 KB (-41%) | 44.0% | 40.3% | 1.246 ms |
+| `01-config` | [input](cases/01-config/input.rs) | [output](cases/01-config/output.rs) | [diff](cases/01-config/compression.diff) | 53.9 KB -> 35.0 KB (-35%) | 39.7% | 36.6% | 1.762 ms |
+| `04-rest` | [input](cases/04-rest/input.rs) | [output](cases/04-rest/output.rs) | [diff](cases/04-rest/compression.diff) | 48.1 KB -> 32.6 KB (-32%) | 34.9% | 32.2% | 1.948 ms |
+| `07-gmail-backfill-3d` | [input](cases/07-gmail-backfill-3d/input.rs) | [output](cases/07-gmail-backfill-3d/output.rs) | [diff](cases/07-gmail-backfill-3d/compression.diff) | 17.4 KB -> 13.3 KB (-24%) | 26.2% | 23.2% | 0.676 ms |
+| `02-jwt` | [input](cases/02-jwt/input.rs) | [output](cases/02-jwt/output.rs) | [diff](cases/02-jwt/compression.diff) | 4.5 KB -> 3.8 KB (-15%) | 20.1% | 10.4% | 0.172 ms |
+| `10-memory-tree-init-smoke` | [input](cases/10-memory-tree-init-smoke/input.rs) | [output](cases/10-memory-tree-init-smoke/output.rs) | [diff](cases/10-memory-tree-init-smoke/compression.diff) | 3.4 KB -> 3.4 KB (-0%) | 0.0% | 0.0% | 0.147 ms |
 | `06-socket` | [input](cases/06-socket/input.rs) | [output](cases/06-socket/output.rs) | [diff](cases/06-socket/compression.diff) | 2.0 KB -> 2.0 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
 | `03-socket` | [input](cases/03-socket/input.rs) | [output](cases/03-socket/output.rs) | [diff](cases/03-socket/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 0.0% | 0.0% | 0.000 ms |
 

@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | [diff](cases/09-rg-provider/compression.diff) | 59.8 KB -> 18.2 KB (-70%) | 70.5% | 69.2% | 0.875 ms |
-| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | [diff](cases/05-rg-agent/compression.diff) | 62.2 KB -> 19.9 KB (-68%) | 68.8% | 67.8% | 0.875 ms |
-| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | [diff](cases/04-rg-openhuman/compression.diff) | 65.1 KB -> 30.5 KB (-53%) | 54.3% | 52.9% | 1.030 ms |
-| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | [diff](cases/06-rg-memory/compression.diff) | 70.0 KB -> 44.1 KB (-37%) | 38.7% | 37.3% | 0.913 ms |
-| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | [diff](cases/07-rg-workflow/compression.diff) | 95.5 KB -> 70.3 KB (-26%) | 27.4% | 26.6% | 1.161 ms |
-| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | [diff](cases/10-rg-subconscious/compression.diff) | 79.6 KB -> 63.2 KB (-21%) | 21.5% | 20.6% | 0.614 ms |
-| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | [diff](cases/08-rg-tinyplace/compression.diff) | 76.0 KB -> 62.0 KB (-18%) | 19.4% | 18.4% | 0.637 ms |
-| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | [diff](cases/01-rg-tokenjuice/compression.diff) | 71.4 KB -> 61.9 KB (-13%) | 14.4% | 13.3% | 0.706 ms |
-| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | [diff](cases/02-rg-compression/compression.diff) | 73.4 KB -> 67.7 KB (-8%) | 8.4% | 7.5% | 0.398 ms |
-| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | [diff](cases/03-rg-retrieve/compression.diff) | 1.9 MB -> 1.9 MB (-0%) | 0.3% | 0.2% | 2.044 ms |
+| `09-rg-provider` | [input](cases/09-rg-provider/input.rg) | [output](cases/09-rg-provider/output.rg) | [diff](cases/09-rg-provider/compression.diff) | 59.8 KB -> 18.2 KB (-70%) | 70.5% | 69.2% | 0.886 ms |
+| `05-rg-agent` | [input](cases/05-rg-agent/input.rg) | [output](cases/05-rg-agent/output.rg) | [diff](cases/05-rg-agent/compression.diff) | 62.2 KB -> 19.9 KB (-68%) | 68.8% | 67.8% | 0.867 ms |
+| `04-rg-openhuman` | [input](cases/04-rg-openhuman/input.rg) | [output](cases/04-rg-openhuman/output.rg) | [diff](cases/04-rg-openhuman/compression.diff) | 65.1 KB -> 30.5 KB (-53%) | 54.3% | 52.9% | 1.044 ms |
+| `06-rg-memory` | [input](cases/06-rg-memory/input.rg) | [output](cases/06-rg-memory/output.rg) | [diff](cases/06-rg-memory/compression.diff) | 70.0 KB -> 44.1 KB (-37%) | 38.7% | 37.3% | 0.909 ms |
+| `07-rg-workflow` | [input](cases/07-rg-workflow/input.rg) | [output](cases/07-rg-workflow/output.rg) | [diff](cases/07-rg-workflow/compression.diff) | 95.5 KB -> 70.3 KB (-26%) | 27.4% | 26.6% | 1.174 ms |
+| `10-rg-subconscious` | [input](cases/10-rg-subconscious/input.rg) | [output](cases/10-rg-subconscious/output.rg) | [diff](cases/10-rg-subconscious/compression.diff) | 79.6 KB -> 63.2 KB (-21%) | 21.5% | 20.6% | 0.640 ms |
+| `08-rg-tinyplace` | [input](cases/08-rg-tinyplace/input.rg) | [output](cases/08-rg-tinyplace/output.rg) | [diff](cases/08-rg-tinyplace/compression.diff) | 76.0 KB -> 62.0 KB (-18%) | 19.4% | 18.4% | 0.654 ms |
+| `01-rg-tokenjuice` | [input](cases/01-rg-tokenjuice/input.rg) | [output](cases/01-rg-tokenjuice/output.rg) | [diff](cases/01-rg-tokenjuice/compression.diff) | 71.4 KB -> 61.9 KB (-13%) | 14.4% | 13.3% | 0.602 ms |
+| `02-rg-compression` | [input](cases/02-rg-compression/input.rg) | [output](cases/02-rg-compression/output.rg) | [diff](cases/02-rg-compression/compression.diff) | 73.4 KB -> 67.7 KB (-8%) | 8.4% | 7.5% | 0.435 ms |
+| `03-rg-retrieve` | [input](cases/03-rg-retrieve/input.rg) | [output](cases/03-rg-retrieve/output.rg) | [diff](cases/03-rg-retrieve/compression.diff) | 1.9 MB -> 1.9 MB (-0%) | 0.3% | 0.2% | 1.990 ms |
 
 ## What TinyJuice Is Doing
 

@@ -10,39 +10,39 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `15-openstack` | [input](cases/15-openstack/input.log) | [output](cases/15-openstack/output.log) | [diff](cases/15-openstack/compression.diff) | 595.1 KB -> 906 B (-100%) | 99.9% | 99.8% | 2.616 ms |
-| `01-hdfs` | [input](cases/01-hdfs/input.log) | [output](cases/01-hdfs/output.log) | [diff](cases/01-hdfs/compression.diff) | 287.8 KB -> 470 B (-100%) | 99.9% | 99.8% | 1.702 ms |
-| `17-apache-access` | [input](cases/17-apache-access/input.log) | [output](cases/17-apache-access/output.log) | [diff](cases/17-apache-access/compression.diff) | 578.0 KB -> 1.7 KB (-100%) | 99.7% | 99.7% | 15.491 ms |
-| `11-healthapp` | [input](cases/11-healthapp/input.log) | [output](cases/11-healthapp/output.log) | [diff](cases/11-healthapp/compression.diff) | 187.5 KB -> 1.1 KB (-99%) | 99.5% | 99.3% | 4.743 ms |
-| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | [output](cases/34-jvm-gc/output.log) | [diff](cases/34-jvm-gc/compression.diff) | 235.6 KB -> 1.9 KB (-99%) | 99.4% | 99.1% | 10.077 ms |
-| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | [output](cases/04-zookeeper/output.log) | [diff](cases/04-zookeeper/compression.diff) | 279.9 KB -> 4.6 KB (-98%) | 98.5% | 98.3% | 3.967 ms |
-| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | [output](cases/30-laravel-app/output.log) | [diff](cases/30-laravel-app/compression.diff) | 104.5 KB -> 3.8 KB (-96%) | 96.8% | 96.2% | 2.979 ms |
-| `09-linux` | [input](cases/09-linux/input.log) | [output](cases/09-linux/output.log) | [diff](cases/09-linux/compression.diff) | 216.5 KB -> 11.2 KB (-95%) | 95.0% | 94.7% | 6.187 ms |
-| `19-auth-log` | [input](cases/19-auth-log/input.log) | [output](cases/19-auth-log/output.log) | [diff](cases/19-auth-log/compression.diff) | 282.2 KB -> 16.4 KB (-94%) | 94.6% | 94.1% | 7.442 ms |
-| `12-apache-error` | [input](cases/12-apache-error/input.log) | [output](cases/12-apache-error/output.log) | [diff](cases/12-apache-error/compression.diff) | 171.2 KB -> 10.6 KB (-94%) | 94.2% | 93.7% | 2.608 ms |
-| `06-hpc` | [input](cases/06-hpc/input.log) | [output](cases/06-hpc/output.log) | [diff](cases/06-hpc/compression.diff) | 151.2 KB -> 9.6 KB (-94%) | 94.1% | 93.6% | 4.881 ms |
-| `05-bgl` | [input](cases/05-bgl/input.log) | [output](cases/05-bgl/output.log) | [diff](cases/05-bgl/compression.diff) | 317.1 KB -> 20.2 KB (-94%) | 94.0% | 93.6% | 3.039 ms |
-| `13-proxifier` | [input](cases/13-proxifier/input.log) | [output](cases/13-proxifier/output.log) | [diff](cases/13-proxifier/compression.diff) | 237.0 KB -> 15.5 KB (-93%) | 93.7% | 93.4% | 6.630 ms |
-| `16-mac` | [input](cases/16-mac/input.log) | [output](cases/16-mac/output.log) | [diff](cases/16-mac/compression.diff) | 319.4 KB -> 24.3 KB (-92%) | 92.9% | 92.4% | 9.895 ms |
-| `14-openssh` | [input](cases/14-openssh/input.log) | [output](cases/14-openssh/output.log) | [diff](cases/14-openssh/compression.diff) | 225.2 KB -> 18.1 KB (-92%) | 92.4% | 91.9% | 6.880 ms |
-| `08-windows` | [input](cases/08-windows/input.log) | [output](cases/08-windows/output.log) | [diff](cases/08-windows/compression.diff) | 285.4 KB -> 28.2 KB (-90%) | 90.5% | 90.1% | 6.341 ms |
-| `02-hadoop` | [input](cases/02-hadoop/input.log) | [output](cases/02-hadoop/output.log) | [diff](cases/02-hadoop/compression.diff) | 384.9 KB -> 38.1 KB (-90%) | 90.4% | 90.1% | 4.282 ms |
-| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | [output](cases/07-thunderbird/output.log) | [diff](cases/07-thunderbird/compression.diff) | 325.2 KB -> 32.3 KB (-90%) | 90.2% | 90.0% | 7.632 ms |
-| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | [output](cases/20-caddy-coraza-waf/output.log) | [diff](cases/20-caddy-coraza-waf/compression.diff) | 427.0 KB -> 53.7 KB (-87%) | 87.5% | 87.4% | 9.932 ms |
-| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | [output](cases/33-postfix-mail/output.log) | [diff](cases/33-postfix-mail/compression.diff) | 16.3 KB -> 3.8 KB (-76%) | 79.3% | 75.2% | 0.547 ms |
-| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | [output](cases/23-authelia-bf/output.log) | [diff](cases/23-authelia-bf/compression.diff) | 82.7 KB -> 68.4 KB (-17%) | 17.6% | 17.1% | 0.807 ms |
-| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | [output](cases/29-spark-eventlog/output.log) | [diff](cases/29-spark-eventlog/compression.diff) | 412.7 KB -> 353.5 KB (-14%) | 14.4% | 14.3% | 5.035 ms |
-| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | [output](cases/32-w3c-iis/output.log) | [diff](cases/32-w3c-iis/compression.diff) | 47.4 KB -> 47.4 KB (-0%) | 0.0% | 0.0% | 0.783 ms |
-| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | [output](cases/31-zeek-http/output.log) | [diff](cases/31-zeek-http/compression.diff) | 71.2 KB -> 71.2 KB (-0%) | 0.0% | 0.0% | 1.268 ms |
+| `15-openstack` | [input](cases/15-openstack/input.log) | [output](cases/15-openstack/output.log) | [diff](cases/15-openstack/compression.diff) | 595.1 KB -> 906 B (-100%) | 99.9% | 99.8% | 2.697 ms |
+| `01-hdfs` | [input](cases/01-hdfs/input.log) | [output](cases/01-hdfs/output.log) | [diff](cases/01-hdfs/compression.diff) | 287.8 KB -> 470 B (-100%) | 99.9% | 99.8% | 1.731 ms |
+| `17-apache-access` | [input](cases/17-apache-access/input.log) | [output](cases/17-apache-access/output.log) | [diff](cases/17-apache-access/compression.diff) | 578.0 KB -> 1.7 KB (-100%) | 99.7% | 99.7% | 15.479 ms |
+| `11-healthapp` | [input](cases/11-healthapp/input.log) | [output](cases/11-healthapp/output.log) | [diff](cases/11-healthapp/compression.diff) | 187.5 KB -> 1.1 KB (-99%) | 99.5% | 99.3% | 4.878 ms |
+| `34-jvm-gc` | [input](cases/34-jvm-gc/input.log) | [output](cases/34-jvm-gc/output.log) | [diff](cases/34-jvm-gc/compression.diff) | 235.6 KB -> 1.9 KB (-99%) | 99.4% | 99.1% | 10.334 ms |
+| `04-zookeeper` | [input](cases/04-zookeeper/input.log) | [output](cases/04-zookeeper/output.log) | [diff](cases/04-zookeeper/compression.diff) | 279.9 KB -> 4.6 KB (-98%) | 98.5% | 98.3% | 4.126 ms |
+| `30-laravel-app` | [input](cases/30-laravel-app/input.log) | [output](cases/30-laravel-app/output.log) | [diff](cases/30-laravel-app/compression.diff) | 104.5 KB -> 3.8 KB (-96%) | 96.8% | 96.2% | 3.072 ms |
+| `09-linux` | [input](cases/09-linux/input.log) | [output](cases/09-linux/output.log) | [diff](cases/09-linux/compression.diff) | 216.5 KB -> 11.2 KB (-95%) | 95.0% | 94.7% | 6.056 ms |
+| `19-auth-log` | [input](cases/19-auth-log/input.log) | [output](cases/19-auth-log/output.log) | [diff](cases/19-auth-log/compression.diff) | 282.2 KB -> 16.4 KB (-94%) | 94.6% | 94.1% | 7.716 ms |
+| `12-apache-error` | [input](cases/12-apache-error/input.log) | [output](cases/12-apache-error/output.log) | [diff](cases/12-apache-error/compression.diff) | 171.2 KB -> 10.6 KB (-94%) | 94.2% | 93.7% | 2.529 ms |
+| `06-hpc` | [input](cases/06-hpc/input.log) | [output](cases/06-hpc/output.log) | [diff](cases/06-hpc/compression.diff) | 151.2 KB -> 9.6 KB (-94%) | 94.1% | 93.6% | 4.858 ms |
+| `05-bgl` | [input](cases/05-bgl/input.log) | [output](cases/05-bgl/output.log) | [diff](cases/05-bgl/compression.diff) | 317.1 KB -> 20.2 KB (-94%) | 94.0% | 93.6% | 2.940 ms |
+| `13-proxifier` | [input](cases/13-proxifier/input.log) | [output](cases/13-proxifier/output.log) | [diff](cases/13-proxifier/compression.diff) | 237.0 KB -> 15.5 KB (-93%) | 93.7% | 93.4% | 6.821 ms |
+| `16-mac` | [input](cases/16-mac/input.log) | [output](cases/16-mac/output.log) | [diff](cases/16-mac/compression.diff) | 319.4 KB -> 24.3 KB (-92%) | 92.9% | 92.4% | 9.772 ms |
+| `14-openssh` | [input](cases/14-openssh/input.log) | [output](cases/14-openssh/output.log) | [diff](cases/14-openssh/compression.diff) | 225.2 KB -> 18.1 KB (-92%) | 92.4% | 91.9% | 6.704 ms |
+| `08-windows` | [input](cases/08-windows/input.log) | [output](cases/08-windows/output.log) | [diff](cases/08-windows/compression.diff) | 285.4 KB -> 28.2 KB (-90%) | 90.5% | 90.1% | 6.472 ms |
+| `02-hadoop` | [input](cases/02-hadoop/input.log) | [output](cases/02-hadoop/output.log) | [diff](cases/02-hadoop/compression.diff) | 384.9 KB -> 38.1 KB (-90%) | 90.4% | 90.1% | 4.254 ms |
+| `07-thunderbird` | [input](cases/07-thunderbird/input.log) | [output](cases/07-thunderbird/output.log) | [diff](cases/07-thunderbird/compression.diff) | 325.2 KB -> 32.3 KB (-90%) | 90.2% | 90.0% | 7.588 ms |
+| `20-caddy-coraza-waf` | [input](cases/20-caddy-coraza-waf/input.log) | [output](cases/20-caddy-coraza-waf/output.log) | [diff](cases/20-caddy-coraza-waf/compression.diff) | 427.0 KB -> 53.7 KB (-87%) | 87.5% | 87.4% | 10.108 ms |
+| `33-postfix-mail` | [input](cases/33-postfix-mail/input.log) | [output](cases/33-postfix-mail/output.log) | [diff](cases/33-postfix-mail/compression.diff) | 16.3 KB -> 3.8 KB (-76%) | 79.3% | 75.2% | 0.516 ms |
+| `23-authelia-bf` | [input](cases/23-authelia-bf/input.log) | [output](cases/23-authelia-bf/output.log) | [diff](cases/23-authelia-bf/compression.diff) | 82.7 KB -> 68.4 KB (-17%) | 17.6% | 17.1% | 0.834 ms |
+| `29-spark-eventlog` | [input](cases/29-spark-eventlog/input.log) | [output](cases/29-spark-eventlog/output.log) | [diff](cases/29-spark-eventlog/compression.diff) | 412.7 KB -> 353.5 KB (-14%) | 14.4% | 14.3% | 5.043 ms |
+| `32-w3c-iis` | [input](cases/32-w3c-iis/input.log) | [output](cases/32-w3c-iis/output.log) | [diff](cases/32-w3c-iis/compression.diff) | 47.4 KB -> 47.4 KB (-0%) | 0.0% | 0.0% | 0.810 ms |
+| `31-zeek-http` | [input](cases/31-zeek-http/input.log) | [output](cases/31-zeek-http/output.log) | [diff](cases/31-zeek-http/compression.diff) | 71.2 KB -> 71.2 KB (-0%) | 0.0% | 0.0% | 1.395 ms |
 | `27-suricata-eve` | [input](cases/27-suricata-eve/input.log) | [output](cases/27-suricata-eve/output.log) | [diff](cases/27-suricata-eve/compression.diff) | 19.4 KB -> 19.4 KB (-0%) | 0.0% | 0.0% | 0.002 ms |
 | `26-gitlab-bf` | [input](cases/26-gitlab-bf/input.log) | [output](cases/26-gitlab-bf/output.log) | [diff](cases/26-gitlab-bf/compression.diff) | 40.7 KB -> 40.7 KB (-0%) | 0.0% | 0.0% | 0.004 ms |
-| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | [output](cases/25-sshesame-honeypot/output.log) | [diff](cases/25-sshesame-honeypot/compression.diff) | 42.1 KB -> 42.1 KB (-0%) | 0.0% | 0.0% | 1.049 ms |
-| `24-http-dos` | [input](cases/24-http-dos/input.log) | [output](cases/24-http-dos/output.log) | [diff](cases/24-http-dos/compression.diff) | 73.0 KB -> 73.0 KB (-0%) | 0.0% | 0.0% | 1.085 ms |
+| `25-sshesame-honeypot` | [input](cases/25-sshesame-honeypot/input.log) | [output](cases/25-sshesame-honeypot/output.log) | [diff](cases/25-sshesame-honeypot/compression.diff) | 42.1 KB -> 42.1 KB (-0%) | 0.0% | 0.0% | 1.012 ms |
+| `24-http-dos` | [input](cases/24-http-dos/input.log) | [output](cases/24-http-dos/output.log) | [diff](cases/24-http-dos/compression.diff) | 73.0 KB -> 73.0 KB (-0%) | 0.0% | 0.0% | 1.121 ms |
 | `22-traefik-http` | [input](cases/22-traefik-http/input.log) | [output](cases/22-traefik-http/output.log) | [diff](cases/22-traefik-http/compression.diff) | 116.4 KB -> 116.4 KB (-0%) | 0.0% | 0.0% | 0.010 ms |
-| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | [output](cases/21-traefik-flood/output.log) | [diff](cases/21-traefik-flood/compression.diff) | 133.6 KB -> 133.6 KB (-0%) | 0.0% | 0.0% | 0.193 ms |
-| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | [output](cases/18-nginx-access/output.log) | [diff](cases/18-nginx-access/compression.diff) | 337.5 KB -> 337.5 KB (-0%) | 0.0% | 0.0% | 5.846 ms |
-| `10-android` | [input](cases/10-android/input.log) | [output](cases/10-android/output.log) | [diff](cases/10-android/compression.diff) | 279.1 KB -> 279.1 KB (-0%) | 0.0% | 0.0% | 5.853 ms |
-| `03-spark` | [input](cases/03-spark/input.log) | [output](cases/03-spark/output.log) | [diff](cases/03-spark/compression.diff) | 196.3 KB -> 196.3 KB (-0%) | 0.0% | 0.0% | 0.308 ms |
+| `21-traefik-flood` | [input](cases/21-traefik-flood/input.log) | [output](cases/21-traefik-flood/output.log) | [diff](cases/21-traefik-flood/compression.diff) | 133.6 KB -> 133.6 KB (-0%) | 0.0% | 0.0% | 0.195 ms |
+| `18-nginx-access` | [input](cases/18-nginx-access/input.log) | [output](cases/18-nginx-access/output.log) | [diff](cases/18-nginx-access/compression.diff) | 337.5 KB -> 337.5 KB (-0%) | 0.0% | 0.0% | 6.190 ms |
+| `10-android` | [input](cases/10-android/input.log) | [output](cases/10-android/output.log) | [diff](cases/10-android/compression.diff) | 279.1 KB -> 279.1 KB (-0%) | 0.0% | 0.0% | 5.807 ms |
+| `03-spark` | [input](cases/03-spark/input.log) | [output](cases/03-spark/output.log) | [diff](cases/03-spark/compression.diff) | 196.3 KB -> 196.3 KB (-0%) | 0.0% | 0.0% | 0.317 ms |
 
 ## What TinyJuice Is Doing
 

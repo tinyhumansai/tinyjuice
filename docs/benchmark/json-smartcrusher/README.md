@@ -10,12 +10,12 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | [diff](cases/02-notion-tools-array/compression.diff) | 890.8 KB -> 16.0 KB (-98%) | 98.2% | 98.2% | 12.280 ms |
-| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | [diff](cases/03-slack-tools-array/compression.diff) | 106.7 KB -> 13.8 KB (-87%) | 87.3% | 86.9% | 1.912 ms |
-| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | [diff](cases/01-github-tools-array/compression.diff) | 110.9 KB -> 15.1 KB (-86%) | 86.6% | 86.2% | 3.784 ms |
-| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | [diff](cases/07-app-schema-object/compression.diff) | 48.6 KB -> 8.9 KB (-82%) | 82.1% | 81.3% | 0.771 ms |
-| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | [diff](cases/10-cargo-metadata/compression.diff) | 62.0 KB -> 62.0 KB (-0%) | 0.0% | 0.0% | 0.135 ms |
-| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | [diff](cases/09-package-manifest/compression.diff) | 9.4 KB -> 9.4 KB (-0%) | 0.0% | 0.0% | 0.029 ms |
+| `02-notion-tools-array` | [input](cases/02-notion-tools-array/input.json) | [output](cases/02-notion-tools-array/output.md) | [diff](cases/02-notion-tools-array/compression.diff) | 890.8 KB -> 16.0 KB (-98%) | 98.2% | 98.2% | 10.224 ms |
+| `03-slack-tools-array` | [input](cases/03-slack-tools-array/input.json) | [output](cases/03-slack-tools-array/output.md) | [diff](cases/03-slack-tools-array/compression.diff) | 106.7 KB -> 13.8 KB (-87%) | 87.3% | 86.9% | 1.926 ms |
+| `01-github-tools-array` | [input](cases/01-github-tools-array/input.json) | [output](cases/01-github-tools-array/output.md) | [diff](cases/01-github-tools-array/compression.diff) | 110.9 KB -> 15.1 KB (-86%) | 86.6% | 86.2% | 2.970 ms |
+| `07-app-schema-object` | [input](cases/07-app-schema-object/input.json) | [output](cases/07-app-schema-object/output.md) | [diff](cases/07-app-schema-object/compression.diff) | 48.6 KB -> 8.9 KB (-82%) | 82.1% | 81.3% | 0.758 ms |
+| `10-cargo-metadata` | [input](cases/10-cargo-metadata/input.json) | [output](cases/10-cargo-metadata/output.md) | [diff](cases/10-cargo-metadata/compression.diff) | 62.0 KB -> 62.0 KB (-0%) | 0.0% | 0.0% | 0.144 ms |
+| `09-package-manifest` | [input](cases/09-package-manifest/input.json) | [output](cases/09-package-manifest/output.md) | [diff](cases/09-package-manifest/compression.diff) | 9.4 KB -> 9.4 KB (-0%) | 0.0% | 0.0% | 0.030 ms |
 | `08-lottie-animation` | [input](cases/08-lottie-animation/input.json) | [output](cases/08-lottie-animation/output.md) | [diff](cases/08-lottie-animation/compression.diff) | 16.8 KB -> 16.8 KB (-0%) | 0.0% | 0.0% | 0.029 ms |
 | `06-tauri-capabilities-schema` | [input](cases/06-tauri-capabilities-schema/input.json) | [output](cases/06-tauri-capabilities-schema/output.md) | [diff](cases/06-tauri-capabilities-schema/compression.diff) | 2.4 KB -> 2.4 KB (-0%) | 0.0% | 0.0% | 0.005 ms |
 | `05-polymarket-events-list` | [input](cases/05-polymarket-events-list/input.json) | [output](cases/05-polymarket-events-list/output.md) | [diff](cases/05-polymarket-events-list/compression.diff) | 201 B -> 201 B (-0%) | 0.0% | 0.0% | 0.000 ms |

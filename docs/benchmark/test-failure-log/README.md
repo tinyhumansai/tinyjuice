@@ -10,16 +10,16 @@ Every case links to the raw input, the exact model-facing output (with the CCR r
 
 | Case | Input | Output (after CCR) | Diff | Bytes | Pass 1: no CCR | Pass 2: with CCR | Avg latency |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB -> 1.2 KB (-78%) | 79.5% | 75.4% | 0.238 ms |
-| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB -> 792 B (-71%) | 73.6% | 65.5% | 0.144 ms |
-| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | [diff](cases/10-vitest-excerpt-10/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.7% | 67.4% | 0.078 ms |
-| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | [diff](cases/09-vitest-excerpt-9/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.7% | 67.4% | 0.083 ms |
-| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | [diff](cases/08-vitest-excerpt-8/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.6% | 67.2% | 0.076 ms |
-| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 969 B -> 969 B (-0%) | 78.2% | 56.0% | 0.048 ms |
-| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 967 B -> 967 B (-0%) | 78.1% | 55.8% | 0.044 ms |
-| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 967 B -> 967 B (-0%) | 78.1% | 55.8% | 0.044 ms |
+| `07-vitest-excerpt-7` | [input](cases/07-vitest-excerpt-7/input.log) | [output](cases/07-vitest-excerpt-7/output.log) | [diff](cases/07-vitest-excerpt-7/compression.diff) | 5.6 KB -> 1.2 KB (-78%) | 79.5% | 75.4% | 0.224 ms |
+| `01-vitest-unit-20260704-234941` | [input](cases/01-vitest-unit-20260704-234941/input.log) | [output](cases/01-vitest-unit-20260704-234941/output.log) | [diff](cases/01-vitest-unit-20260704-234941/compression.diff) | 2.8 KB -> 792 B (-71%) | 73.6% | 65.5% | 0.125 ms |
+| `10-vitest-excerpt-10` | [input](cases/10-vitest-excerpt-10/input.log) | [output](cases/10-vitest-excerpt-10/output.log) | [diff](cases/10-vitest-excerpt-10/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.7% | 67.4% | 0.075 ms |
+| `09-vitest-excerpt-9` | [input](cases/09-vitest-excerpt-9/input.log) | [output](cases/09-vitest-excerpt-9/output.log) | [diff](cases/09-vitest-excerpt-9/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.7% | 67.4% | 0.077 ms |
+| `08-vitest-excerpt-8` | [input](cases/08-vitest-excerpt-8/input.log) | [output](cases/08-vitest-excerpt-8/output.log) | [diff](cases/08-vitest-excerpt-8/compression.diff) | 1.9 KB -> 1.9 KB (-0%) | 78.6% | 67.2% | 0.077 ms |
+| `02-vitest-unit-20260704-234958` | [input](cases/02-vitest-unit-20260704-234958/input.log) | [output](cases/02-vitest-unit-20260704-234958/output.log) | [diff](cases/02-vitest-unit-20260704-234958/compression.diff) | 969 B -> 969 B (-0%) | 78.2% | 56.0% | 0.045 ms |
+| `04-vitest-unit-20260704-235125` | [input](cases/04-vitest-unit-20260704-235125/input.log) | [output](cases/04-vitest-unit-20260704-235125/output.log) | [diff](cases/04-vitest-unit-20260704-235125/compression.diff) | 967 B -> 967 B (-0%) | 78.1% | 55.8% | 0.042 ms |
+| `03-vitest-unit-20260704-235052` | [input](cases/03-vitest-unit-20260704-235052/input.log) | [output](cases/03-vitest-unit-20260704-235052/output.log) | [diff](cases/03-vitest-unit-20260704-235052/compression.diff) | 967 B -> 967 B (-0%) | 78.1% | 55.8% | 0.043 ms |
 | `06-vitest-unit-20260704-235240` | [input](cases/06-vitest-unit-20260704-235240/input.log) | [output](cases/06-vitest-unit-20260704-235240/output.log) | [diff](cases/06-vitest-unit-20260704-235240/compression.diff) | 971 B -> 971 B (-0%) | 77.8% | 55.6% | 0.043 ms |
-| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 970 B -> 970 B (-0%) | 78.2% | 55.6% | 0.043 ms |
+| `05-vitest-unit-20260704-235231` | [input](cases/05-vitest-unit-20260704-235231/input.log) | [output](cases/05-vitest-unit-20260704-235231/output.log) | [diff](cases/05-vitest-unit-20260704-235231/compression.diff) | 970 B -> 970 B (-0%) | 78.2% | 55.6% | 0.042 ms |
 
 ## What TinyJuice Is Doing
 

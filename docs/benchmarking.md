@@ -11,7 +11,18 @@ Human-readable before/after samples live under [`docs/benchmark`](benchmark/READ
 
 ## Corpus Benchmark
 
-Refresh the real sample corpus and Markdown reports:
+One command runs the corpus, re-renders the per-category reports, and
+rewrites the summary table in the top-level `README.md` (it refuses to touch
+the README if any accuracy gate fails):
+
+```sh
+scripts/benchmark/update-readme.sh            # full pipeline, 3 iterations
+scripts/benchmark/update-readme.sh -n 10      # more iterations
+scripts/benchmark/update-readme.sh --skip-dump    # keep existing case artifacts
+scripts/benchmark/update-readme.sh --report /tmp/report.json  # reuse a report
+```
+
+The equivalent manual steps, plus refreshing the sample corpus itself:
 
 ```sh
 scripts/benchmark/update-real-samples.sh

@@ -78,7 +78,8 @@ attribution for agent-created commits.
 
 ## How Much Does It Save?
 
-The checked-in benchmark corpus is 15.4 MB of real content across 166 cases —
+The checked-in benchmark corpus is
+<!-- bench:corpus -->15.4 MB of real content across 166 cases<!-- /bench:corpus --> —
 real OpenHuman snapshots plus source files, algorithm implementations, and
 logs fetched from public GitHub repositories (see the per-category
 `ATTRIBUTION.md` for sources and licenses; refresh with
@@ -97,25 +98,27 @@ through untouched). Two passes are measured:
 `Applied` counts the cases where compression actually fired — the rest pass
 through because they are too small or a shape the compressor declines.
 
+<!-- bench:table -->
 | Category | Cases | Applied | Pass 1: without CCR | Pass 2: with CCR | Avg latency |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 86.7% | 85.6% | 1.276 ms |
-| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 80.4% | 75.7% | 0.412 ms |
-| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 77.9% | 62.1% | 0.084 ms |
-| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 74.7% | 0.168 ms |
-| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 68.7% | 0.252 ms |
-| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 58.0% | 57.7% | 4.246 ms |
-| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 35.4% | 35.3% | 1.894 ms |
-| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 34.5% | 30.1% | 0.529 ms |
-| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 32.4% | 31.4% | 0.925 ms |
-| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 29.0% | 26.1% | 0.730 ms |
+| [Service logs and crash reports](docs/benchmark/service-log/README.md) | 10 | 10 | 86.7% | 85.6% | 1.215 ms |
+| [Polyglot source and XML](docs/benchmark/polyglot-source/README.md) (TS/Py/C++/Go/Rust/XML) | 6 | 6 | 80.4% | 75.7% | 0.446 ms |
+| [Test failure logs](docs/benchmark/test-failure-log/README.md) | 10 | 10 | 77.9% | 62.1% | 0.079 ms |
+| [HTML, RSS, and page snapshots](docs/benchmark/html-status-report/README.md) | 10 | 10 | 77.0% | 74.7% | 0.167 ms |
+| [Unified diffs](docs/benchmark/unified-diff/README.md) | 10 | 10 | 70.4% | 68.7% | 0.253 ms |
+| [GitHub log files](docs/benchmark/github-logs/README.md) (loghub, Elastic, CrowdSec, lnav, fail2ban) | 33 | 22 | 58.0% | 57.7% | 4.285 ms |
+| [JSON SmartCrusher](docs/benchmark/json-smartcrusher/README.md) | 10 | 4 | 35.4% | 35.3% | 1.609 ms |
+| [GitHub source files](docs/benchmark/github-source/README.md) (13 languages, real repos + algorithms) | 47 | 43 | 34.5% | 30.1% | 0.552 ms |
+| [Search results](docs/benchmark/search-results/README.md) | 10 | 10 | 32.4% | 31.4% | 0.920 ms |
+| [Rust source](docs/benchmark/rust-source/README.md) | 10 | 7 | 29.0% | 26.1% | 0.775 ms |
 | [Plain text with ML off](docs/benchmark/plain-text/README.md) | 10 | 0 | 0.0% | 0.0% | 0.000 ms |
 
-Across the whole corpus TinyJuice cut 15.4 MB of content down to 6.9 MB, and
-every case passes its accuracy gates: signal checks (errors, changed lines,
-matches, class/function signatures survive), task checks, structural
-invariants (no inflation, no encoding damage), and a byte-exact CCR recovery
-compare.
+Across the whole corpus TinyJuice cut 15.4 MB of content down to
+6.9 MB, and every case passes its accuracy gates: signal checks
+(errors, changed lines, matches, class/function signatures survive), task
+checks, structural invariants (no inflation, no encoding damage), and a
+byte-exact CCR recovery compare.
+<!-- /bench:table -->
 
 Source-code numbers are deliberately lower than they used to be: the
 compressor now keeps every class skeleton (fields, signatures, doc comments),
