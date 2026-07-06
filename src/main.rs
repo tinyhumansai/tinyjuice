@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
+use std::process::Command;
 use std::process::ExitCode;
 
 use tinyjuice::{
@@ -30,6 +31,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "reduce-json" => run_reduce_json(&args[1..]),
         "verify" => run_verify(&args[1..]),
         "discover" => run_discover(&args[1..]),
+        "wrap" => run_wrap(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -38,6 +40,84 @@ fn run(args: Vec<String>) -> Result<(), String> {
             print_usage();
             Err(format!("unknown command: {other}"))
         }
+    }
+}
+
+fn run_wrap(args: &[String]) -> Result<(), String> {
+    let mut tool_name = "exec".to_owned();
+    let mut max_inline_chars = None;
+    let mut separator = None;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--" => {
+                separator = Some(i);
+                break;
+            }
+            "--tool-name" => {
+                i += 1;
+                tool_name = args
+                    .get(i)
+                    .ok_or_else(|| "--tool-name requires a value".to_owned())?
+                    .clone();
+            }
+            "--max-inline-chars" => {
+                i += 1;
+                let value = args
+                    .get(i)
+                    .ok_or_else(|| "--max-inline-chars requires a value".to_owned())?;
+                max_inline_chars = Some(
+                    value
+                        .parse::<usize>()
+                        .map_err(|_| "--max-inline-chars must be a positive integer".to_owned())?,
+                );
+            }
+            "-h" | "--help" => {
+                print_wrap_usage();
+                return Ok(());
+            }
+            value => return Err(format!("unknown wrap option before --: {value}")),
+        }
+        i += 1;
+    }
+
+    let Some(separator) = separator else {
+        return Err("wrap requires -- before the command".to_owned());
+    };
+    let command_args = &args[separator + 1..];
+    let Some(program) = command_args.first() else {
+        return Err("wrap requires a command after --".to_owned());
+    };
+
+    let output = Command::new(program)
+        .args(&command_args[1..])
+        .output()
+        .map_err(|error| format!("failed to run {program}: {error}"))?;
+    let exit_code = output.status.code();
+    let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+    let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+    let input = ToolExecutionInput {
+        tool_name,
+        command: Some(command_args.join(" ")),
+        argv: Some(command_args.to_vec()),
+        stdout: Some(stdout),
+        stderr: Some(stderr),
+        exit_code,
+        ..Default::default()
+    };
+    let options = ReduceOptions {
+        max_inline_chars,
+        ..Default::default()
+    };
+    let rules = load_builtin_rules();
+    let result = reduce_execution_with_rules(input, &rules, &options);
+    print!("{}", result.inline_text);
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        std::process::exit(exit_code.unwrap_or(1).clamp(1, 255));
     }
 }
 
@@ -338,6 +418,7 @@ fn print_usage() {
     println!("  reduce-json  Reduce a JSON protocol payload from a file or stdin");
     println!("  verify       Verify built-in rules and/or reducer fixtures");
     println!("  discover     Report command families still using generic fallback");
+    println!("  wrap         Run a command and reduce its captured output");
 }
 
 fn print_reduce_usage() {
@@ -357,4 +438,10 @@ fn print_verify_usage() {
 fn print_discover_usage() {
     println!("Usage: tinyjuice discover [--pretty] [path|-]");
     println!("Input is a JSON array or newline-delimited ToolExecutionInput objects.");
+}
+
+fn print_wrap_usage() {
+    println!(
+        "Usage: tinyjuice wrap [--tool-name NAME] [--max-inline-chars N] -- command [args...]"
+    );
 }

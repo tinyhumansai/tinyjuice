@@ -135,3 +135,46 @@ fn discover_reports_fallback_families_without_raw_output() {
     let stdout = String::from_utf8(output.stdout).expect("utf8 stdout");
     assert!(!stdout.contains("raw secret output"), "{stdout}");
 }
+
+#[test]
+fn wrap_runs_command_and_reduces_output() {
+    let mut script = tempfile::NamedTempFile::new().expect("temp script");
+    writeln!(
+        script,
+        "i=1; while [ $i -le 80 ]; do echo line $i; i=$((i + 1)); done"
+    )
+    .expect("write script");
+    let script_path = script.path().to_string_lossy().into_owned();
+
+    let output = tinyjuice()
+        .args([
+            "wrap",
+            "--max-inline-chars",
+            "120",
+            "--",
+            "sh",
+            &script_path,
+        ])
+        .output()
+        .expect("run tinyjuice wrap");
+
+    assert!(output.status.success(), "{output:#?}");
+    let stdout = String::from_utf8(output.stdout).expect("utf8 stdout");
+    assert!(stdout.len() <= 120, "{stdout}");
+    assert!(stdout.contains("omitted"), "{stdout}");
+    assert!(!stdout.contains("line 40\nline 41"), "{stdout}");
+}
+
+#[test]
+fn wrap_preserves_wrapped_exit_code() {
+    let output = tinyjuice()
+        .args(["wrap", "--", "sh", "-c", "printf 'line 1\\n'; exit 7"])
+        .output()
+        .expect("run tinyjuice wrap failure");
+
+    assert_eq!(output.status.code(), Some(7), "{output:#?}");
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("utf8 stdout"),
+        "line 1\n"
+    );
+}

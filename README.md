@@ -182,6 +182,7 @@ cargo run -- reduce --tool-name bash --command "git status" status.txt
 cargo run -- reduce-json payload.json
 cargo run -- verify --rules --fixtures
 cargo run -- discover executions.ndjson
+cargo run -- wrap -- cargo test
 ```
 
 Run hot-path benchmarks:
