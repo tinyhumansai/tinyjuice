@@ -349,12 +349,18 @@ TinyJuice files:
 
 OpenHuman files:
 
-- `src/openhuman/tools/impl/filesystem/search_read.rs` (NEW) — one tool:
+- `src/openhuman/tools/impl/filesystem/search_read.rs` — one tool:
   glob → grep → rank via TinyJuice scoring → bounded snippets with path/line
   metadata → omission report. Registered alongside the existing tools; the
   schema description positions it as the preferred first move over separate
   glob/grep/read calls.
 - `src/openhuman/tools/impl/filesystem/mod.rs` — registration.
+- `src/openhuman/tools/user_filter.rs` and
+  `app/src/utils/toolDefinitions.ts` — include `search_read` in the file-read
+  tool family so user tool preferences and frontend toggles do not hide the
+  ranked read surface when "Read Files" is enabled.
+- `app/src/utils/toolTimelineFormatting.ts` — render `search_read` as a
+  known search/read timeline tool.
 
 Acceptance:
 
@@ -362,6 +368,13 @@ Acceptance:
 - Output is bounded (max files, snippets, bytes) with explicit omitted
   counts; vendor/generated paths deprioritized unless requested.
 - The tool never returns whole files; follow-up reads use `file_read`.
+
+Status: TinyJuice has pure ranking and snippet-window fixtures for exact
+symbol/path/density ordering, vendor/generated penalties, bounded window
+merging, and omitted counts. OpenHuman `../openhuman-4` already carried the
+host `search_read` implementation and registration; commit `76399a6ce` wires it
+into the Rust user-preference family, frontend tool catalog, and timeline
+formatting so the registered tool is exposed consistently with `file_read`.
 
 ## P2-2: Subagent Summary Evidence Extraction
 
