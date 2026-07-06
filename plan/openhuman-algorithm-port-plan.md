@@ -326,11 +326,14 @@ Acceptance: as specified per compressor in the roadmap plan; plus one
 OpenHuman end-to-end fixture per compressor family driven through
 `compact_tool_output_with_policy`.
 
-Status: TinyJuice now has host-hook e2e coverage through
+Status: implemented. TinyJuice has host-hook e2e coverage through
 `compact_tool_output_with_policy` for SmartCrusher, DiffNoise, search
 thinning/BM25 query ranking, TextCrusher, HTML extraction, and generic command
-fallback, each asserting recoverability where the path is lossy. OpenHuman-side
-adapter fixtures remain the host-repo portion of this acceptance item.
+fallback, each asserting recoverability where the path is lossy. OpenHuman
+`../openhuman-4` mirrors that host-adapter coverage in
+`src/openhuman/tokenjuice/tool_integration.rs`; commit `88a17f9f8` adds the
+remaining HTML extraction and generic command fallback fixtures so each current
+compressor family is exercised through the adapter path.
 
 ## P2-1: Ranked Search-Read Tool
 
