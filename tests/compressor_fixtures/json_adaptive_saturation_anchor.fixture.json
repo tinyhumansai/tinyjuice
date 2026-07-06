@@ -1,0 +1,18 @@
+{
+  "description": "SmartCrusher row dropping adds adaptive spread anchors when semantic bigrams do not saturate early",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonAdaptiveSaturationRows",
+    "rows": 140
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "topic wordee marker alpha beta",
+      "tokenjuice_retrieve"
+    ]
+  }
+}

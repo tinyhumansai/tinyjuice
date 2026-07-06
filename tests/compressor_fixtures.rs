@@ -98,6 +98,28 @@ enum FixtureGenerator {
         #[serde(rename = "denseRow")]
         dense_row: usize,
     },
+    JsonNearDuplicateClusterRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "clusterStart")]
+        cluster_start: usize,
+        #[serde(rename = "clusterEnd")]
+        cluster_end: usize,
+    },
+    JsonSpreadRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "spreadRow")]
+        spread_row: usize,
+    },
+    JsonAdaptiveSaturationRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+    },
+    JsonEarlySaturationRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+    },
     DiffLockfile {
         #[serde(rename = "lines")]
         lines: usize,
@@ -440,6 +462,62 @@ impl FixtureGenerator {
                     .collect();
                 format!("[{}]", rendered_rows.join(","))
             }
+            FixtureGenerator::JsonNearDuplicateClusterRows {
+                rows,
+                cluster_start,
+                cluster_end,
+            } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let message = if (*cluster_start..=*cluster_end).contains(&i) {
+                            "retry backlog service failed"
+                        } else {
+                            "routine healthy service stable"
+                        };
+                        format!(r#"{{"id":"job-{i}","status":"active","message":"{message}"}}"#)
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonSpreadRows { rows, spread_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let message = if i == *spread_row {
+                            "deterministic spread anchor payload".to_string()
+                        } else {
+                            format!("ordinary payload {i}")
+                        };
+                        format!(
+                            r#"{{"id":{i},"name":"record {i}","status":"active","message":"{message}"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonAdaptiveSaturationRows { rows } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let word = alpha_word(i);
+                        format!(
+                            r#"{{"id":{i},"status":"active","message":"topic {word} marker alpha beta"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonEarlySaturationRows { rows } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let message = if i < (*rows / 2) {
+                            format!("topic {} marker alpha beta", alpha_word(i))
+                        } else {
+                            "topic repeated marker alpha beta".to_string()
+                        };
+                        format!(r#"{{"id":"job-{i}","status":"active","message":"{message}"}}"#)
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
             FixtureGenerator::DiffLockfile { lines } => {
                 let mut out =
                     String::from("diff --git a/Cargo.lock b/Cargo.lock\n@@ -1,80 +1,80 @@\n");
@@ -490,4 +568,16 @@ impl FixtureGenerator {
             }
         }
     }
+}
+
+fn alpha_word(mut n: usize) -> String {
+    let mut out = String::from("word");
+    loop {
+        out.push((b'a' + (n % 26) as u8) as char);
+        n /= 26;
+        if n == 0 {
+            break;
+        }
+    }
+    out
 }

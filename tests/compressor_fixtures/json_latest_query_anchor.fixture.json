@@ -1,0 +1,24 @@
+{
+  "description": "SmartCrusher row dropping extends tail anchors for latest/recent queries",
+  "kind": "json",
+  "extension": "json",
+  "query": "latest records",
+  "generator": {
+    "type": "jsonRows",
+    "rows": 140,
+    "specialRow": 124,
+    "specialNote": "latest positional context"
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "latest positional context",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "record 70"
+    ]
+  }
+}

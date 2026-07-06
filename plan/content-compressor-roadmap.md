@@ -45,8 +45,9 @@ numeric outliers, and duplicate-cluster representative anchors now also have
 router-level fixture coverage. Constant-column hoisting, nested object
 flattening, stringified JSON flattening, heterogeneous bucket rendering,
 discriminator anchors, numeric change-point anchors, and information-dense
-anchors now also have router-level fixture coverage. More planner-path fixtures
-remain.
+anchors now also have router-level fixture coverage. Latest/oldest query
+direction, exact and near-duplicate clusters, deterministic spread anchors, and
+adaptive spread saturation now cover the remaining current planner anchor paths.
 
 Do not add:
 

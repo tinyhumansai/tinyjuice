@@ -1,0 +1,24 @@
+{
+  "description": "SmartCrusher row dropping extends head anchors for oldest/initial queries",
+  "kind": "json",
+  "extension": "json",
+  "query": "oldest records",
+  "generator": {
+    "type": "jsonRows",
+    "rows": 140,
+    "specialRow": 24,
+    "specialNote": "oldest positional context"
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "oldest positional context",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "record 70"
+    ]
+  }
+}
