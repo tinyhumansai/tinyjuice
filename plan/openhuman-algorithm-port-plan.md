@@ -435,6 +435,17 @@ tag + end marker); repeated compactions update the previous summary instead
 of nesting; tool order does not change the cache key; frozen prefix bytes are
 never rewritten.
 
+Status: implemented in core and mirrored in OpenHuman. TinyJuice exposes the
+`SummaryProvider` contract, strict `StructuredSummary` shape, summary metadata
+tag/end marker, deterministic fallback, summary upsert helpers, stable prompt
+cache hints, and live-zone frozen-prefix splicing. OpenHuman
+`../openhuman-4/src/openhuman/tokenjuice/` mirrors those modules, while
+`src/openhuman/tinyagents/summarize.rs` uses TokenJuice boundary/tail planning,
+the summary failure policy, deterministic trim fallback, the canonical summary
+end marker, and duplicate-summary removal before rewriting model requests.
+Cache hints and live-zone helpers are available through the mirrored
+`tokenjuice` exports for provider/adaptor use.
+
 ---
 
 ## Deferred (with unlock conditions)
