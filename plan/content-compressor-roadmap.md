@@ -106,7 +106,8 @@ Add:
 
 Status: partially implemented. `ci/github-actions` now handles
 `gh run view --log` output, retaining failing step/error lines and counting
-failed-step annotations through the fixture suite.
+failed-step annotations through the fixture suite. Log-template fixture
+coverage now reconstructs original lines from emitted template blocks.
 
 Do not add:
 
