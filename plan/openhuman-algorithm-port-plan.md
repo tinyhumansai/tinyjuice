@@ -211,6 +211,13 @@ Acceptance:
 - Measured vs estimated is visible end-to-end (crate → adapter → RPC schema).
 - Fixture benchmark results are reported separately from live stats.
 
+Status: implemented. TinyJuice exposes class-labeled `SavingsRecord` values
+with live vs fixture-benchmark source labels, byte metadata, lossy/CCR flags,
+rule/skip metadata, and optional measured model usage. OpenHuman mirrors the
+records, persists rollups by model, compressor, accounting class, record
+source, and content kind, exposes those labels through `tokenjuice.savings_*`
+controllers, and records provider `UsageInfo` as measured metadata-only usage.
+
 ## P1-2: Web Extract Truncate-Store
 
 Source spec: `web-extract-truncate-store-spec.md`. OpenHuman has the host
