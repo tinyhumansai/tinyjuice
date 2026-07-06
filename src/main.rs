@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::process::ExitCode;
 
+use tinyjuice::cache::RangeUnit;
 use tinyjuice::{
     LoadRuleOptions, ReduceOptions, ToolExecutionInput, discover_fallback_outputs,
     load_builtin_rules, reduce_execution_with_rules, reduce_json_str, verify_rule_fixtures,
@@ -32,6 +33,8 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "verify" => run_verify(&args[1..]),
         "discover" => run_discover(&args[1..]),
         "wrap" => run_wrap(&args[1..]),
+        "ls" => run_ls(&args[1..]),
+        "cat" => run_cat(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -41,6 +44,150 @@ fn run(args: Vec<String>) -> Result<(), String> {
             Err(format!("unknown command: {other}"))
         }
     }
+}
+
+fn run_ls(args: &[String]) -> Result<(), String> {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_ls_usage();
+        return Ok(());
+    }
+    let store_dir = parse_store_dir_args("ls", args)?;
+    let mut tokens = Vec::new();
+    for entry in fs::read_dir(&store_dir)
+        .map_err(|error| format!("failed to read {}: {error}", store_dir.display()))?
+    {
+        let entry = entry.map_err(|error| format!("failed to read store entry: {error}"))?;
+        if !entry
+            .file_type()
+            .map_err(|error| format!("failed to inspect store entry: {error}"))?
+            .is_file()
+        {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if is_cli_ccr_token(&name) {
+            tokens.push(name);
+        }
+    }
+    tokens.sort();
+    for token in tokens {
+        println!("{token}");
+    }
+    Ok(())
+}
+
+fn run_cat(args: &[String]) -> Result<(), String> {
+    let mut store_dir = None;
+    let mut token = None;
+    let mut range = None;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--store-dir" => {
+                i += 1;
+                store_dir = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| "--store-dir requires a value".to_owned())?,
+                ));
+            }
+            "--lines" => {
+                if range.is_some() {
+                    return Err("cat accepts at most one range flag".to_owned());
+                }
+                i += 1;
+                range = Some((
+                    RangeUnit::Lines,
+                    parse_range_arg(
+                        args.get(i)
+                            .ok_or_else(|| "--lines requires START:END".to_owned())?,
+                        "--lines",
+                    )?,
+                ));
+            }
+            "--bytes" => {
+                if range.is_some() {
+                    return Err("cat accepts at most one range flag".to_owned());
+                }
+                i += 1;
+                range = Some((
+                    RangeUnit::Bytes,
+                    parse_range_arg(
+                        args.get(i)
+                            .ok_or_else(|| "--bytes requires START:END".to_owned())?,
+                        "--bytes",
+                    )?,
+                ));
+            }
+            "-h" | "--help" => {
+                print_cat_usage();
+                return Ok(());
+            }
+            value if value.starts_with('-') => return Err(format!("unknown cat option: {value}")),
+            value => {
+                if token.replace(value.to_owned()).is_some() {
+                    return Err("cat accepts exactly one token".to_owned());
+                }
+            }
+        }
+        i += 1;
+    }
+
+    let store_dir = store_dir.ok_or_else(|| "cat requires --store-dir".to_owned())?;
+    let token = token.ok_or_else(|| "cat requires a token".to_owned())?;
+    if !is_cli_ccr_token(&token) {
+        return Err("cat token must be a 32-character hex CCR token".to_owned());
+    }
+
+    tinyjuice::cache::enable_disk_tier(store_dir);
+    let content = match range {
+        Some((unit, (start, end))) => tinyjuice::cache::retrieve_range(&token, start, end, unit),
+        None => tinyjuice::cache::retrieve(&token),
+    }
+    .ok_or_else(|| format!("token not found: {token}"))?;
+    print!("{content}");
+    Ok(())
+}
+
+fn parse_store_dir_args(command: &str, args: &[String]) -> Result<PathBuf, String> {
+    let mut store_dir = None;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--store-dir" => {
+                i += 1;
+                store_dir = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| "--store-dir requires a value".to_owned())?,
+                ));
+            }
+            value => return Err(format!("unknown {command} option: {value}")),
+        }
+        i += 1;
+    }
+
+    store_dir.ok_or_else(|| format!("{command} requires --store-dir"))
+}
+
+fn parse_range_arg(raw: &str, flag: &str) -> Result<(usize, usize), String> {
+    let (start, end) = raw
+        .split_once(':')
+        .ok_or_else(|| format!("{flag} expects START:END"))?;
+    let start = start
+        .parse::<usize>()
+        .map_err(|_| format!("{flag} start must be a non-negative integer"))?;
+    let end = end
+        .parse::<usize>()
+        .map_err(|_| format!("{flag} end must be a non-negative integer"))?;
+    if end < start {
+        return Err(format!("{flag} end must be greater than or equal to start"));
+    }
+    Ok((start, end))
+}
+
+fn is_cli_ccr_token(token: &str) -> bool {
+    token.len() == 32 && token.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn run_wrap(args: &[String]) -> Result<(), String> {
@@ -419,6 +566,8 @@ fn print_usage() {
     println!("  verify       Verify built-in rules and/or reducer fixtures");
     println!("  discover     Report command families still using generic fallback");
     println!("  wrap         Run a command and reduce its captured output");
+    println!("  ls           List tokens from an explicit CCR disk store");
+    println!("  cat          Print a token from an explicit CCR disk store");
 }
 
 fn print_reduce_usage() {
@@ -444,4 +593,12 @@ fn print_wrap_usage() {
     println!(
         "Usage: tinyjuice wrap [--tool-name NAME] [--max-inline-chars N] -- command [args...]"
     );
+}
+
+fn print_ls_usage() {
+    println!("Usage: tinyjuice ls --store-dir DIR");
+}
+
+fn print_cat_usage() {
+    println!("Usage: tinyjuice cat --store-dir DIR [--lines START:END | --bytes START:END] TOKEN");
 }

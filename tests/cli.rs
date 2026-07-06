@@ -1,3 +1,4 @@
+use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
@@ -176,5 +177,119 @@ fn wrap_preserves_wrapped_exit_code() {
     assert_eq!(
         String::from_utf8(output.stdout).expect("utf8 stdout"),
         "line 1\n"
+    );
+}
+
+#[test]
+fn ls_lists_only_token_shaped_store_entries() {
+    let dir = tempfile::tempdir().expect("temp store");
+    fs::write(dir.path().join("0123456789abcdef0123456789abcdef"), "one").expect("write token");
+    fs::write(dir.path().join("not-a-token"), "ignored").expect("write ignored");
+
+    let output = tinyjuice()
+        .args(["ls", "--store-dir", &dir.path().to_string_lossy()])
+        .output()
+        .expect("run tinyjuice ls");
+
+    assert!(output.status.success(), "{output:#?}");
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("utf8 stdout"),
+        "0123456789abcdef0123456789abcdef\n"
+    );
+}
+
+#[test]
+fn cat_reads_token_from_explicit_store_dir() {
+    let dir = tempfile::tempdir().expect("temp store");
+    let token = "0123456789abcdef0123456789abcdef";
+    fs::write(dir.path().join(token), "alpha\nbeta\ngamma\n").expect("write token");
+
+    let output = tinyjuice()
+        .args(["cat", "--store-dir", &dir.path().to_string_lossy(), token])
+        .output()
+        .expect("run tinyjuice cat");
+
+    assert!(output.status.success(), "{output:#?}");
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("utf8 stdout"),
+        "alpha\nbeta\ngamma\n"
+    );
+}
+
+#[test]
+fn cat_reads_line_range_from_explicit_store_dir() {
+    let dir = tempfile::tempdir().expect("temp store");
+    let token = "0123456789abcdef0123456789abcdef";
+    fs::write(dir.path().join(token), "alpha\nbeta\ngamma\ndelta\n").expect("write token");
+
+    let output = tinyjuice()
+        .args([
+            "cat",
+            "--store-dir",
+            &dir.path().to_string_lossy(),
+            "--lines",
+            "1:3",
+            token,
+        ])
+        .output()
+        .expect("run tinyjuice cat lines");
+
+    assert!(output.status.success(), "{output:#?}");
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("utf8 stdout"),
+        "beta\ngamma"
+    );
+}
+
+#[test]
+fn cat_reads_byte_range_from_explicit_store_dir() {
+    let dir = tempfile::tempdir().expect("temp store");
+    let token = "0123456789abcdef0123456789abcdef";
+    fs::write(dir.path().join(token), "alpha beta gamma").expect("write token");
+
+    let output = tinyjuice()
+        .args([
+            "cat",
+            "--store-dir",
+            &dir.path().to_string_lossy(),
+            "--bytes",
+            "6:10",
+            token,
+        ])
+        .output()
+        .expect("run tinyjuice cat bytes");
+
+    assert!(output.status.success(), "{output:#?}");
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("utf8 stdout"),
+        "beta"
+    );
+}
+
+#[test]
+fn cat_rejects_multiple_range_flags() {
+    let dir = tempfile::tempdir().expect("temp store");
+    let token = "0123456789abcdef0123456789abcdef";
+    fs::write(dir.path().join(token), "alpha\nbeta\n").expect("write token");
+
+    let output = tinyjuice()
+        .args([
+            "cat",
+            "--store-dir",
+            &dir.path().to_string_lossy(),
+            "--lines",
+            "0:1",
+            "--bytes",
+            "0:5",
+            token,
+        ])
+        .output()
+        .expect("run tinyjuice cat conflicting ranges");
+
+    assert!(!output.status.success(), "{output:#?}");
+    assert!(
+        String::from_utf8(output.stderr)
+            .expect("utf8 stderr")
+            .contains("cat accepts at most one range flag")
     );
 }

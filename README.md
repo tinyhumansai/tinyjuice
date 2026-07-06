@@ -183,6 +183,8 @@ cargo run -- reduce-json payload.json
 cargo run -- verify --rules --fixtures
 cargo run -- discover executions.ndjson
 cargo run -- wrap -- cargo test
+cargo run -- ls --store-dir .tokenjuice/ccr
+cargo run -- cat --store-dir .tokenjuice/ccr <token>
 ```
 
 Run hot-path benchmarks:
@@ -207,6 +209,10 @@ flag, and CCR token IDs. Existing `compress_content`, `route`, and `cache::*`
 helpers still use the process-global `GlobalCcrStore` for compatibility. New
 tests and host adapters can use `MemoryCcrStore` to assert CCR behavior without
 touching the global cache.
+
+The CLI `ls` and `cat` commands operate only on an explicit CCR disk tier via
+`--store-dir`; they do not imply access to another process's in-memory cache.
+`cat` supports `--lines START:END` and `--bytes START:END` ranges.
 
 `run_typed_pipeline` is the typed-transform entry point for new reducers. It
 runs lossless `ReformatTransform`s before CCR-backed `OffloadTransform`s and
