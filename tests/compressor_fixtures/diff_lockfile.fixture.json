@@ -1,0 +1,21 @@
+{
+  "description": "DiffNoise collapses generated lockfile body with a clear reason and retained recovery",
+  "kind": "diff",
+  "extension": "diff",
+  "generator": {
+    "type": "diffLockfile",
+    "lines": 80
+  },
+  "expected": {
+    "compressor": "diff",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "reason=lockfile",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "new dep entry 79"
+    ]
+  }
+}

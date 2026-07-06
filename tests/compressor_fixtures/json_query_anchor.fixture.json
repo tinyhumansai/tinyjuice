@@ -1,0 +1,24 @@
+{
+  "description": "SmartCrusher row dropping keeps query-relevant rows and retains the original",
+  "kind": "json",
+  "extension": "json",
+  "query": "special needle",
+  "generator": {
+    "type": "jsonRows",
+    "rows": 140,
+    "specialRow": 71,
+    "specialNote": "contains special needle token"
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "special needle token",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "\"id\": 70"
+    ]
+  }
+}

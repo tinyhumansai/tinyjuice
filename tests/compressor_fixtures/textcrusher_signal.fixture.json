@@ -1,0 +1,23 @@
+{
+  "description": "TextCrusher keeps query-relevant error text verbatim and retains recovery",
+  "kind": "plainText",
+  "query": "sync.worker.v2 REQUEST_ID",
+  "generator": {
+    "type": "plainStatus",
+    "before": 40,
+    "after": 40,
+    "errorLine": "ERROR sync.worker.v2 failed for REQUEST_ID 9F42 after retry 17."
+  },
+  "expected": {
+    "compressor": "textcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "ERROR sync.worker.v2 failed for REQUEST_ID 9F42",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "ordinary deployment progress line 3 with"
+    ]
+  }
+}

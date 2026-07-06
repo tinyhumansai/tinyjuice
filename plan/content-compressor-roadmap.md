@@ -39,6 +39,9 @@ Add:
 
 - Broader fixture coverage for all SmartCrusher planner paths.
 
+Status: initial router-level fixture coverage now includes a query-anchored
+row-dropping case with CCR recovery. More planner-path fixtures remain.
+
 Do not add:
 
 - Non-deterministic learned planning in core.
@@ -66,6 +69,9 @@ Current behavior:
 Add:
 
 - Broader fixture coverage for host-tuned noisy path policy.
+
+Status: initial router-level fixture coverage now includes a lockfile noise
+case that asserts the reason marker and recovery token.
 
 Do not add:
 
@@ -162,6 +168,9 @@ Add:
 - Better query context propagation.
 - Broader fixture coverage for search-read host adapters.
 
+Status: initial router-level fixture coverage now includes a query-ranked
+search thinning case with omitted counts and CCR recovery.
+
 Do not add:
 
 - Filesystem search in core compressor.
@@ -219,6 +228,9 @@ Current behavior:
 Add:
 
 - Broader fixture coverage for TextCrusher scoring and ML tag protection.
+
+Status: initial router-level fixture coverage now includes a query-relevant
+error-preservation case with verbatim signal text and CCR recovery.
 
 Do not add:
 
