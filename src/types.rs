@@ -314,6 +314,10 @@ pub struct CompactResult {
     pub facts: Option<HashMap<String, usize>>,
     pub stats: ReductionStats,
     pub classification: ClassificationResult,
+    /// CCR token for the original raw output when a protocol surface requested
+    /// storage and the store retained the content.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ccr_token: Option<String>,
 }
 
 /// Per-agent TokenJuice profile.

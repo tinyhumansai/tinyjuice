@@ -769,6 +769,7 @@ pub fn reduce_execution_with_rules(
                 ratio: 1.0,
             },
             classification,
+            ccr_token: None,
         };
     }
 
@@ -788,6 +789,7 @@ pub fn reduce_execution_with_rules(
                 ratio: 1.0,
             },
             classification,
+            ccr_token: None,
         };
     }
 
@@ -838,6 +840,13 @@ pub fn reduce_execution_with_rules(
         ratio
     );
 
+    let ccr_token = if opts.store.unwrap_or(false) && reduced_chars < measured_raw_chars {
+        let (token, retained) = crate::cache::offload_checked(&raw_text);
+        retained.then_some(token)
+    } else {
+        None
+    };
+
     CompactResult {
         inline_text,
         preview_text: if summary.is_empty() {
@@ -852,6 +861,7 @@ pub fn reduce_execution_with_rules(
             ratio,
         },
         classification,
+        ccr_token,
     }
 }
 

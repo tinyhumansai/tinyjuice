@@ -81,8 +81,8 @@ pub use pipeline::{
 };
 pub use policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy};
 pub use protocol::{
-    ReduceJsonEnvelope, ReduceJsonError, ReduceJsonMetadata, ReduceJsonRequest, ReduceJsonResponse,
-    ReduceJsonResult, ReduceJsonTrace, reduce_json_request, reduce_json_str,
+    ReduceJsonCcrRef, ReduceJsonEnvelope, ReduceJsonError, ReduceJsonMetadata, ReduceJsonRequest,
+    ReduceJsonResponse, ReduceJsonResult, ReduceJsonTrace, reduce_json_request, reduce_json_str,
 };
 pub use reduce::reduce_execution_with_rules;
 pub use relevance::{Bm25Corpus, Bm25DocumentScore};

@@ -1,9 +1,9 @@
 # Reduce-JSON Protocol
 
 `reduce_json_str` and `reduce_json_request` provide the library form of the
-future `tinyjuice reduce-json` machine protocol. The current surface is meant
-for Rust hosts and tests; CLI wiring, artifact references, and durable stats
-recording are still product-roadmap work.
+`tinyjuice reduce-json` machine protocol. The current surface is meant for Rust
+hosts, the CLI, and tests; artifact records and durable stats recording are
+still product-roadmap work.
 
 ## Request Shapes
 
@@ -58,9 +58,10 @@ Envelope input:
 - `maxInlineChars`: cap returned inline text.
 - `raw`: return raw text without reducing it.
 - `noOmit`: compatibility flag recorded as metadata.
-- `store`: compatibility flag recorded as metadata.
-- `storeDir`: accepted for compatibility; durable artifact storage is not wired
-  in the library surface.
+- `store`: when reduction omits content and CCR retains the original, return a
+  metadata-only CCR reference.
+- `storeDir`: accepted for compatibility; explicit per-call artifact storage is
+  not wired in the library surface.
 - `cwd`: copied to `input.cwd` when the input does not already set it.
 - `trace`: include metadata-only classification trace fields.
 - `recordStats`: compatibility flag recorded as metadata.
@@ -91,11 +92,30 @@ Optional fields:
 - `previewText`: reducer preview when a future surface supplies one.
 - `facts`: counter results such as failed tests or errors.
 - `metadata`: booleans for `noOmit`, `store`, and `recordStats` requests.
+  When `store` succeeds, `metadata.ccr` contains a `token` plus
+  `originalChars`. The token references the original raw tool output in CCR;
+  it is not embedded in `inlineText`.
 - `trace`: metadata-only reducer trace with `toolName`, `argv0`, `rawMode`,
   `maxInlineChars`, `family`, and `matchedReducer`.
 
 Trace output intentionally excludes raw command output, raw arguments, and full
 metadata maps.
+
+Example `store` metadata:
+
+```json
+{
+  "metadata": {
+    "storeRequested": true,
+    "noOmitRequested": false,
+    "recordStatsRequested": false,
+    "ccr": {
+      "token": "0123456789abcdef0123456789abcdef",
+      "originalChars": 4096
+    }
+  }
+}
+```
 
 ## Errors
 

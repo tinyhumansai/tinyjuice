@@ -42,6 +42,15 @@ pub struct ReduceJsonMetadata {
     pub no_omit_requested: bool,
     pub store_requested: bool,
     pub record_stats_requested: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ccr: Option<ReduceJsonCcrRef>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReduceJsonCcrRef {
+    pub token: String,
+    pub original_chars: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -131,6 +140,16 @@ fn response_from_result(
         }
     });
 
+    let metadata = metadata.map(|mut metadata| {
+        if let Some(token) = result.ccr_token.clone() {
+            metadata.ccr = Some(ReduceJsonCcrRef {
+                token,
+                original_chars: result.stats.raw_chars,
+            });
+        }
+        metadata
+    });
+
     ReduceJsonResponse {
         inline_text: result.inline_text,
         preview_text: result.preview_text,
@@ -147,6 +166,7 @@ fn metadata_for_options(options: &ReduceOptions) -> Option<ReduceJsonMetadata> {
         no_omit_requested: options.no_omit.unwrap_or(false),
         store_requested: options.store.unwrap_or(false),
         record_stats_requested: options.record_stats.unwrap_or(false),
+        ccr: None,
     };
     (metadata.no_omit_requested || metadata.store_requested || metadata.record_stats_requested)
         .then_some(metadata)
@@ -213,6 +233,7 @@ mod tests {
                 no_omit_requested: false,
                 store_requested: false,
                 record_stats_requested: true,
+                ccr: None,
             })
         );
         let trace = response.trace.expect("trace");
@@ -220,6 +241,42 @@ mod tests {
         assert_eq!(trace.argv0.as_deref(), Some("some_tool"));
         assert_eq!(trace.max_inline_chars, Some(24));
         assert_eq!(trace.matched_reducer.as_deref(), Some("generic/fallback"));
+    }
+
+    #[test]
+    fn reduce_json_store_option_returns_retrievable_ccr_ref() {
+        let rules = load_builtin_rules();
+        let original = (0..80)
+            .map(|i| format!("line {i}: verbose report details"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let response = reduce_json_request(
+            ReduceJsonRequest::Envelope(ReduceJsonEnvelope {
+                input: ToolExecutionInput {
+                    tool_name: "bash".to_owned(),
+                    argv: Some(vec!["custom-report".to_owned()]),
+                    stdout: Some(original.clone()),
+                    ..ToolExecutionInput::default()
+                },
+                options: ReduceOptions {
+                    store: Some(true),
+                    max_inline_chars: Some(80),
+                    ..ReduceOptions::default()
+                },
+            }),
+            &rules,
+        )
+        .expect("stored payload");
+
+        let metadata = response.metadata.expect("store metadata");
+        assert!(metadata.store_requested);
+        let ccr = metadata.ccr.expect("ccr ref");
+        assert_eq!(ccr.original_chars, original.chars().count());
+        assert_eq!(
+            crate::cache::retrieve(&ccr.token).as_deref(),
+            Some(original.as_str())
+        );
+        assert!(!response.inline_text.contains(&ccr.token));
     }
 
     #[test]

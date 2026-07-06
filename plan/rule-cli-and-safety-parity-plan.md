@@ -96,9 +96,11 @@ Status: partially implemented. The library now exposes `ReduceJsonRequest`,
 `reduce_json_str()`, and `reduce_json_request()`. The protocol accepts direct
 and envelope payloads, supports the compatibility option fields, rejects
 malformed JSON and NUL bytes with structured errors, and returns stable
-serde-compatible response fields with optional metadata-only trace. The current
-library contract is documented in `docs/reduce-json-protocol.md`. CLI wiring,
-CCR/artifact refs, and durable stats recording remain to be implemented.
+serde-compatible response fields with optional metadata-only trace. When
+`options.store` is set and CCR retains omitted raw output, the response includes
+a metadata-only CCR token reference. The current library contract is documented
+in `docs/reduce-json-protocol.md`. Durable artifact refs and durable stats
+recording remain to be implemented.
 
 ## P1: CLI Surface
 
