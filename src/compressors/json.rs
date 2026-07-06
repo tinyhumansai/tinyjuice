@@ -88,6 +88,23 @@ pub struct JsonAnalysis {
     pub estimated_table_bytes: usize,
 }
 
+impl JsonAnalysis {
+    /// Estimated bytes removed by rendering this payload as a SmartCrusher
+    /// table. This is a rough planning signal, not a benchmarked savings claim.
+    pub fn estimated_reduction_bytes(&self, original_bytes: usize) -> usize {
+        original_bytes.saturating_sub(self.estimated_table_bytes)
+    }
+
+    /// Estimated fractional reduction from 0.0 to 1.0. Returns 0.0 for empty
+    /// originals or payloads that are not estimated to shrink.
+    pub fn estimated_reduction_ratio(&self, original_bytes: usize) -> f64 {
+        if original_bytes == 0 {
+            return 0.0;
+        }
+        self.estimated_reduction_bytes(original_bytes) as f64 / original_bytes as f64
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct JsonFieldAnalysis {
     pub key: String,
@@ -97,6 +114,16 @@ pub struct JsonFieldAnalysis {
     pub constant: bool,
     pub sparse: bool,
     pub numeric: Option<JsonNumericStats>,
+}
+
+impl JsonFieldAnalysis {
+    /// Ratio of distinct rendered values among present cells for this field.
+    pub fn unique_ratio(&self) -> f64 {
+        if self.present == 0 {
+            return 0.0;
+        }
+        self.unique_count as f64 / self.present as f64
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1171,9 +1198,15 @@ mod tests {
             .expect("latency field");
 
         assert!(status.constant);
+        assert_eq!(status.unique_ratio(), 1.0 / 20.0);
         assert!(debug.sparse);
         assert_eq!(debug.present, 1);
+        assert_eq!(debug.unique_ratio(), 1.0);
         assert_eq!(latency.numeric.expect("numeric").min, 10.0);
+        assert!(latency.unique_ratio() > 0.9);
+        assert!(analysis.estimated_table_bytes < input.len());
+        assert!(analysis.estimated_reduction_bytes(input.len()) > 0);
+        assert!(analysis.estimated_reduction_ratio(input.len()) > 0.0);
     }
 
     #[test]
