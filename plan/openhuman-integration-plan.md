@@ -235,6 +235,7 @@ Acceptance:
   percentage saving. Rechecked on 2026-07-06: that claim is no longer present.
   Keep it that way until fixture benchmark reports exist, and keep those
   reports separate from live savings stats.
-- The host truncation caps (per-tool char cap, 16 KiB byte-cap backstop) and
-  TinyJuice compaction currently compose blindly. Until the footer contract is
-  fixed, any cap below the compacted size silently severs recoverability.
+- Host truncation caps must preserve the TinyJuice body/footer contract. The
+  current tinyagents per-tool char cap and 16 KiB byte-cap backstop truncate
+  only the compacted body and reattach the recovery footer; future host cap
+  paths need the same invariant.

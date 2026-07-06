@@ -97,12 +97,13 @@ The Rust crate has compatible types, but no stable `reduce-json` protocol or
 CLI. That blocks non-Rust hosts and makes OpenHuman integration harder to test
 from fixtures.
 
-### Missing Safe-Inventory Policy
+### Safe-Inventory Policy Implemented
 
-The code has a narrow `is_file_content_inspection_command()` guard. It does not
-yet implement the richer policy from the references: safe inventory pipelines
-may compact, exact content reads stay raw, mixed shell sequences stay raw, and
-unsafe actions such as `find -exec` stay raw.
+The code now has a host-selectable `ShellCompactionPolicy` with the richer
+reference behavior: safe inventory pipelines may compact, exact content reads
+stay raw, mixed shell sequences stay raw, and unsafe actions such as
+`find -exec` stay raw. The legacy `is_file_content_inspection_command()` helper
+remains as a compatibility wrapper for older call sites.
 
 ### Footer Placement Requires A Host Contract
 
