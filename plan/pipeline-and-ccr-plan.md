@@ -106,9 +106,10 @@ delegate to `GlobalCcrStore`. `_report` variants return `PipelineReport` with
 redacted skip reasons, cheap bloat estimates, and applied-step metadata.
 `run_typed_pipeline()` now gives new `ReformatTransform` and `OffloadTransform`
 implementations a typed execution path with no-op, reformat-only, offload-only,
-mixed, and CCR-retention-failure coverage. Current production compressors still
-mostly run through the compatibility router until they are converted
-incrementally.
+mixed, and CCR-retention-failure coverage. The production router now uses the
+typed path for covered non-command transforms and still falls back to the
+compatibility router for command reducers, ML text, non-stub code compression,
+and generic command fallback behavior.
 
 ### Step 3: Convert Existing Compressors Gradually
 
@@ -127,6 +128,7 @@ exposed as `SmartCrusherRowsTransform` and requires a retained CCR token.
 DiffNoise, HTML extraction, log templates, signal-log compression, search
 thinning, and TextCrusher also have typed transforms. Code stubbing is exposed
 as `CodeStubTransform` and requires explicit construction with a `StubMode`.
+The router reports typed transform step names for these production paths.
 
 ### Step 4: Add Bloat Estimation
 

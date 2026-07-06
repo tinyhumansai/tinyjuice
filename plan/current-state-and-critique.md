@@ -70,9 +70,11 @@ reads as raw unless the user or tool intentionally requests a stub/summary.
 compressors, and `route()` remains responsible for checking CCR availability.
 The new `pipeline` module adds the first typed split:
 `ReformatTransform` emits ordinary `TransformOutput`, while `OffloadOutput`
-can only be built from a retained `CcrPutResult`. Existing compressors still
-need gradual conversion into those traits before lossy safety is fully enforced
-by construction.
+can only be built from a retained `CcrPutResult`. The production router now
+uses those typed transforms for covered non-command JSON, diff, log, search,
+HTML, explicit code-stub, and TextCrusher paths. Command reducers, ML text,
+non-stub code compression, and generic fallback behavior still use the
+compatibility compressor interface.
 
 ### CCR Store Is Now Injectable
 
@@ -83,13 +85,12 @@ against an isolated store instead of the global cache. Remaining work is to
 thread explicit stores through more OpenHuman call sites instead of relying on
 the global compatibility path.
 
-### Pipeline Reports Are Available But Compatibility-Based
+### Pipeline Reports Cover Typed And Compatibility Paths
 
 `compress_content_with_store_report` and `route_with_store_report` now return a
 redacted `PipelineReport` with byte counts, cheap bloat estimate, applied step,
-CCR token ids, lossy flag, and skip reason. Because current compressors still
-run through the compatibility router, the applied step is reported as
-`compat_router` until compressors are converted into typed transforms.
+CCR token ids, lossy flag, and skip reason. Typed production paths report their
+transform names, while remaining compatibility paths report `compat_router`.
 
 ### Missing Machine Protocol
 
