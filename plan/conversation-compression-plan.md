@@ -65,6 +65,12 @@ Add pure helpers first:
 - latest visible assistant anchor
 - manual partial split and rejoin helpers
 
+Status: implemented in core. The helpers cover provider-safe JSON argument
+shrinking, deterministic tail selection, protected head decay,
+tool-call/tool-result boundary alignment, orphan sanitizer, latest real
+user/visible assistant anchors, and partial split/rejoin with orphan
+sanitization after middle replacement.
+
 Acceptance:
 
 - JSON argument shrinking preserves parseability.
@@ -159,4 +165,3 @@ Acceptance:
 - Session database writes.
 - Compression leases implemented against OpenHuman storage inside core.
 - Prompt cache mutation mixed into lossy compression APIs.
-

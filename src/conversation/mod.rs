@@ -11,8 +11,9 @@ mod tool_digest;
 mod types;
 
 pub use boundary::{
-    align_tail_start_for_tool_boundaries, latest_real_user_index, latest_visible_assistant_index,
-    sanitize_orphan_tool_messages,
+    PartialConversationSplit, align_tail_start_for_tool_boundaries, latest_real_user_index,
+    latest_visible_assistant_index, rejoin_partial_conversation, sanitize_orphan_tool_messages,
+    split_partial_conversation,
 };
 pub use budget::{
     ConversationBudget, HeadProtection, TailBudgetSelection, effective_input_window,
