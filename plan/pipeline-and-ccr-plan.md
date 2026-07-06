@@ -135,8 +135,9 @@ why a transform was skipped.
 Status: first pass implemented. `pipeline::estimate_bloat` reports a redacted
 0-100 score plus categorical reason for JSON rows, diff context, log
 repetition, search fanout, HTML markup, code body bulk, and plain-text
-repetition. The router reports the estimate but does not yet use it to skip
-work.
+repetition. The router reports the estimate and uses a zero-score estimate to
+skip low-signal payloads when there is no command context, query hint, or
+explicit stub-read intent.
 
 ## Acceptance Criteria
 

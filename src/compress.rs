@@ -194,6 +194,13 @@ pub async fn route_with_store_report_shell_policy(
         .with_bloat_estimate(bloat_estimate);
         return (res, report);
     }
+    if should_skip_low_bloat(&input, bloat_estimate.score) {
+        let res = CompressedOutput::passthrough(content.to_string(), kind);
+        let report =
+            PipelineReport::passthrough(kind, original_bytes, PipelineSkipReason::LowBloat)
+                .with_bloat_estimate(bloat_estimate);
+        return (res, report);
+    }
     input.kind = kind;
 
     // Resolve which compressor to try, honouring per-kind config gates.
@@ -362,6 +369,24 @@ fn is_exact_file_read(hint: &ContentHint) -> bool {
             .source_tool
             .as_deref()
             .is_some_and(|tool| matches!(tool, "file_read" | "read_file" | "fs_read"))
+}
+
+fn should_skip_low_bloat(input: &CompressInput<'_>, bloat_score: u8) -> bool {
+    if bloat_score > 0 {
+        return false;
+    }
+    if input.command.is_some() || input.argv.as_ref().is_some_and(|argv| !argv.is_empty()) {
+        return false;
+    }
+    if input
+        .hint
+        .query
+        .as_deref()
+        .is_some_and(|query| !query.trim().is_empty())
+    {
+        return false;
+    }
+    !matches!(input.hint.read_intent, crate::types::ReadIntent::Stub(_))
 }
 
 #[cfg(test)]
@@ -555,6 +580,36 @@ mod tests {
         assert!(report.bloat_estimate.is_some());
         assert!(report.applied_steps.is_empty());
         assert!(report.ccr_tokens.is_empty());
+    }
+
+    #[tokio::test]
+    async fn report_records_low_bloat_skip_before_compressor_work() {
+        let content = (0..180)
+            .map(|i| format!("unique observation {i} has ordinary prose without repeated bulk."))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let hint = ContentHint {
+            explicit: Some(ContentKind::PlainText),
+            ..Default::default()
+        };
+        let (res, report) = compress_content_with_store_report(
+            &content,
+            Some(hint),
+            &opts(),
+            &cache::GlobalCcrStore,
+        )
+        .await;
+
+        assert!(!res.applied);
+        assert_eq!(res.text, content);
+        assert_eq!(report.skip_reason, Some(PipelineSkipReason::LowBloat));
+        assert_eq!(
+            report
+                .bloat_estimate
+                .map(|estimate| estimate.reason.as_str()),
+            Some("low_signal")
+        );
+        assert!(report.applied_steps.is_empty());
     }
 
     #[tokio::test]
