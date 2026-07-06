@@ -122,10 +122,17 @@ Acceptance:
 - Validation is deterministic and does not panic on bad user files.
 - Discovery reports command families and counts without raw tool output.
 
+Status: partially implemented. `verify_rules()` now reports parse errors,
+invalid regex patterns, duplicate rule ids, and shadowed lower-priority rules
+across the same builtin/user/project roots as `load_rules()`, without changing
+the lenient runtime loader. Current diagnostics show the 100 built-ins parse
+without duplicate ids and include 11 counter regexes that Rust `regex` drops
+because they use lookahead. Fixture verification and discovery reports remain
+to be implemented.
+
 ## What Not To Do
 
 - Do not implement host installers before `doctor` can verify them.
 - Do not silently compact CI logs by default.
 - Do not turn every shell output into generic head/tail truncation.
 - Do not store raw artifacts unless explicitly requested.
-
