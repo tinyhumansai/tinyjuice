@@ -19,11 +19,12 @@ Current behavior:
   dropped.
 - Full-present constant columns are hoisted into table metadata instead of
   repeated in every rendered row.
+- Analyzer reports field frequencies, types, unique counts/ratios, constants,
+  sparse fields, numeric stats, estimated table bytes, and rough estimated
+  reduction.
 
 Add:
 
-- Analyzer for key frequencies, field types, unique ratios, numeric stats,
-  sparse fields, and estimated reduction.
 - Planner for dynamic anchors, query matches, structural outliers, discriminator
   buckets, and duplicate clusters.
 - Adaptive keep count using deterministic saturation/knee detection.
