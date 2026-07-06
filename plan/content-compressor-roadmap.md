@@ -245,7 +245,10 @@ Add:
 - Broader fixture coverage for TextCrusher scoring and ML tag protection.
 
 Status: initial router-level fixture coverage now includes a query-relevant
-error-preservation case with verbatim signal text and CCR recovery.
+error-preservation case with verbatim signal text and CCR recovery. ML
+tag-protection fixtures now prove custom workflow tags are restored byte-for-byte
+when callbacks keep protected placeholders and that ML output is declined when a
+callback drops them.
 
 Do not add:
 

@@ -1,0 +1,17 @@
+{
+  "description": "ML tag protection restores workflow custom tags byte-for-byte",
+  "generator": {
+    "type": "workflowBlock",
+    "fillerWords": 200
+  },
+  "callback": "keepPlaceholder",
+  "expected": {
+    "producesOutput": true,
+    "contains": [
+      "<workflow id=\"alpha\">\n<context-item value=\"1\" />\n</workflow>"
+    ],
+    "notContains": [
+      "__TOKENJUICE_TAG_"
+    ]
+  }
+}
