@@ -82,11 +82,13 @@ Current behavior:
 - Command output uses the rule reducer.
 - Non-command logs use signal preservation for errors, warnings, summaries, and
   stack traces.
+- Repetitive non-command logs use a lossless, reconstructible template reformat
+  before signal offload.
+- `LogTemplateTransform` exposes the template path as a typed reformat that
+  runs without CCR.
 
 Add:
 
-- Lossless log-template reformat before signal offload.
-- Reconstructible template blocks and variants.
 - More command-rule parity for common build systems and CI outputs.
 - GitHub Actions failing-step summaries through rule metadata.
 
