@@ -404,6 +404,18 @@ Acceptance:
 - Summarizer failure path returns the deterministic summary, never the full
   transcript, and never loses the subagent's final answer.
 
+Status: implemented. TinyJuice exposes provider-neutral subagent transcript
+events, deterministic evidence extraction, bounded markdown rendering, omission
+reports, and fixtures for long transcripts, failure evidence, contradictory
+findings, and byte-budget truncation. OpenHuman `../openhuman-4` constructs
+`SubagentRunOutcome::deterministic_summary` from the child run history, uses the
+shared handoff renderer for completed and incomplete `spawn_subagent` /
+`continue_subagent` results, preserves the final answer when it is not already
+inside the deterministic summary, and falls back to the deterministic
+checkpoint when the LLM checkpoint summary is empty or fails. The
+`PayloadSummarizer` also supplies this deterministic scaffold for subagent-like
+payloads before invoking its semantic summarizer.
+
 ## P2-3: Summary Contract And Prompt Cache Hints
 
 Source spec: `hermes-compression-algorithms-spec.md` (P2 portions). Builds on
