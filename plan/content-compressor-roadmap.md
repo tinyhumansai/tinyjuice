@@ -14,6 +14,9 @@ Current behavior:
 - Keeps all rows for small arrays.
 - For large arrays, keeps fixed head/tail windows plus error rows and numeric
   outliers.
+- Heterogeneous object arrays can render as smaller per-shape bucket tables,
+  preserving original row indices and using CCR recovery when bucket rows are
+  dropped.
 
 Add:
 
@@ -198,4 +201,3 @@ Acceptance:
 - Output consists only of verbatim spans.
 - Custom workflow tags survive ML compression byte-for-byte.
 - Plain data without useful signal declines rather than blindly truncating.
-
