@@ -1,7 +1,8 @@
 use super::builtin::BUILTIN_RULE_JSONS;
 use super::loader::{LoadRuleOptions, list_rule_files, project_rules_root, user_rules_root};
+use crate::classify::classify_execution;
 use crate::reduce::reduce_execution_with_rules;
-use crate::types::{CompiledRule, JsonRule, RuleFixture, RuleOrigin};
+use crate::types::{CompiledRule, JsonRule, RuleFixture, RuleOrigin, ToolExecutionInput};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -103,6 +104,28 @@ pub struct RuleFixtureFailure {
     pub actual_bytes: usize,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleDiscoveryReport {
+    pub inputs_seen: usize,
+    pub fallback_outputs: usize,
+    pub families: Vec<RuleDiscoveryFamily>,
+}
+
+impl RuleDiscoveryReport {
+    pub fn is_empty(&self) -> bool {
+        self.fallback_outputs == 0
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleDiscoveryFamily {
+    pub tool_name: String,
+    pub argv0: String,
+    pub count: usize,
+}
+
 #[derive(Debug, Clone)]
 struct RuleDescriptor {
     source: RuleOrigin,
@@ -176,6 +199,91 @@ pub fn verify_rule_fixtures(
     }
 
     report
+}
+
+/// Count command families that currently fall through to `generic/fallback`.
+pub fn discover_fallback_outputs<I>(inputs: I, rules: &[CompiledRule]) -> RuleDiscoveryReport
+where
+    I: IntoIterator<Item = ToolExecutionInput>,
+{
+    let mut inputs_seen = 0;
+    let mut fallback_outputs = 0;
+    let mut counts: HashMap<(String, String), usize> = HashMap::new();
+
+    for input in inputs {
+        inputs_seen += 1;
+        let classification = classify_execution(&input, rules, None);
+        if !is_generic_fallback(&classification) {
+            continue;
+        }
+
+        fallback_outputs += 1;
+        let key = discovery_key_for_input(&input);
+        *counts.entry(key).or_default() += 1;
+    }
+
+    let mut families = counts
+        .into_iter()
+        .map(|((tool_name, argv0), count)| RuleDiscoveryFamily {
+            tool_name,
+            argv0,
+            count,
+        })
+        .collect::<Vec<_>>();
+    families.sort_by(|a, b| {
+        b.count
+            .cmp(&a.count)
+            .then_with(|| a.tool_name.cmp(&b.tool_name))
+            .then_with(|| a.argv0.cmp(&b.argv0))
+    });
+
+    RuleDiscoveryReport {
+        inputs_seen,
+        fallback_outputs,
+        families,
+    }
+}
+
+fn is_generic_fallback(classification: &crate::types::ClassificationResult) -> bool {
+    classification.matched_reducer.as_deref() == Some("generic/fallback")
+        || (classification.family == "generic" && classification.matched_reducer.is_none())
+}
+
+fn discovery_key_for_input(input: &ToolExecutionInput) -> (String, String) {
+    (
+        sanitize_discovery_label(&input.tool_name),
+        discovery_argv0(input)
+            .map(sanitize_discovery_label)
+            .unwrap_or_else(|| "unknown".to_owned()),
+    )
+}
+
+fn discovery_argv0(input: &ToolExecutionInput) -> Option<&str> {
+    input
+        .argv
+        .as_ref()
+        .and_then(|argv| argv.first().map(String::as_str))
+        .or_else(|| {
+            input
+                .command
+                .as_deref()
+                .and_then(|command| command.split_whitespace().next())
+        })
+}
+
+fn sanitize_discovery_label(raw: &str) -> String {
+    let trimmed = raw.trim_matches(|ch: char| ch.is_whitespace() || ch == '"' || ch == '\'');
+    let basename = trimmed.rsplit(['/', '\\']).next().unwrap_or(trimmed);
+    let label = basename
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-' | '+' | ':'))
+        .take(80)
+        .collect::<String>();
+    if label.is_empty() {
+        "unknown".to_owned()
+    } else {
+        label
+    }
 }
 
 fn list_fixture_files(root: &Path) -> Vec<PathBuf> {
@@ -632,5 +740,78 @@ mod tests {
         assert_eq!(report.parse_errors.len(), 1, "{report:#?}");
         assert!(report.failures.is_empty(), "{report:#?}");
         assert!(!report.is_clean());
+    }
+
+    #[test]
+    fn discovery_groups_generic_fallback_outputs_by_command_family() {
+        let rules = load_builtin_rules();
+        let inputs = vec![
+            ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                argv: Some(vec!["unknown-build".to_owned(), "--json".to_owned()]),
+                stdout: Some("secret output should not be reported".to_owned()),
+                ..Default::default()
+            },
+            ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                command: Some("/tmp/work/unknown-build --again".to_owned()),
+                stderr: Some("another secret output".to_owned()),
+                ..Default::default()
+            },
+            ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                argv: Some(vec!["git".to_owned(), "status".to_owned()]),
+                stdout: Some("On branch main".to_owned()),
+                ..Default::default()
+            },
+        ];
+
+        let report = discover_fallback_outputs(inputs, &rules);
+
+        assert_eq!(report.inputs_seen, 3, "{report:#?}");
+        assert_eq!(report.fallback_outputs, 2, "{report:#?}");
+        assert_eq!(report.families.len(), 1, "{report:#?}");
+        assert_eq!(report.families[0].tool_name, "bash");
+        assert_eq!(report.families[0].argv0, "unknown-build");
+        assert_eq!(report.families[0].count, 2);
+        assert!(!report.is_empty());
+
+        let diagnostic = format!("{report:?}");
+        assert!(!diagnostic.contains("secret output"));
+        assert!(!diagnostic.contains("/tmp/work"));
+        assert!(!diagnostic.contains("On branch main"));
+    }
+
+    #[test]
+    fn discovery_sorts_fallback_families_by_count_then_label() {
+        let rules = load_builtin_rules();
+        let inputs = vec![
+            ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                argv: Some(vec!["beta".to_owned()]),
+                ..Default::default()
+            },
+            ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                argv: Some(vec!["alpha".to_owned()]),
+                ..Default::default()
+            },
+            ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                argv: Some(vec!["beta".to_owned(), "again".to_owned()]),
+                ..Default::default()
+            },
+        ];
+
+        let report = discover_fallback_outputs(inputs, &rules);
+
+        assert_eq!(
+            report
+                .families
+                .iter()
+                .map(|family| (family.argv0.as_str(), family.count))
+                .collect::<Vec<_>>(),
+            vec![("beta", 2), ("alpha", 1)]
+        );
     }
 }

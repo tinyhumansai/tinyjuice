@@ -122,15 +122,16 @@ Acceptance:
 - Validation is deterministic and does not panic on bad user files.
 - Discovery reports command families and counts without raw tool output.
 
-Status: partially implemented. `verify_rules()` now reports parse errors,
-invalid regex patterns, duplicate rule ids, and shadowed lower-priority rules
-across the same builtin/user/project roots as `load_rules()`, without changing
-the lenient runtime loader. Current diagnostics show the 100 built-ins parse
-without duplicate ids and include 11 counter regexes that Rust `regex` drops
-because they use lookahead. `verify_rule_fixtures()` now walks
+Status: implemented for the library surface. `verify_rules()` now reports parse
+errors, invalid regex patterns, duplicate rule ids, and shadowed lower-priority
+rules across the same builtin/user/project roots as `load_rules()`, without
+changing the lenient runtime loader. Current diagnostics show the 100 built-ins
+parse without duplicate ids and include 11 counter regexes that Rust `regex`
+drops because they use lookahead. `verify_rule_fixtures()` walks
 `*.fixture.json` examples, runs them through compiled rules, and reports pass
-counts, parse errors, and hash-only output mismatches. Discovery reports remain
-to be implemented.
+counts, parse errors, and hash-only output mismatches.
+`discover_fallback_outputs()` groups command families that still classify to
+`generic/fallback` while omitting raw tool output.
 
 ## What Not To Do
 
