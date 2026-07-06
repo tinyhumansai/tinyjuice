@@ -21,11 +21,12 @@ use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::{Severity, severity};
+use crate::pipeline::{PipelineInput, ReformatTransform, TransformOutput};
 use crate::reduce::reduce_execution_with_rules;
 use crate::rules::load_builtin_rules;
 use crate::types::{
-    CompiledRule, CompressInput, CompressOptions, CompressOutput, CompressorKind, ReduceOptions,
-    ToolExecutionInput,
+    CompiledRule, CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind,
+    ReduceOptions, ToolExecutionInput,
 };
 
 pub const MAX_ERRORS: usize = 10;
@@ -39,6 +40,24 @@ pub const TEMPLATE_MIN_CONSTANT_TOKENS: usize = 3;
 static BUILTIN_RULES: Lazy<Vec<CompiledRule>> = Lazy::new(load_builtin_rules);
 
 pub struct LogCompressor;
+
+/// Typed reformat transform for repetitive non-command logs.
+pub struct LogTemplateTransform;
+
+impl ReformatTransform for LogTemplateTransform {
+    fn name(&self) -> &'static str {
+        "log_templates"
+    }
+
+    fn applies_to(&self, input: &PipelineInput<'_>) -> bool {
+        input.content_kind == ContentKind::Log
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>) -> Option<TransformOutput> {
+        let output = compress_templates(input.content)?;
+        Some(TransformOutput::new(output.text, CompressorKind::Log))
+    }
+}
 
 #[async_trait]
 impl Compressor for LogCompressor {
@@ -559,6 +578,45 @@ mod tests {
         assert!(!out.lossy);
         assert!(out.ccr_token.is_none());
         assert!(out.text.contains("[TOKENJUICE LOG TEMPLATE"));
+    }
+
+    #[test]
+    fn template_reformat_transform_runs_without_ccr() {
+        let input = repetitive_template_log();
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Log,
+            original_bytes: input.len(),
+        };
+        let transform = LogTemplateTransform;
+
+        assert!(transform.applies_to(&pipeline_input));
+        let out = transform.apply(&pipeline_input).expect("template reformat");
+
+        assert_eq!(out.kind, CompressorKind::Log);
+        assert!(
+            out.text.contains("[TOKENJUICE LOG TEMPLATE"),
+            "{}",
+            out.text
+        );
+        assert_eq!(
+            reconstruct_template_reformat(&out.text).trim_end(),
+            input.trim_end()
+        );
+    }
+
+    #[test]
+    fn template_reformat_transform_skips_non_log_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = LogTemplateTransform;
+
+        assert!(!transform.applies_to(&input));
     }
 
     #[test]
