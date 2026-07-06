@@ -54,14 +54,14 @@ Current behavior:
 - Keeps structural lines and changed lines.
 - Collapses long unchanged context.
 - Summarizes noisy lockfile/bundle hunks inside `DiffCompressor`.
+- Exposes `DiffNoiseTransform` as a typed offload transform that emits lossy
+  diff views only with a retained CCR token.
+- Supports configurable noisy path substrings, optional whitespace-only hunk
+  dropping, per-hunk reason markers, and droppable-body bloat estimates.
 
 Add:
 
-- Separate `DiffNoise` offload transform.
-- Configurable suffix list for lockfiles and generated bundles.
-- Optional whitespace-only hunk dropping.
-- Per-hunk omission reasons.
-- Bloat estimate based on droppable body-byte share.
+- Broader fixture coverage for host-tuned noisy path policy.
 
 Do not add:
 
