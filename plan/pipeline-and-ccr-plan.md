@@ -103,9 +103,12 @@ token rejection.
 Status: partially implemented. `compress_content_with_store()` and
 `route_with_store()` are store-injected compatibility paths while the old APIs
 delegate to `GlobalCcrStore`. `_report` variants return `PipelineReport` with
-redacted skip reasons, cheap bloat estimates, and applied-step metadata. The
-typed transform traits exist, but current compressors have not been converted
-into pipeline transforms yet.
+redacted skip reasons, cheap bloat estimates, and applied-step metadata.
+`run_typed_pipeline()` now gives new `ReformatTransform` and `OffloadTransform`
+implementations a typed execution path with no-op, reformat-only, offload-only,
+mixed, and CCR-retention-failure coverage. Current production compressors still
+mostly run through the compatibility router until they are converted
+incrementally.
 
 ### Step 3: Convert Existing Compressors Gradually
 

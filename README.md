@@ -198,6 +198,11 @@ helpers still use the process-global `GlobalCcrStore` for compatibility. New
 tests and host adapters can use `MemoryCcrStore` to assert CCR behavior without
 touching the global cache.
 
+`run_typed_pipeline` is the typed-transform entry point for new reducers. It
+runs lossless `ReformatTransform`s before CCR-backed `OffloadTransform`s and
+keeps the true original content available to offload transforms even after an
+intermediate reformat.
+
 Shell-producing hosts can use the `route*_shell_policy` variants or call
 `apply_shell_compaction_policy` with `ShellCompactionPolicy` before compacting
 command output. The default OpenHuman-facing path uses `AllowSafeInventory`:

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy)]
 pub struct PipelineInput<'a> {
     pub content: &'a str,
+    pub original_content: &'a str,
     pub content_kind: ContentKind,
     pub original_bytes: usize,
 }
@@ -14,6 +15,7 @@ impl<'a> From<&CompressInput<'a>> for PipelineInput<'a> {
     fn from(input: &CompressInput<'a>) -> Self {
         Self {
             content: input.content,
+            original_content: input.content,
             content_kind: input.kind,
             original_bytes: input.original_bytes,
         }

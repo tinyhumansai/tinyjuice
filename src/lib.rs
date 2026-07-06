@@ -70,7 +70,7 @@ pub use error::{TinyJuiceError, TinyJuiceResult};
 pub use observability::{ContextBreakdown, ContextBucket, ContextBucketKind};
 pub use pipeline::{
     OffloadOutput, OffloadTransform, PipelineInput, PipelineReport, PipelineSkipReason,
-    PipelineStep, ReformatTransform, TransformOutput,
+    PipelineStep, ReformatTransform, TransformOutput, TypedPipelineOutput, run_typed_pipeline,
 };
 pub use policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy};
 pub use reduce::reduce_execution_with_rules;

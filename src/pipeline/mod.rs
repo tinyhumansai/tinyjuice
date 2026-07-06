@@ -7,10 +7,12 @@
 
 mod estimate;
 mod report;
+mod runner;
 mod transform;
 
 pub use estimate::{BloatEstimate, BloatReason, estimate_bloat};
 pub use report::{PipelineReport, PipelineSkipReason, PipelineStep};
+pub use runner::{TypedPipelineOutput, run_typed_pipeline};
 pub use transform::{
     OffloadOutput, OffloadTransform, PipelineInput, ReformatTransform, TransformOutput,
 };
