@@ -86,6 +86,8 @@ Current behavior:
   before signal offload.
 - `LogTemplateTransform` exposes the template path as a typed reformat that
   runs without CCR.
+- `SignalLogTransform` exposes signal-preserving log compression as a typed
+  offload that emits output only with a retained CCR token.
 
 Add:
 
