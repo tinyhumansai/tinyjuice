@@ -239,7 +239,9 @@ and hex hashes with redacted findings only.
 `reduce_json_str` and `reduce_json_request` expose the library form of the
 `reduce-json` protocol. They accept direct `ToolExecutionInput` JSON or an
 `{ "input": ..., "options": ... }` envelope, reject malformed payloads with
-structured errors, and return stable serde-compatible response fields.
+structured errors, and return stable serde-compatible response fields. See
+[docs/reduce-json-protocol.md](docs/reduce-json-protocol.md) for the current
+request and response contract.
 
 `verify_rules` checks the same builtin/user/project rule layers as the loader
 without changing the lenient load contract. It reports parse errors, invalid
