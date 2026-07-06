@@ -190,14 +190,17 @@ Current behavior:
 - Optional ML text compressor through host callback.
 - ML disabled by default.
 - Generic fallback only runs for command output.
+- Deterministic extractive TextCrusher keeps verbatim spans scored by recency,
+  BM25 query relevance, identifiers, numbers, and error/salience markers.
+- Near-duplicate suppression uses word-term overlap.
+- `TextCrusherTransform` exposes the deterministic path as a typed offload
+  that emits output only with a retained CCR token.
+- Custom tag protection wraps ML compression so protected workflow tags must
+  survive byte-for-byte.
 
 Add:
 
-- Deterministic extractive TextCrusher.
-- Segment scoring by recency, BM25 query relevance, identifiers, numbers, and
-  error/salience markers.
-- Near-duplicate suppression with word shingles.
-- Tag protection around ML compression before enabling broader use.
+- Broader fixture coverage for TextCrusher scoring and ML tag protection.
 
 Do not add:
 
