@@ -127,7 +127,9 @@ invalid regex patterns, duplicate rule ids, and shadowed lower-priority rules
 across the same builtin/user/project roots as `load_rules()`, without changing
 the lenient runtime loader. Current diagnostics show the 100 built-ins parse
 without duplicate ids and include 11 counter regexes that Rust `regex` drops
-because they use lookahead. Fixture verification and discovery reports remain
+because they use lookahead. `verify_rule_fixtures()` now walks
+`*.fixture.json` examples, runs them through compiled rules, and reports pass
+counts, parse errors, and hash-only output mismatches. Discovery reports remain
 to be implemented.
 
 ## What Not To Do
