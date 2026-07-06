@@ -230,6 +230,12 @@ prefix costs such as system prompts and tool definitions from compressible
 conversation or memory history, and measured provider prompt usage can override
 rough local estimates without storing raw prompt text.
 
+`live_zone::*` exposes provider-neutral cache/live-zone contracts for hosts
+that need to preserve frozen prompt bytes exactly. Hosts provide byte ranges;
+TinyJuice validates mutable-block replacements, preserves the frozen prefix,
+and can detect volatile cache-hostile values such as UUIDs, timestamps, JWTs,
+and hex hashes with redacted findings only.
+
 Already-extracted web pages can be passed through `reduce_web_extract` or
 `reduce_web_extract_with_store`. The reducer removes inline base64 image blobs,
 preserves ordinary markdown image URLs, and stores omitted middle content in CCR
@@ -296,8 +302,8 @@ docs/references/     Design references and candidate strategy specs
 TinyJuice is pre-1.0. The router, command-rule engine, CCR recovery store,
 content detectors, several native compressors, the OpenHuman-style tool adapter,
 typed-pipeline primitives, injectable CCR store, report-producing router path,
-savings metadata, deterministic conversation helpers, and the analytics
-interface are implemented. Public API names may still move as OpenHuman
+savings metadata, deterministic conversation helpers, live-zone cache contracts,
+and the analytics interface are implemented. Public API names may still move as OpenHuman
 integration hardens.
 
 The project boundary is deliberate: keep the core crate small, do not add

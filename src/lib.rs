@@ -14,6 +14,7 @@ pub mod config;
 pub mod conversation;
 pub mod detect;
 mod error;
+pub mod live_zone;
 pub mod ml;
 pub mod observability;
 pub mod openhuman;
@@ -68,6 +69,10 @@ pub use conversation::{
 };
 pub use detect::detect_content_kind;
 pub use error::{TinyJuiceError, TinyJuiceResult};
+pub use live_zone::{
+    ByteRange, LiveZone, LiveZoneError, LiveZoneReplacement, LiveZoneRewrite, VolatileCacheFinding,
+    VolatileValueKind, detect_volatile_cache_values, splice_live_zone_replacements,
+};
 pub use observability::{ContextBreakdown, ContextBucket, ContextBucketKind};
 pub use pipeline::{
     OffloadOutput, OffloadTransform, PipelineInput, PipelineReport, PipelineSkipReason,
