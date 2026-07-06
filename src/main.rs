@@ -36,6 +36,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "ls" => run_ls(&args[1..]),
         "cat" => run_cat(&args[1..]),
         "stats" => run_stats(&args[1..]),
+        "doctor" => run_doctor(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -111,6 +112,156 @@ fn run_stats(args: &[String]) -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+fn run_doctor(args: &[String]) -> Result<(), String> {
+    let mut store_dir = None;
+    let mut fixtures_dir = PathBuf::from("tests/fixtures");
+    let mut check_fixtures = false;
+    let mut pretty = false;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--store-dir" => {
+                i += 1;
+                store_dir = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| "--store-dir requires a value".to_owned())?,
+                ));
+            }
+            "--fixtures" => {
+                check_fixtures = true;
+                if let Some(next) = args.get(i + 1)
+                    && !next.starts_with('-')
+                {
+                    i += 1;
+                    fixtures_dir = PathBuf::from(next);
+                }
+            }
+            "--no-fixtures" => check_fixtures = false,
+            "--pretty" => pretty = true,
+            "-h" | "--help" => {
+                print_doctor_usage();
+                return Ok(());
+            }
+            value => return Err(format!("unknown doctor option: {value}")),
+        }
+        i += 1;
+    }
+
+    let mut status = "disabled";
+    let mut checks = Vec::new();
+
+    let rules_report = verify_rules(&LoadRuleOptions {
+        exclude_user: true,
+        exclude_project: true,
+        ..Default::default()
+    });
+    let rules_status = if !rules_report.parse_errors.is_empty()
+        || !rules_report.duplicate_ids.is_empty()
+    {
+        "broken"
+    } else if !rules_report.invalid_regexes.is_empty() || !rules_report.shadowed_rules.is_empty() {
+        "warn"
+    } else {
+        "ok"
+    };
+    status = merge_doctor_status(status, rules_status);
+    checks.push(serde_json::json!({
+        "name": "rules",
+        "status": rules_status,
+        "descriptors": rules_report.descriptors_seen,
+        "valid": rules_report.valid_rules,
+        "final": rules_report.final_rules,
+        "parseErrors": rules_report.parse_errors.len(),
+        "invalidRegexes": rules_report.invalid_regexes.len(),
+        "duplicateIds": rules_report.duplicate_ids.len(),
+        "shadowed": rules_report.shadowed_rules.len(),
+    }));
+
+    if check_fixtures {
+        let rules = load_builtin_rules();
+        let fixture_report = verify_rule_fixtures(&fixtures_dir, &rules);
+        let fixture_status = if fixture_report.is_clean() {
+            "ok"
+        } else {
+            "broken"
+        };
+        status = merge_doctor_status(status, fixture_status);
+        checks.push(serde_json::json!({
+            "name": "fixtures",
+            "status": fixture_status,
+            "dir": fixtures_dir.to_string_lossy(),
+            "seen": fixture_report.fixtures_seen,
+            "passed": fixture_report.passed,
+            "parseErrors": fixture_report.parse_errors.len(),
+            "failures": fixture_report.failures.len(),
+        }));
+    } else {
+        checks.push(serde_json::json!({
+            "name": "fixtures",
+            "status": "disabled",
+        }));
+    }
+
+    match store_dir {
+        Some(store_dir) => match read_ccr_store_inventory(&store_dir) {
+            Ok(inventory) => {
+                let bytes = inventory
+                    .entries
+                    .iter()
+                    .map(|entry| entry.bytes)
+                    .sum::<u64>();
+                status = merge_doctor_status(status, "ok");
+                checks.push(serde_json::json!({
+                    "name": "ccrDiskStore",
+                    "status": "ok",
+                    "storeDir": store_dir.to_string_lossy(),
+                    "tokens": inventory.entries.len(),
+                    "bytes": bytes,
+                    "ignoredEntries": inventory.ignored_entries,
+                }));
+            }
+            Err(error) => {
+                status = merge_doctor_status(status, "broken");
+                checks.push(serde_json::json!({
+                    "name": "ccrDiskStore",
+                    "status": "broken",
+                    "storeDir": store_dir.to_string_lossy(),
+                    "error": error,
+                }));
+            }
+        },
+        None => checks.push(serde_json::json!({
+            "name": "ccrDiskStore",
+            "status": "disabled",
+        })),
+    }
+
+    let report = serde_json::json!({
+        "status": status,
+        "checks": checks,
+    });
+    if pretty {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report)
+                .map_err(|error| format!("failed to serialize doctor report: {error}"))?
+        );
+    } else {
+        println!(
+            "{}",
+            serde_json::to_string(&report)
+                .map_err(|error| format!("failed to serialize doctor report: {error}"))?
+        );
+    }
+
+    if status == "broken" {
+        Err("doctor found broken checks".to_owned())
+    } else {
+        Ok(())
+    }
 }
 
 fn run_cat(args: &[String]) -> Result<(), String> {
@@ -270,6 +421,23 @@ fn read_ccr_store_inventory(store_dir: &Path) -> Result<CcrStoreInventory, Strin
         entries,
         ignored_entries,
     })
+}
+
+fn merge_doctor_status(current: &'static str, next: &'static str) -> &'static str {
+    if doctor_status_rank(next) > doctor_status_rank(current) {
+        next
+    } else {
+        current
+    }
+}
+
+fn doctor_status_rank(status: &str) -> u8 {
+    match status {
+        "broken" => 3,
+        "warn" => 2,
+        "ok" => 1,
+        _ => 0,
+    }
 }
 
 fn run_wrap(args: &[String]) -> Result<(), String> {
@@ -651,6 +819,7 @@ fn print_usage() {
     println!("  ls           List tokens from an explicit CCR disk store");
     println!("  cat          Print a token from an explicit CCR disk store");
     println!("  stats        Report metadata-only CCR disk store stats");
+    println!("  doctor       Report TinyJuice health checks");
 }
 
 fn print_reduce_usage() {
@@ -688,4 +857,8 @@ fn print_cat_usage() {
 
 fn print_stats_usage() {
     println!("Usage: tinyjuice stats --store-dir DIR [--pretty]");
+}
+
+fn print_doctor_usage() {
+    println!("Usage: tinyjuice doctor [--pretty] [--fixtures [dir]] [--store-dir DIR]");
 }

@@ -318,3 +318,57 @@ fn stats_reports_metadata_for_explicit_store_dir() {
     let stdout = String::from_utf8(output.stdout).expect("utf8 stdout");
     assert!(!stdout.contains("ignored raw content"), "{stdout}");
 }
+
+#[test]
+fn doctor_reports_health_checks_without_fixtures_by_default() {
+    let output = tinyjuice()
+        .args(["doctor"])
+        .output()
+        .expect("run tinyjuice doctor");
+
+    assert!(output.status.success(), "{output:#?}");
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).expect("doctor json");
+    assert!(
+        matches!(response["status"].as_str(), Some("ok" | "warn")),
+        "{response:#?}"
+    );
+
+    let checks = response["checks"].as_array().expect("checks array");
+    let rules = checks
+        .iter()
+        .find(|check| check["name"] == "rules")
+        .expect("rules check");
+    assert!(matches!(rules["status"].as_str(), Some("ok" | "warn")));
+    assert_eq!(rules["descriptors"], 101);
+
+    let fixtures = checks
+        .iter()
+        .find(|check| check["name"] == "fixtures")
+        .expect("fixtures check");
+    assert_eq!(fixtures["status"], "disabled");
+}
+
+#[test]
+fn doctor_reports_broken_store_dir() {
+    let missing_dir = tempfile::tempdir()
+        .expect("temp parent")
+        .path()
+        .join("missing");
+    let missing_dir = missing_dir.to_string_lossy().into_owned();
+
+    let output = tinyjuice()
+        .args(["doctor", "--store-dir", &missing_dir])
+        .output()
+        .expect("run tinyjuice doctor");
+
+    assert!(!output.status.success(), "{output:#?}");
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).expect("doctor json");
+    assert_eq!(response["status"], "broken");
+    let checks = response["checks"].as_array().expect("checks array");
+    let store = checks
+        .iter()
+        .find(|check| check["name"] == "ccrDiskStore")
+        .expect("store check");
+    assert_eq!(store["status"], "broken");
+    assert_eq!(store["storeDir"], missing_dir);
+}

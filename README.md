@@ -186,6 +186,7 @@ cargo run -- wrap -- cargo test
 cargo run -- ls --store-dir .tokenjuice/ccr
 cargo run -- cat --store-dir .tokenjuice/ccr <token>
 cargo run -- stats --store-dir .tokenjuice/ccr
+cargo run -- doctor --store-dir .tokenjuice/ccr
 ```
 
 Run hot-path benchmarks:
@@ -216,6 +217,11 @@ tier via `--store-dir`; they do not imply access to another process's in-memory
 cache. `cat` supports `--lines START:END` and `--bytes START:END` ranges.
 `stats` reports metadata-only counts and byte totals without reading token
 content.
+
+The CLI `doctor` command emits structured health JSON using `ok`, `warn`,
+`broken`, and `disabled` statuses. It verifies built-in rule health by default,
+can include fixture checks with `--fixtures [dir]`, and can inspect an explicit
+CCR disk tier with `--store-dir`.
 
 `run_typed_pipeline` is the typed-transform entry point for new reducers. It
 runs lossless `ReformatTransform`s before CCR-backed `OffloadTransform`s and

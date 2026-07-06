@@ -124,7 +124,7 @@ Implementation guidance:
 
 Status: partially implemented. The crate now builds a dependency-free
 `tinyjuice` binary with `reduce`, `reduce-json`, `verify`, `discover`, `wrap`,
-`ls`, `cat`, and `stats` commands.
+`ls`, `cat`, `stats`, and `doctor` commands.
 `reduce` accepts stdin or one file plus command metadata flags and prints
 reduced inline text. `reduce-json` accepts the documented protocol payload from
 stdin or one file, prints response JSON, and exits non-zero with structured
@@ -135,8 +135,10 @@ metadata-only fallback family counts. `wrap` runs a command after `--`, reduces
 captured stdout/stderr with exit-code metadata, and exits with the wrapped
 command's status. `ls`, `cat`, and `stats` operate on an explicit CCR disk
 tier via `--store-dir`; `cat` supports line and byte ranges, while `stats`
-reports metadata-only token counts and byte totals. Doctor and installers
-remain future CLI slices.
+reports metadata-only token counts and byte totals. `doctor` emits structured
+health JSON with `ok`, `warn`, `broken`, and `disabled` checks for built-in
+rules, optional fixture verification, and optional explicit CCR disk store
+inspection. Host installers remain future CLI slices.
 
 ## P1: Rule Validation And Discovery
 
