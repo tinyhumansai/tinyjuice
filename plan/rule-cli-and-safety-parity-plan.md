@@ -122,13 +122,14 @@ Implementation guidance:
 - Pass through raw content on reducer failure unless the CLI command explicitly
   asks for validation.
 
-Status: first slice implemented. The crate now builds a dependency-free
-`tinyjuice` binary with `reduce` and `reduce-json` commands. `reduce` accepts
-stdin or one file plus command metadata flags and prints reduced inline text.
-`reduce-json` accepts the documented protocol payload from stdin or one file,
-prints response JSON, and exits non-zero with structured error JSON on invalid
-payloads. `verify`, `wrap`, retrieval, stats, discovery, doctor, and installers
-remain future CLI slices.
+Status: partially implemented. The crate now builds a dependency-free
+`tinyjuice` binary with `reduce`, `reduce-json`, and `verify` commands.
+`reduce` accepts stdin or one file plus command metadata flags and prints
+reduced inline text. `reduce-json` accepts the documented protocol payload from
+stdin or one file, prints response JSON, and exits non-zero with structured
+error JSON on invalid payloads. `verify --rules --fixtures` reports rule and
+fixture diagnostics and exits non-zero for hard verification failures. `wrap`,
+retrieval, stats, discovery, doctor, and installers remain future CLI slices.
 
 ## P1: Rule Validation And Discovery
 

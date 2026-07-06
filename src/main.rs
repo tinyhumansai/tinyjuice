@@ -1,10 +1,11 @@
 use std::fs;
 use std::io::{self, Read, Write};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 use tinyjuice::{
-    ReduceOptions, ToolExecutionInput, load_builtin_rules, reduce_execution_with_rules,
-    reduce_json_str,
+    LoadRuleOptions, ReduceOptions, ToolExecutionInput, load_builtin_rules,
+    reduce_execution_with_rules, reduce_json_str, verify_rule_fixtures, verify_rules,
 };
 
 fn main() -> ExitCode {
@@ -26,6 +27,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
     match command {
         "reduce" => run_reduce(&args[1..]),
         "reduce-json" => run_reduce_json(&args[1..]),
+        "verify" => run_verify(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -34,6 +36,79 @@ fn run(args: Vec<String>) -> Result<(), String> {
             print_usage();
             Err(format!("unknown command: {other}"))
         }
+    }
+}
+
+fn run_verify(args: &[String]) -> Result<(), String> {
+    let mut check_rules = false;
+    let mut check_fixtures = false;
+    let mut fixtures_dir = PathBuf::from("tests/fixtures");
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--rules" => check_rules = true,
+            "--fixtures" => {
+                check_fixtures = true;
+                if let Some(next) = args.get(i + 1)
+                    && !next.starts_with('-')
+                {
+                    i += 1;
+                    fixtures_dir = PathBuf::from(next);
+                }
+            }
+            "-h" | "--help" => {
+                print_verify_usage();
+                return Ok(());
+            }
+            value => return Err(format!("unknown verify option: {value}")),
+        }
+        i += 1;
+    }
+
+    if !check_rules && !check_fixtures {
+        check_rules = true;
+        check_fixtures = true;
+    }
+
+    let mut failed = false;
+    if check_rules {
+        let report = verify_rules(&LoadRuleOptions {
+            exclude_user: true,
+            exclude_project: true,
+            ..Default::default()
+        });
+        println!(
+            "rules: descriptors={} valid={} final={} parse_errors={} invalid_regexes={} duplicate_ids={} shadowed={}",
+            report.descriptors_seen,
+            report.valid_rules,
+            report.final_rules,
+            report.parse_errors.len(),
+            report.invalid_regexes.len(),
+            report.duplicate_ids.len(),
+            report.shadowed_rules.len()
+        );
+        failed |= !report.parse_errors.is_empty() || !report.duplicate_ids.is_empty();
+    }
+
+    if check_fixtures {
+        let rules = load_builtin_rules();
+        let report = verify_rule_fixtures(&fixtures_dir, &rules);
+        println!(
+            "fixtures: dir={} seen={} passed={} parse_errors={} failures={}",
+            fixtures_dir.display(),
+            report.fixtures_seen,
+            report.passed,
+            report.parse_errors.len(),
+            report.failures.len()
+        );
+        failed |= !report.is_clean();
+    }
+
+    if failed {
+        Err("verification failed".to_owned())
+    } else {
+        Ok(())
     }
 }
 
@@ -191,6 +266,7 @@ fn print_usage() {
     println!("Commands:");
     println!("  reduce       Reduce plain tool output from a file or stdin");
     println!("  reduce-json  Reduce a JSON protocol payload from a file or stdin");
+    println!("  verify       Verify built-in rules and/or reducer fixtures");
 }
 
 fn print_reduce_usage() {
@@ -201,4 +277,8 @@ fn print_reduce_usage() {
 
 fn print_reduce_json_usage() {
     println!("Usage: tinyjuice reduce-json [--pretty] [path|-]");
+}
+
+fn print_verify_usage() {
+    println!("Usage: tinyjuice verify [--rules] [--fixtures [dir]]");
 }
