@@ -67,6 +67,12 @@ Acceptance:
 - `find . -exec cat {} \;` stays raw.
 - Mixed shell sequences stay raw unless explicitly allowed.
 
+Status: implemented in the reducer and router policy paths. The default
+`allow-safe-inventory` policy keeps exact file-content reads raw, rejects mixed
+shell sequences and unsafe inventory actions, and allows safe inventory
+pipelines such as `find . -type f | sort | head`. The rule fixture suite now
+covers that safe-inventory path through the reducer.
+
 ## P0: Reduce-Json Protocol
 
 Plan:

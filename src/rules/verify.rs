@@ -683,8 +683,8 @@ mod tests {
         let rules = load_builtin_rules();
         let report = verify_rule_fixtures(&fixtures_dir, &rules);
 
-        assert_eq!(report.fixtures_seen, 4, "{report:#?}");
-        assert_eq!(report.passed, 4, "{report:#?}");
+        assert_eq!(report.fixtures_seen, 5, "{report:#?}");
+        assert_eq!(report.passed, 5, "{report:#?}");
         assert!(report.parse_errors.is_empty(), "{report:#?}");
         assert!(report.failures.is_empty(), "{report:#?}");
         assert!(report.is_clean());

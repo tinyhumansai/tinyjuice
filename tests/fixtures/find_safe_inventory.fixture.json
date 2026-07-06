@@ -1,0 +1,9 @@
+{
+  "description": "Safe inventory pipeline can compact shell find output through generic fallback",
+  "input": {
+    "toolName": "bash",
+    "command": "find . -type f | sort | head -n 20",
+    "stdout": "./src/generated/module_0.rs\n./src/generated/module_1.rs\n./src/generated/module_2.rs\n./src/generated/module_3.rs\n./src/generated/module_4.rs\n./src/generated/module_5.rs\n./src/generated/module_6.rs\n./src/generated/module_7.rs\n./src/generated/module_8.rs\n./src/generated/module_9.rs\n./src/generated/module_10.rs\n./src/generated/module_11.rs\n./src/generated/module_12.rs\n./src/generated/module_13.rs\n./src/generated/module_14.rs\n./src/generated/module_15.rs\n./src/generated/module_16.rs\n./src/generated/module_17.rs\n./src/generated/module_18.rs\n./src/generated/module_19.rs"
+  },
+  "expectedOutput": "./src/generated/module_0.rs\n./src/generated/module_1.rs\n./src/generated/module_2.rs\n./src/generated/module_3.rs\n./src/generated/module_4.rs\n./src/generated/module_5.rs\n./src/generated/module_6.rs\n./src/generated/module_7.rs\n... 4 lines omitted ...\n./src/generated/module_12.rs\n./src/generated/module_13.rs\n./src/generated/module_14.rs\n./src/generated/module_15.rs\n./src/generated/module_16.rs\n./src/generated/module_17.rs\n./src/generated/module_18.rs\n./src/generated/module_19.rs"
+}
