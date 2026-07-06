@@ -132,7 +132,8 @@ pub fn compress_with_query(content: &str, query: Option<&str>) -> Option<Compres
 
     let flat_rows = flatten_rows(array)?;
     let analysis = analyze_flat_rows(&flat_rows);
-    let columns = analysis.columns.clone();
+    let table_shape = table_shape(&flat_rows, &analysis);
+    let columns = table_shape.columns.clone();
     if columns.len() < 2 {
         return None;
     }
@@ -158,6 +159,7 @@ pub fn compress_with_query(content: &str, query: Option<&str>) -> Option<Compres
         rows.len(),
         columns.len()
     );
+    write_constants_line(&mut out, &table_shape.constants);
     let _ = writeln!(out, "{}", columns.join(" | "));
 
     if plan.lossy {
@@ -258,6 +260,14 @@ fn compress_shape_buckets(
         .iter()
         .map(|rows| analyze_flat_rows(rows))
         .collect::<Vec<_>>();
+    let table_shapes = bucket_rows
+        .iter()
+        .zip(&analyses)
+        .map(|(rows, analysis)| table_shape(rows, analysis))
+        .collect::<Vec<_>>();
+    if table_shapes.iter().any(|shape| shape.columns.len() < 2) {
+        return None;
+    }
     let plans = bucket_rows
         .iter()
         .zip(&analyses)
@@ -270,7 +280,8 @@ fn compress_shape_buckets(
     out.push_str("]\n");
 
     for (bucket_index, bucket) in buckets.iter().enumerate() {
-        let columns = &analyses[bucket_index].columns;
+        let table_shape = &table_shapes[bucket_index];
+        let columns = &table_shape.columns;
         let plan = &plans[bucket_index];
         let _ = writeln!(
             out,
@@ -279,6 +290,7 @@ fn compress_shape_buckets(
             bucket.indices.len(),
             columns.len()
         );
+        write_constants_line(&mut out, &table_shape.constants);
         let _ = writeln!(out, "__row | {}", columns.join(" | "));
 
         if plan.lossy {
@@ -351,6 +363,53 @@ fn write_bucket_row(out: &mut String, rows: &[FlatRow], row_index: usize, column
         .map(|col| row.values.get(col).map(render_cell).unwrap_or_default())
         .collect::<Vec<_>>();
     let _ = writeln!(out, "{row_index} | {}", cells.join(" | "));
+}
+
+#[derive(Debug, Clone)]
+struct TableShape {
+    columns: Vec<String>,
+    constants: Vec<(String, String)>,
+}
+
+fn table_shape(rows: &[FlatRow], analysis: &JsonAnalysis) -> TableShape {
+    let mut constants = Vec::new();
+    let mut columns = Vec::new();
+    for field in &analysis.fields {
+        if field.constant {
+            if let Some(value) = rows
+                .first()
+                .and_then(|row| row.values.get(&field.key))
+                .map(render_cell)
+            {
+                constants.push((field.key.clone(), value));
+            } else {
+                columns.push(field.key.clone());
+            }
+        } else {
+            columns.push(field.key.clone());
+        }
+    }
+
+    if columns.len() < 2 {
+        TableShape {
+            columns: analysis.columns.clone(),
+            constants: Vec::new(),
+        }
+    } else {
+        TableShape { columns, constants }
+    }
+}
+
+fn write_constants_line(out: &mut String, constants: &[(String, String)]) {
+    if constants.is_empty() {
+        return;
+    }
+    let rendered = constants
+        .iter()
+        .map(|(key, value)| format!("{key}={value}"))
+        .collect::<Vec<_>>()
+        .join(" | ");
+    let _ = writeln!(out, "constants: {rendered}");
 }
 
 /// Analyze a JSON array-of-objects without rendering it.
@@ -1118,6 +1177,27 @@ mod tests {
     }
 
     #[test]
+    fn constant_columns_are_hoisted_out_of_rows() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","region":"us-east","latency":{}}}"#,
+                10 + i
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(!c.lossy);
+        assert!(c.text.contains("constants: region=us-east | status=active"));
+        assert!(c.text.contains("id | latency"), "{}", c.text);
+        assert!(!c.text.contains("id | latency | region"), "{}", c.text);
+        assert_eq!(c.text.matches("active").count(), 1, "{}", c.text);
+        assert_eq!(c.text.matches("us-east").count(), 1, "{}", c.text);
+    }
+
+    #[test]
     fn query_anchor_row_survives_dropped_middle() {
         let mut rows = Vec::new();
         for i in 0..140 {
@@ -1479,16 +1559,13 @@ mod tests {
         assert!(c.text.contains("[bucket 1:"), "{}", c.text);
         assert!(c.text.contains("[bucket 2:"), "{}", c.text);
         assert!(c.text.contains("[bucket 3:"), "{}", c.text);
-        assert!(c.text.contains("__row | event | ip | success | user_id"));
-        assert!(
-            c.text
-                .contains("__row | event | region | service | version")
-        );
-        assert!(c.text.contains("__row | event | name | unit | value"));
-        assert!(
-            c.text
-                .contains("31 | deploy | us-east | api-10 | 2026.10.0")
-        );
+        assert!(c.text.contains("constants: event=login | success=true"));
+        assert!(c.text.contains("constants: event=deploy | region=us-east"));
+        assert!(c.text.contains("constants: event=metric | unit=pct"));
+        assert!(c.text.contains("__row | ip | user_id"));
+        assert!(c.text.contains("__row | service | version"));
+        assert!(c.text.contains("__row | name | value"));
+        assert!(c.text.contains("31 | api-10 | 2026.10.0"));
     }
 
     #[test]
@@ -1515,8 +1592,10 @@ mod tests {
         assert!(c.text.contains("[json bucketed tables:"), "{}", c.text);
         assert!(c.text.contains("exact original via retrieve footer"));
         assert!(c.text.contains("row(s) omitted in bucket"), "{}", c.text);
-        assert!(c.text.contains("0 | login"), "{}", c.text);
-        assert!(c.text.contains("179 | metric"), "{}", c.text);
+        assert!(c.text.contains("constants: event=login | success=true"));
+        assert!(c.text.contains("0 | 10.0.0.0 | user-0"), "{}", c.text);
+        assert!(c.text.contains("constants: event=metric | unit=pct"));
+        assert!(c.text.contains("179 | cpu-89 | 129"), "{}", c.text);
     }
 
     #[test]
