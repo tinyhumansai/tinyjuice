@@ -8,14 +8,85 @@ use async_trait::async_trait;
 use std::collections::HashSet;
 
 use super::Compressor;
+use crate::cache::CcrStore;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
 use crate::relevance::Bm25Corpus;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 pub const MIN_SEGMENTS: usize = 12;
 pub const TARGET_RATIO: f32 = 0.40;
 const MIN_TARGET_CHARS: usize = 800;
 
 pub struct TextCompressor;
+
+/// Typed offload transform for deterministic extractive TextCrusher.
+#[derive(Debug, Clone)]
+pub struct TextCrusherTransform {
+    options: CompressOptions,
+    query: Option<String>,
+}
+
+impl TextCrusherTransform {
+    pub fn new(options: CompressOptions) -> Self {
+        Self {
+            options,
+            query: None,
+        }
+    }
+
+    pub fn with_query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+
+    pub fn options(&self) -> &CompressOptions {
+        &self.options
+    }
+
+    pub fn query(&self) -> Option<&str> {
+        self.query.as_deref()
+    }
+}
+
+impl Default for TextCrusherTransform {
+    fn default() -> Self {
+        Self::new(CompressOptions::default())
+    }
+}
+
+impl OffloadTransform for TextCrusherTransform {
+    fn name(&self) -> &'static str {
+        "textcrusher"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::PlainText {
+            return 0.0;
+        }
+        let score = f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0;
+        if self
+            .query
+            .as_deref()
+            .is_some_and(|query| !query.trim().is_empty())
+        {
+            score.max(0.1)
+        } else {
+            score
+        }
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::PlainText {
+            return None;
+        }
+        let compacted = compress_textcrusher(input.content, self.query(), &self.options)?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::TextCrusher,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for TextCompressor {
@@ -620,6 +691,8 @@ mod tests {
     use super::*;
     use std::sync::Arc;
 
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::pipeline::PipelineInput;
     use crate::types::CompressOptions;
 
     fn opts() -> CompressOptions {
@@ -786,6 +859,56 @@ mod tests {
         assert_eq!(first, second);
         assert!(first.lines().count() < 20, "{first}");
         assert!(first.len() < input.len());
+    }
+
+    #[test]
+    fn textcrusher_transform_requires_retained_ccr() {
+        let mut input = String::new();
+        for i in 0..40 {
+            input.push_str(&format!(
+                "ordinary deployment progress line {i} with routine status information.\n\n"
+            ));
+        }
+        input.push_str("ERROR sync.worker.v2 failed for REQUEST_ID 9F42 after retry 17.\n\n");
+        for i in 40..80 {
+            input.push_str(&format!(
+                "ordinary deployment progress line {i} with routine status information.\n\n"
+            ));
+        }
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::PlainText,
+            original_bytes: input.len(),
+        };
+        let transform = TextCrusherTransform::new(opts()).with_query("sync.worker.v2 REQUEST_ID");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained textcrusher output");
+
+        assert_eq!(out.kind(), CompressorKind::TextCrusher);
+        assert!(out.text().contains("ERROR sync.worker.v2 failed"));
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn textcrusher_transform_skips_non_plain_input() {
+        let input = PipelineInput {
+            content: "diff --git a/a b/a",
+            original_content: "diff --git a/a b/a",
+            content_kind: ContentKind::Diff,
+            original_bytes: "diff --git a/a b/a".len(),
+        };
+        let transform = TextCrusherTransform::default();
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 
     #[test]
