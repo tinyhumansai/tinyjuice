@@ -10,8 +10,10 @@ use async_trait::async_trait;
 use std::fmt::Write as _;
 
 use super::Compressor;
+use crate::cache::CcrStore;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
 use crate::text::ansi::strip_ansi;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Context lines kept on each side of a changed run before collapsing.
 pub const CONTEXT_ANCHOR: usize = 3;
@@ -55,6 +57,52 @@ impl Default for DiffNoiseOptions {
                 .collect(),
             drop_whitespace_only_hunks: false,
         }
+    }
+}
+
+/// Typed offload transform for low-value diff hunks.
+pub struct DiffNoiseTransform {
+    options: DiffNoiseOptions,
+}
+
+impl DiffNoiseTransform {
+    pub fn new(options: DiffNoiseOptions) -> Self {
+        Self { options }
+    }
+
+    pub fn options(&self) -> &DiffNoiseOptions {
+        &self.options
+    }
+}
+
+impl Default for DiffNoiseTransform {
+    fn default() -> Self {
+        Self::new(DiffNoiseOptions::default())
+    }
+}
+
+impl OffloadTransform for DiffNoiseTransform {
+    fn name(&self) -> &'static str {
+        "diff_noise"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Diff {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Diff {
+            return None;
+        }
+        let compacted = compress_with_options(input.content, &self.options)?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Diff,
+            store.put(input.original_content),
+        )
     }
 }
 
@@ -285,6 +333,8 @@ fn diff_git_paths(diff_git_line: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::types::ContentKind;
 
     #[test]
     fn keeps_changed_lines_collapses_context() {
@@ -465,6 +515,49 @@ mod tests {
         assert!(out.contains("41"), "{out}");
         assert!(out.contains("42"), "{out}");
         assert!(!out.contains("diff-noise hunk omitted"), "{out}");
+    }
+
+    #[test]
+    fn diff_noise_transform_requires_retained_ccr() {
+        let mut s = String::from("diff --git a/Cargo.lock b/Cargo.lock\n@@ -1,80 +1,80 @@\n");
+        for i in 0..80 {
+            let _ = writeln!(s, "+ new dep entry {i}");
+        }
+        for i in 0..80 {
+            let _ = writeln!(s, "- old dep entry {i}");
+        }
+        let input = PipelineInput {
+            content: &s,
+            original_content: &s,
+            content_kind: ContentKind::Diff,
+            original_bytes: s.len(),
+        };
+        let transform = DiffNoiseTransform::default();
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform.apply(&input, &store).expect("retained offload");
+
+        assert_eq!(out.kind(), CompressorKind::Diff);
+        assert!(out.text().contains("reason=lockfile"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(s.as_str()));
+    }
+
+    #[test]
+    fn diff_noise_transform_skips_non_diff_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = DiffNoiseTransform::default();
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 
     #[test]
