@@ -240,6 +240,8 @@ and hex hashes with redacted findings only.
 without changing the lenient load contract. It reports parse errors, invalid
 regex patterns, duplicate rule IDs, and shadowed lower-priority rules so CLI
 or host diagnostics can fail loudly while runtime loading remains compatible.
+`verify_rule_fixtures` runs recorded `*.fixture.json` examples through compiled
+rules and reports pass counts, parse errors, and hash-only output mismatches.
 
 Already-extracted web pages can be passed through `reduce_web_extract` or
 `reduce_web_extract_with_store`. The reducer removes inline base64 image blobs,

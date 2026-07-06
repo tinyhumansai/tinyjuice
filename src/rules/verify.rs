@@ -1,9 +1,11 @@
 use super::builtin::BUILTIN_RULE_JSONS;
 use super::loader::{LoadRuleOptions, list_rule_files, project_rules_root, user_rules_root};
-use crate::types::{JsonRule, RuleOrigin};
+use crate::reduce::reduce_execution_with_rules;
+use crate::types::{CompiledRule, JsonRule, RuleFixture, RuleOrigin};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -66,6 +68,41 @@ pub struct RuleDescriptorRef {
     pub path: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleFixtureVerificationReport {
+    pub fixtures_seen: usize,
+    pub passed: usize,
+    pub parse_errors: Vec<RuleFixtureParseError>,
+    pub failures: Vec<RuleFixtureFailure>,
+}
+
+impl RuleFixtureVerificationReport {
+    pub fn is_clean(&self) -> bool {
+        self.parse_errors.is_empty() && self.failures.is_empty()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleFixtureParseError {
+    pub path: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleFixtureFailure {
+    pub path: String,
+    pub family: String,
+    #[serde(default)]
+    pub matched_rule_id: Option<String>,
+    pub expected_sha256: String,
+    pub actual_sha256: String,
+    pub expected_bytes: usize,
+    pub actual_bytes: usize,
+}
+
 #[derive(Debug, Clone)]
 struct RuleDescriptor {
     source: RuleOrigin,
@@ -112,6 +149,97 @@ pub fn verify_rules(opts: &LoadRuleOptions) -> RuleVerificationReport {
         duplicate_ids,
         shadowed_rules,
     }
+}
+
+/// Verify recorded rule fixtures without exposing raw fixture input or output.
+pub fn verify_rule_fixtures(
+    fixtures_dir: impl AsRef<Path>,
+    rules: &[CompiledRule],
+) -> RuleFixtureVerificationReport {
+    let mut report = RuleFixtureVerificationReport {
+        fixtures_seen: 0,
+        passed: 0,
+        parse_errors: Vec::new(),
+        failures: Vec::new(),
+    };
+
+    for path in list_fixture_files(fixtures_dir.as_ref()) {
+        report.fixtures_seen += 1;
+        let path_label = path.display().to_string();
+        match read_fixture(&path) {
+            Ok(fixture) => verify_fixture(&path_label, fixture, rules, &mut report),
+            Err(error) => report.parse_errors.push(RuleFixtureParseError {
+                path: path_label,
+                error,
+            }),
+        }
+    }
+
+    report
+}
+
+fn list_fixture_files(root: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    collect_fixture_files(root, &mut out);
+    out.sort();
+    out
+}
+
+fn collect_fixture_files(root: &Path, out: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(root) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_fixture_files(&path, out);
+        } else if path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.ends_with(".fixture.json"))
+        {
+            out.push(path);
+        }
+    }
+}
+
+fn read_fixture(path: &Path) -> Result<RuleFixture, String> {
+    let raw = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
+    serde_json::from_str(&raw).map_err(|error| error.to_string())
+}
+
+fn verify_fixture(
+    path: &str,
+    fixture: RuleFixture,
+    rules: &[CompiledRule],
+    report: &mut RuleFixtureVerificationReport,
+) {
+    let expected = fixture.expected_output.trim_end();
+    let options = fixture.options.unwrap_or_default();
+    let result = reduce_execution_with_rules(fixture.input, rules, &options);
+    let actual = result.inline_text.trim_end();
+
+    if actual == expected {
+        report.passed += 1;
+        return;
+    }
+
+    report.failures.push(RuleFixtureFailure {
+        path: path.to_owned(),
+        family: result.classification.family,
+        matched_rule_id: result.classification.matched_reducer,
+        expected_sha256: sha256_hex(expected),
+        actual_sha256: sha256_hex(actual),
+        expected_bytes: expected.len(),
+        actual_bytes: actual.len(),
+    });
+}
+
+fn sha256_hex(text: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(text.as_bytes());
+    hex::encode(hasher.finalize())
 }
 
 fn collect_builtin_descriptors(
@@ -316,10 +444,15 @@ fn ref_for_descriptor(descriptor: &RuleDescriptor) -> RuleDescriptorRef {
 
 #[cfg(test)]
 mod tests {
+    use super::super::load_builtin_rules;
     use super::*;
 
     fn write_rule(dir: &Path, filename: &str, json: &str) {
         std::fs::write(dir.join(filename), json).expect("write rule");
+    }
+
+    fn write_fixture(dir: &Path, filename: &str, json: &str) {
+        std::fs::write(dir.join(filename), json).expect("write fixture");
     }
 
     #[test]
@@ -428,5 +561,76 @@ mod tests {
             .expect("git/status shadowing reported");
         assert_eq!(shadowed.active.source, RuleOrigin::Project);
         assert_eq!(shadowed.shadowed.len(), 2);
+    }
+
+    #[test]
+    fn fixture_verifier_reports_existing_fixtures_pass() {
+        let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
+        assert!(
+            fixtures_dir.is_dir(),
+            "missing fixture directory {}",
+            fixtures_dir.display()
+        );
+
+        let rules = load_builtin_rules();
+        let report = verify_rule_fixtures(&fixtures_dir, &rules);
+
+        assert_eq!(report.fixtures_seen, 3, "{report:#?}");
+        assert_eq!(report.passed, 3, "{report:#?}");
+        assert!(report.parse_errors.is_empty(), "{report:#?}");
+        assert!(report.failures.is_empty(), "{report:#?}");
+        assert!(report.is_clean());
+    }
+
+    #[test]
+    fn fixture_verifier_reports_hash_only_mismatch() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        write_fixture(
+            dir.path(),
+            "mismatch.fixture.json",
+            r#"{
+                "description": "non-sensitive mismatch marker",
+                "input": {
+                    "toolName": "bash",
+                    "argv": ["git", "status"],
+                    "stdout": "On branch main\n\nChanges not staged for commit:\n\tmodified:   src/foo.rs\n"
+                },
+                "expectedOutput": "wrong compact text"
+            }"#,
+        );
+
+        let rules = load_builtin_rules();
+        let report = verify_rule_fixtures(dir.path(), &rules);
+
+        assert_eq!(report.fixtures_seen, 1, "{report:#?}");
+        assert_eq!(report.passed, 0, "{report:#?}");
+        assert!(report.parse_errors.is_empty(), "{report:#?}");
+        assert_eq!(report.failures.len(), 1, "{report:#?}");
+
+        let failure = &report.failures[0];
+        assert_eq!(failure.family, "git-status");
+        assert_eq!(failure.matched_rule_id.as_deref(), Some("git/status"));
+        assert_ne!(failure.expected_sha256, failure.actual_sha256);
+        assert_eq!(failure.expected_bytes, "wrong compact text".len());
+
+        let diagnostic = format!("{failure:?}");
+        assert!(!diagnostic.contains("wrong compact text"));
+        assert!(!diagnostic.contains("On branch main"));
+        assert!(!diagnostic.contains("src/foo.rs"));
+    }
+
+    #[test]
+    fn fixture_verifier_reports_parse_errors() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        write_fixture(dir.path(), "bad.fixture.json", "{ not json }");
+
+        let rules = load_builtin_rules();
+        let report = verify_rule_fixtures(dir.path(), &rules);
+
+        assert_eq!(report.fixtures_seen, 1, "{report:#?}");
+        assert_eq!(report.passed, 0, "{report:#?}");
+        assert_eq!(report.parse_errors.len(), 1, "{report:#?}");
+        assert!(report.failures.is_empty(), "{report:#?}");
+        assert!(!report.is_clean());
     }
 }
