@@ -85,6 +85,14 @@ Acceptance:
   mode, max-inline clamping, and invalid classifier.
 - Protocol docs exist before OpenHuman or non-Rust hosts depend on it.
 
+Status: partially implemented. The library now exposes `ReduceJsonRequest`,
+`ReduceJsonEnvelope`, `ReduceJsonResponse`, `ReduceJsonError`,
+`reduce_json_str()`, and `reduce_json_request()`. The protocol accepts direct
+and envelope payloads, supports the compatibility option fields, rejects
+malformed JSON and NUL bytes with structured errors, and returns stable
+serde-compatible response fields with optional metadata-only trace. CLI wiring,
+CCR/artifact refs, and durable stats recording remain to be implemented.
+
 ## P1: CLI Surface
 
 Minimal order:

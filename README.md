@@ -236,6 +236,11 @@ TinyJuice validates mutable-block replacements, preserves the frozen prefix,
 and can detect volatile cache-hostile values such as UUIDs, timestamps, JWTs,
 and hex hashes with redacted findings only.
 
+`reduce_json_str` and `reduce_json_request` expose the library form of the
+`reduce-json` protocol. They accept direct `ToolExecutionInput` JSON or an
+`{ "input": ..., "options": ... }` envelope, reject malformed payloads with
+structured errors, and return stable serde-compatible response fields.
+
 `verify_rules` checks the same builtin/user/project rule layers as the loader
 without changing the lenient load contract. It reports parse errors, invalid
 regex patterns, duplicate rule IDs, and shadowed lower-priority rules so CLI

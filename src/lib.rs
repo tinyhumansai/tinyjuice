@@ -20,6 +20,7 @@ pub mod observability;
 pub mod openhuman;
 pub mod pipeline;
 pub mod policy;
+pub mod protocol;
 pub mod reduce;
 pub mod relevance;
 pub mod rules;
@@ -79,6 +80,10 @@ pub use pipeline::{
     PipelineStep, ReformatTransform, TransformOutput, TypedPipelineOutput, run_typed_pipeline,
 };
 pub use policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy};
+pub use protocol::{
+    ReduceJsonEnvelope, ReduceJsonError, ReduceJsonMetadata, ReduceJsonRequest, ReduceJsonResponse,
+    ReduceJsonResult, ReduceJsonTrace, reduce_json_request, reduce_json_str,
+};
 pub use reduce::reduce_execution_with_rules;
 pub use relevance::{Bm25Corpus, Bm25DocumentScore};
 pub use rules::{

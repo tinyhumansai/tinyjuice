@@ -260,6 +260,21 @@ pub struct ReduceOptions {
     /// Working directory for project-layer rule discovery.
     #[serde(default)]
     pub cwd: Option<String>,
+    /// Protocol compatibility flag for callers that want no lossy omission.
+    #[serde(default)]
+    pub no_omit: Option<bool>,
+    /// Request artifact/CCR storage when a protocol surface supports it.
+    #[serde(default)]
+    pub store: Option<bool>,
+    /// Storage directory for protocol surfaces that support artifacts.
+    #[serde(default)]
+    pub store_dir: Option<String>,
+    /// Request metadata-only reducer trace fields in protocol responses.
+    #[serde(default)]
+    pub trace: Option<bool>,
+    /// Request metadata-only stats recording in protocol adapters.
+    #[serde(default)]
+    pub record_stats: Option<bool>,
 }
 
 // ---------------------------------------------------------------------------
