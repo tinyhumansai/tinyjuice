@@ -180,7 +180,10 @@ Add:
 - Broader fixture coverage for search-read host adapters.
 
 Status: initial router-level fixture coverage now includes a query-ranked
-search thinning case with omitted counts and CCR recovery.
+search thinning case with omitted counts and CCR recovery. Ranked search-read
+fixtures now cover exact-symbol/path/density ordering, vendor/generated
+penalties, bounded snippet-window merging, and explicit omitted-match counts for
+host-provided candidates.
 
 Do not add:
 

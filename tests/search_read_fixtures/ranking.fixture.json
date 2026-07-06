@@ -1,0 +1,69 @@
+{
+  "description": "Ranked search-read prefers exact symbols, then path relevance, then match density",
+  "query": {
+    "literal": "payment",
+    "symbols": [
+      "settle_invoice"
+    ]
+  },
+  "candidates": [
+    {
+      "path": "src/billing/worker.rs",
+      "matchedLines": [
+        {
+          "lineNumber": 42,
+          "text": "fn settle_invoice() -> Result<()>"
+        }
+      ],
+      "exports": [
+        "settle_invoice"
+      ],
+      "maxLine": 100
+    },
+    {
+      "path": "src/payment/readme.md",
+      "matchedLines": [
+        {
+          "lineNumber": 1,
+          "text": "general overview"
+        }
+      ],
+      "maxLine": 10
+    },
+    {
+      "path": "src/other.rs",
+      "matchedLines": [
+        {
+          "lineNumber": 10,
+          "text": "payment retry"
+        },
+        {
+          "lineNumber": 11,
+          "text": "payment queue"
+        }
+      ],
+      "maxLine": 20
+    }
+  ],
+  "expected": {
+    "orderedPaths": [
+      "src/billing/worker.rs",
+      "src/payment/readme.md",
+      "src/other.rs"
+    ],
+    "snippets": [
+      {
+        "path": "src/billing/worker.rs",
+        "context": 2,
+        "maxSnippets": 2,
+        "windows": [
+          {
+            "start": 40,
+            "end": 44
+          }
+        ],
+        "omittedMatches": 0
+      }
+    ]
+  }
+}
