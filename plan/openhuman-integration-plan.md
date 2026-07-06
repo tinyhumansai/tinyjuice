@@ -230,10 +230,10 @@ Acceptance:
   off by default until tag protection and fixtures exist. Note the Kompress
   bridge is already wired in OpenHuman's `install_from_config`; verify its
   config default is off.
-- OpenHuman's README already claims "up to 80% fewer tokens" for TokenJuice,
-  which conflicts with this plan set's no-percentage-claims-until-fixtures
-  constraint. Either land the fixture benchmark suite early enough to back the
-  claim or soften the README wording.
+- Older plan notes assumed OpenHuman's README claimed a broad TokenJuice
+  percentage saving. Rechecked on 2026-07-06: that claim is no longer present.
+  Keep it that way until fixture benchmark reports exist, and keep those
+  reports separate from live savings stats.
 - The host truncation caps (per-tool char cap, 16 KiB byte-cap backstop) and
   TinyJuice compaction currently compose blindly. Until the footer contract is
   fixed, any cap below the compacted size silently severs recoverability.

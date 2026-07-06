@@ -184,9 +184,11 @@ Acceptance:
 ## P1-1: Savings Accounting Upgrade
 
 Source spec: `savings-accounting-spec.md`. OpenHuman already persists savings
-(`src/openhuman/tokenjuice/savings.rs`, dashboard-facing) and the README
-already claims "up to 80% fewer tokens" — this port is what makes that claim
-either verifiable or correctable, so it lands early in P1.
+(`src/openhuman/tokenjuice/savings.rs`, dashboard-facing). The old reviewed
+plan assumed OpenHuman's README still made a broad percentage-savings claim;
+as of 2026-07-06 that claim is no longer present. This slice still lands early
+because live estimates, measured usage, and future fixture benchmark results
+must be labeled separately before any savings surface can be trusted.
 
 TinyJuice files:
 
