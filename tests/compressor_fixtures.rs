@@ -124,6 +124,10 @@ enum FixtureGenerator {
         #[serde(rename = "lines")]
         lines: usize,
     },
+    DiffGeneratedBundle {
+        #[serde(rename = "lines")]
+        lines: usize,
+    },
     SearchResults {
         #[serde(rename = "matchesPerFile")]
         matches_per_file: usize,
@@ -526,6 +530,18 @@ impl FixtureGenerator {
                 }
                 for i in 0..*lines {
                     let _ = writeln!(out, "- old dep entry {i}");
+                }
+                out
+            }
+            FixtureGenerator::DiffGeneratedBundle { lines } => {
+                let mut out = String::from(
+                    "diff --git a/dist/app.min.js b/dist/app.min.js\n@@ -1,80 +1,80 @@\n",
+                );
+                for i in 0..*lines {
+                    let _ = writeln!(out, "+ minified chunk payload {i}");
+                }
+                for i in 0..*lines {
+                    let _ = writeln!(out, "- previous minified payload {i}");
                 }
                 out
             }

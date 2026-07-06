@@ -1,0 +1,21 @@
+{
+  "description": "DiffNoise whitespace-only mode preserves semantic hunks",
+  "generator": {
+    "type": "semantic",
+    "context": 50
+  },
+  "options": {
+    "dropWhitespaceOnlyHunks": true
+  },
+  "expected": {
+    "recovery": true,
+    "contains": [
+      "-fn answer() -> i32 { 41 }",
+      "+fn answer() -> i32 { 42 }"
+    ],
+    "notContains": [
+      "reason=whitespace_only",
+      "diff-noise hunk omitted"
+    ]
+  }
+}

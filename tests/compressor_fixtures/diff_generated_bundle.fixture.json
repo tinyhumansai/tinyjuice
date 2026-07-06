@@ -1,0 +1,21 @@
+{
+  "description": "DiffNoise collapses generated bundle body with a clear reason and retained recovery",
+  "kind": "diff",
+  "extension": "diff",
+  "generator": {
+    "type": "diffGeneratedBundle",
+    "lines": 80
+  },
+  "expected": {
+    "compressor": "diff",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "reason=generated_bundle",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "minified chunk payload 79"
+    ]
+  }
+}

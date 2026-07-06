@@ -77,8 +77,11 @@ Add:
 
 - Broader fixture coverage for host-tuned noisy path policy.
 
-Status: initial router-level fixture coverage now includes a lockfile noise
-case that asserts the reason marker and recovery token.
+Status: router-level fixture coverage now includes lockfile and generated-bundle
+noise cases that assert reason markers and recovery tokens. Host-tuned policy
+fixtures now cover configured noisy path patterns, whitespace-only hunk
+dropping, semantic-hunk preservation, and CCR retention through the typed
+DiffNoise transform.
 
 Do not add:
 
