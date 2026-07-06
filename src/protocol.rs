@@ -1,7 +1,8 @@
 use crate::reduce::reduce_execution_with_rules;
+use crate::savings::{self, SavingsRecord};
 use crate::types::{
-    ClassificationResult, CompactResult, CompiledRule, ReduceOptions, ReductionStats,
-    ToolExecutionInput,
+    ClassificationResult, CompactResult, CompiledRule, CompressorKind, ContentKind, ReduceOptions,
+    ReductionStats, ToolExecutionInput,
 };
 use serde::{Deserialize, Serialize};
 
@@ -128,6 +129,10 @@ fn response_from_result(
     trace_input: Option<ToolExecutionInput>,
     options: &ReduceOptions,
 ) -> ReduceJsonResponse {
+    if options.record_stats.unwrap_or(false) {
+        record_stats(&result);
+    }
+
     let trace = trace_input.map(|input| {
         let argv0 = trace_argv0(&input).map(str::to_owned);
         ReduceJsonTrace {
@@ -170,6 +175,37 @@ fn metadata_for_options(options: &ReduceOptions) -> Option<ReduceJsonMetadata> {
     };
     (metadata.no_omit_requested || metadata.store_requested || metadata.record_stats_requested)
         .then_some(metadata)
+}
+
+fn record_stats(result: &CompactResult) {
+    let mut record = SavingsRecord::estimated_compaction(
+        ContentKind::Log,
+        CompressorKind::Generic,
+        estimated_tokens_from_chars(result.stats.raw_chars),
+        estimated_tokens_from_chars(result.stats.reduced_chars),
+    )
+    .with_bytes(
+        result.stats.raw_chars as u64,
+        result.stats.reduced_chars as u64,
+    )
+    .with_lossy(result.stats.reduced_chars < result.stats.raw_chars)
+    .with_ccr_token_present(result.ccr_token.is_some());
+
+    if let Some(rule_id) = result.classification.matched_reducer.as_deref() {
+        record = record.with_rule_id(rule_id);
+    }
+
+    savings::record_event(record);
+}
+
+fn estimated_tokens_from_chars(chars: usize) -> u64 {
+    if chars == 0 {
+        0
+    } else {
+        ((chars as f64) / crate::tokens::CHARS_PER_TOKEN)
+            .ceil()
+            .max(1.0) as u64
+    }
 }
 
 fn trace_argv0(input: &ToolExecutionInput) -> Option<&str> {

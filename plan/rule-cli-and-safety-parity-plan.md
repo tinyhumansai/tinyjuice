@@ -98,9 +98,10 @@ and envelope payloads, supports the compatibility option fields, rejects
 malformed JSON and NUL bytes with structured errors, and returns stable
 serde-compatible response fields with optional metadata-only trace. When
 `options.store` is set and CCR retains omitted raw output, the response includes
-a metadata-only CCR token reference. The current library contract is documented
-in `docs/reduce-json-protocol.md`. Durable artifact refs and durable stats
-recording remain to be implemented.
+a metadata-only CCR token reference. When `options.recordStats` is set, the
+protocol emits a metadata-only `SavingsRecord` through the configured recorder.
+The current library contract is documented in `docs/reduce-json-protocol.md`.
+Durable artifact refs remain to be implemented.
 
 ## P1: CLI Surface
 

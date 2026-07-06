@@ -64,7 +64,8 @@ Envelope input:
   not wired in the library surface.
 - `cwd`: copied to `input.cwd` when the input does not already set it.
 - `trace`: include metadata-only classification trace fields.
-- `recordStats`: compatibility flag recorded as metadata.
+- `recordStats`: emit a metadata-only `SavingsRecord` through the configured
+  savings recorder, if any.
 
 ## Response
 
@@ -100,6 +101,11 @@ Optional fields:
 
 Trace output intentionally excludes raw command output, raw arguments, and full
 metadata maps.
+
+`recordStats` uses the same metadata-only savings recorder as the content
+router. Records include reducer id, measured character counts as byte-count
+metadata for this protocol surface, estimated token counts, and CCR-token
+presence. They do not include raw output, command arguments, or host metadata.
 
 Example `store` metadata:
 
