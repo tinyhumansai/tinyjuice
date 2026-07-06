@@ -213,7 +213,8 @@ Conversation-level helpers under `conversation::*` expose deterministic Hermes
 primitives without host runtime dependencies: token-budget tail selection,
 tool-call/result boundary alignment, latest user/assistant anchors, JSON
 string-leaf shrinking, partial split/rejoin helpers for compacting a middle
-window, and old tool-result digesting with sensitive metadata redaction.
+window, last-N user exchange retention helpers, and old tool-result digesting
+with sensitive metadata redaction.
 
 `savings::configure_record_recorder` installs a metadata-only savings recorder
 that receives class-labeled `SavingsRecord` values (`counted`, `measured`, or

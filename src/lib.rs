@@ -63,8 +63,8 @@ pub use conversation::{
     normalize_summary_text, protected_head_end, redact_sensitive_json,
     rehydrate_summary_from_message, rejoin_partial_conversation, render_structured_summary,
     sanitize_orphan_tool_messages, select_tail_by_budget, shrink_json_string_leaves,
-    split_partial_conversation, summarize_subagent_transcript, threshold_tokens,
-    upsert_compaction_summary,
+    split_for_last_user_exchanges, split_partial_conversation, summarize_subagent_transcript,
+    tail_start_for_last_user_exchanges, threshold_tokens, upsert_compaction_summary,
 };
 pub use detect::detect_content_kind;
 pub use error::{TinyJuiceError, TinyJuiceResult};

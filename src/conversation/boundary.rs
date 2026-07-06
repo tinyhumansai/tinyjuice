@@ -82,12 +82,7 @@ pub fn sanitize_orphan_tool_messages(messages: &[ConversationMessage]) -> Vec<Co
 
 /// Latest user message that is not an internal compaction summary.
 pub fn latest_real_user_index(messages: &[ConversationMessage]) -> Option<usize> {
-    messages.iter().rposition(|message| match message {
-        ConversationMessage::Chat(chat) => {
-            chat.role == "user" && !chat.is_compaction_summary && !chat.hidden
-        }
-        _ => false,
-    })
+    messages.iter().rposition(is_real_user_message)
 }
 
 /// Latest visible assistant reply that is not an internal compaction summary.
@@ -124,6 +119,45 @@ pub fn split_partial_conversation(
         head_end,
         tail_start,
     }
+}
+
+/// Select the retained-tail start for the last `exchange_count` real user turns.
+///
+/// Real user turns exclude hidden messages and internal compaction summaries.
+/// If there are fewer real user turns than requested, the whole unprotected
+/// region after `head_end` is retained. The returned start is moved backward
+/// when needed to keep retained tool results with their parent tool calls.
+pub fn tail_start_for_last_user_exchanges(
+    messages: &[ConversationMessage],
+    head_end: usize,
+    exchange_count: usize,
+) -> usize {
+    let head_end = head_end.min(messages.len());
+    if exchange_count == 0 || head_end >= messages.len() {
+        return messages.len();
+    }
+
+    let mut seen = 0usize;
+    for idx in (head_end..messages.len()).rev() {
+        if is_real_user_message(&messages[idx]) {
+            seen += 1;
+            if seen == exchange_count {
+                return align_tail_start_for_tool_boundaries(messages, idx).max(head_end);
+            }
+        }
+    }
+
+    head_end
+}
+
+/// Split a conversation while retaining the last `exchange_count` real user turns.
+pub fn split_for_last_user_exchanges(
+    messages: &[ConversationMessage],
+    head_end: usize,
+    exchange_count: usize,
+) -> PartialConversationSplit {
+    let tail_start = tail_start_for_last_user_exchanges(messages, head_end, exchange_count);
+    split_partial_conversation(messages, head_end, tail_start)
 }
 
 /// Rejoin a partial split after replacing the compactible middle.
@@ -189,6 +223,14 @@ fn find_parent_call_index(
             }
             _ => false,
         })
+}
+
+fn is_real_user_message(message: &ConversationMessage) -> bool {
+    matches!(
+        message,
+        ConversationMessage::Chat(chat)
+            if chat.role == "user" && !chat.is_compaction_summary && !chat.hidden
+    )
 }
 
 #[cfg(test)]
@@ -337,6 +379,72 @@ mod tests {
                 ConversationMessage::assistant("done"),
             ]
         );
+    }
+
+    #[test]
+    fn last_user_exchange_tail_starts_at_nth_recent_real_user() {
+        let messages = vec![
+            ConversationMessage::system("sys"),
+            ConversationMessage::user("old ask"),
+            ConversationMessage::assistant("old answer"),
+            ConversationMessage::user("middle ask"),
+            ConversationMessage::assistant("middle answer"),
+            ConversationMessage::user("latest ask"),
+            ConversationMessage::assistant("latest answer"),
+        ];
+
+        assert_eq!(tail_start_for_last_user_exchanges(&messages, 1, 2), 3);
+    }
+
+    #[test]
+    fn last_user_exchange_tail_skips_summaries_and_hidden_users() {
+        let mut hidden_user = ChatMessage::user("hidden ask");
+        hidden_user.hidden = true;
+        let messages = vec![
+            ConversationMessage::system("sys"),
+            ConversationMessage::user("old ask"),
+            ConversationMessage::assistant("old answer"),
+            ConversationMessage::Chat(hidden_user),
+            ConversationMessage::Chat(ChatMessage::compaction_summary("user", "summary ask")),
+            ConversationMessage::user("latest ask"),
+            ConversationMessage::assistant("latest answer"),
+        ];
+
+        let split = split_for_last_user_exchanges(&messages, 1, 1);
+
+        assert_eq!(split.middle, messages[1..5].to_vec());
+        assert_eq!(split.tail, messages[5..].to_vec());
+        assert_eq!(split.tail_start, 5);
+    }
+
+    #[test]
+    fn last_user_exchange_tail_keeps_unprotected_region_when_count_exceeds_history() {
+        let messages = vec![
+            ConversationMessage::system("sys"),
+            ConversationMessage::user("only ask"),
+            ConversationMessage::assistant("answer"),
+        ];
+
+        let split = split_for_last_user_exchanges(&messages, 1, 3);
+
+        assert!(split.middle.is_empty());
+        assert_eq!(split.tail, messages[1..].to_vec());
+        assert_eq!(split.tail_start, 1);
+    }
+
+    #[test]
+    fn zero_user_exchanges_retains_no_tail() {
+        let messages = vec![
+            ConversationMessage::system("sys"),
+            ConversationMessage::user("ask"),
+            ConversationMessage::assistant("answer"),
+        ];
+
+        let split = split_for_last_user_exchanges(&messages, 1, 0);
+
+        assert_eq!(split.middle, messages[1..].to_vec());
+        assert!(split.tail.is_empty());
+        assert_eq!(split.tail_start, messages.len());
     }
 
     fn generated_tool_history(

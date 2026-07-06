@@ -13,7 +13,7 @@ mod types;
 pub use boundary::{
     PartialConversationSplit, align_tail_start_for_tool_boundaries, latest_real_user_index,
     latest_visible_assistant_index, rejoin_partial_conversation, sanitize_orphan_tool_messages,
-    split_partial_conversation,
+    split_for_last_user_exchanges, split_partial_conversation, tail_start_for_last_user_exchanges,
 };
 pub use budget::{
     ConversationBudget, HeadProtection, TailBudgetSelection, effective_input_window,

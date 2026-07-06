@@ -69,7 +69,9 @@ Status: implemented in core. The helpers cover provider-safe JSON argument
 shrinking, deterministic tail selection, protected head decay,
 tool-call/tool-result boundary alignment, orphan sanitizer, latest real
 user/visible assistant anchors, and partial split/rejoin with orphan
-sanitization after middle replacement.
+sanitization after middle replacement. Last-N real user exchange helpers now
+select a deterministic retained tail while skipping hidden/internal summary
+messages.
 
 Acceptance:
 
