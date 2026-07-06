@@ -189,6 +189,11 @@ pub fn compress_with_query(content: &str, query: Option<&str>) -> Option<Compres
     }
 
     let out = out.trim_end().to_string();
+    if let Some(bucketed) = compress_shape_buckets(content, &flat_rows, query)
+        && bucketed.text.len() < out.len()
+    {
+        return Some(bucketed);
+    }
     if out.len() >= content.len() {
         return None;
     }
@@ -209,6 +214,143 @@ pub fn compress_with_query(content: &str, query: Option<&str>) -> Option<Compres
             CompressorKind::SmartCrusher,
         ))
     }
+}
+
+fn compress_shape_buckets(
+    original: &str,
+    rows: &[FlatRow],
+    query: Option<&str>,
+) -> Option<CompressOutput> {
+    let buckets = shape_buckets(rows);
+    if buckets.len() < 2 {
+        return None;
+    }
+
+    let mut out = String::with_capacity(original.len());
+    let mut lossy = false;
+    let _ = write!(
+        out,
+        "[json bucketed tables: {} rows × {} buckets · __row=original row index · blank=absent key",
+        rows.len(),
+        buckets.len()
+    );
+
+    for bucket in &buckets {
+        if bucket.indices.len() < MIN_ROWS {
+            return None;
+        }
+        if bucket.columns.len() < 2 {
+            return None;
+        }
+    }
+
+    let bucket_rows = buckets
+        .iter()
+        .map(|bucket| {
+            bucket
+                .indices
+                .iter()
+                .map(|&index| rows[index].clone())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let analyses = bucket_rows
+        .iter()
+        .map(|rows| analyze_flat_rows(rows))
+        .collect::<Vec<_>>();
+    let plans = bucket_rows
+        .iter()
+        .zip(&analyses)
+        .map(|(rows, analysis)| plan_rows(rows, analysis, query))
+        .collect::<Vec<_>>();
+    if plans.iter().any(|plan| plan.lossy) {
+        lossy = true;
+        out.push_str(" · exact original via retrieve footer");
+    }
+    out.push_str("]\n");
+
+    for (bucket_index, bucket) in buckets.iter().enumerate() {
+        let columns = &analyses[bucket_index].columns;
+        let plan = &plans[bucket_index];
+        let _ = writeln!(
+            out,
+            "\n[bucket {}: {} row(s) × {} cols]",
+            bucket_index + 1,
+            bucket.indices.len(),
+            columns.len()
+        );
+        let _ = writeln!(out, "__row | {}", columns.join(" | "));
+
+        if plan.lossy {
+            let mut prev: Option<usize> = None;
+            for &local_index in &plan.keep_rows {
+                if let Some(previous) = prev {
+                    let gap = local_index - previous - 1;
+                    if gap > 0 {
+                        let _ = writeln!(out, "[... {gap} row(s) omitted in bucket ...]");
+                    }
+                } else if local_index > 0 {
+                    let _ = writeln!(out, "[... {local_index} row(s) omitted in bucket ...]");
+                }
+                write_bucket_row(&mut out, rows, bucket.indices[local_index], columns);
+                prev = Some(local_index);
+            }
+            if let Some(previous) = prev {
+                let tail = bucket.indices.len().saturating_sub(previous + 1);
+                if tail > 0 {
+                    let _ = writeln!(out, "[... {tail} row(s) omitted in bucket ...]");
+                }
+            }
+        } else {
+            for &row_index in &bucket.indices {
+                write_bucket_row(&mut out, rows, row_index, columns);
+            }
+        }
+    }
+
+    let out = out.trim_end().to_string();
+    if out.len() >= original.len() {
+        return None;
+    }
+    if lossy {
+        Some(CompressOutput::lossy(out, CompressorKind::SmartCrusher))
+    } else {
+        Some(CompressOutput::reformatted(
+            out,
+            CompressorKind::SmartCrusher,
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct ShapeBucket {
+    columns: Vec<String>,
+    indices: Vec<usize>,
+}
+
+fn shape_buckets(rows: &[FlatRow]) -> Vec<ShapeBucket> {
+    let mut buckets: Vec<ShapeBucket> = Vec::new();
+    for (index, row) in rows.iter().enumerate() {
+        let columns = row.values.keys().cloned().collect::<Vec<_>>();
+        if let Some(bucket) = buckets.iter_mut().find(|bucket| bucket.columns == columns) {
+            bucket.indices.push(index);
+        } else {
+            buckets.push(ShapeBucket {
+                columns,
+                indices: vec![index],
+            });
+        }
+    }
+    buckets
+}
+
+fn write_bucket_row(out: &mut String, rows: &[FlatRow], row_index: usize, columns: &[String]) {
+    let row = &rows[row_index];
+    let cells = columns
+        .iter()
+        .map(|col| row.values.get(col).map(render_cell).unwrap_or_default())
+        .collect::<Vec<_>>();
+    let _ = writeln!(out, "{row_index} | {}", cells.join(" | "));
 }
 
 /// Analyze a JSON array-of-objects without rendering it.
@@ -1311,6 +1453,70 @@ mod tests {
         assert!(c.text.contains("001"), "{}", c.text);
         assert!(c.text.contains("{not json}"), "{}", c.text);
         assert!(!c.text.contains("note."), "{}", c.text);
+    }
+
+    #[test]
+    fn heterogeneous_shapes_render_smaller_bucket_tables() {
+        let mut rows = Vec::new();
+        for i in 0..12 {
+            rows.push(format!(
+                r#"{{"event":"login","user_id":"user-{i}","ip":"10.0.0.{i}","success":true}}"#
+            ));
+            rows.push(format!(
+                r#"{{"event":"deploy","service":"api-{i}","version":"2026.{i}.0","region":"us-east"}}"#
+            ));
+            rows.push(format!(
+                r#"{{"event":"metric","name":"cpu-{i}","value":{},"unit":"pct"}}"#,
+                40 + i
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(!c.lossy);
+        assert!(c.text.contains("[json bucketed tables:"), "{}", c.text);
+        assert!(c.text.contains("[bucket 1:"), "{}", c.text);
+        assert!(c.text.contains("[bucket 2:"), "{}", c.text);
+        assert!(c.text.contains("[bucket 3:"), "{}", c.text);
+        assert!(c.text.contains("__row | event | ip | success | user_id"));
+        assert!(
+            c.text
+                .contains("__row | event | region | service | version")
+        );
+        assert!(c.text.contains("__row | event | name | unit | value"));
+        assert!(
+            c.text
+                .contains("31 | deploy | us-east | api-10 | 2026.10.0")
+        );
+    }
+
+    #[test]
+    fn lossy_heterogeneous_bucket_marks_omissions_and_recovery() {
+        let mut rows = Vec::new();
+        for i in 0..90 {
+            rows.push(format!(
+                r#"{{"event":"login","user_id":"user-{i}","ip":"10.0.0.{i}","success":true}}"#
+            ));
+        }
+        for i in 0..90 {
+            rows.push(format!(
+                r#"{{"event":"metric","name":"cpu-{i}","value":{},"unit":"pct"}}"#,
+                40 + i
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let value: Value = serde_json::from_str(&input).unwrap();
+        let flat_rows = flatten_rows(value.as_array().unwrap()).unwrap();
+        let c = compress_shape_buckets(&input, &flat_rows, None).expect("bucketed");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("[json bucketed tables:"), "{}", c.text);
+        assert!(c.text.contains("exact original via retrieve footer"));
+        assert!(c.text.contains("row(s) omitted in bucket"), "{}", c.text);
+        assert!(c.text.contains("0 | login"), "{}", c.text);
+        assert!(c.text.contains("179 | metric"), "{}", c.text);
     }
 
     #[test]
