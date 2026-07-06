@@ -17,11 +17,13 @@ Current behavior:
 - Heterogeneous object arrays can render as smaller per-shape bucket tables,
   preserving original row indices and using CCR recovery when bucket rows are
   dropped.
+- Full-present constant columns are hoisted into table metadata instead of
+  repeated in every rendered row.
 
 Add:
 
-- Analyzer for key frequencies, field types, constants, unique ratios, numeric
-  stats, sparse fields, and estimated reduction.
+- Analyzer for key frequencies, field types, unique ratios, numeric stats,
+  sparse fields, and estimated reduction.
 - Planner for dynamic anchors, query matches, structural outliers, discriminator
   buckets, and duplicate clusters.
 - Adaptive keep count using deterministic saturation/knee detection.
