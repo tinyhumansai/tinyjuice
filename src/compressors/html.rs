@@ -10,7 +10,9 @@
 use async_trait::async_trait;
 
 use super::Compressor;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::cache::CcrStore;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Block-level tags after which we emit a newline so the extracted text keeps
 /// document structure (paragraphs, list items, headings, rows).
@@ -42,6 +44,34 @@ const BLOCK_TAGS: &[&str] = &[
 const DROP_BODY_TAGS: &[&str] = &["script", "style", "head", "noscript", "svg"];
 
 pub struct HtmlCompressor;
+
+/// Typed offload transform for lossy HTML-to-text extraction.
+pub struct HtmlExtractTransform;
+
+impl OffloadTransform for HtmlExtractTransform {
+    fn name(&self) -> &'static str {
+        "html_extract"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Html {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Html {
+            return None;
+        }
+        let compacted = compress(input.content)?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Html,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for HtmlCompressor {
@@ -214,6 +244,8 @@ fn collapse_blank_lines(text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::pipeline::PipelineInput;
 
     #[test]
     fn strips_tags_and_scripts() {
@@ -256,5 +288,48 @@ mod tests {
         assert!(out.lossy);
         assert!(out.text.len() < html.len());
         assert!(out.text.contains("cell 7"));
+    }
+
+    #[test]
+    fn html_extract_transform_requires_retained_ccr() {
+        let mut html = String::from("<html><body>");
+        for i in 0..50 {
+            html.push_str(&format!(
+                "<div class=\"row item-{i}\"><span>cell {i}</span></div>"
+            ));
+        }
+        html.push_str("</body></html>");
+        let input = PipelineInput {
+            content: &html,
+            original_content: &html,
+            content_kind: ContentKind::Html,
+            original_bytes: html.len(),
+        };
+        let transform = HtmlExtractTransform;
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform.apply(&input, &store).expect("retained HTML");
+
+        assert_eq!(out.kind(), CompressorKind::Html);
+        assert!(out.text().contains("cell 7"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(html.as_str()));
+    }
+
+    #[test]
+    fn html_extract_transform_skips_non_html_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = HtmlExtractTransform;
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 }
