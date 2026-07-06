@@ -8,7 +8,7 @@ algorithm this plan names the TinyJuice core modules, the OpenHuman files to
 add or change, the wiring, and the acceptance criteria — in enough detail that
 an implementing agent can execute it without re-deriving the analysis.
 
-Verified against the OpenHuman repo (`../openhuman-2`) on 2026-07-04. All
+Verified against the OpenHuman repo (`../openhuman-4`) on 2026-07-06. All
 OpenHuman paths below exist today unless marked NEW.
 
 ## Ground Rules
@@ -285,10 +285,10 @@ OpenHuman files:
   `char_limit` (default 15000, clamp 2000..500000), `convert_base64_images`
   (default true).
 
-Status: OpenHuman now has the shared reducer wired through both `web_fetch`
-and `http_request`, and `[tokenjuice.web_extract]` is the canonical config
-shape. Legacy flat `web_extract_*` keys, env vars, and settings patches remain
-accepted and are normalized before live updates.
+Status: implemented. OpenHuman has the shared reducer wired through both
+`web_fetch` and `http_request`, and `[tokenjuice.web_extract]` is the canonical
+config shape. Legacy flat `web_extract_*` keys, env vars, and settings patches
+remain accepted and are normalized before live updates.
 
 Acceptance:
 
@@ -411,12 +411,12 @@ Acceptance:
   counts; vendor/generated paths deprioritized unless requested.
 - The tool never returns whole files; follow-up reads use `file_read`.
 
-Status: TinyJuice has pure ranking and snippet-window fixtures for exact
-symbol/path/density ordering, vendor/generated penalties, bounded window
-merging, and omitted counts. OpenHuman `../openhuman-4` already carried the
-host `search_read` implementation and registration; commit `76399a6ce` wires it
-into the Rust user-preference family, frontend tool catalog, and timeline
-formatting so the registered tool is exposed consistently with `file_read`.
+Status: implemented. TinyJuice has pure ranking and snippet-window fixtures for
+exact symbol/path/density ordering, vendor/generated penalties, bounded window
+merging, and omitted counts. OpenHuman `../openhuman-4` already carried the host
+`search_read` implementation and registration; commit `76399a6ce` wires it into
+the Rust user-preference family, frontend tool catalog, and timeline formatting
+so the registered tool is exposed consistently with `file_read`.
 
 ## P2-2: Subagent Summary Evidence Extraction
 

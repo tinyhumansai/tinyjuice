@@ -7,10 +7,12 @@ keeping the core crate independent of OpenHuman runtime types.
 
 ## Verified OpenHuman State (2026-07-04)
 
-The integration is not greenfield. OpenHuman already vendors TinyJuice
-(`vendor/tinyjuice` submodule pinned at `4b1a34f`, wired through
-`[patch.crates-io]`) and ships it as the "TokenJuice" product feature. The
-existing surface:
+The integration is not greenfield. The current `../openhuman-4` checkout carries
+a local TokenJuice mirror under `src/openhuman/tokenjuice/` and ships it as the
+"TokenJuice" product feature. Earlier OpenHuman checkouts used a
+`vendor/tinyjuice` submodule; in this checkout, crate contract changes are
+mirrored into the local TokenJuice copy until the dependency boundary is
+restored. The existing surface:
 
 - Adapter module: `src/openhuman/tokenjuice/` re-exports the crate API and owns
   `install_from_config(&Config)`, called at startup and on live settings
