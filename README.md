@@ -212,8 +212,10 @@ redaction.
 
 `savings::configure_record_recorder` installs a metadata-only savings recorder
 that receives class-labeled `SavingsRecord` values (`counted`, `measured`, or
-`estimated`) with content kind, compressor, byte/token counts, lossy/CCR flags,
-and redacted rule or skip labels. The older four-argument
+`estimated`) with a source label (`live` or `fixture_benchmark`), content kind,
+compressor, byte/token counts, lossy/CCR flags, and redacted rule or skip
+labels. Fixture benchmark records are meant to be reported separately from live
+runtime stats. The older four-argument
 `configure_recorder` callback remains as a compatibility wrapper.
 
 `ContextBreakdown` and `ContextBucket` provide host-facing context usage

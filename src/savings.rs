@@ -31,6 +31,28 @@ impl AccountingClass {
     }
 }
 
+/// Origin of a savings record.
+///
+/// Live runtime observations and offline fixture benchmark results must stay
+/// distinguishable so dashboards never present benchmark outcomes as live
+/// production savings.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SavingsRecordSource {
+    #[default]
+    Live,
+    FixtureBenchmark,
+}
+
+impl SavingsRecordSource {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Live => "live",
+            Self::FixtureBenchmark => "fixture_benchmark",
+        }
+    }
+}
+
 /// Provider-reported usage fields hosts may attach when real model usage is
 /// available.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
@@ -47,6 +69,8 @@ pub struct ModelUsage {
 #[serde(rename_all = "camelCase")]
 pub struct SavingsRecord {
     pub accounting_class: AccountingClass,
+    #[serde(default)]
+    pub source: SavingsRecordSource,
     pub content_kind: ContentKind,
     pub compressor: CompressorKind,
     pub original_tokens: u64,
@@ -69,6 +93,7 @@ impl SavingsRecord {
     ) -> Self {
         Self {
             accounting_class: AccountingClass::Estimated,
+            source: SavingsRecordSource::Live,
             content_kind,
             compressor,
             original_tokens,
@@ -81,6 +106,11 @@ impl SavingsRecord {
             skip_reason: None,
             measured_usage: None,
         }
+    }
+
+    pub fn with_source(mut self, source: SavingsRecordSource) -> Self {
+        self.source = source;
+        self
     }
 
     pub fn with_bytes(mut self, original_bytes: u64, compacted_bytes: u64) -> Self {
@@ -203,10 +233,27 @@ mod tests {
 
         let json = serde_json::to_string(&record).expect("record serializes");
         assert!(json.contains("\"accountingClass\":\"estimated\""));
+        assert!(json.contains("\"source\":\"live\""));
         assert!(json.contains("\"contentKind\":\"log\""));
         assert!(json.contains("\"compressor\":\"log\""));
         assert!(!json.contains("secret tool output"));
         assert!(!json.contains("prompt"));
+    }
+
+    #[test]
+    fn fixture_benchmark_records_are_labeled_separately() {
+        let record = SavingsRecord::estimated_compaction(
+            ContentKind::Json,
+            CompressorKind::SmartCrusher,
+            80,
+            30,
+        )
+        .with_source(SavingsRecordSource::FixtureBenchmark)
+        .with_bytes(320, 120);
+
+        let json = serde_json::to_string(&record).expect("record serializes");
+        assert!(json.contains("\"source\":\"fixture_benchmark\""));
+        assert!(!json.contains("fixture raw content"));
     }
 
     #[test]
