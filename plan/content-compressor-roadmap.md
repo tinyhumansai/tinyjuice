@@ -30,6 +30,10 @@ Current behavior:
 - Nested uniform objects flatten into dotted columns.
 - Stringified JSON objects are parsed and flattened when they are small and
   valid.
+- `SmartCrusherTableTransform` exposes faithful table rendering as a typed
+  reformat that runs without CCR.
+- `SmartCrusherRowsTransform` exposes row-dropping SmartCrusher output as a
+  typed offload that emits output only with a retained CCR token.
 
 Add:
 
