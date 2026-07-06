@@ -82,6 +82,15 @@ Acceptance:
 - Lossy output is unconstructable without a verified token (compile-time).
 - No behavior change for existing compaction paths (fixture parity).
 
+Status: implemented. TinyJuice has the typed pipeline/report layer and
+`CcrStore` trait with global and in-memory stores; OpenHuman mirrors those
+exports under `src/openhuman/tokenjuice/`, including store-injected
+`compress_content_with_store*` and `route_with_store*` paths. `install_from_config`
+maps runtime config into the explicit TokenJuice install path while preserving
+the global store compatibility path. OpenHuman tests cover isolated in-memory
+offload behavior, CCR rejection, pipeline reporting, and runtime config/cache
+limit installation.
+
 ## P0-2: Fix The Hook, Then Safe Shell Policy
 
 Source specs: `shell-output-intercept-spec.md`,
@@ -126,6 +135,17 @@ Acceptance:
 - Exit code and stderr presence preserved in compacted output.
 - A shell result carrying argv reaches the rule reducer (end-to-end test in
   OpenHuman, not just crate-level).
+
+Status: implemented. TinyJuice exposes `ShellCompactionPolicy` and command
+classification in `src/policy/shell.rs`; OpenHuman config surfaces
+`TokenjuiceShellPolicy` with the `allow_safe_inventory` default and partial
+updates/env overlays. `ToolOutputMiddleware` now captures tool arguments in
+`before_tool`, parses rendered shell exit status in `after_tool`, calls
+`compact_tool_output_with_policy_detail`, bypasses recovery tools, applies body
+caps, and reattaches the TokenJuice recovery footer after truncation. OpenHuman
+middleware tests cover argument threading, nonzero exit/stderr preservation,
+safe inventory compaction, exact shell/file reads, unsafe `find -exec`
+passthrough, and footer survival across both per-tool and shared byte caps.
 
 ## P0-3: Hermes Deterministic Conversation Primitives
 
@@ -180,6 +200,16 @@ Acceptance:
 - Compaction never drops the latest real user message or latest visible
   assistant reply.
 - Digest output contains no raw secrets (redaction before persistence).
+
+Status: implemented for the deterministic subset. TinyJuice exposes budget,
+boundary, provider-neutral conversion, tool-result digest, JSON string-leaf
+shrinking, and redaction helpers. OpenHuman uses those helpers in
+`TokenjuiceMicrocompactMiddleware` to digest older tool results in one pass,
+and `ContextCompressionMiddleware` uses TokenJuice tail-budget selection,
+latest-user/latest-assistant anchors, and tool-boundary alignment before
+summarization. Tests cover retained anchors, tool result digesting,
+duplicate-result handling, parseable/redacted JSON arguments, and secret
+redaction before model-facing/persisted output.
 
 ## P1-1: Savings Accounting Upgrade
 
@@ -306,6 +336,15 @@ Acceptance:
 - Stub output preserves imports, exports, and public signatures; elided
   ranges are listed with line numbers.
 - Parse failure reports fallback and never silently omits without markers.
+
+Status: implemented. TinyJuice has explicit `ReadIntent::Exact` as the default,
+`ReadIntent::Stub(StubMode)`, line-range metadata, and parse-status reporting
+for tree-sitter and heuristic fallback paths. OpenHuman `file_read` exposes a
+`mode` argument (`full`, `stub`, `signatures`, `public_api`, `symbols`, `lines`)
+and calls `stub_code` directly for requested stub modes while `full` remains
+byte-exact. Tool and router tests cover schema guidance, stub output, symbol
+expansion, heuristic fallback reporting, partial-read tracking, exact default
+router passthrough, and full middleware-chain exactness for `file_read`.
 
 ## P1-4: Core Compressor Upgrades (SmartCrusher, DiffNoise, Log Templates, TextCrusher, BM25)
 
