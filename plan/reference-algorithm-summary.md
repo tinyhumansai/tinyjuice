@@ -50,6 +50,7 @@ TinyJuice's content router. Its useful algorithms are:
 - structured handoff summaries
 - summary failure policy
 - prompt-cache hints and stable static-prefix cache keys
+- live-zone byte-range contracts for frozen prefixes and mutable blocks
 - context usage breakdowns
 
 This should enter TinyJuice as an optional conversation adapter layer. It should

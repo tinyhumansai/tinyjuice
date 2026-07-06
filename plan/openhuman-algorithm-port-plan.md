@@ -385,7 +385,9 @@ P0-3. TinyJuice adds `src/conversation/summary.rs` (SummaryProvider trait,
 strict structured schema, deterministic fallback, failure policy:
 auth/network failures abort and preserve messages) and `src/cache_hints.rs`
 (static-prefix cache key = SHA-256 of instructions + NUL + sorted tool
-schemas; Anthropic carrier hints only, no payload mutation). OpenHuman's
+schemas; Anthropic carrier hints only, no payload mutation) plus
+`src/live_zone.rs` for frozen-prefix byte ranges, mutable replacement splicing,
+and redacted volatile-value detection. OpenHuman's
 `ContextCompressionMiddleware` implements `SummaryProvider` over its existing
 summarization path and adopts the failure policy; cache hints feed the
 provider layer (`src/openhuman/inference/provider/`) as routing hints only.

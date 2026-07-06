@@ -115,6 +115,12 @@ Acceptance:
 - Cache hints are reported separately from compression steps.
 - Frozen byte ranges are left for adapters to splice byte-identically.
 
+Status: implemented in core. `cache_hints.rs` exposes stable prefix keys and
+provider marker hints without mutating payloads. `live_zone.rs` adds
+provider-neutral frozen-prefix/mutable-block byte ranges, validates replacement
+splicing without rewriting frozen bytes, and reports UUID/timestamp/JWT/hash
+volatility using redacted findings only.
+
 ## P2: Summary Contract
 
 Add optional summary interfaces:
