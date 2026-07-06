@@ -21,7 +21,11 @@ use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::{Severity, severity};
-use crate::pipeline::{PipelineInput, ReformatTransform, TransformOutput};
+use crate::cache::CcrStore;
+use crate::pipeline::{
+    OffloadOutput, OffloadTransform, PipelineInput, ReformatTransform, TransformOutput,
+    estimate_bloat,
+};
 use crate::reduce::reduce_execution_with_rules;
 use crate::rules::load_builtin_rules;
 use crate::types::{
@@ -44,6 +48,9 @@ pub struct LogCompressor;
 /// Typed reformat transform for repetitive non-command logs.
 pub struct LogTemplateTransform;
 
+/// Typed offload transform for signal-preserving non-command logs.
+pub struct SignalLogTransform;
+
 impl ReformatTransform for LogTemplateTransform {
     fn name(&self) -> &'static str {
         "log_templates"
@@ -56,6 +63,31 @@ impl ReformatTransform for LogTemplateTransform {
     fn apply(&self, input: &PipelineInput<'_>) -> Option<TransformOutput> {
         let output = compress_templates(input.content)?;
         Some(TransformOutput::new(output.text, CompressorKind::Log))
+    }
+}
+
+impl OffloadTransform for SignalLogTransform {
+    fn name(&self) -> &'static str {
+        "signal_log"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Log {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Log {
+            return None;
+        }
+        let compacted = compress_signal(input.content)?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Log,
+            store.put(input.original_content),
+        )
     }
 }
 
@@ -455,6 +487,7 @@ fn normalize_for_dedupe(line: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
     use crate::types::{CompressOptions, ContentHint, ContentKind};
 
     fn noisy_log() -> String {
@@ -617,6 +650,45 @@ mod tests {
         let transform = LogTemplateTransform;
 
         assert!(!transform.applies_to(&input));
+    }
+
+    #[test]
+    fn signal_log_transform_requires_retained_ccr() {
+        let input = noisy_log();
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Log,
+            original_bytes: input.len(),
+        };
+        let transform = SignalLogTransform;
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained signal log");
+
+        assert_eq!(out.kind(), CompressorKind::Log);
+        assert!(out.text().contains("error[E0382]"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn signal_log_transform_skips_non_log_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = SignalLogTransform;
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 
     #[test]
