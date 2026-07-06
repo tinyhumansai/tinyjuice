@@ -22,15 +22,18 @@ Current behavior:
 - Analyzer reports field frequencies, types, unique counts/ratios, constants,
   sparse fields, numeric stats, estimated table bytes, and rough estimated
   reduction.
+- Planner preserves dynamic head/tail anchors, query-relevant matches,
+  structural sparse rows, numeric outliers/change points, discriminator values,
+  duplicate and near-duplicate representatives, information-dense rows, and
+  deterministic spread anchors.
+- Adaptive spread anchor counts use deterministic semantic-bigram saturation.
+- Nested uniform objects flatten into dotted columns.
+- Stringified JSON objects are parsed and flattened when they are small and
+  valid.
 
 Add:
 
-- Planner for dynamic anchors, query matches, structural outliers, discriminator
-  buckets, and duplicate clusters.
-- Adaptive keep count using deterministic saturation/knee detection.
-- Heterogeneous-array handling through buckets.
-- Nested uniform object flattening into dotted columns.
-- Stringified JSON parsing where safe.
+- Broader fixture coverage for all SmartCrusher planner paths.
 
 Do not add:
 
