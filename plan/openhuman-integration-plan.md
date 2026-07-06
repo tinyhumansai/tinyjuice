@@ -49,8 +49,9 @@ existing surface:
 2. **Footer-truncation status.** `CompressedOutput` now exposes separate
    `body` and `recovery_footer` fields while keeping `text` as the
    compatibility body+footer output. OpenHuman's tinyagents middleware caps the
-   body and reattaches the footer afterward. Other host-side caps still need
-   the same audit.
+   body and reattaches the footer afterward; regression tests cover both the
+   per-tool char cap and the shared byte-budget path. Any future host cap that
+   runs after TokenJuice must preserve the same body/footer contract.
 3. **Recovery-tool passthrough status.** OpenHuman's tinyagents middleware now
    bypasses summarization, TokenJuice compaction, per-tool caps, and the shared
    byte cap for both `tokenjuice_retrieve` and legacy `retrieve_tool_output`.
