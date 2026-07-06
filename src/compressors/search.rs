@@ -208,12 +208,27 @@ fn score_match_without_query(body: &str) -> f32 {
 
 /// Host-provided search-read query metadata. TinyJuice only scores already
 /// discovered matches; filesystem traversal stays in the host.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchReadQuery {
     pub literal: Option<String>,
     pub regex: Option<String>,
     pub symbols: Vec<String>,
     pub file_kinds: Vec<String>,
+    pub penalize_vendor: bool,
+    pub penalize_generated: bool,
+}
+
+impl Default for SearchReadQuery {
+    fn default() -> Self {
+        Self {
+            literal: None,
+            regex: None,
+            symbols: Vec::new(),
+            file_kinds: Vec::new(),
+            penalize_vendor: true,
+            penalize_generated: true,
+        }
+    }
 }
 
 /// One candidate file already discovered by a host search adapter.
@@ -285,16 +300,19 @@ pub fn rank_search_read_candidate(
         .iter()
         .any(|symbol| import_export_contains(candidate, symbol));
 
-    let generated_penalty = if candidate.generated || looks_generated_path(&candidate.path) {
+    let generated_penalty = if query.penalize_generated
+        && (candidate.generated || looks_generated_path(&candidate.path))
+    {
         4.0
     } else {
         0.0
     };
-    let vendor_penalty = if candidate.vendor || looks_vendor_path(&candidate.path) {
-        3.0
-    } else {
-        0.0
-    };
+    let vendor_penalty =
+        if query.penalize_vendor && (candidate.vendor || looks_vendor_path(&candidate.path)) {
+            3.0
+        } else {
+            0.0
+        };
 
     (if exact_symbol_match { 8.0 } else { 0.0 })
         + (if path_match { 4.0 } else { 0.0 })
@@ -574,6 +592,33 @@ mod tests {
         assert!(
             rank_search_read_candidate(&first_party, &query)
                 > rank_search_read_candidate(&vendor, &query)
+        );
+    }
+
+    #[test]
+    fn ranked_search_can_honor_explicit_vendor_scope() {
+        let query = SearchReadQuery {
+            symbols: vec!["hydrateRoot".to_string()],
+            penalize_vendor: false,
+            ..Default::default()
+        };
+        let first_party = SearchReadCandidate {
+            path: "src/app/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            ..SearchReadCandidate::new("src/app/root.tsx")
+        };
+        let vendor = SearchReadCandidate {
+            path: "vendor/pkg/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            vendor: true,
+            ..SearchReadCandidate::new("vendor/pkg/root.tsx")
+        };
+
+        assert_eq!(
+            rank_search_read_candidate(&first_party, &query),
+            rank_search_read_candidate(&vendor, &query)
         );
     }
 
