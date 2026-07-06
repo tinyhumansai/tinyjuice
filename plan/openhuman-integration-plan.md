@@ -40,7 +40,7 @@ restored. The existing surface:
   passthrough with `none/agent-profile-auto-unresolved`, so hosts must resolve
   it before calling the adapter.
 
-### Known Integration Bugs (found in review)
+### Resolved Integration Findings
 
 1. **Hook migration status.** OpenHuman's tinyagents middleware now captures
    `TaToolCall` arguments in `before_tool`, parses rendered shell exit-code
@@ -177,6 +177,15 @@ Acceptance:
 - Every emitted footer references a retrievable token at emission time.
 - Ranged retrieval handles UTF-8 safely.
 - Not-found cases do not panic or leak local paths.
+
+Status: behavior implemented; compatibility cleanup remains intentionally
+non-breaking. New recovery footers point at canonical `tokenjuice_retrieve`,
+while the legacy `retrieve_tool_output` tool stays registered as an alias for
+older prompts and allowlists. Both names route through the same cache retrieval
+implementation, both are included in `RECOVERY_TOOL_NAMES`, and middleware tests
+cover bypassing TokenJuice compaction plus host caps for both names. Tool tests
+cover full retrieval, ranged retrieval, and not-found errors without local path
+leaks.
 
 ### Phase 4: Stats And Cost Integration
 
