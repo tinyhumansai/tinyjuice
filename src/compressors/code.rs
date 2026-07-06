@@ -16,9 +16,11 @@ use async_trait::async_trait;
 use std::fmt::Write as _;
 
 use super::Compressor;
+use crate::cache::CcrStore;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
 use crate::types::{
     CodeElision, CodeStubOutput, CompressInput, CompressOptions, CompressOutput, CompressorKind,
-    LineRange, ParseStatus, ReadIntent, StubMode, SymbolSummary,
+    ContentKind, LineRange, ParseStatus, ReadIntent, StubMode, SymbolSummary,
 };
 
 /// Bodies with more than this many collapsed lines get a placeholder; shorter
@@ -29,6 +31,68 @@ pub const MIN_BODY_LINES_TO_COLLAPSE: usize = 4;
 const KEEP_MARKERS: &[&str] = &["TODO", "FIXME", "XXX", "error", "panic", "unsafe"];
 
 pub struct CodeCompressor;
+
+/// Typed offload transform for explicit source-code stub reads.
+#[derive(Debug, Clone)]
+pub struct CodeStubTransform {
+    mode: StubMode,
+    extension: Option<String>,
+}
+
+impl CodeStubTransform {
+    pub fn new(mode: StubMode) -> Self {
+        Self {
+            mode,
+            extension: None,
+        }
+    }
+
+    pub fn with_extension(mut self, extension: impl Into<String>) -> Self {
+        self.extension = Some(extension.into());
+        self
+    }
+
+    pub fn mode(&self) -> &StubMode {
+        &self.mode
+    }
+
+    pub fn extension(&self) -> Option<&str> {
+        self.extension.as_deref()
+    }
+}
+
+impl OffloadTransform for CodeStubTransform {
+    fn name(&self) -> &'static str {
+        "code_stub"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Code {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Code {
+            return None;
+        }
+        let stub = stub_code(
+            input.content,
+            self.extension(),
+            &self.mode,
+            input.original_bytes,
+        );
+        if stub.text.len() >= input.content.len() {
+            return None;
+        }
+        OffloadOutput::from_retained_put(
+            stub.text,
+            CompressorKind::Code,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for CodeCompressor {
@@ -755,6 +819,7 @@ mod treesitter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
 
     #[test]
     fn keeps_signatures_collapses_bodies() {
@@ -867,6 +932,50 @@ mod tests {
         assert!(out.symbols[0].public);
         assert_eq!(out.elisions.len(), 1);
         assert!(out.elisions[0].start_line <= out.elisions[0].end_line);
+    }
+
+    #[test]
+    fn code_stub_transform_requires_retained_ccr() {
+        let mut src = String::from("use std::fmt;\n\npub fn visible() {\n");
+        for i in 0..20 {
+            src.push_str(&format!("    println!(\"{i}\");\n"));
+        }
+        src.push_str("}\n");
+        let pipeline_input = PipelineInput {
+            content: &src,
+            original_content: &src,
+            content_kind: ContentKind::Code,
+            original_bytes: src.len(),
+        };
+        let transform = CodeStubTransform::new(StubMode::SignaturesOnly).with_extension("rs");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained code stub");
+
+        assert_eq!(out.kind(), CompressorKind::Code);
+        assert!(out.text().contains("pub fn visible()"), "{}", out.text());
+        assert!(!out.text().contains("println!(\"10\")"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(src.as_str()));
+    }
+
+    #[test]
+    fn code_stub_transform_skips_non_code_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = CodeStubTransform::new(StubMode::SignaturesOnly);
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 
     #[test]
