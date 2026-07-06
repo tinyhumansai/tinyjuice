@@ -9,6 +9,7 @@
 mod common;
 
 use serde_json::json;
+use std::fmt::Write as _;
 use tinyjuice::cache;
 use tinyjuice::tool_integration::compact_tool_output_with_policy;
 use tinyjuice::types::AgentTokenjuiceCompression;
@@ -29,6 +30,72 @@ fn big_json_rows() -> String {
         })
         .collect();
     serde_json::to_string_pretty(&rows).unwrap()
+}
+
+fn lockfile_diff() -> String {
+    let mut s = String::from("diff --git a/Cargo.lock b/Cargo.lock\n@@ -1,80 +1,80 @@\n");
+    for i in 0..80 {
+        let _ = writeln!(s, "+ new dep entry {i}");
+    }
+    for i in 0..80 {
+        let _ = writeln!(s, "- old dep entry {i}");
+    }
+    s
+}
+
+fn search_results() -> String {
+    let mut s = String::from("120 match(es); scanned 2 file(s)\n");
+    for i in 0..60 {
+        let body = if i == 7 {
+            "let needle_value = compute_long_name_7();".to_owned()
+        } else {
+            format!("let value_{i} = compute_long_name_{i}();")
+        };
+        let _ = writeln!(s, "src/a.rs:{i}:{body}");
+    }
+    for i in 0..60 {
+        let _ = writeln!(s, "src/b.rs:{i}:fn helper_function_number_{i}() {{}}");
+    }
+    s
+}
+
+fn status_report_text() -> String {
+    let mut s = String::new();
+    for i in 0..40 {
+        let _ = writeln!(
+            s,
+            "ordinary deployment progress line {i} with routine status information.\n"
+        );
+    }
+    s.push_str("ERROR sync.worker.v2 failed for REQUEST_ID 9F42 after retry 17.\n\n");
+    for i in 40..80 {
+        let _ = writeln!(
+            s,
+            "ordinary deployment progress line {i} with routine status information.\n"
+        );
+    }
+    s
+}
+
+fn html_document() -> String {
+    let mut body = String::from(
+        "<!doctype html><html><head><title>Fixture</title><script>secret()</script></head><body><h1>Fixture page</h1>",
+    );
+    for i in 0..120 {
+        let _ = write!(
+            body,
+            "<p>paragraph {i} with useful extracted text and repeated markup wrappers.</p>"
+        );
+    }
+    body.push_str("</body></html>");
+    body
+}
+
+fn assert_recoverable(text: &str, expected_original: &str) {
+    let tokens = cache::parse_markers(text);
+    assert_eq!(tokens.len(), 1, "expected one recovery marker in:\n{text}");
+    let original = cache::retrieve(&tokens[0]).expect("footer token must be retrievable");
+    assert_eq!(original, expected_original);
 }
 
 #[tokio::test]
@@ -119,6 +186,88 @@ async fn full_profile_compacts_and_original_is_recoverable() {
     let original = cache::retrieve(&tokens[0])
         .expect("footer-referenced token must be retrievable at emission time");
     assert_eq!(original, payload, "CCR roundtrip must restore the original");
+}
+
+#[tokio::test]
+async fn diff_noise_compacts_recoverably_through_tool_hook() {
+    common::install_test_config();
+    let payload = lockfile_diff();
+    let (text, stats) = compact_tool_output_with_policy(
+        "shell",
+        Some(&json!({ "command": "git diff Cargo.lock" })),
+        &payload,
+        Some(0),
+        AgentTokenjuiceCompression::Full,
+    )
+    .await;
+
+    assert!(stats.applied, "expected DiffNoise, got {stats:?}");
+    assert_eq!(stats.rule_id, "diff");
+    assert!(text.contains("reason=lockfile"), "{text}");
+    assert!(stats.compacted_bytes < stats.original_bytes);
+    assert_recoverable(&text, &payload);
+}
+
+#[tokio::test]
+async fn search_results_compact_recoverably_through_tool_hook() {
+    common::install_test_config();
+    let payload = search_results();
+    let (text, stats) = compact_tool_output_with_policy(
+        "grep",
+        Some(&json!({ "pattern": "needle_value" })),
+        &payload,
+        Some(0),
+        AgentTokenjuiceCompression::Full,
+    )
+    .await;
+
+    assert!(stats.applied, "expected search compressor, got {stats:?}");
+    assert_eq!(stats.rule_id, "search");
+    assert!(text.contains("needle_value"), "{text}");
+    assert!(text.contains("search omitted"), "{text}");
+    assert!(stats.compacted_bytes < stats.original_bytes);
+    assert_recoverable(&text, &payload);
+}
+
+#[tokio::test]
+async fn textcrusher_compacts_recoverably_through_tool_hook() {
+    common::install_test_config();
+    let payload = status_report_text();
+    let (text, stats) = compact_tool_output_with_policy(
+        "browser_extract_text",
+        Some(&json!({ "query": "sync.worker.v2 REQUEST_ID" })),
+        &payload,
+        Some(0),
+        AgentTokenjuiceCompression::Full,
+    )
+    .await;
+
+    assert!(stats.applied, "expected TextCrusher, got {stats:?}");
+    assert_eq!(stats.rule_id, "textcrusher");
+    assert!(text.contains("ERROR sync.worker.v2 failed"), "{text}");
+    assert!(stats.compacted_bytes < stats.original_bytes);
+    assert_recoverable(&text, &payload);
+}
+
+#[tokio::test]
+async fn html_extract_compacts_recoverably_through_tool_hook() {
+    common::install_test_config();
+    let payload = html_document();
+    let (text, stats) = compact_tool_output_with_policy(
+        "http_request",
+        Some(&json!({ "url": "https://example.test/page", "path": "page.html" })),
+        &payload,
+        Some(0),
+        AgentTokenjuiceCompression::Full,
+    )
+    .await;
+
+    assert!(stats.applied, "expected HTML extraction, got {stats:?}");
+    assert_eq!(stats.rule_id, "html");
+    assert!(text.contains("Fixture page"), "{text}");
+    assert!(!text.contains("<script>"), "{text}");
+    assert!(stats.compacted_bytes < stats.original_bytes);
+    assert_recoverable(&text, &payload);
 }
 
 #[tokio::test]
