@@ -124,22 +124,18 @@ the minimal wrapper unless they genuinely lack tool metadata.
 
 ### Limited Observability
 
-Current stats expose bytes and compressor labels, and savings callbacks estimate
-tokens. Missing pieces include skip reasons, applied-step traces, CCR retention
-status, omission counts, and fixture-backed benchmark reports.
+Current stats expose bytes, compressor labels, pipeline skip reasons,
+body/footer status, CCR token ids, and class-labeled savings records. Remaining
+observability work is mostly product-facing: fixture-backed benchmark reports,
+stable CLI/RPC output, and richer per-compressor omission metadata in every
+host surface.
 
 ## What Should Be Added
 
-- Type-level separation of reformat and offload transforms.
-- Injectable CCR store trait with current memory/disk behavior preserved.
 - Stable `reduce-json` request/response protocol and minimal CLI.
-- Safe-inventory command policy before wider shell compaction.
-- OpenHuman adapter tests for `full`, `light`, `off`, recovery tool bypass,
-  exact file reads, and config reload.
 - Deterministic benchmark and fixture suite before claims.
-- Query context and BM25 scoring as a lightweight shared primitive.
-- Better compressor metadata: omitted rows, omitted lines, skip reasons, and
-  applied transforms.
+- Stable product-facing reports for omitted rows, omitted lines, skip reasons,
+  applied transforms, and fixture-vs-live savings classes.
 
 ## What Should Not Be Added Yet
 
