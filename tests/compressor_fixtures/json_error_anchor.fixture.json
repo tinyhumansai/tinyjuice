@@ -1,0 +1,23 @@
+{
+  "description": "SmartCrusher row dropping preserves buried error rows",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonErrorRows",
+    "rows": 120,
+    "errorRow": 75
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "job 75",
+      "error: timeout",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "job 70"
+    ]
+  }
+}

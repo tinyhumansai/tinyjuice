@@ -1,0 +1,23 @@
+{
+  "description": "SmartCrusher row dropping preserves numeric outlier rows",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonNumericOutlierRows",
+    "rows": 120,
+    "outlierRow": 88
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "9999",
+      "/api/88",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "/api/70"
+    ]
+  }
+}

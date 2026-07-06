@@ -38,6 +38,32 @@ enum FixtureGenerator {
         #[serde(rename = "specialNote")]
         special_note: Option<String>,
     },
+    JsonSparseRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "sparseRow")]
+        sparse_row: usize,
+    },
+    JsonErrorRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "errorRow")]
+        error_row: usize,
+    },
+    JsonNumericOutlierRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "outlierRow")]
+        outlier_row: usize,
+    },
+    JsonDuplicateClusterRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "clusterStart")]
+        cluster_start: usize,
+        #[serde(rename = "clusterEnd")]
+        cluster_end: usize,
+    },
     DiffLockfile {
         #[serde(rename = "lines")]
         lines: usize,
@@ -211,6 +237,68 @@ impl FixtureGenerator {
                         format!(
                             r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
                         )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonSparseRows { rows, sparse_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let extra = if i == *sparse_row {
+                            r#","diagnostic":"rare sparse field""#
+                        } else {
+                            ""
+                        };
+                        format!(r#"{{"id":{i},"name":"record {i}","status":"active"{extra}}}"#)
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonErrorRows { rows, error_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let status = if i == *error_row {
+                            "error: timeout"
+                        } else {
+                            "ok"
+                        };
+                        format!(
+                            r#"{{"id":{i},"name":"job {i}","status":"{status}","note":"detail {i}"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonNumericOutlierRows { rows, outlier_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let latency = if i == *outlier_row {
+                            9999
+                        } else {
+                            10 + (i % 3)
+                        };
+                        format!(
+                            r#"{{"id":{i},"endpoint":"/api/{i}","latency_ms":{latency},"region":"us"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonDuplicateClusterRows {
+                rows,
+                cluster_start,
+                cluster_end,
+            } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        if (*cluster_start..=*cluster_end).contains(&i) {
+                            r#"{"id":"retry-batch-17","status":"retry","message":"duplicate cluster payload"}"#
+                                .to_owned()
+                        } else {
+                            format!(
+                                r#"{{"id":"job-{i}","status":"ok","message":"ordinary payload {i}"}}"#
+                            )
+                        }
                     })
                     .collect();
                 format!("[{}]", rendered_rows.join(","))

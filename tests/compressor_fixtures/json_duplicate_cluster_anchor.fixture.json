@@ -1,0 +1,24 @@
+{
+  "description": "SmartCrusher row dropping preserves duplicate-cluster representatives",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonDuplicateClusterRows",
+    "rows": 140,
+    "clusterStart": 72,
+    "clusterEnd": 76
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "retry-batch-17",
+      "duplicate cluster payload",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "ordinary payload 70"
+    ]
+  }
+}

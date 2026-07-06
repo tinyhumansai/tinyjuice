@@ -1,0 +1,22 @@
+{
+  "description": "SmartCrusher row dropping preserves sparse structural rows",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonSparseRows",
+    "rows": 140,
+    "sparseRow": 72
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "rare sparse field",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "record 70"
+    ]
+  }
+}

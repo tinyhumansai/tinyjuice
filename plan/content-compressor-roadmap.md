@@ -40,7 +40,9 @@ Add:
 - Broader fixture coverage for all SmartCrusher planner paths.
 
 Status: initial router-level fixture coverage now includes a query-anchored
-row-dropping case with CCR recovery. More planner-path fixtures remain.
+row-dropping case with CCR recovery. Sparse structural rows, error rows,
+numeric outliers, and duplicate-cluster representative anchors now also have
+router-level fixture coverage. More planner-path fixtures remain.
 
 Do not add:
 
