@@ -81,7 +81,10 @@ pub use pipeline::{
 pub use policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy};
 pub use reduce::reduce_execution_with_rules;
 pub use relevance::{Bm25Corpus, Bm25DocumentScore};
-pub use rules::{LoadRuleOptions, load_builtin_rules, load_rules};
+pub use rules::{
+    LoadRuleOptions, RuleDescriptorRef, RuleDuplicateId, RuleParseError, RuleRegexError,
+    RuleShadowedRule, RuleVerificationReport, load_builtin_rules, load_rules, verify_rules,
+};
 pub use tool_integration::{
     CompactionStats, compact_output, compact_output_with_policy, compact_tool_output_with_policy,
     configure, current_options, install_config,

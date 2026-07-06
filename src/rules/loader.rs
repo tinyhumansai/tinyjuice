@@ -39,7 +39,7 @@ pub struct LoadRuleOptions {
 // Layer path helpers
 // ---------------------------------------------------------------------------
 
-fn user_rules_root(custom: Option<&Path>) -> PathBuf {
+pub(crate) fn user_rules_root(custom: Option<&Path>) -> PathBuf {
     if let Some(p) = custom {
         return p.to_owned();
     }
@@ -50,7 +50,7 @@ fn user_rules_root(custom: Option<&Path>) -> PathBuf {
         .join("rules")
 }
 
-fn project_rules_root(cwd: Option<&Path>, custom: Option<&Path>) -> PathBuf {
+pub(crate) fn project_rules_root(cwd: Option<&Path>, custom: Option<&Path>) -> PathBuf {
     if let Some(p) = custom {
         return p.to_owned();
     }
@@ -89,7 +89,7 @@ fn load_builtin_descriptors() -> Vec<(RuleOrigin, String, JsonRule)> {
 
 /// Recursively walk `root` and return all `.json` files that are not
 /// `.schema.json` or `.fixture.json`.
-fn list_rule_files(root: &Path) -> Vec<PathBuf> {
+pub(crate) fn list_rule_files(root: &Path) -> Vec<PathBuf> {
     if !root.is_dir() {
         return Vec::new();
     }

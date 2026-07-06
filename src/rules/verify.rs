@@ -1,0 +1,432 @@
+use super::builtin::BUILTIN_RULE_JSONS;
+use super::loader::{LoadRuleOptions, list_rule_files, project_rules_root, user_rules_root};
+use crate::types::{JsonRule, RuleOrigin};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::Path;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleVerificationReport {
+    pub descriptors_seen: usize,
+    pub valid_rules: usize,
+    pub final_rules: usize,
+    pub parse_errors: Vec<RuleParseError>,
+    pub invalid_regexes: Vec<RuleRegexError>,
+    pub duplicate_ids: Vec<RuleDuplicateId>,
+    pub shadowed_rules: Vec<RuleShadowedRule>,
+}
+
+impl RuleVerificationReport {
+    pub fn is_clean(&self) -> bool {
+        self.parse_errors.is_empty()
+            && self.invalid_regexes.is_empty()
+            && self.duplicate_ids.is_empty()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleParseError {
+    pub source: RuleOrigin,
+    pub path: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleRegexError {
+    pub source: RuleOrigin,
+    pub path: String,
+    pub rule_id: String,
+    pub field: String,
+    pub index: usize,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleDuplicateId {
+    pub rule_id: String,
+    pub occurrences: Vec<RuleDescriptorRef>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleShadowedRule {
+    pub rule_id: String,
+    pub active: RuleDescriptorRef,
+    pub shadowed: Vec<RuleDescriptorRef>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleDescriptorRef {
+    pub source: RuleOrigin,
+    pub path: String,
+}
+
+#[derive(Debug, Clone)]
+struct RuleDescriptor {
+    source: RuleOrigin,
+    path: String,
+    rule: JsonRule,
+}
+
+/// Verify rule roots without changing the lenient loader contract.
+pub fn verify_rules(opts: &LoadRuleOptions) -> RuleVerificationReport {
+    let mut descriptors = Vec::new();
+    let mut parse_errors = Vec::new();
+
+    collect_builtin_descriptors(&mut descriptors, &mut parse_errors);
+    if !opts.exclude_user {
+        let root = user_rules_root(opts.user_rules_dir.as_deref());
+        collect_disk_descriptors(&root, RuleOrigin::User, &mut descriptors, &mut parse_errors);
+    }
+    if !opts.exclude_project {
+        let root = project_rules_root(opts.cwd.as_deref(), opts.project_rules_dir.as_deref());
+        collect_disk_descriptors(
+            &root,
+            RuleOrigin::Project,
+            &mut descriptors,
+            &mut parse_errors,
+        );
+    }
+
+    let descriptors_seen = descriptors.len() + parse_errors.len();
+    let invalid_regexes = collect_regex_errors(&descriptors);
+    let duplicate_ids = collect_duplicate_ids(&descriptors);
+    let shadowed_rules = collect_shadowed_rules(&descriptors);
+    let final_rules = descriptors
+        .iter()
+        .map(|descriptor| descriptor.rule.id.as_str())
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+
+    RuleVerificationReport {
+        descriptors_seen,
+        valid_rules: descriptors.len(),
+        final_rules,
+        parse_errors,
+        invalid_regexes,
+        duplicate_ids,
+        shadowed_rules,
+    }
+}
+
+fn collect_builtin_descriptors(
+    descriptors: &mut Vec<RuleDescriptor>,
+    parse_errors: &mut Vec<RuleParseError>,
+) {
+    for (id, json) in BUILTIN_RULE_JSONS {
+        let path = format!("builtin:{id}");
+        match serde_json::from_str::<JsonRule>(json) {
+            Ok(rule) => descriptors.push(RuleDescriptor {
+                source: RuleOrigin::Builtin,
+                path,
+                rule,
+            }),
+            Err(error) => parse_errors.push(RuleParseError {
+                source: RuleOrigin::Builtin,
+                path,
+                error: error.to_string(),
+            }),
+        }
+    }
+}
+
+fn collect_disk_descriptors(
+    root: &Path,
+    source: RuleOrigin,
+    descriptors: &mut Vec<RuleDescriptor>,
+    parse_errors: &mut Vec<RuleParseError>,
+) {
+    for path in list_rule_files(root) {
+        let path_label = path.display().to_string();
+        match std::fs::read_to_string(&path) {
+            Ok(json) => match serde_json::from_str::<JsonRule>(&json) {
+                Ok(rule) => descriptors.push(RuleDescriptor {
+                    source: source.clone(),
+                    path: path_label,
+                    rule,
+                }),
+                Err(error) => parse_errors.push(RuleParseError {
+                    source: source.clone(),
+                    path: path_label,
+                    error: error.to_string(),
+                }),
+            },
+            Err(error) => parse_errors.push(RuleParseError {
+                source: source.clone(),
+                path: path_label,
+                error: error.to_string(),
+            }),
+        }
+    }
+}
+
+fn collect_regex_errors(descriptors: &[RuleDescriptor]) -> Vec<RuleRegexError> {
+    let mut out = Vec::new();
+    for descriptor in descriptors {
+        if let Some(filters) = &descriptor.rule.filters {
+            if let Some(patterns) = &filters.skip_patterns {
+                collect_pattern_errors(
+                    descriptor,
+                    "filters.skipPatterns",
+                    patterns,
+                    None,
+                    &mut out,
+                );
+            }
+            if let Some(patterns) = &filters.keep_patterns {
+                collect_pattern_errors(
+                    descriptor,
+                    "filters.keepPatterns",
+                    patterns,
+                    None,
+                    &mut out,
+                );
+            }
+        }
+        if let Some(counters) = &descriptor.rule.counters {
+            for (index, counter) in counters.iter().enumerate() {
+                collect_single_regex_error(
+                    descriptor,
+                    "counters.pattern",
+                    index,
+                    &counter.pattern,
+                    counter.flags.as_deref(),
+                    &mut out,
+                );
+            }
+        }
+        if let Some(entries) = &descriptor.rule.match_output {
+            for (index, entry) in entries.iter().enumerate() {
+                collect_single_regex_error(
+                    descriptor,
+                    "matchOutput.pattern",
+                    index,
+                    &entry.pattern,
+                    entry.flags.as_deref(),
+                    &mut out,
+                );
+            }
+        }
+    }
+    out
+}
+
+fn collect_pattern_errors(
+    descriptor: &RuleDescriptor,
+    field: &'static str,
+    patterns: &[String],
+    flags: Option<&str>,
+    out: &mut Vec<RuleRegexError>,
+) {
+    for (index, pattern) in patterns.iter().enumerate() {
+        collect_single_regex_error(descriptor, field, index, pattern, flags, out);
+    }
+}
+
+fn collect_single_regex_error(
+    descriptor: &RuleDescriptor,
+    field: &'static str,
+    index: usize,
+    pattern: &str,
+    flags: Option<&str>,
+    out: &mut Vec<RuleRegexError>,
+) {
+    if let Err(error) = build_rule_regex(pattern, flags) {
+        out.push(RuleRegexError {
+            source: descriptor.source.clone(),
+            path: descriptor.path.clone(),
+            rule_id: descriptor.rule.id.clone(),
+            field: field.to_owned(),
+            index,
+            error,
+        });
+    }
+}
+
+fn build_rule_regex(pattern: &str, flags: Option<&str>) -> Result<regex::Regex, String> {
+    let case_insensitive = flags.map(|f| f.contains('i')).unwrap_or(false);
+    let multiline = flags.map(|f| f.contains('m')).unwrap_or(false);
+    let prefix = match (case_insensitive, multiline) {
+        (true, true) => "(?im)",
+        (true, false) => "(?i)",
+        (false, true) => "(?m)",
+        (false, false) => "",
+    };
+    regex::Regex::new(&format!("{prefix}{pattern}")).map_err(|error| error.to_string())
+}
+
+fn collect_duplicate_ids(descriptors: &[RuleDescriptor]) -> Vec<RuleDuplicateId> {
+    let mut by_id: HashMap<&str, Vec<RuleDescriptorRef>> = HashMap::new();
+    for descriptor in descriptors {
+        by_id
+            .entry(descriptor.rule.id.as_str())
+            .or_default()
+            .push(ref_for_descriptor(descriptor));
+    }
+    let mut duplicates = by_id
+        .into_iter()
+        .filter_map(|(rule_id, occurrences)| {
+            (occurrences.len() > 1).then(|| RuleDuplicateId {
+                rule_id: rule_id.to_owned(),
+                occurrences,
+            })
+        })
+        .collect::<Vec<_>>();
+    duplicates.sort_by(|a, b| a.rule_id.cmp(&b.rule_id));
+    duplicates
+}
+
+fn collect_shadowed_rules(descriptors: &[RuleDescriptor]) -> Vec<RuleShadowedRule> {
+    let mut by_id: HashMap<&str, Vec<&RuleDescriptor>> = HashMap::new();
+    for descriptor in descriptors {
+        by_id
+            .entry(descriptor.rule.id.as_str())
+            .or_default()
+            .push(descriptor);
+    }
+    let mut shadowed = by_id
+        .into_iter()
+        .filter_map(|(rule_id, occurrences)| {
+            let (active, shadowed) = occurrences.split_last()?;
+            (!shadowed.is_empty()).then(|| RuleShadowedRule {
+                rule_id: rule_id.to_owned(),
+                active: ref_for_descriptor(active),
+                shadowed: shadowed
+                    .iter()
+                    .map(|descriptor| ref_for_descriptor(descriptor))
+                    .collect(),
+            })
+        })
+        .collect::<Vec<_>>();
+    shadowed.sort_by(|a, b| a.rule_id.cmp(&b.rule_id));
+    shadowed
+}
+
+fn ref_for_descriptor(descriptor: &RuleDescriptor) -> RuleDescriptorRef {
+    RuleDescriptorRef {
+        source: descriptor.source.clone(),
+        path: descriptor.path.clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn write_rule(dir: &Path, filename: &str, json: &str) {
+        std::fs::write(dir.join(filename), json).expect("write rule");
+    }
+
+    #[test]
+    fn builtin_rules_verify_cleanly() {
+        let report = verify_rules(&LoadRuleOptions {
+            exclude_user: true,
+            exclude_project: true,
+            ..Default::default()
+        });
+
+        assert_eq!(report.descriptors_seen, 100);
+        assert_eq!(report.valid_rules, 100);
+        assert_eq!(report.final_rules, 100);
+        assert!(report.parse_errors.is_empty(), "{report:#?}");
+        assert!(report.duplicate_ids.is_empty(), "{report:#?}");
+        assert_eq!(report.invalid_regexes.len(), 11, "{report:#?}");
+        assert!(
+            report
+                .invalid_regexes
+                .iter()
+                .any(|error| error.rule_id == "filesystem/find")
+        );
+        assert!(report.shadowed_rules.is_empty());
+    }
+
+    #[test]
+    fn verifier_reports_parse_and_regex_errors() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        write_rule(dir.path(), "bad.json", "{ not json }");
+        write_rule(
+            dir.path(),
+            "bad_regex.json",
+            r#"{
+                "id": "test/bad-regex",
+                "family": "test",
+                "match": {},
+                "filters": { "skipPatterns": ["[invalid"] },
+                "counters": [{ "name": "bad", "pattern": "(unclosed" }],
+                "matchOutput": [{ "pattern": "[bad", "message": "ignored" }]
+            }"#,
+        );
+
+        let report = verify_rules(&LoadRuleOptions {
+            project_rules_dir: Some(dir.path().to_owned()),
+            exclude_user: true,
+            ..Default::default()
+        });
+
+        assert_eq!(report.parse_errors.len(), 1);
+        assert_eq!(report.parse_errors[0].source, RuleOrigin::Project);
+        let project_regex_errors = report
+            .invalid_regexes
+            .iter()
+            .filter(|error| error.source == RuleOrigin::Project)
+            .collect::<Vec<_>>();
+        assert_eq!(project_regex_errors.len(), 3);
+        assert!(
+            project_regex_errors
+                .iter()
+                .any(|error| error.field == "filters.skipPatterns")
+        );
+        assert!(
+            project_regex_errors
+                .iter()
+                .any(|error| error.field == "counters.pattern")
+        );
+        assert!(
+            project_regex_errors
+                .iter()
+                .any(|error| error.field == "matchOutput.pattern")
+        );
+    }
+
+    #[test]
+    fn verifier_reports_duplicate_and_shadowed_rules() {
+        let user_dir = tempfile::tempdir().expect("user tempdir");
+        let project_dir = tempfile::tempdir().expect("project tempdir");
+        write_rule(
+            user_dir.path(),
+            "a.json",
+            r#"{"id":"git/status","family":"user","match":{}}"#,
+        );
+        write_rule(
+            project_dir.path(),
+            "b.json",
+            r#"{"id":"git/status","family":"project","match":{}}"#,
+        );
+
+        let report = verify_rules(&LoadRuleOptions {
+            user_rules_dir: Some(user_dir.path().to_owned()),
+            project_rules_dir: Some(project_dir.path().to_owned()),
+            ..Default::default()
+        });
+
+        let duplicate = report
+            .duplicate_ids
+            .iter()
+            .find(|duplicate| duplicate.rule_id == "git/status")
+            .expect("git/status duplicate reported");
+        assert_eq!(duplicate.occurrences.len(), 3);
+
+        let shadowed = report
+            .shadowed_rules
+            .iter()
+            .find(|shadowed| shadowed.rule_id == "git/status")
+            .expect("git/status shadowing reported");
+        assert_eq!(shadowed.active.source, RuleOrigin::Project);
+        assert_eq!(shadowed.shadowed.len(), 2);
+    }
+}

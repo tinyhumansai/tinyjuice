@@ -236,6 +236,11 @@ TinyJuice validates mutable-block replacements, preserves the frozen prefix,
 and can detect volatile cache-hostile values such as UUIDs, timestamps, JWTs,
 and hex hashes with redacted findings only.
 
+`verify_rules` checks the same builtin/user/project rule layers as the loader
+without changing the lenient load contract. It reports parse errors, invalid
+regex patterns, duplicate rule IDs, and shadowed lower-priority rules so CLI
+or host diagnostics can fail loudly while runtime loading remains compatible.
+
 Already-extracted web pages can be passed through `reduce_web_extract` or
 `reduce_web_extract_with_store`. The reducer removes inline base64 image blobs,
 preserves ordinary markdown image URLs, and stores omitted middle content in CCR
