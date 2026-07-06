@@ -199,6 +199,10 @@ Add:
 - More complete entity support if fixtures show need.
 - Broader fixture coverage for web-extract host formats.
 
+Status: initial web-extract fixture coverage now includes a markdown host
+format case for base64 image replacement, real image URL preservation, URL
+secret redaction, and retained recovery text.
+
 Do not add:
 
 - URL fetching or scraping in core TinyJuice.
