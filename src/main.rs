@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::{self, Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::ExitCode;
 
@@ -35,6 +35,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "wrap" => run_wrap(&args[1..]),
         "ls" => run_ls(&args[1..]),
         "cat" => run_cat(&args[1..]),
+        "stats" => run_stats(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -52,26 +53,62 @@ fn run_ls(args: &[String]) -> Result<(), String> {
         return Ok(());
     }
     let store_dir = parse_store_dir_args("ls", args)?;
-    let mut tokens = Vec::new();
-    for entry in fs::read_dir(&store_dir)
-        .map_err(|error| format!("failed to read {}: {error}", store_dir.display()))?
-    {
-        let entry = entry.map_err(|error| format!("failed to read store entry: {error}"))?;
-        if !entry
-            .file_type()
-            .map_err(|error| format!("failed to inspect store entry: {error}"))?
-            .is_file()
-        {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().into_owned();
-        if is_cli_ccr_token(&name) {
-            tokens.push(name);
-        }
+    let inventory = read_ccr_store_inventory(&store_dir)?;
+    for entry in inventory.entries {
+        println!("{}", entry.token);
     }
-    tokens.sort();
-    for token in tokens {
-        println!("{token}");
+    Ok(())
+}
+
+fn run_stats(args: &[String]) -> Result<(), String> {
+    let mut store_dir = None;
+    let mut pretty = false;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--store-dir" => {
+                i += 1;
+                store_dir = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| "--store-dir requires a value".to_owned())?,
+                ));
+            }
+            "--pretty" => pretty = true,
+            "-h" | "--help" => {
+                print_stats_usage();
+                return Ok(());
+            }
+            value => return Err(format!("unknown stats option: {value}")),
+        }
+        i += 1;
+    }
+
+    let store_dir = store_dir.ok_or_else(|| "stats requires --store-dir".to_owned())?;
+    let inventory = read_ccr_store_inventory(&store_dir)?;
+    let bytes = inventory
+        .entries
+        .iter()
+        .map(|entry| entry.bytes)
+        .sum::<u64>();
+    let stats = serde_json::json!({
+        "storeDir": store_dir.to_string_lossy(),
+        "tokens": inventory.entries.len(),
+        "bytes": bytes,
+        "ignoredEntries": inventory.ignored_entries,
+    });
+    if pretty {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&stats)
+                .map_err(|error| format!("failed to serialize stats: {error}"))?
+        );
+    } else {
+        println!(
+            "{}",
+            serde_json::to_string(&stats)
+                .map_err(|error| format!("failed to serialize stats: {error}"))?
+        );
     }
     Ok(())
 }
@@ -188,6 +225,51 @@ fn parse_range_arg(raw: &str, flag: &str) -> Result<(usize, usize), String> {
 
 fn is_cli_ccr_token(token: &str) -> bool {
     token.len() == 32 && token.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+struct CcrStoreInventory {
+    entries: Vec<CcrStoreEntry>,
+    ignored_entries: usize,
+}
+
+struct CcrStoreEntry {
+    token: String,
+    bytes: u64,
+}
+
+fn read_ccr_store_inventory(store_dir: &Path) -> Result<CcrStoreInventory, String> {
+    let mut entries = Vec::new();
+    let mut ignored_entries = 0;
+
+    for entry in fs::read_dir(store_dir)
+        .map_err(|error| format!("failed to read {}: {error}", store_dir.display()))?
+    {
+        let entry = entry.map_err(|error| format!("failed to read store entry: {error}"))?;
+        if !entry
+            .file_type()
+            .map_err(|error| format!("failed to inspect store entry: {error}"))?
+            .is_file()
+        {
+            ignored_entries += 1;
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if is_cli_ccr_token(&name) {
+            let bytes = entry
+                .metadata()
+                .map_err(|error| format!("failed to inspect store entry {name}: {error}"))?
+                .len();
+            entries.push(CcrStoreEntry { token: name, bytes });
+        } else {
+            ignored_entries += 1;
+        }
+    }
+
+    entries.sort_by(|left, right| left.token.cmp(&right.token));
+    Ok(CcrStoreInventory {
+        entries,
+        ignored_entries,
+    })
 }
 
 fn run_wrap(args: &[String]) -> Result<(), String> {
@@ -568,6 +650,7 @@ fn print_usage() {
     println!("  wrap         Run a command and reduce its captured output");
     println!("  ls           List tokens from an explicit CCR disk store");
     println!("  cat          Print a token from an explicit CCR disk store");
+    println!("  stats        Report metadata-only CCR disk store stats");
 }
 
 fn print_reduce_usage() {
@@ -601,4 +684,8 @@ fn print_ls_usage() {
 
 fn print_cat_usage() {
     println!("Usage: tinyjuice cat --store-dir DIR [--lines START:END | --bytes START:END] TOKEN");
+}
+
+fn print_stats_usage() {
+    println!("Usage: tinyjuice stats --store-dir DIR [--pretty]");
 }
