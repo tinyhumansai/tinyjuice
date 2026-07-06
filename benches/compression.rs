@@ -114,13 +114,19 @@ fn bench_rule_engine(c: &mut Criterion) {
     };
 
     c.bench_function("reduce_execution_with_rules/git_status", |b| {
-        b.iter(|| {
-            reduce_execution_with_rules(
-                black_box(input.clone()),
-                black_box(&rules),
-                &ReduceOptions::default(),
-            )
-        })
+        // Clone in setup, not inside the timed closure — otherwise the
+        // measurement includes a multi-KB string clone per iteration.
+        b.iter_batched(
+            || input.clone(),
+            |input| {
+                reduce_execution_with_rules(
+                    black_box(input),
+                    black_box(&rules),
+                    &ReduceOptions::default(),
+                )
+            },
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     c.bench_function("load_builtin_rules", |b| {

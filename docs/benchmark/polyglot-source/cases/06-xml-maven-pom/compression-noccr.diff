@@ -1,0 +1,783 @@
+--- input/input.xml
++++ output/output-noccr.txt
+@@ -1,468 +1,311 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project xmlns="http://maven.apache.org/POM/4.0.0">
+-  <modelVersion>4.0.0</modelVersion>
+-  <groupId>ai.tinyhumans</groupId>
+-  <artifactId>orchestrator</artifactId>
+-  <version>2.14.3</version>
+-  <packaging>jar</packaging>
+-  <name>TinyHumans Orchestrator</name>
+-  <description>Coordinates agent workloads across regional clusters with retry and backpressure.</description>
+-  <properties>
+-    <maven.compiler.source>21</maven.compiler.source>
+-    <maven.compiler.target>21</maven.compiler.target>
+-    <kafka.version>3.7.0</kafka.version>
+-  </properties>
+-  <dependencies>
+-    <dependency>
+-      <groupId>org.apache.kafka</groupId>
+-      <artifactId>kafka-clients</artifactId>
+-      <version>${kafka.version}</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.fasterxml.jackson.core</groupId>
+-      <artifactId>jackson-databind</artifactId>
+-      <version>2.17.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>io.micrometer</groupId>
+-      <artifactId>micrometer-registry-prometheus</artifactId>
+-      <version>1.13.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.postgresql</groupId>
+-      <artifactId>postgresql</artifactId>
+-      <version>42.7.3</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-api</artifactId>
+-      <version>2.0.13</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>ch.qos.logback</groupId>
+-      <artifactId>logback-classic</artifactId>
+-      <version>1.5.6</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter</artifactId>
+-      <version>5.10.2</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-core</artifactId>
+-      <version>5.12.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.testcontainers</groupId>
+-      <artifactId>postgresql-tc</artifactId>
+-      <version>1.19.8</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>io.grpc</groupId>
+-      <artifactId>grpc-netty-shaded</artifactId>
+-      <version>1.64.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.google.protobuf</groupId>
+-      <artifactId>protobuf-java</artifactId>
+-      <version>4.27.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.httpcomponents.client5</groupId>
+-      <artifactId>httpclient5</artifactId>
+-      <version>5.3.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.kafka</groupId>
+-      <artifactId>kafka-clients</artifactId>
+-      <version>${kafka.version}</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.fasterxml.jackson.core</groupId>
+-      <artifactId>jackson-databind</artifactId>
+-      <version>2.17.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>io.micrometer</groupId>
+-      <artifactId>micrometer-registry-prometheus</artifactId>
+-      <version>1.13.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.postgresql</groupId>
+-      <artifactId>postgresql</artifactId>
+-      <version>42.7.3</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-api</artifactId>
+-      <version>2.0.13</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>ch.qos.logback</groupId>
+-      <artifactId>logback-classic</artifactId>
+-      <version>1.5.6</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter</artifactId>
+-      <version>5.10.2</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-core</artifactId>
+-      <version>5.12.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.testcontainers</groupId>
+-      <artifactId>postgresql-tc</artifactId>
+-      <version>1.19.8</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>io.grpc</groupId>
+-      <artifactId>grpc-netty-shaded</artifactId>
+-      <version>1.64.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.google.protobuf</groupId>
+-      <artifactId>protobuf-java</artifactId>
+-      <version>4.27.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.httpcomponents.client5</groupId>
+-      <artifactId>httpclient5</artifactId>
+-      <version>5.3.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.kafka</groupId>
+-      <artifactId>kafka-clients</artifactId>
+-      <version>${kafka.version}</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.fasterxml.jackson.core</groupId>
+-      <artifactId>jackson-databind</artifactId>
+-      <version>2.17.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>io.micrometer</groupId>
+-      <artifactId>micrometer-registry-prometheus</artifactId>
+-      <version>1.13.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.postgresql</groupId>
+-      <artifactId>postgresql</artifactId>
+-      <version>42.7.3</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-api</artifactId>
+-      <version>2.0.13</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>ch.qos.logback</groupId>
+-      <artifactId>logback-classic</artifactId>
+-      <version>1.5.6</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter</artifactId>
+-      <version>5.10.2</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-core</artifactId>
+-      <version>5.12.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.testcontainers</groupId>
+-      <artifactId>postgresql-tc</artifactId>
+-      <version>1.19.8</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>io.grpc</groupId>
+-      <artifactId>grpc-netty-shaded</artifactId>
+-      <version>1.64.0</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.google.protobuf</groupId>
+-      <artifactId>protobuf-java</artifactId>
+-      <version>4.27.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.httpcomponents.client5</groupId>
+-      <artifactId>httpclient5</artifactId>
+-      <version>5.3.1</version>
+-      <scope>compile</scope>
+-      <exclusions>
+-        <exclusion>
+-          <groupId>commons-logging</groupId>
+-          <artifactId>commons-logging</artifactId>
+-        </exclusion>
+-      </exclusions>
+-    </dependency>
+-  </dependencies>
+-  <build>
+-    <plugins>
+-      <plugin>
+-        <groupId>org.apache.maven.plugins</groupId>
+-        <artifactId>maven-surefire-plugin</artifactId>
+-        <version>3.2.5</version>
+-      </plugin>
+-      <plugin>
+-        <groupId>org.apache.maven.plugins</groupId>
+-        <artifactId>maven-compiler-plugin</artifactId>
+-        <version>3.13.0</version>
+-      </plugin>
+-      <plugin>
+-        <groupId>org.apache.maven.plugins</groupId>
+-        <artifactId>maven-shade-plugin</artifactId>
+-        <version>3.5.3</version>
+-      </plugin>
+-    </plugins>
+-  </build>
+-</project>
++4.0.0
++ai.tinyhumans
++orchestrator
++2.14.3
++jar
++TinyHumans Orchestrator
++Coordinates agent workloads across regional clusters with retry and backpressure.
++
++21
++21
++3.7.0
++
++org.apache.kafka
++kafka-clients
++${kafka.version}
++compile
++
++commons-logging
++commons-logging
++
++com.fasterxml.jackson.core
++jackson-databind
++2.17.1
++compile
++
++commons-logging
++commons-logging
++
++io.micrometer
++micrometer-registry-prometheus
++1.13.0
++compile
++
++commons-logging
++commons-logging
++
++org.postgresql
++postgresql
++42.7.3
++compile
++
++commons-logging
++commons-logging
++
++org.slf4j
++slf4j-api
++2.0.13
++compile
++
++commons-logging
++commons-logging
++
++ch.qos.logback
++logback-classic
++1.5.6
++compile
++
++commons-logging
++commons-logging
++
++org.junit.jupiter
++junit-jupiter
++5.10.2
++compile
++
++commons-logging
++commons-logging
++
++org.mockito
++mockito-core
++5.12.0
++compile
++
++commons-logging
++commons-logging
++
++org.testcontainers
++postgresql-tc
++1.19.8
++compile
++
++commons-logging
++commons-logging
++
++io.grpc
++grpc-netty-shaded
++1.64.0
++compile
++
++commons-logging
++commons-logging
++
++com.google.protobuf
++protobuf-java
++4.27.1
++compile
++
++commons-logging
++commons-logging
++
++org.apache.httpcomponents.client5
++httpclient5
++5.3.1
++compile
++
++commons-logging
++commons-logging
++
++org.apache.kafka
++kafka-clients
++${kafka.version}
++compile
++
++commons-logging
++commons-logging
++
++com.fasterxml.jackson.core
++jackson-databind
++2.17.1
++compile
++
++commons-logging
++commons-logging
++
++io.micrometer
++micrometer-registry-prometheus
++1.13.0
++compile
++
++commons-logging
++commons-logging
++
++org.postgresql
++postgresql
++42.7.3
++compile
++
++commons-logging
++commons-logging
++
++org.slf4j
++slf4j-api
++2.0.13
++compile
++
++commons-logging
++commons-logging
++
++ch.qos.logback
++logback-classic
++1.5.6
++compile
++
++commons-logging
++commons-logging
++
++org.junit.jupiter
++junit-jupiter
++5.10.2
++compile
++
++commons-logging
++commons-logging
++
++org.mockito
++mockito-core
++5.12.0
++compile
++
++commons-logging
++commons-logging
++
++org.testcontainers
++postgresql-tc
++1.19.8
++compile
++
++commons-logging
++commons-logging
++
++io.grpc
++grpc-netty-shaded
++1.64.0
++compile
++
++commons-logging
++commons-logging
++
++com.google.protobuf
++protobuf-java
++4.27.1
++compile
++
++commons-logging
++commons-logging
++
++org.apache.httpcomponents.client5
++httpclient5
++5.3.1
++compile
++
++commons-logging
++commons-logging
++
++org.apache.kafka
++kafka-clients
++${kafka.version}
++compile
++
++commons-logging
++commons-logging
++
++com.fasterxml.jackson.core
++jackson-databind
++2.17.1
++compile
++
++commons-logging
++commons-logging
++
++io.micrometer
++micrometer-registry-prometheus
++1.13.0
++compile
++
++commons-logging
++commons-logging
++
++org.postgresql
++postgresql
++42.7.3
++compile
++
++commons-logging
++commons-logging
++
++org.slf4j
++slf4j-api
++2.0.13
++compile
++
++commons-logging
++commons-logging
++
++ch.qos.logback
++logback-classic
++1.5.6
++compile
++
++commons-logging
++commons-logging
++
++org.junit.jupiter
++junit-jupiter
++5.10.2
++compile
++
++commons-logging
++commons-logging
++
++org.mockito
++mockito-core
++5.12.0
++compile
++
++commons-logging
++commons-logging
++
++org.testcontainers
++postgresql-tc
++1.19.8
++compile
++
++commons-logging
++commons-logging
++
++io.grpc
++grpc-netty-shaded
++1.64.0
++compile
++
++commons-logging
++commons-logging
++
++com.google.protobuf
++protobuf-java
++4.27.1
++compile
++
++commons-logging
++commons-logging
++
++org.apache.httpcomponents.client5
++httpclient5
++5.3.1
++compile
++
++commons-logging
++commons-logging
++
++org.apache.maven.plugins
++maven-surefire-plugin
++3.2.5
++
++org.apache.maven.plugins
++maven-compiler-plugin
++3.13.0
++
++org.apache.maven.plugins
++maven-shade-plugin
++3.5.3
+\ No newline at end of file

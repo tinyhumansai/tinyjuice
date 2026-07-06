@@ -18,7 +18,7 @@
       "[IMAGE: inline]",
       "https://cdn.example/images/chart.png",
       "final web sentinel",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "AAAA1111SECRETIMAGE"

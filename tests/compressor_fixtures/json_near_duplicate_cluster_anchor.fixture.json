@@ -15,7 +15,7 @@
     "contains": [
       "job-72",
       "retry backlog service failed",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ]
   }
 }

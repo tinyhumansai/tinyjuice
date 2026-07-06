@@ -35,7 +35,7 @@ fn build_regex(pattern: &str, flags: Option<&str>) -> Option<regex::Regex> {
         Ok(re) => Some(re),
         Err(err) => {
             log::debug!(
-                "[tokenjuice] rule compiler: invalid regex '{}' (flags={:?}): {}",
+                "[tinyjuice] rule compiler: invalid regex '{}' (flags={:?}): {}",
                 pattern,
                 flags,
                 err
@@ -54,7 +54,7 @@ fn build_regex(pattern: &str, flags: Option<&str>) -> Option<regex::Regex> {
 /// `path` is either a filesystem path or `"builtin:<id>"` for embedded rules.
 pub fn compile_rule(rule: JsonRule, source: RuleOrigin, path: String) -> CompiledRule {
     log::debug!(
-        "[tokenjuice] compiling rule '{}' from {:?} path={}",
+        "[tinyjuice] compiling rule '{}' from {:?} path={}",
         rule.id,
         source,
         path
@@ -307,12 +307,12 @@ mod tests {
         let compiled = compile_rule(
             rule,
             RuleOrigin::User,
-            "/home/user/.config/tokenjuice/rules/test.json".to_owned(),
+            "/home/user/.config/tinyjuice/rules/test.json".to_owned(),
         );
         assert_eq!(compiled.source, RuleOrigin::User);
         assert_eq!(
             compiled.path,
-            "/home/user/.config/tokenjuice/rules/test.json"
+            "/home/user/.config/tinyjuice/rules/test.json"
         );
     }
 }

@@ -3,10 +3,9 @@
 //!
 //! Each compressor preserves the signal its kind carries — errors in logs,
 //! changed hunks in diffs, signatures in code, anomalous rows in JSON — and
-//! drops the rest. Lossy compressors leave recovery to the router
-//! ([`crate::compress`]), which offloads the original to
-//! the CCR cache and appends a retrieval marker. Compressors therefore return
-//! only the compacted body and a `lossy` flag; they never touch the cache.
+//! drops the rest. Whole-payload recovery belongs to the router
+//! ([`crate::compress`]), which offloads the original to the CCR cache and
+//! appends a retrieval footer.
 
 pub mod code;
 pub mod diff;
@@ -14,6 +13,7 @@ pub mod generic;
 pub mod html;
 pub mod json;
 pub mod log;
+pub mod log_template;
 pub mod ml_text;
 pub mod search;
 pub mod signals;

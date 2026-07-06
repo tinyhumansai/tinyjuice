@@ -12,7 +12,7 @@
     "recovery": true,
     "contains": [
       "topic wordee marker alpha beta",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ]
   }
 }

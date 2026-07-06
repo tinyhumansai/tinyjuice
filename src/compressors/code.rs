@@ -121,7 +121,7 @@ impl Compressor for CodeCompressor {
         // Prefer the AST path when a grammar matches the file's language; fall
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
-        #[cfg(feature = "tokenjuice-treesitter")]
+        #[cfg(feature = "tinyjuice-treesitter")]
         if let Some(ext) = input.hint.extension.as_deref()
             && let Some(out) = treesitter::compress(input.content, ext)
         {
@@ -203,7 +203,7 @@ pub fn stub_code(
     mode: &StubMode,
     max_bytes: usize,
 ) -> CodeStubOutput {
-    #[cfg(feature = "tokenjuice-treesitter")]
+    #[cfg(feature = "tinyjuice-treesitter")]
     if let Some(ext) = extension
         && let Some(out) = treesitter::stub(content, ext, mode)
     {
@@ -624,7 +624,7 @@ fn brace_delta(line: &str) -> (i32, i32) {
 /// source but replaces function/method bodies longer than a threshold with a
 /// `{ … N lines … }` (or `...` for Python) placeholder, preserving signatures,
 /// imports, type declarations and struct/enum fields exactly.
-#[cfg(feature = "tokenjuice-treesitter")]
+#[cfg(feature = "tinyjuice-treesitter")]
 mod treesitter {
     use super::{
         CompressOutput, CompressorKind, LineRange, MIN_BODY_LINES_TO_COLLAPSE, ParseStatus,
@@ -858,7 +858,7 @@ mod tests {
         assert!(compress_heuristic(src).is_none());
     }
 
-    #[cfg(feature = "tokenjuice-treesitter")]
+    #[cfg(feature = "tinyjuice-treesitter")]
     #[test]
     fn treesitter_collapses_rust_body_keeps_struct() {
         let mut src = String::from("use std::collections::HashMap;\n\n");
@@ -885,7 +885,7 @@ mod tests {
         assert!(out.text.len() < src.len());
     }
 
-    #[cfg(feature = "tokenjuice-treesitter")]
+    #[cfg(feature = "tinyjuice-treesitter")]
     #[test]
     fn treesitter_collapses_python_body() {
         let mut src = String::from("import os\n\ndef handler(event):\n");

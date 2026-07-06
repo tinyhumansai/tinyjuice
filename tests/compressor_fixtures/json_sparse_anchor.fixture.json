@@ -13,7 +13,7 @@
     "recovery": true,
     "contains": [
       "rare sparse field",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "record 70"

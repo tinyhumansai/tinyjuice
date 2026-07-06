@@ -1,0 +1,92 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 1259721a2..b44a50c40 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -74,172 +74,172 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:ce6f4c78676797834803e15739073723⟧]
+@@ -1588,161 +1588,161 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:00d25048757d5a17a61d6fccd6df453c⟧]
+@@ -1845,161 +1845,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:f85ff73e42f753fea3f39236773f8e6d⟧]
+@@ -3162,161 +3162,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:c14d65499efda6cf000f27bc21831f54⟧]
+@@ -3811,161 +3811,161 @@ checksum = "8c196769dd60fd4f363e11d948139556a344e79d451aeb2fa2fd040738ef7691"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:29f8a934e3eb10d6e56c80acce0c7e35⟧]
+@@ -5654,220 +5654,220 @@ name = "rlp-derive"
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:9f2551fd40bda8cc3bb3900c1095e00b⟧]
+@@ -6098,160 +6098,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-0 line(s) omitted ... ⟦tj:ec82753ea1c9c87368475214db268dcb⟧]
+@@ -6317,161 +6318,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:8565d1fe2120523103eea7326dc81da9⟧]
+@@ -6618,161 +6619,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:ace636ed3088d02b1fb197c8f4f22ccd⟧]
+@@ -6810,168 +6811,168 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:e2519ef2a9e60e9296c57e8a93997be7⟧]
+@@ -7255,192 +7256,193 @@ checksum = "121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e"
+[... lockfile/bundle hunk: +7/-6 line(s) omitted ... ⟦tj:e14e838ead5bbccab563bdda69c7662f⟧]
+@@ -8169,161 +8171,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:f9a280a8a8b8435453f20af5baa67ccf⟧]
+diff --git a/Cargo.toml b/Cargo.toml
+index 241e0d09f..70240e869 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -2,164 +2,164 @@
+ name = "openhuman"
+ version = "0.58.11"
+ edition = "2021"
+[... 74 context line(s) omitted ... ⟦tj:127adaa200d267a8ade4739799fbeda0⟧]
+ # TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
+ # behind the default `tokenjuice-treesitter` feature; disabling it falls back to
+ # the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
+-tree-sitter = { version = "0.24", optional = true }
+-tree-sitter-rust = { version = "0.23", optional = true }
++tree-sitter = { version = "0.26", optional = true }
++tree-sitter-rust = { version = "0.24", optional = true }
+ tree-sitter-typescript = { version = "0.23", optional = true }
+-tree-sitter-python = { version = "0.23", optional = true }
++tree-sitter-python = { version = "0.25", optional = true }
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ serde_repr = "0.1"
+[... 74 context line(s) omitted ... ⟦tj:6f7e2d3df16160186b00498c45491a73⟧]
+ tracing-log = "0.2"
+ tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi", "env-filter"] }
+ tracing-appender = "0.2"
+diff --git a/app/src-tauri/Cargo.lock b/app/src-tauri/Cargo.lock
+index 4df2712c9..7422ebe59 100644
+--- a/app/src-tauri/Cargo.lock
++++ b/app/src-tauri/Cargo.lock
+@@ -9160,168 +9160,168 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:55784001fd1637821666fa71f616ff89⟧]
+diff --git a/vendor/tinyagents b/vendor/tinyagents
+index 3e81e4935..6bf67ace4 160000
+--- a/vendor/tinyagents
++++ b/vendor/tinyagents
+@@ -1 +1 @@
+-Subproject commit 3e81e4935efeb05901915d2e54e1d4aa71a4185a
++Subproject commit 6bf67ace49914ed53684a8b1f3ff52dbbdd7fbd4
+diff --git a/vendor/tinychannels b/vendor/tinychannels
+index c69aa8896..985c8f87b 160000
+--- a/vendor/tinychannels
++++ b/vendor/tinychannels
+@@ -1 +1 @@
+-Subproject commit c69aa889696a418a38d23c548c309f73606c12d3
++Subproject commit 985c8f87b428dcae339675fe2eed6fddd92413d8
+diff --git a/vendor/tinyjuice b/vendor/tinyjuice
+index 4b1a34fcc..ee6cd5ed8 160000
+--- a/vendor/tinyjuice
++++ b/vendor/tinyjuice
+@@ -1 +1 @@
+-Subproject commit 4b1a34fccccea3de6d49ab657ba53ccca9de04f2
++Subproject commit ee6cd5ed8af044287afbcca4efa0533258a54efa
+diff --git a/vendor/tinyplace b/vendor/tinyplace
+index 65faa27b8..e21d15421 160000
+--- a/vendor/tinyplace
++++ b/vendor/tinyplace
+@@ -1 +1 @@
+-Subproject commit 65faa27b84344cc33428dc74d965221f60554ac6
++Subproject commit e21d154219457f15dc3b29741ed9b6d800f94523
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (63882 bytes): call tinyjuice_retrieve with token "c61b4841a7400aec49e3a28bc338ea34"]

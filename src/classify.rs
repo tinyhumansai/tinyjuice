@@ -148,7 +148,7 @@ pub fn classify_execution(
         && let Some(rule) = rules.iter().find(|r| r.rule.id == id)
     {
         log::debug!(
-            "[tokenjuice] forced classification: rule='{}' family='{}'",
+            "[tinyjuice] forced classification: rule='{}' family='{}'",
             id,
             rule.rule.family
         );
@@ -160,14 +160,14 @@ pub fn classify_execution(
     }
 
     // Find all matching rules
-    let mut matched: Vec<&CompiledRule> = rules
+    let matched: Vec<&CompiledRule> = rules
         .iter()
         .filter(|r| matches_rule(&r.rule, input))
         .collect();
 
     if matched.is_empty() {
         log::debug!(
-            "[tokenjuice] no rule matched tool='{}' argv={:?} — using generic fallback",
+            "[tinyjuice] no rule matched tool='{}' argv={:?} — using generic fallback",
             input.tool_name,
             input.argv
         );
@@ -178,17 +178,14 @@ pub fn classify_execution(
         };
     }
 
-    // Sort by descending score, then alphabetically for stability
-    matched.sort_by(|a, b| {
-        let score_diff = score_rule(&b.rule).cmp(&score_rule(&a.rule));
-        if score_diff != std::cmp::Ordering::Equal {
-            score_diff
-        } else {
-            a.rule.id.cmp(&b.rule.id)
-        }
-    });
-
-    let best = matched[0];
+    // Only the best rule is used — a full sort (with scores recomputed inside
+    // the comparator) is wasted work; a single min-by scan suffices.
+    let best = matched
+        .iter()
+        .map(|r| (r, score_rule(&r.rule)))
+        .min_by(|(a, sa), (b, sb)| sb.cmp(sa).then_with(|| a.rule.id.cmp(&b.rule.id)))
+        .map(|(r, _)| *r)
+        .expect("matched is non-empty");
     let confidence = if best.rule.id == "generic/fallback" {
         0.2
     } else {
@@ -196,7 +193,7 @@ pub fn classify_execution(
     };
 
     log::debug!(
-        "[tokenjuice] classified tool='{}' → rule='{}' family='{}' confidence={}",
+        "[tinyjuice] classified tool='{}' → rule='{}' family='{}' confidence={}",
         input.tool_name,
         best.rule.id,
         best.rule.family,

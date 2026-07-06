@@ -15,7 +15,7 @@
     "recovery": true,
     "contains": [
       "oldest positional context",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "record 70"

@@ -1,0 +1,119 @@
+[Sun Dec 04 04:47:44 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 04:47:44 2005] [error] mod_jk child workerEnv in error state 6  [×26 first 04:47:44, last 04:59:38]
+[Sun Dec 04 04:51:08 2005] [notice] jk2_init() Found child 6725 in scoreboard slot 10
+[Sun Dec 04 04:51:09 2005] [notice] jk2_init() Found child 6726 in scoreboard slot 8
+[... 81 line(s) omitted ... ⟦tj:b06490e7af17f4315cc2b62999ebc3f8⟧]
+[Sun Dec 04 05:00:03 2005] [notice] jk2_init() Found child 8560 in scoreboard slot 7
+[Sun Dec 04 05:00:09 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 05:00:09 2005] [error] mod_jk child workerEnv in error state 6  [×15 first 05:00:09, last 05:15:16]
+[Sun Dec 04 05:00:13 2005] [notice] jk2_init() Found child 8565 in scoreboard slot 9
+[Sun Dec 04 05:00:13 2005] [notice] jk2_init() Found child 8573 in scoreboard slot 10
+[... 39 line(s) omitted ... ⟦tj:72b34dbfb31c906d4cfa6743f6e903d7⟧]
+[Sun Dec 04 05:12:30 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 05:12:30 2005] [error] mod_jk child workerEnv in error state 6
+[Sun Dec 04 05:15:09 2005] [error] [client 222.166.160.184] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 05:15:13 2005] [notice] jk2_init() Found child 1000 in scoreboard slot 10
+[Sun Dec 04 05:15:16 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[... 3 line(s) omitted ... ⟦tj:0f73b4fe379f5290dd1876a82bcf8966⟧]
+[Sun Dec 04 06:01:21 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 06:01:21 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 06:01:30 2005] [error] mod_jk child workerEnv in error state 6  [×90 first 06:01:30, last 06:59:47]
+[Sun Dec 04 06:01:42 2005] [notice] jk2_init() Found child 32352 in scoreboard slot 9
+[Sun Dec 04 06:01:42 2005] [notice] jk2_init() Found child 32353 in scoreboard slot 10
+[... 347 line(s) omitted ... ⟦tj:641ad21650e7dbc449bdbb9a7b298027⟧]
+[Sun Dec 04 07:02:01 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 07:02:01 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 9  [×27 first 07:02:03, last 07:18:00]
+[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 8
+[Sun Dec 04 07:02:03 2005] [error] mod_jk child workerEnv in error state 8
+[... 83 line(s) omitted ... ⟦tj:572ddd2a04c74a497cb316fa99bc5610⟧]
+[Sun Dec 04 07:18:00 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 07:18:00 2005] [error] mod_jk child workerEnv in error state 7
+[Sun Dec 04 07:45:45 2005] [error] [client 63.13.186.196] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 08:54:17 2005] [error] [client 147.31.138.75] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 09:35:12 2005] [error] [client 207.203.80.15] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 10:53:30 2005] [error] [client 218.76.139.20] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 11:11:07 2005] [error] [client 24.147.151.74] Directory index forbidden by rule: /var/www/html/  [×3 first 11:11:07, last 11:42:43]
+[Sun Dec 04 11:33:18 2005] [error] [client 211.141.93.88] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 11:42:43 2005] [error] [client 216.127.124.16] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 12:33:13 2005] [error] [client 208.51.151.210] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 13:32:32 2005] [error] [client 65.68.235.27] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 14:29:00 2005] [error] [client 4.245.93.87] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 15:18:36 2005] [error] [client 67.154.58.130] Directory index forbidden by rule: /var/www/html/  [×2 first 15:18:36, last 15:59:01]
+[Sun Dec 04 15:59:01 2005] [error] [client 24.83.37.136] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 16:24:03 2005] [notice] jk2_init() Found child 1219 in scoreboard slot 6
+[Sun Dec 04 16:24:05 2005] [error] [client 58.225.62.140] Directory index forbidden by rule: /var/www/html/
+[Sun Dec 04 16:24:06 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 16:24:06 2005] [error] mod_jk child workerEnv in error state 6  [×26 first 16:24:06, last 16:56:27]
+[Sun Dec 04 16:31:07 2005] [notice] jk2_init() Found child 1248 in scoreboard slot 7
+[Sun Dec 04 16:32:37 2005] [notice] jk2_init() Found child 1253 in scoreboard slot 9
+[... 87 line(s) omitted ... ⟦tj:48059f89525c37dcd945edeafd478014⟧]
+[Sun Dec 04 17:01:43 2005] [notice] jk2_init() Found child 1355 in scoreboard slot 10
+[Sun Dec 04 17:01:47 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 17:01:47 2005] [error] mod_jk child workerEnv in error state 6  [×31 first 17:01:47, last 17:43:12]
+[Sun Dec 04 17:01:47 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Sun Dec 04 17:01:47 2005] [error] mod_jk child workerEnv in error state 6
+[... 81 line(s) omitted ... ⟦tj:faeb23d4d551f521928b5cf66e3b1541⟧]
+[Sun Dec 04 17:34:57 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[... 359 line(s) omitted ... ⟦tj:d50e9a27b6243c6a9a9ccb4e088d3f4d⟧]
+[Mon Dec 05 04:01:18 2005] [notice] jk2_init() Found child 2879 in scoreboard slot 6
+[Mon Dec 05 04:01:23 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 04:01:23 2005] [error] mod_jk child workerEnv in error state 6  [×13 first 04:01:23, last 04:14:00]
+[Mon Dec 05 04:01:23 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 04:01:23 2005] [error] mod_jk child workerEnv in error state 6
+[... 49 line(s) omitted ... ⟦tj:208f29a5c5a18ffda02a6190300ab060⟧]
+[Mon Dec 05 05:06:47 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 05:06:47 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 05:06:47 2005] [error] mod_jk child workerEnv in error state 6  [×7 first 05:06:47, last 05:15:33]
+[Mon Dec 05 05:06:47 2005] [error] mod_jk child workerEnv in error state 6
+[Mon Dec 05 05:06:47 2005] [error] mod_jk child workerEnv in error state 6
+[... 21 line(s) omitted ... ⟦tj:52ee2e3f33b19d85430c0bab433aba40⟧]
+[Mon Dec 05 06:35:27 2005] [notice] jk2_init() Found child 4820 in scoreboard slot 8
+[Mon Dec 05 06:35:27 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 06:35:27 2005] [error] mod_jk child workerEnv in error state 6  [×2 first 06:35:27, last 06:36:58]
+[Mon Dec 05 06:36:58 2005] [notice] jk2_init() Found child 4821 in scoreboard slot 10
+[Mon Dec 05 06:36:58 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 06:36:58 2005] [error] mod_jk child workerEnv in error state 6
+[Mon Dec 05 06:36:59 2005] [error] [client 221.232.178.24] Directory index forbidden by rule: /var/www/html/
+[Mon Dec 05 07:16:00 2005] [notice] jk2_init() Found child 4893 in scoreboard slot 7
+[Mon Dec 05 07:16:00 2005] [notice] jk2_init() Found child 4892 in scoreboard slot 6
+[Mon Dec 05 07:16:03 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 07:16:03 2005] [error] mod_jk child workerEnv in error state 6  [×40 first 07:16:03, last 07:57:02]
+[Mon Dec 05 07:16:03 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 07:16:03 2005] [error] mod_jk child workerEnv in error state 6
+[... 123 line(s) omitted ... ⟦tj:04adc7b10951378b64c686c2d577777c⟧]
+[Mon Dec 05 07:57:01 2005] [notice] jk2_init() Found child 5048 in scoreboard slot 6
+[Mon Dec 05 07:57:02 2005] [notice] jk2_init() Found child 5051 in scoreboard slot 9
+[Mon Dec 05 07:57:02 2005] [error] jk2_init() Can't find child 5053 in scoreboard  [×2 first 07:57:02, last 07:57:02]
+[Mon Dec 05 07:57:02 2005] [error] jk2_init() Can't find child 5054 in scoreboard
+[Mon Dec 05 07:57:02 2005] [notice] jk2_init() Found child 5052 in scoreboard slot 10
+[... 9 line(s) omitted ... ⟦tj:d02805349d638ef297633f0f73727b34⟧]
+[Mon Dec 05 07:57:02 2005] [error] mod_jk child workerEnv in error state 6
+[Mon Dec 05 07:57:02 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 07:57:02 2005] [error] mod_jk child init 1 -2  [×2 first 07:57:02, last 07:57:02]
+[Mon Dec 05 07:57:02 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 07:57:02 2005] [error] mod_jk child init 1 -2
+[Mon Dec 05 09:09:48 2005] [error] [client 207.12.15.211] Directory index forbidden by rule: /var/www/html/
+[Mon Dec 05 09:36:13 2005] [notice] jk2_init() Found child 5271 in scoreboard slot 7
+[Mon Dec 05 09:36:13 2005] [notice] jk2_init() Found child 5270 in scoreboard slot 6
+[Mon Dec 05 09:36:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 09:36:14 2005] [error] mod_jk child workerEnv in error state 6  [×3 first 09:36:14, last 09:55:21]
+[Mon Dec 05 09:36:14 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 09:36:14 2005] [error] mod_jk child workerEnv in error state 6
+[... 3 line(s) omitted ... ⟦tj:7f592efaf39a25beed833060529a4db1⟧]
+[Mon Dec 05 10:10:32 2005] [notice] jk2_init() Found child 5330 in scoreboard slot 9
+[Mon Dec 05 10:10:33 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 10:10:33 2005] [error] mod_jk child workerEnv in error state 6  [×42 first 10:10:33, last 10:59:29]
+[Mon Dec 05 10:16:20 2005] [notice] jk2_init() Found child 5344 in scoreboard slot 7
+[Mon Dec 05 10:16:52 2005] [notice] jk2_init() Found child 5347 in scoreboard slot 6
+[... 38 line(s) omitted ... ⟦tj:dfdff7606e958961373ae415c92f2afd⟧]
+[Mon Dec 05 10:26:36 2005] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Mon Dec 05 10:26:36 2005] [error] mod_jk child workerEnv in error state 6
+[Mon Dec 05 10:26:39 2005] [error] [client 141.153.150.164] Directory index forbidden by rule: /var/www/html/  [×3 first 10:26:39, last 10:48:48]
+[Mon Dec 05 10:28:44 2005] [error] [client 198.232.168.9] Directory index forbidden by rule: /var/www/html/
+[Mon Dec 05 10:31:40 2005] [notice] jk2_init() Found child 5404 in scoreboard slot 8
+[... 577 line(s) omitted ... ⟦tj:28b26f3237848475ba0c9c05da566dad⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (171239 bytes): call tinyjuice_retrieve with token "c7efa3eb686e3a96bd2f8f4457b2a788"]

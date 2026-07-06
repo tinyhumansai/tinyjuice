@@ -1,0 +1,161 @@
+diff --git a/.github/workflows/release-production.yml b/.github/workflows/release-production.yml
+index 6f13136e7..e66dba04d 100644
+--- a/.github/workflows/release-production.yml
++++ b/.github/workflows/release-production.yml
+@@ -345,161 +345,161 @@ jobs:
+               owner,
+               repo,
+               tag_name: tag,
+[... 74 context line(s) omitted ... ⟦tj:fc9c6cd5c26d7bb830d5b1889d4b99c0⟧]
+       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+       - name: Init vendored Rust submodules
+-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice
++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+       - name: Log in to GHCR
+[... 74 context line(s) omitted ... ⟦tj:fc51e4e50212afdcbf9a7fcb1c96284e⟧]
+         with:
+           ref: ${{ needs.prepare-build.outputs.build_ref }}
+           fetch-depth: 1
+diff --git a/.github/workflows/release-staging.yml b/.github/workflows/release-staging.yml
+index 9913ff760..3b7a830c2 100644
+--- a/.github/workflows/release-staging.yml
++++ b/.github/workflows/release-staging.yml
+@@ -240,161 +240,161 @@ jobs:
+           else
+             echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
+           fi
+[... 74 context line(s) omitted ... ⟦tj:b7430b79e54801adbd57075daae97fd1⟧]
+       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+       - name: Init vendored Rust submodules
+-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice
++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+       - name: Build image (no push)
+[... 74 context line(s) omitted ... ⟦tj:502201ea3a02309cff2fc728d6eff813⟧]
+       always()
+       && inputs.create_tag
+       && needs.prepare-build.result == 'success'
+diff --git a/.gitmodules b/.gitmodules
+index c07bfb8cf..ce992e204 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,19 +1,22 @@
+ [submodule "app/src-tauri/vendor/tauri-cef"]
+ 	path = app/src-tauri/vendor/tauri-cef
+ 	url = https://github.com/tinyhumansai/tauri-cef.git
+[... 13 context line(s) omitted ... ⟦tj:5e554cbb7d401450814d528bd48e7f44⟧]
+ [submodule "vendor/tinyjuice"]
+ 	path = vendor/tinyjuice
+ 	url = https://github.com/tinyhumansai/tinyjuice
++[submodule "vendor/tinyplace"]
++	path = vendor/tinyplace
++	url = https://github.com/tinyhumansai/tiny.place.git
+diff --git a/Cargo.lock b/Cargo.lock
+index 0b9058932..7aa978e60 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -6829,163 +6829,161 @@ name = "tinychannels"
+[... lockfile/bundle hunk: +1/-3 line(s) omitted ... ⟦tj:216d12807bd56c985f2dc92dc659531b⟧]
+@@ -8170,161 +8168,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:665770892539836a86dc24c14f7653dc⟧]
+diff --git a/Cargo.toml b/Cargo.toml
+index 5ba2492c5..cea66d3b4 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,122 +1,124 @@
+ [package]
+ name = "openhuman"
+ version = "0.58.11"
+[... 34 context line(s) omitted ... ⟦tj:c126fae05ad9f42b8bf484a3324bec06⟧]
+ crate-type = ["rlib"]
+ 
+ [dependencies]
+-# tiny.place A2A social network SDK — published on crates.io (tinyhumansai/tiny.place)
+-tinyplace = "1.0.1"
++# tiny.place A2A social network SDK — published on crates.io and patched below
++# to the vendored tiny.place submodule so OpenHuman can test SDK changes before
++# publishing.
++tinyplace = "2.0"
+ # tinyflows — host-agnostic workflow engine (typed node graph → validate → compile →
+ # run on tinyagents). Powers the "Workflows" feature via the seam in
+ # `src/openhuman/tinyflows/` + the `flows::` domain. Pulls tinyagents 1.7 transitively
+[... 74 context line(s) omitted ... ⟦tj:5d87a5a67376a976ac87c3128f843584⟧]
+ sha1 = "0.10"
+ hmac = "0.12"
+ # Archive extraction for the Node.js runtime bootstrap. Unix Node
+@@ -282,119 +284,120 @@ windows-sys = { version = "0.61", features = [
+ # the UIA COM API; the Windows analogue of the macOS AXUIElement Swift helper.
+ uiautomation = "0.25"
+ 
+[... 74 context line(s) omitted ... ⟦tj:c3e98ceacdee738aca397d3a3581b4b9⟧]
+ tinyflows = { path = "vendor/tinyflows" }
+ tinycortex = { path = "vendor/tinycortex" }
+ tinyjuice = { path = "vendor/tinyjuice" }
++tinyplace = { path = "vendor/tinyplace/sdk/rust" }
+ 
+ # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
+ # panics + render surrounding source lines. `line-tables-only` keeps the
+[... 33 context line(s) omitted ... ⟦tj:eeb7c915538ba763f94ea51fe87e54a8⟧]
+ #     `target/` substantially.
+ [profile.dev.package."*"]
+ debug = false
+diff --git a/app/src-tauri/Cargo.lock b/app/src-tauri/Cargo.lock
+index c71496c0f..d39344b86 100644
+--- a/app/src-tauri/Cargo.lock
++++ b/app/src-tauri/Cargo.lock
+@@ -173,161 +173,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:bcf0ce62bd7ab2171bb182f1167b69d1⟧]
+@@ -2016,161 +2016,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:a5c414cfeea5332d23dd7249e759b58d⟧]
+@@ -2419,161 +2419,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:cb7356937e06253d58ed94593716003f⟧]
+@@ -4059,161 +4059,161 @@ version = "3.1.0"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:e94bd4a70f3437ae023d66760e3e6093⟧]
+@@ -4953,161 +4953,161 @@ checksum = "b93853da6d84c2e3c7d730d6473e8817692dd89be387eb01b94d7f108ecb5b8c"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:bdbf48a8acb2b7b8119be8e9e2c3fa54⟧]
+@@ -6649,161 +6649,161 @@ checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:886e7c1c40d0e06f6c395eb3ada5a0b2⟧]
+@@ -7236,220 +7236,220 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:6f5344ee606a128af248d542a6a2ebc7⟧]
+@@ -8921,161 +8921,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:82a50571d3952d1dbd72e6d3eade895c⟧]
+@@ -9175,163 +9175,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-3 line(s) omitted ... ⟦tj:1b7890e6b1b2f3cc1b0ce3ffd7afd46c⟧]
+@@ -10537,161 +10535,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:ae157a4d82e9afd5f32c3a0957cc523f⟧]
+diff --git a/app/src-tauri/Cargo.toml b/app/src-tauri/Cargo.toml
+index 0258d69d3..f5ca5599e 100644
+--- a/app/src-tauri/Cargo.toml
++++ b/app/src-tauri/Cargo.toml
+@@ -140,150 +140,151 @@ nix = { version = "0.29", default-features = false, features = ["hostname", "sig
+ 
+ [target.'cfg(target_os = "macos")'.dependencies]
+ objc2 = "0.6"
+[... 74 context line(s) omitted ... ⟦tj:1e297c10a507be41ef4c0f0ea038c58f⟧]
+ tinyflows = { path = "../../vendor/tinyflows" }
+ tinycortex = { path = "../../vendor/tinycortex" }
+ tinyjuice = { path = "../../vendor/tinyjuice" }
++tinyplace = { path = "../../vendor/tinyplace/sdk/rust" }
+ 
+ # CEF support lives on the `feat/cef` branch of tauri-apps/tauri. We carry our
+ # own fork at tinyhumansai/tauri-cef on `feat/cef-notification-intercept` which
+[... 64 context line(s) omitted ... ⟦tj:e33b9b00f2293e0e2820fd15f22db294⟧]
+ #   * No artifact paths, features, or runtime behaviour change.
+ [profile.dev.package."*"]
+ debug = false
+diff --git a/vendor/tinyplace b/vendor/tinyplace
+new file mode 160000
+index 000000000..65faa27b8
+--- /dev/null
++++ b/vendor/tinyplace
+@@ -0,0 +1 @@
++Subproject commit 65faa27b84344cc33428dc74d965221f60554ac6
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (87201 bytes): call tinyjuice_retrieve with token "489dae09418b8eece3cdeab5ebc5c72e"]

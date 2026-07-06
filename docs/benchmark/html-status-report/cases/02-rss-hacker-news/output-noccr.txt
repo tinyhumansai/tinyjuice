@@ -1,0 +1,222 @@
+Hacker News: Front Page
+https://news.ycombinator.com/ Hacker News RSS https://hnrss.org/ hnrss v2.1.1 Sun, 05 Jul 2026 12:36:38 +0000
+Educators disciplined over Charlie Kirk posts are securing big payouts
+
+Article URL: https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568
+
+Comments URL: https://news.ycombinator.com/item?id=48793726
+
+Points: 5
+
+# Comments: 0
+
+Sun, 05 Jul 2026 12:29:44 +0000 https://www.nbcnews.com/news/us-news/educators-disciplined-charlie-kirk-posts-are-securing-big-payouts-rcna352568 Anon84 https://news.ycombinator.com/item?id=48793726 https://news.ycombinator.com/item?id=48793726
+The Engineer in the Half-Space
+
+Article URL: https://yusufaytas.com/the-engineer-in-the-half-space
+
+Comments URL: https://news.ycombinator.com/item?id=48793716
+
+Points: 13
+
+# Comments: 0
+
+Sun, 05 Jul 2026 12:28:04 +0000 https://yusufaytas.com/the-engineer-in-the-half-space yusufaytas https://news.ycombinator.com/item?id=48793716 https://news.ycombinator.com/item?id=48793716
+Europe's new climate in seven charts
+
+Article URL: https://www.bbc.com/news/articles/c8e2j0j87reo
+
+Comments URL: https://news.ycombinator.com/item?id=48792790
+
+Points: 107
+
+# Comments: 119
+
+Sun, 05 Jul 2026 09:56:10 +0000 https://www.bbc.com/news/articles/c8e2j0j87reo saikatsg https://news.ycombinator.com/item?id=48792790 https://news.ycombinator.com/item?id=48792790
+Scientist who cleaned space toilet on work now leading Mars exploration
+
+Article URL: https://www.bbc.com/news/articles/cz758x04g83o
+
+Comments URL: https://news.ycombinator.com/item?id=48792780
+
+Points: 16
+
+# Comments: 4
+
+Sun, 05 Jul 2026 09:55:22 +0000 https://www.bbc.com/news/articles/cz758x04g83o saikatsg https://news.ycombinator.com/item?id=48792780 https://news.ycombinator.com/item?id=48792780
+Claude Design System Prompt
+
+Article URL: https://github.com/Trystan-SA/claude-design-system-prompt
+
+Comments URL: https://news.ycombinator.com/item?id=48792399
+
+Points: 36
+
+# Comments: 4
+
+Sun, 05 Jul 2026 08:43:37 +0000 https://github.com/Trystan-SA/claude-design-system-prompt handfuloflight https://news.ycombinator.com/item?id=48792399 https://news.ycombinator.com/item?id=48792399
+Apocketlypse
+
+Article URL: https://0dd.company/galleries/triumph/1.html
+
+Comments URL: https://news.ycombinator.com/item?id=48792352
+
+Points: 26
+
+# Comments: 5
+
+Sun, 05 Jul 2026 08:32:09 +0000 https://0dd.company/galleries/triumph/1.html scaglio https://news.ycombinator.com/item?id=48792352 https://news.ycombinator.com/item?id=48792352
+Knowledge Should Not Be Gated
+
+Article URL: https://www.formaly.io/blog/knowledge-should-not-be-gated
+
+Comments URL: https://news.ycombinator.com/item?id=48792195
+
+Points: 18
+
+# Comments: 1
+
+Sun, 05 Jul 2026 07:59:48 +0000 https://www.formaly.io/blog/knowledge-should-not-be-gated nezhar https://news.ycombinator.com/item?id=48792195 https://news.ycombinator.com/item?id=48792195
+Programmers need to start meditating
+
+Article URL: https://jacob.gold/posts/programmers-need-to-start-meditating-now/
+
+Comments URL: https://news.ycombinator.com/item?id=48792080
+
+Points: 97
+
+# Comments: 100
+
+Sun, 05 Jul 2026 07:39:35 +0000 https://jacob.gold/posts/programmers-need-to-start-meditating-now/ enz https://news.ycombinator.com/item?id=48792080 https://news.ycombinator.com/item?id=48792080
+Fast Software, the Best Software (2019)
+
+Article URL: https://craigmod.com/essays/fast_software/
+
+Comments URL: https://news.ycombinator.com/item?id=48792008
+
+Points: 51
+
+# Comments: 22
+
+Sun, 05 Jul 2026 07:25:25 +0000 https://craigmod.com/essays/fast_software/ ustad https://news.ycombinator.com/item?id=48792008 https://news.ycombinator.com/item?id=48792008
+Reducing Assumptions, Exploding Your Code
+
+Article URL: https://ryelang.org/blog/posts/reducing_assumptions_but_exploding/
+
+Comments URL: https://news.ycombinator.com/item?id=48791990
+
+Points: 14
+
+# Comments: 2
+
+Sun, 05 Jul 2026 07:22:08 +0000 https://ryelang.org/blog/posts/reducing_assumptions_but_exploding/ mpweiher https://news.ycombinator.com/item?id=48791990 https://news.ycombinator.com/item?id=48791990
+Dark Mode with Web Standards
+
+Article URL: https://olliewilliams.xyz/blog/dark-mode/
+
+Comments URL: https://news.ycombinator.com/item?id=48791973
+
+Points: 11
+
+# Comments: 0
+
+Sun, 05 Jul 2026 07:17:25 +0000 https://olliewilliams.xyz/blog/dark-mode/ thm https://news.ycombinator.com/item?id=48791973 https://news.ycombinator.com/item?id=48791973
+Megawatts by Microwave
+
+Article URL: https://computer.rip/2026-07-04-microwave-and-power.html
+
+Comments URL: https://news.ycombinator.com/item?id=48791591
+
+Points: 35
+
+# Comments: 4
+
+Sun, 05 Jul 2026 05:56:03 +0000 https://computer.rip/2026-07-04-microwave-and-power.html eternauta3k https://news.ycombinator.com/item?id=48791591 https://news.ycombinator.com/item?id=48791591
+Shadcn/UI now defaults to Base UI instead of Radix
+
+Article URL: https://ui.shadcn.com/docs/changelog
+
+Comments URL: https://news.ycombinator.com/item?id=48791328
+
+Points: 175
+
+# Comments: 65
+
+Sun, 05 Jul 2026 04:46:08 +0000 https://ui.shadcn.com/docs/changelog dabinat https://news.ycombinator.com/item?id=48791328 https://news.ycombinator.com/item?id=48791328
+Moby Dick Workout (2022)
+
+Article URL: https://www.hogbaysoftware.com/posts/moby-dick-workout/
+
+Comments URL: https://news.ycombinator.com/item?id=48791266
+
+Points: 55
+
+# Comments: 18
+
+Sun, 05 Jul 2026 04:30:33 +0000 https://www.hogbaysoftware.com/posts/moby-dick-workout/ helloplanets https://news.ycombinator.com/item?id=48791266 https://news.ycombinator.com/item?id=48791266
+My ASN Journey series (2024)
+
+Article URL: https://www.animmouse.com/p/my-asn-journey/
+
+Comments URL: https://news.ycombinator.com/item?id=48791256
+
+Points: 24
+
+# Comments: 10
+
+Sun, 05 Jul 2026 04:29:05 +0000 https://www.animmouse.com/p/my-asn-journey/ antonalekseev https://news.ycombinator.com/item?id=48791256 https://news.ycombinator.com/item?id=48791256
+The Log Is the Agent
+
+Article URL: https://arxiv.org/abs/2605.21997
+
+Comments URL: https://news.ycombinator.com/item?id=48790912
+
+Points: 54
+
+# Comments: 17
+
+Sun, 05 Jul 2026 02:57:38 +0000 https://arxiv.org/abs/2605.21997 iacguy https://news.ycombinator.com/item?id=48790912 https://news.ycombinator.com/item?id=48790912
+If you're a button, you have one job
+
+Article URL: https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/
+
+Comments URL: https://news.ycombinator.com/item?id=48790689
+
+Points: 300
+
+# Comments: 150
+
+Sun, 05 Jul 2026 02:01:03 +0000 https://unsung.aresluna.org/if-youre-a-button-you-have-one-job/ nozzlegear https://news.ycombinator.com/item?id=48790689 https://news.ycombinator.com/item?id=48790689
+Return of the Nigerian Prince Redux: Beware Book Club and Book Review Scams (2025)
+
+Article URL: https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/
+
+Comments URL: https://news.ycombinator.com/item?id=48790240
+
+Points: 59
+
+# Comments: 19
+
+Sun, 05 Jul 2026 00:22:25 +0000 https://writerbeware.blog/2025/09/19/return-of-the-nigerian-prince-redux-beware-book-club-and-book-review-scams/ Anon84 https://news.ycombinator.com/item?id=48790240 https://news.ycombinator.com/item?id=48790240
+Jellyfish can heal wounds in minutes. Scientists want their secrets
+
+Article URL: https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets
+
+Comments URL: https://news.ycombinator.com/item?id=48789712
+
+Points: 149
+
+# Comments: 31
+
+Sat, 04 Jul 2026 22:36:28 +0000 https://www.mbl.edu/news/jellyfish-can-heal-wounds-minutes-scientists-want-their-secrets hhs https://news.ycombinator.com/item?id=48789712 https://news.ycombinator.com/item?id=48789712
+GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance
+
+Article URL: https://github.com/openai/codex/issues/30364
+
+Comments URL: https://news.ycombinator.com/item?id=48789428
+
+Points: 311
+
+# Comments: 117
+
+Sat, 04 Jul 2026 21:51:09 +0000 https://github.com/openai/codex/issues/30364 maille https://news.ycombinator.com/item?id=48789428 https://news.ycombinator.com/item?id=48789428

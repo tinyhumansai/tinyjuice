@@ -1,0 +1,120 @@
+[... 250 line(s) omitted ... ⟦tj:b42d1e05b1e35d07e652dda9a0ace2a0⟧]
+[10.30 17:14:20] Dropbox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 17:15:10] QQ.exe - tcpconn.tencent.com:80 close, 133 bytes sent, 0 bytes received, lifetime <1 sec
+[10.30 17:15:42] QQ.exe - tcpconn6.tencent.com:443 error : A connection request was canceled before the completion.
+[10.30 17:16:10] QQ.exe - tcpconn4.tencent.com:80 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly. 
+[10.30 17:17:09] SogouCloud.exe - get.sogou.com:80 close, 651 bytes sent, 346 bytes received, lifetime <1 sec
+[10.30 17:17:16] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 169 line(s) omitted ... ⟦tj:069740731f610afca67abe9705832c9a⟧]
+[10.30 17:56:23] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 17:56:23] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 close, 451 bytes sent, 353 bytes received, lifetime <1 sec
+[10.30 17:57:12] YodaoDict.exe - oimagec7.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 17:59:03] svchost.exe *64 - proxy.cse.cuhk.edu.hk:5070 close, 293 bytes sent, 514 bytes received, lifetime <1 sec
+[10.30 17:59:09] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[Template: [10.30 <*> <*> - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS] (8 lines, first 17:59:10, last 17:59:21)
+[... 9 line(s) omitted ... ⟦tj:59e46c945e439af449f484967c3efe46⟧]
+[10.30 18:00:10] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 18:00:10] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 950 bytes sent, 3559 bytes (3.47 KB) received, lifetime 01:01
+[10.30 18:00:12] FlashPlayerPlugin_18_0_0_209.exe - formi.baidu.com:843 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[10.30 18:00:13] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 1212 bytes (1.18 KB) sent, 11440 bytes (11.1 KB) received, lifetime 00:59
+[10.30 18:00:15] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 35 line(s) omitted ... ⟦tj:67f05a2d77d2b8076940178e60dbac2c⟧]
+[10.30 18:03:47] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 18:03:47] firefox.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 18:04:14] Skype.exe - 86.99.222.235:443 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly.
+[10.30 18:05:44] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 983 bytes sent, 308385 bytes (301 KB) received, lifetime 01:57
+[10.30 18:05:44] firefox.exe - proxy.cse.cuhk.edu.hk:5070 close, 983 bytes sent, 268665 bytes (262 KB) received, lifetime 01:57
+[... 80 line(s) omitted ... ⟦tj:e4ff493529cc2cd9385df3924dcbec40⟧]
+[10.30 20:42:17] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 2464 bytes (2.40 KB) sent, 1010 bytes received, lifetime 02:01
+[10.30 20:42:31] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 20:42:33] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion.   [×6 first 20:42:33, last 20:59:47]
+[10.30 20:42:33] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 20:42:34] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1299 bytes (1.26 KB) sent, 1029 bytes (1.00 KB) received, lifetime <1 sec
+[... 293 line(s) omitted ... ⟦tj:9d89469f9fd0b5c76d5eba838e99dd2b⟧]
+[10.30 20:59:47] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 21:03:16] WeChat.exe - proxy.cse.cuhk.edu.hk:5070 close, 259 bytes sent, 5197 bytes (5.07 KB) received, lifetime <1 sec
+[10.30 21:03:34] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion.   [×6 first 21:03:34, last 21:17:51]
+[10.30 21:03:57] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 3090 bytes (3.01 KB) sent, 1093 bytes (1.06 KB) received, lifetime 04:00
+[10.30 21:05:25] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 35 line(s) omitted ... ⟦tj:e045b59bc3e62abf233963e742d90865⟧]
+[10.30 21:07:18] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 21:07:20] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 21:08:03] spoolsv.exe *64 - 127.0.0.1:135 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403  [×2 first 21:08:03, last 21:13:23]
+[10.30 21:08:23] YodaoDict.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 21:08:23] YodaoDict.exe - proxy.cse.cuhk.edu.hk:5070 close, 441 bytes sent, 687 bytes received, lifetime <1 sec
+[10.30 21:10:12] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 1237 bytes (1.20 KB) sent, 1164 bytes (1.13 KB) received, lifetime 04:00
+[10.30 21:11:09] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 2001 bytes (1.95 KB) sent, 18018 bytes (17.5 KB) received, lifetime 04:00
+[10.30 21:11:51] YodaoDict.exe - oimageb3.ydstatic.com:80 error : A connection request was canceled before the completion.   [×7 first 21:11:51, last 21:16:41]
+[10.30 21:11:55] YodaoDict.exe - oimagea5.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 21:11:55] YodaoDict.exe - oimageb1.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 21:12:32] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 21:12:32] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[10.30 21:12:56] YodaoDict.exe - oimagea3.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 21:12:56] YodaoDict.exe - oimagec1.ydstatic.com:80 error : A connection request was canceled before the completion.   [×4 first 21:12:56, last 21:16:41]
+[10.30 21:12:56] YodaoDict.exe - oimageb5.ydstatic.com:80 error : A connection request was canceled before the completion. 
+[10.30 21:13:09] AcroRd32.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 138 line(s) omitted ... ⟦tj:93bb5e0f87bd55a27f0abb95a2ff1ec8⟧]
+[07.26 13:47:59] chrome.exe *64 - www.4399.com:80 close, 0 bytes sent, 0 bytes received, lifetime 00:21
+[07.26 13:47:59] chrome.exe *64 - cnzz.mmstat.com:80 close, 686 bytes sent, 579 bytes received, lifetime <1 sec
+[07.26 13:48:21] chrome.exe *64 - hm.baidu.com:80 error : A connection request was canceled before the completion. 
+[07.26 13:48:29] chrome.exe *64 - app.4399.cn:80 close, 1381 bytes (1.34 KB) sent, 38524 bytes (37.6 KB) received, lifetime 00:52
+[... 615 line(s) omitted ... ⟦tj:fe0b5bda5b30a4ab74fc5e0066a9f9fd⟧]
+[07.26 21:29:23] chrome.exe *64 - s.youtube.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.26 21:29:25] chrome.exe *64 - www.google.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.26 21:29:27] chrome.exe *64 - mtalk.google.com:5228 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[07.26 21:29:49] chrome.exe *64 - mtalk.google.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.26 21:29:51] chrome.exe *64 - ogs.google.com:443 close, 461 bytes sent, 4217 bytes (4.11 KB) received, lifetime 00:29
+[... 55 line(s) omitted ... ⟦tj:41a1e89af1de1be1d3208a9e36d38139⟧]
+[07.26 22:02:56] chrome.exe *64 - clients4.google.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.26 22:03:11] chrome.exe *64 - 15.client-channel.google.com:443 close, 474 bytes sent, 4464 bytes (4.35 KB) received, lifetime 00:11
+[07.26 22:05:04] QQProtectUpd.exe - qd-update.qq.com:8080 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403
+[07.26 22:05:05] SogouCloud.exe - security.ie.sogou.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.26 22:05:59] chrome.exe *64 - play.google.com:443 close, 40925 bytes (39.9 KB) sent, 33398 bytes (32.6 KB) received, lifetime 30:55
+[07.26 22:05:59] chrome.exe *64 - people-pa.clients6.google.com:443 close, 1836 bytes (1.79 KB) sent, 4868 bytes (4.75 KB) received, lifetime 03:00
+[07.26 22:05:59] chrome.exe *64 - www.google.com.hk:443 close, 4710 bytes (4.59 KB) sent, 71939 bytes (70.2 KB) received, lifetime 03:10
+[07.26 22:06:02] SGTool.exe - info.pinyin.sogou.com:80 close, 1041 bytes (1.01 KB) sent, 607 bytes received, lifetime 00:04
+[07.26 22:06:02] SGTool.exe - config.pinyin.sogou.com:80 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy closed the connection unexpectedly.
+[07.27 03:00:17] Dropbox.exe - client.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - Could not resolve proxy.cse.cuhk.edu.hk error 11001
+[07.27 03:00:18] Dropbox.exe - client-cf.dropbox.com:443 error : A connection request was canceled before the completion. 
+[07.27 03:00:19] Dropbox.exe - bolt.dropbox.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.27 03:00:20] SogouCloud.exe - get.sogou.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[... 28 line(s) omitted ... ⟦tj:427695c37e5aa2bf1736b58ea5de542d⟧]
+[07.27 04:09:24] chrome.exe *64 - play.google.com:443 close, 8399 bytes (8.20 KB) sent, 9521 bytes (9.29 KB) received, lifetime 09:01
+[07.27 04:12:38] chrome.exe *64 - clients6.google.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.27 04:17:03] chrome.exe *64 - mtalk.google.com:5228 error : Could not connect through proxy proxy.cse.cuhk.edu.hk:5070 - Proxy server cannot establish a connection with the target, status code 403  [×2 first 04:17:03, last 04:38:15]
+[07.27 04:19:13] chrome.exe *64 - www.evernote.com:443 close, 2214 bytes (2.16 KB) sent, 5451 bytes (5.32 KB) received, lifetime 04:00
+[07.27 04:19:15] Dropbox.exe - d.dropbox.com:443 close, 1821 bytes (1.77 KB) sent, 4970 bytes (4.85 KB) received, lifetime 01:01
+[... 16 line(s) omitted ... ⟦tj:6bec7a5659540b482daf5cf2b622764e⟧]
+[07.27 05:04:15] chrome.exe *64 - www.evernote.com:443 close, 2485 bytes (2.42 KB) sent, 2359 bytes (2.30 KB) received, lifetime 04:01
+[07.27 05:04:38] chrome.exe *64 - 13.client-channel.google.com:443 close, 14267 bytes (13.9 KB) sent, 36698 bytes (35.8 KB) received, lifetime 48:06
+[07.27 05:05:50] chrome.exe *64 - qa.sockets.stackexchange.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061  [×2 first 05:05:50, last 05:05:54]
+[07.27 05:05:51] chrome.exe *64 - 13.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061  [×7 first 05:05:51, last 05:11:34]
+[07.27 05:05:52] chrome.exe *64 - 13.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:52] chrome.exe *64 - 13.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:53] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:53] Dropbox.exe - client-cf.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:54] chrome.exe *64 - qa.sockets.stackexchange.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:54] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:05:56] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:01] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:08] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:09] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:13] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:15] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:22] chrome.exe *64 - mtalk.google.com:5228 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:32] chrome.exe *64 - www.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:06:40] Dropbox.exe - client-lb.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:07:02] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:07:06] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:08:27] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:08:29] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:09:52] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:10:59] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:11:29] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:11:34] chrome.exe *64 - 16.client-channel.google.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[07.27 05:12:56] Dropbox.exe - bolt.dropbox.com:443 error : Could not connect to proxy proxy.cse.cuhk.edu.hk:5070 - connection attempt failed with error 10061
+[... 175 line(s) omitted ... ⟦tj:51b54b81be21923178dbf3f4ec58f205⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (236962 bytes): call tinyjuice_retrieve with token "94b6a9d98d76e7ad7841ed10caa463cd"]

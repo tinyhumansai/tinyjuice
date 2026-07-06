@@ -1,0 +1,31 @@
+--- input/input.c
++++ output/output.c
+@@ -137,19 +137,8 @@
+     for (int i = 0; i < ALPHABET_SIZE; i++) {
+ 
+         // No words on this character
+-        if (NULL == trie->children[i]) {
+-            continue;
+-        }
+-
+-        // If you have a separate index mapping, then you'd need the inverse of
+-        // the map here. Since we subtracted 'a' for the index, we can just add
+-        // 'a' to get the inverse map function.
+-        prefix[prefix_len] = i + 'a';
+-
+-        // traverse the print into the child
+-        trie_print(trie->children[i], prefix, prefix_len + 1);
++{ … 11 line(s) … ⟦tj:7b83ecf72b61bee7083a682e46ad5e7b⟧ }
+     }
+-}
+ 
+ 
+ /*------Demonstrate purposes uses text file called dictionary -------*/
+@@ -204,3 +193,6 @@
+         printf("\n==========================================================\n");
+     }
+ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (5241 bytes): call tinyjuice_retrieve with token "6310a979a27595cc7a51260fd786f142"]
+\ No newline at end of file

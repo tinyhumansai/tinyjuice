@@ -1,0 +1,64 @@
+--- input/input.ts
++++ output/output.ts
+@@ -69,35 +69,14 @@
+     ;[this.heap[a], this.heap[b]] = [this.heap[b], this.heap[a]]
+   }
+ 
+-  protected bubbleUp(index: number = this.size() - 1): void {
+-    let parentIndex
++  protected bubbleUp(index: number = this.size() - 1): void { … 10 line(s) … ⟦tj:1a1fd5cd306243355600dbcfa172c818⟧ }
+ 
+-    while (index > 0) {
+-      parentIndex = Math.floor((index - 1) / 2)
+-      if (this.isRightlyPlaced(index, parentIndex)) break
+-      this.swap(parentIndex, index)
+-      index = parentIndex
+-    }
+-  }
+-
+   private sinkDown(): void {
+     let index = 0
+     let leftChildIndex = this.getLeftChildIndex(index)
+-    let rightChildIndex = this.getRightChildIndex(index)
+-    let childIndexToSwap
+-
+-    while (this.heap[leftChildIndex] || this.heap[rightChildIndex]) {
+-      childIndexToSwap = this.getChildIndexToSwap(
+-        leftChildIndex,
+-        rightChildIndex
+-      )
+-      if (this.isRightlyPlaced(childIndexToSwap, index)) break
+-      this.swap(childIndexToSwap, index)
+-      index = childIndexToSwap
+-      leftChildIndex = this.getLeftChildIndex(index)
+-      rightChildIndex = this.getRightChildIndex(index)
++    { … 13 line(s) … ⟦tj:2963b0929fd7273aa9ec7bddb00deac2⟧ }
+     }
+-  }
++}
+ 
+   private getLeftChildIndex(index: number): number {
+     return index * 2 + 1
+@@ -187,16 +166,10 @@
+   public increasePriority(idx: number, value: T): void {
+     if (this.keys[idx] === -1) {
+       // If the key does not exist, insert the value.
+-      this.insert(value)
+-      return
+-    }
+-    const key = this.keys[idx]
+-    if (this.compare(this.heap[key], value)) {
+-      // Do not do anything if the value in the heap already has a higher priority.
+-      return
+-    }
+-    // Increase the priority and bubble it up the heap.
+-    this.heap[key] = value
++    { … 10 line(s) … ⟦tj:a5a81ac499398714426c7fdf598f10f3⟧ }
+     this.bubbleUp(key)
+-  }
+ }
++}
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (5726 bytes): call tinyjuice_retrieve with token "00c5ab612cd0c92619c52f54d185463b"]
+\ No newline at end of file

@@ -26,8 +26,11 @@ const ERROR_KEYWORDS: &[&str] = &[
     "error:",
 ];
 
-/// Keywords that mark a warning. Lower weight than errors.
-const WARNING_KEYWORDS: &[&str] = &["warning", "warn:", "[warn]", "deprecated"];
+/// Keywords that mark a warning. Lower weight than errors. Bare `fail` (Android
+/// logcat / HealthApp style: `saveOneDetailData fail ...`) counts as at least a
+/// warning — the severity fallback matches it at word boundaries only, and an
+/// explicit level token (e.g. a leading `INFO`) still overrides it.
+const WARNING_KEYWORDS: &[&str] = &["warning", "warn:", "[warn]", "deprecated", "fail"];
 
 /// Keywords that bump importance regardless of severity.
 const IMPORTANCE_KEYWORDS: &[&str] = &[
@@ -78,15 +81,85 @@ pub enum Severity {
 }
 
 /// Bucket a line into [`Severity`].
+///
+/// An explicit level token wins over keyword scanning: a standalone
+/// `WARN`/`ERROR`/… field (bracketed, colon-suffixed, or `key=LEVEL`) pins the
+/// severity so a `WARN … Got exception …` line stays a warning instead of being
+/// dragged into the error bucket by the substring `exception`. Only when no
+/// explicit level is present do we fall back to keyword substrings, and those
+/// use ASCII word boundaries so identifiers like `error_count` don't match.
 pub fn severity(line: &str) -> Severity {
-    let lower = line.to_ascii_lowercase();
-    if ERROR_KEYWORDS.iter().any(|kw| lower.contains(kw)) {
+    if let Some(sev) = explicit_level(line) {
+        return sev;
+    }
+    if ERROR_KEYWORDS.iter().any(|kw| contains_keyword(line, kw)) {
         Severity::Error
-    } else if WARNING_KEYWORDS.iter().any(|kw| lower.contains(kw)) {
+    } else if WARNING_KEYWORDS.iter().any(|kw| contains_keyword(line, kw)) {
         Severity::Warning
     } else {
         Severity::Other
     }
+}
+
+/// Map a bare level token to its severity, or `None` when it isn't a level.
+/// Case-sensitive: only the conventional all-uppercase forms and the common
+/// lowercase `warn`/`error` log forms count, so a capitalised class name like
+/// `Error` in prose isn't mistaken for a level field.
+fn level_severity(tok: &str) -> Option<Severity> {
+    match tok {
+        "ERROR" | "ERR" | "FATAL" | "CRITICAL" | "CRIT" | "SEVERE" | "EMERG" | "ALERT"
+        | "error" | "err" | "fatal" | "critical" | "crit" | "severe" => Some(Severity::Error),
+        "WARN" | "WARNING" | "warn" | "warning" => Some(Severity::Warning),
+        "INFO" | "DEBUG" | "TRACE" | "NOTICE" | "info" | "debug" | "trace" | "notice" => {
+            Some(Severity::Other)
+        }
+        _ => None,
+    }
+}
+
+/// Detect the first explicit level token in `line`, if any. Recognises bare
+/// (`WARN`), bracketed (`[WARN]`), colon-suffixed (`WARN:`) and `key=LEVEL`
+/// forms — the log-level field conventionally sits at the front of the line.
+fn explicit_level(line: &str) -> Option<Severity> {
+    for raw in line.split_whitespace() {
+        // `key=LEVEL` → test the value after the last `=`.
+        let candidate = raw.rsplit('=').next().unwrap_or(raw);
+        let candidate = candidate.trim_matches(|c: char| {
+            matches!(
+                c,
+                '[' | ']' | '(' | ')' | '{' | '}' | ':' | ',' | '<' | '>' | '"' | '\''
+            )
+        });
+        if let Some(sev) = level_severity(candidate) {
+            return Some(sev);
+        }
+    }
+    None
+}
+
+/// True if `kw` (a lowercase keyword) appears in `line` at ASCII word
+/// boundaries — the characters flanking the match must not be identifier
+/// characters (alphanumeric or `_`), so `error_count`/`errors_total` don't
+/// count as an `error`, while `error:`/`(error)` still do.
+fn contains_keyword(line: &str, kw: &str) -> bool {
+    let hay = line.to_ascii_lowercase();
+    let bytes = hay.as_bytes();
+    let mut from = 0;
+    while let Some(rel) = hay[from..].find(kw) {
+        let start = from + rel;
+        let end = start + kw.len();
+        let before_ok = start == 0 || !is_ident_byte(bytes[start - 1]);
+        let after_ok = end >= bytes.len() || !is_ident_byte(bytes[end]);
+        if before_ok && after_ok {
+            return true;
+        }
+        from = start + 1;
+    }
+    false
+}
+
+fn is_ident_byte(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || b == b'_'
 }
 
 #[cfg(test)]
@@ -117,6 +190,65 @@ mod tests {
         assert_eq!(severity("error[E0382]: borrow"), Severity::Error);
         assert_eq!(severity("warning: deprecated"), Severity::Warning);
         assert_eq!(severity("running 12 tests"), Severity::Other);
+    }
+
+    #[test]
+    fn explicit_level_wins_over_keyword_substring() {
+        // `WARN` level pins the line as a warning even though it mentions
+        // `exception` — the old substring scan wrongly bucketed this as Error.
+        assert_eq!(
+            severity(
+                "081109 214043 2561 WARN dfs.DataNode: Got exception while serving blk_1 to /10.0.0.1:"
+            ),
+            Severity::Warning
+        );
+        assert_eq!(
+            severity("[WARN] task failed, will retry"),
+            Severity::Warning
+        );
+        assert_eq!(
+            severity("INFO: request failed but retried ok"),
+            Severity::Other
+        );
+        assert_eq!(
+            severity("level=warn msg=\"exception caught\""),
+            Severity::Warning
+        );
+    }
+
+    #[test]
+    fn explicit_error_level_still_error() {
+        assert_eq!(severity("ERROR something broke"), Severity::Error);
+        assert_eq!(severity("2024-01-01 FATAL boom"), Severity::Error);
+        assert_eq!(severity("level=error msg=oops"), Severity::Error);
+    }
+
+    #[test]
+    fn keyword_needs_word_boundary() {
+        // `error_count` / `errors_total` are identifiers, not an error signal.
+        assert_eq!(severity("metrics error_count=0 ok"), Severity::Other);
+        assert_eq!(severity("stat errors_total 0"), Severity::Other);
+        // A real error keyword at a boundary still classifies.
+        assert_eq!(severity("fatal: repository not found"), Severity::Error);
+        assert_eq!(
+            severity("connection (error) while dialing"),
+            Severity::Error
+        );
+    }
+
+    #[test]
+    fn bare_fail_is_at_least_warning() {
+        // HealthApp/logcat style line: no level token, lowercase `fail`.
+        assert_eq!(
+            severity(
+                "20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003"
+            ),
+            Severity::Warning
+        );
+        // Word boundary: `failover` is not a failure signal.
+        assert_eq!(severity("switched to failover replica"), Severity::Other);
+        // An explicit level still wins over the keyword.
+        assert_eq!(severity("INFO retry ok after fail"), Severity::Other);
     }
 
     #[test]

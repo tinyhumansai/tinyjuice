@@ -262,12 +262,41 @@ fn duplicate_id_last_write_wins() {
 fn default_user_rules_dir_is_home_based() {
     // Just exercise the path: if home doesn't exist, should still not panic
     let path = super::user_rules_root(None);
-    // Should end in .config/tokenjuice/rules
-    assert!(path.to_string_lossy().contains("tokenjuice"));
+    // Ends in .config/tinyjuice/rules — or the legacy tokenjuice dir when
+    // only that one exists on the machine running the tests.
+    let p = path.to_string_lossy();
+    assert!(p.contains("tinyjuice") || p.contains("tokenjuice"), "{p}");
 }
 
 #[test]
 fn default_project_rules_dir_is_cwd_based() {
     let path = super::project_rules_root(None, None);
-    assert!(path.to_string_lossy().contains(".tokenjuice"));
+    assert!(path.to_string_lossy().contains(".tinyjuice"));
+}
+
+#[test]
+fn cached_overlay_includes_project_rules_and_caches_per_cwd() {
+    let cwd = tempfile::tempdir().expect("tempdir");
+    let rules_dir = cwd.path().join(".tinyjuice").join("rules");
+    std::fs::create_dir_all(&rules_dir).unwrap();
+    std::fs::write(
+        rules_dir.join("custom.json"),
+        r#"{"id":"test/overlay-cache","family":"overlay-cache","match":{"argv0":["overlaycachetool"]}}"#,
+    )
+    .unwrap();
+
+    let first = cached_overlay_rules(Some(cwd.path()));
+    assert!(
+        first.iter().any(|r| r.rule.id == "test/overlay-cache"),
+        "project rule must be part of the overlay"
+    );
+
+    // Second call for the same cwd returns the cached Arc.
+    let second = cached_overlay_rules(Some(cwd.path()));
+    assert!(std::sync::Arc::ptr_eq(&first, &second));
+
+    // A different cwd (no project rules) must not see the project rule.
+    let other = tempfile::tempdir().expect("tempdir");
+    let bare = cached_overlay_rules(Some(other.path()));
+    assert!(!bare.iter().any(|r| r.rule.id == "test/overlay-cache"));
 }

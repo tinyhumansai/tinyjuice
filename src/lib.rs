@@ -25,6 +25,7 @@ pub mod reduce;
 pub mod relevance;
 pub mod rules;
 pub mod savings;
+pub mod sdk;
 pub mod text;
 pub mod tokens;
 pub mod tool_integration;
@@ -91,6 +92,12 @@ pub use rules::{
     RuleFixtureFailure, RuleFixtureParseError, RuleFixtureVerificationReport, RuleParseError,
     RuleRegexError, RuleShadowedRule, RuleVerificationReport, discover_fallback_outputs,
     load_builtin_rules, load_rules, verify_rule_fixtures, verify_rules,
+};
+pub use sdk::{
+    HostInstallSpec, SdkCompressOptions, SdkCompressionClassification, SdkCompressionRequest,
+    SdkCompressionResponse, SdkCompressionStats, TinyJuiceHost, TinyJuiceSdk, arguments_value,
+    compress_host_hook_payload, compress_request, host_hook_response, host_install_spec,
+    host_install_specs, host_template, request_from_json_value,
 };
 pub use tool_integration::{
     CompactionStats, compact_output, compact_output_with_policy, compact_tool_output_with_policy,

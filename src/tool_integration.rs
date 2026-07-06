@@ -12,7 +12,7 @@
 //! the payload, or the input is under the byte floor, or the router/CCR is
 //! disabled, the original string is returned untouched.
 //!
-//! Runtime options (the `[tokenjuice]` config block) are installed once at
+//! Runtime options (the `[tinyjuice]` config block) are installed once at
 //! startup via [`configure`]; callers don't thread `Config` through.
 
 use once_cell::sync::OnceCell;
@@ -59,10 +59,12 @@ fn options_for_agent(profile: AgentTokenjuiceCompression) -> Result<CompressOpti
         AgentTokenjuiceCompression::Full => Ok(current_options()),
         AgentTokenjuiceCompression::Light => {
             let mut opts = current_options();
-            // Coding agents need raw, exact tool text more than aggressive token
-            // savings. Disabling CCR makes every lossy compressor decline in
-            // route(), while still allowing any truly lossless reduction.
+            // Coding agents need raw, exact tool text more than aggressive
+            // token savings. With CCR off and lossy-without-CCR disallowed,
+            // every lossy compressor declines in route(), while any truly
+            // lossless reduction is still allowed.
             opts.ccr_enabled = false;
+            opts.lossy_without_ccr = false;
             opts.ml_text_enabled = false;
             Ok(opts)
         }
@@ -71,8 +73,8 @@ fn options_for_agent(profile: AgentTokenjuiceCompression) -> Result<CompressOpti
 
 /// Install the full TokenJuice runtime configuration in one call at startup:
 /// router/compressor options, CCR cache limits, and the optional on-disk tier.
-/// Kept free of the config-schema type so `tokenjuice` stays decoupled — the
-/// caller maps `Config.tokenjuice` into these primitives.
+/// Kept free of the config-schema type so `tinyjuice` stays decoupled — the
+/// caller maps `Config.tinyjuice` into these primitives.
 #[allow(clippy::too_many_arguments)]
 pub fn install_config(
     options: CompressOptions,
@@ -90,7 +92,7 @@ pub fn install_config(
         Some(root) => super::cache::enable_disk_tier(root),
         None => super::cache::disable_disk_tier(),
     }
-    log::debug!("[tokenjuice] runtime config installed");
+    log::debug!("[tinyjuice] runtime config installed");
 }
 
 /// Statistics for a single compaction call (back-compat shape).
@@ -137,7 +139,7 @@ pub async fn compact_tool_output_with_policy(
         Ok(opts) => opts,
         Err(rule_id) => {
             log::debug!(
-                "[tokenjuice] agent profile skipped compaction tool={} profile={} bytes={}",
+                "[tinyjuice] agent profile skipped compaction tool={} profile={} bytes={}",
                 tool_name,
                 profile.as_str(),
                 original_bytes
@@ -376,7 +378,7 @@ mod tests {
         assert!(compacted.contains("metadata.owner"), "{compacted}");
         assert!(compacted.contains("metadata.flags.retry"), "{compacted}");
         assert!(compacted.contains("team-7"), "{compacted}");
-        assert!(compacted.contains("tokenjuice_retrieve"), "{compacted}");
+        assert!(compacted.contains("tinyjuice_retrieve"), "{compacted}");
         assert!(compacted.len() < output.len());
     }
 

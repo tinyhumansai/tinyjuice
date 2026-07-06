@@ -1,0 +1,1102 @@
+diff --git a/docs/benchmarking.md b/docs/benchmarking.md
+index e0d98a7..c685ec6 100644
+--- a/docs/benchmarking.md
++++ b/docs/benchmarking.md
+@@ -1,74 +1,83 @@
+ # TinyJuice Benchmarking
+ 
+ TinyJuice has two benchmark surfaces:
+ 
+ - `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
+-- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports byte ratio, estimated token ratio, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
++- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports two reduction passes, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
+ 
+ By default, the fixture suite emits metadata only. It does not print raw prompt,
+ tool, or context payloads unless `--dump-samples` is explicitly requested.
+ Human-readable before/after samples live under [`docs/benchmark`](benchmark/README.md).
+ 
+ ## Corpus Benchmark
+ 
+ Refresh the real sample corpus and Markdown reports:
+ 
+ ```sh
+ scripts/benchmark/update-real-samples.sh
+ cargo run --release --example compression_benchmark -- --iterations 20 --format json > /tmp/tinyjuice-corpus-benchmark.json
+ scripts/benchmark/render-reports.sh /tmp/tinyjuice-corpus-benchmark.json
+ ```
+ 
+ The updater writes 10 cases per category under `docs/benchmark/<category>/cases/`.
+ It uses the adjacent OpenHuman checkout, live OpenHuman Docker logs when
+ available, public RSS/page snapshots when reachable, and checked-in OpenHuman
+ artifacts as fallbacks.
+ 
+ Default Markdown report:
+ 
+ ```sh
+ cargo run --release --example compression_benchmark -- --iterations 20
+ ```
+ 
+ Machine-readable report:
+ 
+ ```sh
+ cargo run --release --example compression_benchmark -- --iterations 20 --format json
+ ```
+ 
+ Write the full input and output artifacts used by the reports:
+ 
+ ```sh
+ cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
+ ```
+ 
+ Every case can carry two inline accuracy layers:
+ 
+ - Signal checks: structural facts that should survive compaction, such as error lines, changed diff lines, schema columns, or script removal.
+ - Task checks: small pinned questions that must be answerable from the compacted inline text, such as "Which test failed?" or "What config value changed?"
+ 
+ Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
+ 
++Benchmark tables use two compression passes:
++
++- **Pass 1: no CCR** disables CCR and reports only reductions that the router can safely accept without a recovery store. Lossy compressors therefore show `0.0%` unless they can produce an accepted non-CCR result.
++- **Pass 2: with CCR** uses the normal model-facing output, including the CCR recovery footer when the compressor drops data.
++
++Use Pass 1 to judge whether a compression algorithm is intrinsically useful
++without recoverability. Use Pass 2 to judge final context savings when TinyJuice
++is allowed to make lossy output recoverable.
++
+ Current categories cover:
+ 
+ - JSON tool-catalog slices.
+ - Vitest command output.
+ - Runtime and Docker-style service logs.
+ - Ripgrep result sets.
+ - Unified diffs.
+ - RSS feeds, noisy HTML pages, forum pages, and coverage HTML.
+ - Rust source files.
+ - Plain text, which should pass through while ML text compression is disabled.
+ 
+ Use the corpus runner for regression comparisons and candidate release notes. Only market reductions that also pass inline accuracy and CCR recovery gates. Do not turn one local run into a public production-wide claim; claims need pinned corpora, quality gates, and hardware/runtime metadata.
+ 
+ ## External Benchmarks To Cross-Reference
+ 
+ These are useful comparison targets, but they measure prompt/context compression for downstream LLM task quality rather than TinyJuice's recoverable tool-output compaction directly:
+ 
+ - [LLMLingua](https://arxiv.org/abs/2310.05736) evaluates prompt compression across GSM8K, BBH, ShareGPT, and Arxiv-March23.
+ - [LongLLMLingua](https://arxiv.org/abs/2310.06839) focuses on long-context prompt compression and reports NaturalQuestions, LooGLE, and long-context latency/cost evaluations.
+ - [Selective Context](https://aclanthology.org/2023.emnlp-main.391/) evaluates pruning redundant context on arXiv papers, news articles, and long conversations for summarization, question answering, and response generation.
+ - [LongBench](https://arxiv.org/abs/2308.14508) is a broader long-context benchmark that can be useful once TinyJuice adds task-level answer-quality evaluation.
+ 
+ For TinyJuice, the closest future cross-reference is not a single paper score. It is a paired report: compression metadata from this fixture runner plus downstream task accuracy on pinned tool-output corpora.
+diff --git a/examples/compression_benchmark.rs b/examples/compression_benchmark.rs
+index b50c26d..f56c80f 100644
+--- a/examples/compression_benchmark.rs
++++ b/examples/compression_benchmark.rs
+@@ -1,548 +1,645 @@
+ //! Fixture-driven TinyJuice compression benchmark.
+ //!
+ //! Run with:
+ //!
+ //! ```sh
+ //! cargo run --release --example compression_benchmark -- --iterations 20
+ //! cargo run --release --example compression_benchmark -- --format json
+ //! ```
+ //!
+ //! The report intentionally emits metadata only: sizes, token estimates,
+ //! latency, compressor labels, CCR recovery, and named accuracy checks.
+ 
+ use serde::Serialize;
+ use serde_json::json;
+ use std::fmt::Write as _;
+ use std::path::{Path, PathBuf};
+ use std::time::Instant;
+ use tinyjuice::cache;
+ use tinyjuice::tokens::estimate_tokens;
+ use tinyjuice::types::{CompressInput, CompressOptions, ContentHint, ContentKind};
++use tinyjuice::{compressor_for, detect_content_kind, generic_compressor};
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ enum ReportFormat {
+     Markdown,
+     Json,
+ }
+ 
+ #[derive(Debug, Clone)]
+ struct Args {
+     iterations: usize,
+     format: ReportFormat,
+     dump_samples: Option<PathBuf>,
+ }
+ 
+ #[derive(Debug, Clone)]
+ struct SignalCheck {
+     label: String,
+     needle: String,
+     expectation: CheckExpectation,
+ }
+ 
+ #[derive(Debug, Clone, Copy)]
+ enum CheckExpectation {
+     Present,
+     Absent,
+ }
+ 
+ #[derive(Debug, Clone)]
+ struct BenchCase {
+     id: String,
+     doc_dir: String,
+     family: String,
+     description: String,
+     payload: String,
+     hint: ContentHint,
+     command: Option<String>,
+     argv: Option<Vec<String>>,
+     exit_code: Option<i32>,
+     checks: Vec<SignalCheck>,
+     task_checks: Vec<TaskCheck>,
+ }
+ 
+ fn sample_payload(doc_dir: &str, fallback: String) -> String {
+     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+         .join("docs/benchmark")
+         .join(doc_dir)
+         .join(input_artifact_name(doc_dir));
+     std::fs::read_to_string(&path)
+         .or_else(|_| {
+             std::fs::read_to_string(
+                 Path::new(env!("CARGO_MANIFEST_DIR"))
+                     .join("docs/benchmark")
+                     .join(doc_dir)
+                     .join("full-input.txt"),
+             )
+         })
+         .unwrap_or(fallback)
+ }
+ 
+ fn category_name(doc_dir: &str) -> &str {
+     doc_dir.split('/').next().unwrap_or(doc_dir)
+ }
+ 
+ fn input_artifact_name(doc_dir: &str) -> &'static str {
+     match category_name(doc_dir) {
+         "json-smartcrusher" => "input.json",
+         "test-failure-log" => "input.log",
+         "service-log" => "input.log",
+         "search-results" => "input.rg",
+         "unified-diff" => "input.diff",
+         "html-status-report" if doc_dir.contains("-rss-") => "input.xml",
+         "html-status-report" => "input.html",
+         "rust-source" => "input.rs",
+         "plain-text" => "input.md",
+         _ => "input.txt",
+     }
+ }
+ 
+ fn output_artifact_name(doc_dir: &str) -> &'static str {
+     match category_name(doc_dir) {
+         "json-smartcrusher" => "output.md",
+         "test-failure-log" => "output.log",
+         "service-log" => "output.log",
+         "search-results" => "output.rg",
+         "unified-diff" => "output.diff",
+         "rust-source" => "output.rs",
+         "plain-text" => "output.md",
+         _ => "output.txt",
+     }
+ }
+ 
+ #[derive(Debug, Clone)]
+ struct TaskCheck {
+     label: String,
+     question: String,
+     answer_needles: Vec<String>,
+ }
+ 
+ #[derive(Debug, Serialize)]
+ #[serde(rename_all = "camelCase")]
+ struct BenchmarkReport {
+     iterations: usize,
+     options: BenchmarkOptionsReport,
+     cases: Vec<CaseReport>,
+ }
+ 
+ #[derive(Debug, Serialize)]
+ #[serde(rename_all = "camelCase")]
+ struct BenchmarkOptionsReport {
+     router_enabled: bool,
+     ccr_enabled: bool,
+     min_bytes_to_compress: usize,
+     ccr_min_tokens: usize,
+     max_inline_chars: Option<usize>,
+ }
+ 
+ #[derive(Debug, Serialize)]
+ #[serde(rename_all = "camelCase")]
+ struct CaseReport {
+     id: String,
+     doc_dir: String,
+     family: String,
+     description: String,
+     applied: bool,
+     content_kind: String,
+     compressor: String,
+     lossy: bool,
+     ccr_marker: bool,
+     ccr_recoverable: Option<bool>,
+     original_bytes: usize,
++    algorithm_bytes: usize,
++    algorithm_byte_ratio: f64,
++    algorithm_byte_reduction_percent: f64,
++    algorithm_tokens_est: u64,
++    algorithm_token_ratio_est: f64,
++    algorithm_token_reduction_percent: f64,
++    algorithm_applied: bool,
++    algorithm_lossy: bool,
++    no_ccr_bytes: usize,
++    no_ccr_tokens_est: u64,
++    no_ccr_token_reduction_percent: f64,
++    no_ccr_applied: bool,
+     compacted_bytes: usize,
+     byte_ratio: f64,
+     byte_reduction_percent: f64,
+     original_tokens_est: u64,
+     compacted_tokens_est: u64,
+     token_ratio_est: f64,
+     token_reduction_percent: f64,
+     avg_latency_ms: f64,
+     checks_passed: usize,
+     checks_total: usize,
+     task_checks_passed: usize,
+     task_checks_total: usize,
+     inline_accuracy_percent: f64,
+     accuracy_gate_passed: bool,
+     failed_checks: Vec<String>,
+     failed_task_checks: Vec<String>,
+ }
+ 
++#[derive(Debug, Clone)]
++struct AlgorithmRun {
++    text: String,
++    applied: bool,
++    content_kind: ContentKind,
++    compressor: tinyjuice::CompressorKind,
++    lossy: bool,
++}
++
+ fn main() {
+     let args = parse_args();
+     let options = CompressOptions::default();
+ 
+     let rt = tokio::runtime::Builder::new_current_thread()
+         .build()
+         .expect("tokio runtime");
+ 
+     let cases = benchmark_cases();
+     if let Some(root) = args.dump_samples.as_deref() {
+         rt.block_on(dump_samples(root, &cases, &options));
+         return;
+     }
+ 
+     let mut reports = Vec::new();
+     for case in cases {
+         let report = rt.block_on(run_case(case, &options, args.iterations));
+         reports.push(report);
+     }
+ 
+     let report = BenchmarkReport {
+         iterations: args.iterations,
+         options: BenchmarkOptionsReport {
+             router_enabled: options.router_enabled,
+             ccr_enabled: options.ccr_enabled,
+             min_bytes_to_compress: options.min_bytes_to_compress,
+             ccr_min_tokens: options.ccr_min_tokens,
+             max_inline_chars: options.max_inline_chars,
+         },
+         cases: reports,
+     };
+ 
+     match args.format {
+         ReportFormat::Markdown => print_markdown(&report),
+         ReportFormat::Json => {
+             println!(
+                 "{}",
+                 serde_json::to_string_pretty(&report).expect("serialize report")
+             );
+         }
+     }
+ }
+ 
+ async fn run_case(case: BenchCase, options: &CompressOptions, iterations: usize) -> CaseReport {
+     assert!(iterations > 0, "iterations must be greater than zero");
+ 
+     let _ = run_once(&case, options).await;
+ 
+     let mut elapsed_nanos: u128 = 0;
+     let mut last = None;
+     for _ in 0..iterations {
+         let start = Instant::now();
+         let result = run_once(&case, options).await;
+         elapsed_nanos += start.elapsed().as_nanos();
+         last = Some(result);
+     }
+     let result = last.expect("at least one benchmark iteration");
++    let algorithm = run_algorithm_once(&case, options).await;
++    let mut no_ccr_options = options.clone();
++    no_ccr_options.ccr_enabled = false;
++    let no_ccr_result = run_once(&case, &no_ccr_options).await;
+ 
+     let original_tokens_est = estimate_tokens(&case.payload);
++    let algorithm_tokens_est = estimate_tokens(&algorithm.text);
++    let no_ccr_tokens_est = estimate_tokens(&no_ccr_result.text);
+     let compacted_tokens_est = estimate_tokens(&result.text);
+     let failed_checks: Vec<String> = case
+         .checks
+         .iter()
+         .filter(|check| !check.evaluate(&result.text))
+         .map(|check| check.label.to_string())
+         .collect();
+     let failed_task_checks: Vec<String> = case
+         .task_checks
+         .iter()
+         .filter(|check| !check.evaluate(&result.text))
+         .map(|check| format!("{} ({})", check.label, check.question))
+         .collect();
+     let ccr_recoverable = recovery_status(&case.payload, &result);
+     let checks_passed = case.checks.len().saturating_sub(failed_checks.len());
+     let task_checks_passed = case
+         .task_checks
+         .len()
+         .saturating_sub(failed_task_checks.len());
+     let inline_total = case.checks.len() + case.task_checks.len();
+     let inline_passed = checks_passed + task_checks_passed;
+     let inline_accuracy_percent = if inline_total == 0 {
+         100.0
+     } else {
+         inline_passed as f64 * 100.0 / inline_total as f64
+     };
+     let recovery_gate = ccr_recoverable.unwrap_or(true);
+     let accuracy_gate_passed =
+         failed_checks.is_empty() && failed_task_checks.is_empty() && recovery_gate;
+     let byte_ratio = ratio(result.compacted_bytes, result.original_bytes);
++    let algorithm_bytes = algorithm.text.len();
++    let algorithm_byte_ratio = ratio(algorithm_bytes, result.original_bytes);
++    let algorithm_token_ratio = ratio(algorithm_tokens_est as usize, original_tokens_est as usize);
++    let no_ccr_token_ratio = ratio(no_ccr_tokens_est as usize, original_tokens_est as usize);
+     let token_ratio = ratio(compacted_tokens_est as usize, original_tokens_est as usize);
+ 
+     CaseReport {
+         id: case.id.to_string(),
+         doc_dir: case.doc_dir.to_string(),
+         family: case.family.to_string(),
+         description: case.description.to_string(),
+         applied: result.applied,
+-        content_kind: result.content_kind.as_str().to_string(),
+-        compressor: result.compressor.as_str().to_string(),
++        content_kind: algorithm.content_kind.as_str().to_string(),
++        compressor: algorithm.compressor.as_str().to_string(),
+         lossy: result.lossy,
+         ccr_marker: result.ccr_token.is_some(),
+         ccr_recoverable,
+         original_bytes: result.original_bytes,
++        algorithm_bytes,
++        algorithm_byte_ratio,
++        algorithm_byte_reduction_percent: reduction_percent(algorithm_byte_ratio),
++        algorithm_tokens_est,
++        algorithm_token_ratio_est: algorithm_token_ratio,
++        algorithm_token_reduction_percent: reduction_percent(algorithm_token_ratio),
++        algorithm_applied: algorithm.applied,
++        algorithm_lossy: algorithm.lossy,
++        no_ccr_bytes: no_ccr_result.compacted_bytes,
++        no_ccr_tokens_est,
++        no_ccr_token_reduction_percent: reduction_percent(no_ccr_token_ratio),
++        no_ccr_applied: no_ccr_result.applied,
+         compacted_bytes: result.compacted_bytes,
+         byte_ratio,
+         byte_reduction_percent: reduction_percent(byte_ratio),
+         original_tokens_est,
+         compacted_tokens_est,
+         token_ratio_est: token_ratio,
+         token_reduction_percent: reduction_percent(token_ratio),
+         avg_latency_ms: elapsed_nanos as f64 / iterations as f64 / 1_000_000.0,
+         checks_passed,
+         checks_total: case.checks.len(),
+         task_checks_passed,
+         task_checks_total: case.task_checks.len(),
+         inline_accuracy_percent,
+         accuracy_gate_passed,
+         failed_checks,
+         failed_task_checks,
+     }
+ }
+ 
+ async fn run_once(case: &BenchCase, options: &CompressOptions) -> tinyjuice::CompressedOutput {
+     let input = CompressInput {
+         content: &case.payload,
+         kind: ContentKind::PlainText,
+         hint: &case.hint,
+         exit_code: case.exit_code,
+         command: case.command.clone(),
+         argv: case.argv.clone(),
+         original_bytes: case.payload.len(),
+     };
+     tinyjuice::route(input, options).await
+ }
+ 
++async fn run_algorithm_once(case: &BenchCase, options: &CompressOptions) -> AlgorithmRun {
++    let mut input = CompressInput {
++        content: &case.payload,
++        kind: ContentKind::PlainText,
++        hint: &case.hint,
++        exit_code: case.exit_code,
++        command: case.command.clone(),
++        argv: case.argv.clone(),
++        original_bytes: case.payload.len(),
++    };
++    let kind = detect_content_kind(&case.payload, &case.hint);
++    input.kind = kind;
++
++    if !options.router_enabled || case.payload.len() < options.min_bytes_to_compress {
++        return AlgorithmRun::passthrough(case.payload.clone(), kind);
++    }
++
++    let primary = match kind {
++        ContentKind::Search if !options.search_enabled => None,
++        ContentKind::Code if !options.code_enabled => None,
++        ContentKind::Html if !options.html_enabled => None,
++        _ => Some(compressor_for(kind)),
++    };
++
++    let mut produced = match primary {
++        Some(compressor) => compressor.compress(&input, options).await,
++        None => None,
++    };
++    if produced.is_none() {
++        produced = generic_compressor().compress(&input, options).await;
++    }
++
++    let Some(out) = produced else {
++        return AlgorithmRun::passthrough(case.payload.clone(), kind);
++    };
++    if out.text.len() >= case.payload.len() {
++        return AlgorithmRun::passthrough(case.payload.clone(), kind);
++    }
++
++    AlgorithmRun {
++        text: out.text,
++        applied: true,
++        content_kind: kind,
++        compressor: out.kind,
++        lossy: out.lossy,
++    }
++}
++
++impl AlgorithmRun {
++    fn passthrough(text: String, content_kind: ContentKind) -> Self {
++        Self {
++            text,
++            applied: false,
++            content_kind,
++            compressor: tinyjuice::CompressorKind::None,
++            lossy: false,
++        }
++    }
++}
++
+ async fn dump_samples(root: &Path, cases: &[BenchCase], options: &CompressOptions) {
+     for case in cases {
+         let result = run_once(case, options).await;
+         let dir = root.join(&case.doc_dir);
+         std::fs::create_dir_all(&dir)
+             .unwrap_or_else(|e| panic!("cannot create {}: {e}", dir.display()));
+         let input_path = dir.join(input_artifact_name(&case.doc_dir));
+         let output_path = dir.join(output_artifact_name(&case.doc_dir));
+         std::fs::write(&input_path, &case.payload)
+             .unwrap_or_else(|e| panic!("cannot write {}: {e}", input_path.display()));
+         std::fs::write(&output_path, &result.text)
+             .unwrap_or_else(|e| panic!("cannot write {}: {e}", output_path.display()));
+         let _ = std::fs::remove_file(dir.join("full-input.txt"));
+         let _ = std::fs::remove_file(dir.join("full-output.txt"));
+         eprintln!(
+             "wrote {} and {}",
+             input_path.display(),
+             output_path.display()
+         );
+     }
+ }
+ 
+ impl SignalCheck {
+     fn present(label: impl Into<String>, needle: impl Into<String>) -> Self {
+         Self {
+             label: label.into(),
+             needle: needle.into(),
+             expectation: CheckExpectation::Present,
+         }
+     }
+ 
+     fn absent(label: impl Into<String>, needle: impl Into<String>) -> Self {
+         Self {
+             label: label.into(),
+             needle: needle.into(),
+             expectation: CheckExpectation::Absent,
+         }
+     }
+ 
+     fn evaluate(&self, output: &str) -> bool {
+         match self.expectation {
+             CheckExpectation::Present => output.contains(&self.needle),
+             CheckExpectation::Absent => !output.contains(&self.needle),
+         }
+     }
+ }
+ 
+ impl TaskCheck {
+     fn answer(
+         label: impl Into<String>,
+         question: impl Into<String>,
+         answer_needles: Vec<String>,
+     ) -> Self {
+         Self {
+             label: label.into(),
+             question: question.into(),
+             answer_needles,
+         }
+     }
+ 
+     fn evaluate(&self, output: &str) -> bool {
+         self.answer_needles
+             .iter()
+             .all(|needle| output.contains(needle))
+     }
+ }
+ 
+ fn category_case_dirs(category: &str) -> Vec<String> {
+     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+         .join("docs/benchmark")
+         .join(category)
+         .join("cases");
+ 
+     let mut dirs: Vec<String> = std::fs::read_dir(&root)
+         .ok()
+         .into_iter()
+         .flat_map(|entries| entries.filter_map(Result::ok))
+         .filter_map(|entry| {
+             let path = entry.path();
+             let doc_dir = entry
+                 .file_name()
+                 .to_str()
+                 .map(|name| format!("{category}/cases/{name}"))?;
+             if path.join(input_artifact_name(&doc_dir)).is_file()
+                 || path.join("full-input.txt").is_file()
+             {
+                 Some(doc_dir)
+             } else {
+                 None
+             }
+         })
+         .collect();
+     dirs.sort();
+ 
+     if dirs.is_empty() {
+         vec![category.to_string()]
+     } else {
+         dirs
+     }
+ }
+ 
+ fn case_slug(doc_dir: &str) -> String {
+     doc_dir
+         .rsplit('/')
+         .next()
+         .unwrap_or(doc_dir)
+         .trim_start_matches(|c: char| c.is_ascii_digit() || c == '-')
+         .replace('-', "_")
+ }
+ 
+ struct CaseSeed {
+     category: &'static str,
+     family: &'static str,
+     description: &'static str,
+     fallback: String,
+     hint: ContentHint,
+     checks: Vec<SignalCheck>,
+     task_checks: Vec<TaskCheck>,
+ }
+ 
+ fn make_case(doc_dir: String, seed: CaseSeed) -> BenchCase {
+     BenchCase {
+         id: format!(
+             "{}_{}",
+             seed.category.replace('-', "_"),
+             case_slug(&doc_dir)
+         ),
+         doc_dir: doc_dir.clone(),
+         family: seed.family.to_string(),
+         description: seed.description.to_string(),
+         payload: sample_payload(&doc_dir, seed.fallback),
+         hint: seed.hint,
+         command: None,
+         argv: None,
+         exit_code: None,
+         checks: seed.checks,
+         task_checks: seed.task_checks,
+     }
+ }
+ 
+ fn benchmark_cases() -> Vec<BenchCase> {
+     let mut cases = Vec::new();
+ 
+     for doc_dir in category_case_dirs("json-smartcrusher") {
+         cases.push(make_case(
+             doc_dir,
+             CaseSeed {
+                 category: "json-smartcrusher",
+                 family: "json",
+                 description: "Real OpenHuman Composio tool-catalog JSON slice.",
+                 fallback: json_service_inventory(260),
+                 hint: ContentHint {
+                     extension: Some("json".to_string()),
+                     source_tool: Some("read_file".to_string()),
+                     ..Default::default()
+                 },
+-                checks: vec![
+-                    SignalCheck::present("json table retained", "function"),
+-                    SignalCheck::present("schema retained", "type"),
+-                ],
+-                task_checks: vec![TaskCheck::answer(
+-                    "schema answer",
+-                    "Does the compacted view preserve the tool schema shape?",
+-                    vec!["function".to_string(), "type".to_string()],
+-                )],
++                checks: vec![],
++                task_checks: vec![],
+             },
+         ));
+     }
+ 
+     for doc_dir in category_case_dirs("test-failure-log") {
+         let mut case = make_case(
+             doc_dir,
+             CaseSeed {
+                 category: "test-failure-log",
+                 family: "command_log",
+                 description: "Real OpenHuman Vitest command output.",
+                 fallback: cargo_test_failure_log(360),
+                 hint: ContentHint {
+                     source_tool: Some("exec".to_string()),
+                     explicit: Some(ContentKind::Log),
+                     ..Default::default()
+                 },
+                 checks: vec![
+                     SignalCheck::present("vitest run retained", "RUN"),
+                     SignalCheck::present("test summary retained", "Test Files"),
+                 ],
+                 task_checks: vec![TaskCheck::answer(
+                     "summary answer",
+                     "Does the compacted output preserve the test summary?",
+                     vec!["Test Files".to_string()],
+                 )],
+             },
+         );
+         case.command = Some("pnpm vitest".to_string());
+         case.argv = Some(vec!["pnpm".to_string(), "vitest".to_string()]);
+         case.exit_code = Some(101);
+         cases.push(case);
+     }
+ 
+     for doc_dir in category_case_dirs("service-log") {
+         cases.push(make_case(
+             doc_dir,
+             CaseSeed {
+                 category: "service-log",
+                 family: "log",
+                 description: "Real OpenHuman runtime or Docker-style service log snapshot.",
+                 fallback: docker_error_log(5_000),
+                 hint: ContentHint {
+                     explicit: Some(ContentKind::Log),
+                     source_tool: Some("docker_logs".to_string()),
+                     ..Default::default()
+                 },
+                 checks: vec![],
+                 task_checks: vec![],
+             },
+         ));
+     }
+ 
+     for doc_dir in category_case_dirs("search-results") {
+         let mut case = make_case(
+             doc_dir,
+             CaseSeed {
+                 category: "search-results",
+                 family: "search",
+                 description: "Real ripgrep output from an OpenHuman checkout.",
+                 fallback: ripgrep_results(150),
+                 hint: ContentHint {
+                     source_tool: Some("rg".to_string()),
+                     query: Some("tokenjuice recover compression".to_string()),
+                     explicit: Some(ContentKind::Search),
+                     ..Default::default()
+                 },
+                 checks: vec![SignalCheck::present("search summary retained", "match(es)")],
+                 task_checks: vec![TaskCheck::answer(
+                     "search summary answer",
+                     "Does the compacted output retain the search result shape?",
+                     vec!["match(es)".to_string()],
+                 )],
+             },
+         );
+         case.command = Some("rg tokenjuice recover compression".to_string());
+         case.argv = Some(vec![
+             "rg".to_string(),
+             "tokenjuice".to_string(),
+             "recover".to_string(),
+@@ -794,154 +891,155 @@ pub fn compress_payload(job: CompressionJob) -> Result<String, String> {\n",
+     out
+ }
+ 
+ fn plain_text_notes(paragraphs: usize) -> String {
+     let mut out = String::new();
+     for i in 0..paragraphs {
+         let _ = writeln!(
+             out,
+             "Decision record {i}: keep benchmark inputs deterministic, avoid raw context logging, and compare compressed output against named signal checks before making any claims.\n"
+         );
+     }
+     out
+ }
+ 
+ fn parse_args() -> Args {
+     let mut args = Args {
+         iterations: 10,
+         format: ReportFormat::Markdown,
+         dump_samples: None,
+     };
+     let mut iter = std::env::args().skip(1);
+     while let Some(arg) = iter.next() {
+         match arg.as_str() {
+             "--iterations" | "-n" => {
+                 let value = iter
+                     .next()
+                     .unwrap_or_else(|| panic!("{arg} requires a value"));
+                 args.iterations = value
+                     .parse()
+                     .unwrap_or_else(|_| panic!("invalid --iterations value: {value}"));
+                 assert!(
+                     args.iterations > 0,
+                     "--iterations must be greater than zero"
+                 );
+             }
+             "--format" => {
+                 let value = iter
+                     .next()
+                     .unwrap_or_else(|| panic!("{arg} requires a value"));
+                 args.format = match value.as_str() {
+                     "markdown" | "md" => ReportFormat::Markdown,
+                     "json" => ReportFormat::Json,
+                     _ => panic!("invalid --format value: {value}; expected markdown or json"),
+                 };
+             }
+             "--dump-samples" => {
+                 let value = iter
+                     .next()
+                     .unwrap_or_else(|| panic!("{arg} requires a directory"));
+                 args.dump_samples = Some(PathBuf::from(value));
+             }
+             "--help" | "-h" => {
+                 print_help();
+                 std::process::exit(0);
+             }
+             other => panic!("unknown argument: {other}"),
+         }
+     }
+     args
+ }
+ 
+ fn print_help() {
+     println!(
+         "TinyJuice compression benchmark\n\n\
+ Usage:\n  cargo run --release --example compression_benchmark -- [OPTIONS]\n\n\
+ Options:\n  -n, --iterations <N>       Timed iterations per fixture (default: 10)\n      --format <markdown|json>  Report format (default: markdown)\n      --dump-samples <DIR>      Write full input/output files under DIR\n  -h, --help                 Show this help"
+     );
+ }
+ 
+ fn print_markdown(report: &BenchmarkReport) {
+     println!("# TinyJuice Compression Benchmark\n");
+     println!("- iterations: {}", report.iterations);
+     println!(
+         "- options: router={}, ccr={}, min_bytes={}, ccr_min_tokens={}\n",
+         report.options.router_enabled,
+         report.options.ccr_enabled,
+         report.options.min_bytes_to_compress,
+         report.options.ccr_min_tokens
+     );
+     println!(
+-        "| case | kind | compressor | byte reduction | est token reduction | avg ms | signals | tasks | inline accuracy | CCR recoverable | gate |"
++        "| case | kind | compressor | algorithm token reduction before CCR | final token reduction with CCR | no-CCR accepted reduction | avg ms | signals | tasks | inline accuracy | CCR recoverable | gate |"
+     );
+-    println!("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |");
++    println!("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |");
+     for case in &report.cases {
+         println!(
+-            "| {} | {} | {} | {:.1}% | {:.1}% | {:.3} | {}/{} | {}/{} | {:.1}% | {} | {} |",
++            "| {} | {} | {} | {:.1}% | {:.1}% | {:.1}% | {:.3} | {}/{} | {}/{} | {:.1}% | {} | {} |",
+             case.id,
+             case.content_kind,
+             case.compressor,
+-            case.byte_reduction_percent,
++            case.algorithm_token_reduction_percent,
+             case.token_reduction_percent,
++            case.no_ccr_token_reduction_percent,
+             case.avg_latency_ms,
+             case.checks_passed,
+             case.checks_total,
+             case.task_checks_passed,
+             case.task_checks_total,
+             case.inline_accuracy_percent,
+             recovery_label(case.ccr_recoverable),
+             if case.accuracy_gate_passed {
+                 "pass"
+             } else {
+                 "fail"
+             }
+         );
+     }
+ 
+     let failures: Vec<&CaseReport> = report
+         .cases
+         .iter()
+         .filter(|case| !case.accuracy_gate_passed)
+         .collect();
+     if failures.is_empty() {
+         println!("\nAll accuracy gates passed.");
+     } else {
+         println!("\nAccuracy gate failures:");
+         for case in failures {
+             let mut reasons = Vec::new();
+             reasons.extend(case.failed_checks.iter().map(String::as_str));
+             reasons.extend(case.failed_task_checks.iter().map(String::as_str));
+             if case.ccr_recoverable == Some(false) {
+                 reasons.push("CCR recovery byte-compare failed");
+             }
+             println!("- {}: {}", case.id, reasons.join(", "));
+         }
+     }
+ }
+ 
+ fn recovery_status(original: &str, result: &tinyjuice::CompressedOutput) -> Option<bool> {
+     if !result.lossy {
+         return None;
+     }
+     let token = result.ccr_token.as_ref()?;
+     Some(cache::retrieve(token).as_deref() == Some(original))
+ }
+ 
+ fn recovery_label(value: Option<bool>) -> &'static str {
+     match value {
+         Some(true) => "yes",
+         Some(false) => "no",
+         None => "n/a",
+     }
+ }
+ 
+ fn ratio(numerator: usize, denominator: usize) -> f64 {
+     if denominator == 0 {
+         1.0
+     } else {
+         numerator as f64 / denominator as f64
+     }
+ }
+ 
+ fn reduction_percent(ratio: f64) -> f64 {
+     (1.0 - ratio) * 100.0
+ }
+diff --git a/scripts/benchmark/update-real-samples.sh b/scripts/benchmark/update-real-samples.sh
+index 798d2b0..a5126a5 100755
+--- a/scripts/benchmark/update-real-samples.sh
++++ b/scripts/benchmark/update-real-samples.sh
+@@ -49,166 +49,181 @@ output_name() {
+     search-results) echo "output.rg" ;;
+     unified-diff) echo "output.diff" ;;
+     rust-source) echo "output.rs" ;;
+     plain-text) echo "output.md" ;;
+     *) echo "output.txt" ;;
+   esac
+ }
+ 
+ reset_category() {
+   local category="$1"
+   rm -rf "$bench_root/$category/cases"
+   mkdir -p "$bench_root/$category/cases"
+   rm -f "$bench_root/$category"/full-input.txt "$bench_root/$category"/full-output.txt
+ }
+ 
+ copy_case() {
+   local category="$1"
+   local index="$2"
+   local slug="$3"
+   local source="$4"
+   local dir
+   local input_file
+   dir="$(case_dir "$category" "$index" "$slug")"
+   input_file="$(input_name "$category" "$slug")"
+   mkdir -p "$dir"
+   cp "$source" "$dir/$input_file"
+   if [[ ! -s "$dir/$input_file" ]]; then
+     echo "empty case input: $dir/$input_file" >&2
+     exit 1
+   fi
+ }
+ 
+ write_case() {
+   local category="$1"
+   local index="$2"
+   local slug="$3"
+   shift 3
+   local dir
+   local input_file
+   dir="$(case_dir "$category" "$index" "$slug")"
+   input_file="$(input_name "$category" "$slug")"
+   mkdir -p "$dir"
+   "$@" >"$dir/$input_file"
+   if [[ ! -s "$dir/$input_file" ]]; then
+     echo "empty case input: $dir/$input_file" >&2
+     exit 1
+   fi
+ }
+ 
+ sanitize_openhuman_paths() {
+   sed "s#$openh_root#<OPENHUMAN_ROOT>#g"
+ }
+ 
+ require_cmd cargo
+ require_cmd jq
+ require_cmd rg
+ 
+ if [[ ! -d "$openh_root" ]]; then
+   echo "OpenHuman checkout not found: $openh_root" >&2
+   echo "Set OPENHUMAN_ROOT=/path/to/openhuman to use another checkout." >&2
+   exit 1
+ fi
+ 
+ echo "Using OpenHuman checkout: $openh_root"
+ 
+ mkdir -p "$bench_root"
+ 
+ for category in \
+   json-smartcrusher \
+   test-failure-log \
+   service-log \
+   search-results \
+   unified-diff \
+   html-status-report \
+   rust-source \
+   plain-text
+ do
+   reset_category "$category"
+ done
+ 
+-echo "Writing JSON tool-catalog cases"
+-for i in $(seq 1 "$case_count"); do
+-  start=$(( (i - 1) * 50 ))
+-  write_case "json-smartcrusher" "$i" "github-tools-$i" \
+-    jq ".result.result.tools[$start:$((start + 50))]" "$openh_root/tests/fixtures/composio_github.json"
+-done
++echo "Writing mixed JSON cases"
++write_case "json-smartcrusher" 1 "github-tools-array" \
++  jq '.result.result.tools[0:60]' "$openh_root/tests/fixtures/composio_github.json"
++write_case "json-smartcrusher" 2 "notion-tools-array" \
++  jq '.result.result.tools[0:60]' "$openh_root/tests/fixtures/composio_notion.json"
++write_case "json-smartcrusher" 3 "slack-tools-array" \
++  jq '.result.result.tools[0:60]' "$openh_root/tests/fixtures/composio_slack.json"
++write_case "json-smartcrusher" 4 "polymarket-markets-list" \
++  jq '.' "$openh_root/tests/fixtures/polymarket/markets_list.json"
++write_case "json-smartcrusher" 5 "polymarket-events-list" \
++  jq '.' "$openh_root/tests/fixtures/polymarket/events_list.json"
++write_case "json-smartcrusher" 6 "tauri-capabilities-schema" \
++  jq '.' "$openh_root/app/src-tauri/gen/schemas/capabilities.json"
++write_case "json-smartcrusher" 7 "app-schema-object" \
++  jq '.' "$openh_root/app/schema.json"
++write_case "json-smartcrusher" 8 "lottie-animation" \
++  jq '.' "$openh_root/app/public/lottie/safe.json"
++write_case "json-smartcrusher" 9 "package-manifest" \
++  jq '.' "$openh_root/app/package.json"
++write_case "json-smartcrusher" 10 "cargo-metadata" \
++  bash -c 'cd "$1" && cargo metadata --format-version 1 --no-deps' _ "$openh_root"
+ 
+ echo "Writing Vitest command-log cases"
+ vitest_logs=()
+ while IFS= read -r path; do
+   vitest_logs+=("$path")
+ done < <(find "$openh_root/target/debug-logs" -type f -name '*.log' -print 2>/dev/null | sort)
+ if [[ "${#vitest_logs[@]}" -eq 0 ]]; then
+   echo "no OpenHuman debug logs found under $openh_root/target/debug-logs" >&2
+   exit 1
+ fi
+ for i in $(seq 1 "$case_count"); do
+   source="${vitest_logs[$(( (i - 1) % ${#vitest_logs[@]} ))]}"
+   if [[ "$i" -le "${#vitest_logs[@]}" ]]; then
+     write_case "test-failure-log" "$i" "vitest-$(basename "$source" .log)" \
+       sanitize_openhuman_paths <"$source"
+   else
+     write_case "test-failure-log" "$i" "vitest-excerpt-$i" \
+       bash -c '{ sed -n "1,80p" "$1"; tail -n 80 "$1"; } | sed "s#$2#<OPENHUMAN_ROOT>#g"' _ "$source" "$openh_root"
+   fi
+ done
+ 
+ echo "Writing runtime/service log cases"
+ service_source="$openh_root/crahs.log"
+ service_first_written=0
+ if command -v docker >/dev/null 2>&1; then
+   container="$(docker ps --format '{{.Names}}' 2>/dev/null | rg -i 'openhuman' | head -n 1 || true)"
+   if [[ -n "${container:-}" ]]; then
+     write_case "service-log" 1 "docker-openhuman-live" \
+       docker logs --tail 5000 "$container"
+     service_first_written=1
+   fi
+ fi
+ if [[ ! -s "$service_source" ]]; then
+   echo "missing service source log: $service_source" >&2
+   exit 1
+ fi
+ total_lines="$(wc -l <"$service_source" | tr -d ' ')"
+ chunk_size=$(( (total_lines + case_count - 1) / case_count ))
+ for i in $(seq 1 "$case_count"); do
+   if [[ "$i" -eq 1 && "$service_first_written" -eq 1 ]]; then
+     continue
+   fi
+   start=$(( (i - 1) * chunk_size + 1 ))
+   end=$(( i * chunk_size ))
+   write_case "service-log" "$i" "openhuman-crash-slice-$i" \
+     bash -c 'sed -n "${2},${3}p" "$1"' _ "$service_source" "$start" "$end"
+ done
+ 
+ echo "Writing ripgrep result cases"
+ queries=(
+   "tokenjuice"
+   "compression"
+   "retrieve"
+   "OpenHuman"
+   "agent"
+   "memory"
+   "workflow"
+   "tinyplace"
+   "provider"
+   "subconscious"
+ )
+ for i in $(seq 1 "$case_count"); do
+   query="${queries[$(( (i - 1) % ${#queries[@]} ))]}"
+   slug="$(printf '%s' "$query" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-')"
+   write_case "search-results" "$i" "rg-$slug" \
+     bash -c 'rg -n -i "$2" "$1" --glob "!node_modules/**" --glob "!target/**" --glob "!app/dist/**" --glob "!app/dist-web/**" | sed "s#$1#<OPENHUMAN_ROOT>#g" | sed -n "1,500p"' _ "$openh_root" "$query"
+ done
+ 
+ echo "Writing unified diff cases"
+ write_case "unified-diff" 1 "tinyjuice-worktree" \
+   bash -c 'cd "$1" && git diff --no-ext-diff --unified=80 -- README.md docs/benchmarking.md examples/compression_benchmark.rs scripts/benchmark/update-real-samples.sh' _ "$repo_root"
+ for i in $(seq 2 "$case_count"); do
+   commit="$(git -C "$openh_root" rev-list --max-count=1 --skip=$((i - 2)) HEAD)"
+   write_case "unified-diff" "$i" "openhuman-commit-$i" \
+     bash -c 'git -C "$1" show --format= --no-ext-diff --unified=80 "$2" | sed "s#$1#<OPENHUMAN_ROOT>#g"' _ "$openh_root" "$commit"
+ done
+ 
+ echo "Writing HTML/RSS/page cases"
+ html_index=1
+ fetch_page() {

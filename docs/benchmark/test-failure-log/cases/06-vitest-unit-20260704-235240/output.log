@@ -1,0 +1,8 @@
+exit 101
+RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+ Test Files  8 passed (8)
+      Tests  69 passed (69)
+   Start at  23:52:41
+   Duration  5.07s (transform 1.45s, setup 763ms, import 1.64s, tests 600ms, environment 1.53s)
+
+[PARTIAL view — full original (971 bytes): call tinyjuice_retrieve with token "2dae148f0f15a4aa336dc8e45977a35f"]

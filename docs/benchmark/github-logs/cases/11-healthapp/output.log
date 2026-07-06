@@ -1,0 +1,14 @@
+[... 721 line(s) omitted ... ⟦tj:42e36b625eca85939ad149bd3b0b4613⟧]
+20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003  [×2]
+[... 7 line(s) omitted ... ⟦tj:fff37f786c794df288b851900a7b935c⟧]
+20171223-22:19:58:411|HiH_HiHealthBinder|30002312|insertHiHealthData() bulkSaveDetailHiHealthData fail errorCode = 4,errorMessage = ERR_DATA_INSERT 
+20171223-22:19:58:411|HiH_HiHealthBinder|30002312|insertHiHealthData() end totalTime = 45
+20171223-22:19:58:411|Step_LSC|30002312|uploadStaticsToDB() onResult  type = 4 obj=true
+20171223-22:19:58:411|Step_LSC|30002312|uploadStaticsToDB failed message=true
+20171223-22:19:58:413|HiH_HiSyncControl|30002312|checkInsertStatus stepSum or calorieSum is enough
+20171223-22:19:58:413|HiH_HiAppUtil|30002312|getBinderPackageName packageName = com.huawei.health
+[... 1265 line(s) omitted ... ⟦tj:77b1e5c2249a75a828cdd7dae21a371f⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (187456 bytes): call tinyjuice_retrieve with token "95ec36322f5db1e6faaab764c568b670"]

@@ -1,0 +1,1472 @@
+diff --git a/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md b/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md
+new file mode 100644
+index 000000000..73fd65eb3
+--- /dev/null
++++ b/docs/tinyagents-full-migration-plan/C4-journal-progress-parity-plan.md
+@@ -0,0 +1,193 @@
++# C4 — Journal-backed progress projection & `progress_tracing` deletion
++
++Status: execution plan (2026-07-04), written after a ground-truth code map of
++both the OpenHuman progress surface and the vendored crate observability
++primitives. This is the actionable plan for the C4 workstream's July 2026
++continuation notes, and it is the gated prerequisite for **doc 03 (V3) Step
++5** — deleting the `ProviderDelta` bridge and `progress_tracing`.
++
++## 1. Corrected architecture (what the map found)
++
++- **There is no crate `SpanCollector`.** The only span state machine is
++  OpenHuman's `SpanCollector` in `src/openhuman/agent/progress_tracing.rs`
++  (1272 lines). The crate does **not** build spans — it journals raw
++  `AgentObservation`s and lets exporters project.
++- **The journal/status/persistence stack already exists and is attached to
++  every run.** `run_turn_via_tinyagents_shared`
++  (`src/openhuman/tinyagents/mod.rs:420`) mints a run id, seeds the `EventSink`
++  with it, and `attach_turn_journal` (`src/openhuman/tinyagents/journal.rs:304`)
++  installs `StoreEventJournal` (over `JsonlAppendStore`) via a
++  `JournalSink → RedactingSink → FanOutSink`, plus a durable `FileStatusStore`.
++  Every run already durably records the crate `AgentEvent` stream as
++  `AgentObservation`s.
++- **Two producers of `AgentProgress`:**
++  - Crate path: `OpenhumanEventBridge` (`src/openhuman/tinyagents/observability.rs:464`)
++    maps `AgentEvent` → `AgentProgress` live (stateful: iteration cursor,
++    subagent `scope`, `tool_names` recovery, display labels, failure class).
++  - Legacy path: `session/tool_progress.rs` `TurnProgress` +
++    `spawn_delta_forwarder` maps engine callbacks + `ProviderDelta` →
++    `AgentProgress` (the **Step-5 deletion target**, 253 lines).
++- **`SpanCollector` consumes `AgentProgress`** (the bridge *output*), while the
++  journal captures the `AgentEvent` *input*. The web progress bridge
++  (`channels/providers/web/progress_bridge.rs:157`) is a side-observer of the
++  `AgentProgress` channel: `collector.record(&event, now)` per event, then
++  `collector.finish()` + `export_run_trace(config, spans)` at loop exit.
++- **Langfuse is exported twice, in two data models.**
++  `progress_tracing/langfuse.rs` (825 lines) hand-rolls a `TraceSpan`→Langfuse
++  ingestion batch; the crate `observability/langfuse/` already builds the same
++  batch from `&[AgentObservation]` (`LangfuseClient::send_observations`,
++  `build_ingestion_batch`). Same proxy path, same `207` handling.
++
++## 2a. BLOCKER found during S1 (2026-07-04): the mapping is not journal-replayable
++
++The S1 attempt to extract a pure `event_to_progress` revealed that the live
++`OpenhumanEventBridge` mapping **depends on live side-channels absent from the
++journal**, so "parity by construction via journal replay" (§2 below) does
++**not** hold as written:
++
++- **`ToolCompleted`** (`observability.rs:745`): the crate event
++  `ToolCompleted { call_id, tool_name, started_at_ms, input, output }` carries
++  **no outcome**. `success` / `elapsed_ms` / `output_chars` / failure class are
++  read from `self.failure_map`, a `call_id → (ok, failure, elapsed, chars)` map
++  populated by `ToolOutcomeCaptureMiddleware` — not journalled.
++- **`record_usage`** (`observability.rs:298`): drains `usage_carry` (the model
++  adapter's provider `UsageInfo` FIFO) to restore **charged USD**, cache-creation
++  and context-window tokens the crate `Usage` drops. Not journalled.
++
++A journal-only projection therefore yields structurally-correct spans with
++**degraded attributes** (assumed-success tools, zero durations/sizes, `$0`
++cost) — which cannot pass the S3/S5 parity gate.
++
++### Corrected prerequisite — S0: make the journal self-sufficient (crate work)
++
++Before any journal projection can hit parity, the enriching data must live in
++the journalled `AgentEvent`s, not in OpenHuman side-channels:
++
++1. **Enrich `AgentEvent::ToolCompleted`** in the crate with the outcome:
++   `success: bool`, `duration_ms`, `output_bytes` (and an optional structured
++   failure), populated in `tools.rs::finish_tool_call` from the `ToolResult`
++   and the `started_at_ms` it already tracks. OpenHuman's bridge then reads them
++   from the event; `failure_map`/`ToolOutcomeCaptureMiddleware` shrink to the
++   product-specific `ToolFailureClass` mapping (or that too moves onto the
++   event). This is a V-series crate PR (additive event fields).
++2. **Usage accounting**: decide whether charged-USD/provider-cost belongs on a
++   crate event (e.g. a `provider_cost`/`cache_creation` extension on
++   `UsageRecorded`/`Usage`) or stays a documented, accepted OpenHuman-only trace
++   attribute filled at export time from the status/cost store rather than the
++   live side-channel. (The cost roll-up is already persisted per-run; the trace
++   can read it from there instead of `usage_carry`.)
++3. Only after S0 does §2's "reuse the mapping" become true by construction.
++
++**Sequencing impact:** S0 (crate event enrichment) is now the first slice and
++gates S1→S2. It is separate crate work that should be PR'd upstream like V1/V2.
++The remaining S1–S6 below stand, rebased on S0.
++
++## 2. The parity-preserving approach (valid only after S0)
++
++Reproduce the span tree **by construction**, not by re-deriving it:
++
++> Replay journal `AgentObservation`s → `AgentProgress` using the *same* mapping
++> the live bridge uses → fold through the *existing* `SpanCollector`.
++
++Concretely:
++
++1. **Extract the bridge mapping into a pure, reusable function**
++   `event_to_progress(event: &AgentEvent, state: &mut BridgeState, scope) -> Vec<AgentProgress>`
++   (state = iteration cursor + `tool_names` + scope). The live
++   `OpenhumanEventBridge::on_event` becomes a thin driver over it (refactor, **no
++   behavior change** — guarded by the existing bridge tests). This makes the
++   AgentEvent→AgentProgress mapping a single source of truth.
++2. **Journal projection**
++   `spans_from_observations(ctx: TraceContext, obs: &[AgentObservation]) -> Vec<TraceSpan>`:
++   fold each observation through `event_to_progress` into `AgentProgress`, feed a
++   fresh `SpanCollector::record(...)` stamped with `obs.ts_ms`, then `finish()`.
++   Because it reuses `SpanCollector`, span-shape parity is guaranteed for every
++   `AgentProgress` variant the journal can produce.
++3. **Parity harness** (`progress_tracing`'s `tests.rs` is the oracle): drive a
++   representative synthetic run and assert
++   `spans_from_observations(journal)` == `SpanCollector` fed the live
++   `AgentProgress`. Cover: multi-iteration turn, tool calls (success + failed +
++   unknown-tool recovery), model-call generation spans w/ usage & reasoning &
++   cache-creation, nested sub-agents, cost roll-up.
++
++### Parity gaps to resolve (AgentProgress with no journal `AgentEvent` source)
++
++`SpanCollector` ignores streaming/content deltas for spans
++(`progress_tracing.rs:1076`), so `TextDelta`/`ThinkingDelta`/`ToolCallArgsDelta`
++**do not affect span parity** — safe to drop on replay. The variants that *do*
++carry span data but have no direct `AgentEvent`:
++
++| AgentProgress | Span effect | Journal source | Resolution |
++| --- | --- | --- | --- |
++| `TurnContent{prompt, reply}` | root span `input`/`output` (gated on `capture_content`) | `ModelCompleted.input/output` present in journal but shaped differently | project root i/o from `ModelStarted`/`ModelCompleted` payloads, or emit a journalled content event |
++| `TaskBoardUpdated` | none (no span) | n/a | ignore for spans |
++| `SubagentAwaitingUser` | subagent span attr | partial (`SubAgentStarted/Completed` only) | accept minor attr gap or add a crate event (V6) |
++| `TurnCostUpdated` | root usage roll-up | `UsageRecorded`/`CostRecorded` in journal | project from those (already in bridge) |
++
++Document any accepted gap in the parity test as an explicit, reviewed
++exception.
++
++## 3. Langfuse swap (separable, lower-risk slice)
++
++Replace `progress_tracing/langfuse.rs::push_spans` with the crate
++`LangfuseClient::proxy(...).send_observations(trace_cfg, &obs)` reading the run's
++journal. Parity test: assert the crate batch matches the existing batch shape
++for a fixture run (trace-create + per-observation generation/span/event,
++`usageDetails`/`costDetails`, `207` handling, content gating from
++`agent_tracing.capture_content`). This deletes ~825 lines independently of the
++span-projection slice.
++
++## 4. Sequenced slices (each: code + tests + green build; deletions gated)
++
++0. **S0 — enrich crate `AgentEvent::ToolCompleted`** with `duration_ms` /
++   `output_bytes` / `error` so the journal is self-sufficient for tool outcomes
++   (§2a). **DONE** — tinyagents#18 (branch `feat/tool-completed-outcome`,
++   933 tests green). Also enriches the crate Langfuse tool span. Merge + gitlink
++   bump precede S1. (Usage/charged-USD accounting — §2a item 2 — is still open:
++   fill it at export time from the persisted per-run cost store rather than the
++   `usage_carry` side-channel.)
++1. **S1 — extract `event_to_progress`** (pure mapping) + make the live bridge a
++   driver over it. No behavior change; existing bridge/`observability` tests are
++   the gate. *No deletion.*
++2. **S2 — `spans_from_observations`** journal projection + parity harness vs
++   `SpanCollector`. **IN PROGRESS** — additive projection module now covers the
++   single-agent spine, S0 tool outcomes, root `TurnContent` from captured model
++   I/O, and sub-agent lifecycle/scoped child tool/model spans. Remaining known
++   gap: per-call charged USD/cache-creation is still zero until export-time cost
++   store reconciliation lands.
++3. **S3 — flip the web progress bridge** to build spans from the journal at run
++   end (`spans_from_observations`) instead of the live `AgentProgress`
++   side-observer; keep the old path behind a shadow-compare for one release
++   (log divergences), matching the C1 `session_shadow_reads` pattern. **STARTED**
++   — the web bridge now keeps live export as-is and logs a structural
++   journal-projection shadow comparison keyed by the durable journal run id.
++4. **S4 — Langfuse swap** to the crate exporter (§3); delete
++   `progress_tracing/langfuse.rs` (~825 + tests).
++5. **S5 — delete `progress_tracing.rs` + `SpanCollector`** once S3 shadow shows
++   no divergence for one release **and** V3 projection parity holds (the doc 07
++   gate). Tick the deletion ledger (~2k incl. tests).
++6. **S6 (= V3 Step 5)** — with `AgentProgress` now a journal projection, delete
++   the legacy `ProviderDelta` bridge in `session/tool_progress.rs` (253) and the
++   `spawn_delta_forwarder`, since the crate event path is the only producer.
++
++## 5. Gates (doc 07)
++
++- `progress_tracing` delete: **C4 shadow parity (S3) for one release AND V3
++  projection parity.** Langfuse (S4) may land earlier (independent shape parity).
++- Approval/security/redaction boundaries unchanged: the journal path already
++  runs through `RedactingSink` (`journal.rs:327`); the projection must not
++  re-introduce raw prompt/PII into spans beyond what `capture_content` already
++  gates.
++
++## 6. Key file references
++
++Producer/bridge: `tinyagents/observability.rs:464` (`OpenhumanEventBridge`),
++`tinyagents/journal.rs:304` (`attach_turn_journal`), `tinyagents/mod.rs:420`
++(`run_turn_via_tinyagents_shared`). Span machine:
++`agent/progress_tracing.rs` (`SpanCollector:307`, `record:686`, `finish:1087`,
++`export_run_trace:1254`), driven at
++`channels/providers/web/progress_bridge.rs:157`. Crate foundation:
++`harness/observability/{mod,types}.rs` (`HarnessEventJournal:156`,
++`StoreEventJournal`, `JournalSink:581`, `AgentObservation:40`),
++`harness/observability/langfuse/`. Parity oracle:
++`agent/progress_tracing/tests.rs` (1169 lines).
+diff --git a/src/openhuman/agent/progress_tracing.rs b/src/openhuman/agent/progress_tracing.rs
+index 9efa86db2..779ae9239 100644
+--- a/src/openhuman/agent/progress_tracing.rs
++++ b/src/openhuman/agent/progress_tracing.rs
+@@ -1,145 +1,150 @@
+ //! Structured tracing export off the agent [`progress`](super::progress)
+ //! channel (issue #3886).
+ //!
+[... 56 context line(s) omitted ... ⟦tj:38c2a4c26442b8725b2bfbbc69afc163⟧]
+ use crate::openhuman::config::schema::{AgentTracingBackend, AgentTracingConfig};
+ use crate::openhuman::config::Config;
+ 
++/// Journal-backed projection from durable tinyagents observations.
++pub(crate) mod journal_projection;
+ /// Langfuse ingestion exporter (remote push to the co-hosted staging server).
+ pub(crate) mod langfuse;
+ 
++#[cfg(test)]
++mod journal_projection_tests;
++
+ /// Kind of run a trace belongs to, rendered as stable snake_case strings for
+ /// Langfuse trace tags (`run:<type>`) and metadata (`run_type`) so runs can be
+ /// filtered in the UI.
+[... 74 context line(s) omitted ... ⟦tj:47fb0d0733b8b2fefb4fbb9a9f4a34bf⟧]
+     /// Kind of run — exported as Langfuse trace tags (`run:<type>`) and the
+     /// `run_type` metadata key. Defaults to interactive chat.
+     pub run_type: RunType,
+diff --git a/src/openhuman/agent/progress_tracing/journal_projection.rs b/src/openhuman/agent/progress_tracing/journal_projection.rs
+new file mode 100644
+index 000000000..f15acb881
+--- /dev/null
++++ b/src/openhuman/agent/progress_tracing/journal_projection.rs
+@@ -0,0 +1,336 @@
++//! Journal-backed span projection (C4 slice S2).
++//!
++//! Reconstructs a run's [`AgentProgress`] stream from the durable
++//! [`AgentObservation`] journal (the crate `AgentEvent` record) and folds it
++//! through the existing [`SpanCollector`], so trace spans no longer require the
++//! *live* in-run `AgentProgress` side-observer
++//! (`channels/providers/web/progress_bridge.rs`). A UI/supervisor can attach
++//! after a run, read the journal, and rebuild identical spans.
++//!
++//! This is deliberately built on `SpanCollector` (not a re-derivation) so span
++//! *shape* parity holds by construction for every `AgentProgress` the journal
++//! can produce. The one-way mapping here mirrors `OpenhumanEventBridge`
++//! (`tinyagents/observability.rs`) but is **pure** — it depends only on the
++//! journalled event, made possible by the crate carrying tool outcome
++//! (`duration_ms`/`output_bytes`/`error`) on `ToolCompleted` (tinyagents#18).
++//!
++//! Known parity gaps (see `docs/.../C4-journal-progress-parity-plan.md` §2a):
++//! - `ModelCallCompleted.cost_usd` and `cache_creation_tokens` are not on the
++//!   crate event; filled as `0` here and to be sourced from the persisted
++//!   per-run cost store at export time.
++//! - Sub-agent prompt/output content is not on the crate lifecycle events, so
++//!   subagent spans carry lifecycle/timing and child tool/model structure but
++//!   empty delegated prompt/final output until a richer journal event exists.
++
++use tinyagents::harness::events::AgentEvent;
++use tinyagents::harness::observability::AgentObservation;
++
++use super::{SpanCollector, TraceContext, TraceSpan};
++use crate::openhuman::agent::progress::AgentProgress;
++use crate::openhuman::tool_status::classify;
++
++/// Mutable state threaded across a single run's observations while replaying.
++#[derive(Default)]
++struct ReplayState {
++    /// 1-based iteration index, bumped once per `ModelStarted` — the same
++    /// attribution the live `IterationCursor` provides.
++    iteration: u32,
++    /// Max iterations configured for the turn (carried onto iteration spans).
++    max_iterations: u32,
++    /// `call_id → model name`, learned from `ModelStarted` so the matching
++    /// `ModelCompleted` can name its generation span (the crate `ModelCompleted`
++    /// event carries no model name).
++    models: std::collections::HashMap<String, String>,
++    /// Stack of currently-open sub-agent runs. The crate lifecycle event only
++    /// carries name/depth; ordered replay brackets child model/tool events.
++    subagents: Vec<ReplaySubagent>,
++    /// Monotonic suffix to make repeated invocations of the same child name
++    /// distinct in the span tree.
++    next_subagent_seq: u64,
++}
++
++#[derive(Clone)]
++struct ReplaySubagent {
++    agent_id: String,
++    task_id: String,
++    depth: usize,
++    iteration: u32,
++    started_ts_ms: u64,
++}
++
++impl ReplayState {
++    fn active_subagent(&self) -> Option<&ReplaySubagent> {
++        self.subagents.last()
++    }
++
++    fn active_subagent_mut(&mut self) -> Option<&mut ReplaySubagent> {
++        self.subagents.last_mut()
++    }
++}
++
++/// Maps one journalled observation to zero or more [`AgentProgress`] events,
++/// updating `state`. Non-span-bearing events (deltas, budget/cache/steering
++/// diagnostics) map to nothing — `SpanCollector` ignores them anyway.
++fn observation_to_progress(obs: &AgentObservation, state: &mut ReplayState) -> Vec<AgentProgress> {
++    let event = &obs.event;
++    match event {
++        AgentEvent::RunStarted { .. } => {
++            if state.active_subagent().is_some() {
++                Vec::new()
++            } else {
++                vec![AgentProgress::TurnStarted]
++            }
++        }
++
++        AgentEvent::ModelStarted { call_id, model } => {
++            let iteration = match state.active_subagent_mut() {
++                Some(scope) => {
++                    scope.iteration += 1;
++                    scope.iteration
++                }
++                None => {
++                    state.iteration += 1;
++                    state.iteration
++                }
++            };
++            state
++                .models
++                .insert(call_id.as_str().to_string(), model.clone());
++            match state.active_subagent() {
++                Some(scope) => vec![AgentProgress::SubagentIterationStarted {
++                    agent_id: scope.agent_id.clone(),
++                    task_id: scope.task_id.clone(),
++                    iteration,
++                    max_iterations: state.max_iterations,
++                    extended_policy: false,
++                }],
++                None => vec![AgentProgress::IterationStarted {
++                    iteration,
++                    max_iterations: state.max_iterations,
++                }],
++            }
++        }
++
++        AgentEvent::ToolStarted { call_id, tool_name } => match state.active_subagent() {
++            Some(scope) => vec![AgentProgress::SubagentToolCallStarted {
++                agent_id: scope.agent_id.clone(),
++                task_id: scope.task_id.clone(),
++                call_id: call_id.as_str().to_string(),
++                tool_name: tool_name.clone(),
++                arguments: serde_json::Value::Null,
++                iteration: scope.iteration,
++                display_label: None,
++                display_detail: None,
++            }],
++            None => vec![AgentProgress::ToolCallStarted {
++                call_id: call_id.as_str().to_string(),
++                tool_name: tool_name.clone(),
++                // The journal does not carry the model's raw argument JSON in
++                // payload-free mode; the tool span still renders from name + id.
++                arguments: serde_json::Value::Null,
++                iteration: state.iteration,
++                display_label: None,
++                display_detail: None,
++            }],
++        },
++
++        AgentEvent::ToolCompleted {
++            call_id,
++            tool_name,
++            input,
++            output,
++            duration_ms,
++            output_bytes,
++            error,
++            ..
++        } => {
++            // Outcome now rides the event (tinyagents#18): success, duration and
++            // size are self-describing, and the same `classify` the live path
++            // uses reproduces the identical `ClassifiedFailure` from the
++            // journalled error string. `output` is present only when the run
++            // captured payloads (full-content journals).
++            let failure = error.as_ref().map(|text| classify(text, false));
++            let output_text = match output {
++                Some(serde_json::Value::String(text)) => text.clone(),
++                Some(value) => value.to_string(),
++                None => String::new(),
++            };
++            match state.active_subagent() {
++                Some(scope) => vec![AgentProgress::SubagentToolCallCompleted {
++                    agent_id: scope.agent_id.clone(),
++                    task_id: scope.task_id.clone(),
++                    call_id: call_id.as_str().to_string(),
++                    tool_name: tool_name.clone(),
++                    success: error.is_none(),
++                    output_chars: output_bytes.unwrap_or(0) as usize,
++                    output: output_text,
++                    arguments: input.clone(),
++                    elapsed_ms: duration_ms.unwrap_or(0),
++                    iteration: scope.iteration,
++                    failure,
++                }],
++                None => vec![AgentProgress::ToolCallCompleted {
++                    call_id: call_id.as_str().to_string(),
++                    tool_name: tool_name.clone(),
++                    success: error.is_none(),
++                    output_chars: output_bytes.unwrap_or(0) as usize,
++                    output: output_text,
++                    arguments: input.clone(),
++                    elapsed_ms: duration_ms.unwrap_or(0),
++                    iteration: state.iteration,
++                    failure,
++                }],
++            }
++        }
++
++        AgentEvent::ModelCompleted {
++            call_id,
++            usage,
++            input,
++            output,
++            ..
++        } => {
++            let model = state
++                .models
++                .get(call_id.as_str())
++                .cloned()
++                .unwrap_or_default();
++            let usage = usage.unwrap_or_default();
++            let scope = state.active_subagent().cloned();
++            let iteration = scope
++                .as_ref()
++                .map(|s| s.iteration)
++                .unwrap_or(state.iteration);
++            let mut progress = vec![AgentProgress::ModelCallCompleted {
++                model,
++                // Provider qualification/cost are filled at export time from the
++                // persisted cost store, not the journal (§2a).
++                provider_id: String::new(),
++                subagent_task_id: scope.as_ref().map(|s| s.task_id.clone()),
++                input: input.clone(),
++                output: output.clone(),
++                iteration,
++                input_tokens: usage.input_tokens,
++                output_tokens: usage.output_tokens,
++                cached_input_tokens: usage.cache_read_tokens,
++                cache_creation_tokens: 0,
++                reasoning_tokens: usage.reasoning_tokens,
++                cost_usd: 0.0,
++            }];
++            if scope.is_none() {
++                let turn_input = input.as_ref().map(json_content_text);
++                let turn_output = output.as_ref().map(json_content_text);
++                if turn_input.is_some() || turn_output.is_some() {
++                    progress.push(AgentProgress::TurnContent {
++                        input: turn_input,
++                        output: turn_output,
++                    });
++                }
++            }
++            progress
++        }
++
++        AgentEvent::SubAgentStarted { name, depth } => {
++            state.next_subagent_seq += 1;
++            let task_id = format!("{name}-d{depth}-{}", state.next_subagent_seq);
++            state.subagents.push(ReplaySubagent {
++                agent_id: name.clone(),
++                task_id: task_id.clone(),
++                depth: *depth,
++                iteration: 0,
++                started_ts_ms: obs.ts_ms,
++            });
++            vec![AgentProgress::SubagentSpawned {
++                agent_id: name.clone(),
++                task_id,
++                mode: "typed".to_string(),
++                dedicated_thread: false,
++                prompt_chars: 0,
++                worker_thread_id: None,
++                display_name: Some(name.clone()),
++                prompt: String::new(),
++            }]
++        }
++
++        AgentEvent::SubAgentCompleted { name, depth } => {
++            let pos = state
++                .subagents
++                .iter()
++                .rposition(|scope| scope.agent_id == *name && scope.depth == *depth);
++            let Some(scope) = pos.map(|index| state.subagents.remove(index)) else {
++                return Vec::new();
++            };
++            vec![AgentProgress::SubagentCompleted {
++                agent_id: scope.agent_id,
++                task_id: scope.task_id,
++                elapsed_ms: obs.ts_ms.saturating_sub(scope.started_ts_ms),
++                iterations: scope.iteration,
++                output_chars: 0,
++                output: String::new(),
++                worktree_path: None,
++                changed_files: Vec::new(),
++                dirty_status: None,
++            }]
++        }
++
++        AgentEvent::RunCompleted { .. } => {
++            if state.active_subagent().is_some() {
++                Vec::new()
++            } else {
++                vec![AgentProgress::TurnCompleted {
++                    iterations: state.iteration,
++                }]
++            }
++        }
++
++        AgentEvent::RunFailed { error, .. } => {
++            let Some(scope) = state.subagents.pop() else {
++                return Vec::new();
++            };
++            vec![AgentProgress::SubagentFailed {
++                agent_id: scope.agent_id,
++                task_id: scope.task_id,
++                error: error.clone(),
++            }]
++        }
++
++        _ => Vec::new(),
++    }
++}
++
++fn json_content_text(value: &serde_json::Value) -> String {
++    match value {
++        serde_json::Value::String(text) => text.clone(),
++        serde_json::Value::Object(map) => map
++            .get("content")
++            .and_then(serde_json::Value::as_str)
++            .map(str::to_string)
++            .unwrap_or_else(|| value.to_string()),
++        _ => value.to_string(),
++    }
++}
++
++/// Projects a run's journalled `observations` into trace spans by replaying
++/// them into [`AgentProgress`] and folding through a fresh [`SpanCollector`],
++/// stamped with each observation's journal timestamp (`ts_ms`).
++pub(crate) fn spans_from_observations(
++    ctx: TraceContext,
++    max_iterations: u32,
++    observations: &[AgentObservation],
++) -> Vec<TraceSpan> {
++    let capture_content = ctx.capture_content;
++    let mut collector = SpanCollector::new(ctx).with_content_capture(capture_content);
++    let mut state = ReplayState {
++        max_iterations,
++        ..ReplayState::default()
++    };
++    let mut last_ts = 0;
++    for obs in observations {
++        last_ts = obs.ts_ms;
++        for progress in observation_to_progress(obs, &mut state) {
++            collector.record(&progress, obs.ts_ms);
++        }
++    }
++    collector.finish(last_ts);
++    collector.spans().to_vec()
++}
+diff --git a/src/openhuman/agent/progress_tracing/journal_projection_tests.rs b/src/openhuman/agent/progress_tracing/journal_projection_tests.rs
+new file mode 100644
+index 000000000..0c30ed24d
+--- /dev/null
++++ b/src/openhuman/agent/progress_tracing/journal_projection_tests.rs
+@@ -0,0 +1,334 @@
++use super::journal_projection::spans_from_observations;
++use super::{SpanKind, SpanStatus, TraceContext};
++use tinyagents::harness::events::AgentEvent;
++use tinyagents::harness::ids::{CallId, EventId, RunId};
++use tinyagents::harness::observability::AgentObservation;
++use tinyagents::harness::usage::Usage;
++
++/// Wraps an event as a journalled observation stamped at `ts`.
++fn obs(offset: u64, ts: u64, event: AgentEvent) -> AgentObservation {
++    AgentObservation {
++        event_id: EventId::new(format!("run-1-evt-{offset}")),
++        run_id: RunId::new("run-1"),
++        parent_run_id: None,
++        root_run_id: RunId::new("run-1"),
++        offset,
++        ts_ms: ts,
++        event,
++    }
++}
++
++fn tool_completed(call: &str, name: &str, error: Option<&str>) -> AgentEvent {
++    AgentEvent::ToolCompleted {
++        call_id: CallId::new(call),
++        tool_name: name.to_string(),
++        started_at_ms: Some(1_020),
++        input: None,
++        output: None,
++        duration_ms: Some(30),
++        output_bytes: Some(12),
++        error: error.map(str::to_string),
++    }
++}
++
++fn single_turn(tool_error: Option<&str>) -> Vec<AgentObservation> {
++    vec![
++        obs(
++            0,
++            1_000,
++            AgentEvent::RunStarted {
++                run_id: RunId::new("run-1"),
++                thread_id: None,
++            },
++        ),
++        obs(
++            1,
++            1_010,
++            AgentEvent::ModelStarted {
++                call_id: CallId::new("c1"),
++                model: "gpt-4".to_string(),
++            },
++        ),
++        obs(
++            2,
++            1_020,
++            AgentEvent::ToolStarted {
++                call_id: CallId::new("t1"),
++                tool_name: "lookup".to_string(),
++            },
++        ),
++        obs(3, 1_050, tool_completed("t1", "lookup", tool_error)),
++        obs(
++            4,
++            1_060,
++            AgentEvent::ModelCompleted {
++                call_id: CallId::new("c1"),
++                started_at_ms: Some(1_010),
++                usage: Some(Usage::new(100, 20)),
++                input: None,
++                output: None,
++            },
++        ),
++        obs(
++            5,
++            1_070,
++            AgentEvent::RunCompleted {
++                run_id: RunId::new("run-1"),
++            },
++        ),
++    ]
++}
++
++fn subagent_turn() -> Vec<AgentObservation> {
++    vec![
++        obs(
++            0,
++            1_000,
++            AgentEvent::RunStarted {
++                run_id: RunId::new("run-1"),
++                thread_id: None,
++            },
++        ),
++        obs(
++            1,
++            1_010,
++            AgentEvent::SubAgentStarted {
++                name: "researcher".to_string(),
++                depth: 1,
++            },
++        ),
++        obs(
++            2,
++            1_020,
++            AgentEvent::ModelStarted {
++                call_id: CallId::new("scout-model"),
++                model: "gpt-4".to_string(),
++            },
++        ),
++        obs(
++            3,
++            1_030,
++            AgentEvent::ToolStarted {
++                call_id: CallId::new("scout-tool"),
++                tool_name: "read_file".to_string(),
++            },
++        ),
++        obs(4, 1_060, tool_completed("scout-tool", "read_file", None)),
++        obs(
++            5,
++            1_070,
++            AgentEvent::ModelCompleted {
++                call_id: CallId::new("scout-model"),
++                started_at_ms: Some(1_020),
++                usage: Some(Usage::new(11, 7)),
++                input: None,
++                output: None,
++            },
++        ),
++        obs(
++            6,
++            1_090,
++            AgentEvent::SubAgentCompleted {
++                name: "researcher".to_string(),
++                depth: 1,
++            },
++        ),
++        obs(
++            7,
++            1_100,
++            AgentEvent::RunCompleted {
++                run_id: RunId::new("run-1"),
++            },
++        ),
++    ]
++}
++
++fn ctx() -> TraceContext {
++    TraceContext::new("session-1", Some("user-1".into()))
++}
++
++#[test]
++fn projects_single_agent_turn_span_tree() {
++    let spans = spans_from_observations(ctx(), 10, &single_turn(None));
++
++    // Turn + iteration + tool + generation spans are all present.
++    let by_kind = |k: SpanKind| spans.iter().filter(|s| s.kind == k).count();
++    assert_eq!(by_kind(SpanKind::Turn), 1, "one turn span");
++    assert_eq!(by_kind(SpanKind::Iteration), 1, "one iteration span");
++    assert_eq!(by_kind(SpanKind::Tool), 1, "one tool span");
++    assert_eq!(by_kind(SpanKind::Generation), 1, "one generation span");
++
++    let tool = spans.iter().find(|s| s.kind == SpanKind::Tool).unwrap();
++    assert_eq!(tool.name, "tool.lookup");
++    assert_eq!(tool.attributes["tool.success"], serde_json::json!(true));
++    assert_eq!(tool.attributes["tool.output_chars"], serde_json::json!(12));
++    assert_eq!(tool.attributes["tool.elapsed_ms"], serde_json::json!(30));
++
++    let generation = spans
++        .iter()
++        .find(|s| s.kind == SpanKind::Generation)
++        .unwrap();
++    assert!(
++        generation.name.contains("gpt-4"),
++        "gen span names the model"
++    );
++}
++
++#[test]
++fn failed_tool_projects_error_outcome() {
++    // With content capture on, a failed tool span carries the classified
++    // cause reconstructed from the journalled error string, reproducing the
++    // live path's `classify(error, false)` exactly.
++    let spans = spans_from_observations(
++        ctx().with_capture_content(true),
++        10,
++        &single_turn(Some("permission denied opening /etc/x")),
++    );
++    let tool = spans.iter().find(|s| s.kind == SpanKind::Tool).unwrap();
++    assert_eq!(tool.attributes["tool.success"], serde_json::json!(false));
++    assert!(
++        tool.attributes.contains_key("error.message"),
++        "failed tool span carries a classified error message"
++    );
++}
++
++#[test]
++fn projects_subagent_scope_from_lifecycle_brackets() {
++    let spans = spans_from_observations(ctx(), 10, &subagent_turn());
++
++    let by_kind = |k: SpanKind| spans.iter().filter(|s| s.kind == k).count();
++    assert_eq!(by_kind(SpanKind::Subagent), 1, "one subagent span");
++    assert_eq!(
++        by_kind(SpanKind::SubagentIteration),
++        1,
++        "one child iteration span"
++    );
++    assert_eq!(by_kind(SpanKind::Tool), 1, "one child tool span");
++    assert_eq!(by_kind(SpanKind::Generation), 1, "one child generation");
++
++    let subagent = spans.iter().find(|s| s.kind == SpanKind::Subagent).unwrap();
++    assert_eq!(
++        subagent.attributes["subagent.agent_id"],
++        serde_json::json!("researcher")
++    );
++    assert_eq!(
++        subagent.attributes["subagent.iterations"],
++        serde_json::json!(1)
++    );
++
++    let child_iteration = spans
++        .iter()
++        .find(|s| s.kind == SpanKind::SubagentIteration)
++        .unwrap();
++    assert_eq!(
++        child_iteration.parent_span_id.as_deref(),
++        Some(subagent.span_id.as_str())
++    );
++}
++
++#[test]
++fn projects_failed_subagent_from_child_run_failed() {
++    let observations = vec![
++        obs(
++            0,
++            1_000,
++            AgentEvent::RunStarted {
++                run_id: RunId::new("run-1"),
++                thread_id: None,
++            },
++        ),
++        obs(
++            1,
++            1_010,
++            AgentEvent::SubAgentStarted {
++                name: "researcher".to_string(),
++                depth: 1,
++            },
++        ),
++        obs(
++            2,
++            1_020,
++            AgentEvent::RunFailed {
++                run_id: RunId::new("run-1"),
++                error: "provider unavailable".to_string(),
++            },
++        ),
++        obs(
++            3,
++            1_030,
++            AgentEvent::RunCompleted {
++                run_id: RunId::new("run-1"),
++            },
++        ),
++    ];
++
++    let spans = spans_from_observations(ctx(), 10, &observations);
++    let subagent = spans.iter().find(|s| s.kind == SpanKind::Subagent).unwrap();
++
++    assert_eq!(subagent.status, SpanStatus::Error);
++    assert_eq!(subagent.attributes["error"], serde_json::json!(true));
++    assert!(
++        subagent.attributes.get("error.length").is_some(),
++        "failed subagent span carries redacted error metadata"
++    );
++}
++
++#[test]
++fn projects_turn_content_from_root_model_io() {
++    let observations = vec![
++        obs(
++            0,
++            1_000,
++            AgentEvent::RunStarted {
++                run_id: RunId::new("run-1"),
++                thread_id: None,
++            },
++        ),
++        obs(
++            1,
++            1_010,
++            AgentEvent::ModelStarted {
++                call_id: CallId::new("m1"),
++                model: "gpt-4".to_string(),
++            },
++        ),
++        obs(
++            2,
++            1_020,
++            AgentEvent::ModelCompleted {
++                call_id: CallId::new("m1"),
++                started_at_ms: Some(1_010),
++                usage: Some(Usage::new(5, 3)),
++                input: Some(serde_json::json!([
++                    {"role": "user", "content": "summarize this"}
++                ])),
++                output: Some(serde_json::json!({
++                    "role": "assistant",
++                    "content": "short summary"
++                })),
++            },
++        ),
++        obs(
++            3,
++            1_030,
++            AgentEvent::RunCompleted {
++                run_id: RunId::new("run-1"),
++            },
++        ),
++    ];
++    let spans = spans_from_observations(ctx().with_capture_content(true), 10, &observations);
++    let turn = spans.iter().find(|s| s.kind == SpanKind::Turn).unwrap();
++
++    assert!(
++        turn.input
++            .as_ref()
++            .unwrap()
++            .to_string()
++            .contains("summarize this"),
++        "root model input is attached through TurnContent"
++    );
++    assert_eq!(
++        turn.output.as_ref().unwrap(),
++        &serde_json::json!("short summary")
++    );
++}
+diff --git a/src/openhuman/agent/turn_origin.rs b/src/openhuman/agent/turn_origin.rs
+index 01a4ef1b2..49955a63e 100644
+--- a/src/openhuman/agent/turn_origin.rs
++++ b/src/openhuman/agent/turn_origin.rs
+@@ -1,185 +1,190 @@
+ //! Agent turn origin — the trust/routing label attached to every agent
+ //! `run_turn` invocation. Read by [`crate::openhuman::approval::ApprovalGate`]
+ //! and [`crate::openhuman::agent_tool_policy::ToolPolicyEngine`] to make
+[... 23 context line(s) omitted ... ⟦tj:6ae5283dbdfd75daac518ddd01efb76e⟧]
+     WebChat {
+         thread_id: String,
+         client_id: String,
++        /// Per-turn request id, when the caller has one. Used by internal
++        /// observers to correlate a live progress bridge with the durable
++        /// tinyagents journal stream for the same turn.
++        request_id: Option<String>,
+     },
+     /// Inbound message from a non-web channel (Telegram / Discord / Slack /
+     /// Yuanbao / etc.). External-effect tools must persist a
+[... 128 context line(s) omitted ... ⟦tj:3bbb01bb91cd1f3fc27224a76e1cca8e⟧]
+             AgentTurnOrigin::WebChat {
+                 thread_id: "outer".into(),
+                 client_id: "c-outer".into(),
++                request_id: Some("req-outer".into()),
+             },
+             async {
+                 with_origin(
+[... 16 context line(s) omitted ... ⟦tj:0b9d26aebd6a7f61e0044bcf421b3463⟧]
+         }
+     }
+ }
+diff --git a/src/openhuman/approval/gate.rs b/src/openhuman/approval/gate.rs
+index f6a6bd1d5..14f438b3a 100644
+--- a/src/openhuman/approval/gate.rs
++++ b/src/openhuman/approval/gate.rs
+@@ -835,160 +835,161 @@ impl ApprovalGate {
+     fn take_waiter(&self, request_id: &str) -> Option<oneshot::Sender<ApprovalDecision>> {
+         let mut waiters = self.waiters.lock();
+         waiters.remove(request_id)
+[... 74 context line(s) omitted ... ⟦tj:02f8779099ab512d1e1af9e4bce78b1f⟧]
+         AgentTurnOrigin::WebChat {
+             thread_id: "t-test".into(),
+             client_id: "c-test".into(),
++            request_id: Some("req-test".into()),
+         }
+     }
+ 
+[... 74 context line(s) omitted ... ⟦tj:53ca6fdee619c7cc60b0846532db4cd7⟧]
+             if let Some(r) = gate.pending_for_meeting("meet-1") {
+                 break r;
+             }
+@@ -1171,160 +1172,161 @@ mod tests {
+     async fn decide_unknown_id_is_noop() {
+         let (gate, _dir) = test_gate();
+         let decided = gate
+[... 74 context line(s) omitted ... ⟦tj:d462e143f8335b1c08e7fab11f44699b⟧]
+         let origin = AgentTurnOrigin::WebChat {
+             thread_id: "thread-42".into(),
+             client_id: "client-1".into(),
++            request_id: Some("req-42".into()),
+         };
+         let handle = tokio::spawn(async move {
+             turn_origin::with_origin(
+[... 74 context line(s) omitted ... ⟦tj:e143c3bdde372d7237122138124b7af6⟧]
+         assert_eq!(
+             gate.effective_ttl(),
+             Duration::from_secs(2),
+diff --git a/src/openhuman/channels/providers/web/ops.rs b/src/openhuman/channels/providers/web/ops.rs
+index eae023d9e..2203c39e9 100644
+--- a/src/openhuman/channels/providers/web/ops.rs
++++ b/src/openhuman/channels/providers/web/ops.rs
+@@ -473,160 +473,161 @@ pub async fn start_chat(
+             existing.run_queue.push(queued_msg).await;
+             let status = existing.run_queue.status().await;
+             log::info!(
+[... 74 context line(s) omitted ... ⟦tj:4cc4f0857712d9c2a1592227672d6170⟧]
+         let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
+             thread_id: thread_id_task.clone(),
+             client_id: client_id_task.clone(),
++            request_id: Some(request_id_task.clone()),
+         };
+         // `None` => the turn was cancelled cooperatively before producing a
+         // result; the interrupting/cancelling side already emitted the
+[... 74 context line(s) omitted ... ⟦tj:fa35982eb2bda6b747ec4f5a4d0343fc⟧]
+                 let classified_type_string = classified_type.to_string();
+                 if crate::openhuman::agent::error::is_max_iterations_error(&detailed) {
+                     log::info!(
+@@ -703,160 +704,161 @@ pub async fn start_chat(
+ 
+     {
+         let mut in_flight = IN_FLIGHT.lock().await;
+[... 74 context line(s) omitted ... ⟦tj:da216a6690e66b67fe06305b6cc71ac1⟧]
+         let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
+             thread_id: thread_id_task.clone(),
+             client_id: client_id_task.clone(),
++            request_id: Some(request_id_task.clone()),
+         };
+         let result = tokio::select! {
+             biased;
+[... 74 context line(s) omitted ... ⟦tj:7179bdd587533df8a7eb09ab86153f97⟧]
+             thread_id: thread_id.to_string(),
+             handle,
+             cancel_token,
+diff --git a/src/openhuman/channels/providers/web/progress_bridge.rs b/src/openhuman/channels/providers/web/progress_bridge.rs
+index 5587116a9..8a49c1b31 100644
+--- a/src/openhuman/channels/providers/web/progress_bridge.rs
++++ b/src/openhuman/channels/providers/web/progress_bridge.rs
+@@ -52,257 +52,351 @@ fn cap_wire_output(output: String) -> String {
+     }
+     let mut end = MAX_WIRE_SUBAGENT_OUTPUT.saturating_sub(TRUNCATION_MARKER_BUDGET);
+     while end > 0 && !output.is_char_boundary(end) {
+[... 74 context line(s) omitted ... ⟦tj:ccb0530bcd04c05c6388faa1b1d54e61⟧]
+         .or(state.user_id)
+ }
+ 
++fn span_projection_signature(
++    spans: &[crate::openhuman::agent::progress_tracing::TraceSpan],
++) -> Vec<String> {
++    spans
++        .iter()
++        .map(|span| {
++            let attr_keys = span
++                .attributes
++                .keys()
++                .map(String::as_str)
++                .collect::<Vec<_>>()
++                .join(",");
++            format!(
++                "{:?}|{}|{:?}|attrs:[{}]",
++                span.kind, span.name, span.status, attr_keys
++            )
++        })
++        .collect()
++}
++
++async fn shadow_compare_journal_projection(
++    request_id: &str,
++    trace_ctx: crate::openhuman::agent::progress_tracing::TraceContext,
++    max_iterations: u32,
++    live_spans: &[crate::openhuman::agent::progress_tracing::TraceSpan],
++) {
++    let Some(journal_run_id) =
++        crate::openhuman::tinyagents::journal::take_request_journal_run(request_id)
++    else {
++        log::debug!(
++            "[agent-tracing][journal-shadow] no journal run registered request_id={}",
++            request_id
++        );
++        return;
++    };
++
++    let observations = match crate::openhuman::tinyagents::journal::read_run_events(
++        &journal_run_id,
++        0,
++    )
++    .await
++    {
++        Ok(observations) => observations,
++        Err(err) => {
++            log::warn!(
++                    "[agent-tracing][journal-shadow] read failed request_id={} journal_run_id={} err={err}",
++                    request_id,
++                    journal_run_id
++                );
++            return;
++        }
++    };
++    if observations.is_empty() {
++        log::warn!(
++            "[agent-tracing][journal-shadow] journal empty request_id={} journal_run_id={}",
++            request_id,
++            journal_run_id
++        );
++        return;
++    }
++
++    let projected =
++        crate::openhuman::agent::progress_tracing::journal_projection::spans_from_observations(
++            trace_ctx,
++            max_iterations,
++            &observations,
++        );
++    let live_sig = span_projection_signature(live_spans);
++    let projected_sig = span_projection_signature(&projected);
++    if live_sig == projected_sig {
++        log::debug!(
++            "[agent-tracing][journal-shadow] parity ok request_id={} journal_run_id={} spans={} observations={}",
++            request_id,
++            journal_run_id,
++            live_spans.len(),
++            observations.len()
++        );
++    } else {
++        log::warn!(
++            "[agent-tracing][journal-shadow] parity divergence request_id={} journal_run_id={} live_spans={} journal_spans={} observations={} live_sig={:?} journal_sig={:?}",
++            request_id,
++            journal_run_id,
++            live_spans.len(),
++            projected.len(),
++            observations.len(),
++            live_sig,
++            projected_sig
++        );
++    }
++}
++
+ /// Spawn a background task that reads [`AgentProgress`] events from the
+ /// agent turn loop and translates them into [`WebChannelEvent`]s tagged
+ /// with the correct client/thread/request IDs. The task runs until the
+[... 24 context line(s) omitted ... ⟦tj:9ca9a700b42ea43a261e37bfcaae6550⟧]
+             metadata.session_id,
+         );
+         let mut round: u32 = 0;
++        let mut parent_max_iterations: u32 = 0;
+         let mut events_seen: u64 = 0;
+         let mut parent_completed = false;
+         let mut parent_tool_count: u64 = 0;
+[... 5 context line(s) omitted ... ⟦tj:c08132019a17224457c709664bfda278⟧]
+         // progress stream into OTel/Langfuse-style spans correlated by session
+         // id (falling back to the thread id for headless/autonomous runs).
+         // `None` (disabled) is zero-cost.
++        let mut journal_trace_ctx = None;
+         let mut span_collector = if config.observability.share_usage_data
+             || config.observability.agent_tracing.enabled
+         {
+[... 50 context line(s) omitted ... ⟦tj:3ae868b2a5c0fc7c3ab3e141b908c0d1⟧]
+             if let Some(agent_id) = metadata.agent_id.clone() {
+                 trace_ctx = trace_ctx.with_agent_id(agent_id);
+             }
++            journal_trace_ctx = Some(trace_ctx.clone());
+             Some(SpanCollector::new(trace_ctx))
+         } else {
+             None
+[... 74 context line(s) omitted ... ⟦tj:96461a48c84df846d6eb854727f16dc8⟧]
+                         iteration,
+                         tool_name,
+                         call_id,
+@@ -334,160 +428,161 @@ pub(crate) fn spawn_progress_bridge(
+                     log::debug!(
+                         "[web_channel][bridge] tool_result round={} tool={} call_id={} success={} request_id={}",
+                         iteration,
+[... 74 context line(s) omitted ... ⟦tj:5f002899539f267e696c7d2dea40c7e5⟧]
+                     max_iterations,
+                 } => {
+                     round = iteration;
++                    parent_max_iterations = max_iterations;
+                     publish_web_channel_event(WebChannelEvent {
+                         event: "iteration_start".to_string(),
+                         client_id: client_id.clone(),
+[... 74 context line(s) omitted ... ⟦tj:687e363966d18599153a6f60f4d630e5⟧]
+                                 "elapsedMs": elapsed_ms,
+                                 "iteration": iteration,
+                                 "failure": failure_json,
+@@ -1143,162 +1238,171 @@ pub(crate) fn spawn_progress_bridge(
+                     total_usd,
+                 } => {
+                     ledger_upsert_telemetry(
+[... 74 context line(s) omitted ... ⟦tj:de3394e66fe5444508f1acf277a02d50⟧]
+         // never affects the turn outcome.
+         if let Some(mut collector) = span_collector.take() {
+             collector.finish(unix_epoch_ms());
+-            crate::openhuman::agent::progress_tracing::export_run_trace(&config, collector.spans())
++            let live_spans = collector.spans().to_vec();
++            if let Some(trace_ctx) = journal_trace_ctx.take() {
++                shadow_compare_journal_projection(
++                    &request_id,
++                    trace_ctx,
++                    parent_max_iterations,
++                    &live_spans,
++                )
+                 .await;
++            }
++            crate::openhuman::agent::progress_tracing::export_run_trace(&config, &live_spans).await;
+         }
+ 
+         log::debug!(
+[... 74 context line(s) omitted ... ⟦tj:5c2d0ec70446d1372cceb4804623c994⟧]
+         // Truncation landed on a char boundary (no replacement char / panic).
+         assert!(capped.starts_with('é'));
+         // The final payload (content + marker) must honor the wire cap.
+diff --git a/src/openhuman/memory_store/chunks/store_tests.rs b/src/openhuman/memory_store/chunks/store_tests.rs
+index 984d4b40c..c8effd914 100644
+--- a/src/openhuman/memory_store/chunks/store_tests.rs
++++ b/src/openhuman/memory_store/chunks/store_tests.rs
+@@ -1,94 +1,94 @@
+ //! Unit tests for [`super`] — chunk upsert / list / lifecycle / embedding /
+ //! content-pointer accessors against a tempdir-backed SQLite store.
+ //!
+[... 7 context line(s) omitted ... ⟦tj:015c214753da899730c1b3a64793d64d⟧]
+ //! that don't need it.
+ 
+ use super::*;
+-use crate::openhuman::memory_store::chunks::types::chunk_id;
++use crate::openhuman::memory_store::chunks::types::{chunk_id, Metadata, SourceRef};
+ use chrono::TimeZone;
+ use rusqlite::params;
+ use tempfile::TempDir;
+[... 74 context line(s) omitted ... ⟦tj:724565e4a8658b2ce79224ae7720861b⟧]
+         ..Default::default()
+     };
+     let rows = list_chunks(&cfg, &q).unwrap();
+diff --git a/src/openhuman/plan_review/tool.rs b/src/openhuman/plan_review/tool.rs
+index beec1ab99..ca954cb68 100644
+--- a/src/openhuman/plan_review/tool.rs
++++ b/src/openhuman/plan_review/tool.rs
+@@ -106,93 +106,94 @@ impl Tool for RequestPlanReviewTool {
+                     .map(|s| s.trim().to_string())
+                     .filter(|s| !s.is_empty())
+                     .collect()
+[... 74 context line(s) omitted ... ⟦tj:89ec4df22795eda001efbbeeaaec9497⟧]
+             AgentTurnOrigin::WebChat {
+                 thread_id: "t-int".into(),
+                 client_id: "c-int".into(),
++                request_id: Some("req-int".into()),
+             },
+             tool.execute(json!({ "summary": "plan", "steps": ["one"] })),
+         );
+[... 7 context line(s) omitted ... ⟦tj:189737d5228c9cb446c3023a39075c19⟧]
+         );
+     }
+ }
+diff --git a/src/openhuman/tinyagents/journal.rs b/src/openhuman/tinyagents/journal.rs
+index aa057676f..f81983221 100644
+--- a/src/openhuman/tinyagents/journal.rs
++++ b/src/openhuman/tinyagents/journal.rs
+@@ -1,163 +1,197 @@
+ //! Durable event journals + status stores for tinyagents turns (issue #4249,
+ //! Workstream 05-events, 05.1).
+ //!
+[... 41 context line(s) omitted ... ⟦tj:b57367cb6f7708cd8246ca24b405ecc7⟧]
+ //!
+ //! [`EventSink::with_stream_id`]: tinyagents::harness::events::EventSink::with_stream_id
+ 
++use std::collections::HashMap;
+ use std::path::PathBuf;
+ use std::sync::{Arc, Mutex};
+ 
+ use async_trait::async_trait;
++use once_cell::sync::Lazy;
+ 
+ use tinyagents::error::Result as TaResult;
+ use tinyagents::harness::events::{EventSink, HarnessRunStatus};
+[... 11 context line(s) omitted ... ⟦tj:cb5d496dd28d751fbe104177ddc4acd8⟧]
+ /// it round-trips the crate [`FileStore`] name sanitizer.
+ const STATUS_NS: &str = "run_status";
+ 
++/// Best-effort live request → durable tinyagents journal stream map. The web
++/// progress bridge uses this at turn end to shadow-project spans from the
++/// journal and compare them against the live `SpanCollector` path during C4 S3.
++static REQUEST_JOURNAL_RUNS: Lazy<Mutex<HashMap<String, String>>> =
++    Lazy::new(|| Mutex::new(HashMap::new()));
++
+ /// Mints a fresh, slash-free, process-unique run id (`run.<32-hex>`), used three
+ /// ways for one turn: the [`EventSink::with_stream_id`] prefix (so persisted
+ /// `event_id`s are the restart-stable `{run_id}-evt-{offset}`), the journal
+[... 9 context line(s) omitted ... ⟦tj:7796b93c494a020b31f543d3bee5cfd2⟧]
+     RunId::new(format!("run.{}", uuid::Uuid::new_v4().simple()))
+ }
+ 
++pub(crate) fn register_request_journal_run(request_id: &str, run_id: &str) {
++    match REQUEST_JOURNAL_RUNS.lock() {
++        Ok(mut runs) => {
++            runs.insert(request_id.to_string(), run_id.to_string());
++            log::debug!(
++                "[journal] registered request journal request_id={} run_id={}",
++                request_id,
++                run_id
++            );
++        }
++        Err(err) => {
++            log::debug!(
++                "[journal] request journal registry poisoned request_id={} err={err}",
++                request_id
++            );
++        }
++    }
++}
++
++pub(crate) fn take_request_journal_run(request_id: &str) -> Option<String> {
++    REQUEST_JOURNAL_RUNS
++        .lock()
++        .ok()
++        .and_then(|mut runs| runs.remove(request_id))
++}
++
+ /// Resolve the internal workspace directory (`{workspace}`) whose
+ /// `tinyagents_store/` subtree holds the journal + kv stores. Async because the
+ /// config load is async; errors are surfaced so callers can log-and-skip.
+[... 74 context line(s) omitted ... ⟦tj:c270f2343479cb1b69a99daac5917bad⟧]
+                     Ok(status) => out.push(status),
+                     Err(err) => {
+                         log::debug!("[journal] skipping undecodable run status key={key} err={err}")
+diff --git a/src/openhuman/tinyagents/mod.rs b/src/openhuman/tinyagents/mod.rs
+index 785201571..41f2fdb27 100644
+--- a/src/openhuman/tinyagents/mod.rs
++++ b/src/openhuman/tinyagents/mod.rs
+@@ -620,160 +620,169 @@ pub(crate) async fn run_turn_via_tinyagents_shared(
+     }
+ 
+     let streaming = on_progress.is_some();
+[... 74 context line(s) omitted ... ⟦tj:87ce12d04b39aa659b929fe9971daa26⟧]
+         }
+         None => None,
+     };
++    if subagent_scope.is_none() {
++        if let Some(crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
++            request_id: Some(request_id),
++            ..
++        }) = crate::openhuman::agent::turn_origin::current()
++        {
++            journal::register_request_journal_run(&request_id, journal_run_id.as_str());
++        }
++    }
+ 
+     if let Some(events) = &events {
+         ctx = ctx.with_events(events.clone());
+[... 74 context line(s) omitted ... ⟦tj:5e2c0603e4cecf3407b37539e4b5b6ad⟧]
+         }
+     })
+     .await;
+diff --git a/src/openhuman/tinyagents/observability.rs b/src/openhuman/tinyagents/observability.rs
+index 861218d32..39766b9d4 100644
+--- a/src/openhuman/tinyagents/observability.rs
++++ b/src/openhuman/tinyagents/observability.rs
+@@ -839,165 +839,165 @@ impl EventListener for OpenhumanEventBridge {
+                         self.send(AgentProgress::ToolCallCompleted {
+                             call_id: call_id.as_str().to_string(),
+                             tool_name: requested_name.clone(),
+[... 74 context line(s) omitted ... ⟦tj:8206e38cd0638015cfa9ab89f11ed4cf⟧]
+                 tool_name,
+                 input,
+                 output,
+-                // tinyagents 1.7 added started_at_ms/duration_ms/output_bytes/error
+-                // to this event. The bridge keeps sourcing success/duration/size
+-                // from its own capture side channel (failure_map/tool_started_at)
+-                // below, so the new crate-provided fields are intentionally ignored
+-                // here to preserve existing behavior. TODO: adopt them directly.
++                // `started_at_ms`/`duration_ms`/`output_bytes`/`error` now ride
++                // the crate event (tinyagents 1.7 / tinyagents#18). The bridge
++                // still reads its richer side channels below to preserve current
++                // success/duration/size behavior; adopting crate fields directly
++                // is C4 slice S1.
+                 ..
+             } => {
+                 let iteration = self.iteration();
+[... 74 context line(s) omitted ... ⟦tj:08cc473e8213f2fdcfd183128ee9995b⟧]
+             // cost-footer DTO wiring is a follow-up (workstream 06).
+             AgentEvent::CacheHit { call_id, key } => {
+                 {
+diff --git a/src/openhuman/tinyagents/tools.rs b/src/openhuman/tinyagents/tools.rs
+index 0538b315e..f023f5ca5 100644
+--- a/src/openhuman/tinyagents/tools.rs
++++ b/src/openhuman/tinyagents/tools.rs
+@@ -1,241 +1,240 @@
+ //! `tinyagents` [`Tool`] adapter over an openhuman [`Tool`] (issue #4249).
+ //!
+ //! Wraps `Arc<dyn openhuman::tools::Tool>` so the harness agent-loop can invoke
+[... 8 context line(s) omitted ... ⟦tj:bdfdbf8a8168e112e5cfa5b91fb23510⟧]
+ use tinyagents::harness::steering::{SteeringCommand, SteeringHandle};
+ use tinyagents::harness::tool::{
+     SandboxMode, Tool, ToolAccess, ToolCall as TaToolCall, ToolExecutionContext, ToolPolicy,
+-    ToolResult as TaToolResult, ToolRuntime, ToolSchema, ToolSideEffects, WorkspaceAccess,
++    ToolResult as TaToolResult, ToolRuntime, ToolSchema, ToolSideEffects,
++    ToolTimeout as TaToolTimeout, WorkspaceAccess,
+ };
+ 
+ /// A captured early-exit: a sub-agent invoked an early-exit tool (e.g.
+[... 134 context line(s) omitted ... ⟦tj:e9c7d3531ef050541bdb3a28fe066e10⟧]
+         })
+         .with_runtime(ToolRuntime {
+             timeout_ms,
+-            // tinyagents 1.7 added a structured `timeout: ToolTimeout` field
+-            // alongside the numeric `timeout_ms`. Inherit the run/global policy
+-            // to preserve prior behavior (the numeric `timeout_ms` above stays
+-            // the only per-tool deadline signal). Fully-qualified because the
+-            // local `ToolTimeout` import here is openhuman's, not the harness's.
+-            timeout: tinyagents::harness::tool::ToolTimeout::Inherit,
++            // tinyagents 1.7 added a structured timeout field alongside the
++            // numeric timeout_ms. Inherit the run/global policy and keep the
++            // numeric timeout_ms above as the only per-tool deadline signal.
++            timeout: TaToolTimeout::Inherit,
+             max_retries: None,
+             idempotent: tool.is_concurrency_safe(&serde_json::Value::Null),
+             cancelable: true,
+[... 74 context line(s) omitted ... ⟦tj:520b1bf0892bd56ab7380301cc90055f⟧]
+     let exec = tool.execute_with_context(call.arguments.clone(), options, context);
+     let outcome = match deadline {
+         Some(d) => match tokio::time::timeout(d, exec).await {
+diff --git a/tests/tool_registry_approval_raw_coverage_e2e.rs b/tests/tool_registry_approval_raw_coverage_e2e.rs
+index 93d6c8029..42d0bc60e 100644
+--- a/tests/tool_registry_approval_raw_coverage_e2e.rs
++++ b/tests/tool_registry_approval_raw_coverage_e2e.rs
+@@ -1108,160 +1108,161 @@ async fn approval_schema_handlers_validate_params_and_surface_empty_gate_state()
+     negative_limit.insert("limit".to_string(), json!(-1));
+     assert!(recent_handler(negative_limit)
+         .await
+[... 74 context line(s) omitted ... ⟦tj:e74c16662637ea6422d2d8d6ce0a6f79⟧]
+             AgentTurnOrigin::WebChat {
+                 thread_id: "approval-raw-thread".to_string(),
+                 client_id: "approval-raw-client".to_string(),
++                request_id: None,
+             },
+             APPROVAL_CHAT_CONTEXT.scope(
+                 ApprovalChatContext {
+[... 74 context line(s) omitted ... ⟦tj:fa416237e0bfb3bb208cef378a265fe9⟧]
+         Some("tools.composio_execute")
+     );
+ 
+@@ -1296,276 +1297,279 @@ async fn approval_rpc_decision_paths_persist_always_allow_and_recent_audit() {
+         &harness.rpc_base,
+         24,
+         "openhuman.approval_list_recent_decisions",
+[... 74 context line(s) omitted ... ⟦tj:fbb542cebcfb6dc46e3da226c7d6df55⟧]
+         AgentTurnOrigin::WebChat {
+             thread_id: "approval-auto-thread".to_string(),
+             client_id: "approval-auto-client".to_string(),
++            request_id: None,
+         },
+         gate.intercept_audited(
+             "tools.composio_execute",
+[... 45 context line(s) omitted ... ⟦tj:d527ff7e97a9b020e0f585e58784e62d⟧]
+             AgentTurnOrigin::WebChat {
+                 thread_id: "approval-deny-thread".to_string(),
+                 client_id: "approval-deny-client".to_string(),
++                request_id: None,
+             },
+             APPROVAL_CHAT_CONTEXT.scope(
+                 ApprovalChatContext {
+[... 112 context line(s) omitted ... ⟦tj:685e8535f83527ecc8f73117c7c66714⟧]
+         AgentTurnOrigin::WebChat {
+             thread_id: "approval-persist-failure-thread".to_string(),
+             client_id: "approval-persist-failure-client".to_string(),
++            request_id: None,
+         },
+         APPROVAL_CHAT_CONTEXT.scope(
+             ApprovalChatContext {
+[... 21 context line(s) omitted ... ⟦tj:983825875dd52ddfaaea6550718cf8ca⟧]
+ 
+     harness.rpc_join.abort();
+ }
+diff --git a/tests/worker_b_raw_coverage_e2e.rs b/tests/worker_b_raw_coverage_e2e.rs
+index 014c8eadd..d399cae5e 100644
+--- a/tests/worker_b_raw_coverage_e2e.rs
++++ b/tests/worker_b_raw_coverage_e2e.rs
+@@ -515,160 +515,161 @@ async fn agent_profile_lifecycle_persists_custom_profile_and_validates_delete()
+                 "sortOrder": 42
+             }
+         }),
+[... 74 context line(s) omitted ... ⟦tj:e781886f83dd9caf7736f46593bf718e⟧]
+             AgentTurnOrigin::WebChat {
+                 thread_id: "worker-b-thread".to_string(),
+                 client_id: "worker-b-client".to_string(),
++                request_id: None,
+             },
+             APPROVAL_CHAT_CONTEXT.scope(
+                 ApprovalChatContext {
+[... 74 context line(s) omitted ... ⟦tj:9b946232693bfed5111a8c4acf7cc090⟧]
+         "thread mapping should be cleared after decision"
+     );
+ 
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (177347 bytes): call tinyjuice_retrieve with token "5b9f415c9b59a3244f71da31f3e780fc"]

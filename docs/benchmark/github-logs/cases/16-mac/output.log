@@ -1,0 +1,158 @@
+[... 81 line(s) omitted ... ⟦tj:1eb31fe7bfeda68857ac48737e2203a2⟧]
+Jul  1 10:10:24 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31328) deny(1) network-outbound /private/var/run/mDNSResponder
+Jul  1 10:10:27 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31328) deny(1) network-outbound /private/var/run/mDNSResponder
+Jul  1 10:13:39 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=Account identity not set}
+Jul  1 10:13:43 calvisitor-10-105-160-95 SpotlightNetHelper[352]: CFPasteboardRef CFPasteboardCreate(CFAllocatorRef, CFStringRef) : failed to create global data
+Jul  1 10:13:57 calvisitor-10-105-160-95 kernel[0]: Sandbox: com.apple.Addres(31346) deny(1) network-outbound /private/var/run/mDNSResponder
+Jul  1 10:38:53 calvisitor-10-105-160-95 sandboxd[129] ([31376]): com.apple.Addres(31376) deny network-outbound /private/var/run/mDNSResponder
+[... 3 line(s) omitted ... ⟦tj:dac81bf55aa63ad65a31370cff72b60f⟧]
+Jul  1 10:47:08 calvisitor-10-105-160-95 sandboxd[129] ([31382]): com.apple.Addres(31382) deny network-outbound /private/var/run/mDNSResponder
+Jul  1 11:20:51 calvisitor-10-105-160-95 sharingd[30299]: 11:20:51.293 : BTLE discovered device with hash <01faa200 00000000 0000>
+Jul  1 11:24:45 calvisitor-10-105-160-95 secd[276]:  securityd_xpc_dictionary_handler cloudd[326] copy_matching Error Domain=NSOSStatusErrorDomain Code=-50 "query missing class name" (paramErr: error in user parameter list) UserInfo={NSDescription=query missing class name}
+Jul  1 11:29:32 calvisitor-10-105-160-95 locationd[82]: Location icon should now be in state 'Inactive'
+Jul  1 11:38:18 calvisitor-10-105-160-95 kernel[0]: ARPT: 626126.086205: wl0: setup_keepalive: interval 900, retry_interval 30, retry_count 10
+[... 12 line(s) omitted ... ⟦tj:c72b03af9d48cb619f2a9f3091d87400⟧]
+Jul  1 11:44:25 authorMacBook-Pro kernel[0]: en0::IO80211Interface::postMessage bssid changed
+Jul  1 11:44:26 authorMacBook-Pro kernel[0]: IO80211AWDLPeerManager::setAwdlOperatingMode Setting the AWDL operation mode from SUSPENDED to AUTO
+Jul  1 11:46:16 calvisitor-10-105-160-95 symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
+Jul  1 11:46:16 authorMacBook-Pro kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
+Jul  1 11:46:19 authorMacBook-Pro sharingd[30299]: 11:46:19.229 : Finished generating hashes
+[... 4 line(s) omitted ... ⟦tj:aeea1019fd4f6b59810d77573f7786a7⟧]
+Jul  1 11:48:28 calvisitor-10-105-160-95 AddressBookSourceSync[31471]: Unrecognized attribute value: t:AbchPersonItemType
+Jul  1 11:48:43 calvisitor-10-105-160-95 kernel[0]: PM response took 1938 ms (54, powerd)
+Jul  1 11:49:29 calvisitor-10-105-160-95 QQ[10018]: tcp_connection_destination_perform_socket_connect 19110 connectx to 183.57.48.75:80@0 failed: [50] Network is down
+Jul  1 11:49:29 calvisitor-10-105-160-95 kernel[0]: AirPort: Link Down on en0. Reason 8 (Disassociated because station leaving).
+Jul  1 11:49:29 authorMacBook-Pro sharingd[30299]: 11:49:29.473 : BTLE scanner Powered On
+Jul  1 11:49:29 authorMacBook-Pro kernel[0]: USBMSC Identifier (non-unique): 000000000820 0x5ac 0x8406 0x820, 3
+Jul  1 11:49:29 authorMacBook-Pro symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
+Jul  1 11:49:30 authorMacBook-Pro corecaptured[31480]: CCXPCService::setStreamEventHandler Registered for notification callback.
+Jul  1 11:49:30 authorMacBook-Pro Dropbox[24019]: [0701/114930:WARNING:dns_config_service_posix.cc(306)] Failed to read DnsConfig.
+Jul  1 11:49:35 calvisitor-10-105-160-95 cdpd[11807]: Saw change in network reachability (isReachable=2)
+Jul  1 11:51:02 authorMacBook-Pro kernel[0]: [HID] [ATC] AppleDeviceManagementHIDEventService::processWakeReason Wake reason: Host (0x01)
+[... 12 line(s) omitted ... ⟦tj:e1ac24ae345c45db26187da7916dc651⟧]
+Jul  1 11:58:27 authorMacBook-Pro com.apple.cts[258]: com.apple.suggestions.harvest: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 15323 seconds.  Ignoring.
+Jul  1 12:12:04 calvisitor-10-105-160-95 kernel[0]: AppleCamIn::systemWakeCall - messageType = 0xE0000340
+Jul  1 12:12:21 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=Account identity not set}
+Jul  1 12:26:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 427826 seconds.  Ignoring.
+Jul  1 12:26:01 calvisitor-10-105-160-95 com.apple.cts[258]: com.apple.EscrowSecurityAlert.daily: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 2350 seconds.  Ignoring.
+[... 29 line(s) omitted ... ⟦tj:e1cfe401956c436bdd346966361f4428⟧]
+Jul  1 14:52:03 calvisitor-10-105-160-95 blued[85]: [BluetoothHIDDeviceController] EventServiceDisconnectedCallback
+Jul  1 15:05:42 calvisitor-10-105-160-95 kernel[0]: PMStats: Hibernate read took 197 ms
+Jul  1 15:05:47 calvisitor-10-105-160-95 secd[276]:  SOSAccountThisDeviceCanSyncWithCircle sync with device failure: Error Domain=com.apple.security.sos.error Code=1035 "Account identity not set" UserInfo={NSDescription=Account identity not set}
+Jul  1 15:05:51 calvisitor-10-105-160-95 com.apple.AddressBook.InternetAccountsBridge[31654]: dnssd_clientstub ConnectToServer: connect() failed path:/var/run/mDNSResponder Socket:4 Err:-1 Errno:1 Operation not permitted
+Jul  1 19:43:22 calvisitor-10-105-160-95 kernel[0]: pages 1471315, wire 491253, act 449877, inact 3, cleaned 0 spec 5, zf 23, throt 0, compr 345876, xpmapped 40000
+Jul  1 19:43:22 calvisitor-10-105-160-95 VDCAssistant[213]: VDCAssistant:  Found a camera (0x1430000005ac8290) , but was not able to start it up (0x0 -- (os/kern) successful)
+Jul  1 19:43:22 calvisitor-10-105-160-95 WindowServer[184]: handle_will_sleep_auth_and_shield_windows: Reordering authw 0x7fa823a04400(2004) (lock state: 3)
+Jul  1 19:43:32 calvisitor-10-105-163-202 symptomsd[215]: __73-[NetworkAnalyticsEngine observeValueForKeyPath:ofObject:change:context:]_block_invoke unexpected switch value 2
+Jul  1 19:43:36 calvisitor-10-105-163-202 QQ[10018]: button report: 0x8002bdf
+Jul  1 19:46:26 calvisitor-10-105-163-202 GoogleSoftwareUpdateAgent[31702]: 2017-07-01 19:46:26.133 GoogleSoftwareUpdateAgent[31702/0x7000002a0000] [lvl=2] -[KSAgentApp(KeystoneThread) runKeystonesInThreadWithArg:] Checking with local engine: <KSUpdateEngine:0x100259c60 ticketStore=<KSPersistentTicketStore:0x100253770 store=<KSKeyedPersistentStore:0x100254d10 path="/Users/xpc/Library/Google/GoogleSoftwareUpdate/TicketStore/Keystone.ticketstore" lockFile=<KSLockFile:0x100254d80 path="/Users/xpc/Library/Google/GoogleSoftwareUpdate/TicketStore/Keystone.ticketstore.lock" locked=NO > >> processor=<KSActionProcessor:0x100259e70 delegate=<KSUpdateEngine:0x100259c60> isProcessing=NO actionsCompleted=0 progress=0.00 errors=0 currentActionErrors=0 events=0 currentActionEvents=0 actionQueue=( ) > delegate=(null) serverInfoStore=<KSServerPrivateInfoStore:0x1002594d0 path="/Users/xpc/Library/Google/GoogleSoftwareUpdate/Servers"> errors=0 >
+Jul  1 19:46:42 calvisitor-10-105-163-202 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f9950712080>.  [×2 first Jul 1 19:46:42, last Jul 1 19:46:42]
+Jul  1 19:46:42 calvisitor-10-105-163-202 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f9951303310>.
+Jul  1 19:50:12 calvisitor-10-105-163-202 quicklookd[31687]: Error returned from iconservicesagent: (null)
+Jul  1 20:13:23 calvisitor-10-105-163-202 Safari[9852]: tcp_connection_tls_session_error_callback_imp 1977 __tcp_connection_tls_session_callback_write_block_invoke.434 error 22
+Jul  1 20:17:07 calvisitor-10-105-163-202 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f9951105bf0>.
+Jul  1 20:17:08 calvisitor-10-105-163-202 quicklookd[31687]: Error returned from iconservicesagent: (null)
+Jul  1 20:23:09 calvisitor-10-105-163-202 cloudd[326]:  SecOSStatusWith error:[-50] Error Domain=NSOSStatusErrorDomain Code=-50 "query missing class name" (paramErr: error in user parameter list) UserInfo={NSDescription=query missing class name}
+Jul  1 21:03:00 calvisitor-10-105-163-202 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.  [×2 first Jul 1 21:03:00, last Jul 1 21:17:32]
+Jul  1 21:10:19 calvisitor-10-105-163-202 Preview[11512]: WARNING: Type1 font data isn't in the correct format required by the Adobe Type 1 Font Format specification.
+Jul  1 21:17:32 calvisitor-10-105-163-202 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  1 21:18:10 calvisitor-10-105-163-202 quicklookd[31687]: Error returned from iconservicesagent: (null)  [×2 first Jul 1 21:18:10, last Jul 1 21:19:06]
+[... 1171 line(s) omitted ... ⟦tj:ffe85c422c725753dc126a8d15d663f2⟧]
+Jul  6 02:32:06 calvisitor-10-105-163-28 kernel[0]: WARNING: hibernate_page_list_setall skipped 19622 xpmapped pages
+Jul  6 02:32:06 calvisitor-10-105-163-28 kernel[0]: BuildActDeviceEntry enter
+Jul  6 02:32:06 authorMacBook-Pro QQ[10018]: tcp_connection_handle_connect_conditions_bad 23645 failed: 3 - No network route
+[... 4 line(s) omitted ... ⟦tj:7bcd7501442c50894c399d0591070d8e⟧]
+Jul  6 03:12:43 authorMacBook-Pro BezelServices 255.10[94]: ASSERTION FAILED: dvcAddrRef != ((void *)0) -[DriverServices getDeviceAddress:] line: 2789
+[... 7 line(s) omitted ... ⟦tj:581205a95c8c15188be53e19b9b3cde7⟧]
+Jul  6 03:53:18 authorMacBook-Pro QQ[10018]: tcp_connection_handle_connect_conditions_bad 23701 failed: 3 - No network route
+[... 13 line(s) omitted ... ⟦tj:086b5ac0be79a70ea8c8cadd951841bd⟧]
+Jul  6 08:32:47 authorMacBook-Pro WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  6 08:33:10 calvisitor-10-105-163-253 corecaptured[36565]: doSaveChannels@286: Will write to: /Library/Logs/CrashReporter/CoreCapture/IOReporters/[2017-07-06_08,33,08.335034] - AuthFail:sts:5_rsn:0.xml
+Jul  6 08:33:25 calvisitor-10-105-163-253 TCIM[30318]: [Accounts] Failed to update account with identifier 76FE6715-3D27-4F21-AA35-C88C1EA820E8, error: Error Domain=ABAddressBookErrorDomain Code=1002 "(null)"
+[... 14 line(s) omitted ... ⟦tj:e9114c30a696189032e5bfd33f4d8410⟧]
+Jul  6 10:13:16 calvisitor-10-105-163-253 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 15 line(s) omitted ... ⟦tj:6365fc0d688da4a4cd52fb567af5369f⟧]
+Jul  6 12:00:53 authorMacBook-Pro CalendarAgent[279]: [com.apple.calendar.store.log.caldav.queue] [Adding [<CalDAVAccountRefreshQueueableOperation: 0x7fa11d67f3b0; Sequence: 0>] to failed operations.]
+[... 16 line(s) omitted ... ⟦tj:7e8c8acb27245908308a3504cca3b801⟧]
+Jul  6 12:03:12 authorMacBook-Pro Dropbox[24019]: [0706/120312:WARNING:dns_config_service_posix.cc(306)] Failed to read DnsConfig.
+[... 18 line(s) omitted ... ⟦tj:984067223a1ac65ebe04c2d929b5585b⟧]
+Jul  6 13:39:08 calvisitor-10-105-162-178 Mail[11203]: tcp_connection_destination_perform_socket_connect 45238 connectx to 123.125.50.30:993@0 failed: [50] Network is down
+Jul  6 14:07:50 authorMacBook-Pro QQ[10018]: tcp_connection_handle_connect_conditions_bad 24150 failed: 3 - No network route
+[... 4 line(s) omitted ... ⟦tj:d80569d90f8bd636b27c94e30df77e72⟧]
+Jul  6 14:15:54 authorMacBook-Pro CalendarAgent[279]: [com.apple.calendar.store.log.caldav.queue] [Adding [<CalDAVAccountRefreshQueueableOperation: 0x7fa11d67f3b0; Sequence: 0>] to failed operations.]
+[... 9 line(s) omitted ... ⟦tj:5c9d277bd0b8a577296198c671ad9350⟧]
+Jul  6 14:43:22 calvisitor-10-105-162-178 com.apple.AddressBook.InternetAccountsBridge[37051]: dnssd_clientstub ConnectToServer: connect() failed path:/var/run/mDNSResponder Socket:4 Err:-1 Errno:1 Operation not permitted
+[... 27 line(s) omitted ... ⟦tj:d75c01735303660f80ec84e00d630c94⟧]
+Jul  6 16:29:42 authorMacBook-Pro symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
+[... 13 line(s) omitted ... ⟦tj:906844a1645ba855b6c3fd9ac15d01e2⟧]
+Jul  6 18:05:46 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  6 18:07:04 calvisitor-10-105-162-178 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f995050b170>.
+[... 45 line(s) omitted ... ⟦tj:a707ccc1b5485a8775e5a9cdbfb61804⟧]
+Jul  6 20:05:36 calvisitor-10-105-162-178 CalendarAgent[279]: [com.apple.calendar.store.log.caldav.queue] [Adding [<CalDAVAccountRefreshQueueableOperation: 0x7fa11d73f960; Sequence: 0>] to failed operations.]
+Jul  6 20:14:33 calvisitor-10-105-162-178 QQ[10018]: FA||Url||taskID[2019353677] dealloc
+Jul  6 20:30:35 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 5 line(s) omitted ... ⟦tj:4e61ad73c450329163fdb7696e66a9a4⟧]
+Jul  6 21:03:09 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  6 21:08:02 calvisitor-10-105-162-178 Preview[11512]: Page bounds {{0, 0}, {400, 400}}
+Jul  6 21:22:31 calvisitor-10-105-162-178 WeChat[24144]: Failed to connect (titleField) outlet from (MMSessionPickerChoosenRowView) to (NSTextField): missing setter or instance variable
+Jul  6 22:05:30 calvisitor-10-105-162-178 CalendarAgent[279]: [com.apple.calendar.store.log.caldav.queue] [Account xpc_ben@163.com@https://caldav.163.com/caldav/principals/users/xpc_ben%40163.com/ timed out when executing operation: <CalDAVAccountRefreshQueueableOperation: 0x7fa11f9f2290; Sequence: 0>]
+Jul  6 22:26:19 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  6 22:33:18 calvisitor-10-105-162-178 CalendarAgent[279]: [com.apple.calendar.store.log.caldav.queue] [Account refresh failed with error: Error Domain=CoreDAVHTTPStatusErrorDomain Code=502 "(null)" UserInfo={AccountName=163, CalDAVErrFromRefresh=YES, CoreDAVHTTPHeaders=<CFBasicHash 0x7fa11fe7a810 [0x7fff7abc1440]>{type = immutable dict, count = 5, entries => 0 : Connection = <CFString 0x7fff7ab1aea0 [0x7fff7abc1440]>{contents = "keep-alive"} 3 : Content-Type = text/html 4 : Content-Length = 166 5 : Server = nginx 6 : Date = <CFString 0x7fa11ac2ab80 [0x7fff7abc1440]>{contents = "Fri, 07 Jul 2017 05:32:43 GMT"} } }]
+Jul  6 22:37:40 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 3 line(s) omitted ... ⟦tj:c838b411c8086192374b860bd85f2479⟧]
+Jul  6 23:33:55 calvisitor-10-105-162-178 SpotlightNetHelper[352]: CFPasteboardRef CFPasteboardCreate(CFAllocatorRef, CFStringRef) : failed to create global data
+[... 5 line(s) omitted ... ⟦tj:8f23d8681c40faf05d74eeb0eaceeddb⟧]
+Jul  7 00:24:41 calvisitor-10-105-162-178 com.apple.WebKit.Networking[9854]: CFNetwork SSLHandshake failed (-9802)
+[... 3 line(s) omitted ... ⟦tj:49205a593e0347182a8c12b324f782fb⟧]
+Jul  7 00:43:06 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 3 line(s) omitted ... ⟦tj:fd9021a69e51d3fe237849467bb432e9⟧]
+Jul  7 00:52:58 authorMacBook-Pro symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
+[... 104 line(s) omitted ... ⟦tj:854d76d9261d655bdec8daaa7d68a8e0⟧]
+Jul  7 11:01:11 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 12 line(s) omitted ... ⟦tj:191f729eba992c0913c64c1c8f5902c8⟧]
+Jul  7 12:15:59 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  7 12:16:28 calvisitor-10-105-162-178 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f995070be80>.
+Jul  7 12:16:28 calvisitor-10-105-162-178 quicklookd[38023]: Error returned from iconservicesagent: (null)
+Jul  7 12:16:28 calvisitor-10-105-162-178 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f995060a270>.
+[... 83 line(s) omitted ... ⟦tj:6c1927c91d5a0850c328ce0f27d1659a⟧]
+Jul  7 16:04:15 calvisitor-10-105-160-205 symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
+Jul  7 16:04:15 calvisitor-10-105-160-205 kernel[0]: Setting BTCoex Config: enable_2G:1, profile_2g:0, enable_5G:1, profile_5G:0
+Jul  7 16:04:16 authorMacBook-Pro QQ[10018]: tcp_connection_handle_connect_conditions_bad 25340 failed: 3 - No network route
+[... 6 line(s) omitted ... ⟦tj:48177760acdb44551e89bc9910047e59⟧]
+Jul  7 16:24:10 authorMacBook-Pro locationd[82]: PBRequester failed with Error Error Domain=NSURLErrorDomain Code=-1009 "The Internet connection appears to be offline." UserInfo={NSUnderlyingError=0x7fb7f0035dc0 {Error Domain=kCFErrorDomainCFNetwork Code=-1009 "The Internet connection appears to be offline." UserInfo={NSErrorFailingURLStringKey=https://gs-loc.apple.com/clls/wloc, NSErrorFailingURLKey=https://gs-loc.apple.com/clls/wloc, _kCFStreamErrorCodeKey=8, _kCFStreamErrorDomainKey=12, NSLocalizedDescription=The Internet connection appears to be offline.}}, NSErrorFailingURLStringKey=https://gs-loc.apple.com/clls/wloc, NSErrorFailingURLKey=https://gs-loc.apple.com/clls/wloc, _kCFStreamErrorDomainKey=12, _kCFStreamErrorCodeKey=8, NSLocalizedDescription=The Internet connection appears to be offline.}
+[... 15 line(s) omitted ... ⟦tj:6e3a030eb1fc3a1e04e8f82fd6f6f81c⟧]
+Jul  7 17:20:30 calvisitor-10-105-160-85 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+Jul  7 17:30:00 calvisitor-10-105-160-85 kernel[0]: Sandbox: QuickLookSatelli(38418) deny(1) mach-lookup com.apple.networkd
+Jul  7 17:30:00 calvisitor-10-105-160-85 QuickLookSatellite[38418]: nw_path_evaluator_start_helper_connection net_helper_path_evaluation_start failed, dumping backtrace: [x86_64] libnetcore-583.50.1 0   libsystem_network.dylib             0x00007fff92fabde9 __nw_create_backtrace_string + 123 1   libsystem_network.dylib             0x00007fff92fc289f nw_path_evaluator_start_helper_connection + 196 2   libdispatch.dylib                   0x00007fff980fa93d _dispatch_call_block_and_release + 12 3   libdispatch.dylib                   0x00007fff980ef40b _dispatch_client_callout + 8 4   libdispatch.dylib                   0x00007fff980f403b _dispatch_queue_drain + 754 5   libdispatch.dylib                   0x00007fff980fa707 _dispatch_queue_invoke + 549 6   libdispatch.dylib                   0x00007fff980f2d53 _dispatch_root_queue_drain + 538 7   libdispatch.dylib                   0x00007fff980f2b00 _dispatch_worker_thread3 + 91 8   libsystem_pthread.dylib             0x00007fff8ebc44de _pthread_wqthread + 1129 9   libsystem_pthread.dylib             0x00007fff8ebc2341 start_wqthread + 13
+Jul  7 17:34:51 calvisitor-10-105-160-85 Safari[9852]: KeychainGetICDPStatus: status: off
+Jul  7 17:45:26 calvisitor-10-105-160-85 loginwindow[94]: CoreAnimation: warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces.
+[... 32 line(s) omitted ... ⟦tj:a51dd678ea8d618e8e508c0bd15b65f0⟧]
+Jul  7 20:32:00 calvisitor-10-105-160-85 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f9951217bb0>.
+Jul  7 20:32:00 calvisitor-10-105-160-85 quicklookd[38603]: Error returned from iconservicesagent: (null)
+Jul  7 20:32:02 calvisitor-10-105-160-85 secd[276]:  securityd_xpc_dictionary_handler cloudd[326] copy_matching Error Domain=NSOSStatusErrorDomain Code=-50 "query missing class name" (paramErr: error in user parameter list) UserInfo={NSDescription=query missing class name}
+Jul  7 20:32:12 calvisitor-10-105-160-85 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f9950712080>.
+Jul  7 20:32:28 calvisitor-10-105-160-85 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f9951214ca0>.
+Jul  7 20:34:14 calvisitor-10-105-160-85 locationd[82]: NETWORK: requery, 0, 0, 0, 0, 328, items, fQueryRetries, 0, fLastRetryTimestamp, 521177334.4
+Jul  7 20:39:28 calvisitor-10-105-160-85 com.apple.WebKit.Networking[9854]: NSURLSession/NSURLConnection HTTP load failed (kCFStreamErrorDomainSSL, -9806)
+Jul  7 20:43:37 calvisitor-10-105-160-85 QuickLookSatellite[38624]: [QL] No sandbox token for request <QLThumbnailRequest vmware-usbarb-25037.log>, it will probably fail
+Jul  7 20:44:13 calvisitor-10-105-160-85 GPUToolsAgent[38749]: schedule invalidation <DYTransport 0x7f89e8c00520, error: lost transport connection (31)>
+Jul  7 20:50:32 calvisitor-10-105-160-85 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 9 line(s) omitted ... ⟦tj:528378bd35e33ef95f8ac58a1de1d6f7⟧]
+Jul  7 21:23:11 calvisitor-10-105-160-85 com.apple.WebKit.WebContent[38826]: <<<< MediaValidator >>>> mv_ValidateRFC4281CodecId: Unrecognized codec 1.(null). Failed codec specific check.
+[... 4 line(s) omitted ... ⟦tj:113c128aa8c0652470b201e3d8c8fcbc⟧]
+Jul  7 21:31:11 calvisitor-10-105-160-85 garcon[38866]: Failed to connect (view) outlet from (NSApplication) to (NSColorPickerGridView): missing setter or instance variable
+[... 4 line(s) omitted ... ⟦tj:34b9e453fb91e8cfd678d7ed86cf4865⟧]
+Jul  7 21:58:03 calvisitor-10-105-160-85 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 36 line(s) omitted ... ⟦tj:5d8f5f803b79b49aef310fc295853d2b⟧]
+Jul  8 03:12:46 authorMacBook-Pro QQ[10018]: tcp_connection_handle_connect_conditions_bad 25902 failed: 3 - No network route
+[... 7 line(s) omitted ... ⟦tj:8936d9c9e6ae9fe26bc008f7ded3a9b9⟧]
+Jul  8 03:32:43 authorMacBook-Pro symptomsd[215]: -[NetworkAnalyticsEngine _writeJournalRecord:fromCellFingerprint:key:atLOI:ofKind:lqm:isFaulty:] Hashing of the primary key failed. Dropping the journal record.
+[... 17 line(s) omitted ... ⟦tj:6798a174b3056e426efc7a9e4caf3b82⟧]
+Jul  8 04:54:12 authorMacBook-Pro QQ[10018]: tcp_connection_handle_connect_conditions_bad 26042 failed: 3 - No network route
+[... 19 line(s) omitted ... ⟦tj:e1c50dd9dd366a53d7cfdac0400afb4c⟧]
+Jul  8 06:11:46 calvisitor-10-105-162-124 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+[... 20 line(s) omitted ... ⟦tj:e0aa6298ce6334fe88bdd35bdbb29e46⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (319414 bytes): call tinyjuice_retrieve with token "d9ea495488728d8c989dc942fca3324a"]

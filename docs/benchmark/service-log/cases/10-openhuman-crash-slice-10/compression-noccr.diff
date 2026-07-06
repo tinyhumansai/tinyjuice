@@ -1,0 +1,10 @@
+--- input/input.log
++++ output/output-noccr.log
+@@ -335,6 +335,4 @@
+ AirPort: 
+ Bluetooth: Version (null), 0 services, 0 devices, 0 incoming serial ports
+ Network Service: Wi-Fi, AirPort, en0
+-Thunderbolt Bus: MacBook Pro, Apple Inc.
+-Thunderbolt Bus: MacBook Pro, Apple Inc.
+-Thunderbolt Bus: MacBook Pro, Apple Inc.
++Thunderbolt Bus: MacBook Pro, Apple Inc. [×3]

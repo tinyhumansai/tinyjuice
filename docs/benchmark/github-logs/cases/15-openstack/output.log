@@ -1,0 +1,9 @@
+[... 56 line(s) omitted ... ⟦tj:f1cac8acac01b3338f648c30b01a2392⟧]
+nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:00:20.345 2931 WARNING nova.virt.libvirt.imagecache [req-addc1839-2ed5-4778-b57e-5854eb7b8b09 - - - - -] Unknown base file: /var/lib/nova/instances/_base/a489c868f0c37da93b76227c91bb03908ac0e742  [×30 first 2017-05-16, last 2017-05-16]
+[... 1239 line(s) omitted ... ⟦tj:f317220fad9770f06e73ddaa19dba616⟧]
+nova-compute.log.1.2017-05-16_13:55:31 2017-05-16 00:09:41.850 2931 WARNING nova.compute.manager [req-addc1839-2ed5-4778-b57e-5854eb7b8b09 - - - - -] While synchronizing instance power states, found 1 instances in the database and 0 instances on the hypervisor.
+[... 703 line(s) omitted ... ⟦tj:bf91b2a52c9097ce48e16a681df54b61⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (595119 bytes): call tinyjuice_retrieve with token "025a1bc64ff5b2ef4a4bda6c4ad5c5c5"]

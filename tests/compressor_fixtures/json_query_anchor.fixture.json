@@ -15,7 +15,7 @@
     "recovery": true,
     "contains": [
       "special needle token",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "\"id\": 70"

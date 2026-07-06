@@ -6,7 +6,7 @@ pub mod loader;
 pub mod verify;
 
 pub use compiler::compile_rule;
-pub use loader::{LoadRuleOptions, load_builtin_rules, load_rules};
+pub use loader::{LoadRuleOptions, cached_overlay_rules, load_builtin_rules, load_rules};
 pub use verify::{
     RuleDescriptorRef, RuleDiscoveryFamily, RuleDiscoveryReport, RuleDuplicateId,
     RuleFixtureFailure, RuleFixtureParseError, RuleFixtureVerificationReport, RuleParseError,

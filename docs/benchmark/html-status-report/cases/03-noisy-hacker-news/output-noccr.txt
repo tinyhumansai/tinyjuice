@@ -1,0 +1,97 @@
+Hacker News
+Hacker Newsnew | past | comments | ask | show | jobs | submit login
+1.
+Shadcn/UI now defaults to Base UI instead of Radix (shadcn.com)
+176 points by dabinat 7 hours ago | hide | 67 comments
+2.
+If you're a button, you have one job (aresluna.org)
+302 points by nozzlegear 10 hours ago | hide | 153 comments
+3.
+Claude Design System Prompt (github.com/trystan-sa)
+40 points by handfuloflight 3 hours ago | hide | 7 comments
+4.
+Fast Software, the Best Software (2019) (craigmod.com)
+51 points by ustad 5 hours ago | hide | 22 comments
+5.
+GPT-5.5 Codex reasoning-token clustering may be leading to degraded performance (github.com/openai)
+313 points by maille 14 hours ago | hide | 117 comments
+6.
+Functional Programming in hica (hica.dev)
+11 points by cladamski79 2 hours ago | hide | 2 comments
+7.
+Educators disciplined over Charlie Kirk posts are securing big payouts (nbcnews.com)
+10 points by Anon84 10 minutes ago | hide | 1 comment
+8.
+Pandoc Lua Filters (pandoc.org)
+85 points by ankitg12 7 hours ago | hide | 5 comments
+9.
+Scientist who cleaned space toilet on work now leading Mars exploration (bbc.com)
+16 points by saikatsg 2 hours ago | hide | 4 comments
+10.
+Jellyfish can heal wounds in minutes. Scientists want their secrets (mbl.edu)
+149 points by hhs 14 hours ago | hide | 31 comments
+11.
+Knowledge Should Not Be Gated (formaly.io)
+20 points by nezhar 4 hours ago | hide | 2 comments
+12.
+Megawatts by Microwave (computer.rip)
+35 points by eternauta3k 6 hours ago | hide | 4 comments
+13.
+Command and Conquer Generals natively ported to macOS, iPhone, iPad using Fable (github.com/ammaarreshi)
+596 points by asronline 16 hours ago | hide | 255 comments
+14.
+Moby Dick Workout (2022) (hogbaysoftware.com)
+55 points by helloplanets 8 hours ago | hide | 18 comments
+15.
+Artful Cats: Feline-Inspired Art and Artifacts (si.edu)
+51 points by jruohonen 9 hours ago | hide | 4 comments
+16.
+Programmers need to start meditating (jacob.gold)
+99 points by enz 5 hours ago | hide | 101 comments
+17.
+Better Models: Worse Tools (pocoo.org)
+193 points by leemoore 16 hours ago | hide | 66 comments
+18.
+Meta's Un-Stable Signature (hackerfactor.com)
+101 points by ementally 12 hours ago | hide | 15 comments
+19.
+Atomic Force Microscope high-speed video, stainless etching, bacteria, and more (youtube.com)
+85 points by mhb 11 hours ago | hide | 8 comments
+20.
+Apocketlypse (0dd.company)
+26 points by scaglio 4 hours ago | hide | 5 comments
+21.
+The Log Is the Agent (arxiv.org)
+55 points by iacguy 9 hours ago | hide | 17 comments
+22.
+Dark Mode with Web Standards (olliewilliams.xyz)
+11 points by thm 5 hours ago | hide | 1 comment
+23.
+What ORMs have taught me: just learn SQL (2014) (wozniak.ca)
+220 points by ciconia 23 hours ago | hide | 247 comments
+24.
+Return of the Nigerian Prince Redux: Beware Book Club and Book Review Scams (2025) (writerbeware.blog)
+60 points by Anon84 12 hours ago | hide | 19 comments
+25.
+About the Digital Art (tricivenola.com)
+14 points by NaOH 6 hours ago | hide | 2 comments
+26.
+“Beyond the limit”: Satellites and mirrors in space pose threat to the night sky (eso.org)
+155 points by Breadmaker 19 hours ago | hide | 258 comments
+27.
+Reducing Assumptions, Exploding Your Code (ryelang.org)
+14 points by mpweiher 5 hours ago | hide | 2 comments
+28.
+The Engineer in the Half-Space (yusufaytas.com)
+13 points by yusufaytas 12 minutes ago | hide | 1 comment
+29.
+My ASN Journey series (2024) (animmouse.com)
+24 points by antonalekseev 8 hours ago | hide | 11 comments
+30.
+Drone Autonomy (2021) (cggonzalez.com)
+65 points by cgg1 13 hours ago | hide | 6 comments
+More
+
+Guidelines | FAQ | Lists | API | Security | Legal | Apply to YC | Contact
+
+Search:

@@ -1,0 +1,157 @@
+[... 83 line(s) omitted ... ⟦tj:f8561e17c2dd04e4ed7f7a3734ebbb49⟧]
+Mar 27 13:44:29 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 13:44:29 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 14:01:39 ip-10-77-20-248 sshd[2938]: error: maximum authentication attempts exceeded for root from 122.176.37.221 port 37107 ssh2 [preauth]
+Mar 27 14:01:39 ip-10-77-20-248 sshd[2938]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 14:02:16 ip-10-77-20-248 sshd[2856]: Received disconnect from 85.245.107.41 port 54866:11: disconnected by user
+[... 7 line(s) omitted ... ⟦tj:9fc4a93e4c2e7b7b6430c4432ad78e02⟧]
+Mar 27 14:54:57 ip-10-77-20-248 sshd[2967]: Invalid user support from 95.152.57.58
+Mar 27 14:54:57 ip-10-77-20-248 sshd[2967]: input_userauth_request: invalid user support [preauth]
+Mar 27 14:54:58 ip-10-77-20-248 sshd[2967]: error: maximum authentication attempts exceeded for invalid user support from 95.152.57.58 port 53679 ssh2 [preauth]
+Mar 27 14:54:58 ip-10-77-20-248 sshd[2967]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 15:17:01 ip-10-77-20-248 CRON[2980]: pam_unix(cron:session): session opened for user root by (uid=0)
+Mar 27 15:17:01 ip-10-77-20-248 CRON[2980]: pam_unix(cron:session): session closed for user root
+Mar 27 15:30:59 ip-10-77-20-248 sshd[2995]: Did not receive identification string from 209.160.24.191
+Mar 27 15:46:53 ip-10-77-20-248 sshd[2996]: error: maximum authentication attempts exceeded for root from 90.144.183.19 port 57648 ssh2 [preauth]
+Mar 27 15:46:53 ip-10-77-20-248 sshd[2996]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 15:48:29 ip-10-77-20-248 sshd[2998]: Accepted publickey for ubuntu from 85.245.107.41 port 57684 ssh2: RSA SHA256:Kl8kPGZrTiz7g4FO1hyqHdsSBBb5Fge6NWOobN03XJg
+[... 4 line(s) omitted ... ⟦tj:2a72b07bda3207ac3f3fa293784799b2⟧]
+Mar 27 15:49:20 ip-10-77-20-248 sudo: pam_unix(sudo:session): session opened for user root by ubuntu(uid=0)
+Mar 27 15:49:21 ip-10-77-20-248 sudo: pam_unix(sudo:session): session closed for user root
+Mar 27 15:59:42 ip-10-77-20-248 sshd[3242]: error: maximum authentication attempts exceeded for root from 186.128.152.44 port 34605 ssh2 [preauth]
+Mar 27 15:59:42 ip-10-77-20-248 sshd[3242]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 16:02:57 ip-10-77-20-248 sudo:   ubuntu : TTY=pts/0 ; PWD=/usr/share/filebeat/bin ; USER=root ; COMMAND=/usr/bin/vim /etc/filebeat/filebeat.yml
+[... 203 line(s) omitted ... ⟦tj:d0db68e4424356ef5a18d56e7ac63f85⟧]
+Mar 27 18:22:24 ip-10-77-20-248 sshd[14922]: Invalid user admin from 201.177.23.130
+Mar 27 18:22:24 ip-10-77-20-248 sshd[14922]: input_userauth_request: invalid user admin [preauth]
+Mar 27 18:22:26 ip-10-77-20-248 sshd[14922]: error: maximum authentication attempts exceeded for invalid user admin from 201.177.23.130 port 46784 ssh2 [preauth]
+Mar 27 18:22:26 ip-10-77-20-248 sshd[14922]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:18 ip-10-77-20-248 sshd[14924]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56562 ssh2 [preauth]
+Mar 27 18:27:18 ip-10-77-20-248 sshd[14924]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:19 ip-10-77-20-248 sshd[14926]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56567 ssh2 [preauth]
+Mar 27 18:27:19 ip-10-77-20-248 sshd[14926]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:20 ip-10-77-20-248 sshd[14928]: Invalid user support from 190.178.62.6
+Mar 27 18:27:20 ip-10-77-20-248 sshd[14928]: input_userauth_request: invalid user support [preauth]
+Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: error: maximum authentication attempts exceeded for invalid user support from 190.178.62.6 port 56573 ssh2 [preauth]
+Mar 27 18:27:21 ip-10-77-20-248 sshd[14928]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:25 ip-10-77-20-248 sshd[14930]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56589 ssh2 [preauth]
+Mar 27 18:27:25 ip-10-77-20-248 sshd[14930]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 18:27:49 ip-10-77-20-248 sshd[14932]: error: maximum authentication attempts exceeded for root from 190.178.62.6 port 56711 ssh2 [preauth]
+Mar 27 18:27:49 ip-10-77-20-248 sshd[14932]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 19:07:01 ip-10-77-20-248 sshd[14945]: Did not receive identification string from 209.160.24.191
+Mar 27 19:17:01 ip-10-77-20-248 CRON[14959]: pam_unix(cron:session): session opened for user root by (uid=0)
+Mar 27 19:17:01 ip-10-77-20-248 CRON[14959]: pam_unix(cron:session): session closed for user root
+Mar 27 19:17:03 ip-10-77-20-248 sshd[14957]: Invalid user admin from 201.43.243.37
+Mar 27 19:17:03 ip-10-77-20-248 sshd[14957]: input_userauth_request: invalid user admin [preauth]
+Mar 27 19:17:05 ip-10-77-20-248 sshd[14957]: error: maximum authentication attempts exceeded for invalid user admin from 201.43.243.37 port 3904 ssh2 [preauth]
+Mar 27 19:17:05 ip-10-77-20-248 sshd[14957]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 19:39:01 ip-10-77-20-248 CRON[14973]: pam_unix(cron:session): session opened for user root by (uid=0)
+[... 7 line(s) omitted ... ⟦tj:fab59dd9d358ae11423c1645f44cdf1e⟧]
+Mar 27 20:33:04 ip-10-77-20-248 sshd[21240]: Received disconnect from 62.48.142.153 port 22567:11: disconnected by user [preauth]
+Mar 27 20:33:04 ip-10-77-20-248 sshd[21240]: Disconnected from 62.48.142.153 port 22567 [preauth]
+Mar 27 20:36:49 ip-10-77-20-248 sshd[21242]: error: maximum authentication attempts exceeded for root from 68.33.123.70 port 43002 ssh2 [preauth]
+Mar 27 20:36:49 ip-10-77-20-248 sshd[21242]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 20:59:37 ip-10-77-20-248 sshd[21255]: error: maximum authentication attempts exceeded for root from 190.49.42.132 port 60882 ssh2 [preauth]
+Mar 27 20:59:37 ip-10-77-20-248 sshd[21255]: Disconnecting: Too many authentication failures [preauth]
+Mar 27 21:17:01 ip-10-77-20-248 CRON[21268]: pam_unix(cron:session): session opened for user root by (uid=0)
+Mar 27 21:17:01 ip-10-77-20-248 CRON[21268]: pam_unix(cron:session): session closed for user root
+Mar 27 22:02:41 ip-10-77-20-248 sshd[21293]: Invalid user ftpuser from 112.135.124.229
+[... 1209 line(s) omitted ... ⟦tj:1ce07337cefeeba3ca799e25d5c10566⟧]
+Mar 29 10:37:34 ip-10-77-20-248 useradd[941]: failed adding user 'elastic_user_4', data deleted
+Mar 29 10:37:34 ip-10-77-20-248 chpasswd[943]: pam_unix(chpasswd:chauthtok): user "elastic_user_$login_count" does not exist in /etc/passwd
+Mar 29 10:37:34 ip-10-77-20-248 useradd[947]: failed adding user 'elastic_user_5', data deleted
+Mar 29 10:37:34 ip-10-77-20-248 chpasswd[949]: pam_unix(chpasswd:chauthtok): user "elastic_user_$login_count" does not exist in /etc/passwd
+Mar 29 10:37:34 ip-10-77-20-248 useradd[953]: failed adding user 'elastic_user_6', data deleted
+Mar 29 10:37:34 ip-10-77-20-248 chpasswd[955]: pam_unix(chpasswd:chauthtok): user "elastic_user_$login_count" does not exist in /etc/passwd
+Mar 29 10:37:34 ip-10-77-20-248 useradd[959]: failed adding user 'elastic_user_7', data deleted
+Mar 29 10:37:34 ip-10-77-20-248 chpasswd[961]: pam_unix(chpasswd:chauthtok): user "elastic_user_$login_count" does not exist in /etc/passwd
+Mar 29 10:37:34 ip-10-77-20-248 useradd[965]: failed adding user 'elastic_user_8', data deleted
+Mar 29 10:37:34 ip-10-77-20-248 chpasswd[967]: pam_unix(chpasswd:chauthtok): user "elastic_user_$login_count" does not exist in /etc/passwd
+Mar 29 10:37:34 ip-10-77-20-248 useradd[971]: failed adding user 'elastic_user_9', data deleted
+[... 4 line(s) omitted ... ⟦tj:87698a446d345212daf6ac05367489ec⟧]
+Mar 29 10:38:05 ip-10-77-20-248 useradd[980]: failed adding user 'elastic_user_0', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[982]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_0
+Mar 29 10:38:05 ip-10-77-20-248 useradd[987]: failed adding user 'elastic_user_1', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[989]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_1
+Mar 29 10:38:05 ip-10-77-20-248 useradd[994]: failed adding user 'elastic_user_2', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[996]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_2
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1001]: failed adding user 'elastic_user_3', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[1003]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_3
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1008]: failed adding user 'elastic_user_4', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[1010]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_4
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1015]: failed adding user 'elastic_user_5', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[1017]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_5
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1022]: failed adding user 'elastic_user_6', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[1024]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_6
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1029]: failed adding user 'elastic_user_7', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[1031]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_7
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1036]: failed adding user 'elastic_user_8', data deleted
+Mar 29 10:38:05 ip-10-77-20-248 chpasswd[1038]: pam_unix(chpasswd:chauthtok): password changed for elastic_user_8
+Mar 29 10:38:05 ip-10-77-20-248 useradd[1043]: failed adding user 'elastic_user_9', data deleted
+[... 15 line(s) omitted ... ⟦tj:3f0e54d29703b69cbb3e0776bf86b6a4⟧]
+Mar 29 10:42:45 ip-10-77-20-248 sshd[1193]: Failed password for elastic_user_7 from 127.0.0.1 port 52942 ssh2
+[... 30 line(s) omitted ... ⟦tj:f32241d461e689ad01e619cf744b8dc2⟧]
+Mar 29 11:35:20 ip-10-77-20-248 sshd[1361]: Failed publickey for elastic_user_2 from 85.245.107.41 port 50690 ssh2: RSA SHA256:aC2UQe4piBfaFwr2ne0PItnl9AcHqZOYrWjDmqpOzvE
+[... 11 line(s) omitted ... ⟦tj:7f8348d41caccb80b3250efc097b7a9c⟧]
+Mar 29 11:36:51 ip-10-77-20-248 sshd[1460]: Failed publickey for elastic_user_8 from 85.245.107.41 port 50696 ssh2: RSA SHA256:aC2UQe4piBfaFwr2ne0PItnl9AcHqZOYrWjDmqpOzvE
+[... 11 line(s) omitted ... ⟦tj:f5514dca0bfde29bcabbe5c76aad19f7⟧]
+Mar 29 11:37:37 ip-10-77-20-248 sshd[1510]: Failed publickey for elastic_user_5 from 85.245.107.41 port 50697 ssh2: RSA SHA256:aC2UQe4piBfaFwr2ne0PItnl9AcHqZOYrWjDmqpOzvE
+[... 11 line(s) omitted ... ⟦tj:d5cebc24f013516dbf226bec750338b6⟧]
+Mar 29 11:37:50 ip-10-77-20-248 sshd[1558]: Failed publickey for elastic_user_8 from 85.245.107.41 port 50699 ssh2: RSA SHA256:aC2UQe4piBfaFwr2ne0PItnl9AcHqZOYrWjDmqpOzvE
+[... 102 line(s) omitted ... ⟦tj:bbe840528f3b418542f55f37e11c3e49⟧]
+Mar 29 13:07:15 ip-10-77-20-248 sshd[2257]: Failed password for elastic_user_0 from 85.245.107.41 port 51401 ssh2
+[... 12 line(s) omitted ... ⟦tj:49e8155b030fd465d49cb87ba5bf98fa⟧]
+Mar 29 13:41:15 ip-10-77-20-248 sshd[2328]: Failed password for elastic_user_2 from 85.245.107.41 port 51707 ssh2
+[... 13 line(s) omitted ... ⟦tj:aac44de0864dc521e797c9be5a3aa47f⟧]
+Mar 29 14:15:41 ip-10-77-20-248 sshd[2414]: Failed password for invalid user pi from 181.25.206.27 port 50378 ssh2
+Mar 29 14:15:41 ip-10-77-20-248 sshd[2414]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:15:43 ip-10-77-20-248 sshd[2414]: Failed password for invalid user pi from 181.25.206.27 port 50378 ssh2
+Mar 29 14:15:43 ip-10-77-20-248 sshd[2414]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:15:44 ip-10-77-20-248 sshd[2414]: Failed password for invalid user pi from 181.25.206.27 port 50378 ssh2
+Mar 29 14:15:45 ip-10-77-20-248 sshd[2414]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:15:47 ip-10-77-20-248 sshd[2414]: Failed password for invalid user pi from 181.25.206.27 port 50378 ssh2
+Mar 29 14:15:47 ip-10-77-20-248 sshd[2414]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:15:50 ip-10-77-20-248 sshd[2414]: Failed password for invalid user pi from 181.25.206.27 port 50378 ssh2
+[... 9 line(s) omitted ... ⟦tj:fecf77d8c13af4da0d3bc34a26fd7d5a⟧]
+Mar 29 14:15:52 ip-10-77-20-248 sshd[2414]: Failed password for invalid user pi from 181.25.206.27 port 50378 ssh2
+[... 16 line(s) omitted ... ⟦tj:c9c1a1b213f6f4080ea1ebb9ac9eea3e⟧]
+Mar 29 14:16:12 ip-10-77-20-248 sshd[2475]: Failed password for invalid user cloud from 181.25.206.27 port 50538 ssh2
+Mar 29 14:16:12 ip-10-77-20-248 sshd[2475]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:16:14 ip-10-77-20-248 sshd[2475]: Failed password for invalid user cloud from 181.25.206.27 port 50538 ssh2
+Mar 29 14:16:15 ip-10-77-20-248 sshd[2475]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:16:16 ip-10-77-20-248 sshd[2475]: Failed password for invalid user cloud from 181.25.206.27 port 50538 ssh2
+Mar 29 14:16:17 ip-10-77-20-248 sshd[2475]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:16:19 ip-10-77-20-248 sshd[2475]: Failed password for invalid user cloud from 181.25.206.27 port 50538 ssh2
+Mar 29 14:16:19 ip-10-77-20-248 sshd[2475]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:16:21 ip-10-77-20-248 sshd[2475]: Failed password for invalid user cloud from 181.25.206.27 port 50538 ssh2
+Mar 29 14:16:21 ip-10-77-20-248 sshd[2475]: pam_unix(sshd:auth): check pass; user unknown
+Mar 29 14:16:23 ip-10-77-20-248 sshd[2475]: Failed password for invalid user cloud from 181.25.206.27 port 50538 ssh2
+[... 30 line(s) omitted ... ⟦tj:1213abad343d29d3f99a5b55e26f3dec⟧]
+Mar 29 14:43:05 ip-10-77-20-248 sshd[3679]: Failed password for elastic_user_2 from 85.245.107.41 port 52498 ssh2
+Mar 29 14:43:05 ip-10-77-20-248 sshd[3679]: Failed password for elastic_user_2 from 85.245.107.41 port 52498 ssh2
+[... 174 line(s) omitted ... ⟦tj:7d158e13bd610311e7292169a4c875b8⟧]
+Mar 29 17:33:17 ip-10-77-20-248 sshd[4888]: Failed password for elastic_user_6 from 85.245.107.41 port 54957 ssh2
+[... 17 line(s) omitted ... ⟦tj:2161c9411023d60bae988ae36e4a7c8b⟧]
+Mar 29 17:48:33 ip-10-77-20-248 sshd[4988]: Failed password for elastic_user_3 from 24.151.103.17 port 50739 ssh2
+Mar 29 17:48:33 ip-10-77-20-248 sshd[4988]: Failed password for elastic_user_3 from 24.151.103.17 port 50739 ssh2
+[... 118 line(s) omitted ... ⟦tj:e8e0c970c558fda4bda17b62ea009a8a⟧]
+Mar 29 19:30:18 ip-10-77-20-248 sshd[5743]: Failed password for elastic_user_4 from 24.151.103.17 port 52124 ssh2
+[... 97 line(s) omitted ... ⟦tj:4bf900ea2880a63b16ffba46aab85463⟧]
+Mar 29 23:18:21 ip-10-77-20-248 sshd[6402]: Failed password for root from 218.60.136.106 port 56338 ssh2
+Mar 29 23:18:33 ip-10-77-20-248 sshd[6402]: message repeated 5 times: [ Failed password for root from 218.60.136.106 port 56338 ssh2]
+[... 9 line(s) omitted ... ⟦tj:a12a16c5ddf3f3a8d523a68781041c2c⟧]
+Mar 30 02:06:41 ip-10-77-20-248 sshd[11407]: Failed password for root from 106.57.58.19 port 50011 ssh2
+Mar 30 02:06:53 ip-10-77-20-248 sshd[11407]: message repeated 5 times: [ Failed password for root from 106.57.58.19 port 50011 ssh2]
+[... 7 line(s) omitted ... ⟦tj:8541560bde3406585e18b0aba1315198⟧]
+Mar 30 03:08:11 ip-10-77-20-248 sshd[11434]: Failed password for root from 181.23.168.176 port 57912 ssh2
+Mar 30 03:08:21 ip-10-77-20-248 sshd[11434]: message repeated 5 times: [ Failed password for root from 181.23.168.176 port 57912 ssh2]
+[... 104 line(s) omitted ... ⟦tj:f7913a3b7925e858d12941802f43a905⟧]
+Mar 30 10:57:23 ip-10-77-20-248 sshd[12414]: Failed password for elastic_user_3 from 85.245.107.41 port 52961 ssh2
+[... 54 line(s) omitted ... ⟦tj:1f6423984dfcc5dbef01d29da57c3864⟧]
+Mar 30 11:43:15 ip-10-77-20-248 sshd[12766]: Failed password for root from 151.241.67.217 port 52258 ssh2
+Mar 30 11:43:39 ip-10-77-20-248 sshd[12766]: message repeated 2 times: [ Failed password for root from 151.241.67.217 port 52258 ssh2]
+[... 17 line(s) omitted ... ⟦tj:5459822e42603cb26d2fcdb29771444c⟧]
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (282196 bytes): call tinyjuice_retrieve with token "2a32fd9dbce8276083c2ac517cfd45ce"]

@@ -1,0 +1,862 @@
+--- input/input.ts
++++ output/output.ts
+@@ -24,37 +24,7 @@
+ export function createCancelablePromise<T>(callback: (token: CancellationToken) => Promise<T>): CancelablePromise<T> {
+ 	const source = new CancellationTokenSource();
+ 
+-	const thenable = callback(source.token);
+-	const promise = new Promise<T>((resolve, reject) => {
+-		const subscription = source.token.onCancellationRequested(() => {
+-			subscription.dispose();
+-			reject(new CancellationError());
+-		});
+-		Promise.resolve(thenable).then(value => {
+-			subscription.dispose();
+-			source.dispose();
+-			resolve(value);
+-		}, err => {
+-			subscription.dispose();
+-			source.dispose();
+-			reject(err);
+-		});
+-	});
+-
+-	return <CancelablePromise<T>>new class {
+-		cancel() {
+-			source.cancel();
+-			source.dispose();
+-		}
+-		then<TResult1 = T, TResult2 = never>(resolve?: ((value: T) => TResult1 | Promise<TResult1>) | undefined | null, reject?: ((reason: any) => TResult2 | Promise<TResult2>) | undefined | null): Promise<TResult1 | TResult2> {
+-			return promise.then(resolve, reject);
+-		}
+-		catch<TResult = never>(reject?: ((reason: any) => TResult | Promise<TResult>) | undefined | null): Promise<T | TResult> {
+-			return this.then(undefined, reject);
+-		}
+-		finally(onfinally?: (() => void) | undefined | null): Promise<T> {
+-			return promise.finally(onfinally);
+-		}
++	{ … 31 line(s) … ⟦tj:909236ff0c71c58ac77dba1335f62bff⟧ }
+ 	};
+ }
+ 
+@@ -100,68 +70,20 @@
+ export async function raceCancellablePromises<T>(cancellablePromises: CancelablePromise<T>[]): Promise<T> {
+ 	let resolvedPromiseIndex = -1;
+ 	const promises = cancellablePromises.map((promise, index) => promise.then(result => { resolvedPromiseIndex = index; return result; }));
+-	try {
+-		const result = await Promise.race(promises);
+-		return result;
+-	} finally {
+-		cancellablePromises.forEach((cancellablePromise, index) => {
+-			if (index !== resolvedPromiseIndex) {
+-				cancellablePromise.cancel();
+-			}
+-		});
++	{ … 9 line(s) … ⟦tj:d756fa0ef42cf47ee06d65582cb5648f⟧ }
+ 	}
+ }
+ 
+-export function raceTimeout<T>(promise: Promise<T>, timeout: number, onTimeout?: () => void): Promise<T | undefined> {
+-	let promiseResolve: ((value: T | undefined) => void) | undefined = undefined;
++export function raceTimeout<T>(promise: Promise<T>, timeout: number, onTimeout?: () => void): Promise<T | undefined> { … 13 line(s) … ⟦tj:9743417949ec92f74b2556bc19c816ab⟧ }
+ 
+-	const timer = setTimeout(() => {
+-		promiseResolve?.(undefined);
+-		onTimeout?.();
+-	}, timeout);
+-
+-	return Promise.race([
+-		promise.finally(() => clearTimeout(timer)),
+-		new Promise<T | undefined>(resolve => promiseResolve = resolve)
+-	]);
+-}
+-
+ export function raceFilter<T>(promises: Promise<T>[], filter: (result: T) => boolean): Promise<T | undefined> {
+ 	return new Promise((resolve, reject) => {
+ 		if (promises.length === 0) {
+-			resolve(undefined);
+-			return;
+-		}
+-
+-		let resolved = false;
+-		let unresolvedCount = promises.length;
+-		for (const promise of promises) {
+-			promise.then(result => {
+-				unresolvedCount--;
+-				if (!resolved) {
+-					if (filter(result)) {
+-						resolved = true;
+-						resolve(result);
+-					} else if (unresolvedCount === 0) {
+-						// Last one has to resolve the promise
+-						resolve(undefined);
+-					}
+-				}
+-			}).catch(reject);
+-		}
++	{ … 20 line(s) … ⟦tj:27a3a7dd73b1e7c845f0bdc2e5529caa⟧ }
+ 	});
+ }
+ 
+-export function asPromise<T>(callback: () => T | Thenable<T>): Promise<T> {
+-	return new Promise<T>((resolve, reject) => {
+-		const item = callback();
+-		if (isThenable<T>(item)) {
+-			item.then(resolve, reject);
+-		} else {
+-			resolve(item);
+-		}
+-	});
+-}
++export function asPromise<T>(callback: () => T | Thenable<T>): Promise<T> { … 10 line(s) … ⟦tj:78b588074519a330be64d778849f42df⟧ }
+ 
+ /**
+  * Creates and returns a new promise, plus its `resolve` and `reject` callbacks.
+@@ -225,47 +147,9 @@
+ 	queue<T>(promiseFactory: ITask<Promise<T>>): Promise<T> {
+ 		if (this.isDisposed) {
+ 			return Promise.reject(new Error('Throttler is disposed'));
+-		}
+-
+-		if (this.activePromise) {
+-			this.queuedPromiseFactory = promiseFactory;
+-
+-			if (!this.queuedPromise) {
+-				const onComplete = () => {
+-					this.queuedPromise = null;
+-
+-					if (this.isDisposed) {
+-						return;
+-					}
+-
+-					const result = this.queue(this.queuedPromiseFactory!);
+-					this.queuedPromiseFactory = null;
+-
+-					return result;
+-				};
+-
+-				this.queuedPromise = new Promise(resolve => {
+-					this.activePromise!.then(onComplete, onComplete).then(resolve);
+-				});
+-			}
+-
+-			return new Promise((resolve, reject) => {
+-				this.queuedPromise!.then(resolve, reject);
+-			});
+-		}
+-
+-		this.activePromise = promiseFactory();
+-
+-		return new Promise((resolve, reject) => {
+-			this.activePromise!.then((result: T) => {
+-				this.activePromise = null;
+-				resolve(result);
+-			}, (err: unknown) => {
+-				this.activePromise = null;
+-				reject(err);
+-			});
++		{ … 39 line(s) … ⟦tj:097fa63ec313686ab5e6d8a182735c77⟧ }
+ 		});
+-	}
++}
+ 
+ 	dispose(): void {
+ 		this.isDisposed = true;
+@@ -285,19 +169,7 @@
+ 
+ 	private promiseMap = new Map<TKey, Promise<unknown>>();
+ 
+-	queue<T>(key: TKey, promiseTask: ITask<Promise<T>>): Promise<T> {
+-		const runningPromise = this.promiseMap.get(key) ?? Promise.resolve();
+-		const newPromise = runningPromise
+-			.catch(() => { })
+-			.then(promiseTask)
+-			.finally(() => {
+-				if (this.promiseMap.get(key) === newPromise) {
+-					this.promiseMap.delete(key);
+-				}
+-			});
+-		this.promiseMap.set(key, newPromise);
+-		return newPromise;
+-	}
++	queue<T>(key: TKey, promiseTask: ITask<Promise<T>>): Promise<T> { … 13 line(s) … ⟦tj:86bceb52aea2bcc3306b1658c418bc11⟧ }
+ }
+ 
+ interface IScheduledLater extends IDisposable {
+@@ -307,30 +179,14 @@
+ const timeoutDeferred = (timeout: number, fn: () => void): IScheduledLater => {
+ 	let scheduled = true;
+ 	const handle = setTimeout(() => {
+-		scheduled = false;
+-		fn();
+-	}, timeout);
+-	return {
+-		isTriggered: () => scheduled,
+-		dispose: () => {
+-			clearTimeout(handle);
+-			scheduled = false;
+-		},
++	{ … 9 line(s) … ⟦tj:e5f2c80855cc0be17efb50cbd1bdadba⟧ }
+ 	};
+ };
+ 
+ const microtaskDeferred = (fn: () => void): IScheduledLater => {
+ 	let scheduled = true;
+ 	queueMicrotask(() => {
+-		if (scheduled) {
+-			scheduled = false;
+-			fn();
+-		}
+-	});
+-
+-	return {
+-		isTriggered: () => scheduled,
+-		dispose: () => { scheduled = false; },
++	{ … 9 line(s) … ⟦tj:cf2ccf3f4423e2eaf80b653e523de823⟧ }
+ 	};
+ };
+ 
+@@ -376,32 +232,9 @@
+ 	trigger(task: ITask<T | Promise<T>>, delay = this.defaultDelay): Promise<T> {
+ 		this.task = task;
+ 		this.cancelTimeout();
+-
+-		if (!this.completionPromise) {
+-			this.completionPromise = new Promise((resolve, reject) => {
+-				this.doResolve = resolve;
+-				this.doReject = reject;
+-			}).then(() => {
+-				this.completionPromise = null;
+-				this.doResolve = null;
+-				if (this.task) {
+-					const task = this.task;
+-					this.task = null;
+-					return task();
+-				}
+-				return undefined;
+-			});
+-		}
+-
+-		const fn = () => {
+-			this.deferred = null;
+-			this.doResolve?.(null);
+-		};
+-
+-		this.deferred = delay === MicrotaskDelay ? microtaskDeferred(fn) : timeoutDeferred(delay, fn);
+-
++		{ … 24 line(s) … ⟦tj:99ae02a78d41040f9075865dddae109b⟧ }
+ 		return this.completionPromise;
+-	}
++}
+ 
+ 	isTriggered(): boolean {
+ 		return !!this.deferred?.isTriggered();
+@@ -516,18 +349,7 @@
+ export function timeout(millis: number, token?: CancellationToken): CancelablePromise<void> | Promise<void> {
+ 	if (!token) {
+ 		return createCancelablePromise(token => timeout(millis, token));
+-	}
+-
+-	return new Promise((resolve, reject) => {
+-		const handle = setTimeout(() => {
+-			disposable.dispose();
+-			resolve();
+-		}, millis);
+-		const disposable = token.onCancellationRequested(() => {
+-			clearTimeout(handle);
+-			disposable.dispose();
+-			reject(new CancellationError());
+-		});
++	{ … 12 line(s) … ⟦tj:7e9d89ff7d5318c871cf65e7aed65ce9⟧ }
+ 	});
+ }
+ 
+@@ -551,15 +373,7 @@
+ export function disposableTimeout(handler: () => void, timeout = 0, store?: DisposableStore): IDisposable {
+ 	const timer = setTimeout(() => {
+ 		handler();
+-		if (store) {
+-			disposable.dispose();
+-		}
+-	}, timeout);
+-	const disposable = toDisposable(() => {
+-		clearTimeout(timer);
+-		store?.deleteAndLeak(disposable);
+-	});
+-	store?.add(disposable);
++	{ … 9 line(s) … ⟦tj:c5c1f91e6dcf6a8b97587721115b6bd4⟧ }
+ 	return disposable;
+ }
+ 
+@@ -571,49 +385,14 @@
+ export function sequence<T>(promiseFactories: ITask<Promise<T>>[]): Promise<T[]> {
+ 	const results: T[] = [];
+ 	let index = 0;
+-	const len = promiseFactories.length;
+-
+-	function next(): Promise<T> | null {
+-		return index < len ? promiseFactories[index++]() : null;
+-	}
+-
+-	function thenHandler(result: any): Promise<any> {
+-		if (result !== undefined && result !== null) {
+-			results.push(result);
+-		}
+-
+-		const n = next();
+-		if (n) {
+-			return n.then(thenHandler);
+-		}
+-
+-		return Promise.resolve(results);
+-	}
+-
++	{ … 19 line(s) … ⟦tj:309114c3f521b699babcd68e3e411407⟧ }
+ 	return Promise.resolve(null).then(thenHandler);
+ }
+ 
+ export function first<T>(promiseFactories: ITask<Promise<T>>[], shouldStop: (t: T) => boolean = t => !!t, defaultValue: T | null = null): Promise<T | null> {
+ 	let index = 0;
+ 	const len = promiseFactories.length;
+-
+-	const loop: () => Promise<T | null> = () => {
+-		if (index >= len) {
+-			return Promise.resolve(defaultValue);
+-		}
+-
+-		const factory = promiseFactories[index++];
+-		const promise = Promise.resolve(factory());
+-
+-		return promise.then(result => {
+-			if (shouldStop(result)) {
+-				return Promise.resolve(result);
+-			}
+-
+-			return loop();
+-		});
+-	};
+-
++	{ … 18 line(s) … ⟦tj:15f3ca378eacd98f8f5e98f31fa84b35⟧ }
+ 	return loop();
+ }
+ 
+@@ -626,33 +405,7 @@
+ export function firstParallel<T>(promiseList: Promise<T>[], shouldStop: (t: T) => boolean = t => !!t, defaultValue: T | null = null) {
+ 	if (promiseList.length === 0) {
+ 		return Promise.resolve(defaultValue);
+-	}
+-
+-	let todo = promiseList.length;
+-	const finish = () => {
+-		todo = -1;
+-		for (const promise of promiseList) {
+-			(promise as Partial<CancelablePromise<T>>).cancel?.();
+-		}
+-	};
+-
+-	return new Promise<T | null>((resolve, reject) => {
+-		for (const promise of promiseList) {
+-			promise.then(result => {
+-				if (--todo >= 0 && shouldStop(result)) {
+-					finish();
+-					resolve(result);
+-				} else if (todo === 0) {
+-					resolve(defaultValue);
+-				}
+-			})
+-				.catch(err => {
+-					if (--todo >= 0) {
+-						finish();
+-						reject(err);
+-					}
+-				});
+-		}
++	{ … 27 line(s) … ⟦tj:bc769d389ec471e6b18bad51d677e95a⟧ }
+ 	});
+ }
+ 
+@@ -710,43 +463,12 @@
+ 		return this._size;
+ 	}
+ 
+-	queue(factory: ITask<Promise<T>>): Promise<T> {
+-		if (this._isDisposed) {
+-			throw new Error('Object has been disposed');
+-		}
+-		this._size++;
++	queue(factory: ITask<Promise<T>>): Promise<T> { … 11 line(s) … ⟦tj:c2f16520bd6606261499720a9536e9a1⟧ }
+ 
+-		return new Promise<T>((c, e) => {
+-			this.outstandingPromises.push({ factory, c, e });
+-			this.consume();
+-		});
+-	}
++	private consume(): void { … 10 line(s) … ⟦tj:a382aae0cb8edac1ce03515767451d5f⟧ }
+ 
+-	private consume(): void {
+-		while (this.outstandingPromises.length && this.runningPromises < this.maxDegreeOfParalellism) {
+-			const iLimitedTask = this.outstandingPromises.shift()!;
+-			this.runningPromises++;
++	private consumed(): void { … 13 line(s) … ⟦tj:ff64041b3ec8e161c7409e9536708f72⟧ }
+ 
+-			const promise = iLimitedTask.factory();
+-			promise.then(iLimitedTask.c, iLimitedTask.e);
+-			promise.then(() => this.consumed(), () => this.consumed());
+-		}
+-	}
+-
+-	private consumed(): void {
+-		if (this._isDisposed) {
+-			return;
+-		}
+-		this.runningPromises--;
+-		if (--this._size === 0) {
+-			this._onDrained.fire();
+-		}
+-
+-		if (this.outstandingPromises.length > 0) {
+-			this.consume();
+-		}
+-	}
+-
+ 	clear(): void {
+ 		if (this._isDisposed) {
+ 			throw new Error('Object has been disposed');
+@@ -811,17 +533,8 @@
+ 	private drainListeners: DisposableMap<number> | undefined = undefined;
+ 	private drainListenerCount = 0;
+ 
+-	async whenDrained(): Promise<void> {
+-		if (this.isDrained()) {
+-			return;
+-		}
++	async whenDrained(): Promise<void> { … 10 line(s) … ⟦tj:1a241bd36e9847205b4d7fae81cce7e1⟧ }
+ 
+-		const promise = new DeferredPromise<void>();
+-		this.drainers.add(promise);
+-
+-		return promise.p;
+-	}
+-
+ 	private isDrained(): boolean {
+ 		for (const [, queue] of this.queues) {
+ 			if (queue.size > 0) {
+@@ -841,33 +554,9 @@
+ 	queueFor(resource: URI, factory: ITask<Promise<void>>, extUri: IExtUri = defaultExtUri): Promise<void> {
+ 		const key = extUri.getComparisonKey(resource);
+ 
+-		let queue = this.queues.get(key);
+-		if (!queue) {
+-			queue = new Queue<void>();
+-			const drainListenerId = this.drainListenerCount++;
+-			const drainListener = Event.once(queue.onDrained)(() => {
+-				queue?.dispose();
+-				this.queues.delete(key);
+-				this.onDidQueueDrain();
+-
+-				this.drainListeners?.deleteAndDispose(drainListenerId);
+-
+-				if (this.drainListeners?.size === 0) {
+-					this.drainListeners.dispose();
+-					this.drainListeners = undefined;
+-				}
+-			});
+-
+-			if (!this.drainListeners) {
+-				this.drainListeners = new DisposableMap();
+-			}
+-			this.drainListeners.set(drainListenerId, drainListener);
+-
+-			this.queues.set(key, queue);
+-		}
+-
++		{ … 25 line(s) … ⟦tj:ca2cf292831a610efd292886bd1ff884⟧ }
+ 		return queue.queue(factory);
+-	}
++}
+ 
+ 	private onDidQueueDrain(): void {
+ 		if (!this.isDrained()) {
+@@ -888,21 +577,10 @@
+ 	dispose(): void {
+ 		for (const [, queue] of this.queues) {
+ 			queue.dispose();
+-		}
+-
+-		this.queues.clear();
+-
+-		// Even though we might still have pending
+-		// tasks queued, after the queues have been
+-		// disposed, we can no longer track them, so
+-		// we release drainers to prevent hanging
+-		// promises when the resource queue is being
+-		// disposed.
+-		this.releaseDrainers();
+-
++		{ … 12 line(s) … ⟦tj:812cda00cece065f8c241762a83116fd⟧ }
+ 		this.drainListeners?.dispose();
+-	}
+ }
++}
+ 
+ export class TimeoutTimer implements IDisposable {
+ 	private _token: any;
+@@ -930,33 +608,15 @@
+ 		}
+ 	}
+ 
+-	cancelAndSet(runner: () => void, timeout: number): void {
+-		if (this._isDisposed) {
+-			throw new BugIndicatingError(`Calling 'cancelAndSet' on a disposed TimeoutTimer`);
+-		}
++	cancelAndSet(runner: () => void, timeout: number): void { … 11 line(s) … ⟦tj:edcd11eb9d5a4201c30aae878e1bd494⟧ }
+ 
+-		this.cancel();
+-		this._token = setTimeout(() => {
+-			this._token = -1;
+-			runner();
+-		}, timeout);
+-	}
+-
+ 	setIfNotSet(runner: () => void, timeout: number): void {
+ 		if (this._isDisposed) {
+ 			throw new BugIndicatingError(`Calling 'setIfNotSet' on a disposed TimeoutTimer`);
+-		}
+-
+-		if (this._token !== -1) {
+-			// timer is already set
+-			return;
+-		}
+-		this._token = setTimeout(() => {
+-			this._token = -1;
+-			runner();
++		{ … 9 line(s) … ⟦tj:b6e3db3d7db576ab906f417cf461304a⟧ }
+ 		}, timeout);
+-	}
+ }
++}
+ 
+ export class IntervalTimer implements IDisposable {
+ 
+@@ -971,18 +631,9 @@
+ 	cancelAndSet(runner: () => void, interval: number, context = globalThis): void {
+ 		if (this.isDisposed) {
+ 			throw new BugIndicatingError(`Calling 'cancelAndSet' on a disposed IntervalTimer`);
+-		}
+-
+-		this.cancel();
+-		const handle = context.setInterval(() => {
+-			runner();
+-		}, interval);
+-
+-		this.disposable = toDisposable(() => {
+-			context.clearInterval(handle);
+-			this.disposable = undefined;
++		{ … 10 line(s) … ⟦tj:ffed231287be2ac03b050d521582b666⟧ }
+ 		});
+-	}
++}
+ 
+ 	dispose(): void {
+ 		this.cancel();
+@@ -1124,18 +775,7 @@
+ 		return this.intervalToken !== -1;
+ 	}
+ 
+-	private onInterval() {
+-		this.counter--;
+-		if (this.counter > 0) {
+-			// still need to wait
+-			return;
+-		}
+-
+-		// time elapsed
+-		clearInterval(this.intervalToken);
+-		this.intervalToken = -1;
+-		this.runner?.();
+-	}
++	private onInterval() { … 12 line(s) … ⟦tj:00dffb9b7c65c958cec29dcd826cd189⟧ }
+ }
+ 
+ export class RunOnceWorker<T> extends RunOnceScheduler {
+@@ -1233,60 +873,12 @@
+ 	work(units: readonly T[]): boolean {
+ 		if (this.disposed) {
+ 			return false; // work not accepted: disposed
+-		}
++		{ … 39 line(s) … ⟦tj:aa3200230043208bdf56db1622dec4c3⟧ }
++		return true; // work accepted
++}
+ 
+-		// Check for reaching maximum of pending work
+-		if (typeof this.options.maxBufferedWork === 'number') {
+-
+-			// Throttled: simple check if pending + units exceeds max pending
+-			if (this.throttler.value) {
+-				if (this.pending + units.length > this.options.maxBufferedWork) {
+-					return false; // work not accepted: too much pending work
+-				}
+-			}
+-
+-			// Unthrottled: same as throttled, but account for max chunk getting
+-			// worked on directly without being pending
+-			else {
+-				if (this.pending + units.length - this.options.maxWorkChunkSize > this.options.maxBufferedWork) {
+-					return false; // work not accepted: too much pending work
+-				}
+-			}
+-		}
++	private doWork(): void { … 11 line(s) … ⟦tj:e8256905956158c76b87f84ee0e6daff⟧ }
+ 
+-		// Add to pending units first
+-		for (const unit of units) {
+-			this.pendingWork.push(unit);
+-		}
+-
+-		const timeSinceLastExecution = Date.now() - this.lastExecutionTime;
+-
+-		if (!this.throttler.value && (!this.options.waitThrottleDelayBetweenWorkUnits || timeSinceLastExecution >= this.options.throttleDelay)) {
+-			// Work directly if we are not throttling and we are not
+-			// enforced to throttle between `work()` calls.
+-			this.doWork();
+-		} else if (!this.throttler.value && this.options.waitThrottleDelayBetweenWorkUnits) {
+-			// Otherwise, schedule the throttler to work.
+-			this.scheduleThrottler(Math.max(this.options.throttleDelay - timeSinceLastExecution, 0));
+-		} else {
+-			// Otherwise, our work will be picked up by the running throttler
+-		}
+-
+-		return true; // work accepted
+-	}
+-
+-	private doWork(): void {
+-		this.lastExecutionTime = Date.now();
+-
+-		// Extract chunk to handle and handle it
+-		this.handler(this.pendingWork.splice(0, this.options.maxWorkChunkSize));
+-
+-		// If we have remaining work, schedule it after a delay
+-		if (this.pendingWork.length > 0) {
+-			this.scheduleThrottler();
+-		}
+-	}
+-
+ 	private scheduleThrottler(delay = this.options.throttleDelay): void {
+ 		this.throttler.value = new RunOnceScheduler(() => {
+ 			this.throttler.clear();
+@@ -1343,41 +935,11 @@
+ 		_runWhenIdle = (_targetWindow, runner, timeout?) => {
+ 			setTimeout0(() => {
+ 				if (disposed) {
+-					return;
+-				}
+-				const end = Date.now() + 15; // one frame at 64fps
+-				const deadline: IdleDeadline = {
+-					didTimeout: true,
+-					timeRemaining() {
+-						return Math.max(0, end - Date.now());
+-					}
+-				};
+-				runner(Object.freeze(deadline));
+-			});
+-			let disposed = false;
+-			return {
+-				dispose() {
+-					if (disposed) {
+-						return;
+-					}
+-					disposed = true;
+-				}
++			{ … 19 line(s) … ⟦tj:a85aca19f34ffb2741e2a942a0a9e457⟧ }
+ 			};
+-		};
++};
+ 	} else {
+-		_runWhenIdle = (targetWindow: IdleApi, runner, timeout?) => {
+-			const handle: number = targetWindow.requestIdleCallback(runner, typeof timeout === 'number' ? { timeout } : undefined);
+-			let disposed = false;
+-			return {
+-				dispose() {
+-					if (disposed) {
+-						return;
+-					}
+-					disposed = true;
+-					targetWindow.cancelIdleCallback(handle);
+-				}
+-			};
+-		};
++		_runWhenIdle = (targetWindow: IdleApi, runner, timeout?) => { … 13 line(s) … ⟦tj:ac8e157fef8ae49cc85e9ccd0fbcfe51⟧ };
+ 	}
+ 	runWhenGlobalIdle = (runner, timeout) => _runWhenIdle(globalThis, runner, timeout);
+ })();
+@@ -1408,16 +970,7 @@
+ 		this._handle.dispose();
+ 	}
+ 
+-	get value(): T {
+-		if (!this._didRun) {
+-			this._handle.dispose();
+-			this._executor();
+-		}
+-		if (this._error) {
+-			throw this._error;
+-		}
+-		return this._value!;
+-	}
++	get value(): T { … 10 line(s) … ⟦tj:f81eb0dd3aaf70bd63a7bdc07faa5830⟧ }
+ 
+ 	get isInitialized(): boolean {
+ 		return this._didRun;
+@@ -1510,17 +1063,8 @@
+ 		return promise;
+ 	}
+ 
+-	private doneRunning(taskId: number): void {
+-		if (this._running && taskId === this._running.taskId) {
++	private doneRunning(taskId: number): void { … 10 line(s) … ⟦tj:ed4c6a948d9da105234dc34cb6018fd6⟧ }
+ 
+-			// only set running to done if the promise finished that is associated with that taskId
+-			this._running = undefined;
+-
+-			// schedule the queued task now that we are free if we have any
+-			this.runQueued();
+-		}
+-	}
+-
+ 	private runQueued(): void {
+ 		if (this._queued) {
+ 			const queued = this._queued;
+@@ -1540,25 +1084,9 @@
+ 	queue(run: ITask<Promise<void>>): Promise<void> {
+ 
+ 		// this is our first queued task, so we create associated promise with it
+-		// so that we can return a promise that completes when the task has
+-		// completed.
+-		if (!this._queued) {
+-			const { promise, resolve: promiseResolve, reject: promiseReject } = promiseWithResolvers<void>();
+-			this._queued = {
+-				run,
+-				promise,
+-				promiseResolve: promiseResolve!,
+-				promiseReject: promiseReject!
+-			};
+-		}
+-
+-		// we have a previous queued task, just overwrite it
+-		else {
+-			this._queued.run = run;
+-		}
+-
++{ … 17 line(s) … ⟦tj:33012e007e58d69d2adb0de5979e9286⟧ }
+ 		return this._queued.promise;
+-	}
++}
+ 
+ 	hasQueued(): this is ITaskSequentializerWithQueuedTask {
+ 		return !!this._queued;
+@@ -1591,18 +1119,10 @@
+ 	increment(): number {
+ 		const now = this.nowFn();
+ 
+-		// We are outside of the range of `interval` and as such
+-		// start counting from 0 and remember the time
+-		if (now - this.lastIncrementTime > this.interval) {
+-			this.lastIncrementTime = now;
+-			this.value = 0;
+-		}
+-
+-		this.value++;
+-
++		{ … 9 line(s) … ⟦tj:f77b6ce7af347a5655aa27580adf4265⟧ }
+ 		return this.value;
+-	}
+ }
++}
+ 
+ //#endregion
+ 
+@@ -1711,16 +1231,7 @@
+ 	 * This method should only be used in rare cases where otherwise `async`
+ 	 * cannot be used (e.g. when callbacks are involved that require this).
+ 	 */
+-	export function withAsyncBody<T, E = Error>(bodyFn: (resolve: (value: T) => unknown, reject: (error: E) => unknown) => Promise<unknown>): Promise<T> {
+-		// eslint-disable-next-line no-async-promise-executor
+-		return new Promise<T>(async (resolve, reject) => {
+-			try {
+-				await bodyFn(resolve, reject);
+-			} catch (error) {
+-				reject(error);
+-			}
+-		});
+-	}
++	export function withAsyncBody<T, E = Error>(bodyFn: (resolve: (value: T) => unknown, reject: (error: E) => unknown) => Promise<unknown>): Promise<T> { … 10 line(s) … ⟦tj:9ecd9d625a6c0cc5d5edda9cc3d6a371⟧ }
+ }
+ 
+ export class StatefulPromise<T> {
+@@ -1911,26 +1422,9 @@
+ 	[Symbol.asyncIterator](): AsyncIterator<T, undefined, undefined> {
+ 		let i = 0;
+ 		return {
+-			next: async () => {
+-				do {
+-					if (this._state === AsyncIterableSourceState.DoneError) {
+-						throw this._error;
+-					}
+-					if (i < this._results.length) {
+-						return { done: false, value: this._results[i++] };
+-					}
+-					if (this._state === AsyncIterableSourceState.DoneOK) {
+-						return { done: true, value: undefined };
+-					}
+-					await Event.toPromise(this._onStateChanged.event);
+-				} while (true);
+-			},
+-			return: async () => {
+-				this._onReturn?.();
+-				return { done: true, value: undefined };
+-			}
++		{ … 18 line(s) … ⟦tj:a62ad76400221a80df953904266deaa1⟧ }
+ 		};
+-	}
++}
+ 
+ 	public static map<T, R>(iterable: AsyncIterable<T>, mapFn: (item: T) => R): AsyncIterableObject<R> {
+ 		return new AsyncIterableObject<R>(async (emitter) => {
+@@ -2054,28 +1548,7 @@
+ export function createCancelableAsyncIterable<T>(callback: (token: CancellationToken) => AsyncIterable<T>): CancelableAsyncIterableObject<T> {
+ 	const source = new CancellationTokenSource();
+ 	const innerIterable = callback(source.token);
+-
+-	return new CancelableAsyncIterableObject<T>(source, async (emitter) => {
+-		const subscription = source.token.onCancellationRequested(() => {
+-			subscription.dispose();
+-			source.dispose();
+-			emitter.reject(new CancellationError());
+-		});
+-		try {
+-			for await (const item of innerIterable) {
+-				if (source.token.isCancellationRequested) {
+-					// canceled in the meantime
+-					return;
+-				}
+-				emitter.emitOne(item);
+-			}
+-			subscription.dispose();
+-			source.dispose();
+-		} catch (err) {
+-			subscription.dispose();
+-			source.dispose();
+-			emitter.reject(err);
+-		}
++	{ … 22 line(s) … ⟦tj:5850292081544a1b9c5be9e0c7dd621b⟧ }
+ 	});
+ }
+ 
+@@ -2143,3 +1616,6 @@
+ }
+ 
+ //#endregion
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (56377 bytes): call tinyjuice_retrieve with token "7d8dd8ba76dfffd242a387d3226e20de"]
+\ No newline at end of file

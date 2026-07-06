@@ -4,8 +4,8 @@
 //!
 //! Layer order (lower priority → higher priority):
 //! 1. builtin (embedded via `include_str!`)
-//! 2. user (`~/.config/tokenjuice/rules/`)
-//! 3. project (`<cwd>/.tokenjuice/rules/`)
+//! 2. user (`~/.config/tinyjuice/rules/`)
+//! 3. project (`<cwd>/.tinyjuice/rules/`)
 //!
 //! When two layers define the same `id`, the higher-priority layer wins
 //! (project > user > builtin).  The `generic/fallback` rule is always sorted
@@ -13,7 +13,10 @@
 
 use super::{builtin::BUILTIN_RULE_JSONS, compiler::compile_rule};
 use crate::types::{CompiledRule, JsonRule, RuleOrigin};
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 // ---------------------------------------------------------------------------
 // Options
@@ -25,9 +28,9 @@ pub struct LoadRuleOptions {
     /// Working directory for project-layer discovery.  Defaults to the process
     /// current directory.
     pub cwd: Option<PathBuf>,
-    /// Override the user-layer directory (default: `~/.config/tokenjuice/rules`).
+    /// Override the user-layer directory (default: `~/.config/tinyjuice/rules`).
     pub user_rules_dir: Option<PathBuf>,
-    /// Override the project-layer directory (default: `<cwd>/.tokenjuice/rules`).
+    /// Override the project-layer directory (default: `<cwd>/.tinyjuice/rules`).
     pub project_rules_dir: Option<PathBuf>,
     /// Skip user-layer rules.
     pub exclude_user: bool,
@@ -39,24 +42,37 @@ pub struct LoadRuleOptions {
 // Layer path helpers
 // ---------------------------------------------------------------------------
 
+/// Prefer the `tinyjuice` path; fall back to the legacy `tokenjuice` path
+/// when only the legacy one exists on disk.
+fn prefer_existing(new: PathBuf, legacy: PathBuf) -> PathBuf {
+    if !new.is_dir() && legacy.is_dir() {
+        return legacy;
+    }
+    new
+}
+
 pub(crate) fn user_rules_root(custom: Option<&Path>) -> PathBuf {
     if let Some(p) = custom {
         return p.to_owned();
     }
-    dirs::home_dir()
+    let config = dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".config")
-        .join("tokenjuice")
-        .join("rules")
+        .join(".config");
+    prefer_existing(
+        config.join("tinyjuice").join("rules"),
+        config.join("tokenjuice").join("rules"),
+    )
 }
 
 pub(crate) fn project_rules_root(cwd: Option<&Path>, custom: Option<&Path>) -> PathBuf {
     if let Some(p) = custom {
         return p.to_owned();
     }
-    cwd.unwrap_or_else(|| Path::new("."))
-        .join(".tokenjuice")
-        .join("rules")
+    let cwd = cwd.unwrap_or_else(|| Path::new("."));
+    prefer_existing(
+        cwd.join(".tinyjuice").join("rules"),
+        cwd.join(".tokenjuice").join("rules"),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -68,15 +84,11 @@ fn load_builtin_descriptors() -> Vec<(RuleOrigin, String, JsonRule)> {
         .iter()
         .filter_map(|(id, json)| match serde_json::from_str::<JsonRule>(json) {
             Ok(rule) => {
-                log::debug!("[tokenjuice] loaded builtin rule '{}'", id);
+                log::debug!("[tinyjuice] loaded builtin rule '{}'", id);
                 Some((RuleOrigin::Builtin, format!("builtin:{}", id), rule))
             }
             Err(err) => {
-                log::debug!(
-                    "[tokenjuice] failed to parse builtin rule '{}': {}",
-                    id,
-                    err
-                );
+                log::debug!("[tinyjuice] failed to parse builtin rule '{}': {}", id, err);
                 None
             }
         })
@@ -103,7 +115,7 @@ fn walk_dir(dir: &Path, out: &mut Vec<PathBuf>) {
     let entries = match std::fs::read_dir(dir) {
         Ok(e) => e,
         Err(err) => {
-            log::debug!("[tokenjuice] read_dir failed at {}: {}", dir.display(), err);
+            log::debug!("[tinyjuice] read_dir failed at {}: {}", dir.display(), err);
             return;
         }
     };
@@ -116,7 +128,7 @@ fn walk_dir(dir: &Path, out: &mut Vec<PathBuf>) {
             Ok(ft) => ft,
             Err(err) => {
                 log::debug!(
-                    "[tokenjuice] file_type failed at {}: {}",
+                    "[tinyjuice] file_type failed at {}: {}",
                     path.display(),
                     err
                 );
@@ -150,7 +162,7 @@ fn load_disk_descriptors(root: &Path, source: RuleOrigin) -> Vec<(RuleOrigin, St
                 Ok(s) => s,
                 Err(err) => {
                     log::debug!(
-                        "[tokenjuice] read_to_string failed for {:?} rule at {}: {}",
+                        "[tinyjuice] read_to_string failed for {:?} rule at {}: {}",
                         source,
                         path.display(),
                         err
@@ -161,7 +173,7 @@ fn load_disk_descriptors(root: &Path, source: RuleOrigin) -> Vec<(RuleOrigin, St
             match serde_json::from_str::<JsonRule>(&json) {
                 Ok(rule) => {
                     log::debug!(
-                        "[tokenjuice] loaded {:?} rule '{}' from {}",
+                        "[tinyjuice] loaded {:?} rule '{}' from {}",
                         source,
                         rule.id,
                         path.display()
@@ -170,7 +182,7 @@ fn load_disk_descriptors(root: &Path, source: RuleOrigin) -> Vec<(RuleOrigin, St
                 }
                 Err(err) => {
                     log::debug!(
-                        "[tokenjuice] failed to parse {:?} rule at {}: {}",
+                        "[tinyjuice] failed to parse {:?} rule at {}: {}",
                         source,
                         path.display(),
                         err
@@ -188,13 +200,19 @@ fn load_disk_descriptors(root: &Path, source: RuleOrigin) -> Vec<(RuleOrigin, St
 
 /// Merge descriptors by `rule.id`: later entries win (project > user > builtin).
 fn overlay_and_sort(descriptors: Vec<(RuleOrigin, String, JsonRule)>) -> Vec<CompiledRule> {
-    // Use an IndexMap-like approach via a Vec to preserve last-write semantics
-    // while keeping insertion order (needed for stable sort).
-    let mut by_id: std::collections::HashMap<String, (RuleOrigin, String, JsonRule)> =
-        std::collections::HashMap::new();
+    // Last write wins per id; the final sort below restores a stable order.
+    let mut by_id: HashMap<String, (RuleOrigin, String, JsonRule)> = HashMap::new();
 
     for (source, path, rule) in descriptors {
-        by_id.insert(rule.id.clone(), (source, path, rule));
+        let id = rule.id.clone();
+        if let Some((prev_source, prev_path, _)) = by_id.insert(id.clone(), (source, path, rule)) {
+            log::debug!(
+                "[tinyjuice] rule '{}' from {:?} {} overridden by a later layer/file",
+                id,
+                prev_source,
+                prev_path
+            );
+        }
     }
 
     let mut compiled: Vec<CompiledRule> = by_id
@@ -214,7 +232,7 @@ fn overlay_and_sort(descriptors: Vec<(RuleOrigin, String, JsonRule)>) -> Vec<Com
     });
 
     log::debug!(
-        "[tokenjuice] overlay resolved {} rules (fallback last)",
+        "[tinyjuice] overlay resolved {} rules (fallback last)",
         compiled.len()
     );
 
@@ -239,7 +257,7 @@ pub fn load_rules(opts: &LoadRuleOptions) -> Vec<CompiledRule> {
     if !opts.exclude_user {
         let user_root = user_rules_root(opts.user_rules_dir.as_deref());
         log::debug!(
-            "[tokenjuice] loading user rules from {}",
+            "[tinyjuice] loading user rules from {}",
             user_root.display()
         );
         descriptors.extend(load_disk_descriptors(&user_root, RuleOrigin::User));
@@ -250,7 +268,7 @@ pub fn load_rules(opts: &LoadRuleOptions) -> Vec<CompiledRule> {
         let project_root =
             project_rules_root(opts.cwd.as_deref(), opts.project_rules_dir.as_deref());
         log::debug!(
-            "[tokenjuice] loading project rules from {}",
+            "[tinyjuice] loading project rules from {}",
             project_root.display()
         );
         descriptors.extend(load_disk_descriptors(&project_root, RuleOrigin::Project));
@@ -266,6 +284,43 @@ pub fn load_builtin_rules() -> Vec<CompiledRule> {
         exclude_project: true,
         ..Default::default()
     })
+}
+
+// ---------------------------------------------------------------------------
+// Cached overlay for hot paths
+// ---------------------------------------------------------------------------
+
+type OverlayCache = Mutex<HashMap<(PathBuf, PathBuf), Arc<Vec<CompiledRule>>>>;
+static OVERLAY_CACHE: Lazy<OverlayCache> = Lazy::new(Default::default);
+
+/// Cached [`load_rules`] for hot paths (the compression router's rule engine).
+///
+/// Keyed by the resolved user/project rule directories, so callers in
+/// different working directories get their own overlay. Cached for the
+/// process lifetime — rule-file edits need a new process to be picked up,
+/// the same lifetime the builtin-only cache had before overlay support.
+pub fn cached_overlay_rules(cwd: Option<&Path>) -> Arc<Vec<CompiledRule>> {
+    let cwd = cwd
+        .map(Path::to_path_buf)
+        .or_else(|| std::env::current_dir().ok());
+    let key = (
+        user_rules_root(None),
+        project_rules_root(cwd.as_deref(), None),
+    );
+
+    if let Ok(cache) = OVERLAY_CACHE.lock()
+        && let Some(hit) = cache.get(&key)
+    {
+        return Arc::clone(hit);
+    }
+    let rules = Arc::new(load_rules(&LoadRuleOptions {
+        cwd,
+        ..Default::default()
+    }));
+    if let Ok(mut cache) = OVERLAY_CACHE.lock() {
+        cache.insert(key, Arc::clone(&rules));
+    }
+    rules
 }
 
 #[cfg(test)]

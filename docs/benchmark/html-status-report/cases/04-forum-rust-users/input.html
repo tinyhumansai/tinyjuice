@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>The Rust Programming Language Forum</title>
+    <meta name="description" content="General discussion of The Rust Programming Language">
+    <meta name="generator" content="Discourse 2026.7.0-latest - https://github.com/discourse/discourse version 2a08d5d5ca62c6f4fd4fba8a281bee36976e15d3">
+<link rel="icon" type="image/png" href="https://us1.discourse-cdn.com/flex019/uploads/rust_lang/optimized/2X/e/e011218794dba02ebb2b368fd9b831f5585caffe_2_32x32.ico">
+<link rel="apple-touch-icon" type="image/png" href="https://us1.discourse-cdn.com/flex019/uploads/rust_lang/optimized/2X/8/83e41956eccfd67ad6ff76f15a2c22e58db31d4f_2_180x180.svg">
+<meta name="theme-color" media="all" content="#fff">
+
+<meta name="color-scheme" content="light">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+<link rel="canonical" href="https://users.rust-lang.org/" />
+<script type="application/ld+json">{"@context":"http://schema.org","@type":"WebSite","url":"https://users.rust-lang.org","name":"The Rust Programming Language Forum","potentialAction":{"@type":"SearchAction","target":"https://users.rust-lang.org/search?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<meta name="discourse-track-view-session-id" content="IsmpiE3mCkkkNhlXVoUGmdDDTtThfOT4">
+<link rel="search" type="application/opensearchdescription+xml" href="https://users.rust-lang.org/opensearch.xml" title="The Rust Programming Language Forum Search">
+
+    
+    <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/color_definitions_light-default_-1_1_d5537d15356de74106d0f6f9a9d1cdbf01cec97b.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" class="light-scheme"/>
+
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common"  />
+
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/mobile_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width < 40rem)" rel="stylesheet" data-target="mobile"  />
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="desktop"  />
+
+
+
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/automation_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="automation"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/checklist_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="checklist"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-ai_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-ai"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-cakeday_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-cakeday"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-data-explorer_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-data-explorer"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-details_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-details"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-github_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-github"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-lazy-videos_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-lazy-videos"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-local-dates_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-local-dates"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-narrative-bot_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-narrative-bot"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-policy_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-policy"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-presence_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-presence"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-reactions_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-reactions"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-solved_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-solved"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-templates_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-templates"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-topic-voting_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-topic-voting"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-user-notes_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="discourse-user-notes"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/footnote_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="footnote"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/hosted-site_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="hosted-site"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/poll_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="poll"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/spoiler-alert_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="spoiler-alert"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-ai_mobile_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width < 40rem)" rel="stylesheet" data-target="discourse-ai_mobile"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-reactions_mobile_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width < 40rem)" rel="stylesheet" data-target="discourse-reactions_mobile"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-ai_desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="discourse-ai_desktop"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/discourse-reactions_desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="discourse-reactions_desktop"  />
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/poll_desktop_f6d21c3b4672e59e32927108f6d7b37328968701.css?__ws=users.rust-lang.org" media="(width >= 40rem)" rel="stylesheet" data-target="poll_desktop"  />
+
+  <link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_51_e5cbabed97449a77627aa2f25b57261e46866006.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="51" data-theme-name="social share"/>
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_46_529f7d57eeccf16ffc2d82605c7a998a1bf5f407.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="46" data-theme-name="hide (empty) ai settings tab"/>
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_37_b386ef6d5b1936bb85a83a27dd890ca7abf37ba4.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="37" data-theme-name="limit footnote height"/>
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_52_3c728c2f0baef8fc994c82a1a4374d825de10b6a.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="52" data-theme-name="social share max-width adjust and reorder"/>
+<link href="https://sea1.discourse-cdn.com/flex019/stylesheets/common_theme_1_05cdd2b04a51455ab302939c2a60ae32696b8fe4.css?__ws=users.rust-lang.org" media="all" rel="stylesheet" data-target="common_theme" data-theme-id="1" data-theme-name="default"/>
+  
+  
+
+    
+    
+        <link rel="next" href="/latest?no_definitions=true&amp;page=1">
+    <link rel="alternate" type="application/rss+xml" title="Latest posts" href="https://users.rust-lang.org/posts.rss" />
+      <link rel="alternate" type="application/rss+xml" title="Latest topics" href="https://users.rust-lang.org/latest.rss" />
+    <meta property="og:site_name" content="The Rust Programming Language Forum" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="og:image" content="https://us1.discourse-cdn.com/flex019/uploads/rust_lang/original/2X/8/83e41956eccfd67ad6ff76f15a2c22e58db31d4f.svg" />
+<meta property="og:url" content="https://users.rust-lang.org/" />
+<meta name="twitter:url" content="https://users.rust-lang.org/" />
+<meta property="og:title" content="The Rust Programming Language Forum" />
+<meta name="twitter:title" content="The Rust Programming Language Forum" />
+<meta property="og:description" content="General discussion of The Rust Programming Language" />
+<meta name="twitter:description" content="General discussion of The Rust Programming Language" />
+
+    
+  </head>
+  <body class="crawler ">
+    
+    <header>
+  <a href="/">The Rust Programming Language Forum</a>
+    <p>General discussion of The Rust Programming Language</p>
+</header>
+
+    <div id="main-outlet" class="wrap" role="main">
+      
+
+
+
+
+<div class="topic-list-container" itemscope itemtype='http://schema.org/ItemList'>
+  <meta itemprop='itemListOrder' content='http://schema.org/ItemListOrderDescending'>
+
+  <table class='topic-list'>
+
+    <thead>
+      <tr>
+        <th>Topic</th>
+        <th></th>
+        <th class="replies">Replies</th>
+        <th class="views">Views</th>
+        <th>Activity</th>
+      </tr>
+    </thead>
+
+    <tbody>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='1'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/welcome-to-the-rust-programming-language-users-forum/77411' class='title raw-link raw-topic-link'>Welcome to the Rust programming language users forum</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/meta/3' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #999999'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>meta</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+              <p class='excerpt'>
+                This forum is for help, discussion, and announcements related to the Rust programming language. 
+Please read our code of conduct before participating. We will remove any posts that are not respectful, constructive, and o&hellip;
+              </p>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/notriddle" class="latest single">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/notriddle/25/51307_2.png" class="avatar" title='notriddle - Original Poster, Most Recent Poster' aria-label='notriddle - Original Poster, Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>1</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>56124</span>
+          </td>
+          <td>
+            June 24, 2022
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='2'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/forum-code-formatting-and-syntax-highlighting/42214' class='title raw-link raw-topic-link'>Forum Code Formatting and Syntax Highlighting</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/meta/3' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #999999'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>meta</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+              <p class='excerpt'>
+                To format code in this forum you need to surround the code with three backticks (```). For example, typing this... 
+```
+fn main() {
+    println!()
+}
+```
+
+...will be rendered as highlighted Rust code, like so: 
+fn main() &hellip;
+              </p>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/chrisd" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/chrisd/25/11859_2.png" class="avatar" title='chrisd - Original Poster, Most Recent Poster' aria-label='chrisd - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/alice" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/alice/25/9777_2.png" class="avatar" title='alice - Frequent Poster' aria-label='alice - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Ixrec" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/ixrec/25/15209_2.png" class="avatar" title='Ixrec - Frequent Poster' aria-label='Ixrec - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/mbrubeck" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/mbrubeck/25/648_2.png" class="avatar" title='mbrubeck - Frequent Poster' aria-label='mbrubeck - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>3</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>50332</span>
+          </td>
+          <td>
+            May 7, 2020
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='3'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/learning-how-to-navigate-modify-tree-like-structure-with-parsed-ast-sql/141093' class='title raw-link raw-topic-link'>Learning how to navigate/ modify tree-like structure with parsed AST SQL</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/noah_g" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/48db29/25.png" class="avatar" title='noah_g - Original Poster' aria-label='noah_g - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/nerditation" class="latest">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/e79b87/25.png" class="avatar" title='nerditation - Most Recent Poster' aria-label='nerditation - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>1</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>50</span>
+          </td>
+          <td>
+            July 5, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='4'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/per-read-file-integrity-in-a-no-std-kernel-block-level-blake3-instead-of-re-hashing-the-whole-file/140960' class='title raw-link raw-topic-link'>Per-read file integrity in a no_std kernel: block-level BLAKE3 instead of re-hashing the whole file</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/community/8' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #21ab35'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>community</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/abhiprd2000" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/abhiprd2000/25/53071_2.png" class="avatar" title='abhiprd2000 - Original Poster, Most Recent Poster' aria-label='abhiprd2000 - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/derspiny" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/derspiny/25/3540_2.png" class="avatar" title='derspiny - Frequent Poster' aria-label='derspiny - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/scottmcm" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/scottmcm/25/4286_2.png" class="avatar" title='scottmcm - Frequent Poster' aria-label='scottmcm - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/CodesInChaos" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/codesinchaos/25/48836_2.png" class="avatar" title='CodesInChaos - Frequent Poster' aria-label='CodesInChaos - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/robertnio" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/r/57b2e6/25.png" class="avatar" title='robertnio - Frequent Poster' aria-label='robertnio - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>10</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>239</span>
+          </td>
+          <td>
+            July 5, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='5'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/need-ideas-for-my-narrative-authoring-tool/141097' class='title raw-link raw-topic-link'>Need ideas for my narrative authoring tool</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/1nuxiuz" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/1nuxiuz/25/50011_2.png" class="avatar" title='1nuxiuz - Original Poster, Most Recent Poster' aria-label='1nuxiuz - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/noah_g" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/48db29/25.png" class="avatar" title='noah_g - Frequent Poster' aria-label='noah_g - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>3</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>70</span>
+          </td>
+          <td>
+            July 5, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='6'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/how-smart-is-the-compiler-about-avoiding-monomorphization/141090' class='title raw-link raw-topic-link'>How smart is the compiler about avoiding monomorphization?</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/RobertN" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/r/f0a364/25.png" class="avatar" title='RobertN - Original Poster' aria-label='RobertN - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/kpreid" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kpreid/25/22420_2.png" class="avatar" title='kpreid - Most Recent Poster, Accepted Answer' aria-label='kpreid - Most Recent Poster, Accepted Answer'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>1</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>142</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='7'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/cargo-refused-to-format-the-code-is-it-by-design/141081' class='title raw-link raw-topic-link'>Cargo refused to format the code. Is it by design?</a>
+            </span>
+            <div class="link-bottom-line">
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/PC-Killer" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/pc-killer/25/53156_2.png" class="avatar" title='PC-Killer - Original Poster' aria-label='PC-Killer - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/jdahlstrom" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/jdahlstrom/25/38017_2.png" class="avatar" title='jdahlstrom - Frequent Poster' aria-label='jdahlstrom - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/nerditation" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/e79b87/25.png" class="avatar" title='nerditation - Frequent Poster' aria-label='nerditation - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/MOCKBA" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/mockba/25/41423_2.png" class="avatar" title='MOCKBA - Frequent Poster' aria-label='MOCKBA - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Jesper" class="latest">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/j/49beb7/25.png" class="avatar" title='Jesper - Most Recent Poster' aria-label='Jesper - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>7</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>224</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='8'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/simple-unzip-cli-tool-for-windows/141059' class='title raw-link raw-topic-link'>Simple unzip CLI tool for Windows</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/announcements/6' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #ED207B'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>announcements</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/MOCKBA" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/mockba/25/41423_2.png" class="avatar" title='MOCKBA - Original Poster, Most Recent Poster' aria-label='MOCKBA - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/asv" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/asv/25/9818_2.png" class="avatar" title='asv - Frequent Poster' aria-label='asv - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>2</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>178</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='9'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/rupon-developer-procto-top-learning-compiler-development-by-building-my-own-language/141085' class='title raw-link raw-topic-link'>Rupon_developer procto_top В сети Learning Compiler Development by Building My Own Language</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/code-review/11' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #008ec2'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>code review</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/ueuerejej-ops" class="latest single">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/ueuerejej-ops/25/53157_2.png" class="avatar" title='ueuerejej-ops - Original Poster, Most Recent Poster' aria-label='ueuerejej-ops - Original Poster, Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>0</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>45</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='10'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/primus-a-post-quantum-layer-1-blockchain-in-rust-research-project-ml-dsa-87-everywhere/141073' class='title raw-link raw-topic-link'>Primus — a post-quantum Layer-1 blockchain in Rust (research project, ML-DSA-87 everywhere)</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/code-review/11' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #008ec2'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>code review</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/kingkongcastle" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kingkongcastle/25/53119_2.png" class="avatar" title='kingkongcastle - Original Poster' aria-label='kingkongcastle - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/user16251" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/user16251/25/30527_2.png" class="avatar" title='user16251 - Frequent Poster' aria-label='user16251 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/threefold3" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/threefold3/25/32050_2.png" class="avatar" title='threefold3 - Frequent Poster' aria-label='threefold3 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Pjdur" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/pjdur/25/48281_2.png" class="avatar" title='Pjdur - Frequent Poster' aria-label='Pjdur - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/mroth" class="latest">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/m/a8b319/25.png" class="avatar" title='mroth - Most Recent Poster' aria-label='mroth - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>10</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>165</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='11'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/crate-of-the-week/2704' class='title raw-link raw-topic-link'>Crate of the Week</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/community/8' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #21ab35'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>community</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/llogiq" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/llogiq/25/44952_2.png" class="avatar" title='llogiq - Original Poster' aria-label='llogiq - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/nasa42" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/nasa42/25/970_2.png" class="avatar" title='nasa42 - Frequent Poster' aria-label='nasa42 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/willi_kappler" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/willi_kappler/25/16403_2.png" class="avatar" title='willi_kappler - Frequent Poster' aria-label='willi_kappler - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/kornel" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kornel/25/4823_2.png" class="avatar" title='kornel - Frequent Poster' aria-label='kornel - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/athanor" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/athanor/25/53084_2.png" class="avatar" title='athanor - Most Recent Poster' aria-label='athanor - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>1586</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>276732</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='12'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/beginner-file-navigator/141080' class='title raw-link raw-topic-link'>[Beginner] File navigator</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/code-review/11' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #008ec2'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>code review</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/qqqqbbpp" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/qqqqbbpp/25/53098_2.png" class="avatar" title='qqqqbbpp - Original Poster, Most Recent Poster' aria-label='qqqqbbpp - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/jendrikw" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/j/e274bd/25.png" class="avatar" title='jendrikw - Frequent Poster' aria-label='jendrikw - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>2</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>84</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='13'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/whats-the-semantic-difference-between-use-a-and-a-in-the-returned-opaque-type-place/141008' class='title raw-link raw-topic-link'>What&#39;s the semantic difference between `use&lt;&#39;a&gt;` and `+&#39;a` in the returned opaque type place</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/xmh0511" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/xmh0511/25/28198_2.png" class="avatar" title='xmh0511 - Original Poster' aria-label='xmh0511 - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/nerditation" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/e79b87/25.png" class="avatar" title='nerditation - Frequent Poster' aria-label='nerditation - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/SkiFire13" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/skifire13/25/17959_2.png" class="avatar" title='SkiFire13 - Frequent Poster' aria-label='SkiFire13 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/quinedot" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/quinedot/25/17693_2.png" class="avatar" title='quinedot - Frequent Poster' aria-label='quinedot - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Yandros" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/yandros/25/8136_2.png" class="avatar" title='Yandros - Most Recent Poster' aria-label='Yandros - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>6</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>216</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='14'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/slotmap-attach-reattach-but-without-moving/141069' class='title raw-link raw-topic-link'>SlotMap attach/reattach, but without moving?</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/RobertN" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/r/f0a364/25.png" class="avatar" title='RobertN - Original Poster' aria-label='RobertN - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/edddd" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/e/e95f7d/25.png" class="avatar" title='edddd - Frequent Poster' aria-label='edddd - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/kpreid" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kpreid/25/22420_2.png" class="avatar" title='kpreid - Frequent Poster' aria-label='kpreid - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/nerditation" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/e79b87/25.png" class="avatar" title='nerditation - Frequent Poster' aria-label='nerditation - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Morgane55440" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/morgane55440/25/50376_2.png" class="avatar" title='Morgane55440 - Most Recent Poster' aria-label='Morgane55440 - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>20</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>304</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='15'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/announcing-actix-tower-bridge-tower-middleware-into-actix-web/141079' class='title raw-link raw-topic-link'>Announcing actix_tower: Bridge Tower Middleware into Actix Web</a>
+            </span>
+            <div class="link-bottom-line">
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/rstop" class="latest single">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/r/e56c9b/25.png" class="avatar" title='rstop - Original Poster, Most Recent Poster' aria-label='rstop - Original Poster, Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>0</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>47</span>
+          </td>
+          <td>
+            July 4, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='16'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/rust-quest-retro-terminal-adventure-to-help-beginners-learn-rust-written-in-rust/140989' class='title raw-link raw-topic-link'>Rust Quest: retro terminal adventure to help beginners learn Rust, written in Rust</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/community/8' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #21ab35'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>community</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/EazyTom" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/eazytom/25/53091_2.png" class="avatar" title='EazyTom - Original Poster' aria-label='EazyTom - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/steffahn" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/steffahn/25/47569_2.png" class="avatar" title='steffahn - Frequent Poster' aria-label='steffahn - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/stonerfish" class="latest">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/s/50afbb/25.png" class="avatar" title='stonerfish - Most Recent Poster' aria-label='stonerfish - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>9</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>178</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='17'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/mixing-seqcst-with-other-orderings/140994' class='title raw-link raw-topic-link'>Mixing SeqCst with other orderings</a>
+            </span>
+            <div class="link-bottom-line">
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/manganhedenbergite" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/manganhedenbergite/25/51400_2.png" class="avatar" title='manganhedenbergite - Original Poster, Most Recent Poster' aria-label='manganhedenbergite - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/yannham" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/yannham/25/19535_2.png" class="avatar" title='yannham - Frequent Poster' aria-label='yannham - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/steffahn" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/steffahn/25/47569_2.png" class="avatar" title='steffahn - Frequent Poster' aria-label='steffahn - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>6</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>218</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='18'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/method-post-in-actix-web/141076' class='title raw-link raw-topic-link'>Method post in actix-web</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/proRust" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/prorust/25/49730_2.png" class="avatar" title='proRust - Original Poster, Most Recent Poster' aria-label='proRust - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/jofas" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/jofas/25/30690_2.png" class="avatar" title='jofas - Frequent Poster, Accepted Answer' aria-label='jofas - Frequent Poster, Accepted Answer'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>2</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>69</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='19'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/converting-rust-to-c/140897' class='title raw-link raw-topic-link'>Converting Rust to C</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/MarkusPuura" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/markuspuura/25/53038_2.png" class="avatar" title='MarkusPuura - Original Poster' aria-label='MarkusPuura - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/simonbuchan" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/simonbuchan/25/19939_2.png" class="avatar" title='simonbuchan - Frequent Poster' aria-label='simonbuchan - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/bjorn3" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/bjorn3/25/5255_2.png" class="avatar" title='bjorn3 - Frequent Poster' aria-label='bjorn3 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/riking" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/riking/25/2351_2.png" class="avatar" title='riking - Most Recent Poster' aria-label='riking - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>7</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>545</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='20'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/how-to-search-job/141038' class='title raw-link raw-topic-link'>How to search job</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/proRust" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/prorust/25/49730_2.png" class="avatar" title='proRust - Original Poster, Most Recent Poster' aria-label='proRust - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/programmerjake" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/programmerjake/25/12342_2.png" class="avatar" title='programmerjake - Frequent Poster' aria-label='programmerjake - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/akrauze" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/akrauze/25/39129_2.png" class="avatar" title='akrauze - Frequent Poster' aria-label='akrauze - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/fuji-184" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/fuji-184/25/46153_2.png" class="avatar" title='fuji-184 - Frequent Poster' aria-label='fuji-184 - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>4</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>258</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='21'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/does-the-indirection-of-a-pointer-immediately-create-a-reference/141071' class='title raw-link raw-topic-link'>Does the indirection of a pointer immediately create a reference?</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/xmh0511" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/xmh0511/25/28198_2.png" class="avatar" title='xmh0511 - Original Poster' aria-label='xmh0511 - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/theemathas" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/theemathas/25/6091_2.png" class="avatar" title='theemathas - Frequent Poster' aria-label='theemathas - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/chrefr" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/c/e480ec/25.png" class="avatar" title='chrefr - Frequent Poster' aria-label='chrefr - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/robofinch" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/robofinch/25/49287_2.png" class="avatar" title='robofinch - Frequent Poster' aria-label='robofinch - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/marlez" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/marlez/25/52182_2.png" class="avatar" title='marlez - Most Recent Poster' aria-label='marlez - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>10</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>217</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='22'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/twir-quote-of-the-week/328' class='title raw-link raw-topic-link'>TWiR quote of the week</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/community/8' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #21ab35'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>community</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/brson" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/brson/25/10193_2.png" class="avatar" title='brson - Original Poster' aria-label='brson - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/ssokolow" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/ssokolow/25/3035_2.png" class="avatar" title='ssokolow - Frequent Poster' aria-label='ssokolow - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/llogiq" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/llogiq/25/44952_2.png" class="avatar" title='llogiq - Frequent Poster' aria-label='llogiq - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/briankung" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/briankung/25/11310_2.png" class="avatar" title='briankung - Frequent Poster' aria-label='briankung - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Cerber-Ursi" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/cerber-ursi/25/8315_2.png" class="avatar" title='Cerber-Ursi - Most Recent Poster' aria-label='Cerber-Ursi - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>1743</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>281362</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='23'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/beginner-improvements-to-anagram-searching-function-exercism/141005' class='title raw-link raw-topic-link'>[Beginner] Improvements to anagram searching function (exercism)</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/code-review/11' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #008ec2'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>code review</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/keyko" class="latest">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/k/a8b319/25.png" class="avatar" title='keyko - Original Poster, Most Recent Poster' aria-label='keyko - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/quinedot" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/quinedot/25/17693_2.png" class="avatar" title='quinedot - Frequent Poster, Accepted Answer' aria-label='quinedot - Frequent Poster, Accepted Answer'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>5</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>196</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='24'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/covariant-invariant-and-phantomdata-why-does-this-compile/140907' class='title raw-link raw-topic-link'>Covariant, invariant and PhantomData; Why does this compile?</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/zugzwanged" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/z/ba8739/25.png" class="avatar" title='zugzwanged - Original Poster' aria-label='zugzwanged - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/robofinch" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/robofinch/25/49287_2.png" class="avatar" title='robofinch - Frequent Poster' aria-label='robofinch - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/quinedot" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/quinedot/25/17693_2.png" class="avatar" title='quinedot - Frequent Poster' aria-label='quinedot - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Morgane55440" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/morgane55440/25/50376_2.png" class="avatar" title='Morgane55440 - Most Recent Poster' aria-label='Morgane55440 - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>11</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>390</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='25'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/looking-for-code-review-on-my-4-small-crates/141053' class='title raw-link raw-topic-link'>Looking for code review on my 4 small crates</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/code-review/11' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #008ec2'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>code review</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/egare0" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/egare0/25/53133_2.png" class="avatar" title='egare0 - Original Poster' aria-label='egare0 - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/MOCKBA" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/mockba/25/41423_2.png" class="avatar" title='MOCKBA - Frequent Poster' aria-label='MOCKBA - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Kyllingene" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kyllingene/25/33899_2.png" class="avatar" title='Kyllingene - Frequent Poster' aria-label='Kyllingene - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/Jesper" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/j/49beb7/25.png" class="avatar" title='Jesper - Frequent Poster' aria-label='Jesper - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/user16251" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/user16251/25/30527_2.png" class="avatar" title='user16251 - Most Recent Poster' aria-label='user16251 - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>8</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>295</span>
+          </td>
+          <td>
+            July 3, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='26'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/proposal-speed-up-cargo-build-by-constraining-language-to-disallow-mutual-usage-between-files/141009' class='title raw-link raw-topic-link'>Proposal: Speed up `cargo build` by constraining language to disallow mutual usage between files</a>
+            </span>
+            <div class="link-bottom-line">
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/sergeynordicresults" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/sergeynordicresults/25/48367_2.png" class="avatar" title='sergeynordicresults - Original Poster' aria-label='sergeynordicresults - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/robertnio" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/r/57b2e6/25.png" class="avatar" title='robertnio - Frequent Poster' aria-label='robertnio - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/kpreid" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kpreid/25/22420_2.png" class="avatar" title='kpreid - Frequent Poster' aria-label='kpreid - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/ekuber" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/ekuber/25/3875_2.png" class="avatar" title='ekuber - Frequent Poster' aria-label='ekuber - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/simonbuchan" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/simonbuchan/25/19939_2.png" class="avatar" title='simonbuchan - Most Recent Poster' aria-label='simonbuchan - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>12</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>471</span>
+          </td>
+          <td>
+            July 2, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='27'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/std-hashmap-is-slower-than-other-languages-hashmap/140941' class='title raw-link raw-topic-link'>STD HashMap is slower than other languages HashMap</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/fuji-184" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/fuji-184/25/46153_2.png" class="avatar" title='fuji-184 - Original Poster, Most Recent Poster' aria-label='fuji-184 - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/jofas" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/jofas/25/30690_2.png" class="avatar" title='jofas - Frequent Poster' aria-label='jofas - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/user16251" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/user16251/25/30527_2.png" class="avatar" title='user16251 - Frequent Poster' aria-label='user16251 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/marlez" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/marlez/25/52182_2.png" class="avatar" title='marlez - Frequent Poster' aria-label='marlez - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/SkiFire13" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/skifire13/25/17959_2.png" class="avatar" title='SkiFire13 - Frequent Poster' aria-label='SkiFire13 - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>35</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>1005</span>
+          </td>
+          <td>
+            July 2, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='28'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/atomic-concurrency-when-do-i-need-something-stronger-than-ordering-relaxed/141034' class='title raw-link raw-topic-link'>Atomic concurrency: when do I need something stronger than Ordering::Relaxed?</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/amid.ukr" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/amid.ukr/25/52112_2.png" class="avatar" title='amid.ukr - Original Poster, Most Recent Poster' aria-label='amid.ukr - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/nerditation" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/n/e79b87/25.png" class="avatar" title='nerditation - Frequent Poster, Accepted Answer' aria-label='nerditation - Frequent Poster, Accepted Answer'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/danjl1100" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/danjl1100/25/10835_2.png" class="avatar" title='danjl1100 - Frequent Poster' aria-label='danjl1100 - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/steffahn" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/steffahn/25/47569_2.png" class="avatar" title='steffahn - Frequent Poster' aria-label='steffahn - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>4</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>188</span>
+          </td>
+          <td>
+            July 1, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='29'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/rc-foo-but-foo-needs-context-to-drop-cleanup/141022' class='title raw-link raw-topic-link'>Rc&lt;Foo&gt;, but Foo needs context to drop/cleanup?</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/help/5' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #F7941D'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>help</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/RobertN" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/r/f0a364/25.png" class="avatar" title='RobertN - Original Poster' aria-label='RobertN - Original Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/akrauze" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/akrauze/25/39129_2.png" class="avatar" title='akrauze - Frequent Poster' aria-label='akrauze - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/kpreid" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/kpreid/25/22420_2.png" class="avatar" title='kpreid - Frequent Poster' aria-label='kpreid - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/edddd" class="">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/e/e95f7d/25.png" class="avatar" title='edddd - Frequent Poster' aria-label='edddd - Frequent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/simonbuchan" class="latest">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/simonbuchan/25/19939_2.png" class="avatar" title='simonbuchan - Most Recent Poster' aria-label='simonbuchan - Most Recent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>17</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>330</span>
+          </td>
+          <td>
+            July 1, 2026
+          </td>
+        </tr>
+        <tr class="topic-list-item">
+          <td class="main-link" itemprop='itemListElement' itemscope itemtype='http://schema.org/ListItem'>
+            <meta itemprop='position' content='30'>
+            <span class="link-top-line">
+              <a itemprop='url' href='https://users.rust-lang.org/t/armstrong-numbers/141021' class='title raw-link raw-topic-link'>Armstrong Numbers</a>
+            </span>
+            <div class="link-bottom-line">
+                <a href='/c/code-review/11' class='badge-wrapper bullet'>
+                  <span class='badge-category-bg' style='background-color: #008ec2'></span>
+                  <span class='badge-category clear-badge'>
+                    <span class='category-name'>code review</span>
+                  </span>
+                </a>
+                <div class="discourse-tags">
+                </div>
+            </div>
+          </td>
+          <td class='posters'>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/keyko" class="latest">
+                <img width="25" height="25" src="https://avatars.discourse-cdn.com/v4/letter/k/a8b319/25.png" class="avatar" title='keyko - Original Poster, Most Recent Poster' aria-label='keyko - Original Poster, Most Recent Poster'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/ProgramCrafter" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/programcrafter/25/45916_2.png" class="avatar" title='ProgramCrafter - Frequent Poster, Accepted Answer' aria-label='ProgramCrafter - Frequent Poster, Accepted Answer'>
+              </a>
+              <a rel='nofollow' href="https://users.rust-lang.org/u/giocri" class="">
+                <img width="25" height="25" src="/user_avatar/users.rust-lang.org/giocri/25/49821_2.png" class="avatar" title='giocri - Frequent Poster' aria-label='giocri - Frequent Poster'>
+              </a>
+          </td>
+          <td class="replies">
+            <span class='posts' title='posts'>6</span>
+          </td>
+          <td class="views">
+            <span class='views' title='views'>215</span>
+          </td>
+          <td>
+            July 1, 2026
+          </td>
+        </tr>
+    </tbody>
+
+  </table>
+</div>
+
+  <div class="navigation" role='navigation' itemscope itemtype='http://schema.org/SiteNavigationElement'>
+      <span itemprop='name'><b><a href='/latest?no_definitions=true&amp;page=1' rel='next' itemprop='url'>next page →</a></b></span>
+  </div>
+
+ <!-- include_crawler_content? -->
+
+
+
+
+    </div>
+    <footer class="container wrap">
+  <nav class='crawler-nav'>
+    <ul>
+      <li itemscope itemtype='http://schema.org/SiteNavigationElement'>
+        <span itemprop='name'>
+          <a href='/' itemprop="url">Home </a>
+        </span>
+      </li>
+      <li itemscope itemtype='http://schema.org/SiteNavigationElement'>
+        <span itemprop='name'>
+          <a href='/categories' itemprop="url">Categories </a>
+        </span>
+      </li>
+      <li itemscope itemtype='http://schema.org/SiteNavigationElement'>
+        <span itemprop='name'>
+          <a href='/guidelines' itemprop="url">Guidelines </a>
+        </span>
+      </li>
+        <li itemscope itemtype='http://schema.org/SiteNavigationElement'>
+          <span itemprop='name'>
+            <a href='/tos' itemprop="url">Terms of Service </a>
+          </span>
+        </li>
+    </ul>
+  </nav>
+  <p class='powered-by-link'>Powered by <a href="https://www.discourse.org">Discourse</a>, best viewed with JavaScript enabled</p>
+</footer>
+
+    
+    
+  </body>
+  
+</html>

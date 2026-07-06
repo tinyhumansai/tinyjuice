@@ -31,7 +31,7 @@ use crate::pipeline::{
 };
 use crate::policy::{ShellCompactionPolicy, ShellPolicyDecision, apply_shell_compaction_policy};
 use crate::savings;
-use crate::tokens::estimate_tokens;
+use crate::tokens::estimate_tokens_with;
 use crate::types::{
     CompressInput, CompressOptions, CompressOutput, CompressedOutput, ContentHint, ContentKind,
     ReadIntent,
@@ -153,21 +153,23 @@ pub async fn route_with_store_report_shell_policy(
     let content = input.content;
     let original_bytes = content.len();
 
-    if !opts.router_enabled {
-        let kind = detect_content_kind(content, input.hint);
+    let log_floor = opts
+        .min_bytes_to_compress_log
+        .min(opts.min_bytes_to_compress);
+    if !opts.router_enabled || original_bytes < log_floor {
+        let kind = if opts.router_enabled {
+            input.hint.explicit.unwrap_or(ContentKind::PlainText)
+        } else {
+            detect_content_kind(content, input.hint)
+        };
         let res = CompressedOutput::passthrough(content.to_string(), kind);
-        let report =
-            PipelineReport::passthrough(kind, original_bytes, PipelineSkipReason::RouterDisabled)
-                .with_bloat_estimate(estimate_bloat(content, kind));
-        return (res, report);
-    }
-
-    if original_bytes < opts.min_bytes_to_compress {
-        let kind = detect_content_kind(content, input.hint);
-        let res = CompressedOutput::passthrough(content.to_string(), kind);
-        let report =
-            PipelineReport::passthrough(kind, original_bytes, PipelineSkipReason::BelowMinBytes)
-                .with_bloat_estimate(estimate_bloat(content, kind));
+        let skip = if opts.router_enabled {
+            PipelineSkipReason::BelowMinBytes
+        } else {
+            PipelineSkipReason::RouterDisabled
+        };
+        let report = PipelineReport::passthrough(kind, original_bytes, skip)
+            .with_bloat_estimate(estimate_bloat(content, kind));
         return (res, report);
     }
 
@@ -216,8 +218,8 @@ pub async fn route_with_store_report_shell_policy(
         return (res, report);
     }
     input.kind = kind;
-    let original_tokens = estimate_tokens(content);
-    let ccr_for_call = opts.ccr_enabled && original_tokens as usize >= opts.ccr_min_tokens;
+    let original_tokens = estimate_tokens_with(content, opts.chars_per_token);
+    let ccr_for_typed = opts.ccr_enabled && original_tokens as usize >= opts.ccr_min_tokens;
 
     if let Some((res, report)) = try_typed_route(
         &input,
@@ -225,9 +227,26 @@ pub async fn route_with_store_report_shell_policy(
         store,
         bloat_estimate,
         original_tokens,
-        ccr_for_call,
+        ccr_for_typed,
     ) {
         return (res, report);
+    }
+
+    // Between the log floor and the global floor only log-like content
+    // proceeds: detected logs, or command output headed for the rule engine.
+    // Everything else keeps the historical global floor.
+    if original_bytes < opts.min_bytes_to_compress {
+        let log_like = kind == ContentKind::Log || input.command.is_some();
+        if !log_like || original_bytes < opts.min_bytes_to_compress_log {
+            let res = CompressedOutput::passthrough(content.to_string(), kind);
+            let report = PipelineReport::passthrough(
+                kind,
+                original_bytes,
+                PipelineSkipReason::BelowMinBytes,
+            )
+            .with_bloat_estimate(bloat_estimate);
+            return (res, report);
+        }
     }
 
     // Resolve which compressor to try, honouring per-kind config gates.
@@ -267,11 +286,12 @@ pub async fn route_with_store_report_shell_policy(
         return (res, report);
     }
 
-    // CCR threshold: only offload (and therefore only allow *lossy* compaction)
-    // when the input is large enough to be worth caching. Below the token
-    // threshold a lossy result can't be made recoverable, so pass it through;
-    // lossless reformats are still allowed without an offload.
-    if out.lossy && !ccr_for_call {
+    let compacted_body_tokens = estimate_tokens_with(&out.text, opts.chars_per_token);
+    let heavy_crush = compacted_body_tokens <= original_tokens / 2
+        && original_tokens as usize >= opts.ccr_min_tokens / 4;
+    let ccr_for_call =
+        opts.ccr_enabled && (original_tokens as usize >= opts.ccr_min_tokens || heavy_crush);
+    if out.lossy && !ccr_for_call && !opts.lossy_without_ccr {
         let res = CompressedOutput::passthrough(content.to_string(), kind);
         let report =
             PipelineReport::passthrough(kind, original_bytes, PipelineSkipReason::CcrDisabled)
@@ -331,9 +351,9 @@ pub async fn route_with_store_report_shell_policy(
     };
 
     let compacted_bytes = text.len();
-    let compacted_tokens = estimate_tokens(&text);
+    let compacted_tokens = estimate_tokens_with(&text, opts.chars_per_token);
     log::info!(
-        "[tokenjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
+        "[tinyjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
         kind.as_str(),
         out.kind.as_str(),
         out.lossy,
@@ -532,7 +552,7 @@ fn finalize_typed_output(
     };
 
     let compacted_bytes = text.len();
-    let compacted_tokens = estimate_tokens(&text);
+    let compacted_tokens = estimate_tokens_with(&text, 4.0);
     log::info!(
         "[tokenjuice] compacted kind={} compressor={} lossy={} {}->{} bytes (~{}->{} tok)",
         input.kind.as_str(),
@@ -644,7 +664,7 @@ mod tests {
         let token = res.ccr_token.expect("offloaded");
         assert_eq!(cache::retrieve(&token).as_deref(), Some(original.as_str()));
         assert!(
-            res.text.contains("⟦tj:"),
+            res.text.contains("tinyjuice_retrieve"),
             "footer marker present: {}",
             res.text
         );
@@ -732,8 +752,14 @@ mod tests {
             .recovery_footer
             .as_deref()
             .expect("offloaded output exposes footer");
-        assert!(!res.body.contains("⟦tj:"), "body must not contain footer");
-        assert!(footer.contains("⟦tj:"), "footer carries marker: {footer}");
+        assert!(
+            !res.body.contains("tinyjuice_retrieve"),
+            "body must not contain footer"
+        );
+        assert!(
+            footer.contains("tinyjuice_retrieve"),
+            "footer carries marker: {footer}"
+        );
         assert_eq!(res.text, format!("{}{}", res.body, footer));
         assert_eq!(res.compacted_bytes, res.text.len());
     }
@@ -1007,6 +1033,312 @@ mod tests {
         assert!(res.applied);
         assert_eq!(res.content_kind, ContentKind::Html);
         assert!(res.text.contains("cell number 7 content"));
+    }
+
+    fn big_json_array() -> String {
+        let mut rows = Vec::new();
+        for i in 0..120 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"account_{i}","email":"a{i}@ex.com","tier":"gold"}}"#
+            ));
+        }
+        format!("[{}]", rows.join(","))
+    }
+
+    /// A log that the signal path *drops* down to its errors — a genuine
+    /// information-dropping payload (not a faithful reshape).
+    fn big_log() -> String {
+        let mut log = String::new();
+        for i in 0..200 {
+            if i == 137 {
+                log.push_str(&format!(
+                    "2026-07-05T09:00:00Z ERROR worker request failed: upstream timeout id={i}\n"
+                ));
+            } else {
+                log.push_str(&format!(
+                    "2026-07-05T09:00:00Z INFO worker handled request {i} in 20ms\n"
+                ));
+            }
+        }
+        log
+    }
+
+    fn log_hint() -> ContentHint {
+        ContentHint {
+            explicit: Some(ContentKind::Log),
+            ..Default::default()
+        }
+    }
+
+    /// The opt-in escape hatch still works: a host that sets
+    /// `lossy_without_ccr = true` gets marked-but-unrecoverable lossy output
+    /// when CCR is off.
+    #[tokio::test]
+    async fn lossy_compression_works_with_opt_in_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        o.lossy_without_ccr = true; // explicit opt-in, not the default
+        let original = big_log();
+        let res = compress_content(&original, Some(log_hint()), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Log);
+        assert!(res.applied, "opt-in lossy compression applies without CCR");
+        assert!(res.text.len() < original.len());
+        assert!(res.ccr_token.is_none(), "no recovery token without CCR");
+        assert!(
+            !res.text.contains("⟦tj:"),
+            "no dangling footer: {}",
+            res.text
+        );
+    }
+
+    /// The default may still apply lossless reformats when CCR is disabled; it
+    /// only declines information-dropping lossy output that cannot be recovered.
+    #[tokio::test]
+    async fn default_allows_lossless_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(!o.lossy_without_ccr, "default is strict");
+        let original = big_log();
+        let res = compress_content(&original, Some(log_hint()), &o).await;
+        assert!(res.applied, "lossless reformat should apply: {}", res.text);
+        assert!(!res.lossy, "without CCR output must not drop data");
+        assert!(res.ccr_token.is_none());
+        assert!(res.text.len() < original.len());
+    }
+
+    /// A large JSON array with CCR off declines lossy row sampling under the
+    /// strict default, because the sampled-away rows would not be recoverable.
+    #[tokio::test]
+    async fn json_declines_lossy_sampling_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(!o.lossy_without_ccr, "strict default");
+        let original = big_json_array();
+        let res = compress_content(&original, None, &o).await;
+        assert_eq!(res.content_kind, ContentKind::Json);
+        assert!(!res.applied, "unrecoverable lossy view declined: {res:?}");
+        assert_eq!(res.text, original);
+        assert!(res.ccr_token.is_none());
+    }
+
+    /// A faithful, information-preserving reshape (HTML extraction here) is not
+    /// lossy, so it ships even with CCR off — reshaping is always allowed, only
+    /// *dropping* needs a recovery path.
+    #[tokio::test]
+    async fn faithful_reshape_ships_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(!o.lossy_without_ccr);
+        let mut html = String::from("<html><head><title>Status</title></head><body>");
+        for i in 0..80 {
+            html.push_str(&format!(
+                "<div class=\"row\"><span>service {i} is healthy</span></div>"
+            ));
+        }
+        html.push_str("</body></html>");
+        let hint = ContentHint {
+            mime: Some("text/html".into()),
+            explicit: Some(ContentKind::Html),
+            ..Default::default()
+        };
+        let res = compress_content(&html, Some(hint), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Html);
+        assert!(
+            res.applied,
+            "faithful reshape ships without CCR: {}",
+            res.text
+        );
+        assert!(!res.lossy, "extraction is information-preserving");
+        assert!(res.ccr_token.is_none(), "no recovery needed for a reshape");
+        // Every service line's text survives the reshape.
+        for i in 0..80 {
+            assert!(
+                res.text.contains(&format!("service {i} is healthy")),
+                "row {i} kept: {}",
+                res.text
+            );
+        }
+    }
+
+    /// A collapsible source file with many long function bodies. Big enough to
+    /// clear the global floor and to have bodies worth collapsing.
+    fn big_code_file() -> String {
+        let mut src = String::from("use std::collections::HashMap;\n\n");
+        for f in 0..4 {
+            src.push_str(&format!("pub fn worker_{f}(items: &[i32]) -> i32 {{\n"));
+            for i in 0..30 {
+                src.push_str(&format!(
+                    "    let tmp_{f}_{i} = items.iter().sum::<i32>() + {i};\n"
+                ));
+            }
+            src.push_str(&format!("    tmp_{f}_0\n}}\n\n"));
+        }
+        src
+    }
+
+    fn code_hint() -> ContentHint {
+        ContentHint {
+            explicit: Some(ContentKind::Code),
+            extension: Some("rs".into()),
+            ..Default::default()
+        }
+    }
+
+    /// Code must never be cut when it can't be recovered: with CCR off and the
+    /// default options (`lossy_without_ccr = false`), collapsing a function
+    /// body drops information with no retrieval token, so the router passes the
+    /// source through verbatim instead.
+    #[tokio::test]
+    async fn code_is_not_cut_without_ccr() {
+        let mut o = opts();
+        o.ccr_enabled = false;
+        assert!(
+            !o.lossy_without_ccr,
+            "default declines info-dropping output without CCR"
+        );
+        let original = big_code_file();
+        let res = compress_content(&original, Some(code_hint()), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Code);
+        assert!(
+            !res.applied,
+            "unrecoverable code must pass through, not be cut: {}",
+            res.text
+        );
+        assert_eq!(res.text, original, "source returned verbatim");
+        assert!(
+            res.text.contains("tmp_1_15"),
+            "no body lines eaten: {}",
+            res.text
+        );
+    }
+
+    /// With CCR on, code still collapses — every omitted body is individually
+    /// retrievable, so cutting it is safe.
+    #[tokio::test]
+    async fn code_collapses_with_ccr() {
+        let o = opts();
+        assert!(o.ccr_enabled);
+        let original = big_code_file();
+        let res = compress_content(&original, Some(code_hint()), &o).await;
+        assert_eq!(res.content_kind, ContentKind::Code);
+        assert!(res.applied, "CCR makes the collapse recoverable");
+        assert!(res.text.len() < original.len());
+        assert!(res.text.contains("pub fn worker_0"), "signatures kept");
+        // Every collapsed body carries a per-block retrieval token.
+        let tokens = cache::parse_markers(&res.text);
+        assert!(
+            !tokens.is_empty(),
+            "recoverable tokens present: {}",
+            res.text
+        );
+        let body = cache::retrieve(&tokens[0]).expect("stored");
+        assert!(body.contains("tmp_0_15"), "full body recoverable: {body}");
+    }
+
+    #[tokio::test]
+    async fn small_log_above_log_floor_is_compressed() {
+        // Default floors: global 2048, log 512. A ~1.8 KB failure log sits
+        // between them and must still be compressed.
+        let mut log = String::new();
+        for i in 0..45 {
+            log.push_str(&format!("info sync {i}\n"));
+        }
+        for i in 0..60 {
+            log.push_str(&format!("error shard down {i}\n"));
+        }
+        assert!(log.len() > 512 && log.len() < 2048, "len={}", log.len());
+
+        let res = compress_content(&log, None, &CompressOptions::default()).await;
+        assert!(res.applied, "small log must compress: {res:?}");
+        assert_eq!(res.content_kind, ContentKind::Log);
+        assert!(res.text.len() < log.len());
+    }
+
+    #[tokio::test]
+    async fn small_command_output_above_log_floor_runs_rules() {
+        // Command output between the log floor and the global floor still
+        // reaches the rule engine.
+        let mut lines = vec!["On branch main".to_string()];
+        for index in 0..30 {
+            lines.push(format!("\tmodified:   src/some_module/file_{index}.rs"));
+        }
+        let content = lines.join("\n");
+        assert!(content.len() > 512 && content.len() < 2048);
+        let hint = ContentHint::default();
+        let input = CompressInput {
+            content: &content,
+            kind: ContentKind::PlainText,
+            hint: &hint,
+            exit_code: Some(0),
+            command: Some("git status".to_string()),
+            argv: Some(vec!["git".to_string(), "status".to_string()]),
+            original_bytes: content.len(),
+        };
+        let res = route(input, &CompressOptions::default()).await;
+        assert!(res.applied, "command output must compress: {res:?}");
+        assert!(res.text.len() < content.len());
+    }
+
+    #[tokio::test]
+    async fn small_json_below_global_floor_can_reformat_losslessly() {
+        // Typed lossless reformats are allowed before the global lossy floor.
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"account_{i}","email":"a{i}@ex.com","tier":"gold"}}"#
+            ));
+        }
+        let original = format!("[{}]", rows.join(","));
+        assert!(original.len() > 512 && original.len() < 2048);
+        let res = compress_content(&original, None, &CompressOptions::default()).await;
+        assert!(res.applied, "small JSON can reformat: {res:?}");
+        assert!(!res.lossy);
+        assert!(res.ccr_token.is_none());
+        assert!(res.text.len() < original.len());
+    }
+
+    #[tokio::test]
+    async fn tiny_log_below_log_floor_passes_through() {
+        let log = "error failed to start\nwarning low disk\n".repeat(3);
+        assert!(log.len() < 512);
+        let res = compress_content(&log, None, &CompressOptions::default()).await;
+        assert!(!res.applied);
+        assert_eq!(res.text, log);
+    }
+
+    #[tokio::test]
+    async fn heavy_crush_below_ccr_min_tokens_can_apply_losslessly() {
+        // ~470 estimated tokens — under the flat ccr_min_tokens (500) but well
+        // over its quarter — crushed to less than half the tokens: the
+        // ratio-aware gate must offload so the original stays retrievable.
+        let mut o = opts();
+        assert_eq!(o.ccr_min_tokens, 500);
+        o.min_bytes_to_compress = 64;
+        // Long repeated keys, short values: the tabular re-render (keys
+        // emitted once) crushes this to well under half the tokens.
+        let mut rows = Vec::new();
+        for i in 0..18 {
+            rows.push(format!(
+                r#"{{"identifier":{i},"account_name":"a{i}","email_address":"a{i}@x.io","subscription_tier":"g","current_status":"ok"}}"#
+            ));
+        }
+        let original = format!("[{}]", rows.join(","));
+        let original_tokens = crate::tokens::estimate_tokens(&original) as usize;
+        assert!(
+            (125..500).contains(&original_tokens),
+            "tokens={original_tokens}"
+        );
+        let res = compress_content(&original, None, &o).await;
+        assert!(res.applied, "response: {res:?}");
+        if res.lossy {
+            let token = res.ccr_token.expect("lossy output must offload");
+            assert_eq!(cache::retrieve(&token).as_deref(), Some(original.as_str()));
+        } else {
+            assert!(
+                res.ccr_token.is_none(),
+                "lossless output should not require recovery"
+            );
+        }
     }
 
     #[tokio::test]

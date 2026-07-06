@@ -13,7 +13,7 @@
     "contains": [
       "needle_value",
       "search omitted",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "helper_function_number_59"

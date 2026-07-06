@@ -1,0 +1,61 @@
+--- input/input.log
++++ output/output.log
+@@ -1,52 +1,15 @@
+-11:49:42 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+-Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+-  banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+-    'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+-    "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+-    'globalThis.global = globalThis.global || __global_polyfill\n' +
+-    "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+-    'globalThis.process = globalThis.process || __process_polyfill\n'
+-}`
+-
+- RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+-
+-stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx
+-[MockServer] Listening on http://127.0.0.1:5005
+-
+-stdout | src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx
+-[MockServer] Stopped
+-
++exit 101
++2 failed suites, 4 failures
++RUN  v4.1.5 <OPENHUMAN_ROOT>/app
+  ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx (9 tests | 1 failed) 80ms
+-     × per-kind spinner: only the triggering kind spins 8ms
+-
+ ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+-
+  FAIL  src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx > IntelligenceSubconsciousTab > per-kind spinner: only the triggering kind spins
+-Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+-
+-[31mexpected document not to contain element, found <button
+-  class="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-none bg-surface text-content border border-line-strong hover:bg-surface-hover focus-visible:ring-primary-500/25 h-[30px] px-3 text-sm rounded-md"
+-  disabled=""
+-  type="button"
+->
+-  <div
+-    class="w-3 h-3 border border-stone-400 border-t-transparent rounded-full animate-spin"
+-  />
+-  Run review now
+-</button> instead[39m
++Error: expect(element).not.toBeInTheDocument()
+  ❯ src/components/intelligence/__tests__/IntelligenceSubconsciousTab.test.tsx:144:54
+-    142|     // Memory card's Run button is enabled; tinyplace's shows a spinne…
+-    143|     expect(screen.getByText('Run Now')).toBeEnabled();
+-    144|     expect(screen.queryByText('Run review now')).not.toBeInTheDocument…
+-       |                                                      ^
+-    145|   });
+-    146| });
+-
+ ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+-
+-
+  Test Files  1 failed (1)
+       Tests  1 failed | 8 passed (9)
+    Start at  23:49:42
+    Duration  2.19s (transform 1.29s, setup 307ms, import 1.32s, tests 80ms, environment 403ms)
+ 
++[PARTIAL view — full original (2777 bytes): call tinyjuice_retrieve with token "86eb51aa134ea50382aa89d95827b1b5"]
+\ No newline at end of file

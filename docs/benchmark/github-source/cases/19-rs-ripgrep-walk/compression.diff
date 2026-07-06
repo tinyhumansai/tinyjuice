@@ -1,0 +1,1231 @@
+--- input/input.rs
++++ output/output.rs
+@@ -171,19 +171,9 @@
+     fn metadata(&self) -> Result<Metadata, Error> {
+         use self::DirEntryInner::*;
+         match *self {
+-            Stdin => {
+-                let err = Error::Io(io::Error::new(
+-                    io::ErrorKind::Other,
+-                    "<stdin> has no metadata",
+-                ));
+-                Err(err.with_path("<stdin>"))
+-            }
+-            Walkdir(ref x) => x.metadata().map_err(|err| {
+-                Error::Io(io::Error::from(err)).with_path(x.path())
+-            }),
+-            Raw(ref x) => x.metadata(),
++        { … 11 line(s) … ⟦tj:43f955610e667d7da4226476b29fe58e⟧ }
+         }
+-    }
++}
+ 
+     fn file_type(&self) -> Option<FileType> {
+         use self::DirEntryInner::*;
+@@ -253,16 +243,7 @@
+ }
+ 
+ impl std::fmt::Debug for DirEntryRaw {
+-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        // Leaving out FileType because it doesn't have a debug impl
+-        // in Rust 1.9. We could add it if we really wanted to by manually
+-        // querying each possibly file type. Meh. ---AG
+-        f.debug_struct("DirEntryRaw")
+-            .field("path", &self.path)
+-            .field("follow_link", &self.follow_link)
+-            .field("depth", &self.depth)
+-            .finish()
+-    }
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { … 10 line(s) … ⟦tj:3c4430a5d9c4b2454c5c675f8dfd63b3⟧ }
+ }
+ 
+ impl DirEntryRaw {
+@@ -335,37 +316,15 @@
+         depth: usize,
+         ent: &fs::DirEntry,
+         ty: fs::FileType,
+-    ) -> Result<DirEntryRaw, Error> {
+-        let md = ent.metadata().map_err(|err| {
+-            let err = Error::Io(io::Error::from(err)).with_path(ent.path());
+-            Error::WithDepth { depth, err: Box::new(err) }
+-        })?;
+-        Ok(DirEntryRaw {
+-            path: ent.path(),
+-            ty,
+-            follow_link: false,
+-            depth,
+-            metadata: md,
+-        })
+-    }
++    ) -> Result<DirEntryRaw, Error> { … 13 line(s) … ⟦tj:d672699b7f6f038d344550a245e5e82f⟧ }
+ 
+     #[cfg(unix)]
+     fn from_entry_os(
+         depth: usize,
+         ent: &fs::DirEntry,
+         ty: fs::FileType,
+-    ) -> Result<DirEntryRaw, Error> {
+-        use std::os::unix::fs::DirEntryExt;
++    ) -> Result<DirEntryRaw, Error> { … 11 line(s) … ⟦tj:561350c1b18f4fd97d8af647b6a6f092⟧ }
+ 
+-        Ok(DirEntryRaw {
+-            path: ent.path(),
+-            ty,
+-            follow_link: false,
+-            depth,
+-            ino: ent.ino(),
+-        })
+-    }
+-
+     // Placeholder implementation to allow compiling on non-standard platforms
+     // (e.g. wasm32).
+     #[cfg(not(any(windows, unix)))]
+@@ -385,37 +344,15 @@
+         depth: usize,
+         pb: PathBuf,
+         link: bool,
+-    ) -> Result<DirEntryRaw, Error> {
+-        let md =
+-            fs::metadata(&pb).map_err(|err| Error::Io(err).with_path(&pb))?;
+-        Ok(DirEntryRaw {
+-            path: pb,
+-            ty: md.file_type(),
+-            follow_link: link,
+-            depth,
+-            metadata: md,
+-        })
+-    }
++    ) -> Result<DirEntryRaw, Error> { … 11 line(s) … ⟦tj:65b392d05dc77277c888f4faa569d6ab⟧ }
+ 
+     #[cfg(unix)]
+     fn from_path(
+         depth: usize,
+         pb: PathBuf,
+         link: bool,
+-    ) -> Result<DirEntryRaw, Error> {
+-        use std::os::unix::fs::MetadataExt;
++    ) -> Result<DirEntryRaw, Error> { … 13 line(s) … ⟦tj:ec3fda4f4cb218e214f00201088ece54⟧ }
+ 
+-        let md =
+-            fs::metadata(&pb).map_err(|err| Error::Io(err).with_path(&pb))?;
+-        Ok(DirEntryRaw {
+-            path: pb,
+-            ty: md.file_type(),
+-            follow_link: link,
+-            depth,
+-            ino: md.ino(),
+-        })
+-    }
+-
+     // Placeholder implementation to allow compiling on non-standard platforms
+     // (e.g. wasm32).
+     #[cfg(not(any(windows, unix)))]
+@@ -503,17 +440,7 @@
+ struct Filter(Arc<dyn Fn(&DirEntry) -> bool + Send + Sync + 'static>);
+ 
+ impl std::fmt::Debug for WalkBuilder {
+-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        f.debug_struct("WalkBuilder")
+-            .field("paths", &self.paths)
+-            .field("ig_builder", &self.ig_builder)
+-            .field("max_depth", &self.max_depth)
+-            .field("max_filesize", &self.max_filesize)
+-            .field("follow_links", &self.follow_links)
+-            .field("threads", &self.threads)
+-            .field("skip", &self.skip)
+-            .finish()
+-    }
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { … 11 line(s) … ⟦tj:3256791c89d910b55808e098f67175b0⟧ }
+ }
+ 
+ impl WalkBuilder {
+@@ -542,69 +469,16 @@
+     pub fn build(&self) -> Walk {
+         let follow_links = self.follow_links;
+         let max_depth = self.max_depth;
+-        let sorter = self.sorter.clone();
+-        let its = self
+-            .paths
+-            .iter()
+-            .map(move |p| {
+-                if p == Path::new("-") {
+-                    (p.to_path_buf(), None)
+-                } else {
+-                    let mut wd = WalkDir::new(p);
+-                    wd = wd.follow_links(follow_links || p.is_file());
+-                    wd = wd.same_file_system(self.same_file_system);
+-                    if let Some(max_depth) = max_depth {
+-                        wd = wd.max_depth(max_depth);
+-                    }
+-                    if let Some(ref sorter) = sorter {
+-                        match sorter.clone() {
+-                            Sorter::ByName(cmp) => {
+-                                wd = wd.sort_by(move |a, b| {
+-                                    cmp(a.file_name(), b.file_name())
+-                                });
+-                            }
+-                            Sorter::ByPath(cmp) => {
+-                                wd = wd.sort_by(move |a, b| {
+-                                    cmp(a.path(), b.path())
+-                                });
+-                            }
+-                        }
+-                    }
+-                    (p.to_path_buf(), Some(WalkEventIter::from(wd)))
+-                }
+-            })
+-            .collect::<Vec<_>>()
+-            .into_iter();
+-        let ig_root = self.ig_builder.build();
+-        Walk {
+-            its,
+-            it: None,
+-            ig_root: ig_root.clone(),
+-            ig: ig_root.clone(),
+-            max_filesize: self.max_filesize,
+-            skip: self.skip.clone(),
+-            filter: self.filter.clone(),
++        { … 42 line(s) … ⟦tj:238934a331e9839a14f1fe5cafd6b11e⟧ }
+         }
+-    }
++}
+ 
+     /// Build a new `WalkParallel` iterator.
+     ///
+     /// Note that this *doesn't* return something that implements `Iterator`.
+     /// Instead, the returned value must be run with a closure. e.g.,
+     /// `builder.build_parallel().run(|| |path| println!("{:?}", path))`.
+-    pub fn build_parallel(&self) -> WalkParallel {
+-        WalkParallel {
+-            paths: self.paths.clone().into_iter(),
+-            ig_root: self.ig_builder.build(),
+-            max_depth: self.max_depth,
+-            max_filesize: self.max_filesize,
+-            follow_links: self.follow_links,
+-            same_file_system: self.same_file_system,
+-            threads: self.threads,
+-            skip: self.skip.clone(),
+-            filter: self.filter.clone(),
+-        }
+-    }
++    pub fn build_parallel(&self) -> WalkParallel { … 13 line(s) … ⟦tj:cb9e012b5f12e2b88adf376f9943bcd6⟧ }
+ 
+     /// Add a file path to the iterator.
+     ///
+@@ -658,17 +532,9 @@
+     pub fn add_ignore<P: AsRef<Path>>(&mut self, path: P) -> Option<Error> {
+         let mut builder = GitignoreBuilder::new("");
+         let mut errs = PartialErrorBuilder::default();
+-        errs.maybe_push(builder.add(path));
+-        match builder.build() {
+-            Ok(gi) => {
+-                self.ig_builder.add_ignore(gi);
+-            }
+-            Err(err) => {
+-                errs.push(err);
+-            }
+-        }
++        { … 9 line(s) … ⟦tj:1a17ccde369651086919cecd399448cb⟧ }
+         errs.into_error_option()
+-    }
++}
+ 
+     /// Add a custom ignore file name
+     ///
+@@ -932,39 +798,10 @@
+     fn skip_entry(&self, ent: &DirEntry) -> Result<bool, Error> {
+         if ent.depth() == 0 {
+             return Ok(false);
+-        }
+-        // We ensure that trivial skipping is done before any other potentially
+-        // expensive operations (stat, filesystem other) are done. This seems
+-        // like an obvious optimization but becomes critical when filesystem
+-        // operations even as simple as stat can result in significant
+-        // overheads; an example of this was a bespoke filesystem layer in
+-        // Windows that hosted files remotely and would download them on-demand
+-        // when particular filesystem operations occurred. Users of this system
+-        // who ensured correct file-type filters were being used could still
+-        // get unnecessary file access resulting in large downloads.
+-        if should_skip_entry(&self.ig, ent) {
+-            return Ok(true);
+-        }
+-        if let Some(ref stdout) = self.skip {
+-            if path_equals(ent, stdout)? {
+-                return Ok(true);
+-            }
+-        }
+-        if self.max_filesize.is_some() && !ent.is_dir() {
+-            return Ok(skip_filesize(
+-                self.max_filesize.unwrap(),
+-                ent.path(),
+-                &ent.metadata().ok(),
+-            ));
+-        }
+-        if let Some(Filter(filter)) = &self.filter {
+-            if !filter(ent) {
+-                return Ok(true);
+-            }
+-        }
++        { … 30 line(s) … ⟦tj:3365202977034cf2bf5bbc5bf73a9920⟧ }
+         Ok(false)
+-    }
+ }
++}
+ 
+ impl Iterator for Walk {
+     type Item = Result<DirEntry, Error>;
+@@ -973,71 +810,10 @@
+     fn next(&mut self) -> Option<Result<DirEntry, Error>> {
+         loop {
+             let ev = match self.it.as_mut().and_then(|it| it.next()) {
+-                Some(ev) => ev,
+-                None => {
+-                    match self.its.next() {
+-                        None => return None,
+-                        Some((_, None)) => {
+-                            return Some(Ok(DirEntry::new_stdin()));
+-                        }
+-                        Some((path, Some(it))) => {
+-                            self.it = Some(it);
+-                            if path.is_dir() {
+-                                let (ig, err) = self.ig_root.add_parents(path);
+-                                self.ig = ig;
+-                                if let Some(err) = err {
+-                                    return Some(Err(err));
+-                                }
+-                            } else {
+-                                self.ig = self.ig_root.clone();
+-                            }
+-                        }
+-                    }
+-                    continue;
+-                }
+-            };
+-            match ev {
+-                Err(err) => {
+-                    return Some(Err(Error::from_walkdir(err)));
+-                }
+-                Ok(WalkEvent::Exit) => {
+-                    self.ig = self.ig.parent().unwrap();
+-                }
+-                Ok(WalkEvent::Dir(ent)) => {
+-                    let mut ent = DirEntry::new_walkdir(ent, None);
+-                    let should_skip = match self.skip_entry(&ent) {
+-                        Err(err) => return Some(Err(err)),
+-                        Ok(should_skip) => should_skip,
+-                    };
+-                    if should_skip {
+-                        self.it.as_mut().unwrap().it.skip_current_dir();
+-                        // Still need to push this on the stack because
+-                        // we'll get a WalkEvent::Exit event for this dir.
+-                        // We don't care if it errors though.
+-                        let (igtmp, _) = self.ig.add_child(ent.path());
+-                        self.ig = igtmp;
+-                        continue;
+-                    }
+-                    let (igtmp, err) = self.ig.add_child(ent.path());
+-                    self.ig = igtmp;
+-                    ent.err = err;
+-                    return Some(Ok(ent));
+-                }
+-                Ok(WalkEvent::File(ent)) => {
+-                    let ent = DirEntry::new_walkdir(ent, None);
+-                    let should_skip = match self.skip_entry(&ent) {
+-                        Err(err) => return Some(Err(err)),
+-                        Ok(should_skip) => should_skip,
+-                    };
+-                    if should_skip {
+-                        continue;
+-                    }
+-                    return Some(Ok(ent));
+-                }
+-            }
++        { … 62 line(s) … ⟦tj:694e79738c3db7d30b22c6f3939bfcad⟧ }
+         }
+-    }
+ }
++}
+ 
+ impl std::iter::FusedIterator for Walk {}
+ 
+@@ -1071,30 +847,10 @@
+     fn next(&mut self) -> Option<walkdir::Result<WalkEvent>> {
+         let dent = self.next.take().or_else(|| self.it.next());
+         let depth = match dent {
+-            None => 0,
+-            Some(Ok(ref dent)) => dent.depth(),
+-            Some(Err(ref err)) => err.depth(),
+-        };
+-        if depth < self.depth {
+-            self.depth -= 1;
+-            self.next = dent;
+-            return Some(Ok(WalkEvent::Exit));
++        { … 21 line(s) … ⟦tj:f8dffda73b0c637256492b80c441633a⟧ }
+         }
+-        self.depth = depth;
+-        match dent {
+-            None => None,
+-            Some(Err(err)) => Some(Err(err)),
+-            Some(Ok(dent)) => {
+-                if walkdir_is_dir(&dent) {
+-                    self.depth += 1;
+-                    Some(Ok(WalkEvent::Dir(dent)))
+-                } else {
+-                    Some(Ok(WalkEvent::File(dent)))
+-                }
+-            }
+-        }
+-    }
+ }
++}
+ 
+ /// WalkState is used in the parallel recursive directory iterator to indicate
+ /// whether walking should continue as normal, skip descending into a
+@@ -1229,79 +985,9 @@
+     pub fn visit(mut self, builder: &mut dyn ParallelVisitorBuilder<'_>) {
+         let threads = self.threads();
+         let mut stack = vec![];
+-        {
+-            let mut visitor = builder.build();
+-            let mut paths = Vec::new().into_iter();
+-            std::mem::swap(&mut paths, &mut self.paths);
+-            // Send the initial set of root paths to the pool of workers. Note
+-            // that we only send directories. For files, we send to them the
+-            // callback directly.
+-            for path in paths {
+-                let (dent, root_device) = if path == Path::new("-") {
+-                    (DirEntry::new_stdin(), None)
+-                } else {
+-                    let root_device = if !self.same_file_system {
+-                        None
+-                    } else {
+-                        match device_num(&path) {
+-                            Ok(root_device) => Some(root_device),
+-                            Err(err) => {
+-                                let err = Error::Io(err).with_path(path);
+-                                if visitor.visit(Err(err)).is_quit() {
+-                                    return;
+-                                }
+-                                continue;
+-                            }
+-                        }
+-                    };
+-                    match DirEntryRaw::from_path(0, path, false) {
+-                        Ok(dent) => {
+-                            (DirEntry::new_raw(dent, None), root_device)
+-                        }
+-                        Err(err) => {
+-                            if visitor.visit(Err(err)).is_quit() {
+-                                return;
+-                            }
+-                            continue;
+-                        }
+-                    }
+-                };
+-                stack.push(Message::Work(Work {
+-                    dent,
+-                    ignore: self.ig_root.clone(),
+-                    root_device,
+-                }));
+-            }
+-            // ... but there's no need to start workers if we don't need them.
+-            if stack.is_empty() {
+-                return;
+-            }
+-        }
+-        // Create the workers and then wait for them to finish.
+-        let quit_now = Arc::new(AtomicBool::new(false));
+-        let active_workers = Arc::new(AtomicUsize::new(threads));
+-        let stacks = Stack::new_for_each_thread(threads, stack);
+-        std::thread::scope(|s| {
+-            let handles: Vec<_> = stacks
+-                .into_iter()
+-                .map(|stack| Worker {
+-                    visitor: builder.build(),
+-                    stack,
+-                    quit_now: quit_now.clone(),
+-                    active_workers: active_workers.clone(),
+-                    max_depth: self.max_depth,
+-                    max_filesize: self.max_filesize,
+-                    follow_links: self.follow_links,
+-                    skip: self.skip.clone(),
+-                    filter: self.filter.clone(),
+-                })
+-                .map(|worker| s.spawn(|| worker.run()))
+-                .collect();
+-            for handle in handles {
+-                handle.join().unwrap();
+-            }
++        { … 71 line(s) … ⟦tj:39094ee48c4950d279bf3b5c5ecf00be⟧ }
+         });
+-    }
++}
+ 
+     fn threads(&self) -> usize {
+         if self.threads == 0 {
+@@ -1351,16 +1037,7 @@
+     ///
+     /// Note that this only applies to entries at depth 0. On all other
+     /// entries, this is a no-op.
+-    fn add_parents(&mut self) -> Option<Error> {
+-        if self.dent.depth() > 0 {
+-            return None;
+-        }
+-        // At depth 0, the path of this entry is a root path, so we can
+-        // use it directly to add parent ignore rules.
+-        let (ig, err) = self.ignore.add_parents(self.dent.path());
+-        self.ignore = ig;
+-        err
+-    }
++    fn add_parents(&mut self) -> Option<Error> { … 10 line(s) … ⟦tj:8e0de3db607490c57a6f1e22a2a0beb5⟧ }
+ 
+     /// Reads the directory contents of this work item and adds ignore
+     /// rules for this directory.
+@@ -1372,19 +1049,10 @@
+     fn read_dir(&mut self) -> Result<fs::ReadDir, Error> {
+         let readdir = match fs::read_dir(self.dent.path()) {
+             Ok(readdir) => readdir,
+-            Err(err) => {
+-                let err = Error::from(err)
+-                    .with_path(self.dent.path())
+-                    .with_depth(self.dent.depth());
+-                return Err(err);
+-            }
+-        };
+-        let (ig, err) = self.ignore.add_child(self.dent.path());
+-        self.ignore = ig;
+-        self.dent.err = err;
++        { … 10 line(s) … ⟦tj:87f6f774d0ffb4bf07b19e3b909a506b⟧ }
+         Ok(readdir)
+-    }
+ }
++}
+ 
+ /// A work-stealing stack.
+ #[derive(Debug)]
+@@ -1404,28 +1072,9 @@
+     fn new_for_each_thread(threads: usize, init: Vec<Message>) -> Vec<Stack> {
+         // Using new_lifo() ensures each worker operates depth-first, not
+         // breadth-first. We do depth-first because a breadth first traversal
+-        // on wide directories with a lot of gitignores is disastrous (for
+-        // example, searching a directory tree containing all of crates.io).
+-        let deques: Vec<Deque<Message>> =
+-            std::iter::repeat_with(Deque::new_lifo).take(threads).collect();
+-        let stealers = Arc::<[Stealer<Message>]>::from(
+-            deques.iter().map(Deque::stealer).collect::<Vec<_>>(),
+-        );
+-        let stacks: Vec<Stack> = deques
+-            .into_iter()
+-            .enumerate()
+-            .map(|(index, deque)| Stack {
+-                index,
+-                deque,
+-                stealers: stealers.clone(),
+-            })
+-            .collect();
+-        // Distribute the initial messages.
+-        init.into_iter()
+-            .zip(stacks.iter().cycle())
+-            .for_each(|(m, s)| s.push(m));
++        { … 20 line(s) … ⟦tj:217a98d265a0be85c24a0b1ee0c0f215⟧ }
+         stacks
+-    }
++}
+ 
+     /// Push a message.
+     fn push(&self, msg: Message) {
+@@ -1438,19 +1087,7 @@
+     }
+ 
+     /// Steal a message from another queue.
+-    fn steal(&self) -> Option<Message> {
+-        // For fairness, try to steal from index + 1, index + 2, ... len - 1,
+-        // then wrap around to 0, 1, ... index - 1.
+-        let (left, right) = self.stealers.split_at(self.index);
+-        // Don't steal from ourselves
+-        let right = &right[1..];
+-
+-        right
+-            .iter()
+-            .chain(left.iter())
+-            .map(|s| s.steal_batch_and_pop(&self.deque))
+-            .find_map(|s| s.success())
+-    }
++    fn steal(&self) -> Option<Message> { … 13 line(s) … ⟦tj:bdcda5015cc8e0f72e5d5247a51e390c⟧ }
+ }
+ 
+ /// A worker is responsible for descending into directories, updating the
+@@ -1506,71 +1143,9 @@
+     fn run_one(&mut self, mut work: Work) -> WalkState {
+         // If the work is not a directory, then we can just execute the
+         // caller's callback immediately and move on.
+-        if work.is_symlink() || !work.is_dir() {
+-            return self.visitor.visit(Ok(work.dent));
+-        }
+-        if let Some(err) = work.add_parents() {
+-            let state = self.visitor.visit(Err(err));
+-            if state.is_quit() {
+-                return state;
+-            }
+-        }
+-
+-        let descend = if let Some(root_device) = work.root_device {
+-            match is_same_file_system(root_device, work.dent.path()) {
+-                Ok(true) => true,
+-                Ok(false) => false,
+-                Err(err) => {
+-                    let state = self.visitor.visit(Err(err));
+-                    if state.is_quit() {
+-                        return state;
+-                    }
+-                    false
+-                }
+-            }
+-        } else {
+-            true
+-        };
+-
+-        // Try to read the directory first before we transfer ownership
+-        // to the provided closure. Do not unwrap it immediately, though,
+-        // as we may receive an `Err` value e.g. in the case when we do not
+-        // have sufficient read permissions to list the directory.
+-        // In that case we still want to provide the closure with a valid
+-        // entry before passing the error value.
+-        let readdir = work.read_dir();
+-        let depth = work.dent.depth();
+-        let state = self.visitor.visit(Ok(work.dent));
+-        if !state.is_continue() {
+-            return state;
+-        }
+-        if !descend {
+-            return WalkState::Skip;
+-        }
+-
+-        let readdir = match readdir {
+-            Ok(readdir) => readdir,
+-            Err(err) => {
+-                return self.visitor.visit(Err(err));
+-            }
+-        };
+-
+-        if self.max_depth.map_or(false, |max| depth >= max) {
+-            return WalkState::Skip;
+-        }
+-        for result in readdir {
+-            let state = self.generate_work(
+-                &work.ignore,
+-                depth + 1,
+-                work.root_device,
+-                result,
+-            );
+-            if state.is_quit() {
+-                return state;
+-            }
+-        }
++        { … 63 line(s) … ⟦tj:a791a078e335ff9e67403dd9e2a81fe0⟧ }
+         WalkState::Continue
+-    }
++}
+ 
+     /// Decides whether to submit the given directory entry as a file to
+     /// search.
+@@ -1594,68 +1169,9 @@
+     ) -> WalkState {
+         let fs_dent = match result {
+             Ok(fs_dent) => fs_dent,
+-            Err(err) => {
+-                return self
+-                    .visitor
+-                    .visit(Err(Error::from(err).with_depth(depth)));
+-            }
+-        };
+-        let mut dent = match DirEntryRaw::from_entry(depth, &fs_dent) {
+-            Ok(dent) => DirEntry::new_raw(dent, None),
+-            Err(err) => {
+-                return self.visitor.visit(Err(err));
+-            }
+-        };
+-        let is_symlink = dent.file_type().map_or(false, |ft| ft.is_symlink());
+-        if self.follow_links && is_symlink {
+-            let path = dent.path().to_path_buf();
+-            dent = match DirEntryRaw::from_path(depth, path, true) {
+-                Ok(dent) => DirEntry::new_raw(dent, None),
+-                Err(err) => {
+-                    return self.visitor.visit(Err(err));
+-                }
+-            };
+-            if dent.is_dir() {
+-                if let Err(err) = check_symlink_loop(ig, dent.path(), depth) {
+-                    return self.visitor.visit(Err(err));
+-                }
+-            }
+-        }
+-        // N.B. See analogous call in the single-threaded implementation about
+-        // why it's important for this to come before the checks below.
+-        if should_skip_entry(ig, &dent) {
+-            return WalkState::Continue;
+-        }
+-        if let Some(ref stdout) = self.skip {
+-            let is_stdout = match path_equals(&dent, stdout) {
+-                Ok(is_stdout) => is_stdout,
+-                Err(err) => return self.visitor.visit(Err(err)),
+-            };
+-            if is_stdout {
+-                return WalkState::Continue;
+-            }
+-        }
+-        let should_skip_filesize =
+-            if self.max_filesize.is_some() && !dent.is_dir() {
+-                skip_filesize(
+-                    self.max_filesize.unwrap(),
+-                    dent.path(),
+-                    &dent.metadata().ok(),
+-                )
+-            } else {
+-                false
+-            };
+-        let should_skip_filtered =
+-            if let Some(Filter(predicate)) = &self.filter {
+-                !predicate(&dent)
+-            } else {
+-                false
+-            };
+-        if !should_skip_filesize && !should_skip_filtered {
+-            self.send(Work { dent, ignore: ig.clone(), root_device });
+-        }
++        { … 60 line(s) … ⟦tj:ba852bfbf64881e9bcaee2dd20202dfa⟧ }
+         WalkState::Continue
+-    }
++}
+ 
+     /// Returns the next directory to descend into.
+     ///
+@@ -1664,51 +1180,9 @@
+     fn get_work(&mut self) -> Option<Work> {
+         let mut value = self.recv();
+         loop {
+-            // Simulate a priority channel: If quit_now flag is set, we can
+-            // receive only quit messages.
+-            if self.is_quit_now() {
+-                value = Some(Message::Quit)
+-            }
+-            match value {
+-                Some(Message::Work(work)) => {
+-                    return Some(work);
+-                }
+-                Some(Message::Quit) => {
+-                    // Repeat quit message to wake up sleeping threads, if
+-                    // any. The domino effect will ensure that every thread
+-                    // will quit.
+-                    self.send_quit();
+-                    return None;
+-                }
+-                None => {
+-                    if self.deactivate_worker() == 0 {
+-                        // If deactivate_worker() returns 0, every worker thread
+-                        // is currently within the critical section between the
+-                        // acquire in deactivate_worker() and the release in
+-                        // activate_worker() below.  For this to happen, every
+-                        // worker's local deque must be simultaneously empty,
+-                        // meaning there is no more work left at all.
+-                        self.send_quit();
+-                        return None;
+-                    }
+-                    // Wait for next `Work` or `Quit` message.
+-                    loop {
+-                        if let Some(v) = self.recv() {
+-                            self.activate_worker();
+-                            value = Some(v);
+-                            break;
+-                        }
+-                        // Our stack isn't blocking. Instead of burning the
+-                        // CPU waiting, we let the thread sleep for a bit. In
+-                        // general, this tends to only occur once the search is
+-                        // approaching termination.
+-                        let dur = std::time::Duration::from_millis(1);
+-                        std::thread::sleep(dur);
+-                    }
+-                }
+-            }
++        { … 43 line(s) … ⟦tj:aae38a96bfad6e06c10b3023e87d9399⟧ }
+         }
+-    }
++}
+ 
+     /// Indicates that all workers should quit immediately.
+     fn quit_now(&self) {
+@@ -1753,19 +1227,7 @@
+ ) -> Result<(), Error> {
+     let hchild = Handle::from_path(child_path).map_err(|err| {
+         Error::from(err).with_path(child_path).with_depth(child_depth)
+-    })?;
+-    for ig in ig_parent.parents().take_while(|ig| !ig.is_absolute_parent()) {
+-        let h = Handle::from_path(ig.path()).map_err(|err| {
+-            Error::from(err).with_path(child_path).with_depth(child_depth)
+-        })?;
+-        if hchild == h {
+-            return Err(Error::Loop {
+-                ancestor: ig.path().to_path_buf(),
+-                child: child_path.to_path_buf(),
+-            }
+-            .with_depth(child_depth));
+-        }
+-    }
++    { … 13 line(s) … ⟦tj:40ccefeee7801b80f13949bc8f43887f⟧ }
+     Ok(())
+ }
+ 
+@@ -1778,33 +1240,11 @@
+ ) -> bool {
+     let filesize = match *ent {
+         Some(ref md) => Some(md.len()),
+-        None => None,
+-    };
+-
+-    if let Some(fs) = filesize {
+-        if fs > max_filesize {
+-            log::debug!("ignoring {}: {} bytes", path.display(), fs);
+-            true
+-        } else {
+-            false
+-        }
+-    } else {
+-        false
++    { … 12 line(s) … ⟦tj:2f4205d43d7e2e1a8fc4d6371714ac1c⟧ }
+     }
+ }
+ 
+-fn should_skip_entry(ig: &Ignore, dent: &DirEntry) -> bool {
+-    let m = ig.matched_dir_entry(dent);
+-    if m.is_ignore() {
+-        log::debug!("ignoring {}: {:?}", dent.path().display(), m);
+-        true
+-    } else if m.is_whitelist() {
+-        log::debug!("whitelisting {}: {:?}", dent.path().display(), m);
+-        false
+-    } else {
+-        false
+-    }
+-}
++fn should_skip_entry(ig: &Ignore, dent: &DirEntry) -> bool { … 12 line(s) … ⟦tj:17edac0aaf2918b16fad310c2e4690b6⟧ }
+ 
+ /// Returns a handle to stdout for filtering search.
+ ///
+@@ -1816,15 +1256,7 @@
+ fn stdout_handle() -> Option<Handle> {
+     let h = match Handle::stdout() {
+         Err(_) => return None,
+-        Ok(h) => h,
+-    };
+-    let md = match h.as_file().metadata() {
+-        Err(_) => return None,
+-        Ok(md) => md,
+-    };
+-    if !md.is_file() {
+-        return None;
+-    }
++    { … 9 line(s) … ⟦tj:51276b868e2bc7c0bc3ffb92cafef698⟧ }
+     Some(h)
+ }
+ 
+@@ -1834,21 +1266,7 @@
+ fn path_equals(dent: &DirEntry, handle: &Handle) -> Result<bool, Error> {
+     #[cfg(unix)]
+     fn never_equal(dent: &DirEntry, handle: &Handle) -> bool {
+-        dent.ino() != Some(handle.ino())
+-    }
+-
+-    #[cfg(not(unix))]
+-    fn never_equal(_: &DirEntry, _: &Handle) -> bool {
+-        false
+-    }
+-
+-    // If we know for sure that these two things aren't equal, then avoid
+-    // the costly extra stat call to determine equality.
+-    if dent.is_stdin() || never_equal(dent, handle) {
+-        return Ok(false);
+-    }
+-    Handle::from_path(dent.path())
+-        .map(|h| &h == handle)
++    { … 15 line(s) … ⟦tj:58910a24d8ab1204bd8199ccb9f8a69b⟧ }
+         .map_err(|err| Error::Io(err).with_path(dent.path()))
+ }
+ 
+@@ -1943,51 +1361,21 @@
+     fn walk_collect(prefix: &Path, builder: &WalkBuilder) -> Vec<String> {
+         let mut paths = vec![];
+         for result in builder.build() {
+-            let dent = match result {
+-                Err(_) => continue,
+-                Ok(dent) => dent,
+-            };
+-            let path = dent.path().strip_prefix(prefix).unwrap();
+-            if path.as_os_str().is_empty() {
+-                continue;
+-            }
+-            paths.push(normal_path(path.to_str().unwrap()));
+-        }
+-        paths.sort();
++        { … 11 line(s) … ⟦tj:f02b09d3d3839511df1e5efcaae6e163⟧ }
+         paths
+-    }
++}
+ 
+     fn walk_collect_parallel(
+         prefix: &Path,
+         builder: &WalkBuilder,
+-    ) -> Vec<String> {
+-        let mut paths = vec![];
+-        for dent in walk_collect_entries_parallel(builder) {
+-            let path = dent.path().strip_prefix(prefix).unwrap();
+-            if path.as_os_str().is_empty() {
+-                continue;
+-            }
+-            paths.push(normal_path(path.to_str().unwrap()));
+-        }
+-        paths.sort();
+-        paths
+-    }
++    ) -> Vec<String> { … 12 line(s) … ⟦tj:bad13a3e95d62281ba0fd772925a3a50⟧ }
+ 
+     fn walk_collect_entries_parallel(builder: &WalkBuilder) -> Vec<DirEntry> {
+         let dents = Arc::new(Mutex::new(vec![]));
+         builder.build_parallel().run(|| {
+-            let dents = dents.clone();
+-            Box::new(move |result| {
+-                if let Ok(dent) = result {
+-                    dents.lock().unwrap().push(dent);
+-                }
+-                WalkState::Continue
+-            })
+-        });
+-
+-        let dents = dents.lock().unwrap();
++        { … 10 line(s) … ⟦tj:1e84b23f7f37a0758836ef2f2c66142f⟧ }
+         dents.to_vec()
+-    }
++}
+ 
+     fn mkpaths(paths: &[&str]) -> Vec<String> {
+         let mut paths: Vec<_> = paths.iter().map(|s| s.to_string()).collect();
+@@ -2007,220 +1395,85 @@
+     }
+ 
+     #[test]
+-    fn no_ignores() {
+-        let td = tmpdir();
+-        mkdirp(td.path().join("a/b/c"));
+-        mkdirp(td.path().join("x/y"));
+-        wfile(td.path().join("a/b/foo"), "");
+-        wfile(td.path().join("x/y/foo"), "");
++    fn no_ignores() { … 13 line(s) … ⟦tj:ed0c780d195e320c9a6f335724a58959⟧ }
+ 
+-        assert_paths(
+-            td.path(),
+-            &WalkBuilder::new(td.path()),
+-            &["x", "x/y", "x/y/foo", "a", "a/b", "a/b/foo", "a/b/c"],
+-        );
+-    }
+-
+     #[test]
+     fn custom_ignore() {
+         let td = tmpdir();
+         let custom_ignore = ".customignore";
+-        mkdirp(td.path().join("a"));
+-        wfile(td.path().join(custom_ignore), "foo");
+-        wfile(td.path().join("foo"), "");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("bar"), "");
+-        wfile(td.path().join("a/bar"), "");
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        builder.add_custom_ignore_filename(&custom_ignore);
++        { … 9 line(s) … ⟦tj:3b4c79e8544f33f0c43530dbe72a5ff6⟧ }
+         assert_paths(td.path(), &builder, &["bar", "a", "a/bar"]);
+-    }
++}
+ 
+     #[test]
+     fn custom_ignore_exclusive_use() {
+         let td = tmpdir();
+         let custom_ignore = ".customignore";
+-        mkdirp(td.path().join("a"));
+-        wfile(td.path().join(custom_ignore), "foo");
+-        wfile(td.path().join("foo"), "");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("bar"), "");
+-        wfile(td.path().join("a/bar"), "");
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        builder.ignore(false);
+-        builder.git_ignore(false);
+-        builder.git_global(false);
+-        builder.git_exclude(false);
+-        builder.add_custom_ignore_filename(&custom_ignore);
++        { … 13 line(s) … ⟦tj:8cd32074d3ef10fd04e569c5d19b3e80⟧ }
+         assert_paths(td.path(), &builder, &["bar", "a", "a/bar"]);
+-    }
++}
+ 
+     #[test]
+     fn gitignore() {
+         let td = tmpdir();
+         mkdirp(td.path().join(".git"));
+-        mkdirp(td.path().join("a"));
+-        wfile(td.path().join(".gitignore"), "foo");
+-        wfile(td.path().join("foo"), "");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("bar"), "");
+-        wfile(td.path().join("a/bar"), "");
+-
+-        assert_paths(
+-            td.path(),
+-            &WalkBuilder::new(td.path()),
+-            &["bar", "a", "a/bar"],
++        { … 11 line(s) … ⟦tj:edb1b52a3a3e089f0d7b4ce0534e8b69⟧ }
+         );
+-    }
++}
+ 
+     #[test]
+     fn explicit_ignore() {
+         let td = tmpdir();
+         let igpath = td.path().join(".not-an-ignore");
+-        mkdirp(td.path().join("a"));
+-        wfile(&igpath, "foo");
+-        wfile(td.path().join("foo"), "");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("bar"), "");
+-        wfile(td.path().join("a/bar"), "");
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        assert!(builder.add_ignore(&igpath).is_none());
++        { … 9 line(s) … ⟦tj:a9b6ab0746a79de144cde4e00d2da97a⟧ }
+         assert_paths(td.path(), &builder, &["bar", "a", "a/bar"]);
+-    }
++}
+ 
+     #[test]
+     fn explicit_ignore_exclusive_use() {
+         let td = tmpdir();
+         let igpath = td.path().join(".not-an-ignore");
+-        mkdirp(td.path().join("a"));
+-        wfile(&igpath, "foo");
+-        wfile(td.path().join("foo"), "");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("bar"), "");
+-        wfile(td.path().join("a/bar"), "");
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        builder.standard_filters(false);
+-        assert!(builder.add_ignore(&igpath).is_none());
+-        assert_paths(
+-            td.path(),
+-            &builder,
+-            &[".not-an-ignore", "bar", "a", "a/bar"],
++        { … 14 line(s) … ⟦tj:b2cbddab96e634609073558bc8884608⟧ }
+         );
+-    }
++}
+ 
+     #[test]
+-    fn gitignore_parent() {
+-        let td = tmpdir();
+-        mkdirp(td.path().join(".git"));
+-        mkdirp(td.path().join("a"));
+-        wfile(td.path().join(".gitignore"), "foo");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("a/bar"), "");
++    fn gitignore_parent() { … 11 line(s) … ⟦tj:55ce5e505f8c6c5af9d642216f86d19c⟧ }
+ 
+-        let root = td.path().join("a");
+-        assert_paths(&root, &WalkBuilder::new(&root), &["bar"]);
+-    }
+-
+     #[test]
+     fn max_depth() {
+         let td = tmpdir();
+         mkdirp(td.path().join("a/b/c"));
+-        wfile(td.path().join("foo"), "");
+-        wfile(td.path().join("a/foo"), "");
+-        wfile(td.path().join("a/b/foo"), "");
+-        wfile(td.path().join("a/b/c/foo"), "");
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        assert_paths(
+-            td.path(),
+-            &builder,
+-            &["a", "a/b", "a/b/c", "foo", "a/foo", "a/b/foo", "a/b/c/foo"],
++        { … 17 line(s) … ⟦tj:7cb695d11a90f44eb89516e2097eab57⟧ }
+         );
+-        assert_paths(td.path(), builder.max_depth(Some(0)), &[]);
+-        assert_paths(td.path(), builder.max_depth(Some(1)), &["a", "foo"]);
+-        assert_paths(
+-            td.path(),
+-            builder.max_depth(Some(2)),
+-            &["a", "a/b", "foo", "a/foo"],
+-        );
+-    }
++}
+ 
+     #[test]
+     fn max_filesize() {
+         let td = tmpdir();
+         mkdirp(td.path().join("a/b"));
+-        wfile_size(td.path().join("foo"), 0);
+-        wfile_size(td.path().join("bar"), 400);
+-        wfile_size(td.path().join("baz"), 600);
+-        wfile_size(td.path().join("a/foo"), 600);
+-        wfile_size(td.path().join("a/bar"), 500);
+-        wfile_size(td.path().join("a/baz"), 200);
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        assert_paths(
+-            td.path(),
+-            &builder,
+-            &["a", "a/b", "foo", "bar", "baz", "a/foo", "a/bar", "a/baz"],
++        { … 27 line(s) … ⟦tj:b5de4c668d03fcae5a6e26742cb1d89c⟧ }
+         );
+-        assert_paths(
+-            td.path(),
+-            builder.max_filesize(Some(0)),
+-            &["a", "a/b", "foo"],
+-        );
+-        assert_paths(
+-            td.path(),
+-            builder.max_filesize(Some(500)),
+-            &["a", "a/b", "foo", "bar", "a/bar", "a/baz"],
+-        );
+-        assert_paths(
+-            td.path(),
+-            builder.max_filesize(Some(50000)),
+-            &["a", "a/b", "foo", "bar", "baz", "a/foo", "a/bar", "a/baz"],
+-        );
+-    }
++}
+ 
+     #[cfg(unix)] // because symlinks on windows are weird
+     #[test]
+     fn symlinks() {
+         let td = tmpdir();
+         mkdirp(td.path().join("a/b"));
+-        symlink(td.path().join("a/b"), td.path().join("z"));
+-        wfile(td.path().join("a/b/foo"), "");
+-
+-        let mut builder = WalkBuilder::new(td.path());
+-        assert_paths(td.path(), &builder, &["a", "a/b", "a/b/foo", "z"]);
+-        assert_paths(
+-            td.path(),
+-            &builder.follow_links(true),
+-            &["a", "a/b", "a/b/foo", "z", "z/foo"],
++        { … 9 line(s) … ⟦tj:12bfb8c84450da1cfa29603234a344aa⟧ }
+         );
+-    }
++}
+ 
+     #[cfg(unix)] // because symlinks on windows are weird
+     #[test]
+     fn first_path_not_symlink() {
+         let td = tmpdir();
+         mkdirp(td.path().join("foo"));
+-
+-        let dents = WalkBuilder::new(td.path().join("foo"))
+-            .build()
+-            .into_iter()
+-            .collect::<Result<Vec<_>, _>>()
+-            .unwrap();
+-        assert_eq!(1, dents.len());
++        { … 13 line(s) … ⟦tj:4c434b5e9e201ccd429c02c0c7f50f2c⟧ }
+         assert!(!dents[0].path_is_symlink());
++}
+ 
+-        let dents = walk_collect_entries_parallel(&WalkBuilder::new(
+-            td.path().join("foo"),
+-        ));
+-        assert_eq!(1, dents.len());
+-        assert!(!dents[0].path_is_symlink());
+-    }
+-
+     #[cfg(unix)] // because symlinks on windows are weird
+     #[test]
+     fn symlink_loop() {
+@@ -2242,69 +1495,27 @@
+     fn same_file_system() {
+         use super::device_num;
+ 
+-        // If for some reason /sys doesn't exist or isn't a directory, just
+-        // skip this test.
+-        if !Path::new("/sys").is_dir() {
+-            return;
+-        }
+-
+-        // If our test directory actually isn't a different volume from /sys,
+-        // then this test is meaningless and we shouldn't run it.
+-        let td = tmpdir();
+-        if device_num(td.path()).unwrap() == device_num("/sys").unwrap() {
+-            return;
+-        }
+-
+-        mkdirp(td.path().join("same_file"));
+-        symlink("/sys", td.path().join("same_file").join("alink"));
+-
+-        // Create a symlink to sys and enable following symlinks. If the
+-        // same_file_system option doesn't work, then this probably will hit a
+-        // permission error. Otherwise, it should just skip over the symlink
+-        // completely.
+-        let mut builder = WalkBuilder::new(td.path());
+-        builder.follow_links(true).same_file_system(true);
++        { … 22 line(s) … ⟦tj:93a6ed2db7aae8dbc841e4562073d962⟧ }
+         assert_paths(td.path(), &builder, &["same_file", "same_file/alink"]);
+-    }
++}
+ 
+     #[cfg(target_os = "linux")]
+     #[test]
+     fn no_read_permissions() {
+         let dir_path = Path::new("/root");
+ 
+-        // There's no /etc/sudoers.d, skip the test.
+-        if !dir_path.is_dir() {
+-            return;
+-        }
+-        // We're the root, so the test won't check what we want it to.
+-        if fs::read_dir(&dir_path).is_ok() {
+-            return;
+-        }
+-
+-        // Check that we can't descend but get an entry for the parent dir.
+-        let builder = WalkBuilder::new(&dir_path);
++        { … 11 line(s) … ⟦tj:77aaad903e5ad9de9c15d0fba41765f0⟧ }
+         assert_paths(dir_path.parent().unwrap(), &builder, &["root"]);
+-    }
++}
+ 
+     #[test]
+     fn filter() {
+         let td = tmpdir();
+         mkdirp(td.path().join("a/b/c"));
+-        mkdirp(td.path().join("x/y"));
+-        wfile(td.path().join("a/b/foo"), "");
+-        wfile(td.path().join("x/y/foo"), "");
+-
+-        assert_paths(
+-            td.path(),
+-            &WalkBuilder::new(td.path()),
+-            &["x", "x/y", "x/y/foo", "a", "a/b", "a/b/foo", "a/b/c"],
++        { … 15 line(s) … ⟦tj:72435610b98463283905d6c815c3d581⟧ }
+         );
+-
+-        assert_paths(
+-            td.path(),
+-            &WalkBuilder::new(td.path())
+-                .filter_entry(|entry| entry.file_name() != OsStr::new("a")),
+-            &["x", "x/y", "x/y/foo"],
+-        );
+-    }
+ }
++}
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (77918 bytes): call tinyjuice_retrieve with token "a7af07d3f3f774d1cfb6f3adc0d7e52b"]
+\ No newline at end of file

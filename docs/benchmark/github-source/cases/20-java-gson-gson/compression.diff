@@ -1,0 +1,401 @@
+--- input/input.java
++++ output/output.java
+@@ -253,27 +253,8 @@
+   public Gson() {
+     this(
+         Excluder.DEFAULT,
+-        DEFAULT_FIELD_NAMING_STRATEGY,
+-        Collections.<Type, InstanceCreator<?>>emptyMap(),
+-        DEFAULT_SERIALIZE_NULLS,
+-        DEFAULT_COMPLEX_MAP_KEYS,
+-        DEFAULT_JSON_NON_EXECUTABLE,
+-        DEFAULT_ESCAPE_HTML,
+-        DEFAULT_FORMATTING_STYLE,
+-        DEFAULT_STRICTNESS,
+-        DEFAULT_SPECIALIZE_FLOAT_VALUES,
+-        DEFAULT_USE_JDK_UNSAFE,
+-        LongSerializationPolicy.DEFAULT,
+-        DEFAULT_DATE_PATTERN,
+-        DateFormat.DEFAULT,
+-        DateFormat.DEFAULT,
+-        Collections.<TypeAdapterFactory>emptyList(),
+-        Collections.<TypeAdapterFactory>emptyList(),
+-        Collections.<TypeAdapterFactory>emptyList(),
+-        DEFAULT_OBJECT_TO_NUMBER_STRATEGY,
+-        DEFAULT_NUMBER_TO_NUMBER_STRATEGY,
++    { … 19 line(s) … ⟦tj:fe630fc502de9c08ebe261135c8ba729⟧ }
+         Collections.<ReflectionAccessFilter>emptyList());
+-  }
+ 
+   Gson(
+       Excluder excluder,
+@@ -299,104 +280,8 @@
+       List<ReflectionAccessFilter> reflectionFilters) {
+     this.excluder = excluder;
+     this.fieldNamingStrategy = fieldNamingStrategy;
+-    this.instanceCreators = instanceCreators;
+-    this.constructorConstructor =
+-        new ConstructorConstructor(instanceCreators, useJdkUnsafe, reflectionFilters);
+-    this.serializeNulls = serializeNulls;
+-    this.complexMapKeySerialization = complexMapKeySerialization;
+-    this.generateNonExecutableJson = generateNonExecutableGson;
+-    this.htmlSafe = htmlSafe;
+-    this.formattingStyle = formattingStyle;
+-    this.strictness = strictness;
+-    this.serializeSpecialFloatingPointValues = serializeSpecialFloatingPointValues;
+-    this.useJdkUnsafe = useJdkUnsafe;
+-    this.longSerializationPolicy = longSerializationPolicy;
+-    this.datePattern = datePattern;
+-    this.dateStyle = dateStyle;
+-    this.timeStyle = timeStyle;
+-    this.builderFactories = builderFactories;
+-    this.builderHierarchyFactories = builderHierarchyFactories;
+-    this.objectToNumberStrategy = objectToNumberStrategy;
+-    this.numberToNumberStrategy = numberToNumberStrategy;
+-    this.reflectionFilters = reflectionFilters;
+-
+-    List<TypeAdapterFactory> factories = new ArrayList<>();
+-
+-    // built-in type adapters that cannot be overridden
+-    factories.add(TypeAdapters.JSON_ELEMENT_FACTORY);
+-    factories.add(ObjectTypeAdapter.getFactory(objectToNumberStrategy));
+-
+-    // the excluder must precede all adapters that handle user-defined types
+-    factories.add(excluder);
+-
+-    // users' type adapters
+-    factories.addAll(factoriesToBeAdded);
+-
+-    // type adapters for basic platform types
+-    factories.add(TypeAdapters.STRING_FACTORY);
+-    factories.add(TypeAdapters.INTEGER_FACTORY);
+-    factories.add(TypeAdapters.BOOLEAN_FACTORY);
+-    factories.add(TypeAdapters.BYTE_FACTORY);
+-    factories.add(TypeAdapters.SHORT_FACTORY);
+-    TypeAdapter<Number> longAdapter = longAdapter(longSerializationPolicy);
+-    factories.add(TypeAdapters.newFactory(long.class, Long.class, longAdapter));
+-    factories.add(
+-        TypeAdapters.newFactory(
+-            double.class, Double.class, doubleAdapter(serializeSpecialFloatingPointValues)));
+-    factories.add(
+-        TypeAdapters.newFactory(
+-            float.class, Float.class, floatAdapter(serializeSpecialFloatingPointValues)));
+-    factories.add(NumberTypeAdapter.getFactory(numberToNumberStrategy));
+-    factories.add(TypeAdapters.ATOMIC_INTEGER_FACTORY);
+-    factories.add(TypeAdapters.ATOMIC_BOOLEAN_FACTORY);
+-    factories.add(TypeAdapters.newFactory(AtomicLong.class, atomicLongAdapter(longAdapter)));
+-    factories.add(
+-        TypeAdapters.newFactory(AtomicLongArray.class, atomicLongArrayAdapter(longAdapter)));
+-    factories.add(TypeAdapters.ATOMIC_INTEGER_ARRAY_FACTORY);
+-    factories.add(TypeAdapters.CHARACTER_FACTORY);
+-    factories.add(TypeAdapters.STRING_BUILDER_FACTORY);
+-    factories.add(TypeAdapters.STRING_BUFFER_FACTORY);
+-    factories.add(TypeAdapters.newFactory(BigDecimal.class, TypeAdapters.BIG_DECIMAL));
+-    factories.add(TypeAdapters.newFactory(BigInteger.class, TypeAdapters.BIG_INTEGER));
+-    // Add adapter for LazilyParsedNumber because user can obtain it from Gson and then try to
+-    // serialize it again
+-    factories.add(
+-        TypeAdapters.newFactory(LazilyParsedNumber.class, TypeAdapters.LAZILY_PARSED_NUMBER));
+-    factories.add(TypeAdapters.URL_FACTORY);
+-    factories.add(TypeAdapters.URI_FACTORY);
+-    factories.add(TypeAdapters.UUID_FACTORY);
+-    factories.add(TypeAdapters.CURRENCY_FACTORY);
+-    factories.add(TypeAdapters.LOCALE_FACTORY);
+-    factories.add(TypeAdapters.INET_ADDRESS_FACTORY);
+-    factories.add(TypeAdapters.BIT_SET_FACTORY);
+-    factories.add(DefaultDateTypeAdapter.DEFAULT_STYLE_FACTORY);
+-    factories.add(TypeAdapters.CALENDAR_FACTORY);
+-
+-    if (SqlTypesSupport.SUPPORTS_SQL_TYPES) {
+-      factories.add(SqlTypesSupport.TIME_FACTORY);
+-      factories.add(SqlTypesSupport.DATE_FACTORY);
+-      factories.add(SqlTypesSupport.TIMESTAMP_FACTORY);
+-    }
+-
+-    factories.add(ArrayTypeAdapter.FACTORY);
+-    factories.add(TypeAdapters.CLASS_FACTORY);
+-
+-    // type adapters for composite and user-defined types
+-    factories.add(new CollectionTypeAdapterFactory(constructorConstructor));
+-    factories.add(new MapTypeAdapterFactory(constructorConstructor, complexMapKeySerialization));
+-    this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
+-    factories.add(jsonAdapterFactory);
+-    factories.add(TypeAdapters.ENUM_FACTORY);
+-    factories.add(
+-        new ReflectiveTypeAdapterFactory(
+-            constructorConstructor,
+-            fieldNamingStrategy,
+-            excluder,
+-            jsonAdapterFactory,
+-            reflectionFilters));
+-
++    { … 96 line(s) … ⟦tj:50bd5444bdf44a026688e29bfc99d0d0⟧ }
+     this.factories = Collections.unmodifiableList(factories);
+-  }
+ 
+   /**
+    * Returns a new GsonBuilder containing all custom factories and configuration used by the current
+@@ -454,25 +339,9 @@
+     return new TypeAdapter<Number>() {
+       @Override
+       public Double read(JsonReader in) throws IOException {
+-        if (in.peek() == JsonToken.NULL) {
+-          in.nextNull();
+-          return null;
+-        }
+-        return in.nextDouble();
+-      }
+-
+-      @Override
++        { … 8 line(s) … ⟦tj:2893fe49a248731289c4cdc81cd6b445⟧ }
+       public void write(JsonWriter out, Number value) throws IOException {
+-        if (value == null) {
+-          out.nullValue();
+-          return;
+-        }
+-        double doubleValue = value.doubleValue();
+-        checkValidFloatingPoint(doubleValue);
+-        out.value(doubleValue);
+-      }
+-    };
+-  }
++        { … 10 line(s) … ⟦tj:4ade93ef8e62bd6b724b459106630521⟧ }
+ 
+   private TypeAdapter<Number> floatAdapter(boolean serializeSpecialFloatingPointValues) {
+     if (serializeSpecialFloatingPointValues) {
+@@ -481,28 +350,12 @@
+     return new TypeAdapter<Number>() {
+       @Override
+       public Float read(JsonReader in) throws IOException {
+-        if (in.peek() == JsonToken.NULL) {
+-          in.nextNull();
+-          return null;
+-        }
+-        return (float) in.nextDouble();
+-      }
+-
+-      @Override
++        { … 8 line(s) … ⟦tj:40fa6e44efdf342f4f7dd91b775118e0⟧ }
+       public void write(JsonWriter out, Number value) throws IOException {
+         if (value == null) {
+           out.nullValue();
+-          return;
+-        }
+-        float floatValue = value.floatValue();
+-        checkValidFloatingPoint(floatValue);
+-        // For backward compatibility don't call `JsonWriter.value(float)` because that method has
+-        // been newly added and not all custom JsonWriter implementations might override it yet
+-        Number floatNumber = value instanceof Float ? value : floatValue;
+-        out.value(floatNumber);
+-      }
++        { … 9 line(s) … ⟦tj:841eac4dbdae552354e484ad75580101⟧ }
+     };
+-  }
+ 
+   static void checkValidFloatingPoint(double value) {
+     if (Double.isNaN(value) || Double.isInfinite(value)) {
+@@ -520,14 +373,7 @@
+     return new TypeAdapter<Number>() {
+       @Override
+       public Number read(JsonReader in) throws IOException {
+-        if (in.peek() == JsonToken.NULL) {
+-          in.nextNull();
+-          return null;
+-        }
+-        return in.nextLong();
+-      }
+-
+-      @Override
++        { … 8 line(s) … ⟦tj:c1f5da5f442f5c369202c505d5b3d35a⟧ }
+       public void write(JsonWriter out, Number value) throws IOException {
+         if (value == null) {
+           out.nullValue();
+@@ -558,31 +404,12 @@
+     return new TypeAdapter<AtomicLongArray>() {
+       @Override
+       public void write(JsonWriter out, AtomicLongArray value) throws IOException {
+-        out.beginArray();
+-        for (int i = 0, length = value.length(); i < length; i++) {
+-          longAdapter.write(out, value.get(i));
+-        }
+-        out.endArray();
+-      }
+-
+-      @Override
++        { … 8 line(s) … ⟦tj:7213a93948eca5bf831a563b9b049c4e⟧ }
+       public AtomicLongArray read(JsonReader in) throws IOException {
+         List<Long> list = new ArrayList<>();
+         in.beginArray();
+-        while (in.hasNext()) {
+-          long value = longAdapter.read(in).longValue();
+-          list.add(value);
+-        }
+-        in.endArray();
+-        int length = list.size();
+-        AtomicLongArray array = new AtomicLongArray(length);
+-        for (int i = 0; i < length; ++i) {
+-          array.set(i, list.get(i));
+-        }
+-        return array;
+-      }
++        { … 12 line(s) … ⟦tj:205c2fe46842ae867184339275f6ace3⟧ }
+     }.nullSafe();
+-  }
+ 
+   /**
+    * Returns the type adapter for {@code type}.
+@@ -598,63 +425,8 @@
+   public <T> TypeAdapter<T> getAdapter(TypeToken<T> type) {
+     Objects.requireNonNull(type, "type must not be null");
+     TypeAdapter<?> cached = typeTokenCache.get(type);
+-    if (cached != null) {
+-      @SuppressWarnings("unchecked")
+-      TypeAdapter<T> adapter = (TypeAdapter<T>) cached;
+-      return adapter;
+-    }
+-
+-    Map<TypeToken<?>, TypeAdapter<?>> threadCalls = threadLocalAdapterResults.get();
+-    boolean isInitialAdapterRequest = false;
+-    if (threadCalls == null) {
+-      threadCalls = new HashMap<>();
+-      threadLocalAdapterResults.set(threadCalls);
+-      isInitialAdapterRequest = true;
+-    } else {
+-      // the key and value type parameters always agree
+-      @SuppressWarnings("unchecked")
+-      TypeAdapter<T> ongoingCall = (TypeAdapter<T>) threadCalls.get(type);
+-      if (ongoingCall != null) {
+-        return ongoingCall;
+-      }
+-    }
+-
+-    TypeAdapter<T> candidate = null;
+-    try {
+-      FutureTypeAdapter<T> call = new FutureTypeAdapter<>();
+-      threadCalls.put(type, call);
+-
+-      for (TypeAdapterFactory factory : factories) {
+-        candidate = factory.create(this, type);
+-        if (candidate != null) {
+-          call.setDelegate(candidate);
+-          // Replace future adapter with actual adapter
+-          threadCalls.put(type, candidate);
+-          break;
+-        }
+-      }
+-    } finally {
+-      if (isInitialAdapterRequest) {
+-        threadLocalAdapterResults.remove();
+-      }
+-    }
+-
+-    if (candidate == null) {
+-      throw new IllegalArgumentException(
+-          "GSON (" + GsonBuildConfig.VERSION + ") cannot handle " + type);
+-    }
+-
+-    if (isInitialAdapterRequest) {
+-      /*
+-       * Publish resolved adapters to all threads
+-       * Can only do this for the initial request because cyclic dependency TypeA -> TypeB -> TypeA
+-       * would otherwise publish adapter for TypeB which uses not yet resolved adapter for TypeA
+-       * See https://github.com/google/gson/issues/625
+-       */
+-      typeTokenCache.putAll(threadCalls);
+-    }
++    { … 55 line(s) … ⟦tj:376b1311ec9f2014451e5855fbd993d5⟧ }
+     return candidate;
+-  }
+ 
+   /**
+    * Returns the type adapter for {@code type}.
+@@ -730,33 +502,8 @@
+   public <T> TypeAdapter<T> getDelegateAdapter(TypeAdapterFactory skipPast, TypeToken<T> type) {
+     Objects.requireNonNull(skipPast, "skipPast must not be null");
+     Objects.requireNonNull(type, "type must not be null");
+-
+-    if (jsonAdapterFactory.isClassJsonAdapterFactory(type, skipPast)) {
+-      skipPast = jsonAdapterFactory;
+-    }
+-
+-    boolean skipPastFound = false;
+-    for (TypeAdapterFactory factory : factories) {
+-      if (!skipPastFound) {
+-        if (factory == skipPast) {
+-          skipPastFound = true;
+-        }
+-        continue;
+-      }
+-
+-      TypeAdapter<T> candidate = factory.create(this, type);
+-      if (candidate != null) {
+-        return candidate;
+-      }
+-    }
+-
+-    if (skipPastFound) {
+-      throw new IllegalArgumentException("GSON cannot serialize or deserialize " + type);
+-    } else {
+-      // Probably a factory from @JsonAdapter on a field
+-      return getAdapter(type);
++    { … 25 line(s) … ⟦tj:2b32eefa9c60d7274963812e0e947abb⟧ }
+     }
+-  }
+ 
+   /**
+    * This method serializes the specified object into its equivalent representation as a tree of
+@@ -1051,16 +798,7 @@
+    * </ul>
+    */
+   public JsonWriter newJsonWriter(Writer writer) throws IOException {
+-    if (generateNonExecutableJson) {
+-      writer.write(JSON_NON_EXECUTABLE_PREFIX);
+-    }
+-    JsonWriter jsonWriter = new JsonWriter(writer);
+-    jsonWriter.setFormattingStyle(formattingStyle);
+-    jsonWriter.setHtmlSafe(htmlSafe);
+-    jsonWriter.setStrictness(strictness == null ? Strictness.LEGACY_STRICT : strictness);
+-    jsonWriter.setSerializeNulls(serializeNulls);
+-    return jsonWriter;
+-  }
++    { … 10 line(s) … ⟦tj:0004c0c2a6885ce782d4b2f12af89144⟧ }
+ 
+   /**
+    * Returns a new JSON reader configured for the settings on this Gson instance.
+@@ -1494,17 +1232,7 @@
+     }
+ 
+     private TypeAdapter<T> delegate() {
+-      TypeAdapter<T> delegate = this.delegate;
+-      if (delegate == null) {
+-        // Can occur when adapter is leaked to other thread or when adapter is used for
+-        // (de-)serialization
+-        // directly within the TypeAdapterFactory which requested it
+-        throw new IllegalStateException(
+-            "Adapter for type with cyclic dependency has been used"
+-                + " before dependency has been resolved");
+-      }
+-      return delegate;
+-    }
++      { … 11 line(s) … ⟦tj:26caf9681d2112aef5d36439f4e95422⟧ }
+ 
+     @Override
+     public TypeAdapter<T> getSerializationDelegate() {
+@@ -1524,12 +1252,7 @@
+ 
+   @Override
+   public String toString() {
+-    return "{serializeNulls:"
+-        + serializeNulls
+-        + ",factories:"
+-        + factories
+-        + ",instanceCreators:"
+-        + constructorConstructor
+-        + "}";
+-  }
+-}
++    { … 9 line(s) … ⟦tj:cc5d0e3daff3e1e0d5440186875b2827⟧ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (68459 bytes): call tinyjuice_retrieve with token "85926a85e76809458c47cfd998fbcd1c"]
+\ No newline at end of file

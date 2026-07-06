@@ -52,7 +52,9 @@ pub fn prior_to_kind(prior: ToolPrior) -> Option<ContentKind> {
 pub fn extension_to_kind(ext: &str) -> Option<ContentKind> {
     match ext {
         "json" | "jsonl" | "ndjson" => Some(ContentKind::Json),
-        "html" | "htm" | "xhtml" => Some(ContentKind::Html),
+        // XML routes to the HTML extractor: same tag-stripping readable-text
+        // pass works for feeds, config files, and document markup.
+        "html" | "htm" | "xhtml" | "xml" | "rss" | "atom" | "svg" => Some(ContentKind::Html),
         "diff" | "patch" => Some(ContentKind::Diff),
         "log" => Some(ContentKind::Log),
         // Source-code extensions we recognise for the code compressor. Grammar

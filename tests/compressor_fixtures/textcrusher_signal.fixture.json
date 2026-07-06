@@ -14,7 +14,7 @@
     "recovery": true,
     "contains": [
       "ERROR sync.worker.v2 failed for REQUEST_ID 9F42",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "ordinary deployment progress line 3 with"

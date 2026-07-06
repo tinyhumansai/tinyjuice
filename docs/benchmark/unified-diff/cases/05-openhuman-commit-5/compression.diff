@@ -1,0 +1,3219 @@
+--- input/input.diff
++++ output/output.diff
+@@ -205,62 +205,7 @@
+  //! Structured tracing export off the agent [`progress`](super::progress)
+  //! channel (issue #3886).
+  //!
+- //! OpenHuman already emits rich real-time [`AgentProgress`] events for the UI,
+- //! but there was no first-class trace export for offline inspection,
+- //! regression analysis, or debugging long multi-agent runs. This module turns
+- //! that same event stream into OpenTelemetry/Langfuse-style **spans** —
+- //!
+- //! ```text
+- //! agent.turn                      (root, trace_id = session id)
+- //! ├─ agent.iteration #1
+- //! │  ├─ tool.web_search
+- //! │  └─ subagent.researcher
+- //! │     ├─ subagent.iteration #1
+- //! │     │  └─ tool.read_file
+- //! │     └─ (closed on SubagentCompleted)
+- //! └─ agent.iteration #2
+- //! ```
+- //!
+- //! correlated by **session id** (the trace id) with **user attribution**
+- //! (a span attribute), so a run that fans out across many subagents over
+- //! minutes-to-hours is inspectable end to end.
+- //!
+- //! ## Privacy
+- //!
+- //! Spans always carry *metadata* — span names, counts, timings, and
+- //! token/cost figures (model labels are `{provider_id}.{model}`, e.g.
+- //! `managed.chat-v1`). While `observability.agent_tracing.capture_content` is
+- //! on, content is additionally recorded as span `input`/`output` — the turn's
+- //! prompt/reply, each generation's **truncated** request messages (system
+- //! prompt included) + completion, **truncated** tool arguments/results, and
+- //! each subagent's delegated prompt + final output. With the flag off (the
+- //! default — #4454), none of that content ever reaches the in-memory span, so
+- //! no exporter (NDJSON file, app log, or Langfuse) can leak it.
+- //! Streamed text/thinking deltas (`TextDelta`, `ThinkingDelta`,
+- //! `ToolCallArgsDelta`), raw error strings, and filesystem paths are **never**
+- //! recorded regardless of the flag, honoring the project's "never log secrets
+- //! or full PII" rule for logs.
+- //!
+- //! The one exception is the turn's prompt/reply, delivered via
+- //! `AgentProgress::TurnContent`. It is attached to the turn span **only** when
+- //! the operator opts in via `observability.agent_tracing.capture_content`
+- //! (default `false`). That gate is enforced at storage time in
+- //! [`SpanCollector`] — the single choke point — so with the default off, no
+- //! exporter (NDJSON file, app log, or Langfuse push) can ever serialize it.
+- //!
+- //! ## Wiring
+- //!
+- //! [`SpanCollector`] is a pure state machine: feed it the progress events plus
+- //! a millisecond timestamp and it accumulates finished spans. The consumer
+- //! side (the web progress bridge) owns the clock and the export — see
+- //! [`export_spans`]. The collector has no I/O and no async, so the span shape
+- //! is exhaustively unit-testable.
+- 
+- use std::collections::BTreeMap;
+- 
+- use serde::Serialize;
+- 
+- use crate::openhuman::agent::progress::AgentProgress;
++[... 56 context line(s) omitted ... ⟦tj:38c2a4c26442b8725b2bfbbc69afc163⟧]
+  use crate::openhuman::config::schema::{AgentTracingBackend, AgentTracingConfig};
+  use crate::openhuman::config::Config;
+  
+@@ -275,80 +220,7 @@
+  /// Kind of run a trace belongs to, rendered as stable snake_case strings for
+  /// Langfuse trace tags (`run:<type>`) and metadata (`run_type`) so runs can be
+  /// filtered in the UI.
+- ///
+- /// Only kinds actually observable at the collector installation point (the
+- /// web progress bridge) exist here: orchestration passes, subconscious runs,
+- /// cron turns, and meeting agents run their turns WITHOUT a progress bridge
+- /// today, so they never reach the span collector and get no variant.
+- #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+- pub enum RunType {
+-     /// Interactive user chat turn (desktop UI / socket / PTT / dictation).
+-     #[default]
+-     InteractiveChat,
+-     /// Autonomous background run from the task dispatcher.
+-     AutonomousTask,
+-     /// Programmatic AgentBox `/run` invocation.
+-     Agentbox,
+-     /// Inbound message relayed from an external channel (Telegram, Discord,
+-     /// Slack, …) through the channel bus.
+-     ChannelInbound,
+- }
+- 
+- impl RunType {
+-     /// Stable snake_case identifier used in tags/metadata.
+-     pub fn as_str(self) -> &'static str {
+-         match self {
+-             RunType::InteractiveChat => "interactive_chat",
+-             RunType::AutonomousTask => "autonomous_task",
+-             RunType::Agentbox => "agentbox",
+-             RunType::ChannelInbound => "channel_inbound",
+-         }
+-     }
+- 
+-     /// Classify from the chat-request `source` tag. Known background sources
+-     /// map to their kinds; everything else (`ptt`/`dictation`/`type`/absent)
+-     /// is an interactive chat turn.
+-     pub fn from_source(source: Option<&str>) -> Self {
+-         match source {
+-             Some("autonomous") => RunType::AutonomousTask,
+-             Some("agentbox") => RunType::Agentbox,
+-             Some("channel_inbound") => RunType::ChannelInbound,
+-             _ => RunType::InteractiveChat,
+-         }
+-     }
+- }
+- 
+- /// Trace-level correlation context, stamped onto the root span.
+- #[derive(Debug, Clone)]
+- pub struct TraceContext {
+-     /// Trace id — unique per turn. Every span of a single turn shares it, so
+-     /// each turn becomes its own Langfuse trace.
+-     pub session_id: String,
+-     /// Real authenticated user attribution (the backend user id, or email as
+-     /// fallback) — exported as the Langfuse `userId`. `None` when the caller
+-     /// is anonymous. Transport identifiers (socket client id / "system")
+-     /// belong in [`Self::client_id`], not here.
+-     pub user_id: Option<String>,
+-     /// Transport client id (the broadcast socket client, or `"system"` for
+-     /// autonomous runs). Exported as the `client.id` metadata attribute so it
+-     /// stays inspectable without polluting user attribution.
+-     pub client_id: Option<String>,
+-     /// Agent definition id driving the turn (e.g. `"orchestrator"`,
+-     /// `"researcher"`). Stamped as the `agent.id` attribute and folded into
+-     /// the root span/trace name (`agent.turn:<agent_id>`).
+-     pub agent_id: Option<String>,
+-     /// Where the run originated (`"chat"`, `"ptt"`, `"autonomous"`, …).
+-     /// Exported as the `channel.source` metadata attribute.
+-     pub channel_source: Option<String>,
+-     /// Grouping key (the thread/conversation id) exported as the Langfuse
+-     /// `sessionId` so per-turn traces still group under one session. When
+-     /// `None`, the collector falls back to the trace id so every trace still
+-     /// carries a session id.
+-     pub session_group: Option<String>,
+-     /// Whether content capture (`observability.agent_tracing.capture_content`)
+-     /// is on. Gates recording tool arguments/results onto spans at collection
+-     /// time — when off, tool I/O never even reaches the in-memory span.
+-     pub capture_content: bool,
++[... 74 context line(s) omitted ... ⟦tj:47fb0d0733b8b2fefb4fbb9a9f4a34bf⟧]
+      /// Kind of run — exported as Langfuse trace tags (`run:<type>`) and the
+      /// `run_type` metadata key. Defaults to interactive chat.
+      pub run_type: RunType,
+@@ -1042,29 +914,7 @@
+  //! Agent turn origin — the trust/routing label attached to every agent
+  //! `run_turn` invocation. Read by [`crate::openhuman::approval::ApprovalGate`]
+  //! and [`crate::openhuman::agent_tool_policy::ToolPolicyEngine`] to make
+- //! consistent decisions across web, channel, subconscious, and cron entry
+- //! points without relying on the *absence* of other task-locals as a signal.
+- //!
+- //! Every entry point that drives the agent loop ([`crate::openhuman::channels::providers::web`],
+- //! [`crate::openhuman::channels::runtime::dispatch`], [`crate::openhuman::subconscious`],
+- //! [`crate::openhuman::cron`], CLI) MUST scope a real [`AgentTurnOrigin`]
+- //! around its `run_turn` invocation. Any path that fails to do so is treated
+- //! as [`AgentTurnOrigin::Unknown`] by the gate and the call fails closed.
+- 
+- /// Identifies who scheduled the current agent turn so the approval gate can
+- /// pick the correct policy: surface to the user, persist for an
+- /// out-of-band approval surface, run trusted-automation through, or fail
+- /// closed.
+- ///
+- /// This is a typed task-local label, not a credential — it is set by the
+- /// entry point that owns the turn and read by [`crate::openhuman::approval`]
+- /// alongside the existing per-turn chat context.
+- #[derive(Clone, Debug)]
+- pub enum AgentTurnOrigin {
+-     /// Live user chat in the desktop / web UI. The existing
+-     /// [`crate::openhuman::approval::ApprovalChatContext`] task-local is
+-     /// scoped alongside this so the approval gate has a thread / client to
+-     /// route the prompt back to.
++[... 23 context line(s) omitted ... ⟦tj:6ae5283dbdfd75daac518ddd01efb76e⟧]
+      WebChat {
+          thread_id: String,
+          client_id: String,
+@@ -1075,134 +925,7 @@
+      },
+      /// Inbound message from a non-web channel (Telegram / Discord / Slack /
+      /// Yuanbao / etc.). External-effect tools must persist a
+-     /// `pending_approvals` row for the audit trail; the parked future will
+-     /// TTL-deny because no caller picks up the chat-routed approval on this
+-     /// surface yet — which is the correct fail-closed default for remote
+-     /// inputs.
+-     ///
+-     /// `sender` carries the per-user identity (Discord user id, Telegram
+-     /// from_account, Slack user id, etc.) when available so per-user
+-     /// isolation invariants survive into the gate's audit trail. Legacy
+-     /// publishers that don't surface the sender pass `None`; the gate still
+-     /// fails closed because the channel input is remote-untrusted regardless
+-     /// of which sender produced it. Distinct senders in the same shared
+-     /// channel produce distinct origins so a co-channel attacker cannot
+-     /// resume a victim's parked approval flow.
+-     ExternalChannel {
+-         channel: String,
+-         sender: Option<String>,
+-         reply_target: String,
+-         message_id: String,
+-     },
+-     /// Internal automation the user explicitly authorized (cron job the
+-     /// user created, subconscious tick on internal-only memory). `source`
+-     /// carries enough info for the gate to apply the right per-source
+-     /// allowlist.
+-     TrustedAutomation {
+-         job_id: String,
+-         source: TrustedAutomationSource,
+-     },
+-     /// Command-line / sub-agent / one-off internal invocation.
+-     Cli,
+-     /// Unlabelled — gate fails closed. Every entry point MUST scope a real
+-     /// origin before invoking the agent.
+-     Unknown,
+- }
+- 
+- /// Sub-classification for [`AgentTurnOrigin::TrustedAutomation`].
+- #[derive(Clone, Debug, PartialEq, Eq)]
+- pub enum TrustedAutomationSource {
+-     /// Cron job created and authorized by the user.
+-     Cron,
+-     /// Subconscious tick whose memory context is internal-only.
+-     Subconscious,
+-     /// Subconscious tick whose memory context includes chunks ingested
+-     /// from an external sync source (Gmail / Slack / Notion / etc.).
+-     /// Treated as untrusted: external-effect tool surface blocked.
+-     SubconsciousTainted,
+-     /// Autonomous continuation of a thread goal: the heartbeat injected a turn
+-     /// to keep working an idle `active` goal the user explicitly created.
+-     GoalContinuation,
+-     /// A saved, enabled `flows::Flow` (tinyflows workflow) executing via
+-     /// `flows::ops::flows_run` / `flows_resume` (issue B2, see
+-     /// `my_docs/ohxtf/b2-triggers-trust/01-triggers-and-trust.md` §3). The
+-     /// flow's `tool_call`/`http_request` nodes were pre-declared (their
+-     /// `slug`/`url` are static graph config, never `=`-expression evaluated
+-     /// in tinyflows 0.2 — see `my_docs/ohxtf/commons/12-node-catalog-0.2.md`)
+-     /// and validated when the flow was saved, so the *action* carries a trust
+-     /// root the same way a user-authored cron job's prompt does. The runtime
+-     /// trigger payload (webhook body, Composio event, …) stays untrusted —
+-     /// nothing in it can introduce a *new* action, only feed the pre-declared
+-     /// one's arguments.
+-     Workflow {
+-         /// Mirrors `Flow::require_approval`: when `true` the gate does NOT
+-         /// auto-allow this trust root — every external_effect call still
+-         /// parks for a real decision (same shape as `GoalContinuation`),
+-         /// letting a user force human review on a specific flow's outbound
+-         /// actions regardless of the trust root above.
+-         require_approval: bool,
+-     },
+- }
+- 
+- tokio::task_local! {
+-     /// Per-turn agent origin. Scoped by entry points (web channel, channel
+-     /// runtime dispatch, subconscious loop, cron scheduler, CLI) around the
+-     /// `run_turn` invocation. Read by the approval gate to make
+-     /// origin-aware decisions.
+-     pub static AGENT_TURN_ORIGIN: AgentTurnOrigin;
+- }
+- 
+- /// Scope `origin` for the duration of `fut`. Mirrors the existing
+- /// [`crate::openhuman::approval::APPROVAL_CHAT_CONTEXT`] scope pattern.
+- ///
+- /// The inner future is `Box::pin`-ed before being handed to the task-local
+- /// scope so the combined `with_origin(... scope(... run_turn(...)))` future
+- /// state machine stays heap-allocated. The agent loop downstream of this
+- /// scope can be deep (tool dispatch, recursive sub-agent invocations, LLM
+- /// streaming), and stacking two task-local scopes plus the agent loop on a
+- /// 2 MiB worker stack reliably blows the test runtime — same shape as the
+- /// fix in PR #3151. Box-pinning here is the single-point remediation that
+- /// covers every caller (web channel, channel runtime, subconscious, cron,
+- /// CLI).
+- pub async fn with_origin<F: std::future::Future>(origin: AgentTurnOrigin, fut: F) -> F::Output {
+-     AGENT_TURN_ORIGIN.scope(origin, Box::pin(fut)).await
+- }
+- 
+- /// Try to read the current origin. Returns `None` when no caller scoped one
+- /// (legacy callers that haven't been migrated yet — the gate maps this to
+- /// [`AgentTurnOrigin::Unknown`] / fail-closed).
+- pub fn current() -> Option<AgentTurnOrigin> {
+-     AGENT_TURN_ORIGIN.try_with(|o| o.clone()).ok()
+- }
+- 
+- #[cfg(test)]
+- mod tests {
+-     use super::*;
+- 
+-     #[tokio::test]
+-     async fn with_origin_scopes_correctly_and_unscopes_on_exit() {
+-         // Outside any scope: current() returns None.
+-         assert!(current().is_none());
+- 
+-         let observed = with_origin(AgentTurnOrigin::Cli, async {
+-             // Inside the scope: current() returns the scoped origin.
+-             current()
+-         })
+-         .await;
+-         assert!(matches!(observed, Some(AgentTurnOrigin::Cli)));
+- 
+-         // After the scope exits, current() is None again.
+-         assert!(current().is_none());
+-     }
+- 
+-     #[tokio::test]
+-     async fn current_returns_none_outside_scope() {
+-         assert!(current().is_none());
+-     }
+- 
+-     #[tokio::test]
+-     async fn current_returns_inner_origin_on_nested_scope() {
+-         let observed = with_origin(
++[... 128 context line(s) omitted ... ⟦tj:3bbb01bb91cd1f3fc27224a76e1cca8e⟧]
+              AgentTurnOrigin::WebChat {
+                  thread_id: "outer".into(),
+                  client_id: "c-outer".into(),
+@@ -1210,22 +933,7 @@
+              },
+              async {
+                  with_origin(
+-                     AgentTurnOrigin::TrustedAutomation {
+-                         job_id: "j-1".into(),
+-                         source: TrustedAutomationSource::Cron,
+-                     },
+-                     async { current() },
+-                 )
+-                 .await
+-             },
+-         )
+-         .await;
+-         match observed {
+-             Some(AgentTurnOrigin::TrustedAutomation { job_id, source }) => {
+-                 assert_eq!(job_id, "j-1");
+-                 assert_eq!(source, TrustedAutomationSource::Cron);
+-             }
+-             other => panic!("expected inner TrustedAutomation, got {other:?}"),
++[... 16 context line(s) omitted ... ⟦tj:0b9d26aebd6a7f61e0044bcf421b3463⟧]
+          }
+      }
+  }
+@@ -1237,80 +945,7 @@
+      fn take_waiter(&self, request_id: &str) -> Option<oneshot::Sender<ApprovalDecision>> {
+          let mut waiters = self.waiters.lock();
+          waiters.remove(request_id)
+-     }
+- 
+-     fn evict_waiter(&self, request_id: &str) {
+-         let mut waiters = self.waiters.lock();
+-         waiters.remove(request_id);
+-     }
+- 
+-     /// The request_id of the approval currently parked on `thread_id`, if any.
+-     /// Used by the web channel to route an inbound yes/no reply to a decision.
+-     pub fn pending_for_thread(&self, thread_id: &str) -> Option<String> {
+-         self.thread_to_request.lock().get(thread_id).cloned()
+-     }
+- 
+-     /// The request_id of the approval currently parked on a live meeting, if
+-     /// any. Used by `agent_meetings::in_call` to route a spoken
+-     /// "Hey Tiny, approve" to a decision (issue #3513).
+-     pub fn pending_for_meeting(&self, meeting_key: &str) -> Option<String> {
+-         self.meeting_to_request.lock().get(meeting_key).cloned()
+-     }
+- 
+-     /// Drop the thread → request mapping (best-effort; no-op when absent).
+-     fn clear_thread(&self, thread_id: &Option<String>) {
+-         if let Some(t) = thread_id {
+-             self.thread_to_request.lock().remove(t);
+-         }
+-     }
+- 
+-     /// Drop the meeting → request mapping (best-effort; no-op when absent).
+-     fn clear_meeting(&self, ctx: &Option<InCallApprovalContext>) {
+-         if let Some(ic) = ctx {
+-             self.meeting_to_request.lock().remove(&ic.meeting_key);
+-         }
+-     }
+- }
+- 
+- #[cfg(test)]
+- mod tests {
+-     use super::*;
+-     use tempfile::TempDir;
+- 
+-     fn test_gate() -> (ApprovalGate, TempDir) {
+-         let dir = TempDir::new().unwrap();
+-         let config = Config {
+-             workspace_dir: dir.path().to_path_buf(),
+-             ..Config::default()
+-         };
+-         // Mirrors the `session-<uuid>` shape minted by
+-         // `bootstrap_core_runtime` in production so the
+-         // `debug_assert!` regression guard in `ApprovalGate::new`
+-         // doesn't trip in tests.
+-         let session = format!("session-{}", uuid::Uuid::new_v4());
+-         // 500ms TTL was racing the 50×10ms poll loop on slow CI
+-         // runners — the row would expire (and get denied by
+-         // list_pending's lazy-expire) before `decide` could fire,
+-         // surfacing as "pending row never appeared". 2s gives the
+-         // polling tests enough headroom while keeping
+-         // `timeout_returns_deny` fast (PR #2367 CI flake).
+-         let gate = ApprovalGate::new(config, session, Duration::from_secs(2));
+-         (gate, dir)
+-     }
+- 
+-     /// A chat context — the gate only parks within a live chat turn now, so
+-     /// tests that exercise parking must run intercept inside this scope.
+-     fn chat_ctx() -> ApprovalChatContext {
+-         ApprovalChatContext {
+-             thread_id: "t-test".into(),
+-             client_id: "c-test".into(),
+-         }
+-     }
+- 
+-     /// A matching web-chat origin for the chat context fixture. Tests
+-     /// exercising the parking flow scope BOTH task-locals — production
+-     /// callers in `channels/providers/web` do the same.
+-     fn web_origin() -> AgentTurnOrigin {
++[... 74 context line(s) omitted ... ⟦tj:02f8779099ab512d1e1af9e4bce78b1f⟧]
+          AgentTurnOrigin::WebChat {
+              thread_id: "t-test".into(),
+              client_id: "c-test".into(),
+@@ -1318,161 +953,15 @@
+          }
+      }
+  
+-     /// An external-channel (live meeting) origin for the in-call fixtures.
+-     fn meet_origin() -> AgentTurnOrigin {
+-         AgentTurnOrigin::ExternalChannel {
+-             channel: "meet".into(),
+-             sender: None,
+-             reply_target: "meet-1".into(),
+-             message_id: "m-1".into(),
+-         }
+-     }
+- 
+-     fn in_call_ctx() -> InCallApprovalContext {
+-         InCallApprovalContext {
+-             meeting_key: "meet-1".into(),
+-             correlation_id: Some("meet-1".into()),
+-         }
+-     }
+- 
+-     #[tokio::test]
+-     async fn in_call_voice_approve_resolves_parked_external_channel_approval() {
+-         let (gate, _dir) = test_gate();
+-         let gate = Arc::new(gate);
+- 
+-         let g = gate.clone();
+-         let handle = tokio::spawn(async move {
+-             turn_origin::with_origin(
+-                 meet_origin(),
+-                 APPROVAL_IN_CALL_CONTEXT.scope(
+-                     in_call_ctx(),
+-                     g.intercept("composio", "create calendar event", serde_json::json!({})),
+-                 ),
+-             )
+-             .await
+-         });
+- 
+-         // The meeting → request mapping is the voice channel's lookup key.
+-         let mut tries = 0;
+-         let request_id = loop {
++[... 74 context line(s) omitted ... ⟦tj:53ca6fdee619c7cc60b0846532db4cd7⟧]
+              if let Some(r) = gate.pending_for_meeting("meet-1") {
+                  break r;
+              }
+-             tries += 1;
+-             assert!(tries < 50, "meeting mapping never appeared");
+-             tokio::time::sleep(Duration::from_millis(10)).await;
+-         };
+- 
+-         gate.decide(&request_id, ApprovalDecision::ApproveOnce)
+-             .unwrap();
+- 
+-         let outcome = handle.await.unwrap();
+-         assert!(matches!(outcome, GateOutcome::Allow));
+-         assert!(
+-             gate.pending_for_meeting("meet-1").is_none(),
+-             "meeting mapping must be cleared once the park resolves"
+-         );
+-     }
+- 
+-     #[tokio::test]
+-     async fn in_call_voice_deny_resolves_parked_approval_with_deny() {
+-         let (gate, _dir) = test_gate();
+-         let gate = Arc::new(gate);
+- 
+-         let g = gate.clone();
+-         let handle = tokio::spawn(async move {
+-             turn_origin::with_origin(
+-                 meet_origin(),
+-                 APPROVAL_IN_CALL_CONTEXT.scope(
+-                     in_call_ctx(),
+-                     g.intercept("composio", "send email", serde_json::json!({})),
+-                 ),
+-             )
+-             .await
+-         });
+- 
+-         let request_id = loop {
+-             if let Some(r) = gate.pending_for_meeting("meet-1") {
+-                 break r;
+-             }
+ @@ -1171,160 +1172,161 @@ mod tests {
+      async fn decide_unknown_id_is_noop() {
+          let (gate, _dir) = test_gate();
+          let decided = gate
+-             .decide("does-not-exist", ApprovalDecision::ApproveOnce)
+-             .unwrap();
+-         assert!(decided.is_none());
+-     }
+- 
+-     /// TAURI-RUST-5EH: a `decide` miss must be classified — already-decided and
+-     /// expired rows are benign (`AlreadyResolved`), while an id that was never
+-     /// persisted is a genuine lost registration (`NeverRegistered`) that stays a
+-     /// Sentry signal.
+-     #[tokio::test]
+-     async fn classify_decide_miss_distinguishes_resolved_from_unknown() {
+-         let (gate, _dir) = test_gate();
+- 
+-         // Never persisted → genuine loss, keep visible.
+-         assert_eq!(
+-             gate.classify_decide_miss("never-existed"),
+-             DecideMiss::NeverRegistered
+-         );
+- 
+-         // Persist + decide a row, then a second decide misses → already-decided.
+-         let pending = PendingApproval::new(
+-             "req-decided",
+-             "composio",
+-             "send email",
+-             serde_json::json!({}),
+-             Some(chrono::Utc::now() + chrono::Duration::minutes(10)),
+-         );
+-         store::insert_pending(&gate.config, &pending, &gate.session_id).unwrap();
+-         assert!(gate
+-             .decide("req-decided", ApprovalDecision::ApproveOnce)
+-             .unwrap()
+-             .is_some());
+-         // The conditional UPDATE now matches 0 rows (decided_at set).
+-         assert!(gate
+-             .decide("req-decided", ApprovalDecision::Deny)
+-             .unwrap()
+-             .is_none());
+-         assert_eq!(
+-             gate.classify_decide_miss("req-decided"),
+-             DecideMiss::AlreadyResolved
+-         );
+- 
+-         // A row past its expiry is lazily denied by `decide`'s expire pass, so
+-         // its decide miss is also benign (the persisted decision exists).
+-         let expired = PendingApproval::new(
+-             "req-expired",
+-             "composio",
+-             "send email",
+-             serde_json::json!({}),
+-             Some(chrono::Utc::now() - chrono::Duration::minutes(1)),
+-         );
+-         store::insert_pending(&gate.config, &expired, &gate.session_id).unwrap();
+-         assert!(gate
+-             .decide("req-expired", ApprovalDecision::ApproveOnce)
+-             .unwrap()
+-             .is_none());
+-         assert_eq!(
+-             gate.classify_decide_miss("req-expired"),
+-             DecideMiss::AlreadyResolved
+-         );
+-     }
+- 
+-     #[tokio::test]
+-     async fn pending_for_thread_tracks_request_under_chat_context_and_clears() {
+-         let (gate, _dir) = test_gate();
+-         let gate = Arc::new(gate);
+- 
+-         // Run intercept inside a scoped chat context + matching WebChat
+-         // origin (as the web channel does in production).
+-         let g = gate.clone();
+-         let ctx = ApprovalChatContext {
+-             thread_id: "thread-42".into(),
+-             client_id: "client-1".into(),
+-         };
++[... 74 context line(s) omitted ... ⟦tj:d462e143f8335b1c08e7fab11f44699b⟧]
+          let origin = AgentTurnOrigin::WebChat {
+              thread_id: "thread-42".into(),
+              client_id: "client-1".into(),
+@@ -1480,83 +969,10 @@
+          };
+          let handle = tokio::spawn(async move {
+              turn_origin::with_origin(
+-                 origin,
+-                 APPROVAL_CHAT_CONTEXT
+-                     .scope(ctx, g.intercept("shell", "run ls", serde_json::json!({}))),
+-             )
+-             .await
+-         });
+- 
+-         // While parked, the thread → request mapping is queryable.
+-         let mut tries = 0;
+-         let request_id = loop {
+-             if let Some(r) = gate.pending_for_thread("thread-42") {
+-                 break r;
+-             }
+-             tries += 1;
+-             assert!(tries < 50, "thread mapping never appeared");
+-             tokio::time::sleep(Duration::from_millis(10)).await;
+-         };
+- 
+-         // Decide via the mapped request_id (as the chat ingress router will).
+-         gate.decide(&request_id, ApprovalDecision::ApproveOnce)
+-             .unwrap();
+-         assert!(matches!(handle.await.unwrap(), GateOutcome::Allow));
+- 
+-         // Mapping is cleared once intercept returns.
+-         assert!(gate.pending_for_thread("thread-42").is_none());
+-     }
+- 
+-     /// Tests for `effective_ttl` env-override parsing.
+-     ///
+-     /// These run serially (they mutate the process env) via the shared
+-     /// `TEST_ENV_LOCK`; the lock is the same one used by `auto_approve_tool_skips_prompt`
+-     /// and the live_policy tests so they cannot clobber each other in parallel.
+-     ///
+-     /// Guarded on `debug_assertions`: the override is compiled out of release
+-     /// builds, so this assertion only holds under `cargo test` (debug). The
+-     /// fallback tests below hold in either build.
+-     #[cfg(debug_assertions)]
+-     #[test]
+-     fn effective_ttl_uses_env_override_when_valid() {
+-         let _env = crate::openhuman::config::TEST_ENV_LOCK
+-             .lock()
+-             .unwrap_or_else(|e| e.into_inner());
+-         let (gate, _dir) = test_gate(); // boot-time TTL = 2s
+-         unsafe { std::env::set_var("OPENHUMAN_APPROVAL_TTL_SECS", "42") };
++[... 74 context line(s) omitted ... ⟦tj:e143c3bdde372d7237122138124b7af6⟧]
+          assert_eq!(
+              gate.effective_ttl(),
+-             Duration::from_secs(42),
+-             "valid OPENHUMAN_APPROVAL_TTL_SECS must override boot-time TTL"
+-         );
+-         unsafe { std::env::remove_var("OPENHUMAN_APPROVAL_TTL_SECS") };
+-     }
+- 
+-     #[test]
+-     fn effective_ttl_falls_back_to_boot_ttl_for_garbage_value() {
+-         let _env = crate::openhuman::config::TEST_ENV_LOCK
+-             .lock()
+-             .unwrap_or_else(|e| e.into_inner());
+-         let (gate, _dir) = test_gate(); // boot-time TTL = 2s
+-         unsafe { std::env::set_var("OPENHUMAN_APPROVAL_TTL_SECS", "not-a-number") };
+-         assert_eq!(
+-             gate.effective_ttl(),
+              Duration::from_secs(2),
+-             "garbage OPENHUMAN_APPROVAL_TTL_SECS must fall back to boot-time TTL"
+-         );
+-         unsafe { std::env::remove_var("OPENHUMAN_APPROVAL_TTL_SECS") };
+-     }
+- 
+-     #[test]
+-     fn effective_ttl_falls_back_to_boot_ttl_when_unset() {
+-         let _env = crate::openhuman::config::TEST_ENV_LOCK
+-             .lock()
+-             .unwrap_or_else(|e| e.into_inner());
+-         let (gate, _dir) = test_gate(); // boot-time TTL = 2s
+-         unsafe { std::env::remove_var("OPENHUMAN_APPROVAL_TTL_SECS") };
+-         assert_eq!(
+-             gate.effective_ttl(),
+-             Duration::from_secs(2),
+ diff --git a/src/openhuman/channels/providers/web/ops.rs b/src/openhuman/channels/providers/web/ops.rs
+ index eae023d9e..2203c39e9 100644
+ --- a/src/openhuman/channels/providers/web/ops.rs
+@@ -1565,80 +981,7 @@
+              existing.run_queue.push(queued_msg).await;
+              let status = existing.run_queue.status().await;
+              log::info!(
+-                 "[web-channel] queued {} message thread_id={} request_id={} queue_depth={}",
+-                 parsed_mode,
+-                 thread_id,
+-                 request_id,
+-                 status.total
+-             );
+-             crate::core::event_bus::publish_global(DomainEvent::RunQueueMessageQueued {
+-                 thread_id: thread_id.clone(),
+-                 mode: parsed_mode.to_string(),
+-                 queue_depth: status.total,
+-             });
+-             return Ok(json!({
+-                 "queued": true,
+-                 "queue_mode": parsed_mode.to_string(),
+-                 "client_id": client_id,
+-                 "thread_id": thread_id,
+-                 "request_id": request_id,
+-                 "queue_depth": status.total,
+-             })
+-             .to_string());
+-         }
+-         log::info!(
+-             "[web-channel] no in-flight turn for {} mode thread_id={} — starting fresh",
+-             parsed_mode,
+-             thread_id
+-         );
+-     }
+- 
+-     {
+-         let mut in_flight = IN_FLIGHT.lock().await;
+- 
+-         if let Some(existing) = in_flight.remove(&map_key) {
+-             let cancelled_id = cancel_in_flight_gracefully(existing);
+-             log::info!(
+-                 "[web-channel] interrupted in-flight turn thread_id={} cancelled_request_id={}",
+-                 thread_id,
+-                 cancelled_id
+-             );
+-             crate::core::event_bus::publish_global(DomainEvent::RunQueueInterrupted {
+-                 thread_id: thread_id.clone(),
+-                 cancelled_request_id: cancelled_id.clone(),
+-             });
+-             publish_web_channel_event(WebChannelEvent {
+-                 event: "chat_error".to_string(),
+-                 client_id: client_id.clone(),
+-                 thread_id: thread_id.clone(),
+-                 request_id: cancelled_id,
+-                 message: Some("Cancelled by newer request".to_string()),
+-                 error_type: Some("cancelled".to_string()),
+-                 ..Default::default()
+-             });
+-         }
+-     }
+- 
+-     let turn_run_queue = crate::openhuman::agent::harness::run_queue::RunQueue::new();
+-     let turn_run_queue_task = turn_run_queue.clone();
+- 
+-     let client_id_task = client_id.clone();
+-     let thread_id_task = thread_id.clone();
+-     let request_id_task = request_id.clone();
+-     let map_key_task = map_key.clone();
+- 
+-     // Cooperative cancellation for this turn. The token lives in the
+-     // `InFlightEntry`; interrupt / cancel paths cancel it to tear the turn
+-     // future down gracefully at the next await point.
+-     let cancel_token = CancellationToken::new();
+-     let task_cancel_token = cancel_token.clone();
+- 
+-     let user_message = message.clone();
+-     let handle = tokio::spawn(async move {
+-         let approval_ctx = crate::openhuman::approval::ApprovalChatContext {
+-             thread_id: thread_id_task.clone(),
+-             client_id: client_id_task.clone(),
+-         };
++[... 74 context line(s) omitted ... ⟦tj:4cc4f0857712d9c2a1592227672d6170⟧]
+          let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
+              thread_id: thread_id_task.clone(),
+              client_id: client_id_task.clone(),
+@@ -1646,80 +989,7 @@
+          };
+          // `None` => the turn was cancelled cooperatively before producing a
+          // result; the interrupting/cancelling side already emitted the
+-         // user-facing `chat_error`, so we just unwind quietly here.
+-         let result = tokio::select! {
+-             biased;
+-             _ = task_cancel_token.cancelled() => None,
+-             res = crate::openhuman::agent::turn_origin::with_origin(
+-                 origin,
+-                 crate::openhuman::approval::APPROVAL_CHAT_CONTEXT.scope(
+-                     approval_ctx,
+-                     run_chat_task(
+-                         &client_id_task,
+-                         &thread_id_task,
+-                         &request_id_task,
+-                         &user_message,
+-                         model_override,
+-                         temperature,
+-                         profile_id,
+-                         locale,
+-                         turn_run_queue_task,
+-                         metadata,
+-                         /* fork */ false,
+-                     ),
+-                 ),
+-             ) => Some(res),
+-         };
+- 
+-         let result = match result {
+-             Some(res) => res,
+-             None => {
+-                 log::info!(
+-                     "[web-channel] turn cancelled cooperatively client_id={} thread_id={} request_id={}",
+-                     client_id_task,
+-                     thread_id_task,
+-                     request_id_task
+-                 );
+-                 // Release any in-flight slot we still own and stop. The
+-                 // `request_id` guard below prevents clobbering a newer turn that
+-                 // replaced us on the interrupt path.
+-                 let mut in_flight = IN_FLIGHT.lock().await;
+-                 if let Some(current) = in_flight.get(&map_key_task) {
+-                     if current.request_id == request_id_task {
+-                         in_flight.remove(&map_key_task);
+-                     }
+-                 }
+-                 return;
+-             }
+-         };
+- 
+-         match result {
+-             Ok(chat_result) => {
+-                 crate::openhuman::channels::providers::presentation::deliver_response(
+-                     &client_id_task,
+-                     &thread_id_task,
+-                     &request_id_task,
+-                     &chat_result.full_response,
+-                     &user_message,
+-                     &chat_result.citations,
+-                     chat_result.usage.as_ref(),
+-                 )
+-                 .await;
+-             }
+-             Err(err) => {
+-                 log::warn!(
+-                     "[web-channel] run_chat_task failed client_id={} thread_id={} request_id={} error={}",
+-                     client_id_task,
+-                     thread_id_task,
+-                     request_id_task,
+-                     err
+-                 );
+-                 let detailed = format!(
+-                     "run_chat_task failed client_id={} thread_id={} request_id={} error={}",
+-                     client_id_task, thread_id_task, request_id_task, err
+-                 );
+-                 let classified = classify_inference_error(&err);
+-                 let classified_type = classified.error_type;
++[... 74 context line(s) omitted ... ⟦tj:fa35982eb2bda6b747ec4f5a4d0343fc⟧]
+                  let classified_type_string = classified_type.to_string();
+                  if crate::openhuman::agent::error::is_max_iterations_error(&detailed) {
+                      log::info!(
+@@ -1727,80 +997,7 @@
+  
+      {
+          let mut in_flight = IN_FLIGHT.lock().await;
+-         in_flight.insert(
+-             map_key,
+-             InFlightEntry {
+-                 request_id: request_id.clone(),
+-                 handle,
+-                 run_queue: turn_run_queue,
+-                 cancel_token,
+-             },
+-         );
+-     }
+- 
+-     Ok(request_id)
+- }
+- 
+- fn dispatch_followups(followups: Vec<crate::openhuman::agent::harness::run_queue::QueuedMessage>) {
+-     for fup in followups {
+-         tokio::spawn(async move {
+-             if let Err(err) = start_chat(
+-                 &fup.client_id,
+-                 &fup.thread_id,
+-                 &fup.text,
+-                 fup.model_override,
+-                 fup.temperature,
+-                 fup.profile_id,
+-                 fup.locale,
+-                 Some("followup".to_string()),
+-                 ChatRequestMetadata::default(),
+-             )
+-             .await
+-             {
+-                 log::warn!(
+-                     "[web-channel] failed to dispatch followup thread_id={} err={}",
+-                     fup.thread_id,
+-                     err
+-                 );
+-             }
+-         });
+-     }
+- }
+- 
+- /// Spawn an independent, forked (`QueueMode::Parallel`) turn. It snapshots the
+- /// thread's history-at-start (inside `run_chat_task` with `fork = true`), runs
+- /// concurrently with any other turn on the thread, and on completion delivers
+- /// its response (append-only) and removes itself from `PARALLEL_IN_FLIGHT`.
+- /// Emits the same per-`request_id` stream events as a primary turn, so the UI
+- /// can render it as an interleaved branch.
+- #[allow(clippy::too_many_arguments)]
+- async fn spawn_parallel_turn(
+-     client_id: &str,
+-     thread_id: &str,
+-     request_id: String,
+-     message: &str,
+-     model_override: Option<String>,
+-     temperature: Option<f64>,
+-     profile_id: Option<String>,
+-     locale: Option<String>,
+-     metadata: ChatRequestMetadata,
+- ) {
+-     let cancel_token = CancellationToken::new();
+-     let task_cancel_token = cancel_token.clone();
+- 
+-     let client_id_task = client_id.to_string();
+-     let thread_id_task = thread_id.to_string();
+-     let request_id_task = request_id.clone();
+-     let user_message = message.to_string();
+-     // Forked turns don't participate in the steer/followup/collect queue, but
+-     // `run_chat_task` requires a queue handle — give each its own.
+-     let run_queue = crate::openhuman::agent::harness::run_queue::RunQueue::new();
+- 
+-     let handle = tokio::spawn(async move {
+-         let approval_ctx = crate::openhuman::approval::ApprovalChatContext {
+-             thread_id: thread_id_task.clone(),
+-             client_id: client_id_task.clone(),
+-         };
++[... 74 context line(s) omitted ... ⟦tj:da216a6690e66b67fe06305b6cc71ac1⟧]
+          let origin = crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
+              thread_id: thread_id_task.clone(),
+              client_id: client_id_task.clone(),
+@@ -1808,80 +1005,7 @@
+          };
+          let result = tokio::select! {
+              biased;
+-             _ = task_cancel_token.cancelled() => None,
+-             res = crate::openhuman::agent::turn_origin::with_origin(
+-                 origin,
+-                 crate::openhuman::approval::APPROVAL_CHAT_CONTEXT.scope(
+-                     approval_ctx,
+-                     run_chat_task(
+-                         &client_id_task,
+-                         &thread_id_task,
+-                         &request_id_task,
+-                         &user_message,
+-                         model_override,
+-                         temperature,
+-                         profile_id,
+-                         locale,
+-                         run_queue,
+-                         metadata,
+-                         /* fork */ true,
+-                     ),
+-                 ),
+-             ) => Some(res),
+-         };
+- 
+-         match result {
+-             Some(Ok(chat_result)) => {
+-                 crate::openhuman::channels::providers::presentation::deliver_response(
+-                     &client_id_task,
+-                     &thread_id_task,
+-                     &request_id_task,
+-                     &chat_result.full_response,
+-                     &user_message,
+-                     &chat_result.citations,
+-                     chat_result.usage.as_ref(),
+-                 )
+-                 .await;
+-             }
+-             Some(Err(err)) => {
+-                 log::warn!(
+-                     "[web-channel] parallel run_chat_task failed client_id={} thread_id={} request_id={} error={}",
+-                     client_id_task,
+-                     thread_id_task,
+-                     request_id_task,
+-                     err
+-                 );
+-                 let classified = classify_inference_error(&err);
+-                 publish_web_channel_event(WebChannelEvent {
+-                     event: "chat_error".to_string(),
+-                     client_id: client_id_task.clone(),
+-                     thread_id: thread_id_task.clone(),
+-                     request_id: request_id_task.clone(),
+-                     message: Some(classified.message),
+-                     error_type: Some(classified.error_type.to_string()),
+-                     error_source: Some(classified.source.to_string()),
+-                     error_retryable: Some(classified.retryable),
+-                     error_retry_after_ms: classified.retry_after_ms,
+-                     error_provider: classified.provider,
+-                     error_fallback_available: classified.fallback_available,
+-                     ..Default::default()
+-                 });
+-             }
+-             None => {
+-                 log::info!(
+-                     "[web-channel] parallel turn cancelled cooperatively thread_id={} request_id={}",
+-                     thread_id_task,
+-                     request_id_task
+-                 );
+-             }
+-         }
+- 
+-         PARALLEL_IN_FLIGHT.lock().await.remove(&request_id_task);
+-     });
+- 
+-     PARALLEL_IN_FLIGHT.lock().await.insert(
+-         request_id,
+-         ParallelEntry {
++[... 74 context line(s) omitted ... ⟦tj:7179bdd587533df8a7eb09ab86153f97⟧]
+              thread_id: thread_id.to_string(),
+              handle,
+              cancel_token,
+@@ -1893,80 +1017,7 @@
+      }
+      let mut end = MAX_WIRE_SUBAGENT_OUTPUT.saturating_sub(TRUNCATION_MARKER_BUDGET);
+      while end > 0 && !output.is_char_boundary(end) {
+-         end -= 1;
+-     }
+-     let omitted = output.len() - end;
+-     format!(
+-         "{}\n…[truncated {omitted} bytes of tool output]",
+-         &output[..end]
+-     )
+- }
+- 
+- pub(super) fn ledger_upsert_agent_run(
+-     config: &crate::openhuman::config::Config,
+-     upsert: crate::openhuman::session_db::run_ledger::AgentRunUpsert,
+- ) {
+-     if let Err(err) = crate::openhuman::session_db::run_ledger::upsert_agent_run(config, upsert) {
+-         log::warn!("[run_ledger][web_channel] failed to upsert run: {err}");
+-     }
+- }
+- 
+- pub(super) fn ledger_append_event(
+-     config: &crate::openhuman::config::Config,
+-     event: crate::openhuman::session_db::run_ledger::RunEventAppend,
+- ) {
+-     if let Err(err) = crate::openhuman::session_db::run_ledger::append_run_event(config, event) {
+-         log::warn!("[run_ledger][web_channel] failed to append event: {err}");
+-     }
+- }
+- 
+- pub(super) fn ledger_upsert_telemetry(
+-     config: &crate::openhuman::config::Config,
+-     telemetry: crate::openhuman::session_db::run_ledger::RunTelemetryUpsert,
+- ) {
+-     if let Err(err) =
+-         crate::openhuman::session_db::run_ledger::upsert_run_telemetry(config, telemetry)
+-     {
+-         log::warn!("[run_ledger][web_channel] failed to upsert telemetry: {err}");
+-     }
+- }
+- 
+- /// Build the worktree-isolation slice of a `subagent_completed`
+- /// [`SubagentProgressDetail`] (#3376). An empty `changed_files` collapses to
+- /// `None` so the renderer omits an empty "changed files" list rather than
+- /// showing "0 files"; a non-empty list is forwarded verbatim. `worktree_path`
+- /// / `dirty_status` pass through (`None` for non-isolated workers). Split out
+- /// so the empty/non-empty branch is unit-testable without a live DB + channel.
+- fn subagent_worktree_detail(
+-     worktree_path: Option<String>,
+-     changed_files: Vec<String>,
+-     dirty_status: Option<bool>,
+- ) -> SubagentProgressDetail {
+-     SubagentProgressDetail {
+-         worktree_path,
+-         changed_files: if changed_files.is_empty() {
+-             None
+-         } else {
+-             Some(changed_files)
+-         },
+-         dirty_status,
+-         ..Default::default()
+-     }
+- }
+- 
+- /// Trace user attribution for a turn whose `auth_get_me` cache is cold
+- /// (headless / autonomous / freshly booted cores): read the on-disk
+- /// app-session profile and return the user's email (preferred) or backend
+- /// user id. `None` when signed out or the profile is unreadable — the caller
+- /// then falls back to the transport client id.
+- fn session_profile_user_attribution(config: &crate::openhuman::config::Config) -> Option<String> {
+-     let state = crate::openhuman::credentials::session_support::build_session_state(config).ok()?;
+-     state
+-         .user
+-         .as_ref()
+-         .and_then(|u| u.get("email"))
+-         .and_then(serde_json::Value::as_str)
+-         .map(str::to_string)
++[... 74 context line(s) omitted ... ⟦tj:ccb0530bcd04c05c6388faa1b1d54e61⟧]
+          .or(state.user_id)
+  }
+  
+@@ -2064,30 +1115,7 @@
+  /// Spawn a background task that reads [`AgentProgress`] events from the
+  /// agent turn loop and translates them into [`WebChannelEvent`]s tagged
+  /// with the correct client/thread/request IDs. The task runs until the
+- /// sender is dropped (i.e. when the agent turn finishes).
+- pub(crate) fn spawn_progress_bridge(
+-     mut rx: tokio::sync::mpsc::Receiver<crate::openhuman::agent::progress::AgentProgress>,
+-     client_id: String,
+-     thread_id: String,
+-     request_id: String,
+-     turn_state_store: TurnStateStore,
+-     metadata: ChatRequestMetadata,
+-     config: crate::openhuman::config::Config,
+- ) {
+-     use crate::openhuman::agent::progress::AgentProgress;
+-     use crate::openhuman::session_db::run_ledger::{
+-         AgentRunKind, AgentRunStatus, AgentRunUpsert, RunEventAppend, RunTelemetryUpsert,
+-     };
+-     use std::collections::HashMap;
+- 
+-     tokio::spawn(async move {
+-         log::debug!(
+-             "[web_channel][bridge] spawned client_id={} thread_id={} request_id={} speak_reply={:?} source={:?} session_id={:?}",
+-             client_id,
+-             thread_id,
+-             request_id,
+-             metadata.speak_reply,
+-             metadata.source,
++[... 24 context line(s) omitted ... ⟦tj:9ca9a700b42ea43a261e37bfcaae6550⟧]
+              metadata.session_id,
+          );
+          let mut round: u32 = 0;
+@@ -2095,11 +1123,7 @@
+          let mut events_seen: u64 = 0;
+          let mut parent_completed = false;
+          let mut parent_tool_count: u64 = 0;
+-         let mut child_tool_counts: HashMap<String, u64> = HashMap::new();
+-         let mut turn_state =
+-             TurnStateMirror::new(turn_state_store, thread_id.clone(), request_id.clone());
+- 
+-         // #3886: opt-in structured tracing export. When enabled, fold the same
++[... 5 context line(s) omitted ... ⟦tj:c08132019a17224457c709664bfda278⟧]
+          // progress stream into OTel/Langfuse-style spans correlated by session
+          // id (falling back to the thread id for headless/autonomous runs).
+          // `None` (disabled) is zero-cost.
+@@ -2107,56 +1131,7 @@
+          let mut span_collector = if config.observability.share_usage_data
+              || config.observability.agent_tracing.enabled
+          {
+-             use crate::openhuman::agent::progress_tracing::{
+-                 trace_session_id, RunType, SpanCollector, TraceContext,
+-             };
+-             // One trace per turn: the trace id is unique per request, while the
+-             // thread id rides along as the Langfuse `sessionId` so a
+-             // conversation's per-turn traces still group under one session.
+-             let base = trace_session_id(metadata.session_id, &thread_id);
+-             let trace_id = format!("{base}:{request_id}");
+-             // Attribute the trace to the *real* authenticated user (cached
+-             // `auth_get_me` identity: id, else email) — the transport client
+-             // id (socket client / "system") is NOT a user; it rides along as
+-             // the separate `client.id` metadata attribute. When no identity is
+-             // cached (signed-out / fresh install), fall back to the client id
+-             // so the trace still carries some attribution.
+-             let identity = crate::openhuman::app_state::peek_cached_current_user_identity();
+-             let user_attributed = identity.is_some();
+-             let user_id = identity
+-                 .and_then(|i| i.id.or(i.email))
+-                 .or_else(|| session_profile_user_attribution(&config))
+-                 .unwrap_or_else(|| client_id.clone());
+-             // Run origin for trace metadata: the request's source tag
+-             // ("ptt"/"dictation"/"type"/"agentbox"/"autonomous"/…), else a
+-             // plain interactive chat turn.
+-             let run_type = RunType::from_source(metadata.source.as_deref());
+-             let channel_source = metadata
+-                 .source
+-                 .clone()
+-                 .unwrap_or_else(|| "chat".to_string());
+-             // Storage-level privacy gate (#4454): capture_content (off by
+-             // default) rides on the TraceContext so the collector only attaches
+-             // prompt/reply content to spans when the operator opted in — no
+-             // exporter can serialize prompt/reply text otherwise.
+-             let capture_content = config.observability.agent_tracing.capture_content;
+-             log::debug!(
+-                 "[web_channel][bridge] trace context trace_id={} user_attributed={} \
+-                  agent_id={:?} channel_source={} run_type={} capture_content={} request_id={}",
+-                 trace_id,
+-                 user_attributed,
+-                 metadata.agent_id,
+-                 channel_source,
+-                 run_type.as_str(),
+-                 capture_content,
+-                 request_id,
+-             );
+-             let mut trace_ctx = TraceContext::new(trace_id, Some(user_id))
+-                 .with_session_group(thread_id.clone())
+-                 .with_client_id(client_id.clone())
+-                 .with_channel_source(channel_source)
+-                 .with_run_type(run_type)
+-                 .with_capture_content(capture_content);
++[... 50 context line(s) omitted ... ⟦tj:3ae868b2a5c0fc7c3ab3e141b908c0d1⟧]
+              if let Some(agent_id) = metadata.agent_id.clone() {
+                  trace_ctx = trace_ctx.with_agent_id(agent_id);
+              }
+@@ -2164,161 +1139,15 @@
+              Some(SpanCollector::new(trace_ctx))
+          } else {
+              None
+-         };
+- 
+-         // #4270: emit a periodic liveness beat for the whole in-flight turn so
+-         // the frontend silence timer never false-fires during a long prefill or
+-         // a buffered-reasoning phase that streams no progress events. The beat
+-         // is gated on `turn_active` (set once `TurnStarted` is observed) so we
+-         // never emit before the turn's `inference_start` has armed the timer.
+-         let mut heartbeat =
+-             tokio::time::interval(std::time::Duration::from_secs(INFERENCE_HEARTBEAT_SECS));
+-         // Wall-clock cadence: a slow turn must not produce a burst of catch-up
+-         // beats once it finally yields control.
+-         heartbeat.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+-         // `interval`'s first tick resolves immediately — consume it so the first
+-         // real beat lands one full interval after the turn begins.
+-         heartbeat.tick().await;
+-         let mut turn_active = false;
+- 
+-         loop {
+-             let event = tokio::select! {
+-                 // Drain real progress events preferentially over the timer so a
+-                 // busy turn never starves event handling to emit a beat.
+-                 biased;
+-                 maybe = rx.recv() => match maybe {
+-                     Some(ev) => ev,
+-                     None => break,
+-                 },
+-                 _ = heartbeat.tick() => {
+-                     if turn_active {
+-                         log::trace!(
+-                             "[web_channel][bridge] inference_heartbeat thread_id={} request_id={}",
+-                             thread_id,
+-                             request_id,
+-                         );
+-                         publish_web_channel_event(WebChannelEvent {
+-                             event: "inference_heartbeat".to_string(),
+-                             client_id: client_id.clone(),
+-                             thread_id: thread_id.clone(),
+-                             request_id: request_id.clone(),
+-                             ..Default::default()
+-                         });
+-                     }
+-                     continue;
+-                 }
+-             };
+-             events_seen += 1;
+-             turn_state.observe(&event);
+-             if let Some(collector) = span_collector.as_mut() {
+-                 collector.record(&event, unix_epoch_ms());
+-             }
+-             match &event {
+-                 AgentProgress::TextDelta { delta, iteration } => {
+-                     log::trace!(
+-                         "[web_channel][bridge] text_delta round={} chars={} request_id={}",
++[... 74 context line(s) omitted ... ⟦tj:96461a48c84df846d6eb854727f16dc8⟧]
+                          iteration,
+-                         delta.len(),
+-                         request_id,
+-                     );
+-                 }
+-                 AgentProgress::ThinkingDelta { delta, iteration } => {
+-                     log::trace!(
+-                         "[web_channel][bridge] thinking_delta round={} chars={} request_id={}",
+-                         iteration,
+-                         delta.len(),
+-                         request_id,
+-                     );
+-                 }
+-                 AgentProgress::ToolCallArgsDelta {
+-                     call_id,
+-                     tool_name,
+-                     delta,
+-                     iteration,
+-                 } => {
+-                     log::trace!(
+-                         "[web_channel][bridge] tool_args_delta round={} tool={} call_id={} chars={} request_id={}",
+-                         iteration,
+                          tool_name,
+                          call_id,
+ @@ -334,160 +428,161 @@ pub(crate) fn spawn_progress_bridge(
+                      log::debug!(
+                          "[web_channel][bridge] tool_result round={} tool={} call_id={} success={} request_id={}",
+                          iteration,
+-                         tool_name,
+-                         call_id,
+-                         success,
+-                         request_id,
+-                     );
+-                 }
+-                 AgentProgress::SubagentFailed {
+-                     agent_id, error, ..
+-                 } => {
+-                     log::warn!(
+-                         "[web_channel][bridge] subagent_failed agent_id={} err={} client_id={} thread_id={} request_id={}",
+-                         agent_id,
+-                         error,
+-                         client_id,
+-                         thread_id,
+-                         request_id,
+-                     );
+-                 }
+-                 other => {
+-                     log::debug!(
+-                         "[web_channel][bridge] lifecycle event={:?} request_id={}",
+-                         std::mem::discriminant(other),
+-                         request_id,
+-                     );
+-                 }
+-             }
+-             match event {
+-                 AgentProgress::TurnStarted => {
+-                     // Turn is live — start emitting liveness beats (issue #4270).
+-                     turn_active = true;
+-                     ledger_upsert_agent_run(
+-                         &config,
+-                         AgentRunUpsert {
+-                             id: request_id.clone(),
+-                             kind: AgentRunKind::BackgroundAgent,
+-                             parent_run_id: None,
+-                             parent_thread_id: Some(thread_id.clone()),
+-                             agent_id: Some("orchestrator".to_string()),
+-                             status: AgentRunStatus::Running,
+-                             prompt_ref: Some(format!("thread:{thread_id}:request:{request_id}")),
+-                             worker_thread_id: None,
+-                             task_board_id: Some(thread_id.clone()),
+-                             task_card_id: None,
+-                             checkpoint_path: None,
+-                             checkpoint: None,
+-                             summary: None,
+-                             error: None,
+-                             metadata: json!({
+-                                 "clientId": client_id,
+-                                 "source": "web_channel",
+-                                 "schemaVersion": 1
+-                             }),
+-                             started_at: None,
+-                             completed_at: None,
+-                         },
+-                     );
+-                     ledger_append_event(
+-                         &config,
+-                         RunEventAppend {
+-                             run_id: request_id.clone(),
+-                             event_type: "turn_started".to_string(),
+-                             payload: json!({ "threadId": thread_id, "clientId": client_id }),
+-                         },
+-                     );
+-                     publish_web_channel_event(WebChannelEvent {
+-                         event: "inference_start".to_string(),
+-                         client_id: client_id.clone(),
+-                         thread_id: thread_id.clone(),
+-                         request_id: request_id.clone(),
+-                         ..Default::default()
+-                     });
+-                 }
+-                 AgentProgress::IterationStarted {
+-                     iteration,
++[... 74 context line(s) omitted ... ⟦tj:5f002899539f267e696c7d2dea40c7e5⟧]
+                      max_iterations,
+                  } => {
+                      round = iteration;
+@@ -2326,80 +1155,7 @@
+                      publish_web_channel_event(WebChannelEvent {
+                          event: "iteration_start".to_string(),
+                          client_id: client_id.clone(),
+-                         thread_id: thread_id.clone(),
+-                         request_id: request_id.clone(),
+-                         message: Some(format!("Iteration {iteration}/{max_iterations}")),
+-                         round: Some(iteration),
+-                         ..Default::default()
+-                     });
+-                 }
+-                 AgentProgress::ToolCallStarted {
+-                     call_id,
+-                     tool_name,
+-                     arguments,
+-                     iteration,
+-                     display_label,
+-                     display_detail,
+-                 } => {
+-                     parent_tool_count += 1;
+-                     ledger_append_event(
+-                         &config,
+-                         RunEventAppend {
+-                             run_id: request_id.clone(),
+-                             event_type: "tool_call_started".to_string(),
+-                             payload: json!({
+-                                 "callId": call_id,
+-                                 "toolName": tool_name,
+-                                 "iteration": iteration
+-                             }),
+-                         },
+-                     );
+-                     ledger_upsert_telemetry(
+-                         &config,
+-                         RunTelemetryUpsert {
+-                             run_id: request_id.clone(),
+-                             tool_count: Some(parent_tool_count),
+-                             ..Default::default()
+-                         },
+-                     );
+-                     publish_web_channel_event(WebChannelEvent {
+-                         event: "tool_call".to_string(),
+-                         client_id: client_id.clone(),
+-                         thread_id: thread_id.clone(),
+-                         request_id: request_id.clone(),
+-                         tool_name: Some(tool_name),
+-                         skill_id: Some("web_channel".to_string()),
+-                         args: Some(arguments),
+-                         round: Some(iteration),
+-                         tool_call_id: Some(call_id),
+-                         tool_display_label: display_label,
+-                         tool_display_detail: display_detail,
+-                         ..Default::default()
+-                     });
+-                 }
+-                 AgentProgress::ToolCallCompleted {
+-                     call_id,
+-                     tool_name,
+-                     success,
+-                     output_chars,
+-                     output,
+-                     elapsed_ms,
+-                     iteration,
+-                     failure,
+-                     ..
+-                 } => {
+-                     // Serialize the classified failure (if any) for the UI + ledger.
+-                     let failure_json = failure.as_ref().and_then(|f| serde_json::to_value(f).ok());
+-                     ledger_append_event(
+-                         &config,
+-                         RunEventAppend {
+-                             run_id: request_id.clone(),
+-                             event_type: "tool_call_completed".to_string(),
+-                             payload: json!({
+-                                 "callId": call_id,
+-                                 "toolName": tool_name,
+-                                 "success": success,
+-                                 "outputChars": output_chars,
++[... 74 context line(s) omitted ... ⟦tj:687e363966d18599153a6f60f4d630e5⟧]
+                                  "elapsedMs": elapsed_ms,
+                                  "iteration": iteration,
+                                  "failure": failure_json,
+@@ -2407,80 +1163,7 @@
+                      total_usd,
+                  } => {
+                      ledger_upsert_telemetry(
+-                         &config,
+-                         RunTelemetryUpsert {
+-                             run_id: request_id.clone(),
+-                             input_tokens: Some(input_tokens),
+-                             output_tokens: Some(output_tokens),
+-                             cached_input_tokens: Some(cached_input_tokens),
+-                             cost_usd: Some(total_usd),
+-                             model: Some(model.clone()),
+-                             ..Default::default()
+-                         },
+-                     );
+-                     log::debug!(
+-                         "[web_channel] turn cost update model={model} iter={iteration} \
+-                          in={input_tokens} out={output_tokens} cached_in={cached_input_tokens} \
+-                          total_usd={total_usd:.4} client_id={client_id} thread_id={thread_id}"
+-                     );
+-                 }
+-                 AgentProgress::TurnContent { .. } => {
+-                     // Prompt/reply content is attached to the trace span by the
+-                     // span collector above; the ledger/telemetry bridge ignores it.
+-                 }
+-                 AgentProgress::ModelCallCompleted {
+-                     model,
+-                     iteration,
+-                     input_tokens,
+-                     output_tokens,
+-                     cost_usd,
+-                     ..
+-                 } => {
+-                     // Per-call usage is consumed by the span collector above
+-                     // (per-call Langfuse generation); the socket/ledger surfaces
+-                     // stay on the cumulative TurnCostUpdated rollup.
+-                     log::debug!(
+-                         "[web_channel][bridge] model_call_completed model={model} iter={iteration} \
+-                          in={input_tokens} out={output_tokens} cost_usd={cost_usd:.6} request_id={request_id}"
+-                     );
+-                 }
+-             }
+-         }
+-         turn_state.finish();
+-         if !parent_completed {
+-             ledger_upsert_agent_run(
+-                 &config,
+-                 AgentRunUpsert {
+-                     id: request_id.clone(),
+-                     kind: AgentRunKind::BackgroundAgent,
+-                     parent_run_id: None,
+-                     parent_thread_id: Some(thread_id.clone()),
+-                     agent_id: Some("orchestrator".to_string()),
+-                     status: AgentRunStatus::Interrupted,
+-                     prompt_ref: Some(format!("thread:{thread_id}:request:{request_id}")),
+-                     worker_thread_id: None,
+-                     task_board_id: Some(thread_id.clone()),
+-                     task_card_id: None,
+-                     checkpoint_path: None,
+-                     checkpoint: None,
+-                     summary: None,
+-                     error: Some("progress bridge exited before turn completion".to_string()),
+-                     metadata: json!({}),
+-                     started_at: None,
+-                     completed_at: Some(chrono::Utc::now()),
+-                 },
+-             );
+-             ledger_append_event(
+-                 &config,
+-                 RunEventAppend {
+-                     run_id: request_id.clone(),
+-                     event_type: "turn_interrupted".to_string(),
+-                     payload: json!({ "eventsSeen": events_seen }),
+-                 },
+-             );
+-         }
+-         // #3886: seal any spans still open after the stream closed and hand the
+-         // run's trace to the configured tracing sink. Best-effort and gated;
++[... 74 context line(s) omitted ... ⟦tj:de3394e66fe5444508f1acf277a02d50⟧]
+          // never affects the turn outcome.
+          if let Some(mut collector) = span_collector.take() {
+              collector.finish(unix_epoch_ms());
+@@ -2499,80 +1182,7 @@
+          }
+  
+          log::debug!(
+-             "[web_channel][bridge] exit client_id={} thread_id={} request_id={} round={} events_seen={}",
+-             client_id,
+-             thread_id,
+-             request_id,
+-             round,
+-             events_seen,
+-         );
+-     });
+- }
+- 
+- #[cfg(test)]
+- mod tests {
+-     use super::session_profile_user_attribution;
+- 
+-     #[test]
+-     fn session_profile_attribution_none_when_signed_out() {
+-         let tmp = tempfile::TempDir::new().unwrap();
+-         let config = crate::openhuman::config::Config {
+-             workspace_dir: tmp.path().join("workspace"),
+-             action_dir: tmp.path().join("workspace"),
+-             config_path: tmp.path().join("config.toml"),
+-             ..Default::default()
+-         };
+-         assert!(session_profile_user_attribution(&config).is_none());
+-     }
+- 
+-     #[test]
+-     fn session_profile_attribution_prefers_email_from_stored_session() {
+-         let tmp = tempfile::TempDir::new().unwrap();
+-         let config = crate::openhuman::config::Config {
+-             workspace_dir: tmp.path().join("workspace"),
+-             action_dir: tmp.path().join("workspace"),
+-             config_path: tmp.path().join("config.toml"),
+-             ..Default::default()
+-         };
+-         let service = crate::openhuman::credentials::AuthService::from_config(&config);
+-         let mut metadata = std::collections::HashMap::new();
+-         metadata.insert(
+-             "user_json".to_string(),
+-             "{\"email\": \"steven@example.test\", \"_id\": \"u-1\"}".to_string(),
+-         );
+-         metadata.insert("user_id".to_string(), "u-1".to_string());
+-         service
+-             .store_provider_token(
+-                 crate::openhuman::credentials::APP_SESSION_PROVIDER,
+-                 crate::openhuman::credentials::DEFAULT_AUTH_PROFILE_NAME,
+-                 "session-token",
+-                 metadata,
+-                 true,
+-             )
+-             .expect("store session profile");
+-         assert_eq!(
+-             session_profile_user_attribution(&config).as_deref(),
+-             Some("steven@example.test"),
+-             "cold-cache attribution must resolve the on-disk session email"
+-         );
+-     }
+- 
+-     use super::*;
+- 
+-     #[test]
+-     fn cap_wire_output_passes_through_small_payloads() {
+-         let s = "small tool result".to_string();
+-         assert_eq!(cap_wire_output(s.clone()), s);
+-     }
+- 
+-     #[test]
+-     fn cap_wire_output_truncates_large_payloads_on_char_boundary() {
+-         // A multibyte payload past the cap: result stays valid UTF-8, is shorter
+-         // than the input, and carries the truncation marker.
+-         let big = "é".repeat(MAX_WIRE_SUBAGENT_OUTPUT); // 2 bytes each → well over cap
+-         let capped = cap_wire_output(big.clone());
+-         assert!(capped.len() < big.len());
+-         assert!(capped.contains("[truncated"));
++[... 74 context line(s) omitted ... ⟦tj:5c2d0ec70446d1372cceb4804623c994⟧]
+          // Truncation landed on a char boundary (no replacement char / panic).
+          assert!(capped.starts_with('é'));
+          // The final payload (content + marker) must honor the wire cap.
+@@ -2584,13 +1194,7 @@
+  //! Unit tests for [`super`] — chunk upsert / list / lifecycle / embedding /
+  //! content-pointer accessors against a tempdir-backed SQLite store.
+  //!
+- //! ## Test isolation for the connection cache
+- //!
+- //! Because the connection cache is a process-level singleton, tests that want
+- //! to exercise cache behaviour (same Arc, independent workspaces, circuit
+- //! breaker, cleanup) must call `clear_connection_cache()` at the start — or
+- //! be careful to use unique tempdirs that cannot collide with other tests.
+- //! The call is cheap (a mutex lock + HashMap clear) and harmless for tests
++[... 7 context line(s) omitted ... ⟦tj:015c214753da899730c1b3a64793d64d⟧]
+  //! that don't need it.
+  
+  use super::*;
+@@ -2599,275 +1203,65 @@
+  use chrono::TimeZone;
+  use rusqlite::params;
+  use tempfile::TempDir;
+- 
+- fn test_config() -> (TempDir, Config) {
+-     let tmp = TempDir::new().expect("tempdir");
+-     let mut cfg = Config::default();
+-     cfg.workspace_dir = tmp.path().to_path_buf();
+-     (tmp, cfg)
+- }
+- 
+- fn sample_chunk(source_id: &str, seq: u32, ts_ms: i64) -> Chunk {
+-     let ts = Utc.timestamp_millis_opt(ts_ms).unwrap();
+-     Chunk {
+-         id: chunk_id(SourceKind::Chat, source_id, seq, "test-content"),
+-         content: format!("content {source_id} {seq}"),
+-         metadata: Metadata {
+-             source_kind: SourceKind::Chat,
+-             source_id: source_id.to_string(),
+-             owner: "alice@example.com".to_string(),
+-             timestamp: ts,
+-             time_range: (ts, ts),
+-             tags: vec!["eng".into()],
+-             source_ref: Some(SourceRef::new(format!("slack://{source_id}/{seq}"))),
+-             path_scope: None,
+-         },
+-         token_count: 12,
+-         seq_in_source: seq,
+-         created_at: ts,
+-         partial_message: false,
++[... 74 context line(s) omitted ... ⟦tj:724565e4a8658b2ce79224ae7720861b⟧]
++         ..Default::default()
++     };
++     let rows = list_chunks(&cfg, &q).unwrap();
++diff --git a/src/openhuman/plan_review/tool.rs b/src/openhuman/plan_review/tool.rs
++index beec1ab99..ca954cb68 100644
++--- a/src/openhuman/plan_review/tool.rs
+++++ b/src/openhuman/plan_review/tool.rs
++@@ -106,93 +106,94 @@ impl Tool for RequestPlanReviewTool {
++                     .map(|s| s.trim().to_string())
++                     .filter(|s| !s.is_empty())
++                     .collect()
++[... 74 context line(s) omitted ... ⟦tj:89ec4df22795eda001efbbeeaaec9497⟧]
++             AgentTurnOrigin::WebChat {
++                 thread_id: "t-int".into(),
++                 client_id: "c-int".into(),
+++                request_id: Some("req-int".into()),
++             },
++             tool.execute(json!({ "summary": "plan", "steps": ["one"] })),
++         );
++[... 7 context line(s) omitted ... ⟦tj:189737d5228c9cb446c3023a39075c19⟧]
++         );
+      }
+  }
++diff --git a/src/openhuman/tinyagents/journal.rs b/src/openhuman/tinyagents/journal.rs
++index aa057676f..f81983221 100644
++--- a/src/openhuman/tinyagents/journal.rs
+++++ b/src/openhuman/tinyagents/journal.rs
++@@ -1,163 +1,197 @@
++ //! Durable event journals + status stores for tinyagents turns (issue #4249,
++ //! Workstream 05-events, 05.1).
++ //!
++[... 41 context line(s) omitted ... ⟦tj:b57367cb6f7708cd8246ca24b405ecc7⟧]
++ //!
++ //! [`EventSink::with_stream_id`]: tinyagents::harness::events::EventSink::with_stream_id
+  
+- #[test]
+- fn upsert_then_get() {
+-     let (_tmp, cfg) = test_config();
+-     let c = sample_chunk("slack:#eng", 0, 1_700_000_000_000);
+-     assert_eq!(upsert_chunks(&cfg, &[c.clone()]).unwrap(), 1);
+-     let got = get_chunk(&cfg, &c.id).unwrap().expect("chunk stored");
+-     assert_eq!(got, c);
+- }
+++use std::collections::HashMap;
++ use std::path::PathBuf;
++ use std::sync::{Arc, Mutex};
+  
+- #[test]
+- fn upsert_persists_path_scope() {
+-     let (_tmp, cfg) = test_config();
+-     let mut c = sample_chunk("notion:conn-1:page-abc", 0, 1_700_000_000_000);
+-     c.metadata.source_kind = SourceKind::Document;
+-     c.metadata.path_scope = Some("notion:conn-1".to_string());
++ use async_trait::async_trait;
+++use once_cell::sync::Lazy;
+  
+-     assert_eq!(upsert_chunks(&cfg, &[c.clone()]).unwrap(), 1);
++ use tinyagents::error::Result as TaResult;
++ use tinyagents::harness::events::{EventSink, HarnessRunStatus};
++[... 11 context line(s) omitted ... ⟦tj:cb5d496dd28d751fbe104177ddc4acd8⟧]
++ /// it round-trips the crate [`FileStore`] name sanitizer.
++ const STATUS_NS: &str = "run_status";
+  
+-     let got = get_chunk(&cfg, &c.id).unwrap().expect("chunk stored");
+-     assert_eq!(got.metadata.source_id, "notion:conn-1:page-abc");
+-     assert_eq!(got.metadata.path_scope.as_deref(), Some("notion:conn-1"));
+- }
+- 
+- #[test]
+- fn list_chunks_source_scope_filters_before_limit() {
+-     // Two disallowed-source chunks have NEWER timestamps (sorted first by DESC),
+-     // and the single allowed-source chunk is older. With a naive post-limit
+-     // filter and LIMIT 1 the allowed row would be starved; the before-limit gate
+-     // inside list_chunks must still surface it.
+-     let (_tmp, cfg) = test_config();
+-     let tag = || vec!["memory_sources".to_string(), "chat".to_string()];
+-     let mut bad1 = sample_chunk("slack:#secret", 0, 3_000);
+-     bad1.metadata.tags = tag();
+-     let mut bad2 = sample_chunk("slack:#secret", 1, 2_000);
+-     bad2.metadata.tags = tag();
+-     let mut good = sample_chunk("slack:#eng", 0, 1_000);
+-     good.metadata.tags = tag();
+-     upsert_chunks(&cfg, &[bad1, bad2, good]).unwrap();
+- 
+-     let mut allowed = std::collections::HashSet::new();
+-     allowed.insert("slack:#eng".to_string());
+-     let q = ListChunksQuery {
+-         limit: Some(1),
+-         source_scope: Some(allowed),
+-         ..Default::default()
+-     };
+-     let rows = list_chunks(&cfg, &q).unwrap();
+-diff --git a/src/openhuman/plan_review/tool.rs b/src/openhuman/plan_review/tool.rs
+-index beec1ab99..ca954cb68 100644
+---- a/src/openhuman/plan_review/tool.rs
+-+++ b/src/openhuman/plan_review/tool.rs
+-@@ -106,93 +106,94 @@ impl Tool for RequestPlanReviewTool {
+-                     .map(|s| s.trim().to_string())
+-                     .filter(|s| !s.is_empty())
+-                     .collect()
+-             })
+-             .unwrap_or_default();
+- 
+-         // Only interactive (WebChat) turns have a human to review the plan.
+-         // Anything else auto-approves so background automation isn't wedged.
+-         let origin = turn_origin::current().unwrap_or(AgentTurnOrigin::Unknown);
+-         if !matches!(origin, AgentTurnOrigin::WebChat { .. }) {
+-             tracing::debug!(
+-                 origin = ?origin,
+-                 "[tool][request_plan_review] non-interactive turn — auto-approving"
+-             );
+-             return Ok(ToolResult::success(
+-                 "approved: non-interactive turn (no review surface) — proceed with the plan."
+-                     .to_string(),
+-             ));
+-         }
+- 
+-         // Route the surface back to the originating chat thread/client (set by
+-         // the web channel around the turn, same task-local the ApprovalGate uses).
+-         let chat_ctx = APPROVAL_CHAT_CONTEXT.try_with(|c| c.clone()).ok();
+-         let thread_id = chat_ctx.as_ref().map(|c| c.thread_id.clone());
+-         let client_id = chat_ctx.as_ref().map(|c| c.client_id.clone());
+- 
+-         tracing::info!(
+-             thread_id = ?thread_id,
+-             steps = steps.len(),
+-             "[tool][request_plan_review] parking interactive turn for plan review"
+-         );
+- 
+-         let resolution = gate::global()
+-             .request_review(thread_id, client_id, summary, steps)
+-             .await;
+- 
+-         let result = match resolution {
+-             PlanReviewResolution::Approve => ToolResult::success(
+-                 "approved: the user approved the plan — proceed and execute it now.".to_string(),
+-             ),
+-             PlanReviewResolution::Reject => ToolResult::success(
+-                 "rejected: the user rejected the plan — do NOT execute it. Briefly ask what \
+-                  they would like to do instead."
+-                     .to_string(),
+-             ),
+-             PlanReviewResolution::Revise { feedback } => ToolResult::success(format!(
+-                 "revise: the user requested changes before executing. Their feedback:\n{feedback}\n\
+-                  Revise the plan accordingly, then call `request_plan_review` again before \
+-                  executing."
+-             )),
+-         };
+-         Ok(result)
+-     }
+- }
+- 
+- #[cfg(test)]
+- mod tests {
+-     use super::*;
+-     use crate::openhuman::agent::turn_origin::with_origin;
+- 
+-     #[tokio::test]
+-     async fn non_interactive_origin_auto_approves() {
+-         let tool = RequestPlanReviewTool::new();
+-         let out = with_origin(
+-             AgentTurnOrigin::Cli,
+-             tool.execute(json!({ "summary": "do x", "steps": ["a", "b"] })),
+-         )
+-         .await
+-         .unwrap();
+-         assert!(!out.is_error);
+-         assert!(out.output().starts_with("approved"));
+-     }
+- 
+-     #[tokio::test]
+-     async fn interactive_turn_parks_until_resolved() {
+-         let tool = RequestPlanReviewTool::new();
+-         let fut = with_origin(
+-             AgentTurnOrigin::WebChat {
+-                 thread_id: "t-int".into(),
+-                 client_id: "c-int".into(),
+-+                request_id: Some("req-int".into()),
+-             },
+-             tool.execute(json!({ "summary": "plan", "steps": ["one"] })),
+-         );
+-         // An interactive turn must BLOCK on the gate rather than return
+-         // immediately — a short timeout elapses with no result (the parked
+-         // future is then dropped, and the gate cleans up).
+-         let res = tokio::time::timeout(std::time::Duration::from_millis(60), fut).await;
+-         assert!(
+-             res.is_err(),
+-             "interactive turn should park, not resolve immediately"
+-         );
+-     }
+- }
+-diff --git a/src/openhuman/tinyagents/journal.rs b/src/openhuman/tinyagents/journal.rs
+-index aa057676f..f81983221 100644
+---- a/src/openhuman/tinyagents/journal.rs
+-+++ b/src/openhuman/tinyagents/journal.rs
+-@@ -1,163 +1,197 @@
+- //! Durable event journals + status stores for tinyagents turns (issue #4249,
+- //! Workstream 05-events, 05.1).
+- //!
+- //! The live [`crate::openhuman::tinyagents::observability::OpenhumanEventBridge`]
+- //! mirrors the harness [`EventSink`] onto openhuman's in-process `AgentProgress`
+- //! stream — transient state that is lost the moment the UI detaches. This module
+- //! makes that history **durable**: it attaches, *in addition to* the untouched
+- //! bridge, a crate [`StoreEventJournal`] (over the same 04-sessions
+- //! [`JsonlAppendStore`] under `{workspace}/tinyagents_store/journal`) plus a
+- //! [`HarnessStatusStore`] writer, so a run can be reconstructed after the fact —
+- //! even for an unobserved (`on_progress = None`) turn.
+- //!
+- //! Everything here is **best-effort and non-fatal**: opening the store,
+- //! subscribing the sink, and every status/journal write swallow errors behind a
+- //! grep-friendly `[journal]` log line and never fail or alter a chat turn. The
+- //! existing bridge/global-bus path is left fully intact — this is a pure
+- //! observer add-on.
+- //!
+- //! ## Composition
+- //!
+- //! The crate [`EventSink`] is itself the fan-out point: the (already-subscribed)
+- //! `OpenhumanEventBridge` and this journal sink are independent subscribers, so
+- //! **both** receive every event. The journal side is wrapped in a
+- //! [`FanOutSink`] as the durable-observer composition seam (05.2 will add graph
+- //! sinks here) and its records pass through a [`RedactingSink`] so process
+- //! credentials are masked before anything is persisted.
+- //!
+- //! ## Stable event ids (05.1)
+- //!
+- //! The run [`EventSink`] is seeded by the caller with
+- //! [`EventSink::with_stream_id`]`(run_id)` (see [`mint_run_id`]), so every
+- //! persisted observation carries a restart-stable `event_id` of the form
+- //! `{run_id}-evt-{offset}`. That is the id a late-attaching replay reader
+- //! reconstructs the timeline from — the same `(stream_id, offset)` always mints
+- //! the same id, and two runs never collide even if both restart their offset
+- //! counter at zero.
+- //!
+- //! ## Follow-ups (not in this slice)
+- //!
+- //! - A replay RPC (`agent.run_events`?) that surfaces [`read_run_events`] /
+- //!   [`read_run_status`] to the desktop for mid-run reconnect (05.x).
+- //! - Full sub-agent / graph run lineage (`parent_run_id` / `root_run_id`
+- //!   threading) — wired in 05.2/05.3. This slice threads `thread_id` (from the
+- //!   sub-agent task scope) so [`FileStatusStore::list_by_thread`] answers.
+- //!
+- //! [`EventSink::with_stream_id`]: tinyagents::harness::events::EventSink::with_stream_id
+- 
+-+use std::collections::HashMap;
+- use std::path::PathBuf;
+- use std::sync::{Arc, Mutex};
+- 
+- use async_trait::async_trait;
+-+use once_cell::sync::Lazy;
+- 
+- use tinyagents::error::Result as TaResult;
+- use tinyagents::harness::events::{EventSink, HarnessRunStatus};
+- use tinyagents::harness::ids::{ComponentId, HarnessPhase, RunId, ThreadId};
+- use tinyagents::harness::observability::{
+-     AgentObservation, FanOutSink, HarnessEventJournal, HarnessStatusStore, JournalSink,
+-     RedactingSink, StoreEventJournal,
+- };
+- use tinyagents::harness::store::{FileStore, Store};
+- 
+- use crate::openhuman::session_import::ops::open_session_stores;
+- 
+- /// KV namespace the durable per-run [`HarnessRunStatus`] snapshots live under
+- /// (`{workspace}/tinyagents_store/kv/run_status/<run_id>.json`). Slash-free so
+- /// it round-trips the crate [`FileStore`] name sanitizer.
+- const STATUS_NS: &str = "run_status";
+- 
+-+/// Best-effort live request → durable tinyagents journal stream map. The web
+-+/// progress bridge uses this at turn end to shadow-project spans from the
+-+/// journal and compare them against the live `SpanCollector` path during C4 S3.
+-+static REQUEST_JOURNAL_RUNS: Lazy<Mutex<HashMap<String, String>>> =
+-+    Lazy::new(|| Mutex::new(HashMap::new()));
+-+
+- /// Mints a fresh, slash-free, process-unique run id (`run.<32-hex>`), used three
+- /// ways for one turn: the [`EventSink::with_stream_id`] prefix (so persisted
+- /// `event_id`s are the restart-stable `{run_id}-evt-{offset}`), the journal
+- /// stream key, and the status-store key. The `simple()` uuid form (no hyphens)
+- /// keeps the id inside the crate store's allowed-character set.
+- ///
+- /// The caller mints this *before* creating the run [`EventSink`] so the same id
+- /// seeds the sink stream prefix and the durable journal/status — see
+- /// [`attach_turn_journal`].
+- ///
+- /// [`EventSink::with_stream_id`]: tinyagents::harness::events::EventSink::with_stream_id
+- pub(crate) fn mint_run_id() -> RunId {
+++/// Best-effort live request → durable tinyagents journal stream map. The web
+++/// progress bridge uses this at turn end to shadow-project spans from the
+++/// journal and compare them against the live `SpanCollector` path during C4 S3.
+++static REQUEST_JOURNAL_RUNS: Lazy<Mutex<HashMap<String, String>>> =
+++    Lazy::new(|| Mutex::new(HashMap::new()));
+++
++ /// Mints a fresh, slash-free, process-unique run id (`run.<32-hex>`), used three
++ /// ways for one turn: the [`EventSink::with_stream_id`] prefix (so persisted
++ /// `event_id`s are the restart-stable `{run_id}-evt-{offset}`), the journal
++[... 9 context line(s) omitted ... ⟦tj:7796b93c494a020b31f543d3bee5cfd2⟧]
+      RunId::new(format!("run.{}", uuid::Uuid::new_v4().simple()))
+  }
+  
+@@ -2900,166 +1294,20 @@
+  /// Resolve the internal workspace directory (`{workspace}`) whose
+  /// `tinyagents_store/` subtree holds the journal + kv stores. Async because the
+  /// config load is async; errors are surfaced so callers can log-and-skip.
+- async fn resolve_workspace() -> anyhow::Result<PathBuf> {
+-     let config = crate::openhuman::config::Config::load_or_init()
+-         .await
+-         .map_err(|e| anyhow::anyhow!("[journal] load config for workspace: {e}"))?;
+-     Ok(config.workspace_dir)
+- }
+- 
+- /// The OpenHuman journal redaction policy (issue #4249, 05.1).
+- ///
+- /// The crate [`RedactingSink`] masks configured secret substrings anywhere they
+- /// appear in a serialized event before the observation is persisted. This policy
+- /// seeds it with the process's credential material — the values of environment
+- /// variables whose name looks like a secret (contains `KEY` / `TOKEN` / `SECRET`
+- /// / `PASSWORD` / `PASSWD` / `CREDENTIAL` / `BEARER`) — so an API key or bearer
+- /// token echoed into model text, a tool argument fragment, or an error string is
+- /// never written to the durable journal in the clear. Only reasonably long
+- /// values (>= 8 chars) are masked, so unrelated short config values are left
+- /// alone. Minimal but real: it does not persist raw secrets, and structural
+- /// prompt/PII stripping is a follow-up if the event vocabulary grows to carry
+- /// full prompts.
+- fn openhuman_redaction_secrets() -> Vec<String> {
+-     const MARKERS: [&str; 7] = [
+-         "KEY",
+-         "TOKEN",
+-         "SECRET",
+-         "PASSWORD",
+-         "PASSWD",
+-         "CREDENTIAL",
+-         "BEARER",
+-     ];
+-     let mut secrets = Vec::new();
+-     for (name, value) in std::env::vars() {
+-         let upper = name.to_ascii_uppercase();
+-         if MARKERS.iter().any(|m| upper.contains(m)) && value.trim().len() >= 8 {
+-             secrets.push(value);
+-         }
++[... 74 context line(s) omitted ... ⟦tj:c270f2343479cb1b69a99daac5917bad⟧]
++                     Ok(status) => out.push(status),
++                     Err(err) => {
++                         log::debug!("[journal] skipping undecodable run status key={key} err={err}")
++diff --git a/src/openhuman/tinyagents/mod.rs b/src/openhuman/tinyagents/mod.rs
++index 785201571..41f2fdb27 100644
++--- a/src/openhuman/tinyagents/mod.rs
+++++ b/src/openhuman/tinyagents/mod.rs
++@@ -620,160 +620,169 @@ pub(crate) async fn run_turn_via_tinyagents_shared(
+      }
+-     log::debug!(
+-         "[journal] redaction policy seeded with {} secret value(s)",
+-         secrets.len()
+-     );
+-     secrets
+- }
+  
+- /// A durable [`HarnessStatusStore`] backed by a crate [`FileStore`] KV
+- /// namespace.
+- ///
+- /// The crate ships only an in-memory [`HarnessStatusStore`]
+- /// (`InMemoryStatusStore`), which does not survive a process restart — useless
+- /// for the "reattach after the UI died and see what is still running" use case
+- /// this slice targets. This small `Store`-backed impl overwrites one
+- /// `run_status/<run_id>.json` file per run (compact snapshot: ids, phase,
+- /// counters, timestamps, error — never prompts or payloads) and answers the
+- /// lineage/liveness queries by enumerating the namespace via
+- /// [`Store::list`]. `list_by_root` is what lets a supervisor find "every active
+- /// descendant of this root run".
+- pub(crate) struct FileStatusStore {
+-     kv: FileStore,
+- }
+- 
+- impl FileStatusStore {
+-     /// Wrap the workspace kv store as a durable status store.
+-     pub(crate) fn new(kv: FileStore) -> Self {
+-         Self { kv }
+-     }
+- 
+-     /// Enumerate every persisted status snapshot (best-effort per-record decode:
+-     /// a corrupt/legacy record is skipped, never fatal).
+-     async fn all(&self) -> TaResult<Vec<HarnessRunStatus>> {
+-         let keys = self.kv.list(STATUS_NS).await?;
+-         let mut out = Vec::with_capacity(keys.len());
+-         for key in keys {
+-             if let Some(value) = self.kv.get(STATUS_NS, &key).await? {
+-                 match serde_json::from_value::<HarnessRunStatus>(value) {
+-                     Ok(status) => out.push(status),
+-                     Err(err) => {
+-                         log::debug!("[journal] skipping undecodable run status key={key} err={err}")
+-diff --git a/src/openhuman/tinyagents/mod.rs b/src/openhuman/tinyagents/mod.rs
+-index 785201571..41f2fdb27 100644
+---- a/src/openhuman/tinyagents/mod.rs
+-+++ b/src/openhuman/tinyagents/mod.rs
+-@@ -620,160 +620,169 @@ pub(crate) async fn run_turn_via_tinyagents_shared(
+-     }
+- 
+-     let streaming = on_progress.is_some();
+-     // Retain a clone of the progress sink so the turn can emit a terminal
+-     // `TurnCompleted` after the run (the harness event stream the bridge mirrors
+-     // has no run-completed event). Parent turns only — a sub-agent turn reports
+-     // via its `Subagent*` events, not a top-level `TurnCompleted`.
+-     //
+-     // #4457 (defect C): suppressed entirely when `defer_turn_completed_to_caller`
+-     // is set — the caller (chat/session path) emits the single terminal
+-     // `TurnCompleted` itself, after its post-run wrap-up finishes streaming.
+-     let turn_completed_sink = (subagent_scope.is_none() && !defer_turn_completed_to_caller)
+-         .then(|| on_progress.clone())
+-         .flatten();
+-     // A sink is needed to mirror progress (bridge), to observe model-call
+-     // completions for the cap pauser, or to persist a durable event journal
+-     // (issue #4249, 05.1). The journal must attach even for an unobserved
+-     // (`on_progress = None`) turn so the run stays reconstructable, so the
+-     // EventSink is now created unconditionally — cheap (an empty sink) and, if
+-     // no consumer subscribes, inert.
+-     //
+-     // Mint the durable run id *before* the sink and seed the sink stream prefix
+-     // with it (`with_stream_id`), so every persisted observation's `event_id` is
+-     // the restart-stable `{run_id}-evt-{offset}` a late-attach replay
+-     // reconstructs the timeline from (05.1). The same id keys the journal + status.
+-     let journal_run_id = journal::mint_run_id();
+-     let events = Some(EventSink::with_stream_id(journal_run_id.as_str()));
+- 
+-     // Attach the event bridge for EVERY turn — including an unobserved
+-     // (`on_progress = None`) background/cron turn (#4467, item 3). The bridge's
+-     // `record_usage` feeds the global cost tracker on each `UsageRecorded` event
+-     // *during* the run, so a run that burns N model calls and then fails still
+-     // contributes that spend to the wallet/cost surfaces — the post-run
+-     // `record_unobserved_turn_usage` fallback below only runs on the success path
+-     // and never sees a failed run's usage. With `on_progress = None` the bridge
+-     // still records cost but its progress `send`s are inert no-ops, so there is
+-     // no spurious streaming. `events` is created unconditionally above, so the
+-     // bridge is always present.
+-     let bridge = events.as_ref().map(|events| {
+-         let bridge = OpenhumanEventBridge::with_scope(
+-             on_progress,
+-             model,
+-             provider_id.clone(),
+-             max_iterations,
+-             subagent_scope.clone(),
+-             cursor.clone(),
+-             tool_names.clone(),
+-             failure_map.clone(),
+-             provider_usage_carry.clone(),
+-         );
+-         events.subscribe(bridge.clone());
+-         bridge
+-     });
+- 
+-     // Cap pauser: stop gracefully at the model-call budget (returning the partial
+-     // transcript) so the caller can summarize a checkpoint instead of erroring.
+-     if pause_at_cap {
+-         if let (Some(events), Some(handle)) = (&events, &handle) {
+-             events.subscribe(CapPauser::new(handle.clone(), max_iterations));
++     let streaming = on_progress.is_some();
++[... 74 context line(s) omitted ... ⟦tj:87ce12d04b39aa659b929fe9971daa26⟧]
+          }
+-     }
+- 
+-     // Durable event journal + status store (issue #4249, 05.1). Attached *in
+-     // addition to* the bridge above: the EventSink fans out to both, so the
+-     // existing progress/global-bus path is untouched. Best-effort and non-fatal
+-     // — a failure to open/attach the journal returns `None` and the turn runs
+-     // unaffected. The handle stamps the terminal status once the run returns.
+-     // A sub-agent turn records under its task scope as the status thread id, so
+-     // `list_by_thread` can enumerate a task's runs (full parent/root lineage is
+-     // a 05.2/05.3 follow-up).
+-     let journal_thread_id = subagent_scope
+-         .as_ref()
+-         .map(|scope| tinyagents::harness::ids::ThreadId::new(scope.task_id.clone()));
+-     let turn_journal = match &events {
+-         Some(events) => {
+-             journal::attach_turn_journal(events, model, journal_run_id.clone(), journal_thread_id)
+-                 .await
+-         }
+          None => None,
+      };
+ +    if subagent_scope.is_none() {
+@@ -3074,81 +1322,8 @@
+  
+      if let Some(events) = &events {
+          ctx = ctx.with_events(events.clone());
+-     }
+- 
+-     // Steering: attach the shared handle (when present), drain any already-queued
+-     // steer messages into it (so a pre-run steer lands before the first model
+-     // call), and forward mid-flight steers via a poll loop. The same handle
+-     // carries the early-exit `Pause`.
+-     //
+-     // Best-effort thread label for the delivery/requeue observability events and
+-     // the metadata on any requeued steer: a sub-agent uses its task id; the
+-     // interactive/channel parent turn reads the task-local turn origin.
+-     let steer_thread_label = subagent_scope
+-         .as_ref()
+-         .map(|s| s.task_id.clone())
+-         .or_else(|| match crate::openhuman::agent::turn_origin::current() {
+-             Some(crate::openhuman::agent::turn_origin::AgentTurnOrigin::WebChat {
+-                 thread_id,
+-                 ..
+-             }) => Some(thread_id),
+-             Some(crate::openhuman::agent::turn_origin::AgentTurnOrigin::ExternalChannel {
+-                 reply_target,
+-                 ..
+-             }) => Some(reply_target),
+-             _ => None,
+-         })
+-         .unwrap_or_default();
+- 
+-     // The forwarder is wrapped in an abort-on-drop RAII guard (issue #4456): its
+-     // `Drop` aborts the poll task, deregisters the sub-agent steering handle, and
+-     // drains residual (delivered-but-unapplied) steers back into the session run
+-     // queue. Because the guard is held across the drive future, that cleanup runs
+-     // identically on normal return, error, AND drop-cancellation — the previous
+-     // manual `forwarder.abort()` after the drive future only ran on normal
+-     // return, so a cancelled turn (web interrupt / sub-agent abort, both
+-     // drop-based) leaked a forwarder task that looped forever and raced the next
+-     // turn for the shared run queue.
+-     let steering_forwarder_guard = if let Some(handle) = handle {
+-         let registry_task_id = if let Some(scope) = &subagent_scope {
+-             let task_id = orchestration::TaskId::new(scope.task_id.clone());
+-             orchestration::shared_steering_registry().register(task_id.clone(), handle.clone());
+-             tracing::debug!(
+-                 task_id = scope.task_id.as_str(),
+-                 "[tinyagents] registered subagent steering handle"
+-             );
+-             Some(task_id)
+-         } else {
+-             None
+-         };
+-         // Pre-run drain so a steer/collect queued before the turn started lands
+-         // ahead of the first model call.
+-         if let Some(queue) = run_queue.clone() {
+-             steering_forwarder::forward_steers(&queue, &handle, &steer_thread_label).await;
+-             steering_forwarder::forward_collects(&queue, &handle, &steer_thread_label).await;
++[... 74 context line(s) omitted ... ⟦tj:5e2c0603e4cecf3407b37539e4b5b6ad⟧]
+          }
+-         ctx = ctx.with_steering(handle.clone());
+-         Some(steering_forwarder::SteeringForwarderGuard::new(
+-             handle,
+-             run_queue,
+-             registry_task_id,
+-             steer_thread_label.clone(),
+-         ))
+-     } else {
+-         None
+-     };
+- 
+-     // Heap-allocate the harness drive future. It is large (it owns the whole run
+-     // context, middleware stack, and loop state), and a sub-agent turn runs
+-     // nested inside its parent's drive future — leaving it inline on the stack
+-     // overflows when the parent + child drives compose. Boxing keeps only a
+-     // pointer on the stack at each level.
+-     let run_result = with_run_cancellation(cancellation.clone(), async {
+-         if streaming {
+-             Box::pin(harness.invoke_streaming_in_context(&(), ctx, input)).await
+-         } else {
+-             Box::pin(harness.invoke_in_context(&(), ctx, input)).await
+-         }
+      })
+      .await;
+ diff --git a/src/openhuman/tinyagents/observability.rs b/src/openhuman/tinyagents/observability.rs
+@@ -3159,80 +1334,7 @@
+                          self.send(AgentProgress::ToolCallCompleted {
+                              call_id: call_id.as_str().to_string(),
+                              tool_name: requested_name.clone(),
+-                             success: false,
+-                             output_chars: 0,
+-                             output: String::new(),
+-                             arguments: Some(arguments.clone()),
+-                             elapsed_ms: 0,
+-                             iteration,
+-                             failure,
+-                         });
+-                     }
+-                     Some(s) => {
+-                         self.send(AgentProgress::SubagentToolCallStarted {
+-                             agent_id: s.agent_id.clone(),
+-                             task_id: s.task_id.clone(),
+-                             call_id: call_id.as_str().to_string(),
+-                             tool_name: requested_name.clone(),
+-                             arguments: arguments.clone(),
+-                             iteration,
+-                             display_label: Some(label),
+-                             display_detail: Some("tool not available".to_string()),
+-                         });
+-                         self.send(AgentProgress::SubagentToolCallCompleted {
+-                             agent_id: s.agent_id.clone(),
+-                             task_id: s.task_id.clone(),
+-                             call_id: call_id.as_str().to_string(),
+-                             tool_name: requested_name.clone(),
+-                             success: false,
+-                             output_chars: 0,
+-                             output: String::new(),
+-                             arguments: Some(arguments.clone()),
+-                             elapsed_ms: 0,
+-                             iteration,
+-                             failure,
+-                         });
+-                     }
+-                 }
+-             }
+-             AgentEvent::ToolStarted { call_id, tool_name } => {
+-                 // Unknown/invisible tool calls no longer produce a sentinel-named
+-                 // Started event: the migration replaced `UNKNOWN_TOOL_SENTINEL` +
+-                 // `UnknownToolRewriteMiddleware` with the crate
+-                 // `UnknownToolPolicy::ReturnToolError` path (01.2), which recovers
+-                 // the call and emits `AgentEvent::UnknownToolCall` (handled above)
+-                 // instead of a rewritten ToolStarted. So this arm fires only for
+-                 // real, model-visible tools and needs no sentinel guard.
+-                 let iteration = self.iteration();
+-                 // Stamp the start instant so the completion event carries a real
+-                 // elapsed_ms (the crate's ToolCompleted has no timing payload).
+-                 self.tool_started_at
+-                     .lock()
+-                     .unwrap_or_else(|p| p.into_inner())
+-                     .insert(call_id.as_str().to_string(), std::time::Instant::now());
+-                 match &self.scope {
+-                     None => self.send(AgentProgress::ToolCallStarted {
+-                         call_id: call_id.as_str().to_string(),
+-                         tool_name: tool_name.clone(),
+-                         arguments: serde_json::Value::Null,
+-                         iteration,
+-                         display_label: Some(humanize_tool_name(tool_name)),
+-                         display_detail: None,
+-                     }),
+-                     Some(s) => self.send(AgentProgress::SubagentToolCallStarted {
+-                         agent_id: s.agent_id.clone(),
+-                         task_id: s.task_id.clone(),
+-                         call_id: call_id.as_str().to_string(),
+-                         tool_name: tool_name.clone(),
+-                         arguments: serde_json::Value::Null,
+-                         iteration,
+-                         display_label: Some(humanize_tool_name(tool_name)),
+-                         display_detail: None,
+-                     }),
+-                 }
+-             }
+-             AgentEvent::ToolCompleted {
+-                 call_id,
++[... 74 context line(s) omitted ... ⟦tj:8206e38cd0638015cfa9ab89f11ed4cf⟧]
+                  tool_name,
+                  input,
+                  output,
+@@ -3249,80 +1351,7 @@
+                  ..
+              } => {
+                  let iteration = self.iteration();
+-                 // The crate event carries no success/error, so read what the
+-                 // outcome-capture middleware classified for this call. Absent →
+-                 // the event was projected before the middleware ran; assume
+-                 // success (never worse than the previous hardcoded `true`).
+-                 let outcome = self
+-                     .failure_map
+-                     .lock()
+-                     .ok()
+-                     .and_then(|mut m| m.remove(call_id.as_str()));
+-                 let success = outcome.as_ref().map(|(ok, ..)| *ok).unwrap_or(true);
+-                 // Real execution duration + output size the capture middleware
+-                 // recorded off the `ToolResult` (#4467, item 4). Fall back to
+-                 // the bridge's own ToolStarted stamp for duration, and to the
+-                 // captured payload for size, when the middleware ran late.
+-                 let stamped_elapsed = self
+-                     .tool_started_at
+-                     .lock()
+-                     .unwrap_or_else(|p| p.into_inner())
+-                     .remove(call_id.as_str())
+-                     .map(|t| t.elapsed().as_millis() as u64)
+-                     .unwrap_or(0);
+-                 let elapsed_ms = outcome
+-                     .as_ref()
+-                     .map(|(_, _, e, _)| *e)
+-                     .filter(|e| *e > 0)
+-                     .unwrap_or(stamped_elapsed);
+-                 // Tool result text, captured by the harness when
+-                 // `RunPolicy.capture.tool_io` is on (the loop emits it as a
+-                 // JSON string). Empty when capture is off.
+-                 let output_text = match output {
+-                     Some(serde_json::Value::String(s)) => s.clone(),
+-                     Some(v) => v.to_string(),
+-                     None => String::new(),
+-                 };
+-                 let output_chars = outcome
+-                     .as_ref()
+-                     .map(|(_, _, _, c)| *c)
+-                     .filter(|c| *c > 0)
+-                     .unwrap_or_else(|| output_text.chars().count());
+-                 // Carry the classified failure onto whichever completion event
+-                 // this projects — main-agent OR sub-agent (#4459). Previously
+-                 // the sub-agent branch dropped it on the floor.
+-                 let failure = outcome.and_then(|(_, f, _, _)| f);
+-                 match &self.scope {
+-                     None => self.send(AgentProgress::ToolCallCompleted {
+-                         call_id: call_id.as_str().to_string(),
+-                         tool_name: tool_name.clone(),
+-                         success,
+-                         output_chars,
+-                         output: output_text,
+-                         arguments: input.clone(),
+-                         elapsed_ms,
+-                         iteration,
+-                         failure,
+-                     }),
+-                     Some(s) => self.send(AgentProgress::SubagentToolCallCompleted {
+-                         agent_id: s.agent_id.clone(),
+-                         task_id: s.task_id.clone(),
+-                         call_id: call_id.as_str().to_string(),
+-                         tool_name: tool_name.clone(),
+-                         success,
+-                         output_chars,
+-                         output: output_text,
+-                         arguments: input.clone(),
+-                         elapsed_ms,
+-                         iteration,
+-                         failure,
+-                     }),
+-                 }
+-             }
+-             // Response-cache accounting (issue #4249, 03.2). A hit means the
+-             // harness served this model call from its local `ResponseCache`
+-             // without invoking the provider (deterministic internal runs only —
+-             // interactive chat never attaches a cache). Counters are additive; the
++[... 74 context line(s) omitted ... ⟦tj:08cc473e8213f2fdcfd183128ee9995b⟧]
+              // cost-footer DTO wiring is a follow-up (workstream 06).
+              AgentEvent::CacheHit { call_id, key } => {
+                  {
+@@ -3334,14 +1363,7 @@
+  //! `tinyagents` [`Tool`] adapter over an openhuman [`Tool`] (issue #4249).
+  //!
+  //! Wraps `Arc<dyn openhuman::tools::Tool>` so the harness agent-loop can invoke
+- //! the exact same tools the legacy loop runs. The harness calls `call` with a
+- //! validated [`TaToolCall`] (parsed JSON arguments + correlation id); we execute
+- //! the underlying tool and render the [`ToolResult`] the way the LLM should see
+- //! it (rendered via `output_for_llm`, matching the legacy tool loop).
+- 
+- use std::sync::{Arc, Mutex, PoisonError};
+- 
+- use async_trait::async_trait;
++[... 8 context line(s) omitted ... ⟦tj:bdfdbf8a8168e112e5cfa5b91fb23510⟧]
+  use tinyagents::harness::steering::{SteeringCommand, SteeringHandle};
+  use tinyagents::harness::tool::{
+      SandboxMode, Tool, ToolAccess, ToolCall as TaToolCall, ToolExecutionContext, ToolPolicy,
+@@ -3351,140 +1373,7 @@
+  };
+  
+  /// A captured early-exit: a sub-agent invoked an early-exit tool (e.g.
+- /// `ask_user_clarification`), so the loop should pause and surface `question`
+- /// to the user. Mirrors the legacy `run_turn_engine` `early_exit_tool` seam.
+- #[derive(Debug, Clone)]
+- pub(crate) struct EarlyExit {
+-     pub(crate) tool: String,
+-     pub(crate) question: String,
+- }
+- 
+- /// Shared early-exit hook handed to the adapters for the early-exit tool names.
+- /// On a successful call to one of those tools it records the [`EarlyExit`] and
+- /// sends a [`SteeringCommand::Pause`] so the harness loop short-circuits at the
+- /// next checkpoint (before the next model call) — the tinyagents analogue of the
+- /// legacy loop's "break on early-exit tool" behavior.
+- #[derive(Clone)]
+- pub(crate) struct EarlyExitHook {
+-     handle: SteeringHandle,
+-     slot: Arc<Mutex<Option<EarlyExit>>>,
+- }
+- 
+- impl EarlyExitHook {
+-     /// Build a hook that pauses `handle` and records into a fresh slot.
+-     pub(crate) fn new(handle: SteeringHandle) -> Self {
+-         Self {
+-             handle,
+-             slot: Arc::new(Mutex::new(None)),
+-         }
+-     }
+- 
+-     /// The captured early-exit, if one fired during the run.
+-     pub(crate) fn take(&self) -> Option<EarlyExit> {
+-         // #4469 item 3: recover a poisoned slot rather than panic — a panic while
+-         // some other tool held this lock must not swallow the early-exit.
+-         self.slot
+-             .lock()
+-             .unwrap_or_else(PoisonError::into_inner)
+-             .take()
+-     }
+- 
+-     /// Record an early-exit and request a cooperative pause. Only the first
+-     /// early-exit in a run is kept (matching the legacy "halt on first").
+-     fn trigger(&self, tool: &str, question: String) {
+-         {
+-             // #4469 item 3: `into_inner` keeps early-exit recording working even
+-             // if the slot mutex was poisoned by an unrelated panic.
+-             let mut slot = self.slot.lock().unwrap_or_else(PoisonError::into_inner);
+-             if slot.is_none() {
+-                 *slot = Some(EarlyExit {
+-                     tool: tool.to_string(),
+-                     question,
+-                 });
+-             }
+-         }
+-         tracing::info!(tool, "[tinyagents] early-exit tool — requesting pause");
+-         self.handle.send(SteeringCommand::Pause);
+-     }
+- }
+- 
+- /// A harness tool backed by an openhuman [`Tool`].
+- #[cfg(test)]
+- pub(crate) struct ToolAdapter {
+-     inner: Arc<dyn crate::openhuman::tools::Tool>,
+- }
+- 
+- #[cfg(test)]
+- impl ToolAdapter {
+-     /// Wrap a resolved openhuman tool.
+-     pub(crate) fn new(inner: Arc<dyn crate::openhuman::tools::Tool>) -> Self {
+-         Self { inner }
+-     }
+- }
+- 
+- #[cfg(test)]
+- #[async_trait]
+- impl Tool<()> for ToolAdapter {
+-     fn name(&self) -> &str {
+-         self.inner.name()
+-     }
+- 
+-     fn description(&self) -> &str {
+-         self.inner.description()
+-     }
+- 
+-     fn schema(&self) -> ToolSchema {
+-         super::convert::spec_to_schema(&self.inner.spec())
+-     }
+- 
+-     fn policy(&self) -> ToolPolicy {
+-         tool_policy_from_openhuman_tool(self.inner.as_ref())
+-     }
+- 
+-     async fn call(&self, _state: &(), call: TaToolCall) -> tinyagents::Result<TaToolResult> {
+-         Ok(execute_openhuman_tool(self.inner.as_ref(), call, None).await)
+-     }
+- 
+-     async fn call_with_context(
+-         &self,
+-         _state: &(),
+-         call: TaToolCall,
+-         context: ToolExecutionContext,
+-     ) -> tinyagents::Result<TaToolResult> {
+-         Ok(execute_openhuman_tool(self.inner.as_ref(), call, Some(&context)).await)
+-     }
+- }
+- 
+- pub(crate) fn tool_policy_from_openhuman_tool(
+-     tool: &dyn crate::openhuman::tools::Tool,
+- ) -> ToolPolicy {
+-     use crate::openhuman::tools::traits::ToolTimeout;
+-     use crate::openhuman::tools::PermissionLevel;
+- 
+-     let permission = tool.permission_level();
+-     let external_effect = tool.external_effect();
+-     let read_only = matches!(
+-         permission,
+-         PermissionLevel::None | PermissionLevel::ReadOnly
+-     ) && !external_effect;
+- 
+-     let timeout_ms = match tool.timeout_policy(&serde_json::Value::Null) {
+-         ToolTimeout::Secs(seconds) => Some(seconds.saturating_mul(1000)),
+-         ToolTimeout::Inherit | ToolTimeout::Unbounded => None,
+-     };
+- 
+-     ToolPolicy::classified()
+-         .with_side_effects(ToolSideEffects {
+-             read_only,
+-             writes_files: matches!(
+-                 permission,
+-                 PermissionLevel::Write | PermissionLevel::Execute | PermissionLevel::Dangerous
+-             ),
+-             network: false,
+-             installs_dependencies: false,
+-             destructive: matches!(permission, PermissionLevel::Dangerous),
+-             external_service: external_effect,
+-             payment: false,
++[... 134 context line(s) omitted ... ⟦tj:e9c7d3531ef050541bdb3a28fe066e10⟧]
+          })
+          .with_runtime(ToolRuntime {
+              timeout_ms,
+@@ -3501,80 +1390,7 @@
+              max_retries: None,
+              idempotent: tool.is_concurrency_safe(&serde_json::Value::Null),
+              cancelable: true,
+-             sandbox: SandboxMode::Inherit,
+-             max_result_bytes: tool.max_result_size_chars(),
+-             streaming: false,
+-         })
+-         .with_access(ToolAccess {
+-             workspace: match permission {
+-                 PermissionLevel::None | PermissionLevel::ReadOnly => WorkspaceAccess::None,
+-                 PermissionLevel::Write | PermissionLevel::Execute | PermissionLevel::Dangerous => {
+-                     WorkspaceAccess::Any
+-                 }
+-             },
+-             trusted_roots: Vec::new(),
+-             credentials: Vec::new(),
+-             approval_required: external_effect || matches!(permission, PermissionLevel::Dangerous),
+-             background_safe: !external_effect && !matches!(permission, PermissionLevel::Dangerous),
+-         })
+- }
+- 
+- /// `session_id` stamped on the per-tool `DomainEvent`s this executor publishes.
+- /// The tinyagents adapter carries no per-turn session handle at this seam, so a
+- /// stable module label groups its tool-execution telemetry (matches the fixed
+- /// `"javascript"` label the node runtime uses for the same events).
+- const TINYAGENTS_TOOL_SESSION: &str = "tinyagents";
+- 
+- /// Execute an openhuman [`Tool`](crate::openhuman::tools::Tool) for a harness
+- /// [`TaToolCall`] and render the [`TaToolResult`] the way the LLM should see it
+- /// (mirrors the live-path `HarnessToolExecutor`).
+- pub(crate) async fn execute_openhuman_tool(
+-     tool: &dyn crate::openhuman::tools::Tool,
+-     call: TaToolCall,
+-     context: Option<&ToolExecutionContext>,
+- ) -> TaToolResult {
+-     let workspace_root = context
+-         .and_then(|ctx| ctx.workspace.as_ref())
+-         .map(|workspace| workspace.root.display().to_string());
+-     tracing::debug!(
+-         tool = %call.name,
+-         call_id = %call.id,
+-         workspace_root = workspace_root.as_deref().unwrap_or("none"),
+-         "[tinyagents] executing openhuman tool via harness adapter"
+-     );
+- 
+-     // Measure the real execution duration (#4467, item 4) and re-publish the
+-     // per-tool `DomainEvent`s the legacy session loop emitted so SSE consumers
+-     // keep per-tool start/complete telemetry on the tinyagents path (#4467,
+-     // item 5). `tool_name` is cloned up front because `call.name` is moved into
+-     // the `TaToolResult` below.
+-     let started = std::time::Instant::now();
+-     let tool_name = call.name.clone();
+-     crate::core::event_bus::publish_global(
+-         crate::core::event_bus::DomainEvent::ToolExecutionStarted {
+-             tool_name: tool_name.clone(),
+-             session_id: TINYAGENTS_TOOL_SESSION.to_string(),
+-         },
+-     );
+- 
+-     // Approval (HITL) now runs in `ApprovalSecurityMiddleware`
+-     // (`tinyagents/middleware.rs`, a `wrap_tool` middleware) so a denial
+-     // short-circuits before this executor is reached.
+-     //
+-     // Execute through the session tool semantics the live path used
+-     // (`agent_tool_exec`): `execute_with_context` (so markdown-capable tools
+-     // render markdown and context-aware tools can see TinyAgents run metadata)
+-     // under the tool's resolved timeout deadline. Without the deadline an
+-     // inherited/long-running tool call could hang the turn indefinitely.
+-     // Per-call `ToolPolicy`/permission gating needs the session policy context,
+-     // which the per-tool adapter does not carry; approval covers external
+-     // effects, and `RunPolicy::unknown_tool` recovers unregistered tool names
+-     // before execution reaches this adapter.
+-     let options = crate::openhuman::tools::ToolCallOptions {
+-         prefer_markdown: true,
+-     };
+-     let (deadline, timeout_secs) =
+-         crate::openhuman::tool_timeout::resolve_tool_deadline(tool.timeout_policy(&call.arguments));
++[... 74 context line(s) omitted ... ⟦tj:520b1bf0892bd56ab7380301cc90055f⟧]
+      let exec = tool.execute_with_context(call.arguments.clone(), options, context);
+      let outcome = match deadline {
+          Some(d) => match tokio::time::timeout(d, exec).await {
+@@ -3586,80 +1402,7 @@
+      negative_limit.insert("limit".to_string(), json!(-1));
+      assert!(recent_handler(negative_limit)
+          .await
+-         .expect_err("negative limit")
+-         .contains("expected unsigned integer"));
+-     let mut null_limit = Map::new();
+-     null_limit.insert("limit".to_string(), Value::Null);
+-     let recent_value = recent_handler(null_limit)
+-         .await
+-         .expect("null limit should use default");
+-     assert!(recent_value
+-         .get("result")
+-         .or(Some(&recent_value))
+-         .and_then(Value::as_array)
+-         .is_some());
+- 
+-     let decide_handler = controllers
+-         .iter()
+-         .find(|controller| controller.schema.function == "decide")
+-         .expect("decide controller")
+-         .handler;
+-     assert!(decide_handler(Map::new())
+-         .await
+-         .expect_err("missing request id")
+-         .contains("missing required param 'request_id'"));
+-     let mut numeric_request = Map::new();
+-     numeric_request.insert("request_id".to_string(), json!(42));
+-     numeric_request.insert("decision".to_string(), json!("deny"));
+-     assert!(decide_handler(numeric_request)
+-         .await
+-         .expect_err("numeric request id")
+-         .contains("expected string"));
+-     for invalid in [
+-         Value::Null,
+-         json!(false),
+-         json!([]),
+-         json!({ "id": "missing" }),
+-     ] {
+-         let mut invalid_request = Map::new();
+-         invalid_request.insert("request_id".to_string(), invalid);
+-         invalid_request.insert("decision".to_string(), json!("deny"));
+-         assert!(decide_handler(invalid_request)
+-             .await
+-             .expect_err("non-string request id")
+-             .contains("expected string"));
+-     }
+-     let mut numeric_decision = Map::new();
+-     numeric_decision.insert("request_id".to_string(), json!("missing"));
+-     numeric_decision.insert("decision".to_string(), json!(42));
+-     assert!(decide_handler(numeric_decision)
+-         .await
+-         .expect_err("numeric decision")
+-         .contains("expected string"));
+-     let mut invalid_decision = Map::new();
+-     invalid_decision.insert("request_id".to_string(), json!("missing"));
+-     invalid_decision.insert("decision".to_string(), json!("maybe"));
+-     assert!(decide_handler(invalid_decision)
+-         .await
+-         .expect_err("invalid decision")
+-         .contains("approve_once|approve_always_for_tool|deny"));
+- }
+- 
+- #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+- async fn approval_rpc_decision_paths_persist_always_allow_and_recent_audit() {
+-     let _lock = env_lock();
+-     let harness = setup("").await;
+-     let config = Config::load_or_init()
+-         .await
+-         .expect("load config for approval gate");
+-     let test_session_id = format!("session-{}", uuid::Uuid::new_v4());
+-     let gate = ApprovalGate::init_global(config.clone(), test_session_id.clone());
+-     let gate_for_task = gate.clone();
+- 
+-     let approval_task = tokio::spawn(async move {
+-         // Scope a WebChat origin alongside the chat context — the gate now
+-         // requires an origin label or it fails closed on `Unknown`.
+-         turn_origin::with_origin(
++[... 74 context line(s) omitted ... ⟦tj:e74c16662637ea6422d2d8d6ce0a6f79⟧]
+              AgentTurnOrigin::WebChat {
+                  thread_id: "approval-raw-thread".to_string(),
+                  client_id: "approval-raw-client".to_string(),
+@@ -3667,80 +1410,7 @@
+              },
+              APPROVAL_CHAT_CONTEXT.scope(
+                  ApprovalChatContext {
+-                     thread_id: "approval-raw-thread".to_string(),
+-                     client_id: "approval-raw-client".to_string(),
+-                 },
+-                 async move {
+-                     gate_for_task
+-                         .intercept_audited(
+-                             "tools.composio_execute",
+-                             "tools.composio_execute(action=execute, 123 bytes)",
+-                             json!({
+-                                 "action": "execute",
+-                                 "tool_slug": "GMAIL_SEND_EMAIL",
+-                                 "body": "<redacted: string (500 chars)>"
+-                             }),
+-                         )
+-                         .await
+-                 },
+-             ),
+-         )
+-         .await
+-     });
+- 
+-     let deadline = Instant::now() + Duration::from_secs(5);
+-     let request_id = loop {
+-         let pending = rpc(
+-             &harness.rpc_base,
+-             20,
+-             "openhuman.approval_list_pending",
+-             json!({}),
+-         )
+-         .await;
+-         let rows = payload(&pending, "approval_list_pending")
+-             .as_array()
+-             .expect("pending rows");
+-         if let Some(row) = rows.iter().find(|row| {
+-             row.get("tool_name").and_then(Value::as_str) == Some("tools.composio_execute")
+-         }) {
+-             break row
+-                 .get("request_id")
+-                 .and_then(Value::as_str)
+-                 .expect("request id")
+-                 .to_string();
+-         }
+-         assert!(Instant::now() < deadline, "pending approval did not appear");
+-         tokio::time::sleep(Duration::from_millis(25)).await;
+-     };
+- 
+-     assert_eq!(
+-         gate.pending_for_thread("approval-raw-thread").as_deref(),
+-         Some(request_id.as_str())
+-     );
+- 
+-     let invalid = rpc(
+-         &harness.rpc_base,
+-         21,
+-         "openhuman.approval_decide",
+-         json!({ "request_id": request_id, "decision": "maybe" }),
+-     )
+-     .await;
+-     assert!(error_message(&invalid, "invalid decision").contains("invalid 'decision'"));
+- 
+-     let decide = rpc(
+-         &harness.rpc_base,
+-         22,
+-         "openhuman.approval_decide",
+-         json!({
+-             "request_id": request_id,
+-             "decision": "approve_always_for_tool"
+-         }),
+-     )
+-     .await;
+-     assert_eq!(
+-         payload(&decide, "approval_decide")
+-             .get("tool_name")
+-             .and_then(Value::as_str),
++[... 74 context line(s) omitted ... ⟦tj:fa416237e0bfb3bb208cef378a265fe9⟧]
+          Some("tools.composio_execute")
+      );
+  
+@@ -3748,80 +1418,7 @@
+          &harness.rpc_base,
+          24,
+          "openhuman.approval_list_recent_decisions",
+-         json!({ "limit": 1 }),
+-     )
+-     .await;
+-     let rows = payload(&recent, "approval_list_recent_decisions")
+-         .as_array()
+-         .expect("recent decisions");
+-     assert_eq!(rows.len(), 1);
+-     assert_eq!(
+-         rows[0].get("decision").and_then(Value::as_str),
+-         Some("approve_always_for_tool")
+-     );
+- 
+-     let config_after = Config::load_or_init()
+-         .await
+-         .expect("reload config after always allow");
+-     assert!(
+-         config_after
+-             .autonomy
+-             .auto_approve
+-             .iter()
+-             .any(|tool| tool == "tools.composio_execute"),
+-         "approve_always_for_tool should persist an auto-approve entry"
+-     );
+- 
+-     // Bare call with neither a chat context nor an AgentTurnOrigin scope:
+-     // the gate now treats this as `Unknown` and fails closed (refuses to
+-     // execute an external_effect tool from an unlabelled call site). The
+-     // earlier "non-chat ⇒ Allow" behaviour leaked trusted execution to any
+-     // caller that forgot to scope a label.
+-     let no_chat = gate
+-         .intercept_audited(
+-             "tools.web_search",
+-             "tools.web_search(query=coverage)",
+-             json!({ "query": "coverage" }),
+-         )
+-         .await;
+-     match &no_chat.0 {
+-         openhuman_core::openhuman::approval::GateOutcome::Deny { reason } => {
+-             assert!(
+-                 reason.contains("no origin label"),
+-                 "unlabelled call should be denied for missing origin: {reason}"
+-             );
+-         }
+-         other => panic!("expected Deny for unlabelled call, got {other:?}"),
+-     }
+-     assert_eq!(
+-         no_chat.1, None,
+-         "denied calls should not create approval rows"
+-     );
+-     assert!(matches!(
+-         gate.intercept(
+-             "tools.web_search",
+-             "tools.web_search(query=legacy)",
+-             json!({ "query": "legacy" }),
+-         )
+-         .await,
+-         GateOutcome::Deny { .. }
+-     ));
+- 
+-     // Always-allowed tools should bypass approval even when an origin is
+-     // scoped — the auto_approve allowlist short-circuit runs before the
+-     // origin branch. Install a live policy with the persisted entry so the
+-     // gate sees the latest auto_approve set (the gate's boot-time config
+-     // snapshot predates the approve_always_for_tool decision we just made).
+-     live_policy::install(
+-         Arc::new(SecurityPolicy {
+-             workspace_dir: config.workspace_dir.clone(),
+-             auto_approve: vec!["tools.composio_execute".to_string()],
+-             ..SecurityPolicy::default()
+-         }),
+-         config.workspace_dir.clone(),
+-         config.workspace_dir.clone(),
+-     );
+-     let auto_approved = turn_origin::with_origin(
++[... 74 context line(s) omitted ... ⟦tj:fbb542cebcfb6dc46e3da226c7d6df55⟧]
+          AgentTurnOrigin::WebChat {
+              thread_id: "approval-auto-thread".to_string(),
+              client_id: "approval-auto-client".to_string(),
+@@ -3829,51 +1426,7 @@
+          },
+          gate.intercept_audited(
+              "tools.composio_execute",
+-             "tools.composio_execute(action=execute)",
+-             json!({ "action": "execute" }),
+-         ),
+-     )
+-     .await;
+-     assert!(matches!(
+-         auto_approved.0,
+-         openhuman_core::openhuman::approval::GateOutcome::Allow
+-     ));
+-     assert_eq!(
+-         auto_approved.1, None,
+-         "always-allowed tools should bypass persisted approvals"
+-     );
+- 
+-     live_policy::install(
+-         Arc::new(SecurityPolicy {
+-             workspace_dir: config.workspace_dir.clone(),
+-             auto_approve: vec!["tools.live_policy_allowed".to_string()],
+-             ..SecurityPolicy::default()
+-         }),
+-         config.workspace_dir.clone(),
+-         config.workspace_dir.clone(),
+-     );
+-     let live_policy_auto_approved = APPROVAL_CHAT_CONTEXT
+-         .scope(
+-             ApprovalChatContext {
+-                 thread_id: "approval-live-policy-thread".to_string(),
+-                 client_id: "approval-live-policy-client".to_string(),
+-             },
+-             gate.intercept_audited(
+-                 "tools.live_policy_allowed",
+-                 "tools.live_policy_allowed(action=coverage)",
+-                 json!({ "action": "coverage" }),
+-             ),
+-         )
+-         .await;
+-     assert!(matches!(live_policy_auto_approved.0, GateOutcome::Allow));
+-     assert_eq!(live_policy_auto_approved.1, None);
+-     assert!(gate
+-         .pending_for_thread("approval-live-policy-thread")
+-         .is_none());
+- 
+-     let gate_for_deny_task = gate.clone();
+-     let deny_task = tokio::spawn(async move {
+-         turn_origin::with_origin(
++[... 45 context line(s) omitted ... ⟦tj:d527ff7e97a9b020e0f585e58784e62d⟧]
+              AgentTurnOrigin::WebChat {
+                  thread_id: "approval-deny-thread".to_string(),
+                  client_id: "approval-deny-client".to_string(),
+@@ -3881,118 +1434,7 @@
+              },
+              APPROVAL_CHAT_CONTEXT.scope(
+                  ApprovalChatContext {
+-                     thread_id: "approval-deny-thread".to_string(),
+-                     client_id: "approval-deny-client".to_string(),
+-                 },
+-                 async move {
+-                     gate_for_deny_task
+-                         .intercept_audited(
+-                             "tools.web_search",
+-                             "tools.web_search(query=deny)",
+-                             json!({ "query": "deny" }),
+-                         )
+-                         .await
+-                 },
+-             ),
+-         )
+-         .await
+-     });
+- 
+-     let deny_request_id = loop {
+-         let pending = rpc(
+-             &harness.rpc_base,
+-             25,
+-             "openhuman.approval_list_pending",
+-             json!({}),
+-         )
+-         .await;
+-         let rows = payload(&pending, "approval_list_pending deny")
+-             .as_array()
+-             .expect("pending rows for deny");
+-         if let Some(row) = rows
+-             .iter()
+-             .find(|row| row.get("tool_name").and_then(Value::as_str) == Some("tools.web_search"))
+-         {
+-             break row
+-                 .get("request_id")
+-                 .and_then(Value::as_str)
+-                 .expect("deny request id")
+-                 .to_string();
+-         }
+-         assert!(
+-             Instant::now() < deadline,
+-             "pending deny approval did not appear"
+-         );
+-         tokio::time::sleep(Duration::from_millis(25)).await;
+-     };
+- 
+-     let deny = rpc(
+-         &harness.rpc_base,
+-         26,
+-         "openhuman.approval_decide",
+-         json!({ "request_id": deny_request_id, "decision": "deny" }),
+-     )
+-     .await;
+-     assert_eq!(
+-         payload(&deny, "approval_decide deny")
+-             .get("request_id")
+-             .and_then(Value::as_str),
+-         Some(deny_request_id.as_str())
+-     );
+-     let (deny_outcome, deny_approved_id) = deny_task.await.expect("deny task");
+-     match deny_outcome {
+-         openhuman_core::openhuman::approval::GateOutcome::Deny { reason } => {
+-             assert!(reason.contains("User denied"));
+-         }
+-         other => panic!("expected deny outcome, got {other:?}"),
+-     }
+-     assert_eq!(deny_approved_id, None);
+-     assert!(gate.pending_for_thread("approval-deny-thread").is_none());
+-     assert!(gate.session_id().starts_with("session-"));
+- 
+-     let second_init = ApprovalGate::init_global(Config::default(), "session-ignored-second");
+-     assert_eq!(second_init.session_id(), gate.session_id());
+- 
+-     let approval_dir = config.workspace_dir.join("approval");
+-     if approval_dir.exists() {
+-         std::fs::remove_dir_all(&approval_dir).expect("remove approval dir before failure branch");
+-     }
+-     std::fs::write(&approval_dir, "not a directory").expect("replace approval dir with file");
+- 
+-     gate.record_execution(
+-         &request_id,
+-         ExecutionOutcome::Success,
+-         Some("store path is blocked"),
+-     );
+- 
+-     let list_failure = rpc(
+-         &harness.rpc_base,
+-         27,
+-         "openhuman.approval_list_pending",
+-         json!({}),
+-     )
+-     .await;
+-     assert!(list_failure.get("error").is_some());
+- 
+-     let recent_failure = rpc(
+-         &harness.rpc_base,
+-         28,
+-         "openhuman.approval_list_recent_decisions",
+-         json!({}),
+-     )
+-     .await;
+-     assert!(recent_failure.get("error").is_some());
+- 
+-     let decide_failure = rpc(
+-         &harness.rpc_base,
+-         29,
+-         "openhuman.approval_decide",
+-         json!({ "request_id": "blocked-store", "decision": "deny" }),
+-     )
+-     .await;
+-     assert!(decide_failure.get("error").is_some());
+- 
+-     let persist_failure = turn_origin::with_origin(
++[... 112 context line(s) omitted ... ⟦tj:685e8535f83527ecc8f73117c7c66714⟧]
+          AgentTurnOrigin::WebChat {
+              thread_id: "approval-persist-failure-thread".to_string(),
+              client_id: "approval-persist-failure-client".to_string(),
+@@ -4000,27 +1442,7 @@
+          },
+          APPROVAL_CHAT_CONTEXT.scope(
+              ApprovalChatContext {
+-                 thread_id: "approval-persist-failure-thread".to_string(),
+-                 client_id: "approval-persist-failure-client".to_string(),
+-             },
+-             gate.intercept_audited(
+-                 "tools.persistence_failure",
+-                 "tools.persistence_failure(action=coverage)",
+-                 json!({ "action": "coverage" }),
+-             ),
+-         ),
+-     )
+-     .await;
+-     match persist_failure.0 {
+-         GateOutcome::Deny { reason } => {
+-             assert!(reason.contains("Approval gate could not persist the request"));
+-         }
+-         other => panic!("expected persistence failure deny, got {other:?}"),
+-     }
+-     assert_eq!(persist_failure.1, None);
+-     assert!(gate
+-         .pending_for_thread("approval-persist-failure-thread")
+-         .is_none());
++[... 21 context line(s) omitted ... ⟦tj:983825875dd52ddfaaea6550718cf8ca⟧]
+  
+      harness.rpc_join.abort();
+  }
+@@ -4032,80 +1454,7 @@
+                  "sortOrder": 42
+              }
+          }),
+-     )
+-     .await;
+-     let profiles = ok(&upsert, "profiles_upsert")
+-         .get("profiles")
+-         .and_then(Value::as_array)
+-         .expect("profiles after upsert");
+-     let custom = profiles
+-         .iter()
+-         .find(|profile| profile.get("id").and_then(Value::as_str) == Some("worker-b-custom"))
+-         .expect("custom profile present");
+-     assert_eq!(
+-         custom.get("memoryDirSuffix").and_then(Value::as_str),
+-         Some("-1"),
+-         "new custom profiles should receive a stable memory suffix: {custom}"
+-     );
+- 
+-     let select = rpc(
+-         &harness.rpc_base,
+-         302,
+-         "openhuman.profiles_select",
+-         json!({ "profile_id": "worker-b-custom" }),
+-     )
+-     .await;
+-     assert_eq!(
+-         ok(&select, "profiles_select")
+-             .get("activeProfileId")
+-             .and_then(Value::as_str),
+-         Some("worker-b-custom")
+-     );
+- 
+-     let delete_default = rpc(
+-         &harness.rpc_base,
+-         303,
+-         "openhuman.profiles_delete",
+-         json!({ "profile_id": "default" }),
+-     )
+-     .await;
+-     assert!(
+-         error_message(&delete_default, "delete default profile").contains("cannot be deleted"),
+-         "built-in default profile deletion should fail deterministically: {delete_default}"
+-     );
+- 
+-     let delete_custom = rpc(
+-         &harness.rpc_base,
+-         304,
+-         "openhuman.profiles_delete",
+-         json!({ "profile_id": "worker-b-custom" }),
+-     )
+-     .await;
+-     assert_eq!(
+-         ok(&delete_custom, "profiles_delete")
+-             .get("activeProfileId")
+-             .and_then(Value::as_str),
+-         Some("default"),
+-         "deleting active custom profile should fall back to default"
+-     );
+- 
+-     harness.rpc_join.abort();
+- }
+- 
+- #[tokio::test]
+- async fn approval_gate_rpc_decision_resumes_parked_tool_and_records_execution() {
+-     let _lock = env_lock();
+-     let harness = setup().await;
+-     let config = Config::load_or_init()
+-         .await
+-         .expect("load config for approval gate");
+-     let gate = ApprovalGate::init_global(config, format!("session-{}", uuid::Uuid::new_v4()));
+-     let gate_for_task = gate.clone();
+- 
+-     let approval_task = tokio::spawn(async move {
+-         // Scope a WebChat origin alongside the chat context — the gate now
+-         // requires an origin label or it fails closed on `Unknown`.
+-         turn_origin::with_origin(
++[... 74 context line(s) omitted ... ⟦tj:e781886f83dd9caf7736f46593bf718e⟧]
+              AgentTurnOrigin::WebChat {
+                  thread_id: "worker-b-thread".to_string(),
+                  client_id: "worker-b-client".to_string(),
+@@ -4113,80 +1462,11 @@
+              },
+              APPROVAL_CHAT_CONTEXT.scope(
+                  ApprovalChatContext {
+-                     thread_id: "worker-b-thread".to_string(),
+-                     client_id: "worker-b-client".to_string(),
+-                 },
+-                 async move {
+-                     gate_for_task
+-                         .intercept_audited(
+-                             "tools.web_search",
+-                             "search the web for coverage",
+-                             json!({ "query": "<redacted>", "max_results": 3 }),
+-                         )
+-                         .await
+-                 },
+-             ),
+-         )
+-         .await
+-     });
+- 
+-     let deadline = Instant::now() + Duration::from_secs(5);
+-     let request_id = loop {
+-         let pending = rpc(
+-             &harness.rpc_base,
+-             401,
+-             "openhuman.approval_list_pending",
+-             json!({}),
+-         )
+-         .await;
+-         let rows = payload(&pending, "approval_list_pending")
+-             .as_array()
+-             .expect("pending rows array");
+-         if let Some(row) = rows
+-             .iter()
+-             .find(|row| row.get("tool_name").and_then(Value::as_str) == Some("tools.web_search"))
+-         {
+-             break row
+-                 .get("request_id")
+-                 .and_then(Value::as_str)
+-                 .expect("request_id")
+-                 .to_string();
+-         }
+-         assert!(
+-             Instant::now() < deadline,
+-             "approval request did not appear before timeout"
+-         );
+-         tokio::time::sleep(Duration::from_millis(50)).await;
+-     };
+- 
+-     assert_eq!(
+-         gate.pending_for_thread("worker-b-thread").as_deref(),
+-         Some(request_id.as_str())
+-     );
+- 
+-     let decided = rpc(
+-         &harness.rpc_base,
+-         402,
+-         "openhuman.approval_decide",
+-         json!({
+-             "request_id": request_id,
+-             "decision": "approve_once"
+-         }),
+-     )
+-     .await;
+-     assert_eq!(
+-         payload(&decided, "approval_decide")
+-             .get("tool_name")
+-             .and_then(Value::as_str),
+-         Some("tools.web_search")
+-     );
+- 
+-     let (outcome, audit_id) = approval_task.await.expect("approval task join");
+-     assert!(matches!(outcome, GateOutcome::Allow));
+-     let audit_id = audit_id.expect("approved audited request id");
+-     gate.record_execution(&audit_id, ExecutionOutcome::Success, None);
+-     assert!(
+-         gate.pending_for_thread("worker-b-thread").is_none(),
++[... 74 context line(s) omitted ... ⟦tj:9b946232693bfed5111a8c4acf7cc090⟧]
+          "thread mapping should be cleared after decision"
+      );
+  
++
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (177347 bytes): call tinyjuice_retrieve with token "5b9f415c9b59a3244f71da31f3e780fc"]
+\ No newline at end of file

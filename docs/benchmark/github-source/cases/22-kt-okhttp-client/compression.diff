@@ -1,0 +1,114 @@
+--- input/input.kt
++++ output/output.kt
+@@ -224,25 +224,8 @@
+   init {
+     if (connectionSpecs.none { it.isTls }) {
+       this.sslSocketFactoryOrNull = null
+-      this.certificateChainCleaner = null
+-      this.x509TrustManager = null
+-      this.certificatePinner = CertificatePinner.DEFAULT
+-    } else if (builder.sslSocketFactoryOrNull != null) {
+-      this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
+-      this.certificateChainCleaner = builder.certificateChainCleaner!!
+-      this.x509TrustManager = builder.x509TrustManagerOrNull!!
+-      this.certificatePinner = builder.certificatePinner
+-          .withCertificateChainCleaner(certificateChainCleaner!!)
+-    } else {
+-      this.x509TrustManager = Platform.get().platformTrustManager()
+-      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
+-      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+-      this.certificatePinner = builder.certificatePinner
+-          .withCertificateChainCleaner(certificateChainCleaner!!)
+-    }
+-
++    { … 17 line(s) … ⟦tj:41417aec4d9dc01689da02bb7a480cbe⟧ }
+     verifyClientState()
+-  }
+ 
+   private fun verifyClientState() {
+     check(null !in (interceptors as List<Interceptor?>)) {
+@@ -251,36 +234,15 @@
+     check(null !in (networkInterceptors as List<Interceptor?>)) {
+       "Null network interceptor: $networkInterceptors"
+     }
+-
+-    if (connectionSpecs.none { it.isTls }) {
+-      check(sslSocketFactoryOrNull == null)
+-      check(certificateChainCleaner == null)
+-      check(x509TrustManager == null)
+-      check(certificatePinner == CertificatePinner.DEFAULT)
+-    } else {
+-      checkNotNull(sslSocketFactoryOrNull) { "sslSocketFactory == null" }
+-      checkNotNull(certificateChainCleaner) { "certificateChainCleaner == null" }
+-      checkNotNull(x509TrustManager) { "x509TrustManager == null" }
++      { … 10 line(s) … ⟦tj:0611e4f0143b7e4211e13a64a6af0239⟧ }
+     }
+-  }
+ 
+   /** Prepares the [request] to be executed at some point in the future. */
+   override fun newCall(request: Request): Call = RealCall(this, request, forWebSocket = false)
+ 
+   /** Uses [request] to connect a new web socket. */
+   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
+-    val webSocket = RealWebSocket(
+-        taskRunner = TaskRunner.INSTANCE,
+-        originalRequest = request,
+-        listener = listener,
+-        random = Random(),
+-        pingIntervalMillis = pingIntervalMillis.toLong(),
+-        extensions = null, // Always null for clients.
+-        minimumDeflateSize = minWebSocketMessageToCompress
+-    )
+-    webSocket.connect(this)
+-    return webSocket
+-  }
++    { … 12 line(s) … ⟦tj:3c048a4746e55935be2f6c0e9eade102⟧ }
+ 
+   open fun newBuilder(): Builder = Builder(this)
+ 
+@@ -743,16 +705,7 @@
+         level = DeprecationLevel.ERROR
+     )
+     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
+-      if (sslSocketFactory != this.sslSocketFactoryOrNull) {
+-        this.routeDatabase = null
+-      }
+-
+-      this.sslSocketFactoryOrNull = sslSocketFactory
+-      this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
+-          "Unable to extract the trust manager on ${Platform.get()}, " +
+-              "sslSocketFactory is ${sslSocketFactory.javaClass}")
+-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
+-    }
++      { … 10 line(s) … ⟦tj:aaad927c0a825c7c9611a95a6a54d888⟧ }
+ 
+     /**
+      * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
+@@ -868,18 +821,8 @@
+       require(null !in (protocolsCopy as List<Protocol?>)) {
+         "protocols must not contain null"
+       }
+-
+-      // Remove protocols that we no longer support.
+-      @Suppress("DEPRECATION")
+-      protocolsCopy.remove(Protocol.SPDY_3)
+-
+-      if (protocolsCopy != this.protocols) {
+-        this.routeDatabase = null
+-      }
+-
+-      // Assign as an unmodifiable list. This is effectively immutable.
++        { … 10 line(s) … ⟦tj:5e4c0476029c45601c530ba0304752ce⟧ }
+       this.protocols = Collections.unmodifiableList(protocolsCopy)
+-    }
+ 
+     /**
+      * Sets the verifier used to confirm that response certificates apply to requested hostnames for
+@@ -1076,3 +1019,6 @@
+         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
+   }
+ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (44011 bytes): call tinyjuice_retrieve with token "7c57469526804a4708f841ee010533f8"]
+\ No newline at end of file

@@ -1,0 +1,49 @@
+--- input/input.kt
++++ output/output.kt
+@@ -126,17 +126,7 @@
+      * @throws NoSuchElementException if this priority queue is empty
+      */
+     fun poll(): Pair<Int, T> {
+-        if (size == 0) throw NoSuchElementException("Priority queue underflow")
+-        val min = pq[1]
+-        val element = keys[min]
+-        exch(1, size--)
+-        sink(1)
+-        assert(min == pq[size + 1])
+-        qp[min] = -1        // delete
+-        keys[min] = null    // to help with garbage collection
+-        pq[size + 1] = -1   // not needed
+-        return Pair(min, element!!)
+-    }
++        { … 11 line(s) … ⟦tj:d93926a345372fa8cfd354e670acf814⟧ }
+ 
+     private fun less(x: T, y: T): Boolean {
+         return if (comparator != null) {
+@@ -177,15 +167,7 @@
+     }
+ 
+     private fun sink(n: Int) {
+-        var k = n
+-        while (2 * k <= size) {
+-            var j = 2 * k
+-            if (j < size && greater(j, j + 1)) j++
+-            if (!greater(k, j)) break
+-            exch(k, j)
+-            k = j
+-        }
+-    }
++        { … 9 line(s) … ⟦tj:760080be3aaeed40ac7490319dafec24⟧ }
+ 
+     public fun contains(i: Int): Boolean {
+         if (i < 0 || i >= maxN) throw IndexOutOfBoundsException()
+@@ -213,4 +195,7 @@
+     override fun iterator(): Iterator<T> {
+         return keys.copyOfRange(1, size + 1).map { it!! }.iterator()
+     }
+-}
+\ No newline at end of file
++}
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (7042 bytes): call tinyjuice_retrieve with token "37deb2d94e0ce17d38d563cf95df9d35"]
+\ No newline at end of file

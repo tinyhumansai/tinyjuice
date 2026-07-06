@@ -717,7 +717,7 @@ impl CompressOutput {
 }
 
 /// Knobs for the router and compressors, built by the caller from the
-/// `[tokenjuice]` config block. TokenJuice stays decoupled from the config
+/// `[tinyjuice]` config block. TokenJuice stays decoupled from the config
 /// schema crate by taking this plain struct rather than `Config`.
 #[derive(Debug, Clone)]
 pub struct CompressOptions {
@@ -735,13 +735,54 @@ pub struct CompressOptions {
     pub ml_text_enabled: bool,
     /// Outputs below this many bytes are never compressed.
     pub min_bytes_to_compress: usize,
+    /// Lower size floor for log-like content (detected `Log` kind or command
+    /// output routed through the rule engine). Test/build failure logs are
+    /// often only ~1–2 KB yet compress extremely well (a Vitest failure rule
+    /// reaches ~79% on sub-2 KB fixtures), so gating them behind the global
+    /// `min_bytes_to_compress` floor leaves real savings on the table. Content
+    /// in `[min_bytes_to_compress_log, min_bytes_to_compress)` is detected and
+    /// compressed only when it is log-like; every other kind keeps the global
+    /// floor.
+    pub min_bytes_to_compress_log: usize,
     /// CCR only fires (offload original + lossy compression) when the input is
     /// estimated to be at least this many tokens. Below it, the result passes
     /// through (lossless reformats may still apply without offload). Lets small
     /// tool results skip the cache entirely.
+    ///
+    /// This is the primary knob, but it is ratio-aware rather than a hard
+    /// cliff: when a compression is heavily lossy (the compacted text is at
+    /// most half the original tokens) CCR also fires for inputs down to a
+    /// quarter of this threshold. A heavy crush on a small input drops a large
+    /// *fraction* of the content, so recoverability matters there even though
+    /// the absolute token count is modest — while trivially small inputs
+    /// (below a quarter of the threshold) still skip the cache entirely.
     pub ccr_min_tokens: usize,
+    /// Allow *information-dropping* compression when CCR is not in play
+    /// (disabled, below `ccr_min_tokens`, or the original couldn't be
+    /// retained). Faithful reformats (JSON tables/minify, HTML→text) are
+    /// information-preserving and always ship regardless of this flag; it only
+    /// governs compressors that drop content (logs, diffs, search, code
+    /// bodies, sampled JSON rows). Default `false`: without a recovery token
+    /// those pass through untouched rather than emit a partial view the caller
+    /// can't get back. Set `true` to allow marked-but-unrecoverable lossy
+    /// output (dropped content still carries explicit `[... omitted ...]`
+    /// markers, it just isn't retrievable).
+    pub lossy_without_ccr: bool,
     /// Maximum inline character count for the generic/rule fallback path.
     pub max_inline_chars: Option<usize>,
+    /// Target output/input byte ratio for source-code compression. When set
+    /// (e.g. `Some(0.4)`), the code compressor collapses eligible bodies
+    /// largest-first and stops once the projected output is at or below this
+    /// fraction of the input, leaving the remaining bodies fully intact.
+    /// `None` (the default) collapses every eligible body.
+    pub code_target_ratio: Option<f32>,
+    /// Average characters per token used by the router's token estimates
+    /// (gating and savings accounting). The default 4.0 matches the standard
+    /// English-text heuristic; callers whose payloads skew denser (CJK text,
+    /// minified JSON) or sparser can calibrate. With the default value the
+    /// historical ceiling-division estimate is kept bit-for-bit; a custom
+    /// value uses round-half-up.
+    pub chars_per_token: f32,
 }
 
 impl Default for CompressOptions {
@@ -754,8 +795,18 @@ impl Default for CompressOptions {
             html_enabled: true,
             ml_text_enabled: false,
             min_bytes_to_compress: 2048,
+            min_bytes_to_compress_log: 512,
             ccr_min_tokens: 500,
+            // Without CCR, only information-preserving output ships: faithful
+            // reformats (JSON tables/minify, HTML→text) still apply, but any
+            // compressor that *drops* information (logs, diffs, search, code
+            // bodies, sampled JSON rows) passes through untouched rather than
+            // emitting an unrecoverable partial view. A host can opt back into
+            // marked-but-unrecoverable lossy output by flipping this to true.
+            lossy_without_ccr: false,
             max_inline_chars: None,
+            code_target_ratio: None,
+            chars_per_token: 4.0,
         }
     }
 }

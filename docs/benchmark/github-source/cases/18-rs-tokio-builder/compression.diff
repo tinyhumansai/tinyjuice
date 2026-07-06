@@ -1,0 +1,120 @@
+--- input/input.rs
++++ output/output.rs
+@@ -332,18 +332,7 @@
+     ///     .build()
+     ///     .unwrap();
+     /// ```
+-    pub fn enable_all(&mut self) -> &mut Self {
+-        #[cfg(any(
+-            feature = "net",
+-            all(unix, feature = "process"),
+-            all(unix, feature = "signal")
+-        ))]
+-        self.enable_io();
+-        #[cfg(feature = "time")]
+-        self.enable_time();
+-
+-        self
+-    }
++    pub fn enable_all(&mut self) -> &mut Self { … 12 line(s) … ⟦tj:761a685db188b4bb3d03bcf4ff61f321⟧ }
+ 
+     /// Sets the number of worker threads the `Runtime` will use.
+     ///
+@@ -705,19 +694,9 @@
+     fn get_cfg(&self, workers: usize) -> driver::Cfg {
+         driver::Cfg {
+             enable_pause_time: match self.kind {
+-                Kind::CurrentThread => true,
+-                #[cfg(feature = "rt-multi-thread")]
+-                Kind::MultiThread => false,
+-                #[cfg(all(tokio_unstable, feature = "rt-multi-thread"))]
+-                Kind::MultiThreadAlt => false,
+-            },
+-            enable_io: self.enable_io,
+-            enable_time: self.enable_time,
+-            start_paused: self.start_paused,
+-            nevents: self.nevents,
+-            workers,
++        { … 11 line(s) … ⟦tj:42a32dbde6a9bcb66392a631f3991cb3⟧ }
+         }
+-    }
++}
+ 
+     /// Sets a custom timeout for a thread in the blocking pool.
+     ///
+@@ -1095,50 +1074,9 @@
+     fn build_current_thread_runtime(&mut self) -> io::Result<Runtime> {
+         use crate::runtime::scheduler::{self, CurrentThread};
+         use crate::runtime::{runtime::Scheduler, Config};
+-
+-        let (driver, driver_handle) = driver::Driver::new(self.get_cfg(1))?;
+-
+-        // Blocking pool
+-        let blocking_pool = blocking::create_blocking_pool(self, self.max_blocking_threads);
+-        let blocking_spawner = blocking_pool.spawner().clone();
+-
+-        // Generate a rng seed for this runtime.
+-        let seed_generator_1 = self.seed_generator.next_generator();
+-        let seed_generator_2 = self.seed_generator.next_generator();
+-
+-        // And now put a single-threaded scheduler on top of the timer. When
+-        // there are no futures ready to do something, it'll let the timer or
+-        // the reactor to generate some new stimuli for the futures to continue
+-        // in their life.
+-        let (scheduler, handle) = CurrentThread::new(
+-            driver,
+-            driver_handle,
+-            blocking_spawner,
+-            seed_generator_2,
+-            Config {
+-                before_park: self.before_park.clone(),
+-                after_unpark: self.after_unpark.clone(),
+-                global_queue_interval: self.global_queue_interval,
+-                event_interval: self.event_interval,
+-                local_queue_capacity: self.local_queue_capacity,
+-                #[cfg(tokio_unstable)]
+-                unhandled_panic: self.unhandled_panic.clone(),
+-                disable_lifo_slot: self.disable_lifo_slot,
+-                seed_generator: seed_generator_1,
+-                metrics_poll_count_histogram: self.metrics_poll_count_histogram_builder(),
+-            },
+-        );
+-
+-        let handle = Handle {
+-            inner: scheduler::Handle::CurrentThread(handle),
+-        };
+-
+-        Ok(Runtime::from_parts(
+-            Scheduler::CurrentThread(scheduler),
+-            handle,
+-            blocking_pool,
++        { … 42 line(s) … ⟦tj:a67ca3b20a09f198494d810f4a64e69b⟧ }
+         ))
+-    }
++}
+ 
+     fn metrics_poll_count_histogram_builder(&self) -> Option<HistogramBuilder> {
+         if self.metrics_poll_count_histogram_enable {
+@@ -1337,16 +1275,10 @@
+     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+         fmt.debug_struct("Builder")
+             .field("worker_threads", &self.worker_threads)
+-            .field("max_blocking_threads", &self.max_blocking_threads)
+-            .field(
+-                "thread_name",
+-                &"<dyn Fn() -> String + Send + Sync + 'static>",
+-            )
+-            .field("thread_stack_size", &self.thread_stack_size)
+-            .field("after_start", &self.after_start.as_ref().map(|_| "..."))
+-            .field("before_stop", &self.before_stop.as_ref().map(|_| "..."))
+-            .field("before_park", &self.before_park.as_ref().map(|_| "..."))
+-            .field("after_unpark", &self.after_unpark.as_ref().map(|_| "..."))
++        { … 10 line(s) … ⟦tj:aa25e650b963da5adbd3fe61945cca54⟧ }
+             .finish()
+-    }
+ }
++}
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (48202 bytes): call tinyjuice_retrieve with token "5df9278c1f2aa4f8fb13df7afc2fdcaf"]
+\ No newline at end of file

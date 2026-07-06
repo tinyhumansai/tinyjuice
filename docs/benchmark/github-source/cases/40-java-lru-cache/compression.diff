@@ -1,0 +1,95 @@
+--- input/input.java
++++ output/output.java
+@@ -75,15 +75,7 @@
+      * @return the evicted entry
+      */
+     private Entry<K, V> evict() {
+-        if (head == null) {
+-            throw new RuntimeException("cache cannot be empty!");
+-        }
+-        Entry<K, V> evicted = head;
+-        head = evicted.getNextEntry();
+-        head.setPreEntry(null);
+-        evicted.setNextEntry(null);
+-        return evicted;
+-    }
++        { … 9 line(s) … ⟦tj:c8f9fade2969101a0a47b5b305e9f88f⟧ }
+ 
+     /**
+      * Checks if the capacity is valid.
+@@ -121,23 +113,8 @@
+     private void moveNodeToLast(Entry<K, V> entry) {
+         if (tail == entry) {
+             return;
+-        }
+-        final Entry<K, V> preEntry = entry.getPreEntry();
+-        final Entry<K, V> nextEntry = entry.getNextEntry();
+-        if (preEntry != null) {
+-            preEntry.setNextEntry(nextEntry);
+-        }
+-        if (nextEntry != null) {
+-            nextEntry.setPreEntry(preEntry);
+-        }
+-        if (head == entry) {
+-            head = nextEntry;
+-        }
+-        tail.setNextEntry(entry);
+-        entry.setPreEntry(tail);
+-        entry.setNextEntry(null);
++        { … 15 line(s) … ⟦tj:8d43701643bc3e2c6ec908d60c5c222e⟧ }
+         tail = entry;
+-    }
+ 
+     /**
+      * Associates the specified value with the specified key in this cache.
+@@ -148,23 +125,8 @@
+     public void put(K key, V value) {
+         if (data.containsKey(key)) {
+             final Entry<K, V> existingEntry = data.get(key);
+-            existingEntry.setValue(value);
+-            moveNodeToLast(existingEntry);
+-            return;
+-        }
+-        Entry<K, V> newEntry;
+-        if (data.size() == cap) {
+-            newEntry = evict();
+-            data.remove(newEntry.getKey());
+-        } else {
+-            newEntry = new Entry<>();
+-        }
+-
+-        newEntry.setKey(key);
+-        newEntry.setValue(value);
+-        addNewEntry(newEntry);
++        { … 15 line(s) … ⟦tj:932f4c2f5fc1a0ef48989acea81a7eb5⟧ }
+         data.put(key, newEntry);
+-    }
+ 
+     /**
+      * Adds a new entry to the end of the list.
+@@ -172,16 +134,7 @@
+      * @param newEntry the entry to add
+      */
+     private void addNewEntry(Entry<K, V> newEntry) {
+-        if (data.isEmpty()) {
+-            head = newEntry;
+-            tail = newEntry;
+-            return;
+-        }
+-        tail.setNextEntry(newEntry);
+-        newEntry.setPreEntry(tail);
+-        newEntry.setNextEntry(null);
+-        tail = newEntry;
+-    }
++        { … 10 line(s) … ⟦tj:74bcf07953d9727d114bf0f47f4644cf⟧ }
+ 
+     static final class Entry<I, J> {
+ 
+@@ -233,3 +186,6 @@
+         }
+     }
+ }
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (6665 bytes): call tinyjuice_retrieve with token "297a09e22043249ecebe054941693b12"]
+\ No newline at end of file

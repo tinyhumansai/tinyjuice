@@ -352,7 +352,7 @@ mod tests {
         assert!(out.truncated);
         assert!(out.full_text_retained);
         assert!(out.text.contains(FOOTER_RULE));
-        assert!(out.text.contains("tokenjuice_retrieve"));
+        assert!(out.text.contains("tinyjuice_retrieve"));
         assert_eq!(
             parse_markers(&out.text),
             vec![out.ccr_token.clone().unwrap()]
@@ -392,7 +392,7 @@ mod tests {
         assert!(out.text.contains("megapage-line-000000"));
         assert!(out.text.contains("megapage-final-sentinel"));
         assert!(out.text.contains(FOOTER_RULE));
-        assert!(out.text.contains("tokenjuice_retrieve"));
+        assert!(out.text.contains("tinyjuice_retrieve"));
         assert_eq!(
             parse_markers(&out.text),
             vec![out.ccr_token.clone().unwrap()]

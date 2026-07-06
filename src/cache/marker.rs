@@ -8,15 +8,21 @@
 
 /// The retrieve tool's name, surfaced in footers and used by the harness to
 /// keep the tool's own output from being re-compacted and to always advertise it.
-pub const RETRIEVE_TOOL_NAME: &str = "tokenjuice_retrieve";
+pub const RETRIEVE_TOOL_NAME: &str = "tinyjuice_retrieve";
 
-/// The legacy retrieve tool name (kept as an alias during migration).
+/// Legacy retrieve tool names (kept as aliases during migration): the
+/// pre-rename `tokenjuice_retrieve` and the original `retrieve_tool_output`.
 pub const LEGACY_RETRIEVE_TOOL_NAME: &str = "retrieve_tool_output";
+pub const LEGACY_TOKENJUICE_RETRIEVE_TOOL_NAME: &str = "tokenjuice_retrieve";
 
-/// All CCR recovery tool names. Both must be (a) always advertised to every
+/// All CCR recovery tool names. Each must be (a) always advertised to every
 /// agent — any agent that sees a retrieval footer must be able to call the tool
 /// — and (b) never re-compacted (their job is to return an original in full).
-pub const RECOVERY_TOOL_NAMES: &[&str] = &[RETRIEVE_TOOL_NAME, LEGACY_RETRIEVE_TOOL_NAME];
+pub const RECOVERY_TOOL_NAMES: &[&str] = &[
+    RETRIEVE_TOOL_NAME,
+    LEGACY_TOKENJUICE_RETRIEVE_TOOL_NAME,
+    LEGACY_RETRIEVE_TOOL_NAME,
+];
 
 /// Tools whose output must never be re-compacted. See [`RECOVERY_TOOL_NAMES`].
 pub const NEVER_COMPACT_TOOLS: &[&str] = RECOVERY_TOOL_NAMES;
@@ -36,18 +42,18 @@ pub fn format_marker(hash: &str) -> String {
 /// `lossy` distinguishes a partial view (data dropped) from a faithful reformat
 /// (no data lost, layout changed); both offer exact recovery.
 pub fn recovery_footer(hash: &str, original_bytes: usize, lossy: bool) -> String {
-    let marker = format_marker(hash);
+    // Fixed-cost overhead on every compacted output, so keep it tight: the
+    // hash appears exactly once, in the `token "<hash>"` form parse_markers
+    // recognizes (the tool name in front satisfies its proximity guard).
     if lossy {
         format!(
-            "\n\n[compacted tool output — this is a PARTIAL view; the full original \
-             ({original_bytes} bytes) is available by calling {RETRIEVE_TOOL_NAME} with \
-             token \"{hash}\" (marker {marker})]"
+            "\n\n[PARTIAL view — full original ({original_bytes} bytes): call \
+             {RETRIEVE_TOOL_NAME} with token \"{hash}\"]"
         )
     } else {
         format!(
-            "\n\n[reformatted tool output — no data lost, but layout changed; the exact \
-             original ({original_bytes} bytes) is available by calling {RETRIEVE_TOOL_NAME} \
-             with token \"{hash}\" (marker {marker})]"
+            "\n\n[reformatted, no data lost — exact original ({original_bytes} bytes): call \
+             {RETRIEVE_TOOL_NAME} with token \"{hash}\"]"
         )
     }
 }
@@ -76,25 +82,49 @@ pub fn parse_markers(text: &str) -> Vec<String> {
         }
     }
 
-    // Legacy: retrieve_tool_output("HASH") or tokenjuice_retrieve("HASH")
-    for needle in [
-        "retrieve_tool_output(\"",
-        "tokenjuice_retrieve(\"",
-        "token \"",
+    // Call-shaped and legacy forms: tinyjuice_retrieve("HASH"),
+    // tokenjuice_retrieve("HASH"), retrieve_tool_output("HASH"). The bare
+    // `token "` form is guarded: it only counts when one of the recovery tool
+    // names appears just before it, matching the footer wording
+    // `... calling <tool> with token "<hash>"`. Unguarded it would extract
+    // from ordinary prose like `the auth token "sk-abc"`.
+    for (needle, guarded) in [
+        ("tinyjuice_retrieve(\"", false),
+        ("retrieve_tool_output(\"", false),
+        ("tokenjuice_retrieve(\"", false),
+        ("token \"", true),
     ] {
-        let mut rest = text;
-        while let Some(start) = rest.find(needle) {
-            let after = &rest[start + needle.len()..];
-            if let Some(end) = after.find('"') {
-                push(&after[..end]);
-                rest = &after[end..];
-            } else {
+        let mut pos = 0;
+        while let Some(start) = text[pos..].find(needle) {
+            let abs = pos + start;
+            let after = &text[abs + needle.len()..];
+            let Some(end) = after.find('"') else {
                 break;
+            };
+            if !guarded || preceded_by_recovery_tool(text, abs) {
+                push(&after[..end]);
             }
+            pos = abs + needle.len() + end + 1;
         }
     }
 
     out
+}
+
+/// Chars scanned backwards from a `token "` needle looking for a recovery tool
+/// name. The footer puts only ` with ` between the tool name and the needle;
+/// this window is generous to tolerate wrapping/reflow.
+const TOKEN_NEEDLE_LOOKBACK: usize = 96;
+
+/// True if one of [`RECOVERY_TOOL_NAMES`] occurs within the lookback window
+/// ending at byte offset `at` in `text`.
+fn preceded_by_recovery_tool(text: &str, at: usize) -> bool {
+    let mut start = at.saturating_sub(TOKEN_NEEDLE_LOOKBACK);
+    while !text.is_char_boundary(start) {
+        start += 1;
+    }
+    let window = &text[start..at];
+    RECOVERY_TOOL_NAMES.iter().any(|tool| window.contains(tool))
 }
 
 #[cfg(test)]
@@ -129,5 +159,35 @@ mod tests {
         assert!(f.contains("PARTIAL view"));
         assert!(f.contains("c0ffee"));
         assert_eq!(parse_markers(&f), vec!["c0ffee"]);
+    }
+
+    #[test]
+    fn lossless_footer_round_trips() {
+        let f = recovery_footer("deadbeef", 4321, false);
+        assert!(f.contains("no data lost"));
+        assert_eq!(parse_markers(&f), vec!["deadbeef"]);
+    }
+
+    #[test]
+    fn prose_token_quotes_are_not_markers() {
+        assert!(parse_markers("the auth token \"sk-abc123\" expired").is_empty());
+        assert!(parse_markers("set your API token \"foo\" in the env").is_empty());
+    }
+
+    #[test]
+    fn token_needle_scoped_to_recovery_tools() {
+        // Footer-style wording (tool name nearby) still parses…
+        for tool in RECOVERY_TOOL_NAMES {
+            let text = format!("call {tool} with token \"abc123\" to recover");
+            assert_eq!(parse_markers(&text), vec!["abc123"], "tool {tool}");
+        }
+        // …but a tool name far away (outside the lookback window) does not
+        // legitimize an unrelated token-quote.
+        let far = format!(
+            "{} was mentioned earlier. {} Then the auth token \"sk-999\" leaked.",
+            RETRIEVE_TOOL_NAME,
+            "filler ".repeat(30)
+        );
+        assert!(parse_markers(&far).is_empty());
     }
 }

@@ -168,18 +168,20 @@ fn rewrite_git_status_line(line: &str) -> Option<String> {
         return Some(format!("?? {}", path));
     }
 
-    // Porcelain format: two status chars + space + path
+    // Porcelain format: two status chars + space + path. A fully blank
+    // status column means the line is just indented text, not porcelain —
+    // fall through rather than fabricate an "M:" status for it.
     if let Some(caps) = regex_captures(r"^([ MADRCU?!]{2})\s+(.+)$", line) {
         let status_raw = caps[0].trim().replace('?', "??");
-        let path = caps[1].trim();
-        let code = if status_raw.is_empty() {
-            "M"
-        } else if status_raw.starts_with("??") {
-            "??"
-        } else {
-            &status_raw[..1]
-        };
-        return Some(format!("{}: {}", code, path));
+        if !status_raw.is_empty() {
+            let path = caps[1].trim();
+            let code = if status_raw.starts_with("??") {
+                "??"
+            } else {
+                &status_raw[..1]
+            };
+            return Some(format!("{}: {}", code, path));
+        }
     }
 
     Some(trimmed.to_owned())
@@ -200,10 +202,13 @@ fn rewrite_git_status_lines(lines: &[String]) -> Vec<String> {
                 section = Some("untracked");
             }
 
-            // In untracked section, indented non-action lines become "?? "
+            // In untracked section, indented non-action lines become "?? ".
+            // Real git indents untracked paths with a single tab, so any
+            // leading whitespace qualifies; hint lines like `(use "git add
+            // ...)` are handled by rewrite_git_status_line below.
             if section == Some("untracked")
-                && regex_match(r"^\s{2,}\S", line)
-                && !regex_match(r"^\s*(?:modified:|new file:|deleted:|renamed:)", line)
+                && regex_match(r"^\s+\S", line)
+                && !regex_match(r"^\s*(?:modified:|new file:|deleted:|renamed:|\()", line)
             {
                 return Some(format!("?? {}", trimmed));
             }
@@ -236,7 +241,7 @@ fn compact_whitespace(text: &str) -> String {
 /// Compiled once at first use; previously `Regex::new` ran per line, which is
 /// a textbook regex-in-a-loop hot-path bug: a `gh pr list` with N rows paid
 /// for N compilations of the same trivial pattern. Matches the project
-/// convention (see `tokenjuice::text::ansi`).
+/// convention (see `tinyjuice::text::ansi`).
 static GH_TABLE_SPLIT_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\s{2,}|\t+").expect("gh table split regex"));
 
@@ -533,8 +538,15 @@ fn apply_rule(
         });
     }
 
-    // counter_source == preKeep → sample counters before keep filtering
-    let pre_keep_lines = lines.clone();
+    // counter_source == preKeep → sample counters before keep filtering.
+    // Only clone when a rule actually needs the pre-keep snapshot.
+    let pre_keep_lines = if matches!(rule.counter_source, Some(CounterSource::PreKeep))
+        && !compiled_rule.compiled.counters.is_empty()
+    {
+        lines.clone()
+    } else {
+        Vec::new()
+    };
 
     // keepPatterns
     let has_keep = !compiled_rule.compiled.keep_patterns.is_empty();
@@ -627,7 +639,7 @@ fn apply_rule(
     };
 
     log::debug!(
-        "[tokenjuice] apply_rule '{}': {} lines → head={} tail={} failure={}",
+        "[tinyjuice] apply_rule '{}': {} lines → head={} tail={} failure={}",
         rule.id,
         lines.len(),
         head,
@@ -646,16 +658,23 @@ fn apply_rule(
 // Passthrough text
 // ---------------------------------------------------------------------------
 
-fn build_passthrough_text(input: &ToolExecutionInput, raw_text: &str) -> String {
-    let normalized = trim_empty_edges(&normalize_lines(&strip_ansi(raw_text)))
+/// `stripped_raw` must already be ANSI-stripped (the caller strips once and
+/// threads the result through to avoid re-scanning large outputs).
+fn build_passthrough_text(input: &ToolExecutionInput, stripped_raw: &str) -> String {
+    let normalized = trim_empty_edges(&normalize_lines(stripped_raw))
         .join("\n")
         .trim()
         .to_owned();
+    // Keep a nonzero exit code visible even when the command printed nothing
+    // — the exit status is the whole signal in that case.
+    if input.exit_code.map(|c| c != 0).unwrap_or(false) {
+        if normalized.is_empty() {
+            return format!("exit {} (no output)", input.exit_code.unwrap());
+        }
+        return format!("exit {}\n{}", input.exit_code.unwrap(), normalized);
+    }
     if normalized.is_empty() {
         return "(no output)".to_owned();
-    }
-    if input.exit_code.map(|c| c != 0).unwrap_or(false) {
-        return format!("exit {}\n{}", input.exit_code.unwrap(), normalized);
     }
     normalized
 }
@@ -703,7 +722,7 @@ fn format_inline(
 fn select_inline_text(
     classification: &ClassificationResult,
     input: &ToolExecutionInput,
-    raw_text: &str,
+    stripped_raw: &str,
     compact_text: &str,
     max_inline_chars: usize,
 ) -> String {
@@ -711,8 +730,8 @@ fn select_inline_text(
         return compact_text.to_owned();
     }
 
-    let passthrough = build_passthrough_text(input, raw_text);
-    let raw_chars = count_text_chars(&strip_ansi(raw_text));
+    let passthrough = build_passthrough_text(input, stripped_raw);
+    let raw_chars = count_text_chars(stripped_raw);
     let compact_chars = count_text_chars(compact_text);
     let passthrough_limit = if classification.family == "help" {
         max_inline_chars
@@ -747,11 +766,13 @@ pub fn reduce_execution_with_rules(
 ) -> CompactResult {
     let normalized_input = normalize_execution_input(input);
     let raw_text = build_raw_text(&normalized_input);
-    let measured_raw_chars = count_text_chars(&strip_ansi(&raw_text));
+    // Strip ANSI once; every consumer below works on the stripped text.
+    let stripped_raw = strip_ansi(&raw_text);
+    let measured_raw_chars = count_text_chars(&stripped_raw);
     let classification = classify_execution(&normalized_input, rules, opts.classifier.as_deref());
 
     log::debug!(
-        "[tokenjuice] reduce_execution: tool='{}' raw_chars={} family='{}'",
+        "[tinyjuice] reduce_execution: tool='{}' raw_chars={} family='{}'",
         normalized_input.tool_name,
         measured_raw_chars,
         classification.family
@@ -813,7 +834,7 @@ pub fn reduce_execution_with_rules(
     let selected = select_inline_text(
         &classification,
         &normalized_input,
-        &raw_text,
+        &stripped_raw,
         &compact_text,
         max_inline_chars,
     );
@@ -833,7 +854,7 @@ pub fn reduce_execution_with_rules(
     };
 
     log::debug!(
-        "[tokenjuice] reduce_execution complete: rule='{}' raw={} reduced={} ratio={:.2}",
+        "[tinyjuice] reduce_execution complete: rule='{}' raw={} reduced={} ratio={:.2}",
         classification.matched_reducer.as_deref().unwrap_or("?"),
         measured_raw_chars,
         reduced_chars,

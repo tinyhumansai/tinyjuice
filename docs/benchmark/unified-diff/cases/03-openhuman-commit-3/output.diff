@@ -1,0 +1,2653 @@
+diff --git a/.github/workflows/release-production.yml b/.github/workflows/release-production.yml
+index e66dba04d..836b49c6d 100644
+--- a/.github/workflows/release-production.yml
++++ b/.github/workflows/release-production.yml
+@@ -345,161 +345,161 @@ jobs:
+               owner,
+               repo,
+               tag_name: tag,
+[... 74 context line(s) omitted ... ⟦tj:fc9c6cd5c26d7bb830d5b1889d4b99c0⟧]
+       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+       - name: Init vendored Rust submodules
+-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinychannels vendor/tinyplace
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+       - name: Log in to GHCR
+[... 74 context line(s) omitted ... ⟦tj:fc51e4e50212afdcbf9a7fcb1c96284e⟧]
+         with:
+           ref: ${{ needs.prepare-build.outputs.build_ref }}
+           fetch-depth: 1
+diff --git a/.github/workflows/release-staging.yml b/.github/workflows/release-staging.yml
+index 3b7a830c2..79a796ff6 100644
+--- a/.github/workflows/release-staging.yml
++++ b/.github/workflows/release-staging.yml
+@@ -240,161 +240,161 @@ jobs:
+           else
+             echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
+           fi
+[... 74 context line(s) omitted ... ⟦tj:b7430b79e54801adbd57075daae97fd1⟧]
+       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+       - name: Init vendored Rust submodules
+-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinychannels vendor/tinyplace
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+       - name: Build image (no push)
+[... 74 context line(s) omitted ... ⟦tj:502201ea3a02309cff2fc728d6eff813⟧]
+       always()
+       && inputs.create_tag
+       && needs.prepare-build.result == 'success'
+diff --git a/.gitmodules b/.gitmodules
+index ce992e204..3f6001479 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,22 +1,25 @@
+ [submodule "app/src-tauri/vendor/tauri-cef"]
+ 	path = app/src-tauri/vendor/tauri-cef
+ 	url = https://github.com/tinyhumansai/tauri-cef.git
+[... 13 context line(s) omitted ... ⟦tj:5e554cbb7d401450814d528bd48e7f44⟧]
+ [submodule "vendor/tinyjuice"]
+ 	path = vendor/tinyjuice
+ 	url = https://github.com/tinyhumansai/tinyjuice
++[submodule "vendor/tinychannels"]
++	path = vendor/tinychannels
++	url = https://github.com/tinyhumansai/tinychannels
+ [submodule "vendor/tinyplace"]
+ 	path = vendor/tinyplace
+ 	url = https://github.com/tinyhumansai/tiny.place.git
+diff --git a/Cargo.lock b/Cargo.lock
+index 7aa978e60..1259721a2 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -74,172 +74,172 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:0bd4ecb1d1fa14ebc14c2aab0a111fbd⟧]
+@@ -1588,161 +1588,161 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:6e4f40e125cec8961338af4bb87218e6⟧]
+@@ -1845,161 +1845,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:56afd6c1be4da3c0aa09657531d33482⟧]
+@@ -3162,161 +3162,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:b9bfe517de8901ded74fb5556d9bd10c⟧]
+@@ -3811,161 +3811,161 @@ checksum = "8c196769dd60fd4f363e11d948139556a344e79d451aeb2fa2fd040738ef7691"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:c4081c1eee1fab079b31309bf9bcbee0⟧]
+@@ -5654,220 +5654,220 @@ name = "rlp-derive"
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:061e6beb1ead6a1d1d4342777b96967e⟧]
+@@ -6317,161 +6317,161 @@ dependencies = [
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:d2d85a6c1e657982845c0ad3aa4de7c0⟧]
+@@ -6618,307 +6618,308 @@ dependencies = [
+[... lockfile/bundle hunk: +3/-2 line(s) omitted ... ⟦tj:69eef10a6f39c004517de1b4ace21948⟧]
+diff --git a/Cargo.toml b/Cargo.toml
+index cea66d3b4..241e0d09f 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,158 +1,158 @@
+ [package]
+ name = "openhuman"
+ version = "0.58.11"
+[... 71 context line(s) omitted ... ⟦tj:5845cf728cade54093be360293ec5171⟧]
+ # aligned to the host pins (=0.40 / 0.21) so one bundled SQLite + one libgit2
+ # link. Keep the version pin in lockstep with the submodule tag.
+ tinycortex = "0.1"
+-tinychannels = { git = "https://github.com/tinyhumansai/tinychannels.git", branch = "feat/phase-0-hygiene", features = ["relay-websocket"] }
++tinychannels = { version = "0.1", features = ["relay-websocket"] }
+ # TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
+ # behind the default `tokenjuice-treesitter` feature; disabling it falls back to
+ # the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
+[... 74 context line(s) omitted ... ⟦tj:215fe17cd99ad9da1cffa602d525bd85⟧]
+ cron = "0.12"
+ futures-util = "0.3"
+ directories = "6"
+@@ -279,125 +279,127 @@ windows-sys = { version = "0.61", features = [
+     "Win32_System_Memory",
+     "Win32_System_Threading",
+ ] }
+[... 74 context line(s) omitted ... ⟦tj:609c7f6bd31fa8c1f049c323fe08a56d⟧]
+ # version in lockstep with the `tinyagents` requirement above. After cloning:
+ # `git submodule update --init vendor/tinyagents` (worktrees included).
+ tinyagents = { path = "vendor/tinyagents" }
+-# TinyFlows and TinyCortex are vendored beside TinyAgents so integration work can
+-# test workflow and memory-layer changes against OpenHuman before publishing.
++# TinyFlows, TinyCortex, TinyJuice, TinyChannels, and TinyPlace are vendored beside
++# TinyAgents so integration work can test crate changes against OpenHuman before
++# publishing.
+ tinyflows = { path = "vendor/tinyflows" }
+ tinycortex = { path = "vendor/tinycortex" }
+ tinyjuice = { path = "vendor/tinyjuice" }
++tinychannels = { path = "vendor/tinychannels" }
+ tinyplace = { path = "vendor/tinyplace/sdk/rust" }
+ 
+ # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
+[... 34 context line(s) omitted ... ⟦tj:7daa2fc39749e66d690dc18e810b31f4⟧]
+ #     `target/` substantially.
+ [profile.dev.package."*"]
+ debug = false
+diff --git a/app/src-tauri/Cargo.lock b/app/src-tauri/Cargo.lock
+index d39344b86..4df2712c9 100644
+--- a/app/src-tauri/Cargo.lock
++++ b/app/src-tauri/Cargo.lock
+@@ -128,172 +128,172 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:8b9c5883bccbed6e4a9aa06f6d867f1f⟧]
+@@ -8067,161 +8067,161 @@ name = "signature"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:994468abba9625a8800f9bd963072f57⟧]
+@@ -9100,175 +9100,176 @@ dependencies = [
+[... lockfile/bundle hunk: +2/-1 line(s) omitted ... ⟦tj:52dac3cb9097f9cb71e7ca2de0f2fd07⟧]
+@@ -9708,161 +9709,161 @@ version = "0.25.1"
+[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:e1cda42a16282b1134e348f57e10475b⟧]
+diff --git a/app/src-tauri/Cargo.toml b/app/src-tauri/Cargo.toml
+index f5ca5599e..6fa098b29 100644
+--- a/app/src-tauri/Cargo.toml
++++ b/app/src-tauri/Cargo.toml
+@@ -135,156 +135,158 @@ cef = { version = "=146.4.1", default-features = false }
+ openhuman_core = { path = "../..", package = "openhuman", default-features = false }
+ tinyjuice = { version = "0.1", default-features = false }
+ 
+[... 74 context line(s) omitted ... ⟦tj:c78dfe408469970849230538aac3e560⟧]
+ # released tag) — same patch as the root Cargo world so both resolve the
+ # in-tree SDK source. `git submodule update --init vendor/tinyagents` first.
+ tinyagents = { path = "../../vendor/tinyagents" }
+-# TinyFlows and TinyCortex are vendored beside TinyAgents so integration work can
+-# test workflow and memory-layer changes against OpenHuman before publishing.
++# TinyFlows, TinyCortex, TinyJuice, TinyChannels, and TinyPlace are vendored beside
++# TinyAgents so integration work can test crate changes against OpenHuman before
++# publishing.
+ tinyflows = { path = "../../vendor/tinyflows" }
+ tinycortex = { path = "../../vendor/tinycortex" }
+ tinyjuice = { path = "../../vendor/tinyjuice" }
++tinychannels = { path = "../../vendor/tinychannels" }
+ tinyplace = { path = "../../vendor/tinyplace/sdk/rust" }
+ 
+ # CEF support lives on the `feat/cef` branch of tauri-apps/tauri. We carry our
+[... 65 context line(s) omitted ... ⟦tj:98b9b43e3cd8b0a890e0657a94d6c1c7⟧]
+ #   * No artifact paths, features, or runtime behaviour change.
+ [profile.dev.package."*"]
+ debug = false
+diff --git a/src/openhuman/channels/commands.rs b/src/openhuman/channels/commands.rs
+index a1ae4b270..41edc4ece 100644
+--- a/src/openhuman/channels/commands.rs
++++ b/src/openhuman/channels/commands.rs
+@@ -1,208 +1,218 @@
+ //! Channel command handling and health checks.
+ 
+ use super::dingtalk::DingTalkChannel;
+[... 74 context line(s) omitted ... ⟦tj:31aefc7ec59144f612fb801421fae5cc⟧]
+     if let Some(ref sl) = config.channels_config.slack {
+         channels.push((
+             "Slack",
+-            Arc::new(SlackChannel::new(
++            Arc::new(SlackChannel::with_http_client(
+                 sl.bot_token.clone(),
+                 sl.channel_id.clone(),
+                 sl.allowed_users.clone(),
++                crate::openhuman::config::build_runtime_proxy_client("channel.slack"),
+             )),
+         ));
+     }
+[... 14 context line(s) omitted ... ⟦tj:6aa5306438f08fbb701cefc01b32aae4⟧]
+     if let Some(ref sig) = config.channels_config.signal {
+         channels.push((
+             "Signal",
+-            Arc::new(SignalChannel::new(
++            Arc::new(SignalChannel::with_http_client(
+                 sig.http_url.clone(),
+                 sig.account.clone(),
+                 sig.group_id.clone(),
+                 sig.allowed_from.clone(),
+                 sig.ignore_attachments,
+                 sig.ignore_stories,
++                crate::openhuman::config::apply_runtime_proxy_to_builder(
++                    reqwest::Client::builder().connect_timeout(std::time::Duration::from_secs(10)),
++                    "channel.signal",
++                )
++                .build()
++                .expect("Signal HTTP client should build"),
+             )),
+         ));
+     }
+[... 6 context line(s) omitted ... ⟦tj:dc503cb2a37cfe7f2032a9e248542c43⟧]
+                 if wa.is_cloud_config() {
+                     channels.push((
+                         "WhatsApp",
+-                        Arc::new(WhatsAppChannel::new(
++                        Arc::new(WhatsAppChannel::with_http_client(
+                             wa.access_token.clone().unwrap_or_default(),
+                             wa.phone_number_id.clone().unwrap_or_default(),
+                             wa.verify_token.clone().unwrap_or_default(),
+                             wa.allowed_numbers.clone(),
++                            crate::openhuman::config::build_runtime_proxy_client(
++                                "channel.whatsapp",
++                            ),
+                         )),
+                     ));
+                 } else {
+[... 74 context line(s) omitted ... ⟦tj:80cd90937d6e6ac6481ff249997e74de⟧]
+             )),
+         ));
+     }
+diff --git a/src/openhuman/channels/providers/signal.rs b/src/openhuman/channels/providers/signal.rs
+index c4ec26bad..db9e8ac3c 100644
+--- a/src/openhuman/channels/providers/signal.rs
++++ b/src/openhuman/channels/providers/signal.rs
+@@ -1,454 +1 @@
+-use crate::openhuman::channels::traits::{Channel, ChannelMessage, SendMessage};
+-use async_trait::async_trait;
+-use futures_util::StreamExt;
+-use reqwest::Client;
+-use serde::Deserialize;
+-use std::time::Duration;
+-use tokio::sync::mpsc;
+-use uuid::Uuid;
+-
+-const GROUP_TARGET_PREFIX: &str = "group:";
+-
+-#[derive(Debug, Clone, PartialEq, Eq)]
+-enum RecipientTarget {
+-    Direct(String),
+-    Group(String),
+-}
+-
+-/// Signal channel using signal-cli daemon's native JSON-RPC + SSE API.
+-///
+-/// Connects to a running `signal-cli daemon --http <host:port>`.
+-/// Listens via SSE at `/api/v1/events` and sends via JSON-RPC at
+-/// `/api/v1/rpc`.
+-#[derive(Clone)]
+-pub struct SignalChannel {
+-    http_url: String,
+-    account: String,
+-    group_id: Option<String>,
+-    allowed_from: Vec<String>,
+-    ignore_attachments: bool,
+-    ignore_stories: bool,
+-}
+-
+-// ── signal-cli SSE event JSON shapes ────────────────────────────
+-
+-#[derive(Debug, Deserialize)]
+-struct SseEnvelope {
+-    #[serde(default)]
+-    envelope: Option<Envelope>,
+-}
+-
+-#[derive(Debug, Deserialize)]
+-struct Envelope {
+-    #[serde(default)]
+-    source: Option<String>,
+-    #[serde(rename = "sourceNumber", default)]
+-    source_number: Option<String>,
+-    #[serde(rename = "dataMessage", default)]
+-    data_message: Option<DataMessage>,
+-    #[serde(rename = "storyMessage", default)]
+-    story_message: Option<serde_json::Value>,
+-    #[serde(default)]
+-    timestamp: Option<u64>,
+-}
+-
+-#[derive(Debug, Deserialize)]
+-struct DataMessage {
+-    #[serde(default)]
+-    message: Option<String>,
+-    #[serde(default)]
+-    timestamp: Option<u64>,
+-    #[serde(rename = "groupInfo", default)]
+-    group_info: Option<GroupInfo>,
+-    #[serde(default)]
+-    attachments: Option<Vec<serde_json::Value>>,
+-}
+-
+-#[derive(Debug, Deserialize)]
+-struct GroupInfo {
+-    #[serde(rename = "groupId", default)]
+-    group_id: Option<String>,
+-}
+-
+-impl SignalChannel {
+-    pub fn new(
+-        http_url: String,
+-        account: String,
+-        group_id: Option<String>,
+-        allowed_from: Vec<String>,
+-        ignore_attachments: bool,
+-        ignore_stories: bool,
+-    ) -> Self {
+-        let http_url = http_url.trim_end_matches('/').to_string();
+-        Self {
+-            http_url,
+-            account,
+-            group_id,
+-            allowed_from,
+-            ignore_attachments,
+-            ignore_stories,
+-        }
+-    }
+-
+-    fn http_client(&self) -> Client {
+-        let builder = Client::builder().connect_timeout(Duration::from_secs(10));
+-        let builder =
+-            crate::openhuman::config::apply_runtime_proxy_to_builder(builder, "channel.signal");
+-        builder.build().expect("Signal HTTP client should build")
+-    }
+-
+-    /// Effective sender: prefer `sourceNumber` (E.164), fall back to `source`.
+-    fn sender(envelope: &Envelope) -> Option<String> {
+-        envelope
+-            .source_number
+-            .as_deref()
+-            .or(envelope.source.as_deref())
+-            .map(String::from)
+-    }
+-
+-    fn is_sender_allowed(&self, sender: &str) -> bool {
+-        if self.allowed_from.iter().any(|u| u == "*") {
+-            return true;
+-        }
+-        self.allowed_from.iter().any(|u| u == sender)
+-    }
+-
+-    fn is_e164(recipient: &str) -> bool {
+-        let Some(number) = recipient.strip_prefix('+') else {
+-            return false;
+-        };
+-        (2..=15).contains(&number.len()) && number.chars().all(|c| c.is_ascii_digit())
+-    }
+-
+-    /// Check whether a string is a valid UUID (signal-cli uses these for
+-    /// privacy-enabled users who have opted out of sharing their phone number).
+-    fn is_uuid(s: &str) -> bool {
+-        Uuid::parse_str(s).is_ok()
+-    }
+-
+-    fn parse_recipient_target(recipient: &str) -> RecipientTarget {
+-        if let Some(group_id) = recipient.strip_prefix(GROUP_TARGET_PREFIX) {
+-            return RecipientTarget::Group(group_id.to_string());
+-        }
+-
+-        if Self::is_e164(recipient) || Self::is_uuid(recipient) {
+-            RecipientTarget::Direct(recipient.to_string())
+-        } else {
+-            RecipientTarget::Group(recipient.to_string())
+-        }
+-    }
+-
+-    /// Check whether the message targets the configured group.
+-    /// If no `group_id` is configured (None), all DMs and groups are accepted.
+-    /// Use "dm" to filter DMs only.
+-    fn matches_group(&self, data_msg: &DataMessage) -> bool {
+-        let Some(ref expected) = self.group_id else {
+-            return true;
+-        };
+-        match data_msg
+-            .group_info
+-            .as_ref()
+-            .and_then(|g| g.group_id.as_deref())
+-        {
+-            Some(gid) => gid == expected.as_str(),
+-            None => expected.eq_ignore_ascii_case("dm"),
+-        }
+-    }
+-
+-    /// Determine the send target: group id or the sender's number.
+-    fn reply_target(&self, data_msg: &DataMessage, sender: &str) -> String {
+-        if let Some(group_id) = data_msg
+-            .group_info
+-            .as_ref()
+-            .and_then(|g| g.group_id.as_deref())
+-        {
+-            format!("{GROUP_TARGET_PREFIX}{group_id}")
+-        } else {
+-            sender.to_string()
+-        }
+-    }
+-
+-    /// Send a JSON-RPC request to signal-cli daemon.
+-    async fn rpc_request(
+-        &self,
+-        method: &str,
+-        params: serde_json::Value,
+-    ) -> anyhow::Result<Option<serde_json::Value>> {
+-        let url = format!("{}/api/v1/rpc", self.http_url);
+-        let id = Uuid::new_v4().to_string();
+-
+-        let body = serde_json::json!({
+-            "jsonrpc": "2.0",
+-            "method": method,
+-            "params": params,
+-            "id": id,
+-        });
+-
+-        let resp = self
+-            .http_client()
+-            .post(&url)
+-            .timeout(Duration::from_secs(30))
+-            .header("Content-Type", "application/json")
+-            .json(&body)
+-            .send()
+-            .await?;
+-
+-        // 201 = success with no body (e.g. typing indicators)
+-        if resp.status().as_u16() == 201 {
+-            return Ok(None);
+-        }
+-
+-        let text = resp.text().await?;
+-        if text.is_empty() {
+-            return Ok(None);
+-        }
+-
+-        let parsed: serde_json::Value = serde_json::from_str(&text)?;
+-        if let Some(err) = parsed.get("error") {
+-            let code = err.get("code").and_then(|c| c.as_i64()).unwrap_or(-1);
+-            let msg = err
+-                .get("message")
+-                .and_then(|m| m.as_str())
+-                .unwrap_or("unknown");
+-            anyhow::bail!("Signal RPC error {code}: {msg}");
+-        }
+-
+-        Ok(parsed.get("result").cloned())
+-    }
+-
+-    /// Process a single SSE envelope, returning a ChannelMessage if valid.
+-    fn process_envelope(&self, envelope: &Envelope) -> Option<ChannelMessage> {
+-        // Skip story messages when configured
+-        if self.ignore_stories && envelope.story_message.is_some() {
+-            return None;
+-        }
+-
+-        let data_msg = envelope.data_message.as_ref()?;
+-
+-        // Skip attachment-only messages when configured
+-        if self.ignore_attachments {
+-            let has_attachments = data_msg.attachments.as_ref().is_some_and(|a| !a.is_empty());
+-            if has_attachments && data_msg.message.is_none() {
+-                return None;
+-            }
+-        }
+-
+-        let text = data_msg.message.as_deref().filter(|t| !t.is_empty())?;
+-        let sender = Self::sender(envelope)?;
+-
+-        if !self.is_sender_allowed(&sender) {
+-            return None;
+-        }
+-
+-        if !self.matches_group(data_msg) {
+-            return None;
+-        }
+-
+-        let target = self.reply_target(data_msg, &sender);
+-
+-        let timestamp = data_msg
+-            .timestamp
+-            .or(envelope.timestamp)
+-            .unwrap_or_else(|| {
+-                u64::try_from(
+-                    std::time::SystemTime::now()
+-                        .duration_since(std::time::UNIX_EPOCH)
+-                        .unwrap_or_default()
+-                        .as_millis(),
+-                )
+-                .unwrap_or(u64::MAX)
+-            });
+-
+-        Some(ChannelMessage {
+-            id: format!("sig_{timestamp}"),
+-            sender: sender.clone(),
+-            reply_target: target,
+-            content: text.to_string(),
+-            channel: "signal".to_string(),
+-            timestamp: timestamp / 1000, // millis → secs
+-            thread_ts: None,
+-        })
+-    }
+-}
+-
+-#[async_trait]
+-impl Channel for SignalChannel {
+-    fn name(&self) -> &str {
+-        "signal"
+-    }
+-
+-    async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
+-        let params = match Self::parse_recipient_target(&message.recipient) {
+-            RecipientTarget::Direct(number) => serde_json::json!({
+-                "recipient": [number],
+-                "message": &message.content,
+-                "account": &self.account,
+-            }),
+-            RecipientTarget::Group(group_id) => serde_json::json!({
+-                "groupId": group_id,
+-                "message": &message.content,
+-                "account": &self.account,
+-            }),
+-        };
+-
+-        self.rpc_request("send", params).await?;
+-        Ok(())
+-    }
+-
+-    async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
+-        let mut url = reqwest::Url::parse(&format!("{}/api/v1/events", self.http_url))?;
+-        url.query_pairs_mut().append_pair("account", &self.account);
+-
+-        tracing::info!("Signal channel listening via SSE on {}...", self.http_url);
+-
+-        let mut retry_delay_secs = 2u64;
+-        let max_delay_secs = 60u64;
+-
+-        loop {
+-            let resp = self
+-                .http_client()
+-                .get(url.clone())
+-                .header("Accept", "text/event-stream")
+-                .send()
+-                .await;
+-
+-            let resp = match resp {
+-                Ok(r) if r.status().is_success() => r,
+-                Ok(r) => {
+-                    let status = r.status();
+-                    let body = r.text().await.unwrap_or_default();
+-                    tracing::warn!("Signal SSE returned {status}: {body}");
+-                    tokio::time::sleep(tokio::time::Duration::from_secs(retry_delay_secs)).await;
+-                    retry_delay_secs = (retry_delay_secs * 2).min(max_delay_secs);
+-                    continue;
+-                }
+-                Err(e) => {
+-                    tracing::warn!("Signal SSE connect error: {e}, retrying...");
+-                    tokio::time::sleep(tokio::time::Duration::from_secs(retry_delay_secs)).await;
+-                    retry_delay_secs = (retry_delay_secs * 2).min(max_delay_secs);
+-                    continue;
+-                }
+-            };
+-
+-            retry_delay_secs = 2;
+-
+-            let mut bytes_stream = resp.bytes_stream();
+-            let mut buffer = String::new();
+-            let mut current_data = String::new();
+-
+-            while let Some(chunk) = bytes_stream.next().await {
+-                let chunk = match chunk {
+-                    Ok(c) => c,
+-                    Err(e) => {
+-                        tracing::debug!("Signal SSE chunk error, reconnecting: {e}");
+-                        break;
+-                    }
+-                };
+-
+-                let text = match String::from_utf8(chunk.to_vec()) {
+-                    Ok(t) => t,
+-                    Err(e) => {
+-                        tracing::debug!("Signal SSE invalid UTF-8, skipping chunk: {}", e);
+-                        continue;
+-                    }
+-                };
+-
+-                buffer.push_str(&text);
+-
+-                while let Some(newline_pos) = buffer.find('\n') {
+-                    let line = buffer[..newline_pos].trim_end_matches('\r').to_string();
+-                    buffer = buffer[newline_pos + 1..].to_string();
+-
+-                    // Skip SSE comments (keepalive)
+-                    if line.starts_with(':') {
+-                        continue;
+-                    }
+-
+-                    if line.is_empty() {
+-                        // Empty line = event boundary, dispatch accumulated data
+-                        if !current_data.is_empty() {
+-                            match serde_json::from_str::<SseEnvelope>(&current_data) {
+-                                Ok(sse) => {
+-                                    if let Some(ref envelope) = sse.envelope {
+-                                        if let Some(msg) = self.process_envelope(envelope) {
+-                                            if tx.send(msg).await.is_err() {
+-                                                return Ok(());
+-                                            }
+-                                        }
+-                                    }
+-                                }
+-                                Err(e) => {
+-                                    tracing::debug!("Signal SSE parse skip: {e}");
+-                                }
+-                            }
+-                            current_data.clear();
+-                        }
+-                    } else if let Some(data) = line.strip_prefix("data:") {
+-                        if !current_data.is_empty() {
+-                            current_data.push('\n');
+-                        }
+-                        current_data.push_str(data.trim_start());
+-                    }
+-                    // Ignore "event:", "id:", "retry:" lines
+-                }
+-            }
+-
+-            if !current_data.is_empty() {
+-                match serde_json::from_str::<SseEnvelope>(&current_data) {
+-                    Ok(sse) => {
+-                        if let Some(ref envelope) = sse.envelope {
+-                            if let Some(msg) = self.process_envelope(envelope) {
+-                                let _ = tx.send(msg).await;
+-                            }
+-                        }
+-                    }
+-                    Err(e) => {
+-                        tracing::debug!("Signal SSE trailing parse skip: {e}");
+-                    }
+-                }
+-            }
+-
+-            tracing::debug!("Signal SSE stream ended, reconnecting...");
+-            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+-        }
+-    }
+-
+-    async fn health_check(&self) -> bool {
+-        let url = format!("{}/api/v1/check", self.http_url);
+-        let Ok(resp) = self
+-            .http_client()
+-            .get(&url)
+-            .timeout(Duration::from_secs(10))
+-            .send()
+-            .await
+-        else {
+-            return false;
+-        };
+-        resp.status().is_success()
+-    }
+-
+-    async fn start_typing(&self, recipient: &str) -> anyhow::Result<()> {
+-        let params = match Self::parse_recipient_target(recipient) {
+-            RecipientTarget::Direct(number) => serde_json::json!({
+-                "recipient": [number],
+-                "account": &self.account,
+-            }),
+-            RecipientTarget::Group(group_id) => serde_json::json!({
+-                "groupId": group_id,
+-                "account": &self.account,
+-            }),
+-        };
+-        self.rpc_request("sendTyping", params).await?;
+-        Ok(())
+-    }
+-
+-    async fn stop_typing(&self, _recipient: &str) -> anyhow::Result<()> {
+-        // signal-cli doesn't have a stop-typing RPC; typing indicators
+-        // auto-expire after ~15s on the client side.
+-        Ok(())
+-    }
+-}
+-
+-#[cfg(test)]
+-#[path = "signal_tests.rs"]
+-mod tests;
++pub use tinychannels::providers::signal::SignalChannel;
+diff --git a/src/openhuman/channels/providers/signal_tests.rs b/src/openhuman/channels/providers/signal_tests.rs
+deleted file mode 100644
+index d95f08a99..000000000
+--- a/src/openhuman/channels/providers/signal_tests.rs
++++ /dev/null
+@@ -1,457 +0,0 @@
+-use super::*;
+-
+-fn make_channel() -> SignalChannel {
+-    SignalChannel::new(
+-        "http://127.0.0.1:8686".to_string(),
+-        "+1234567890".to_string(),
+-        None,
+-        vec!["+1111111111".to_string()],
+-        false,
+-        false,
+-    )
+-}
+-
+-fn make_channel_with_group(group_id: &str) -> SignalChannel {
+-    SignalChannel::new(
+-        "http://127.0.0.1:8686".to_string(),
+-        "+1234567890".to_string(),
+-        Some(group_id.to_string()),
+-        vec!["*".to_string()],
+-        true,
+-        true,
+-    )
+-}
+-
+-fn make_envelope(source_number: Option<&str>, message: Option<&str>) -> Envelope {
+-    Envelope {
+-        source: source_number.map(String::from),
+-        source_number: source_number.map(String::from),
+-        data_message: message.map(|m| DataMessage {
+-            message: Some(m.to_string()),
+-            timestamp: Some(1_700_000_000_000),
+-            group_info: None,
+-            attachments: None,
+-        }),
+-        story_message: None,
+-        timestamp: Some(1_700_000_000_000),
+-    }
+-}
+-
+-#[test]
+-fn creates_with_correct_fields() {
+-    let ch = make_channel();
+-    assert_eq!(ch.http_url, "http://127.0.0.1:8686");
+-    assert_eq!(ch.account, "+1234567890");
+-    assert!(ch.group_id.is_none());
+-    assert_eq!(ch.allowed_from.len(), 1);
+-    assert!(!ch.ignore_attachments);
+-    assert!(!ch.ignore_stories);
+-}
+-
+-#[test]
+-fn strips_trailing_slash() {
+-    let ch = SignalChannel::new(
+-        "http://127.0.0.1:8686/".to_string(),
+-        "+1234567890".to_string(),
+-        None,
+-        vec![],
+-        false,
+-        false,
+-    );
+-    assert_eq!(ch.http_url, "http://127.0.0.1:8686");
+-}
+-
+-#[test]
+-fn wildcard_allows_anyone() {
+-    let ch = make_channel_with_group("dm");
+-    assert!(ch.is_sender_allowed("+9999999999"));
+-}
+-
+-#[test]
+-fn specific_sender_allowed() {
+-    let ch = make_channel();
+-    assert!(ch.is_sender_allowed("+1111111111"));
+-}
+-
+-#[test]
+-fn unknown_sender_denied() {
+-    let ch = make_channel();
+-    assert!(!ch.is_sender_allowed("+9999999999"));
+-}
+-
+-#[test]
+-fn empty_allowlist_denies_all() {
+-    let ch = SignalChannel::new(
+-        "http://127.0.0.1:8686".to_string(),
+-        "+1234567890".to_string(),
+-        None,
+-        vec![],
+-        false,
+-        false,
+-    );
+-    assert!(!ch.is_sender_allowed("+1111111111"));
+-}
+-
+-#[test]
+-fn name_returns_signal() {
+-    let ch = make_channel();
+-    assert_eq!(ch.name(), "signal");
+-}
+-
+-#[test]
+-fn matches_group_no_group_id_accepts_all() {
+-    let ch = make_channel();
+-    let dm = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: None,
+-        attachments: None,
+-    };
+-    assert!(ch.matches_group(&dm));
+-
+-    let group = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: Some(GroupInfo {
+-            group_id: Some("group123".to_string()),
+-        }),
+-        attachments: None,
+-    };
+-    assert!(ch.matches_group(&group));
+-}
+-
+-#[test]
+-fn matches_group_filters_group() {
+-    let ch = make_channel_with_group("group123");
+-    let matching = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: Some(GroupInfo {
+-            group_id: Some("group123".to_string()),
+-        }),
+-        attachments: None,
+-    };
+-    assert!(ch.matches_group(&matching));
+-
+-    let non_matching = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: Some(GroupInfo {
+-            group_id: Some("other_group".to_string()),
+-        }),
+-        attachments: None,
+-    };
+-    assert!(!ch.matches_group(&non_matching));
+-}
+-
+-#[test]
+-fn matches_group_dm_keyword() {
+-    let ch = make_channel_with_group("dm");
+-    let dm = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: None,
+-        attachments: None,
+-    };
+-    assert!(ch.matches_group(&dm));
+-
+-    let group = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: Some(GroupInfo {
+-            group_id: Some("group123".to_string()),
+-        }),
+-        attachments: None,
+-    };
+-    assert!(!ch.matches_group(&group));
+-}
+-
+-#[test]
+-fn reply_target_dm() {
+-    let ch = make_channel();
+-    let dm = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: None,
+-        attachments: None,
+-    };
+-    assert_eq!(ch.reply_target(&dm, "+1111111111"), "+1111111111");
+-}
+-
+-#[test]
+-fn reply_target_group() {
+-    let ch = make_channel();
+-    let group = DataMessage {
+-        message: Some("hi".to_string()),
+-        timestamp: Some(1000),
+-        group_info: Some(GroupInfo {
+-            group_id: Some("group123".to_string()),
+-        }),
+-        attachments: None,
+-    };
+-    assert_eq!(ch.reply_target(&group, "+1111111111"), "group:group123");
+-}
+-
+-#[test]
+-fn parse_recipient_target_e164_is_direct() {
+-    assert_eq!(
+-        SignalChannel::parse_recipient_target("+1234567890"),
+-        RecipientTarget::Direct("+1234567890".to_string())
+-    );
+-}
+-
+-#[test]
+-fn parse_recipient_target_prefixed_group_is_group() {
+-    assert_eq!(
+-        SignalChannel::parse_recipient_target("group:abc123"),
+-        RecipientTarget::Group("abc123".to_string())
+-    );
+-}
+-
+-#[test]
+-fn parse_recipient_target_uuid_is_direct() {
+-    let uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+-    assert_eq!(
+-        SignalChannel::parse_recipient_target(uuid),
+-        RecipientTarget::Direct(uuid.to_string())
+-    );
+-}
+-
+-#[test]
+-fn parse_recipient_target_non_e164_plus_is_group() {
+-    assert_eq!(
+-        SignalChannel::parse_recipient_target("+abc123"),
+-        RecipientTarget::Group("+abc123".to_string())
+-    );
+-}
+-
+-#[test]
+-fn is_uuid_valid() {
+-    assert!(SignalChannel::is_uuid(
+-        "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+-    ));
+-    assert!(SignalChannel::is_uuid(
+-        "00000000-0000-0000-0000-000000000000"
+-    ));
+-}
+-
+-#[test]
+-fn is_uuid_invalid() {
+-    assert!(!SignalChannel::is_uuid("+1234567890"));
+-    assert!(!SignalChannel::is_uuid("not-a-uuid"));
+-    assert!(!SignalChannel::is_uuid("group:abc123"));
+-    assert!(!SignalChannel::is_uuid(""));
+-}
+-
+-#[test]
+-fn sender_prefers_source_number() {
+-    let env = Envelope {
+-        source: Some("uuid-123".to_string()),
+-        source_number: Some("+1111111111".to_string()),
+-        data_message: None,
+-        story_message: None,
+-        timestamp: Some(1000),
+-    };
+-    assert_eq!(SignalChannel::sender(&env), Some("+1111111111".to_string()));
+-}
+-
+-#[test]
+-fn sender_falls_back_to_source() {
+-    let env = Envelope {
+-        source: Some("uuid-123".to_string()),
+-        source_number: None,
+-        data_message: None,
+-        story_message: None,
+-        timestamp: Some(1000),
+-    };
+-    assert_eq!(SignalChannel::sender(&env), Some("uuid-123".to_string()));
+-}
+-
+-#[test]
+-fn process_envelope_uuid_sender_dm() {
+-    let uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+-    let ch = SignalChannel::new(
+-        "http://127.0.0.1:8686".to_string(),
+-        "+1234567890".to_string(),
+-        None,
+-        vec!["*".to_string()],
+-        false,
+-        false,
+-    );
+-    let env = Envelope {
+-        source: Some(uuid.to_string()),
+-        source_number: None,
+-        data_message: Some(DataMessage {
+-            message: Some("Hello from privacy user".to_string()),
+-            timestamp: Some(1_700_000_000_000),
+-            group_info: None,
+-            attachments: None,
+-        }),
+-        story_message: None,
+-        timestamp: Some(1_700_000_000_000),
+-    };
+-    let msg = ch.process_envelope(&env).unwrap();
+-    assert_eq!(msg.sender, uuid);
+-    assert_eq!(msg.reply_target, uuid);
+-    assert_eq!(msg.content, "Hello from privacy user");
+-
+-    // Verify reply routing: UUID sender in DM should route as Direct
+-    let target = SignalChannel::parse_recipient_target(&msg.reply_target);
+-    assert_eq!(target, RecipientTarget::Direct(uuid.to_string()));
+-}
+-
+-#[test]
+-fn process_envelope_uuid_sender_in_group() {
+-    let uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+-    let ch = SignalChannel::new(
+-        "http://127.0.0.1:8686".to_string(),
+-        "+1234567890".to_string(),
+-        Some("testgroup".to_string()),
+-        vec!["*".to_string()],
+-        false,
+-        false,
+-    );
+-    let env = Envelope {
+-        source: Some(uuid.to_string()),
+-        source_number: None,
+-        data_message: Some(DataMessage {
+-            message: Some("Group msg from privacy user".to_string()),
+-            timestamp: Some(1_700_000_000_000),
+-            group_info: Some(GroupInfo {
+-                group_id: Some("testgroup".to_string()),
+-            }),
+-            attachments: None,
+-        }),
+-        story_message: None,
+-        timestamp: Some(1_700_000_000_000),
+-    };
+-    let msg = ch.process_envelope(&env).unwrap();
+-    assert_eq!(msg.sender, uuid);
+-    assert_eq!(msg.reply_target, "group:testgroup");
+-
+-    // Verify reply routing: group message should still route as Group
+-    let target = SignalChannel::parse_recipient_target(&msg.reply_target);
+-    assert_eq!(target, RecipientTarget::Group("testgroup".to_string()));
+-}
+-
+-#[test]
+-fn sender_none_when_both_missing() {
+-    let env = Envelope {
+-        source: None,
+-        source_number: None,
+-        data_message: None,
+-        story_message: None,
+-        timestamp: None,
+-    };
+-    assert_eq!(SignalChannel::sender(&env), None);
+-}
+-
+-#[test]
+-fn process_envelope_valid_dm() {
+-    let ch = make_channel();
+-    let env = make_envelope(Some("+1111111111"), Some("Hello!"));
+-    let msg = ch.process_envelope(&env).unwrap();
+-    assert_eq!(msg.content, "Hello!");
+-    assert_eq!(msg.sender, "+1111111111");
+-    assert_eq!(msg.channel, "signal");
+-}
+-
+-#[test]
+-fn process_envelope_denied_sender() {
+-    let ch = make_channel();
+-    let env = make_envelope(Some("+9999999999"), Some("Hello!"));
+-    assert!(ch.process_envelope(&env).is_none());
+-}
+-
+-#[test]
+-fn process_envelope_empty_message() {
+-    let ch = make_channel();
+-    let env = make_envelope(Some("+1111111111"), Some(""));
+-    assert!(ch.process_envelope(&env).is_none());
+-}
+-
+-#[test]
+-fn process_envelope_no_data_message() {
+-    let ch = make_channel();
+-    let env = make_envelope(Some("+1111111111"), None);
+-    assert!(ch.process_envelope(&env).is_none());
+-}
+-
+-#[test]
+-fn process_envelope_skips_stories() {
+-    let ch = make_channel_with_group("dm");
+-    let mut env = make_envelope(Some("+1111111111"), Some("story text"));
+-    env.story_message = Some(serde_json::json!({}));
+-    assert!(ch.process_envelope(&env).is_none());
+-}
+-
+-#[test]
+-fn process_envelope_skips_attachment_only() {
+-    let ch = make_channel_with_group("dm");
+-    let env = Envelope {
+-        source: Some("+1111111111".to_string()),
+-        source_number: Some("+1111111111".to_string()),
+-        data_message: Some(DataMessage {
+-            message: None,
+-            timestamp: Some(1_700_000_000_000),
+-            group_info: None,
+-            attachments: Some(vec![serde_json::json!({"contentType": "image/png"})]),
+-        }),
+-        story_message: None,
+-        timestamp: Some(1_700_000_000_000),
+-    };
+-    assert!(ch.process_envelope(&env).is_none());
+-}
+-
+-#[test]
+-fn sse_envelope_deserializes() {
+-    let json = r#"{
+-        "envelope": {
+-            "source": "+1111111111",
+-            "sourceNumber": "+1111111111",
+-            "timestamp": 1700000000000,
+-            "dataMessage": {
+-                "message": "Hello Signal!",
+-                "timestamp": 1700000000000
+-            }
+-        }
+-    }"#;
+-    let sse: SseEnvelope = serde_json::from_str(json).unwrap();
+-    let env = sse.envelope.unwrap();
+-    assert_eq!(env.source_number.as_deref(), Some("+1111111111"));
+-    let dm = env.data_message.unwrap();
+-    assert_eq!(dm.message.as_deref(), Some("Hello Signal!"));
+-}
+-
+-#[test]
+-fn sse_envelope_deserializes_group() {
+-    let json = r#"{
+-        "envelope": {
+-            "sourceNumber": "+2222222222",
+-            "dataMessage": {
+-                "message": "Group msg",
+-                "groupInfo": {
+-                    "groupId": "abc123"
+-                }
+-            }
+-        }
+-    }"#;
+-    let sse: SseEnvelope = serde_json::from_str(json).unwrap();
+-    let env = sse.envelope.unwrap();
+-    let dm = env.data_message.unwrap();
+-    assert_eq!(
+-        dm.group_info.as_ref().unwrap().group_id.as_deref(),
+-        Some("abc123")
+-    );
+-}
+-
+-#[test]
+-fn envelope_defaults() {
+-    let json = r#"{}"#;
+-    let env: Envelope = serde_json::from_str(json).unwrap();
+-    assert!(env.source.is_none());
+-    assert!(env.source_number.is_none());
+-    assert!(env.data_message.is_none());
+-    assert!(env.story_message.is_none());
+-    assert!(env.timestamp.is_none());
+-}
+diff --git a/src/openhuman/channels/providers/slack.rs b/src/openhuman/channels/providers/slack.rs
+index 7fface4bf..ce09e1772 100644
+--- a/src/openhuman/channels/providers/slack.rs
++++ b/src/openhuman/channels/providers/slack.rs
+@@ -1,349 +1 @@
+-use crate::openhuman::channels::traits::{Channel, ChannelMessage, SendMessage};
+-use async_trait::async_trait;
+-
+-/// Slack channel — polls conversations.history via Web API
+-pub struct SlackChannel {
+-    bot_token: String,
+-    channel_id: Option<String>,
+-    allowed_users: Vec<String>,
+-}
+-
+-impl SlackChannel {
+-    pub fn new(bot_token: String, channel_id: Option<String>, allowed_users: Vec<String>) -> Self {
+-        Self {
+-            bot_token,
+-            channel_id,
+-            allowed_users,
+-        }
+-    }
+-
+-    fn http_client(&self) -> reqwest::Client {
+-        crate::openhuman::config::build_runtime_proxy_client("channel.slack")
+-    }
+-
+-    /// Check if a Slack user ID is in the allowlist.
+-    /// Empty list means deny everyone until explicitly configured.
+-    /// `"*"` means allow everyone.
+-    fn is_user_allowed(&self, user_id: &str) -> bool {
+-        self.allowed_users.iter().any(|u| u == "*" || u == user_id)
+-    }
+-
+-    /// Get the bot's own user ID so we can ignore our own messages
+-    async fn get_bot_user_id(&self) -> Option<String> {
+-        let resp: serde_json::Value = self
+-            .http_client()
+-            .get("https://slack.com/api/auth.test")
+-            .bearer_auth(&self.bot_token)
+-            .send()
+-            .await
+-            .ok()?
+-            .json()
+-            .await
+-            .ok()?;
+-
+-        resp.get("user_id")
+-            .and_then(|u| u.as_str())
+-            .map(String::from)
+-    }
+-
+-    /// Resolve the thread identifier for inbound Slack messages.
+-    /// Replies carry `thread_ts` (root thread id); top-level messages only have `ts`.
+-    fn inbound_thread_ts(msg: &serde_json::Value, ts: &str) -> Option<String> {
+-        msg.get("thread_ts")
+-            .and_then(|t| t.as_str())
+-            .or(if ts.is_empty() { None } else { Some(ts) })
+-            .map(str::to_string)
+-    }
+-}
+-
+-#[async_trait]
+-impl Channel for SlackChannel {
+-    fn name(&self) -> &str {
+-        "slack"
+-    }
+-
+-    async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
+-        let mut body = serde_json::json!({
+-            "channel": message.recipient,
+-            "text": message.content
+-        });
+-
+-        if let Some(ref ts) = message.thread_ts {
+-            body["thread_ts"] = serde_json::json!(ts);
+-        }
+-
+-        let resp = self
+-            .http_client()
+-            .post("https://slack.com/api/chat.postMessage")
+-            .bearer_auth(&self.bot_token)
+-            .json(&body)
+-            .send()
+-            .await?;
+-
+-        let status = resp.status();
+-        let body = resp
+-            .text()
+-            .await
+-            .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
+-
+-        if !status.is_success() {
+-            anyhow::bail!("Slack chat.postMessage failed ({status}): {body}");
+-        }
+-
+-        // Slack returns 200 for most app-level errors; check JSON "ok" field
+-        let parsed: serde_json::Value = serde_json::from_str(&body).unwrap_or_default();
+-        if parsed.get("ok") == Some(&serde_json::Value::Bool(false)) {
+-            let err = parsed
+-                .get("error")
+-                .and_then(|e| e.as_str())
+-                .unwrap_or("unknown");
+-            anyhow::bail!("Slack chat.postMessage failed: {err}");
+-        }
+-
+-        Ok(())
+-    }
+-
+-    async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
+-        let channel_id = self
+-            .channel_id
+-            .clone()
+-            .ok_or_else(|| anyhow::anyhow!("Slack channel_id required for listening"))?;
+-
+-        let bot_user_id = self.get_bot_user_id().await.unwrap_or_default();
+-        let mut last_ts = String::new();
+-
+-        tracing::info!("Slack channel listening on #{channel_id}...");
+-
+-        loop {
+-            tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+-
+-            let mut params = vec![("channel", channel_id.clone()), ("limit", "10".to_string())];
+-            if !last_ts.is_empty() {
+-                params.push(("oldest", last_ts.clone()));
+-            }
+-
+-            let resp = match self
+-                .http_client()
+-                .get("https://slack.com/api/conversations.history")
+-                .bearer_auth(&self.bot_token)
+-                .query(&params)
+-                .send()
+-                .await
+-            {
+-                Ok(r) => r,
+-                Err(e) => {
+-                    tracing::warn!("Slack poll error: {e}");
+-                    continue;
+-                }
+-            };
+-
+-            let data: serde_json::Value = match resp.json().await {
+-                Ok(d) => d,
+-                Err(e) => {
+-                    tracing::warn!("Slack parse error: {e}");
+-                    continue;
+-                }
+-            };
+-
+-            if let Some(messages) = data.get("messages").and_then(|m| m.as_array()) {
+-                // Messages come newest-first, reverse to process oldest first
+-                for msg in messages.iter().rev() {
+-                    let ts = msg.get("ts").and_then(|t| t.as_str()).unwrap_or("");
+-                    let user = msg
+-                        .get("user")
+-                        .and_then(|u| u.as_str())
+-                        .unwrap_or("unknown");
+-                    let text = msg.get("text").and_then(|t| t.as_str()).unwrap_or("");
+-
+-                    // Skip bot's own messages
+-                    if user == bot_user_id {
+-                        continue;
+-                    }
+-
+-                    // Sender validation
+-                    if !self.is_user_allowed(user) {
+-                        tracing::warn!("Slack: ignoring message from unauthorized user: {user}");
+-                        continue;
+-                    }
+-
+-                    // Skip empty or already-seen
+-                    if text.is_empty() || ts <= last_ts.as_str() {
+-                        continue;
+-                    }
+-
+-                    last_ts = ts.to_string();
+-
+-                    let channel_msg = ChannelMessage {
+-                        id: format!("slack_{channel_id}_{ts}"),
+-                        sender: user.to_string(),
+-                        reply_target: channel_id.clone(),
+-                        content: text.to_string(),
+-                        channel: "slack".to_string(),
+-                        timestamp: std::time::SystemTime::now()
+-                            .duration_since(std::time::UNIX_EPOCH)
+-                            .unwrap_or_default()
+-                            .as_secs(),
+-                        thread_ts: Self::inbound_thread_ts(msg, ts),
+-                    };
+-
+-                    if tx.send(channel_msg).await.is_err() {
+-                        return Ok(());
+-                    }
+-                }
+-            }
+-        }
+-    }
+-
+-    async fn health_check(&self) -> bool {
+-        self.http_client()
+-            .get("https://slack.com/api/auth.test")
+-            .bearer_auth(&self.bot_token)
+-            .send()
+-            .await
+-            .map(|r| r.status().is_success())
+-            .unwrap_or(false)
+-    }
+-}
+-
+-#[cfg(test)]
+-mod tests {
+-    use super::*;
+-
+-    #[test]
+-    fn slack_channel_name() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec![]);
+-        assert_eq!(ch.name(), "slack");
+-    }
+-
+-    #[test]
+-    fn slack_channel_with_channel_id() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), Some("C12345".into()), vec![]);
+-        assert_eq!(ch.channel_id, Some("C12345".to_string()));
+-    }
+-
+-    #[test]
+-    fn empty_allowlist_denies_everyone() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec![]);
+-        assert!(!ch.is_user_allowed("U12345"));
+-        assert!(!ch.is_user_allowed("anyone"));
+-    }
+-
+-    #[test]
+-    fn wildcard_allows_everyone() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec!["*".into()]);
+-        assert!(ch.is_user_allowed("U12345"));
+-    }
+-
+-    #[test]
+-    fn specific_allowlist_filters() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec!["U111".into(), "U222".into()]);
+-        assert!(ch.is_user_allowed("U111"));
+-        assert!(ch.is_user_allowed("U222"));
+-        assert!(!ch.is_user_allowed("U333"));
+-    }
+-
+-    #[test]
+-    fn allowlist_exact_match_not_substring() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec!["U111".into()]);
+-        assert!(!ch.is_user_allowed("U1111"));
+-        assert!(!ch.is_user_allowed("U11"));
+-    }
+-
+-    #[test]
+-    fn allowlist_empty_user_id() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec!["U111".into()]);
+-        assert!(!ch.is_user_allowed(""));
+-    }
+-
+-    #[test]
+-    fn allowlist_case_sensitive() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec!["U111".into()]);
+-        assert!(ch.is_user_allowed("U111"));
+-        assert!(!ch.is_user_allowed("u111"));
+-    }
+-
+-    #[test]
+-    fn allowlist_wildcard_and_specific() {
+-        let ch = SlackChannel::new("xoxb-fake".into(), None, vec!["U111".into(), "*".into()]);
+-        assert!(ch.is_user_allowed("U111"));
+-        assert!(ch.is_user_allowed("anyone"));
+-    }
+-
+-    // ── Message ID edge cases ─────────────────────────────────────
+-
+-    #[test]
+-    fn slack_message_id_format_includes_channel_and_ts() {
+-        // Verify that message IDs follow the format: slack_{channel_id}_{ts}
+-        let ts = "1234567890.123456";
+-        let channel_id = "C12345";
+-        let expected_id = format!("slack_{channel_id}_{ts}");
+-        assert_eq!(expected_id, "slack_C12345_1234567890.123456");
+-    }
+-
+-    #[test]
+-    fn slack_message_id_is_deterministic() {
+-        // Same channel_id + same ts = same ID (prevents duplicates after restart)
+-        let ts = "1234567890.123456";
+-        let channel_id = "C12345";
+-        let id1 = format!("slack_{channel_id}_{ts}");
+-        let id2 = format!("slack_{channel_id}_{ts}");
+-        assert_eq!(id1, id2);
+-    }
+-
+-    #[test]
+-    fn slack_message_id_different_ts_different_id() {
+-        // Different timestamps produce different IDs
+-        let channel_id = "C12345";
+-        let id1 = format!("slack_{channel_id}_1234567890.123456");
+-        let id2 = format!("slack_{channel_id}_1234567890.123457");
+-        assert_ne!(id1, id2);
+-    }
+-
+-    #[test]
+-    fn slack_message_id_different_channel_different_id() {
+-        // Different channels produce different IDs even with same ts
+-        let ts = "1234567890.123456";
+-        let id1 = format!("slack_C12345_{ts}");
+-        let id2 = format!("slack_C67890_{ts}");
+-        assert_ne!(id1, id2);
+-    }
+-
+-    #[test]
+-    fn slack_message_id_no_uuid_randomness() {
+-        // Verify format doesn't contain random UUID components
+-        let ts = "1234567890.123456";
+-        let channel_id = "C12345";
+-        let id = format!("slack_{channel_id}_{ts}");
+-        assert!(!id.contains('-')); // No UUID dashes
+-        assert!(id.starts_with("slack_"));
+-    }
+-
+-    #[test]
+-    fn inbound_thread_ts_prefers_explicit_thread_ts() {
+-        let msg = serde_json::json!({
+-            "ts": "123.002",
+-            "thread_ts": "123.001"
+-        });
+-
+-        let thread_ts = SlackChannel::inbound_thread_ts(&msg, "123.002");
+-        assert_eq!(thread_ts.as_deref(), Some("123.001"));
+-    }
+-
+-    #[test]
+-    fn inbound_thread_ts_falls_back_to_ts() {
+-        let msg = serde_json::json!({
+-            "ts": "123.001"
+-        });
+-
+-        let thread_ts = SlackChannel::inbound_thread_ts(&msg, "123.001");
+-        assert_eq!(thread_ts.as_deref(), Some("123.001"));
+-    }
+-
+-    #[test]
+-    fn inbound_thread_ts_none_when_ts_missing() {
+-        let msg = serde_json::json!({});
+-
+-        let thread_ts = SlackChannel::inbound_thread_ts(&msg, "");
+-        assert_eq!(thread_ts, None);
+-    }
+-}
++pub use tinychannels::providers::slack::SlackChannel;
+diff --git a/src/openhuman/channels/providers/whatsapp.rs b/src/openhuman/channels/providers/whatsapp.rs
+index 8a721a56f..33b5e06f8 100644
+--- a/src/openhuman/channels/providers/whatsapp.rs
++++ b/src/openhuman/channels/providers/whatsapp.rs
+@@ -1,237 +1 @@
+-use crate::openhuman::channels::traits::{Channel, ChannelMessage, SendMessage};
+-use async_trait::async_trait;
+-use uuid::Uuid;
+-
+-/// `WhatsApp` channel — uses `WhatsApp` Business Cloud API
+-///
+-/// This channel operates in webhook mode (push-based) rather than polling.
+-/// The `listen` method here is a no-op placeholder; inbound delivery depends on
+-/// your deployment wiring Meta webhooks to the app.
+-fn ensure_https(url: &str) -> anyhow::Result<()> {
+-    if !url.starts_with("https://") {
+-        anyhow::bail!(
+-            "Refusing to transmit sensitive data over non-HTTPS URL: URL scheme must be https"
+-        );
+-    }
+-    Ok(())
+-}
+-
+-///
+-/// # Runtime Negotiation
+-///
+-/// This Cloud API channel is automatically selected when `phone_number_id` is set in the config.
+-/// Use `WhatsAppWebChannel` (with `session_path`) for native Web mode.
+-pub struct WhatsAppChannel {
+-    access_token: String,
+-    endpoint_id: String,
+-    verify_token: String,
+-    allowed_numbers: Vec<String>,
+-}
+-
+-impl WhatsAppChannel {
+-    pub fn new(
+-        access_token: String,
+-        endpoint_id: String,
+-        verify_token: String,
+-        allowed_numbers: Vec<String>,
+-    ) -> Self {
+-        Self {
+-            access_token,
+-            endpoint_id,
+-            verify_token,
+-            allowed_numbers,
+-        }
+-    }
+-
+-    fn http_client(&self) -> reqwest::Client {
+-        crate::openhuman::config::build_runtime_proxy_client("channel.whatsapp")
+-    }
+-
+-    /// Check if a phone number is allowed (E.164 format: +1234567890)
+-    fn is_number_allowed(&self, phone: &str) -> bool {
+-        self.allowed_numbers.iter().any(|n| n == "*" || n == phone)
+-    }
+-
+-    /// Get the verify token for webhook verification
+-    pub fn verify_token(&self) -> &str {
+-        &self.verify_token
+-    }
+-
+-    /// Parse an incoming webhook payload from Meta and extract messages
+-    pub fn parse_webhook_payload(&self, payload: &serde_json::Value) -> Vec<ChannelMessage> {
+-        let mut messages = Vec::new();
+-
+-        // WhatsApp Cloud API webhook structure:
+-        // { "object": "whatsapp_business_account", "entry": [...] }
+-        let Some(entries) = payload.get("entry").and_then(|e| e.as_array()) else {
+-            return messages;
+-        };
+-
+-        for entry in entries {
+-            let Some(changes) = entry.get("changes").and_then(|c| c.as_array()) else {
+-                continue;
+-            };
+-
+-            for change in changes {
+-                let Some(value) = change.get("value") else {
+-                    continue;
+-                };
+-
+-                // Extract messages array
+-                let Some(msgs) = value.get("messages").and_then(|m| m.as_array()) else {
+-                    continue;
+-                };
+-
+-                for msg in msgs {
+-                    // Get sender phone number
+-                    let Some(from) = msg.get("from").and_then(|f| f.as_str()) else {
+-                        continue;
+-                    };
+-
+-                    // Check allowlist
+-                    let normalized_from = if from.starts_with('+') {
+-                        from.to_string()
+-                    } else {
+-                        format!("+{from}")
+-                    };
+-
+-                    if !self.is_number_allowed(&normalized_from) {
+-                        tracing::warn!(
+-                            "WhatsApp: ignoring message from unauthorized number: {normalized_from}. \
+-                            Add to allowed_numbers in config.toml, then configure channels in the web UI."
+-                        );
+-                        continue;
+-                    }
+-
+-                    // Extract text content (support text messages only for now)
+-                    let content = if let Some(text_obj) = msg.get("text") {
+-                        text_obj
+-                            .get("body")
+-                            .and_then(|b| b.as_str())
+-                            .unwrap_or("")
+-                            .to_string()
+-                    } else {
+-                        // Could be image, audio, etc. — skip for now
+-                        tracing::debug!("WhatsApp: skipping non-text message from {from}");
+-                        continue;
+-                    };
+-
+-                    if content.is_empty() {
+-                        continue;
+-                    }
+-
+-                    // Get timestamp
+-                    let timestamp = msg
+-                        .get("timestamp")
+-                        .and_then(|t| t.as_str())
+-                        .and_then(|t| t.parse::<u64>().ok())
+-                        .unwrap_or_else(|| {
+-                            std::time::SystemTime::now()
+-                                .duration_since(std::time::UNIX_EPOCH)
+-                                .unwrap_or_default()
+-                                .as_secs()
+-                        });
+-
+-                    messages.push(ChannelMessage {
+-                        id: Uuid::new_v4().to_string(),
+-                        reply_target: normalized_from.clone(),
+-                        sender: normalized_from,
+-                        content,
+-                        channel: "whatsapp".to_string(),
+-                        timestamp,
+-                        thread_ts: None,
+-                    });
+-                }
+-            }
+-        }
+-
+-        messages
+-    }
+-}
+-
+-#[async_trait]
+-impl Channel for WhatsAppChannel {
+-    fn name(&self) -> &str {
+-        "whatsapp"
+-    }
+-
+-    async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
+-        // WhatsApp Cloud API: POST to /v18.0/{phone_number_id}/messages
+-        let url = format!(
+-            "https://graph.facebook.com/v18.0/{}/messages",
+-            self.endpoint_id
+-        );
+-
+-        // Normalize recipient (remove leading + if present for API)
+-        let to = message
+-            .recipient
+-            .strip_prefix('+')
+-            .unwrap_or(&message.recipient);
+-
+-        let body = serde_json::json!({
+-            "messaging_product": "whatsapp",
+-            "recipient_type": "individual",
+-            "to": to,
+-            "type": "text",
+-            "text": {
+-                "preview_url": false,
+-                "body": message.content
+-            }
+-        });
+-
+-        ensure_https(&url)?;
+-
+-        let resp = self
+-            .http_client()
+-            .post(&url)
+-            .bearer_auth(&self.access_token)
+-            .header("Content-Type", "application/json")
+-            .json(&body)
+-            .send()
+-            .await?;
+-
+-        if !resp.status().is_success() {
+-            let status = resp.status();
+-            let error_body = resp.text().await.unwrap_or_default();
+-            tracing::error!("WhatsApp send failed: {status} — {error_body}");
+-            anyhow::bail!("WhatsApp API error: {status}");
+-        }
+-
+-        Ok(())
+-    }
+-
+-    async fn listen(&self, _tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
+-        // WhatsApp uses webhooks (push-based), not polling.
+-        // This method keeps the channel "alive" but doesn't actively poll.
+-        tracing::info!(
+-            "WhatsApp channel active (webhook mode). \
+-            Configure Meta to POST webhook events to your deployed HTTPS webhook URL."
+-        );
+-
+-        // Keep the task alive — it will be cancelled when the channel shuts down
+-        loop {
+-            tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+-        }
+-    }
+-
+-    async fn health_check(&self) -> bool {
+-        // Check if we can reach the WhatsApp API
+-        let url = format!("https://graph.facebook.com/v18.0/{}", self.endpoint_id);
+-
+-        if ensure_https(&url).is_err() {
+-            return false;
+-        }
+-
+-        self.http_client()
+-            .get(&url)
+-            .bearer_auth(&self.access_token)
+-            .send()
+-            .await
+-            .map(|r| r.status().is_success())
+-            .unwrap_or(false)
+-    }
+-}
+-
+-#[cfg(test)]
+-#[path = "whatsapp_tests.rs"]
+-mod tests;
++pub use tinychannels::providers::whatsapp::WhatsAppChannel;
+diff --git a/src/openhuman/channels/providers/whatsapp_tests.rs b/src/openhuman/channels/providers/whatsapp_tests.rs
+deleted file mode 100644
+index ff2497e0c..000000000
+--- a/src/openhuman/channels/providers/whatsapp_tests.rs
++++ /dev/null
+@@ -1,796 +0,0 @@
+-use super::*;
+-
+-fn make_channel() -> WhatsAppChannel {
+-    WhatsAppChannel::new(
+-        "test-token".into(),
+-        "123456789".into(),
+-        "verify-me".into(),
+-        vec!["+1234567890".into()],
+-    )
+-}
+-
+-#[test]
+-fn whatsapp_channel_name() {
+-    let ch = make_channel();
+-    assert_eq!(ch.name(), "whatsapp");
+-}
+-
+-#[test]
+-fn whatsapp_verify_token() {
+-    let ch = make_channel();
+-    assert_eq!(ch.verify_token(), "verify-me");
+-}
+-
+-#[test]
+-fn whatsapp_number_allowed_exact() {
+-    let ch = make_channel();
+-    assert!(ch.is_number_allowed("+1234567890"));
+-    assert!(!ch.is_number_allowed("+9876543210"));
+-}
+-
+-#[test]
+-fn whatsapp_number_allowed_wildcard() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    assert!(ch.is_number_allowed("+1234567890"));
+-    assert!(ch.is_number_allowed("+9999999999"));
+-}
+-
+-#[test]
+-fn whatsapp_number_denied_empty() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec![]);
+-    assert!(!ch.is_number_allowed("+1234567890"));
+-}
+-
+-#[test]
+-fn whatsapp_parse_empty_payload() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({});
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_valid_text_message() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "object": "whatsapp_business_account",
+-        "entry": [{
+-            "id": "123",
+-            "changes": [{
+-                "value": {
+-                    "messaging_product": "whatsapp",
+-                    "metadata": {
+-                        "display_phone_number": "15551234567",
+-                        "phone_number_id": "123456789"
+-                    },
+-                    "messages": [{
+-                        "from": "1234567890",
+-                        "id": "wamid.xxx",
+-                        "timestamp": "1699999999",
+-                        "type": "text",
+-                        "text": {
+-                            "body": "Hello OpenHuman!"
+-                        }
+-                    }]
+-                },
+-                "field": "messages"
+-            }]
+-        }]
+-    });
+-
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].sender, "+1234567890");
+-    assert_eq!(msgs[0].content, "Hello OpenHuman!");
+-    assert_eq!(msgs[0].channel, "whatsapp");
+-    assert_eq!(msgs[0].timestamp, 1_699_999_999);
+-}
+-
+-#[test]
+-fn whatsapp_parse_unauthorized_number() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "object": "whatsapp_business_account",
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "9999999999",
+-                        "timestamp": "1699999999",
+-                        "type": "text",
+-                        "text": { "body": "Spam" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty(), "Unauthorized numbers should be filtered");
+-}
+-
+-#[test]
+-fn whatsapp_parse_non_text_message_skipped() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "1234567890",
+-                        "timestamp": "1699999999",
+-                        "type": "image",
+-                        "image": { "id": "img123" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty(), "Non-text messages should be skipped");
+-}
+-
+-#[test]
+-fn whatsapp_parse_multiple_messages() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [
+-                        { "from": "111", "timestamp": "1", "type": "text", "text": { "body": "First" } },
+-                        { "from": "222", "timestamp": "2", "type": "text", "text": { "body": "Second" } }
+-                    ]
+-                }
+-            }]
+-        }]
+-    });
+-
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 2);
+-    assert_eq!(msgs[0].content, "First");
+-    assert_eq!(msgs[1].content, "Second");
+-}
+-
+-#[test]
+-fn whatsapp_parse_normalizes_phone_with_plus() {
+-    let ch = WhatsAppChannel::new(
+-        "tok".into(),
+-        "123".into(),
+-        "ver".into(),
+-        vec!["+1234567890".into()],
+-    );
+-    // API sends without +, but we normalize to +
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "1234567890",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "Hi" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].sender, "+1234567890");
+-}
+-
+-#[test]
+-fn whatsapp_empty_text_skipped() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-// ══════════════════════════════════════════════════════════
+-// EDGE CASES — Comprehensive coverage
+-// ══════════════════════════════════════════════════════════
+-
+-#[test]
+-fn whatsapp_parse_missing_entry_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "object": "whatsapp_business_account"
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_entry_not_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": "not_an_array"
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_missing_changes_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{ "id": "123" }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_changes_not_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": "not_an_array"
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_missing_value() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{ "field": "messages" }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_missing_messages_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "metadata": {}
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_messages_not_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": "not_an_array"
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_missing_from_field() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "No sender" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty(), "Messages without 'from' should be skipped");
+-}
+-
+-#[test]
+-fn whatsapp_parse_missing_text_body() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": {}
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(
+-        msgs.is_empty(),
+-        "Messages with empty text object should be skipped"
+-    );
+-}
+-
+-#[test]
+-fn whatsapp_parse_null_text_body() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": null }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty(), "Messages with null body should be skipped");
+-}
+-
+-#[test]
+-fn whatsapp_parse_invalid_timestamp_uses_current() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "not_a_number",
+-                        "type": "text",
+-                        "text": { "body": "Hello" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    // Timestamp should be current time (non-zero)
+-    assert!(msgs[0].timestamp > 0);
+-}
+-
+-#[test]
+-fn whatsapp_parse_missing_timestamp_uses_current() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "type": "text",
+-                        "text": { "body": "Hello" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert!(msgs[0].timestamp > 0);
+-}
+-
+-#[test]
+-fn whatsapp_parse_multiple_entries() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [
+-            {
+-                "changes": [{
+-                    "value": {
+-                        "messages": [{
+-                            "from": "111",
+-                            "timestamp": "1",
+-                            "type": "text",
+-                            "text": { "body": "Entry 1" }
+-                        }]
+-                    }
+-                }]
+-            },
+-            {
+-                "changes": [{
+-                    "value": {
+-                        "messages": [{
+-                            "from": "222",
+-                            "timestamp": "2",
+-                            "type": "text",
+-                            "text": { "body": "Entry 2" }
+-                        }]
+-                    }
+-                }]
+-            }
+-        ]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 2);
+-    assert_eq!(msgs[0].content, "Entry 1");
+-    assert_eq!(msgs[1].content, "Entry 2");
+-}
+-
+-#[test]
+-fn whatsapp_parse_multiple_changes() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [
+-                {
+-                    "value": {
+-                        "messages": [{
+-                            "from": "111",
+-                            "timestamp": "1",
+-                            "type": "text",
+-                            "text": { "body": "Change 1" }
+-                        }]
+-                    }
+-                },
+-                {
+-                    "value": {
+-                        "messages": [{
+-                            "from": "222",
+-                            "timestamp": "2",
+-                            "type": "text",
+-                            "text": { "body": "Change 2" }
+-                        }]
+-                    }
+-                }
+-            ]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 2);
+-    assert_eq!(msgs[0].content, "Change 1");
+-    assert_eq!(msgs[1].content, "Change 2");
+-}
+-
+-#[test]
+-fn whatsapp_parse_status_update_ignored() {
+-    // Status updates have "statuses" instead of "messages"
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "statuses": [{
+-                        "id": "wamid.xxx",
+-                        "status": "delivered",
+-                        "timestamp": "1699999999"
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty(), "Status updates should be ignored");
+-}
+-
+-#[test]
+-fn whatsapp_parse_non_text_media_message_types_are_skipped() {
+-    // Every non-text message type hits the same `type != "text" -> continue`
+-    // branch in parse_webhook_payload. Table-driven, one representative case
+-    // per media type (collapsed from 7 byte-identical tests, plan.md §2.1).
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let cases = [
+-        (
+-            "audio",
+-            serde_json::json!({ "id": "audio123", "mime_type": "audio/ogg" }),
+-        ),
+-        ("video", serde_json::json!({ "id": "video123" })),
+-        (
+-            "document",
+-            serde_json::json!({ "id": "doc123", "filename": "file.pdf" }),
+-        ),
+-        ("sticker", serde_json::json!({ "id": "sticker123" })),
+-        (
+-            "location",
+-            serde_json::json!({ "latitude": 40.7128, "longitude": -74.0060 }),
+-        ),
+-        (
+-            "contacts",
+-            serde_json::json!([{ "name": { "formatted_name": "John" } }]),
+-        ),
+-        (
+-            "reaction",
+-            serde_json::json!({ "message_id": "wamid.xxx", "emoji": "\u{1F44D}" }),
+-        ),
+-    ];
+-    for (kind, sub) in cases {
+-        let mut message = serde_json::json!({
+-            "from": "111",
+-            "timestamp": "1",
+-            "type": kind,
+-        });
+-        message[kind] = sub;
+-        let payload = serde_json::json!({
+-            "entry": [{ "changes": [{ "value": { "messages": [message] } }] }]
+-        });
+-        let msgs = ch.parse_webhook_payload(&payload);
+-        assert!(msgs.is_empty(), "{kind} message must be skipped");
+-    }
+-}
+-
+-#[test]
+-fn whatsapp_parse_mixed_authorized_unauthorized() {
+-    let ch = WhatsAppChannel::new(
+-        "tok".into(),
+-        "123".into(),
+-        "ver".into(),
+-        vec!["+1111111111".into()],
+-    );
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [
+-                        { "from": "1111111111", "timestamp": "1", "type": "text", "text": { "body": "Allowed" } },
+-                        { "from": "9999999999", "timestamp": "2", "type": "text", "text": { "body": "Blocked" } },
+-                        { "from": "1111111111", "timestamp": "3", "type": "text", "text": { "body": "Also allowed" } }
+-                    ]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 2);
+-    assert_eq!(msgs[0].content, "Allowed");
+-    assert_eq!(msgs[1].content, "Also allowed");
+-}
+-
+-#[test]
+-fn whatsapp_parse_unicode_message() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "Hello 👋 世界 🌍 مرحبا" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].content, "Hello 👋 世界 🌍 مرحبا");
+-}
+-
+-#[test]
+-fn whatsapp_parse_very_long_message() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let long_text = "A".repeat(10_000);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": long_text }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].content.len(), 10_000);
+-}
+-
+-#[test]
+-fn whatsapp_parse_whitespace_only_message_skipped() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "   " }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    // Whitespace-only is NOT empty, so it passes through
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].content, "   ");
+-}
+-
+-#[test]
+-fn whatsapp_number_allowed_multiple_numbers() {
+-    let ch = WhatsAppChannel::new(
+-        "tok".into(),
+-        "123".into(),
+-        "ver".into(),
+-        vec![
+-            "+1111111111".into(),
+-            "+2222222222".into(),
+-            "+3333333333".into(),
+-        ],
+-    );
+-    assert!(ch.is_number_allowed("+1111111111"));
+-    assert!(ch.is_number_allowed("+2222222222"));
+-    assert!(ch.is_number_allowed("+3333333333"));
+-    assert!(!ch.is_number_allowed("+4444444444"));
+-}
+-
+-#[test]
+-fn whatsapp_number_allowed_case_sensitive() {
+-    // Phone numbers should be exact match
+-    let ch = WhatsAppChannel::new(
+-        "tok".into(),
+-        "123".into(),
+-        "ver".into(),
+-        vec!["+1234567890".into()],
+-    );
+-    assert!(ch.is_number_allowed("+1234567890"));
+-    // Different number should not match
+-    assert!(!ch.is_number_allowed("+1234567891"));
+-}
+-
+-#[test]
+-fn whatsapp_parse_phone_already_has_plus() {
+-    let ch = WhatsAppChannel::new(
+-        "tok".into(),
+-        "123".into(),
+-        "ver".into(),
+-        vec!["+1234567890".into()],
+-    );
+-    // If API sends with +, we should still handle it
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "+1234567890",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "Hi" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].sender, "+1234567890");
+-}
+-
+-#[test]
+-fn whatsapp_channel_fields_stored_correctly() {
+-    let ch = WhatsAppChannel::new(
+-        "my-access-token".into(),
+-        "phone-id-123".into(),
+-        "my-verify-token".into(),
+-        vec!["+111".into(), "+222".into()],
+-    );
+-    assert_eq!(ch.verify_token(), "my-verify-token");
+-    assert!(ch.is_number_allowed("+111"));
+-    assert!(ch.is_number_allowed("+222"));
+-    assert!(!ch.is_number_allowed("+333"));
+-}
+-
+-#[test]
+-fn whatsapp_parse_empty_messages_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": []
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_empty_entry_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": []
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_empty_changes_array() {
+-    let ch = make_channel();
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": []
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert!(msgs.is_empty());
+-}
+-
+-#[test]
+-fn whatsapp_parse_newlines_preserved() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "Line 1\nLine 2\nLine 3" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(msgs[0].content, "Line 1\nLine 2\nLine 3");
+-}
+-
+-#[test]
+-fn whatsapp_parse_special_characters() {
+-    let ch = WhatsAppChannel::new("tok".into(), "123".into(), "ver".into(), vec!["*".into()]);
+-    let payload = serde_json::json!({
+-        "entry": [{
+-            "changes": [{
+-                "value": {
+-                    "messages": [{
+-                        "from": "111",
+-                        "timestamp": "1",
+-                        "type": "text",
+-                        "text": { "body": "<script>alert('xss')</script> & \"quotes\" 'apostrophe'" }
+-                    }]
+-                }
+-            }]
+-        }]
+-    });
+-    let msgs = ch.parse_webhook_payload(&payload);
+-    assert_eq!(msgs.len(), 1);
+-    assert_eq!(
+-        msgs[0].content,
+-        "<script>alert('xss')</script> & \"quotes\" 'apostrophe'"
+-    );
+-}
+diff --git a/src/openhuman/channels/runtime/startup.rs b/src/openhuman/channels/runtime/startup.rs
+index 5fa0b5ad4..7dccde711 100644
+--- a/src/openhuman/channels/runtime/startup.rs
++++ b/src/openhuman/channels/runtime/startup.rs
+@@ -498,214 +498,222 @@ pub async fn start_channels(mut config: Config) -> Result<()> {
+     // name here. The capability block falls back to a platform-agnostic
+     // "messaging bot" phrasing. Per-channel renderers that want a
+     // named capabilities section can call `build_system_prompt` with
+[... 74 context line(s) omitted ... ⟦tj:0989a89de00d8a786dc0c865c68d4924⟧]
+     }
+ 
+     if let Some(ref sl) = config.channels_config.slack {
+-        channels.push(Arc::new(SlackChannel::new(
++        channels.push(Arc::new(SlackChannel::with_http_client(
+             sl.bot_token.clone(),
+             sl.channel_id.clone(),
+             sl.allowed_users.clone(),
++            crate::openhuman::config::build_runtime_proxy_client("channel.slack"),
+         )));
+         // Memory-tree ingestion is handled by the Composio-backed
+         // `SlackProvider`, which runs inside `composio::periodic` and
+[... 23 context line(s) omitted ... ⟦tj:cc8424fd5a8971b2bc1b4222640eefe3⟧]
+     }
+ 
+     if let Some(ref sig) = config.channels_config.signal {
+-        channels.push(Arc::new(SignalChannel::new(
++        channels.push(Arc::new(SignalChannel::with_http_client(
+             sig.http_url.clone(),
+             sig.account.clone(),
+             sig.group_id.clone(),
+             sig.allowed_from.clone(),
+             sig.ignore_attachments,
+             sig.ignore_stories,
++            crate::openhuman::config::apply_runtime_proxy_to_builder(
++                reqwest::Client::builder().connect_timeout(std::time::Duration::from_secs(10)),
++                "channel.signal",
++            )
++            .build()
++            .expect("Signal HTTP client should build"),
+         )));
+     }
+ 
+[... 3 context line(s) omitted ... ⟦tj:8c7f5f9f1b1a7769719028be34cd59cf⟧]
+             "cloud" => {
+                 // Cloud API mode: requires phone_number_id, access_token, verify_token
+                 if wa.is_cloud_config() {
+-                    channels.push(Arc::new(WhatsAppChannel::new(
++                    channels.push(Arc::new(WhatsAppChannel::with_http_client(
+                         wa.access_token.clone().unwrap_or_default(),
+                         wa.phone_number_id.clone().unwrap_or_default(),
+                         wa.verify_token.clone().unwrap_or_default(),
+                         wa.allowed_numbers.clone(),
++                        crate::openhuman::config::build_runtime_proxy_client("channel.whatsapp"),
+                     )));
+                 } else {
+                     tracing::warn!("WhatsApp Cloud API configured but missing required fields (phone_number_id, access_token, verify_token)");
+[... 74 context line(s) omitted ... ⟦tj:73ca93979013035ac768f8c753f93ee1⟧]
+     if let Some(ref yb) = config.channels_config.yuanbao {
+         let yb_cfg = resolve_yuanbao_app_secret(yb.clone(), &config);
+         match YuanbaoChannel::new(yb_cfg) {
+diff --git a/tests/subconscious_e2e.rs b/tests/subconscious_e2e.rs
+index 5473ff17b..ab3647bde 100644
+--- a/tests/subconscious_e2e.rs
++++ b/tests/subconscious_e2e.rs
+@@ -4,116 +4,117 @@
+ //! Run with: `cargo test --test subconscious_e2e -- --nocapture --ignored`
+ 
+ use std::sync::Arc;
+[... 74 context line(s) omitted ... ⟦tj:6138954ad194c4e430d34918098336d6⟧]
+     config.local_ai.runtime_enabled = true;
+     config.local_ai.usage.subconscious = true;
+ 
+-    let engine = openhuman_core::openhuman::subconscious::SubconsciousEngine::new(&config);
++    let engine = openhuman_core::openhuman::subconscious::memory_instance(&config);
+ 
+     // Tick 1
+     println!("\n=== TICK 1 ===");
+     let result1 = engine.tick().await.expect("tick 1 should succeed");
+     println!("  Duration: {}ms", result1.duration_ms);
+     println!("  Response chars: {}", result1.response_chars);
+ 
+     let last_tick1 =
+-        store::with_connection(workspace, store::get_last_tick_at).expect("read last tick");
++        store::with_connection(workspace, |conn| store::get_last_tick_at(conn, "memory"))
++            .expect("read last tick");
+     assert!(last_tick1 >= result1.tick_at);
+ 
+     // Tick 2 with new data
+[... 20 context line(s) omitted ... ⟦tj:fd3d25d4ec528d5eaeb4d0f255542b13⟧]
+ 
+     println!("\n=== E2E PASSED ===\n");
+ }
+diff --git a/vendor/tinychannels b/vendor/tinychannels
+new file mode 160000
+index 000000000..c69aa8896
+--- /dev/null
++++ b/vendor/tinychannels
+@@ -0,0 +1 @@
++Subproject commit c69aa889696a418a38d23c548c309f73606c12d3
+
+[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
+
+[PARTIAL view — full original (192075 bytes): call tinyjuice_retrieve with token "bf74b05a01657e3ae7fa0bb02f76f163"]

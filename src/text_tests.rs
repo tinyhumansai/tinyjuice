@@ -1,4 +1,4 @@
-//! Additional unit tests for the `tokenjuice::text` sub-modules.
+//! Additional unit tests for the `tinyjuice::text` sub-modules.
 //!
 //! Focuses on coverage gaps identified in test-map.md Pick 5
 //! ("TokenJuice Rust port for tool-output compaction"):

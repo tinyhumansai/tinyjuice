@@ -1,0 +1,103 @@
+# TinyJuice Benchmarking
+
+TinyJuice has two benchmark surfaces:
+
+- `cargo bench` runs Criterion hot-path benchmarks for router and rule-engine throughput.
+- `cargo run --release --example compression_benchmark -- --iterations 20` runs the real-snapshot corpus and reports two reduction passes, latency, compressor choice, inline accuracy, CCR recovery, and named gate failures.
+
+By default, the fixture suite emits metadata only. It does not print raw prompt,
+tool, or context payloads unless `--dump-samples` is explicitly requested.
+Human-readable before/after samples live under [`docs/benchmark`](benchmark/README.md).
+
+## Corpus Benchmark
+
+One command runs the corpus, re-renders the per-category reports, and
+rewrites the summary table in the top-level `README.md` (it refuses to touch
+the README if any accuracy gate fails):
+
+```sh
+scripts/benchmark/update-readme.sh            # full pipeline, 3 iterations
+scripts/benchmark/update-readme.sh -n 10      # more iterations
+scripts/benchmark/update-readme.sh --skip-dump    # keep existing case artifacts
+scripts/benchmark/update-readme.sh --report /tmp/report.json  # reuse a report
+```
+
+The equivalent manual steps, plus refreshing the sample corpus itself:
+
+```sh
+scripts/benchmark/update-real-samples.sh
+cargo run --release --example compression_benchmark -- --iterations 20 --format json > /tmp/tinyjuice-corpus-benchmark.json
+scripts/benchmark/render-reports.sh /tmp/tinyjuice-corpus-benchmark.json
+```
+
+The updater writes 10 cases per category under `docs/benchmark/<category>/cases/`.
+It uses the adjacent OpenHuman checkout, live OpenHuman Docker logs when
+available, public RSS/page snapshots when reachable, and checked-in OpenHuman
+artifacts as fallbacks.
+
+Default Markdown report:
+
+```sh
+cargo run --release --example compression_benchmark -- --iterations 20
+```
+
+Machine-readable report:
+
+```sh
+cargo run --release --example compression_benchmark -- --iterations 20 --format json
+```
+
+Write the full input and output artifacts used by the reports:
+
+```sh
+cargo run --release --example compression_benchmark -- --dump-samples docs/benchmark
+```
+
+Every case can carry two inline accuracy layers:
+
+- Signal checks: structural facts that should survive compaction, such as error lines, changed diff lines, schema columns, or script removal.
+- Task checks: small pinned questions that must be answerable from the compacted inline text, such as "Which test failed?" or "What config value changed?"
+
+Lossy fixtures also verify recovery correctness by retrieving the CCR token and byte-comparing the result to the original input.
+
+Benchmark tables report three views of each case:
+
+- **Algorithm** runs the compressor directly with no CCR gating or recovery
+  footer — the number that measures the compression algorithm itself.
+- **Pass 1: no CCR** disables CCR (`ccr_enabled = false`). With the default
+  `lossy_without_ccr = true` the router still accepts lossy results — dropped
+  content carries omission markers but no recovery footer — so this tracks the
+  algorithm column. Under the strict setting (`lossy_without_ccr = false`,
+  as used by the `light` profile) lossy compressors decline and this column
+  drops to `0.0%`.
+- **Pass 2: with CCR** uses the normal model-facing output, including the CCR
+  recovery footer when the compressor drops data.
+
+Use Algorithm/Pass 1 to judge intrinsic compression quality, and Pass 2 to
+judge final context savings once recovery footers are paid for. Category
+summaries include byte-weighted totals (total output vs total input) alongside
+per-case means, so one large fixture cannot hide behind several small ones.
+
+Current categories cover:
+
+- JSON tool-catalog slices.
+- Vitest command output.
+- Runtime and Docker-style service logs.
+- Ripgrep result sets.
+- Unified diffs.
+- RSS feeds, noisy HTML pages, forum pages, and coverage HTML.
+- Rust source files.
+- Plain text, which should pass through while ML text compression is disabled.
+
+Use the corpus runner for regression comparisons and candidate release notes. Only market reductions that also pass inline accuracy and CCR recovery gates. Do not turn one local run into a public production-wide claim; claims need pinned corpora, quality gates, and hardware/runtime metadata.
+
+## External Benchmarks To Cross-Reference
+
+These are useful comparison targets, but they measure prompt/context compression for downstream LLM task quality rather than TinyJuice's recoverable tool-output compaction directly:
+
+- [LLMLingua](https://arxiv.org/abs/2310.05736) evaluates prompt compression across GSM8K, BBH, ShareGPT, and Arxiv-March23.
+- [LongLLMLingua](https://arxiv.org/abs/2310.06839) focuses on long-context prompt compression and reports NaturalQuestions, LooGLE, and long-context latency/cost evaluations.
+- [Selective Context](https://aclanthology.org/2023.emnlp-main.391/) evaluates pruning redundant context on arXiv papers, news articles, and long conversations for summarization, question answering, and response generation.
+- [LongBench](https://arxiv.org/abs/2308.14508) is a broader long-context benchmark that can be useful once TinyJuice adds task-level answer-quality evaluation.
+
+For TinyJuice, the closest future cross-reference is not a single paper score. It is a paired report: compression metadata from this fixture runner plus downstream task accuracy on pinned tool-output corpora.

@@ -1,6 +1,6 @@
 [package]
 name = "tinyjuice"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Pluggable token compression for OpenHuman."
@@ -8,6 +8,7 @@ repository = "https://github.com/tinyhumansai/tinyjuice"
 readme = "README.md"
 keywords = ["llm", "tokens", "compression", "openhuman", "context"]
 categories = ["text-processing"]
+autobins = false
 
 [dependencies]
 async-trait = "0.1"
@@ -49,9 +50,17 @@ tokio = { version = "1", features = ["macros", "rt", "test-util"] }
 name = "compression"
 harness = false
 
+[[bin]]
+name = "tinyjuice"
+path = "src/main.rs"
+
+[[bin]]
+name = "tinyjuice-hooks"
+path = "src/bin/tinyjuice.rs"
+
 [features]
-default = ["tokenjuice-treesitter"]
-tokenjuice-treesitter = [
+default = ["tinyjuice-treesitter"]
+tinyjuice-treesitter = [
     "dep:tree-sitter",
     "dep:tree-sitter-python",
     "dep:tree-sitter-rust",

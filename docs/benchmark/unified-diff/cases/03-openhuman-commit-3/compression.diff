@@ -1,0 +1,3682 @@
+--- input/input.diff
++++ output/output.diff
+@@ -6,2867 +6,135 @@
+                owner,
+                repo,
+                tag_name: tag,
+-               target_commitish: target,
+-               name: `OpenHuman v${version}`,
+-               body,
+-               draft: true,
+-               prerelease: false,
+-             });
+-             core.setOutput('release_id', String(release.data.id));
+-             core.setOutput('upload_url', release.data.upload_url);
+- 
+-   # =========================================================================
+-   # Phase 3a: Build desktop artifacts (delegated to reusable workflow)
+-   # =========================================================================
+-   build-desktop:
+-     name: Build desktop matrix
+-     needs: [prepare-build, create-release]
+-     if: always() && needs.create-release.result == 'success'
+-     uses: ./.github/workflows/build-desktop.yml
+-     secrets: inherit
+-     with:
+-       build_ref: ${{ needs.prepare-build.outputs.build_ref }}
+-       tag: ${{ needs.prepare-build.outputs.tag }}
+-       version: ${{ needs.prepare-build.outputs.version }}
+-       sha: ${{ needs.prepare-build.outputs.sha }}
+-       short_sha: ${{ needs.prepare-build.outputs.short_sha }}
+-       base_url: ${{ needs.prepare-build.outputs.base_url }}
+-       app_env: production
+-       build_profile: release
+-       telegram_bot_username: openhumanaibot
+-       # with_macos_signing defaults to true — left implicit; production
+-       # always notarizes. See build-desktop.yml inputs.
+-       with_release_upload: ${{ inputs.create_release }}
+-       release_id: ${{ needs.create-release.outputs.release_id }}
+-       build_sidecar: false
+- 
+-   # =========================================================================
+-   # Phase 3b: Build & push Docker image (runs parallel with build-desktop).
+-   #
+-   # Publishes `ghcr.io/tinyhumansai/openhuman-core` with two immutable tags
+-   # per release:
+-   #   - :v<version>            — matches the GitHub Release tag (e.g. v1.2.4)
+-   #   - :<version>             — bare SemVer for tooling that strips the v
+-   #
+-   # `:latest` is intentionally NOT pushed here. If a downstream phase
+-   # (build-cli-linux, publish-updater-manifest, the asset-validation gate
+-   # in publish-release) fails, the immutable tags are deleted by
+-   # cleanup-failed-release while the release is rolled back. Pushing
+-   # :latest in this job would move the moving tag onto an image whose
+-   # release got cleaned up, leaving downstream `docker pull …:latest`
+-   # consumers on a build that has no GitHub Release behind it. The
+-   # `tag-docker-latest` job below promotes :latest only after
+-   # `publish-release` succeeds.
+-   #
+-   # linux/amd64 only for now. arm64 users pull the standalone CLI tarball
+-   # (`build-cli-linux` matrix) or build the image from source. Adding arm64
+-   # via QEMU here triples build time on Rust-heavy stages; revisit when an
+-   # `ubuntu-24.04-arm` runner is wired into a per-arch matrix + manifest job.
+-   # =========================================================================
+-   build-docker:
+-     name: "Docker: build and push"
+-     needs: [prepare-build, create-release]
+-     if: always() && needs.create-release.result == 'success'
+-     runs-on: ubuntu-latest
+-     timeout-minutes: 60
+-     environment: Production
+-     env:
+-       REGISTRY: ghcr.io
+-       IMAGE_NAME: tinyhumansai/openhuman-core
+-     steps:
+-       - name: Checkout build ref
+-         uses: actions/checkout@v5
+-         with:
+-           ref: ${{ needs.prepare-build.outputs.build_ref }}
+-           fetch-depth: 1
+-       # Targeted init (not `submodules: true`) so we skip the large tauri-cef
+-       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+-       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+-       - name: Init vendored Rust submodules
+--        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+-+        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinychannels vendor/tinyplace
+-       - name: Set up Docker Buildx
+-         uses: docker/setup-buildx-action@v3
+-       - name: Log in to GHCR
+-         uses: docker/login-action@v3
+-         with:
+-           registry: ${{ env.REGISTRY }}
+-           username: ${{ github.actor }}
+-           password: ${{ secrets.GITHUB_TOKEN }}
+-       - name: Compute image tags
+-         id: image-tags
+-         env:
+-           REGISTRY: ${{ env.REGISTRY }}
+-           IMAGE_NAME: ${{ env.IMAGE_NAME }}
+-           TAG: ${{ needs.prepare-build.outputs.tag }}
+-           VERSION: ${{ needs.prepare-build.outputs.version }}
+-         run: |
+-           set -euo pipefail
+-           base="${REGISTRY}/${IMAGE_NAME}"
+-           {
+-             echo "tags<<EOF"
+-             echo "${base}:${TAG}"
+-             echo "${base}:${VERSION}"
+-             echo "EOF"
+-           } >> "$GITHUB_OUTPUT"
+-       - name: Build and push image
+-         uses: docker/build-push-action@v6
+-         with:
+-           context: .
+-           file: Dockerfile
+-           push: true
+-           platforms: linux/amd64
+-           tags: ${{ steps.image-tags.outputs.tags }}
+-           labels: |
+-             org.opencontainers.image.source=https://github.com/${{ github.repository }}
+-             org.opencontainers.image.revision=${{ needs.prepare-build.outputs.sha }}
+-             org.opencontainers.image.version=${{ needs.prepare-build.outputs.version }}
+-             org.opencontainers.image.title=openhuman-core
+-           cache-from: type=gha,scope=release-production
+-           cache-to: type=gha,scope=release-production,mode=max
+-       - name: Verify pushed image is pullable
+-         run: |
+-           set -euo pipefail
+-           image="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.prepare-build.outputs.tag }}"
+-           docker pull "$image"
+-           docker image inspect "$image" >/dev/null
+- 
+-   # =========================================================================
+-   # Phase 3c: Build standalone Linux openhuman-core tarballs and attach them
+-   # to the GitHub Release. Operators on Linux servers without Docker pull a
+-   # plain tarball + sha256 from the release page; cloud-deploy.md links here.
+-   #
+-   # arm64 uses GitHub-hosted ubuntu-24.04-arm to avoid QEMU emulation
+-   # (matches release-packages.yml). If that runner is unavailable for the
+-   # repo's plan, fall back to ubuntu-22.04 + cross-rs (see comment in
+-   # release-packages.yml `build-cli-linux-arm64`).
+-   # =========================================================================
+-   build-cli-linux:
+-     name: "CLI: ${{ matrix.target }}"
+-     needs: [prepare-build, create-release]
+-     if: ${{ inputs.create_release && always() && needs.create-release.result == 'success' }}
+-     timeout-minutes: 60
+-     environment: Production
+-     runs-on: ${{ matrix.runner }}
+-     strategy:
+-       fail-fast: false
+-       matrix:
+-         include:
+-           - runner: ubuntu-22.04
+-             target: x86_64-unknown-linux-gnu
+-           - runner: ubuntu-24.04-arm
+-             target: aarch64-unknown-linux-gnu
+-     env:
+-       # Consumed by scripts/ci-cancel-aware.sh's cancellation watchdog.
+-       GH_TOKEN: ${{ github.token }}
+-     steps:
+-       - name: Checkout build ref
+-         uses: actions/checkout@v5
+-         with:
+-           ref: ${{ needs.prepare-build.outputs.build_ref }}
+-           fetch-depth: 1
+-diff --git a/.github/workflows/release-staging.yml b/.github/workflows/release-staging.yml
+-index 3b7a830c2..79a796ff6 100644
+---- a/.github/workflows/release-staging.yml
+-+++ b/.github/workflows/release-staging.yml
+-@@ -240,161 +240,161 @@ jobs:
+-           else
+-             echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
+-           fi
+-           echo "base_url=https://staging-api.tinyhumans.ai/" >> "$GITHUB_OUTPUT"
+- 
+-       # Keep main in sync: the version-bump commit (and anything else on
+-       # release) flows back into main right after the cut — every release
+-       # build back-merges, not just production. Runs in both create_tag
+-       # variants because the bump commit lands on release in both.
+-       # continue-on-error so a merge conflict never strands a cut that is
+-       # already tagged — resolve the merge manually in that case.
+-       - name: Merge release back into main
+-         continue-on-error: true
+-         env:
+-           VERSION: ${{ steps.bump.outputs.version }}
+-         run: |
+-           bash scripts/release/merge-release-into-main.sh "chore(staging): merge release v${VERSION}-staging back into main"
+- 
+-   # =========================================================================
+-   # Phase 2: Build desktop artifacts (delegated to reusable workflow)
+-   # =========================================================================
+-   build-desktop:
+-     name: Build desktop matrix
+-     needs: [prepare-build]
+-     if: inputs.create_tag
+-     uses: ./.github/workflows/build-desktop.yml
+-     secrets: inherit
+-     with:
+-       build_ref: ${{ needs.prepare-build.outputs.build_ref }}
+-       tag: ${{ needs.prepare-build.outputs.tag }}
+-       version: ${{ needs.prepare-build.outputs.version }}
+-       sha: ${{ needs.prepare-build.outputs.sha }}
+-       short_sha: ${{ needs.prepare-build.outputs.short_sha }}
+-       base_url: ${{ needs.prepare-build.outputs.base_url }}
+-       app_env: staging
+-       build_profile: debug
+-       telegram_bot_username: alphahumantest_bot
+-       # Notarize staging too — QA installs the bundle from the Actions
+-       # artifact, and unnotarized .app launches are blocked by Gatekeeper on
+-       # macOS ≥ 10.15 (“damaged and can’t be opened”) without out-of-band
+-       # `xattr -dr com.apple.quarantine` workarounds.
+-       with_macos_signing: true
+-       with_release_upload: false
+-       # No publish-updater-manifest job in staging — producing .sig artifacts
+-       # would just leave them stranded in the Actions artifact tree.
+-       with_updater: false
+-       # Standalone openhuman-core CLI ships from the production cut only:
+-       # `build-docker` pushes `ghcr.io/tinyhumansai/openhuman-core` and
+-       # `build-cli-linux` attaches Linux x86_64 / aarch64 tarballs to the
+-       # GitHub Release (see release-production.yml). Staging does not
+-       # publish either surface — the matrix-built sidecar artifact had no
+-       # real consumer. Set `build_sidecar: true` to re-enable a per-platform
+-       # CLI Actions artifact + its Sentry DIF upload for QA spot-checks.
+-       build_sidecar: false
+- 
+-   # =========================================================================
+-   # Phase 2b: Build the openhuman-core Docker image without pushing.
+-   # Mirrors the production `build-docker` job so a Dockerfile regression
+-   # surfaces on the staging cut — no GHCR push, no `:staging-*` tag
+-   # pollution. This is the Docker build gate at the staging-tag
+-   # boundary so a green staging cut means the next prod
+-   # promotion's GHCR push will succeed too.
+-   # =========================================================================
+-   build-docker:
+-     name: "Docker: build (no push)"
+-     needs: [prepare-build]
+-     if: inputs.create_tag
+-     runs-on: ubuntu-latest
+-     timeout-minutes: 30
+-     environment: Production
+-     steps:
+-       - name: Checkout build ref
+-         uses: actions/checkout@v5
+-         with:
+-           ref: ${{ needs.prepare-build.outputs.build_ref }}
+-           fetch-depth: 1
+-       # Targeted init (not `submodules: true`) so we skip the large tauri-cef
+-       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
+-       # [patch.crates-io] resolves Rust SDK crates from vendor/.
+-       - name: Init vendored Rust submodules
+--        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+-+        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinychannels vendor/tinyplace
+-       - name: Set up Docker Buildx
+-         uses: docker/setup-buildx-action@v3
+-       - name: Build image (no push)
+-         uses: docker/build-push-action@v6
+-         with:
+-           context: .
+-           file: Dockerfile
+-           push: false
+-           load: true
+-           platforms: linux/amd64
+-           tags: openhuman-core:staging-${{ needs.prepare-build.outputs.tag }}
+-           labels: |
+-             org.opencontainers.image.source=https://github.com/${{ github.repository }}
+-             org.opencontainers.image.revision=${{ needs.prepare-build.outputs.sha }}
+-             org.opencontainers.image.version=${{ needs.prepare-build.outputs.version }}
+-             org.opencontainers.image.title=openhuman-core
+-           cache-from: type=gha,scope=release-staging
+-           cache-to: type=gha,scope=release-staging,mode=max
+- 
+-   # =========================================================================
+-   # Phase 3: Record a single Sentry deploy marker once the matrix is
+-   # complete. Lives in its own job (not inside the reusable workflow)
+-   # because `sentry-cli releases deploys ... new` does NOT deduplicate by
+-   # (release, env) — running it inside the matrix would add one row per
+-   # platform (×4). One row per release is the right shape: re-runs of CI
+-   # for the same release intentionally produce additional rows representing
+-   # separate deploy attempts.
+-   # =========================================================================
+-   record-sentry-deploy:
+-     name: Record Sentry deploy marker
+-     runs-on: ubuntu-latest
+-     timeout-minutes: 10
+-     environment: Production
+-     if: inputs.create_tag
+-     needs: [prepare-build, build-desktop, build-docker]
+-     env:
+-       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+-       SENTRY_URL: ${{ vars.SENTRY_URL }}
+-     steps:
+-       - name: Install sentry-cli
+-         if: env.SENTRY_AUTH_TOKEN != ''
+-         shell: bash
+-         run: curl -sSf https://sentry.io/get-cli/ | bash
+-       - name: Record deploy marker
+-         if: env.SENTRY_AUTH_TOKEN != ''
+-         shell: bash
+-         env:
+-           SENTRY_URL: ${{ vars.SENTRY_URL }}
+-           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+-           # Marker lives on the React project's release; events from all
+-           # surfaces share the same `openhuman@<version>+<short_sha>` release
+-           # tag, so the marker on any single project's release shows in
+-           # Sentry's "Deploys" tab for that release group.
+-           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_REACT }}
+-           SENTRY_RELEASE:
+-             openhuman@${{ needs.prepare-build.outputs.version }}+${{
+-             needs.prepare-build.outputs.short_sha }}
+-           SENTRY_ENVIRONMENT: staging
+-         run: |
+-           set -euo pipefail
+-           echo "==> Recording deploy marker: ${SENTRY_RELEASE} -> ${SENTRY_ENVIRONMENT}"
+-           sentry-cli releases deploys "${SENTRY_RELEASE}" new \
+-             -e "${SENTRY_ENVIRONMENT}"
+- 
+-   # =========================================================================
+-   # Cleanup: delete the staging tag if the build matrix failed. The version
+-   # bump commit on `release` stays — reverting it would risk a race with
+-   # concurrent merges. The next staging cut just continues from the new
+-   # patch number; the small “gap” in patch numbers is acceptable.
+-   # =========================================================================
+-   cleanup-failed-staging:
+-     name: Remove staging tag if build failed
+-     runs-on: ubuntu-latest
+-     timeout-minutes: 10
+-     environment: Production
+-     needs: [prepare-build, build-desktop, build-docker]
+-     if: >-
+-       always()
+-       && inputs.create_tag
+-       && needs.prepare-build.result == 'success'
+-diff --git a/.gitmodules b/.gitmodules
+-index ce992e204..3f6001479 100644
+---- a/.gitmodules
+-+++ b/.gitmodules
+-@@ -1,22 +1,25 @@
+- [submodule "app/src-tauri/vendor/tauri-cef"]
+- 	path = app/src-tauri/vendor/tauri-cef
+- 	url = https://github.com/tinyhumansai/tauri-cef.git
+- 	branch = feat/cef
+- [submodule "app/src-tauri/vendor/tauri-plugin-notification"]
+- 	path = app/src-tauri/vendor/tauri-plugin-notification
+- 	url = https://github.com/tinyhumansai/tauri-plugin-notification.git
+- [submodule "vendor/tinyagents"]
+- 	path = vendor/tinyagents
+- 	url = https://github.com/tinyhumansai/tinyagents
+- [submodule "vendor/tinyflows"]
+- 	path = vendor/tinyflows
+- 	url = https://github.com/tinyhumansai/tinyflows
+- [submodule "vendor/tinycortex"]
+- 	path = vendor/tinycortex
+- 	url = https://github.com/tinyhumansai/tinycortex
+- [submodule "vendor/tinyjuice"]
+- 	path = vendor/tinyjuice
+- 	url = https://github.com/tinyhumansai/tinyjuice
+-+[submodule "vendor/tinychannels"]
+-+	path = vendor/tinychannels
+-+	url = https://github.com/tinyhumansai/tinychannels
+- [submodule "vendor/tinyplace"]
+- 	path = vendor/tinyplace
+- 	url = https://github.com/tinyhumansai/tiny.place.git
+-diff --git a/Cargo.lock b/Cargo.lock
+-index 7aa978e60..1259721a2 100644
+---- a/Cargo.lock
+-+++ b/Cargo.lock
+-@@ -74,172 +74,172 @@ dependencies = [
+-  "version_check",
+-  "zerocopy",
+- ]
+- 
+- [[package]]
+- name = "aho-corasick"
+- version = "1.1.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
+- dependencies = [
+-  "memchr",
+- ]
+- 
+- [[package]]
+- name = "alsa"
+- version = "0.9.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ed7572b7ba83a31e20d1b48970ee402d2e3e0537dcfe0a3ff4d6eb7508617d43"
+- dependencies = [
+-  "alsa-sys",
+-  "bitflags 2.11.1",
+-  "cfg-if",
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "alsa-sys"
+- version = "0.3.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "db8fee663d06c4e303404ef5f40488a53e062f89ba8bfed81f42325aafad1527"
+- dependencies = [
+-  "libc",
+-  "pkg-config",
+- ]
+- 
+- [[package]]
+- name = "android_system_properties"
+- version = "0.1.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
+- dependencies = [
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "anstream"
+- version = "1.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "824a212faf96e9acacdbd09febd34438f8f711fb84e09a8916013cd7815ca28d"
+- dependencies = [
+-  "anstyle",
+-  "anstyle-parse",
+-  "anstyle-query",
+-  "anstyle-wincon",
+-  "colorchoice",
+-  "is_terminal_polyfill",
+-  "utf8parse",
+- ]
+- 
+- [[package]]
+- name = "anstyle"
+- version = "1.0.14"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000"
+- 
+- [[package]]
+- name = "anstyle-parse"
+- version = "1.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "52ce7f38b242319f7cabaa6813055467063ecdc9d355bbb4ce0c68908cd8130e"
+- dependencies = [
+-  "utf8parse",
+- ]
+- 
+- [[package]]
+- name = "anstyle-query"
+- version = "1.1.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
+- dependencies = [
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "anstyle-wincon"
+- version = "3.0.11"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
+- dependencies = [
+-  "anstyle",
+-  "once_cell_polyfill",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "anyhow"
+- version = "1.0.102"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
+- 
+- [[package]]
+- name = "arbitrary"
+- version = "1.4.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
+- dependencies = [
+-  "derive_arbitrary",
+- ]
+- 
+- [[package]]
+- name = "arboard"
+- version = "3.6.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0348a1c054491f4bfe6ab86a7b6ab1e44e45d899005de92f58b3df180b36ddaf"
+- dependencies = [
+-  "clipboard-win",
+-  "image",
+-  "log",
+-  "objc2 0.6.4",
+-  "objc2-app-kit 0.3.2",
+-  "objc2-core-foundation",
+-  "objc2-core-graphics",
+-  "objc2-foundation 0.3.2",
+-  "parking_lot",
+-  "percent-encoding",
+-  "windows-sys 0.60.2",
+-  "x11rb",
+- ]
+- 
+- [[package]]
+- name = "argon2"
+- version = "0.5.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3c3610892ee6e0cbce8ae2700349fcf8f98adb0dbfbee85aec3c9179d29cc072"
+- dependencies = [
+-  "base64ct",
+-  "blake2",
+-  "cpufeatures 0.2.17",
+-  "password-hash 0.5.0",
+- ]
+- 
+- [[package]]
+- name = "arrayref"
+- version = "0.3.9"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
+- 
+- [[package]]
+- name = "arrayvec"
+- version = "0.7.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+- 
+- [[package]]
+- name = "assert-json-diff"
+- version = "2.0.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "47e4f2b81832e72834d7518d8487a0396a28cc408186a2e8854c0f98011faf12"
+- dependencies = [
+-  "serde",
+-  "serde_json",
+- ]
+- 
+- [[package]]
+- name = "async-channel"
+- version = "1.9.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "81953c529336010edd6d8e358f886d9581267795c61b19475b71314bffa46d35"
+- dependencies = [
+-  "concurrent-queue",
+-  "event-listener 2.5.3",
+-  "futures-core",
+-@@ -1588,161 +1588,161 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
+- dependencies = [
+-  "console",
+-  "fuzzy-matcher",
+-  "shell-words",
+-  "tempfile",
+-  "zeroize",
+- ]
+- 
+- [[package]]
+- name = "digest"
+- version = "0.10.7"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
+- dependencies = [
+-  "block-buffer 0.10.4",
+-  "const-oid 0.9.6",
+-  "crypto-common 0.1.7",
+-  "subtle",
+- ]
+- 
+- [[package]]
+- name = "digest"
+- version = "0.11.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2"
+- dependencies = [
+-  "block-buffer 0.12.0",
+-  "const-oid 0.10.2",
+-  "crypto-common 0.2.1",
+-  "ctutils",
+- ]
+- 
+- [[package]]
+- name = "directories"
+- version = "6.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "16f5094c54661b38d03bd7e50df373292118db60b585c08a411c6d840017fe7d"
+- dependencies = [
+-  "dirs-sys 0.5.0",
+- ]
+- 
+- [[package]]
+- name = "dirs"
+- version = "5.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
+- dependencies = [
+-  "dirs-sys 0.4.1",
+- ]
+- 
+- [[package]]
+- name = "dirs"
+- version = "6.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
+- dependencies = [
+-  "dirs-sys 0.5.0",
+- ]
+- 
+- [[package]]
+- name = "dirs-sys"
+- version = "0.4.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
+- dependencies = [
+-  "libc",
+-  "option-ext",
+-  "redox_users 0.4.6",
+-  "windows-sys 0.48.0",
+- ]
+- 
+- [[package]]
+- name = "dirs-sys"
+- version = "0.5.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab"
+- dependencies = [
+-  "libc",
+-  "option-ext",
+-  "redox_users 0.5.2",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "dispatch2"
+- version = "0.3.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1e0e367e4e7da84520dedcac1901e4da967309406d1e51017ae1abfb97adbd38"
+- dependencies = [
+-  "bitflags 2.11.1",
+-  "objc2 0.6.4",
+- ]
+- 
+- [[package]]
+- name = "displaydoc"
+- version = "0.2.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "document-features"
+- version = "0.2.12"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
+- dependencies = [
+-  "litrs",
+- ]
+- 
+- [[package]]
+- name = "dotenvy"
+- version = "0.15.7"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
+- 
+- [[package]]
+- name = "dunce"
+- version = "1.0.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
+- 
+- [[package]]
+- name = "dyn-clone"
+- version = "1.0.20"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
+- 
+- [[package]]
+- name = "ecb"
+- version = "0.1.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1a8bfa975b1aec2145850fcaa1c6fe269a16578c44705a532ae3edc92b8881c7"
+- dependencies = [
+-  "cipher",
+- ]
+- 
+- [[package]]
+- name = "ecdsa"
+- version = "0.16.9"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ee27f32b5c5292967d2d4a9d7f1e0b0aed2c15daded5a60300e4abb9d8020bca"
+- dependencies = [
+-  "der",
+-  "digest 0.10.7",
+-  "elliptic-curve",
+-  "rfc6979",
+-  "signature",
+-  "spki",
+- ]
+- 
+- [[package]]
+- name = "ed25519"
+- version = "2.2.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
+- dependencies = [
+-  "pkcs8",
+-@@ -1845,161 +1845,161 @@ dependencies = [
+-  "tokio-tungstenite 0.24.0",
+-  "tower-layer",
+-  "tower-service",
+- ]
+- 
+- [[package]]
+- name = "enigo"
+- version = "0.3.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0cf6f550bbbdd5fe66f39d429cb2604bcdacbf00dca0f5bbe2e9306a0009b7c6"
+- dependencies = [
+-  "core-foundation 0.10.1",
+-  "core-graphics 0.24.0",
+-  "foreign-types-shared 0.3.1",
+-  "libc",
+-  "log",
+-  "objc2 0.5.2",
+-  "objc2-app-kit 0.2.2",
+-  "objc2-foundation 0.2.2",
+-  "windows 0.58.0",
+-  "xkbcommon",
+-  "xkeysym",
+- ]
+- 
+- [[package]]
+- name = "enumflags2"
+- version = "0.7.12"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1027f7680c853e056ebcec683615fb6fbbc07dbaa13b4d5d9442b146ded4ecef"
+- dependencies = [
+-  "enumflags2_derive",
+- ]
+- 
+- [[package]]
+- name = "enumflags2_derive"
+- version = "0.7.12"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "67c78a4d8fdf9953a5c9d458f9efe940fd97a0cab0941c075a813ac594733827"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "env_filter"
+- version = "1.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "32e90c2accc4b07a8456ea0debdc2e7587bdd890680d71173a15d4ae604f6eef"
+- dependencies = [
+-  "log",
+-  "regex",
+- ]
+- 
+- [[package]]
+- name = "env_logger"
+- version = "0.11.10"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0621c04f2196ac3f488dd583365b9c09be011a4ab8b9f37248ffcc8f6198b56a"
+- dependencies = [
+-  "anstream",
+-  "anstyle",
+-  "env_filter",
+-  "jiff",
+-  "log",
+- ]
+- 
+- [[package]]
+- name = "equivalent"
+- version = "1.0.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+- 
+- [[package]]
+- name = "errno"
+- version = "0.3.14"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
+- dependencies = [
+-  "libc",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "error-code"
+- version = "3.3.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "dea2df4cf52843e0452895c455a1a2cfbb842a1e7329671acf418fdc53ed4c59"
+- 
+- [[package]]
+- name = "eth-keystore"
+- version = "0.5.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1fda3bf123be441da5260717e0661c25a2fd9cb2b2c1d20bf2e05580047158ab"
+- dependencies = [
+-  "aes",
+-  "ctr",
+-  "digest 0.10.7",
+-  "hex",
+-  "hmac 0.12.1",
+-  "pbkdf2 0.11.0",
+-  "rand 0.8.6",
+-  "scrypt",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "sha3",
+-  "thiserror 1.0.69",
+-  "uuid 0.8.2",
+- ]
+- 
+- [[package]]
+- name = "ethabi"
+- version = "18.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7413c5f74cc903ea37386a8965a936cbeb334bd270862fdece542c1b2dcbc898"
+- dependencies = [
+-  "ethereum-types",
+-  "hex",
+-  "once_cell",
+-  "regex",
+-  "serde",
+-  "serde_json",
+-  "sha3",
+-  "thiserror 1.0.69",
+-  "uint",
+- ]
+- 
+- [[package]]
+- name = "ethbloom"
+- version = "0.13.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c22d4b5885b6aa2fe5e8b9329fb8d232bf739e434e6b87347c63bdd00c120f60"
+- dependencies = [
+-  "crunchy",
+-  "fixed-hash",
+-  "impl-codec",
+-  "impl-rlp",
+-  "impl-serde",
+-  "scale-info",
+-  "tiny-keccak",
+- ]
+- 
+- [[package]]
+- name = "ethereum-types"
+- version = "0.14.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "02d215cbf040552efcbe99a38372fe80ab9d00268e20012b79fcd0f073edd8ee"
+- dependencies = [
+-  "ethbloom",
+-  "fixed-hash",
+-  "impl-codec",
+-  "impl-rlp",
+-  "impl-serde",
+-  "primitive-types",
+-  "scale-info",
+-  "uint",
+- ]
+- 
+- [[package]]
+- name = "ethers-core"
+-@@ -3162,161 +3162,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+- dependencies = [
+-  "either",
+- ]
+- 
+- [[package]]
+- name = "itertools"
+- version = "0.14.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+- dependencies = [
+-  "either",
+- ]
+- 
+- [[package]]
+- name = "itoa"
+- version = "1.0.18"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+- 
+- [[package]]
+- name = "jaq-core"
+- version = "3.1.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7561783b20275a6c9cb576e39208b0c635f34ef14357f1f05a2927a774f3adec"
+- dependencies = [
+-  "dyn-clone",
+-  "once_cell",
+-  "typed-arena",
+- ]
+- 
+- [[package]]
+- name = "jaq-json"
+- version = "2.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d4ec9aaad7340e6990c6c1878ef3b46dbec624e535d7f786cc9ddcf94f773d33"
+- dependencies = [
+-  "bstr",
+-  "bytes",
+-  "foldhash 0.1.5",
+-  "hifijson",
+-  "indexmap",
+-  "jaq-core",
+-  "jaq-std",
+-  "num-bigint",
+-  "num-traits",
+-  "ryu",
+-  "self_cell",
+-  "serde_core",
+- ]
+- 
+- [[package]]
+- name = "jaq-std"
+- version = "3.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "8bdc5a74b0feeb5e6a1dc2dd08c34280a61e37668d10a6a3b27ad69d0fb9ce2e"
+- dependencies = [
+-  "aho-corasick",
+-  "base64 0.22.1",
+-  "bstr",
+-  "jaq-core",
+-  "jiff",
+-  "libm",
+-  "log",
+-  "regex-bites",
+-  "urlencoding",
+- ]
+- 
+- [[package]]
+- name = "jiff"
+- version = "0.2.24"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "f00b5dbd620d61dfdcb6007c9c1f6054ebd75319f163d886a9055cec1155073d"
+- dependencies = [
+-  "jiff-static",
+-  "jiff-tzdb-platform",
+-  "log",
+-  "portable-atomic",
+-  "portable-atomic-util",
+-  "serde_core",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "jiff-static"
+- version = "0.2.24"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "e000de030ff8022ea1da3f466fbb0f3a809f5e51ed31f6dd931c35181ad8e6d7"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "jiff-tzdb"
+- version = "0.1.7"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "6142247df1a93c2b3587402a19710be3e6e942f1581a1702e76408f2c21d6590"
+- 
+- [[package]]
+- name = "jiff-tzdb-platform"
+- version = "0.1.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "875a5a69ac2bab1a891711cf5eccbec1ce0341ea805560dcd90b7a2e925132e8"
+- dependencies = [
+-  "jiff-tzdb",
+- ]
+- 
+- [[package]]
+- name = "jni"
+- version = "0.21.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1a87aa2bb7d2af34197c04845522473242e1aa17c12f4935d5856491a7fb8c97"
+- dependencies = [
+-  "cesu8",
+-  "cfg-if",
+-  "combine",
+-  "jni-sys 0.3.1",
+-  "log",
+-  "thiserror 1.0.69",
+-  "walkdir",
+-  "windows-sys 0.45.0",
+- ]
+- 
+- [[package]]
+- name = "jni-sys"
+- version = "0.3.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "41a652e1f9b6e0275df1f15b32661cf0d4b78d4d87ddec5e0c3c20f097433258"
+- dependencies = [
+-  "jni-sys 0.4.1",
+- ]
+- 
+- [[package]]
+- name = "jni-sys"
+- version = "0.4.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c6377a88cb3910bee9b0fa88d4f42e1d2da8e79915598f65fb0c7ee14c878af2"
+- dependencies = [
+-  "jni-sys-macros",
+- ]
+- 
+- [[package]]
+- name = "jni-sys-macros"
+- version = "0.4.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "38c0b942f458fe50cdac086d2f946512305e5631e720728f2a61aabcd47a6264"
+- dependencies = [
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "jobserver"
+- version = "0.1.34"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "9afb3de4395d6b3e67a780b6de64b51c978ecf11cb9a462c66be7d4ca9039d33"
+- dependencies = [
+-  "getrandom 0.3.4",
+-  "libc",
+-@@ -3811,161 +3811,161 @@ checksum = "8c196769dd60fd4f363e11d948139556a344e79d451aeb2fa2fd040738ef7691"
+- dependencies = [
+-  "jni-sys 0.3.1",
+- ]
+- 
+- [[package]]
+- name = "nix"
+- version = "0.30.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
+- dependencies = [
+-  "bitflags 2.11.1",
+-  "cfg-if",
+-  "cfg_aliases",
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "no-std-compat"
+- version = "0.4.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b93853da6d84c2e3c7d730d6473e8817692dd89be387eb01b94d7f108ecb5b8c"
+- dependencies = [
+-  "spin",
+- ]
+- 
+- [[package]]
+- name = "nom"
+- version = "7.1.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
+- dependencies = [
+-  "memchr",
+-  "minimal-lexical",
+- ]
+- 
+- [[package]]
+- name = "nom"
+- version = "8.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "df9761775871bdef83bee530e60050f7e54b1105350d6884eb0fb4f46c2f9405"
+- dependencies = [
+-  "memchr",
+- ]
+- 
+- [[package]]
+- name = "nom_locate"
+- version = "5.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0b577e2d69827c4740cba2b52efaad1c4cc7c73042860b199710b3575c68438d"
+- dependencies = [
+-  "bytecount",
+-  "memchr",
+-  "nom 8.0.0",
+- ]
+- 
+- [[package]]
+- name = "ntapi"
+- version = "0.4.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c3b335231dfd352ffb0f8017f3b6027a4917f7df785ea2143d8af2adc66980ae"
+- dependencies = [
+-  "winapi",
+- ]
+- 
+- [[package]]
+- name = "nu-ansi-term"
+- version = "0.46.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "77a8165726e8236064dbb45459242600304b42a5ea24ee2948e18e023bf7ba84"
+- dependencies = [
+-  "overload",
+-  "winapi",
+- ]
+- 
+- [[package]]
+- name = "nu-ansi-term"
+- version = "0.50.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
+- dependencies = [
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "num-bigint"
+- version = "0.4.7"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c863e9ab5e7bf9c99ba75e1050f1e4d624ae87ed3532d6238ffbdc7b585dbbe6"
+- dependencies = [
+-  "num-integer",
+-  "num-traits",
+- ]
+- 
+- [[package]]
+- name = "num-conv"
+- version = "0.2.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c6673768db2d862beb9b39a78fdcb1a69439615d5794a1be50caa9bc92c81967"
+- 
+- [[package]]
+- name = "num-derive"
+- version = "0.4.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "num-integer"
+- version = "0.1.46"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
+- dependencies = [
+-  "num-traits",
+- ]
+- 
+- [[package]]
+- name = "num-traits"
+- version = "0.2.19"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
+- dependencies = [
+-  "autocfg",
+- ]
+- 
+- [[package]]
+- name = "num_cpus"
+- version = "1.17.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "91df4bbde75afed763b708b7eee1e8e7651e02d97f6d5dd763e89367e957b23b"
+- dependencies = [
+-  "hermit-abi",
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "num_enum"
+- version = "0.7.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "5d0bca838442ec211fa11de3a8b0e0e8f3a4522575b5c4c06ed722e005036f26"
+- dependencies = [
+-  "num_enum_derive",
+-  "rustversion",
+- ]
+- 
+- [[package]]
+- name = "num_enum_derive"
+- version = "0.7.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "680998035259dcfcafe653688bf2aa6d3e2dc05e98be6ab46afb089dc84f1df8"
+- dependencies = [
+-  "proc-macro-crate",
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+-@@ -5654,220 +5654,220 @@ name = "rlp-derive"
+- version = "0.1.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 1.0.109",
+- ]
+- 
+- [[package]]
+- name = "rppal"
+- version = "0.22.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c1ce3b019009cff02cb6b0e96e7cc2e5c5b90187dc1a490f8ef1521d0596b026"
+- dependencies = [
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "rsqlite-vfs"
+- version = "0.1.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "a8a1f2315036ef6b1fbacd1972e8ee7688030b0a2121edfc2a6550febd41574d"
+- dependencies = [
+-  "hashbrown 0.16.1",
+-  "thiserror 2.0.18",
+- ]
+- 
+- [[package]]
+- name = "rusqlite"
+- version = "0.40.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1b3492ea85308705c3a5cc24fb9b9cf77273d30590349070db42991202b214c4"
+- dependencies = [
+-  "bitflags 2.11.1",
+-  "fallible-iterator 0.3.0",
+-  "fallible-streaming-iterator",
+-  "hashlink",
+-  "libsqlite3-sys",
+-  "smallvec",
+-  "sqlite-wasm-rs",
+- ]
+- 
+- [[package]]
+- name = "rustc-demangle"
+- version = "0.1.27"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b50b8869d9fc858ce7266cce0194bd74df58b9d0e3f6df3a9fc8eb470d95c09d"
+- 
+- [[package]]
+- name = "rustc-hash"
+- version = "2.1.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "94300abf3f1ae2e2b8ffb7b58043de3d399c73fa6f4b73826402a5c457614dbe"
+- 
+- [[package]]
+- name = "rustc-hex"
+- version = "2.1.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
+- 
+- [[package]]
+- name = "rustc_version"
+- version = "0.4.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
+- dependencies = [
+-  "semver",
+- ]
+- 
+- [[package]]
+- name = "rustix"
+- version = "1.1.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190"
+- dependencies = [
+-  "bitflags 2.11.1",
+-  "errno",
+-  "libc",
+-  "linux-raw-sys",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "rustls"
+- version = "0.23.40"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ef86cd5876211988985292b91c96a8f2d298df24e75989a43a3c73f2d4d8168b"
+- dependencies = [
+-  "aws-lc-rs",
+-  "log",
+-  "once_cell",
+-  "ring",
+-  "rustls-pki-types",
+-  "rustls-webpki",
+-  "subtle",
+-  "zeroize",
+- ]
+- 
+- [[package]]
+- name = "rustls-native-certs"
+- version = "0.8.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "612460d5f7bea540c490b2b6395d8e34a953e52b491accd6c86c8164c5932a63"
+- dependencies = [
+-  "openssl-probe",
+-  "rustls-pki-types",
+-  "schannel",
+-  "security-framework 3.7.0",
+- ]
+- 
+- [[package]]
+- name = "rustls-pki-types"
+- version = "1.14.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "30a7197ae7eb376e574fe940d068c30fe0462554a3ddbe4eca7838e049c937a9"
+- dependencies = [
+-  "web-time",
+-  "zeroize",
+- ]
+- 
+- [[package]]
+- name = "rustls-platform-verifier"
+- version = "0.6.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1d99feebc72bae7ab76ba994bb5e121b8d83d910ca40b36e0921f53becc41784"
+- dependencies = [
+-  "core-foundation 0.10.1",
+-  "core-foundation-sys 0.8.7",
+-  "jni",
+-  "log",
+-  "once_cell",
+-  "rustls",
+-  "rustls-native-certs",
+-  "rustls-platform-verifier-android",
+-  "rustls-webpki",
+-  "security-framework 3.7.0",
+-  "security-framework-sys",
+-  "webpki-root-certs",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "rustls-platform-verifier-android"
+- version = "0.1.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
+- 
+- [[package]]
+- name = "rustls-webpki"
+- version = "0.103.13"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "61c429a8649f110dddef65e2a5ad240f747e85f7758a6bccc7e5777bd33f756e"
+- dependencies = [
+-  "aws-lc-rs",
+-  "ring",
+-  "rustls-pki-types",
+-  "untrusted",
+- ]
+- 
+- [[package]]
+- name = "rustversion"
+- version = "1.0.22"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
+- 
+- [[package]]
+- name = "rusty-fork"
+- version = "0.3.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "cc6bf79ff24e648f6da1f8d1f011e9cac26491b619e6b9280f2b47f1774e6ee2"
+- dependencies = [
+-  "fnv",
+-  "quick-error 1.2.3",
+-  "tempfile",
+-  "wait-timeout",
+- ]
+- 
+- [[package]]
+- name = "ryu"
+- version = "1.0.23"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
+- 
+- [[package]]
+- name = "salsa20"
+- version = "0.10.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "97a22f5af31f73a954c10289c93e8a50cc23d971e80ee446f1f6f7137a088213"
+- dependencies = [
+-  "cipher",
+- ]
+- 
+- [[package]]
+- name = "same-file"
+- version = "1.0.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
+- dependencies = [
+-  "winapi-util",
+- ]
+- 
+- [[package]]
+- name = "scale-info"
+- version = "2.11.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "346a3b32eba2640d17a9cb5927056b08f3de90f65b72fe09402c2ad07d684d0b"
+- dependencies = [
+-  "cfg-if",
+-  "derive_more 1.0.0",
+-  "parity-scale-codec",
+-  "scale-info-derive",
+- ]
+- 
+- [[package]]
+- name = "scale-info-derive"
+- version = "2.11.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c6630024bf739e2179b91fb424b28898baf819414262c5d376677dbff1fe7ebf"
+- dependencies = [
+-@@ -6317,161 +6317,161 @@ dependencies = [
+- [[package]]
+- name = "shlex"
+- version = "1.3.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
+- 
+- [[package]]
+- name = "signal-hook-registry"
+- version = "1.4.8"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
+- dependencies = [
+-  "errno",
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "signature"
+- version = "2.2.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
+- dependencies = [
+-  "digest 0.10.7",
+-  "rand_core 0.6.4",
+- ]
+- 
+- [[package]]
+- name = "simd-adler32"
+- version = "0.3.9"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "703d5c7ef118737c72f1af64ad2f6f8c5e1921f818cdcb97b8fe6fc69bf66214"
+- 
+- [[package]]
+- name = "simdutf8"
+- version = "0.1.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
+- 
+- [[package]]
+- name = "similar"
+- version = "2.7.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
+- 
+- [[package]]
+- name = "siphasher"
+- version = "1.0.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
+- 
+- [[package]]
+- name = "slab"
+- version = "0.4.12"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+- 
+- [[package]]
+- name = "smallvec"
+- version = "1.15.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+- 
+- [[package]]
+- name = "smartstring"
+- version = "1.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3fb72c633efbaa2dd666986505016c32c3044395ceaf881518399d2f4127ee29"
+- dependencies = [
+-  "autocfg",
+-  "static_assertions",
+-  "version_check",
+- ]
+- 
+- [[package]]
+- name = "socket2"
+- version = "0.6.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
+- dependencies = [
+-  "libc",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "socketioxide"
+- version = "0.15.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "929e1bc0629c6c8ceaa39473082aa2df35a2a5f0c300382912047bd5dccb9740"
+- dependencies = [
+-  "bytes",
+-  "engineioxide",
+-  "futures-core",
+-  "futures-util",
+-  "http 1.4.0",
+-  "http-body",
+-  "hyper",
+-  "matchit",
+-  "pin-project-lite",
+-  "rustversion",
+-  "serde",
+-  "socketioxide-core",
+-  "socketioxide-parser-common",
+-  "thiserror 1.0.69",
+-  "tokio",
+-  "tower-layer",
+-  "tower-service",
+- ]
+- 
+- [[package]]
+- name = "socketioxide-core"
+- version = "0.15.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "20fbe5455c862962f547bac834bcc6db8659a7033934b9c45c6e1cfb4f9dc178"
+- dependencies = [
+-  "bytes",
+-  "engineioxide",
+-  "serde",
+-  "thiserror 1.0.69",
+- ]
+- 
+- [[package]]
+- name = "socketioxide-parser-common"
+- version = "0.15.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "554757f11f7b0944334fc00765523443c39a05fcd7be69aaaffbda06fbc4cef7"
+- dependencies = [
+-  "bytes",
+-  "itoa",
+-  "serde",
+-  "serde_json",
+-  "socketioxide-core",
+- ]
+- 
+- [[package]]
+- name = "spin"
+- version = "0.5.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+- 
+- [[package]]
+- name = "spki"
+- version = "0.7.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
+- dependencies = [
+-  "base64ct",
+-  "der",
+- ]
+- 
+- [[package]]
+- name = "sqlite-wasm-rs"
+- version = "0.5.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "1b2c760607300407ddeaee518acf28c795661b7108c75421303dbefb237d3a36"
+- dependencies = [
+-  "cc",
+-  "js-sys",
+-  "rsqlite-vfs",
+-  "wasm-bindgen",
+- ]
+- 
+-@@ -6618,307 +6618,308 @@ dependencies = [
+- 
+- [[package]]
+- name = "syntect"
+- version = "5.3.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "656b45c05d95a5704399aeef6bd0ddec7b2b3531b7c9e900abbf7c4d2190c925"
+- dependencies = [
+-  "bincode",
+-  "fancy-regex",
+-  "flate2",
+-  "fnv",
+-  "once_cell",
+-  "regex-syntax",
+-  "serde",
+-  "serde_derive",
+-  "thiserror 2.0.18",
+-  "walkdir",
+- ]
+- 
+- [[package]]
+- name = "sysinfo"
+- version = "0.33.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "4fc858248ea01b66f19d8e8a6d55f41deaf91e9d495246fd01368d99935c6c01"
+- dependencies = [
+-  "core-foundation-sys 0.8.7",
+-  "libc",
+-  "memchr",
+-  "ntapi",
+-  "windows 0.57.0",
+- ]
+- 
+- [[package]]
+- name = "system-configuration"
+- version = "0.7.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "a13f3d0daba03132c0aa9767f98351b3488edc2c100cda2d2ec2b04f3d8d3c8b"
+- dependencies = [
+-  "bitflags 2.11.1",
+-  "core-foundation 0.9.4",
+-  "system-configuration-sys",
+- ]
+- 
+- [[package]]
+- name = "system-configuration-sys"
+- version = "0.6.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "8e1d1b10ced5ca923a1fcb8d03e96b8d3268065d724548c0211415ff6ac6bac4"
+- dependencies = [
+-  "core-foundation-sys 0.8.7",
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "tap"
+- version = "1.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+- 
+- [[package]]
+- name = "tar"
+- version = "0.4.45"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "22692a6476a21fa75fdfc11d452fda482af402c008cdbaf3476414e122040973"
+- dependencies = [
+-  "filetime",
+-  "libc",
+-  "xattr",
+- ]
+- 
+- [[package]]
+- name = "tempfile"
+- version = "3.27.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+- dependencies = [
+-  "fastrand",
+-  "getrandom 0.4.2",
+-  "once_cell",
+-  "rustix",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "thin-vec"
+- version = "0.2.18"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b0f7e269b48f0a7dd0146680fa24b50cc67fc0373f086a5b2f99bd084639b482"
+- 
+- [[package]]
+- name = "thiserror"
+- version = "1.0.69"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+- dependencies = [
+-  "thiserror-impl 1.0.69",
+- ]
+- 
+- [[package]]
+- name = "thiserror"
+- version = "2.0.18"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
+- dependencies = [
+-  "thiserror-impl 2.0.18",
+- ]
+- 
+- [[package]]
+- name = "thiserror-impl"
+- version = "1.0.69"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "thiserror-impl"
+- version = "2.0.18"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "thread_local"
+- version = "1.1.9"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
+- dependencies = [
+-  "cfg-if",
+- ]
+- 
+- [[package]]
+- name = "tiff"
+- version = "0.11.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b63feaf3343d35b6ca4d50483f94843803b0f51634937cc2ec519fc32232bc52"
+- dependencies = [
+-  "fax",
+-  "flate2",
+-  "half",
+-  "quick-error 2.0.1",
+-  "weezl",
+-  "zune-jpeg",
+- ]
+- 
+- [[package]]
+- name = "time"
+- version = "0.3.47"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "743bd48c283afc0388f9b8827b976905fb217ad9e647fae3a379a9283c4def2c"
+- dependencies = [
+-  "deranged",
+-  "itoa",
+-  "num-conv",
+-  "powerfmt",
+-  "serde_core",
+-  "time-core",
+-  "time-macros",
+- ]
+- 
+- [[package]]
+- name = "time-core"
+- version = "0.1.8"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7694e1cfe791f8d31026952abf09c69ca6f6fa4e1a1229e18988f06a04a12dca"
+- 
+- [[package]]
+- name = "time-macros"
+- version = "0.2.27"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "2e70e4c5a0e0a8a4823ad65dfe1a6930e4f4d756dcd9dd7939022b5e8c501215"
+- dependencies = [
+-  "num-conv",
+-  "time-core",
+- ]
+- 
+- [[package]]
+- name = "tiny-keccak"
+- version = "2.0.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
+- dependencies = [
+-  "crunchy",
+- ]
+- 
+- [[package]]
+- name = "tinyagents"
+- version = "1.7.1"
+- dependencies = [
+-  "async-trait",
+-  "bytes",
+-  "futures",
+-  "reqwest 0.12.28",
+-  "rhai",
+-  "rusqlite",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+- ]
+- 
+- [[package]]
+- name = "tinychannels"
+- version = "0.1.0"
+--source = "git+https://github.com/tinyhumansai/tinychannels.git?branch=feat%2Fphase-0-hygiene#5bcc2f3f80643dd519959064b83c96ae8473f149"
+- dependencies = [
+-  "anyhow",
+-  "async-trait",
+-  "base64 0.22.1",
+-  "futures-util",
+-  "hmac 0.12.1",
+-+ "reqwest 0.12.28",
+-  "schemars",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+-  "tokio-tungstenite 0.29.0",
+-  "tracing",
+-+ "uuid 1.23.1",
+- ]
+- 
+- [[package]]
+- name = "tinycortex"
+- version = "0.1.1"
+- dependencies = [
+-  "anyhow",
+-  "async-trait",
+-  "chrono",
+-  "git2",
+-  "parking_lot",
+-  "rand 0.8.6",
+-  "regex",
+-  "rusqlite",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "toml 0.8.23",
+-  "uuid 1.23.1",
+-  "walkdir",
+- ]
+- 
+- [[package]]
+- name = "tinyflows"
+- version = "0.3.2"
+- dependencies = [
+-  "async-trait",
+-  "futures-timer",
+-  "jaq-core",
+-  "jaq-json",
+-  "jaq-std",
+-  "serde",
+-  "serde_json",
+-  "thiserror 2.0.18",
+-  "tinyagents",
+-  "tracing",
+- ]
+- 
+- [[package]]
+- name = "tinyjuice"
+- version = "0.1.0"
+- dependencies = [
+-  "async-trait",
+-  "dirs 5.0.1",
+-  "hex",
+-  "log",
+-  "once_cell",
+-  "regex",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+-  "tree-sitter",
+-  "tree-sitter-python",
+-  "tree-sitter-rust",
+-  "tree-sitter-typescript",
+-  "unicode-segmentation",
+-  "unicode-width",
+- ]
+- 
+- [[package]]
+- name = "tinyplace"
+- version = "2.0.0"
+- dependencies = [
+-  "aes",
+-  "async-trait",
+-  "base64 0.22.1",
+-  "bs58",
+-  "cbc",
+-  "chrono",
+-  "curve25519-dalek",
+-  "ed25519-dalek",
+-  "futures-util",
+-  "hkdf",
+-  "hmac 0.12.1",
+-  "rand 0.8.6",
+-  "reqwest 0.12.28",
+-  "serde",
+-diff --git a/Cargo.toml b/Cargo.toml
+-index cea66d3b4..241e0d09f 100644
+---- a/Cargo.toml
+-+++ b/Cargo.toml
+-@@ -1,158 +1,158 @@
+- [package]
+- name = "openhuman"
+- version = "0.58.11"
+- edition = "2021"
+- description = "OpenHuman core business logic and RPC server"
+- autobins = false
+- 
+- [[bin]]
+- name = "openhuman-core"
+- path = "src/main.rs"
+- 
+- [[bin]]
+- name = "slack-backfill"
+- path = "src/bin/slack_backfill.rs"
+- 
+- [[bin]]
+- name = "gmail-backfill-3d"
+- path = "src/bin/gmail_backfill_3d.rs"
+- 
+- [[bin]]
+- name = "memory-tree-init-smoke"
+- path = "src/bin/memory_tree_init_smoke.rs"
+- 
+- [[bin]]
+- name = "inference-probe"
+- path = "src/bin/inference_probe.rs"
+- 
+- [[bin]]
+- name = "harness-subagent-audit"
+- path = "src/bin/harness_subagent_audit.rs"
+- 
+- [[bin]]
+- name = "test-mcp-stub"
+- path = "src/bin/test_mcp_stub.rs"
+- 
+- [lib]
+- name = "openhuman_core"
+- crate-type = ["rlib"]
+- 
+- [dependencies]
+- # tiny.place A2A social network SDK — published on crates.io and patched below
+- # to the vendored tiny.place submodule so OpenHuman can test SDK changes before
+- # publishing.
+- tinyplace = "2.0"
+- # tinyflows — host-agnostic workflow engine (typed node graph → validate → compile →
+- # run on tinyagents). Powers the "Workflows" feature via the seam in
+- # `src/openhuman/tinyflows/` + the `flows::` domain. Pulls tinyagents 1.7 transitively
+- # (same version openhuman already uses — no conflict). Published on crates.io
+- # and patched below to the vendored submodule.
+- tinyflows = "0.3"
+- # TinyJuice — host-agnostic TokenJuice compression engine. OpenHuman keeps
+- # config/RPC/tool/runtime adapters in `src/openhuman/tokenjuice/` and patches
+- # this dependency to the vendored submodule below.
+- tinyjuice = { version = "0.1", default-features = false }
+- # TinyAgents — Rust LLM orchestration framework (LangGraph/LangChain-style):
+- # durable state graphs, agent-loop harness, model/tool registries, REPL +
+- # `.rag` workflow language. openhuman's agent engine + orchestration run on this
+- # crate's primitives via the adapter seam in `src/openhuman/tinyagents/` (issue
+- # #4249): every turn drives through the harness; the workflow phase DAG, team
+- # member runtime, parallel fan-out, and multi-stage delegation run on graphs.
+- # We wire openhuman's own Provider/Tool, not the removed bundled openai client.
+- # The `sqlite` feature is enabled now that openhuman's direct rusqlite pin is
+- # aligned to 0.40, avoiding duplicate `links = "sqlite3"` native bindings.
+- # Durable graph checkpoints still use `SqlRunLedgerCheckpointer` until the
+- # migration re-points those rows to the crate checkpointer.
+- # The `repl` feature adds the embedded Rhai `.ragsh` session runtime powering
+- # the `rlm` language-workflow tool (`src/openhuman/rlm/`).
+- tinyagents = { version = "1.7", features = ["sqlite", "repl"] }
+- # TinyCortex — Rust core for the memory engine (store/chunks/tree/retrieval/
+- # queue/ingest/score + long tail), vendored as a git submodule and patched
+- # below to `vendor/tinycortex`. OpenHuman's memory subsystem migrates onto this
+- # crate through the adapter seam in `src/openhuman/tinycortex/` (mirroring the
+- # tinyagents seam): engine logic in the crate; RPC, agent tools, live sync,
+- # security gating, and the global singleton stay host-side. rusqlite/git2 are
+- # aligned to the host pins (=0.40 / 0.21) so one bundled SQLite + one libgit2
+- # link. Keep the version pin in lockstep with the submodule tag.
+- tinycortex = "0.1"
+--tinychannels = { git = "https://github.com/tinyhumansai/tinychannels.git", branch = "feat/phase-0-hygiene", features = ["relay-websocket"] }
+-+tinychannels = { version = "0.1", features = ["relay-websocket"] }
+- # TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
+- # behind the default `tokenjuice-treesitter` feature; disabling it falls back to
+- # the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
+- tree-sitter = { version = "0.24", optional = true }
+- tree-sitter-rust = { version = "0.23", optional = true }
+- tree-sitter-typescript = { version = "0.23", optional = true }
+- tree-sitter-python = { version = "0.23", optional = true }
+- serde = { version = "1", features = ["derive"] }
+- serde_json = "1"
+- serde_repr = "0.1"
+- serde_yaml = "0.9"
+- # (Removed `html2md` dep. dhat-rs profiling on real Gmail inboxes
+- # showed `html2md::walk` and `html2md::tables::handle` allocating
+- # ~894 MB peak heap on a 10 KB HTML input from Otter.ai-style emails
+- # (deeply-nested table-as-layout HTML). Cause: recursive walker holding
+- # per-frame Vec state across nesting layers + 5 sequential
+- # `regex::replace_all` passes in `clean_markdown` each producing a
+- # fresh full-size String. We now use a linear-time tag-and-entity
+- # stripper (`fast_html_to_text` in
+- # providers/gmail/post_process.rs) and prefer the email's
+- # `text/plain` MIME part when available.)
+- reqwest = { version = "0.12", default-features = false, features = ["json", "blocking", "rustls-tls", "native-tls", "stream", "http2", "multipart", "socks"] }
+- tokio = { version = "1", features = ["full", "sync"] }
+- once_cell = "1.19"
+- parking_lot = "0.12"
+- log = "0.4"
+- libc = "0.2"
+- nu-ansi-term = "0.46"
+- env_logger = "0.11"
+- base64 = "0.22"
+- aes-gcm = "0.10"
+- argon2 = "0.5"
+- rand = "0.10"
+- dirs = "5"
+- sha2 = "0.10"
+- # Line-level text diffs for the memory_diff module (modified-item unified diffs).
+- similar = "2"
+- # Git-backed change ledger for the memory_diff module: snapshots are commits,
+- # checkpoints are tags, read markers are refs, diffs are git tree diffs.
+- # Vendored libgit2 (no system git dependency on end-user machines).
+- git2 = { version = "0.21", default-features = false, features = ["vendored-libgit2"] }
+- # Legacy SHA-1 only used for Tencent COS HMAC-SHA1 signing (yuanbao
+- # channel media upload). Not used for any new security-sensitive work.
+- sha1 = "0.10"
+- hmac = "0.12"
+- # Archive extraction for the Node.js runtime bootstrap. Unix Node
+- # distributions ship as .tar.xz, Windows as .zip. `xz2` with `static`
+- # bundles liblzma so we don't need it as a system dependency.
+- tar = "0.4"
+- xz2 = { version = "0.1", features = ["static"] }
+- zip = { version = "2", default-features = false, features = ["deflate"] }
+- # gzip decoder for the Piper tar.gz binary releases on macOS / Linux. Already
+- # pulled in transitively by zip's `deflate` feature; declared directly so
+- # the installer module can `use flate2::read::GzDecoder`.
+- flate2 = "1"
+- # Real timeout for `node --version` probes in the runtime resolver. Guards
+- # against a broken shim on PATH hanging the bootstrap forever.
+- wait-timeout = "0.2"
+- uuid = { version = "1", features = ["v4"] }
+- anyhow = "1.0"
+- async-trait = "0.1"
+- chacha20poly1305 = "0.10"
+- # Wipe master keys / decrypted secret buffers from memory on drop (audit C9).
+- # Already present transitively (resolved to 1.8.x via the *-dalek / cipher
+- # crates); declared directly so the keyring module can `use zeroize::Zeroizing`.
+- zeroize = "1"
+- x25519-dalek = { version = "2", features = ["static_secrets"] }
+- hkdf = "0.12"
+- hex = "0.4"
+- tokio-util = { version = "0.7", features = ["rt", "io"] }
+- # tokio-tungstenite is declared per-target below so the TLS backend
+- # (native-tls on Windows, rustls on macOS / Linux) matches the reqwest
+- # backend selected at each TLS call site.
+- futures = "0.3"
+- rusqlite = { version = "=0.40.0", features = ["bundled"] }
+- chrono = { version = "0.4", features = ["serde"] }
+- iana-time-zone = "0.1"
+- cron = "0.12"
+- futures-util = "0.3"
+- directories = "6"
+-@@ -279,125 +279,127 @@ windows-sys = { version = "0.61", features = [
+-     "Win32_System_Memory",
+-     "Win32_System_Threading",
+- ] }
+- # Microsoft UI Automation (UIA) bindings — the Windows backend for the
+- # `ax_interact` tool (`accessibility::uia_interact`). Safe Rust wrappers over
+- # the UIA COM API; the Windows analogue of the macOS AXUIElement Swift helper.
+- uiautomation = "0.25"
+- 
+- [target.'cfg(not(windows))'.dependencies]
+- # macOS / Linux: keep rustls + Mozilla webpki-roots — the historical
+- # default. Avoids pulling OpenSSL as a runtime dep on Linux.
+- tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "handshake", "rustls-tls-webpki-roots"] }
+- 
+- [target.'cfg(target_os = "macos")'.dependencies]
+- whisper-rs = { version = "0.16", features = ["metal"] }
+- # Contacts framework bindings for address book seeding.
+- objc2 = "0.6"
+- objc2-foundation = { version = "0.3", features = ["NSArray", "NSError", "NSObject", "NSString", "NSPredicate"] }
+- objc2-contacts = { version = "0.3.2", features = ["CNContact", "CNContactFetchRequest", "CNContactStore", "CNLabeledValue", "CNPhoneNumber"] }
+- block2 = "0.6"
+- 
+- [target.'cfg(target_os = "linux")'.dependencies]
+- landlock = { version = "0.4", optional = true }
+- rppal = { version = "0.22", optional = true }
+- 
+- [dev-dependencies]
+- # Enable sentry's TestTransport for runtime smoke of the observability
+- # before_send filter (see tests/observability_smoke.rs). `default-features
+- # = false` here is load-bearing — sentry's default feature set pulls in
+- # actix-web / actix-http / actix-server / sentry-actix and ~13 transitive
+- # crates we never use (and that bloat the dev Cargo.lock noticeably).
+- # TestTransport only needs the `test` feature.
+- sentry = { version = "0.47.0", default-features = false, features = ["test"] }
+- # Mock HTTP server for provider E2E tests (inference_provider_e2e).
+- wiremock = "0.6"
+- # Used in json_rpc_e2e to backdate mtime on stale lock files.
+- filetime = "0.2"
+- # `test-util` enables tokio's paused virtual clock (`start_paused`,
+- # `time::advance`) so the #4270 inference-heartbeat tests assert the periodic
+- # beat without real-time waits. Test-only — the runtime feature set in
+- # `[dependencies]` (`full`) intentionally excludes it.
+- tokio = { version = "1", features = ["test-util"] }
+- # Property-based testing for the adversarial-input surfaces (command classifier,
+- # encryption round-trip) — plan.md §6.3. Version already resolved in Cargo.lock.
+- proptest = "1"
+- 
+- [features]
+- default = ["tokenjuice-treesitter"]
+- # AST-aware code compression (tree-sitter Rust/TS/Python grammars; C build).
+- # On by default; disable to fall back to the brace-depth heuristic.
+- tokenjuice-treesitter = [
+-     "tinyjuice/tokenjuice-treesitter",
+- ]
+- sandbox-landlock = ["dep:landlock"]
+- sandbox-bubblewrap = []
+- peripheral-rpi = ["dep:rppal"]
+- browser-native = ["dep:fantoccini"]
+- fantoccini = ["browser-native"]
+- landlock = ["sandbox-landlock"]
+- whatsapp-web = ["dep:whatsapp-rust", "dep:whatsapp-rust-tokio-transport", "dep:whatsapp-rust-ureq-http-client", "dep:wacore", "serde-big-array"]
+- # Exposes the destructive `openhuman.test_reset` RPC. Off by default; the E2E
+- # build (app/scripts/e2e-build.sh) flips it on. Shipped binaries never have
+- # this feature so the wipe RPC isn't even registered, let alone reachable.
+- e2e-test-support = []
+- 
+- [lints.rust]
+- unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+- 
+- # Fix whisper-rs-sys CRT mismatch on Windows MSVC (LNK2038).
+- # Upstream cmake build defaults to /MD but Rust uses /MT.
+- # This fork adds config.static_crt(true) to the build script.
+- # See: https://github.com/tinyhumansai/openhuman/issues/273
+- [patch.crates-io]
+- whisper-rs-sys = { git = "https://github.com/tinyhumansai/whisper-rs-sys.git", branch = "main" }
+- # TinyAgents is vendored as a git submodule (pinned at the released tag) so
+- # migration work can change the SDK source in-tree, test it against OpenHuman
+- # immediately, and PR the diff upstream from the submodule. Keep the submodule
+- # version in lockstep with the `tinyagents` requirement above. After cloning:
+- # `git submodule update --init vendor/tinyagents` (worktrees included).
+- tinyagents = { path = "vendor/tinyagents" }
+--# TinyFlows and TinyCortex are vendored beside TinyAgents so integration work can
+--# test workflow and memory-layer changes against OpenHuman before publishing.
+-+# TinyFlows, TinyCortex, TinyJuice, TinyChannels, and TinyPlace are vendored beside
+-+# TinyAgents so integration work can test crate changes against OpenHuman before
+-+# publishing.
+- tinyflows = { path = "vendor/tinyflows" }
+- tinycortex = { path = "vendor/tinycortex" }
+- tinyjuice = { path = "vendor/tinyjuice" }
+-+tinychannels = { path = "vendor/tinychannels" }
+- tinyplace = { path = "vendor/tinyplace/sdk/rust" }
+- 
+- # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
+- # panics + render surrounding source lines. `line-tables-only` keeps the
+- # binary small (only file+line tables, no full type info) while still
+- # letting `sentry-cli debug-files upload --include-sources` produce a
+- # usable `.src.zip`. `split-debuginfo = "packed"` writes the debug data
+- # into a separate `.dSYM` bundle on macOS so the shipped executable
+- # itself stays slim.
+- [profile.release]
+- debug = "line-tables-only"
+- split-debuginfo = "packed"
+- 
+- # Fast CI builds: trade runtime perf for compile speed
+- [profile.ci]
+- inherits = "release"
+- opt-level = 1
+- codegen-units = 16
+- lto = false
+- incremental = false
+- strip = true
+- debug = false
+- 
+- # Faster local + CI iteration (#3877): compile third-party dependencies in the
+- # dev/test profiles WITHOUT debuginfo. The dependency graph here is large (a
+- # local checkout showed root `target/` ~12G and Tauri `target/` ~4.4G), and
+- # DWARF generation + linking for every dependency is a dominant, repeated cost
+- # across `cargo build`, `cargo test`, `cargo clippy`, and `cargo llvm-cov`.
+- #
+- # Scope is intentionally narrow and low-risk:
+- #   * `package."*"` targets dependencies only — our own crates keep full
+- #     debuginfo, so panics/backtraces in OpenHuman code still resolve to
+- #     file:line and a debugger can still step through our code.
+- #   * Only the unoptimised `dev`/`test` profiles change. `release` and `ci`
+- #     (which already set `debug = false` / `line-tables-only`) are untouched.
+- #   * No artifact paths, features, or runtime behaviour change — this only
+- #     reduces how much DWARF is emitted for dependencies, which also shrinks
+- #     `target/` substantially.
+- [profile.dev.package."*"]
+- debug = false
+-diff --git a/app/src-tauri/Cargo.lock b/app/src-tauri/Cargo.lock
+-index d39344b86..4df2712c9 100644
+---- a/app/src-tauri/Cargo.lock
+-+++ b/app/src-tauri/Cargo.lock
+-@@ -128,172 +128,172 @@ dependencies = [
+-  "version_check",
+-  "zerocopy",
+- ]
+- 
+- [[package]]
+- name = "aho-corasick"
+- version = "1.1.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
+- dependencies = [
+-  "memchr",
+- ]
+- 
+- [[package]]
+- name = "alsa"
+- version = "0.9.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ed7572b7ba83a31e20d1b48970ee402d2e3e0537dcfe0a3ff4d6eb7508617d43"
+- dependencies = [
+-  "alsa-sys",
+-  "bitflags 2.11.1",
+-  "cfg-if",
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "alsa-sys"
+- version = "0.3.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "db8fee663d06c4e303404ef5f40488a53e062f89ba8bfed81f42325aafad1527"
+- dependencies = [
+-  "libc",
+-  "pkg-config",
+- ]
+- 
+- [[package]]
+- name = "android_system_properties"
+- version = "0.1.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
+- dependencies = [
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "anstream"
+- version = "1.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "824a212faf96e9acacdbd09febd34438f8f711fb84e09a8916013cd7815ca28d"
+- dependencies = [
+-  "anstyle",
+-  "anstyle-parse",
+-  "anstyle-query",
+-  "anstyle-wincon",
+-  "colorchoice",
+-  "is_terminal_polyfill",
+-  "utf8parse",
+- ]
+- 
+- [[package]]
+- name = "anstyle"
+- version = "1.0.14"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000"
+- 
+- [[package]]
+- name = "anstyle-parse"
+- version = "1.0.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "52ce7f38b242319f7cabaa6813055467063ecdc9d355bbb4ce0c68908cd8130e"
+- dependencies = [
+-  "utf8parse",
+- ]
+- 
+- [[package]]
+- name = "anstyle-query"
+- version = "1.1.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
+- dependencies = [
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "anstyle-wincon"
+- version = "3.0.11"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
+- dependencies = [
+-  "anstyle",
+-  "once_cell_polyfill",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "anyhow"
+- version = "1.0.102"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
+- 
+- [[package]]
+- name = "arbitrary"
+- version = "1.4.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
+- dependencies = [
+-  "derive_arbitrary",
+- ]
+- 
+- [[package]]
+- name = "arboard"
+- version = "3.6.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0348a1c054491f4bfe6ab86a7b6ab1e44e45d899005de92f58b3df180b36ddaf"
+- dependencies = [
+-  "clipboard-win",
+-  "image",
+-  "log",
+-  "objc2 0.6.4",
+-  "objc2-app-kit 0.3.2",
+-  "objc2-core-foundation",
+-  "objc2-core-graphics",
+-  "objc2-foundation 0.3.2",
+-  "parking_lot",
+-  "percent-encoding",
+-  "windows-sys 0.60.2",
+-  "x11rb",
+- ]
+- 
+- [[package]]
+- name = "argon2"
+- version = "0.5.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3c3610892ee6e0cbce8ae2700349fcf8f98adb0dbfbee85aec3c9179d29cc072"
+- dependencies = [
+-  "base64ct",
+-  "blake2",
+-  "cpufeatures 0.2.17",
+-  "password-hash 0.5.0",
+- ]
+- 
+- [[package]]
+- name = "arrayref"
+- version = "0.3.9"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
+- 
+- [[package]]
+- name = "arrayvec"
+- version = "0.7.6"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+- 
+- [[package]]
+- name = "ashpd"
+- version = "0.11.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d2f3f79755c74fd155000314eb349864caa787c6592eace6c6882dad873d9c39"
+- dependencies = [
+-  "enumflags2",
+-  "futures-channel",
+-  "futures-util",
+-  "rand 0.9.4",
+-  "raw-window-handle",
+-  "serde",
+-  "serde_repr",
+-  "tokio",
+-  "url",
+-  "wayland-backend",
+-  "wayland-client",
+-  "wayland-protocols",
+-  "zbus",
+-@@ -8067,161 +8067,161 @@ name = "signature"
+- version = "2.2.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
+- dependencies = [
+-  "digest 0.10.7",
+-  "rand_core 0.6.4",
+- ]
+- 
+- [[package]]
+- name = "simd-adler32"
+- version = "0.3.9"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "703d5c7ef118737c72f1af64ad2f6f8c5e1921f818cdcb97b8fe6fc69bf66214"
+- 
+- [[package]]
+- name = "similar"
+- version = "2.7.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
+- 
+- [[package]]
+- name = "simplecss"
+- version = "0.2.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7a9c6883ca9c3c7c90e888de77b7a5c849c779d25d74a1269b0218b14e8b136c"
+- dependencies = [
+-  "log",
+- ]
+- 
+- [[package]]
+- name = "siphasher"
+- version = "0.3.11"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "38b58827f4464d87d377d175e90bf58eb00fd8716ff0a62f80356b5e61555d0d"
+- 
+- [[package]]
+- name = "siphasher"
+- version = "1.0.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
+- 
+- [[package]]
+- name = "slab"
+- version = "0.4.12"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+- 
+- [[package]]
+- name = "slotmap"
+- version = "1.1.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038"
+- dependencies = [
+-  "version_check",
+- ]
+- 
+- [[package]]
+- name = "smallvec"
+- version = "1.15.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+- 
+- [[package]]
+- name = "smartstring"
+- version = "1.0.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3fb72c633efbaa2dd666986505016c32c3044395ceaf881518399d2f4127ee29"
+- dependencies = [
+-  "autocfg",
+-  "static_assertions",
+-  "version_check",
+- ]
+- 
+- [[package]]
+- name = "socket2"
+- version = "0.6.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
+- dependencies = [
+-  "libc",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "socketioxide"
+- version = "0.15.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "929e1bc0629c6c8ceaa39473082aa2df35a2a5f0c300382912047bd5dccb9740"
+- dependencies = [
+-  "bytes",
+-  "engineioxide",
+-  "futures-core",
+-  "futures-util",
+-  "http",
+-  "http-body",
+-  "hyper",
+-  "matchit",
+-  "pin-project-lite",
+-  "rustversion",
+-  "serde",
+-  "socketioxide-core",
+-  "socketioxide-parser-common",
+-  "thiserror 1.0.69",
+-  "tokio",
+-  "tower-layer",
+-  "tower-service",
+- ]
++[... 74 context line(s) omitted ... ⟦tj:fc9c6cd5c26d7bb830d5b1889d4b99c0⟧]
++       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
++       # [patch.crates-io] resolves Rust SDK crates from vendor/.
++       - name: Init vendored Rust submodules
++-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinychannels vendor/tinyplace
++       - name: Set up Docker Buildx
++         uses: docker/setup-buildx-action@v3
++       - name: Log in to GHCR
++[... 74 context line(s) omitted ... ⟦tj:fc51e4e50212afdcbf9a7fcb1c96284e⟧]
++         with:
++           ref: ${{ needs.prepare-build.outputs.build_ref }}
++           fetch-depth: 1
++diff --git a/.github/workflows/release-staging.yml b/.github/workflows/release-staging.yml
++index 3b7a830c2..79a796ff6 100644
++--- a/.github/workflows/release-staging.yml
+++++ b/.github/workflows/release-staging.yml
++@@ -240,161 +240,161 @@ jobs:
++           else
++             echo "build_ref=$SHA" >> "$GITHUB_OUTPUT"
++           fi
++[... 74 context line(s) omitted ... ⟦tj:b7430b79e54801adbd57075daae97fd1⟧]
++       # fork the core image doesn't need. The Dockerfile COPYs vendor/ because
++       # [patch.crates-io] resolves Rust SDK crates from vendor/.
++       - name: Init vendored Rust submodules
++-        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinyplace
+++        run: git submodule update --init vendor/tinyagents vendor/tinyflows vendor/tinycortex vendor/tinyjuice vendor/tinychannels vendor/tinyplace
++       - name: Set up Docker Buildx
++         uses: docker/setup-buildx-action@v3
++       - name: Build image (no push)
++[... 74 context line(s) omitted ... ⟦tj:502201ea3a02309cff2fc728d6eff813⟧]
++       always()
++       && inputs.create_tag
++       && needs.prepare-build.result == 'success'
++diff --git a/.gitmodules b/.gitmodules
++index ce992e204..3f6001479 100644
++--- a/.gitmodules
+++++ b/.gitmodules
++@@ -1,22 +1,25 @@
++ [submodule "app/src-tauri/vendor/tauri-cef"]
++ 	path = app/src-tauri/vendor/tauri-cef
++ 	url = https://github.com/tinyhumansai/tauri-cef.git
++[... 13 context line(s) omitted ... ⟦tj:5e554cbb7d401450814d528bd48e7f44⟧]
++ [submodule "vendor/tinyjuice"]
++ 	path = vendor/tinyjuice
++ 	url = https://github.com/tinyhumansai/tinyjuice
+++[submodule "vendor/tinychannels"]
+++	path = vendor/tinychannels
+++	url = https://github.com/tinyhumansai/tinychannels
++ [submodule "vendor/tinyplace"]
++ 	path = vendor/tinyplace
++ 	url = https://github.com/tinyhumansai/tiny.place.git
++diff --git a/Cargo.lock b/Cargo.lock
++index 7aa978e60..1259721a2 100644
++--- a/Cargo.lock
+++++ b/Cargo.lock
++@@ -74,172 +74,172 @@ dependencies = [
++[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:0bd4ecb1d1fa14ebc14c2aab0a111fbd⟧]
++@@ -1588,161 +1588,161 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:6e4f40e125cec8961338af4bb87218e6⟧]
++@@ -1845,161 +1845,161 @@ dependencies = [
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:56afd6c1be4da3c0aa09657531d33482⟧]
++@@ -3162,161 +3162,161 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:b9bfe517de8901ded74fb5556d9bd10c⟧]
++@@ -3811,161 +3811,161 @@ checksum = "8c196769dd60fd4f363e11d948139556a344e79d451aeb2fa2fd040738ef7691"
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:c4081c1eee1fab079b31309bf9bcbee0⟧]
++@@ -5654,220 +5654,220 @@ name = "rlp-derive"
++[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:061e6beb1ead6a1d1d4342777b96967e⟧]
++@@ -6317,161 +6317,161 @@ dependencies = [
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:d2d85a6c1e657982845c0ad3aa4de7c0⟧]
++@@ -6618,307 +6618,308 @@ dependencies = [
++[... lockfile/bundle hunk: +3/-2 line(s) omitted ... ⟦tj:69eef10a6f39c004517de1b4ace21948⟧]
++diff --git a/Cargo.toml b/Cargo.toml
++index cea66d3b4..241e0d09f 100644
++--- a/Cargo.toml
+++++ b/Cargo.toml
++@@ -1,158 +1,158 @@
++ [package]
++ name = "openhuman"
++ version = "0.58.11"
++[... 71 context line(s) omitted ... ⟦tj:5845cf728cade54093be360293ec5171⟧]
++ # aligned to the host pins (=0.40 / 0.21) so one bundled SQLite + one libgit2
++ # link. Keep the version pin in lockstep with the submodule tag.
++ tinycortex = "0.1"
++-tinychannels = { git = "https://github.com/tinyhumansai/tinychannels.git", branch = "feat/phase-0-hygiene", features = ["relay-websocket"] }
+++tinychannels = { version = "0.1", features = ["relay-websocket"] }
++ # TokenJuice code compressor — AST-aware signature extraction. Optional (C build)
++ # behind the default `tokenjuice-treesitter` feature; disabling it falls back to
++ # the language-agnostic brace-depth heuristic. See src/openhuman/tokenjuice/compressors/code.rs.
++[... 74 context line(s) omitted ... ⟦tj:215fe17cd99ad9da1cffa602d525bd85⟧]
++ cron = "0.12"
++ futures-util = "0.3"
++ directories = "6"
++@@ -279,125 +279,127 @@ windows-sys = { version = "0.61", features = [
++     "Win32_System_Memory",
++     "Win32_System_Threading",
++ ] }
++[... 74 context line(s) omitted ... ⟦tj:609c7f6bd31fa8c1f049c323fe08a56d⟧]
++ # version in lockstep with the `tinyagents` requirement above. After cloning:
++ # `git submodule update --init vendor/tinyagents` (worktrees included).
++ tinyagents = { path = "vendor/tinyagents" }
++-# TinyFlows and TinyCortex are vendored beside TinyAgents so integration work can
++-# test workflow and memory-layer changes against OpenHuman before publishing.
+++# TinyFlows, TinyCortex, TinyJuice, TinyChannels, and TinyPlace are vendored beside
+++# TinyAgents so integration work can test crate changes against OpenHuman before
+++# publishing.
++ tinyflows = { path = "vendor/tinyflows" }
++ tinycortex = { path = "vendor/tinycortex" }
++ tinyjuice = { path = "vendor/tinyjuice" }
+++tinychannels = { path = "vendor/tinychannels" }
++ tinyplace = { path = "vendor/tinyplace/sdk/rust" }
+  
+- [[package]]
+- name = "socketioxide-core"
+- version = "0.15.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "20fbe5455c862962f547bac834bcc6db8659a7033934b9c45c6e1cfb4f9dc178"
+- dependencies = [
+-  "bytes",
+-  "engineioxide",
+-  "serde",
+-  "thiserror 1.0.69",
+- ]
+- 
+- [[package]]
+- name = "socketioxide-parser-common"
+- version = "0.15.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "554757f11f7b0944334fc00765523443c39a05fcd7be69aaaffbda06fbc4cef7"
+- dependencies = [
+-  "bytes",
+-  "itoa",
+-  "serde",
+-  "serde_json",
+-  "socketioxide-core",
+- ]
+- 
+- [[package]]
+- name = "socks"
+- version = "0.3.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "f0c3dbbd9ae980613c6dd8e28a9407b50509d3803b57624d5dfe8315218cd58b"
+- dependencies = [
+-  "byteorder",
+-  "libc",
+-  "winapi",
+- ]
+- 
+- [[package]]
+- name = "softbuffer"
+- version = "0.4.8"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "aac18da81ebbf05109ab275b157c22a653bb3c12cf884450179942f81bcbf6c3"
+- dependencies = [
+-  "bytemuck",
+-  "js-sys",
+-  "ndk 0.9.0",
+-  "objc2 0.6.4",
+-  "objc2-core-foundation",
+-  "objc2-core-graphics",
+-  "objc2-foundation 0.3.2",
+-  "objc2-quartz-core 0.3.2",
+-  "raw-window-handle",
+-  "redox_syscall",
+-  "tracing",
++ # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
++[... 34 context line(s) omitted ... ⟦tj:7daa2fc39749e66d690dc18e810b31f4⟧]
++ #     `target/` substantially.
++ [profile.dev.package."*"]
++ debug = false
++diff --git a/app/src-tauri/Cargo.lock b/app/src-tauri/Cargo.lock
++index d39344b86..4df2712c9 100644
++--- a/app/src-tauri/Cargo.lock
+++++ b/app/src-tauri/Cargo.lock
++@@ -128,172 +128,172 @@ dependencies = [
++[... lockfile/bundle hunk: +2/-2 line(s) omitted ... ⟦tj:8b9c5883bccbed6e4a9aa06f6d867f1f⟧]
++@@ -8067,161 +8067,161 @@ name = "signature"
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:994468abba9625a8800f9bd963072f57⟧]
+ @@ -9100,175 +9100,176 @@ dependencies = [
+-  "deranged",
+-  "itoa",
+-  "num-conv",
+-  "powerfmt",
+-  "serde_core",
+-  "time-core",
+-  "time-macros",
+- ]
+- 
+- [[package]]
+- name = "time-core"
+- version = "0.1.8"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "7694e1cfe791f8d31026952abf09c69ca6f6fa4e1a1229e18988f06a04a12dca"
+- 
+- [[package]]
+- name = "time-macros"
+- version = "0.2.27"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "2e70e4c5a0e0a8a4823ad65dfe1a6930e4f4d756dcd9dd7939022b5e8c501215"
+- dependencies = [
+-  "num-conv",
+-  "time-core",
+- ]
+- 
+- [[package]]
+- name = "tiny-keccak"
+- version = "2.0.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
+- dependencies = [
+-  "crunchy",
+- ]
+- 
+- [[package]]
+- name = "tiny-skia"
+- version = "0.11.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "83d13394d44dae3207b52a326c0c85a8bf87f1541f23b0d143811088497b09ab"
+- dependencies = [
+-  "arrayref",
+-  "arrayvec",
+-  "bytemuck",
+-  "cfg-if",
+-  "log",
+-  "png 0.17.16",
+-  "tiny-skia-path",
+- ]
+- 
+- [[package]]
+- name = "tiny-skia-path"
+- version = "0.11.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "9c9e7fc0c2e86a30b117d0462aa261b72b7a99b7ebd7deb3a14ceda95c5bdc93"
+- dependencies = [
+-  "arrayref",
+-  "bytemuck",
+-  "strict-num",
+- ]
+- 
+- [[package]]
+- name = "tinyagents"
+- version = "1.7.1"
+- dependencies = [
+-  "async-trait",
+-  "bytes",
+-  "futures",
+-  "reqwest 0.12.28",
+-  "rhai",
+-  "rusqlite",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+- ]
+- 
+- [[package]]
+- name = "tinychannels"
+- version = "0.1.0"
+--source = "git+https://github.com/tinyhumansai/tinychannels.git?branch=feat%2Fphase-0-hygiene#5bcc2f3f80643dd519959064b83c96ae8473f149"
+- dependencies = [
+-  "anyhow",
+-  "async-trait",
+-  "base64 0.22.1",
+-  "futures-util",
+-  "hmac 0.12.1",
+-+ "reqwest 0.12.28",
+-  "schemars 1.2.1",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+-  "tokio-tungstenite 0.29.0",
+-  "tracing",
+-+ "uuid 1.23.1",
+- ]
+- 
+- [[package]]
+- name = "tinycortex"
+- version = "0.1.1"
+- dependencies = [
+-  "anyhow",
+-  "async-trait",
+-  "chrono",
+-  "git2",
+-  "parking_lot",
+-  "rand 0.8.6",
+-  "regex",
+-  "rusqlite",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "toml 0.8.2",
+-  "uuid 1.23.1",
+-  "walkdir",
+- ]
+- 
+- [[package]]
+- name = "tinyflows"
+- version = "0.3.2"
+- dependencies = [
+-  "async-trait",
+-  "futures-timer",
+-  "jaq-core",
+-  "jaq-json",
+-  "jaq-std",
+-  "serde",
+-  "serde_json",
+-  "thiserror 2.0.18",
+-  "tinyagents",
+-  "tracing",
+- ]
+- 
+- [[package]]
+- name = "tinyjuice"
+- version = "0.1.0"
+- dependencies = [
+-  "async-trait",
+-  "dirs 5.0.1",
+-  "hex",
+-  "log",
+-  "once_cell",
+-  "regex",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+-  "unicode-segmentation",
+-  "unicode-width",
+- ]
+- 
+- [[package]]
+- name = "tinyplace"
+- version = "2.0.0"
+- dependencies = [
+-  "aes",
+-  "async-trait",
+-  "base64 0.22.1",
+-  "bs58",
+-  "cbc",
+-  "chrono",
+-  "curve25519-dalek",
+-  "ed25519-dalek",
+-  "futures-util",
+-  "hkdf",
+-  "hmac 0.12.1",
+-  "rand 0.8.6",
+-  "reqwest 0.12.28",
+-  "serde",
+-  "serde_json",
+-  "sha2 0.10.9",
+-  "thiserror 2.0.18",
+-  "tokio",
+-@@ -9708,161 +9709,161 @@ version = "0.25.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
+- dependencies = [
+-  "core_maths",
+- ]
+- 
+- [[package]]
+- name = "tungstenite"
+- version = "0.24.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "18e5b8366ee7a95b16d32197d0b2604b43a0be89dc5fac9f8e96ccafbaedda8a"
+- dependencies = [
+-  "byteorder",
+-  "bytes",
+-  "data-encoding",
+-  "http",
+-  "httparse",
+-  "log",
+-  "native-tls",
+-  "rand 0.8.6",
+-  "rustls",
+-  "rustls-pki-types",
+-  "sha1",
+-  "thiserror 1.0.69",
+-  "utf-8",
+- ]
+- 
+- [[package]]
+- name = "tungstenite"
+- version = "0.29.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "6c01152af293afb9c7c2a57e4b559c5620b421f6d133261c60dd2d0cdb38e6b8"
+- dependencies = [
+-  "bytes",
+-  "data-encoding",
+-  "http",
+-  "httparse",
+-  "log",
+-  "rand 0.9.4",
+-  "rustls",
+-  "rustls-pki-types",
+-  "sha1",
+-  "thiserror 2.0.18",
+- ]
+- 
+- [[package]]
+- name = "type1-encoding-parser"
+- version = "0.1.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "fa10c302f5a53b7ad27fd42a3996e23d096ba39b5b8dd6d9e683a05b01bee749"
+- dependencies = [
+-  "pom",
+- ]
+- 
+- [[package]]
+- name = "typed-arena"
+- version = "2.0.2"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "6af6ae20167a9ece4bcb41af5b80f8a1f1df981f6391189ce00fd257af04126a"
+- 
+- [[package]]
+- name = "typeid"
+- version = "1.0.3"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
+- 
+- [[package]]
+- name = "typenum"
+- version = "1.20.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
+- 
+- [[package]]
+- name = "uds_windows"
+- version = "1.2.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "f2f6fb2847f6742cd76af783a2a2c49e9375d0a111c7bef6f71cd9e738c72d6e"
+- dependencies = [
+-  "memoffset",
+-  "tempfile",
+-- "windows-sys 0.61.2",
+-+ "windows-sys 0.60.2",
+- ]
+- 
+- [[package]]
+- name = "uiautomation"
+- version = "0.25.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "c68495a701b9f2f21f29353ac446f0d27dd0d7ce97aa9ccf9061bca0446cd744"
+- dependencies = [
+-  "chrono",
+-  "uiautomation_derive",
+-  "windows 0.62.2",
+-  "windows-core 0.62.2",
+- ]
+- 
+- [[package]]
+- name = "uiautomation_derive"
+- version = "0.7.8"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "ffcc4d404aa1c03a848f95cf5feadc3e63946d7f095bf388770b85550093d388"
+- dependencies = [
+-  "proc-macro2",
+-  "quote",
+-  "syn 2.0.117",
+- ]
+- 
+- [[package]]
+- name = "uint"
+- version = "0.9.5"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "76f64bba2c53b04fcab63c01a7d7427eadc821e3bc48c34dc9ba29c501164b52"
+- dependencies = [
+-  "byteorder",
+-  "crunchy",
+-  "hex",
+-  "static_assertions",
+- ]
+- 
+- [[package]]
+- name = "uname"
+- version = "0.1.1"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "b72f89f0ca32e4db1c04e2a72f5345d59796d4866a1ee0609084569f73683dc8"
+- dependencies = [
+-  "libc",
+- ]
+- 
+- [[package]]
+- name = "unarray"
+- version = "0.1.4"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "eaea85b334db583fe3274d12b4cd1880032beab409c0d774be044d4480ab9a94"
+- 
+- [[package]]
+- name = "unic-char-property"
+- version = "0.9.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "a8c57a407d9b6fa02b4795eb81c5b6652060a15a7903ea981f3d723e6c0be221"
+- dependencies = [
+-  "unic-char-range",
+- ]
+- 
+- [[package]]
+- name = "unic-char-range"
+- version = "0.9.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "0398022d5f700414f6b899e10b8348231abf9173fa93144cbc1a43b9793c1fbc"
+- 
+- [[package]]
+- name = "unic-common"
+- version = "0.9.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "80d7ff825a6a654ee85a63e80f92f054f904f21e7d12da4e22f9834a4aaa35bc"
+- 
+- [[package]]
+- name = "unic-ucd-ident"
+- version = "0.9.0"
+- source = "registry+https://github.com/rust-lang/crates.io-index"
+- checksum = "e230a37c0381caa9219d67cf063aa3a375ffed5bf541a452db16e744bdab6987"
+- dependencies = [
+-  "unic-char-property",
++[... lockfile/bundle hunk: +2/-1 line(s) omitted ... ⟦tj:52dac3cb9097f9cb71e7ca2de0f2fd07⟧]
++@@ -9708,161 +9709,161 @@ version = "0.25.1"
++[... lockfile/bundle hunk: +1/-1 line(s) omitted ... ⟦tj:e1cda42a16282b1134e348f57e10475b⟧]
+ diff --git a/app/src-tauri/Cargo.toml b/app/src-tauri/Cargo.toml
+ index f5ca5599e..6fa098b29 100644
+ --- a/app/src-tauri/Cargo.toml
+@@ -2875,80 +143,7 @@
+  openhuman_core = { path = "../..", package = "openhuman", default-features = false }
+  tinyjuice = { version = "0.1", default-features = false }
+  
+- [target.'cfg(unix)'.dependencies]
+- nix = { version = "0.29", default-features = false, features = ["hostname", "signal", "user"] }
+- 
+- [target.'cfg(target_os = "macos")'.dependencies]
+- objc2 = "0.6"
+- objc2-app-kit = "0.3.2"
+- mac-notification-sys = "0.6"
+- # iMessage scanner reads ~/Library/Messages/chat.db read-only on macOS.
+- rusqlite = { version = "=0.40.0", features = ["bundled"] }
+- objc2-user-notifications = "0.3.2"
+- block2 = "0.6.2"
+- objc2-foundation = { version = "0.3.2", features = ["NSTimer", "block2"] }
+- # Native WKWebView host for the floating mascot window — bypasses CEF
+- # (which can't render transparent windowed-mode browsers).
+- objc2-web-kit = { version = "0.3.2", features = ["block2"] }
+- 
+- [target.'cfg(target_os = "linux")'.dependencies]
+- notify-rust = { version = "4", default-features = false, features = ["dbus"] }
+- 
+- [target.'cfg(target_os = "windows")'.dependencies]
+- # AttachConsole — re-attach to the parent shell when the binary runs as a CLI
+- # (the `core` subcommand). The main binary itself is windows-subsystem so
+- # launching the Tauri app from Explorer does not pop a console; the helper
+- # CEF subprocess re-execs inherit that same subsystem.
+- windows-sys = { version = "0.59", features = [
+-     "Win32_System_Console",
+-     "Win32_Foundation",
+-     # EnumWindows / ShowWindow / SW_HIDE / SW_SHOW used by the main-window
+-     # close handler. tauri-runtime-cef's window.hide() / minimize() target a
+-     # cef::Window internal handle, not the visible Chrome_WidgetWin_1
+-     # top-level frame, so we walk the OS window list ourselves (#1607).
+-     "Win32_UI_WindowsAndMessaging",
+-     # CreateMutexW / CloseHandle — used by the pre-CEF single-instance guard
+-     # (see run() in lib.rs) that detects a second launch before CefRuntime::init
+-     # fires (Sentry OPENHUMAN-TAURI-A).
+-     # Win32_Security is required because CreateMutexW's SECURITY_ATTRIBUTES
+-     # parameter is gated behind it in windows-sys 0.59.
+-     "Win32_System_Threading",
+-     "Win32_Security",
+-     # CreateToolhelp32Snapshot / Process32FirstW / Process32NextW — used by the
+-     # pre-CEF cache-lock wait (cef_singleton_wait.rs) that counts straggler
+-     # processes from a dying prior instance before cef::initialize (TAURI-RUST-F).
+-     "Win32_System_Diagnostics_ToolHelp",
+-     "Win32_Storage_FileSystem",
+-     "Win32_System_IO",
+-     "Win32_System_Pipes",
+-     # RegOpenKeyExW / RegQueryValueExW / RegCloseKey — used by
+-     # deep_link_registration_check::verify_protocol_registration to read
+-     # back HKCU\Software\Classes\openhuman\shell\open\command after
+-     # `tauri-plugin-deep-link::register_all` so a silently-failed write
+-     # surfaces in the Sentry / user logs (issue #2699).
+-     "Win32_System_Registry",
+- ] }
+- 
+- [features]
+- default = []
+- # `custom-protocol` switches Tauri from `devUrl` (vite dev server) to the
+- # bundled `frontendDist` served via `tauri://localhost`. `cargo tauri build`
+- # turns this on automatically for release; do not put it in `default` or
+- # every `pnpm dev:app` will silently load the production bundle. DO NOT REMOVE!!
+- custom-protocol = ["tauri/custom-protocol"]
+- sandbox-bubblewrap = []
+- # Forwarded to the core crate to expose `openhuman.test_reset`. Off by
+- # default; the E2E build flips it on via `cargo tauri build --features
+- # e2e-test-support`. See app/scripts/e2e-build.sh.
+- e2e-test-support = ["openhuman_core/e2e-test-support"]
+- 
+- [patch.crates-io]
+- # `cargo tauri build` resolves dependencies from this manifest, so the
+- # workspace-level whisper-rs-sys patch is not applied here. The fork forces
+- # whisper.cpp to use MSVC's static runtime (/MT), matching CEF and avoiding
+- # LNK2038/LNK1169 CRT conflicts on Windows.
+- whisper-rs-sys = { git = "https://github.com/tinyhumansai/whisper-rs-sys.git", branch = "main" }
+- # TinyAgents vendored submodule (repo-root vendor/tinyagents, pinned at the
++[... 74 context line(s) omitted ... ⟦tj:c78dfe408469970849230538aac3e560⟧]
+  # released tag) — same patch as the root Cargo world so both resolve the
+  # in-tree SDK source. `git submodule update --init vendor/tinyagents` first.
+  tinyagents = { path = "../../vendor/tinyagents" }
+@@ -2964,71 +159,7 @@
+  tinyplace = { path = "../../vendor/tinyplace/sdk/rust" }
+  
+  # CEF support lives on the `feat/cef` branch of tauri-apps/tauri. We carry our
+- # own fork at tinyhumansai/tauri-cef on `feat/cef-notification-intercept` which
+- # adds native Web Notifications interception — `tauri-runtime-cef::notification`
+- # (browser-process callback registry) plus `cef-helper` patching `window.Notification`
+- # and `ServiceWorkerRegistration.prototype.showNotification` from the renderer
+- # side. The fork is vendored as a git submodule at `vendor/tauri-cef`; the
+- # submodule's recorded commit is the pin.
+- #
+- # Plugins still patch from upstream tauri-apps/plugins-workspace@feat/cef — the
+- # fork is tauri-only.
+- tauri = { path = "vendor/tauri-cef/crates/tauri" }
+- tauri-build = { path = "vendor/tauri-cef/crates/tauri-build" }
+- tauri-utils = { path = "vendor/tauri-cef/crates/tauri-utils" }
+- tauri-macros = { path = "vendor/tauri-cef/crates/tauri-macros" }
+- tauri-runtime = { path = "vendor/tauri-cef/crates/tauri-runtime" }
+- tauri-runtime-wry = { path = "vendor/tauri-cef/crates/tauri-runtime-wry" }
+- tauri-plugin = { path = "vendor/tauri-cef/crates/tauri-plugin" }
+- 
+- # Pinned to a specific commit on plugins-workspace@feat/cef so fresh
+- # dependency resolution (without Cargo.lock) is reproducible and doesn't
+- # silently drift when upstream pushes to the branch.
+- tauri-plugin-opener = { git = "https://github.com/tauri-apps/plugins-workspace", rev = "c6561ab6b4f9e7f650d4fc8c53fd8acc9b65b9b2" }
+- tauri-plugin-deep-link = { git = "https://github.com/tauri-apps/plugins-workspace", rev = "c6561ab6b4f9e7f650d4fc8c53fd8acc9b65b9b2" }
+- tauri-plugin-global-shortcut = { git = "https://github.com/tauri-apps/plugins-workspace", rev = "c6561ab6b4f9e7f650d4fc8c53fd8acc9b65b9b2" }
+- tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", rev = "c6561ab6b4f9e7f650d4fc8c53fd8acc9b65b9b2" }
+- tauri-plugin-notification = { path = "vendor/tauri-plugin-notification" }
+- 
+- [dev-dependencies]
+- # `test-util` enables `#[tokio::test(start_paused = true)]` for the
+- # idle-watchdog unit tests in `cdp/session.rs` (#1213).
+- tokio = { version = "1", features = ["macros", "rt", "test-util"] }
+- tempfile = "3"
+- 
+- # Emit just enough DWARF in release builds for Sentry to symbolicate Rust
+- # panics + render surrounding source lines. `line-tables-only` keeps the
+- # binary small (only file+line tables, no full type info) while still
+- # letting `sentry-cli debug-files upload --include-sources` produce a
+- # usable `.src.zip`. `split-debuginfo = "packed"` writes the debug data
+- # into a separate `.dSYM` bundle on macOS so the shipped executable
+- # itself stays slim.
+- [profile.release]
+- debug = "line-tables-only"
+- split-debuginfo = "packed"
+- 
+- # Fast CI builds: trade runtime perf for compile speed
+- [profile.ci]
+- inherits = "release"
+- opt-level = 1
+- codegen-units = 16
+- lto = false
+- incremental = false
+- strip = true
+- debug = false
+- 
+- # Faster local + CI iteration (#3877): compile third-party dependencies in the
+- # dev/test profiles WITHOUT debuginfo. The Tauri shell embeds the full core
+- # crate, so its dev dependency graph is huge (a local checkout showed
+- # `app/src-tauri/target/` ~4.4G) and DWARF generation + linking for every
+- # dependency dominates `cargo build` / `cargo tauri dev` / `cargo llvm-cov`.
+- #
+- # Scope is intentionally narrow and low-risk (kept in sync with the root
+- # crate's `Cargo.toml` so both Cargo worlds get the same discipline):
+- #   * `package."*"` targets dependencies only — the shell + core crates keep
+- #     full debuginfo, so panics/backtraces still resolve to file:line.
+- #   * Only the unoptimised `dev`/`test` profiles change; `release`/`ci` are
+- #     untouched, so shipped bundles and Sentry symbolication are unaffected.
++[... 65 context line(s) omitted ... ⟦tj:98b9b43e3cd8b0a890e0657a94d6c1c7⟧]
+  #   * No artifact paths, features, or runtime behaviour change.
+  [profile.dev.package."*"]
+  debug = false
+@@ -3040,80 +171,7 @@
+  //! Channel command handling and health checks.
+  
+  use super::dingtalk::DingTalkChannel;
+- use super::discord::DiscordChannel;
+- use super::email_channel::EmailChannel;
+- use super::imessage::IMessageChannel;
+- use super::irc;
+- use super::irc::IrcChannel;
+- use super::lark::LarkChannel;
+- use super::linq::LinqChannel;
+- use super::qq::QQChannel;
+- use super::signal::SignalChannel;
+- use super::slack::SlackChannel;
+- use super::telegram::TelegramChannel;
+- use super::whatsapp::WhatsAppChannel;
+- #[cfg(feature = "whatsapp-web")]
+- use super::whatsapp_web::WhatsAppWebChannel;
+- use super::yuanbao::YuanbaoChannel;
+- use super::Channel;
+- use crate::openhuman::config::Config;
+- use anyhow::Result;
+- use std::sync::Arc;
+- use std::time::Duration;
+- 
+- #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+- pub(crate) enum ChannelHealthState {
+-     Healthy,
+-     Unhealthy,
+-     Timeout,
+- }
+- 
+- pub(crate) fn classify_health_result(
+-     result: &std::result::Result<bool, tokio::time::error::Elapsed>,
+- ) -> ChannelHealthState {
+-     match result {
+-         Ok(true) => ChannelHealthState::Healthy,
+-         Ok(false) => ChannelHealthState::Unhealthy,
+-         Err(_) => ChannelHealthState::Timeout,
+-     }
+- }
+- 
+- /// Run health checks for configured channels.
+- pub async fn doctor_channels(config: Config) -> Result<()> {
+-     let mut channels: Vec<(&'static str, Arc<dyn Channel>)> = Vec::new();
+- 
+-     if let Some(ref tg) = config.channels_config.telegram {
+-         channels.push((
+-             "Telegram",
+-             Arc::new(
+-                 TelegramChannel::new(
+-                     tg.bot_token.clone(),
+-                     tg.allowed_users.clone(),
+-                     tg.mention_only,
+-                 )
+-                 .with_streaming(
+-                     tg.stream_mode,
+-                     tg.draft_update_interval_ms,
+-                     tg.silent_streaming,
+-                 ),
+-             ),
+-         ));
+-     }
+- 
+-     if let Some(ref dc) = config.channels_config.discord {
+-         channels.push((
+-             "Discord",
+-             Arc::new(DiscordChannel::new(
+-                 dc.bot_token.clone(),
+-                 dc.guild_id.clone(),
+-                 dc.channel_id.clone(),
+-                 dc.allowed_users.clone(),
+-                 dc.listen_to_bots,
+-                 dc.mention_only,
+-             )),
+-         ));
+-     }
+- 
++[... 74 context line(s) omitted ... ⟦tj:31aefc7ec59144f612fb801421fae5cc⟧]
+      if let Some(ref sl) = config.channels_config.slack {
+          channels.push((
+              "Slack",
+@@ -3126,20 +184,7 @@
+              )),
+          ));
+      }
+- 
+-     if let Some(ref im) = config.channels_config.imessage {
+-         channels.push((
+-             "iMessage",
+-             Arc::new(IMessageChannel::new(im.allowed_contacts.clone())),
+-         ));
+-     }
+- 
+-     if config.channels_config.matrix.is_some() {
+-         tracing::warn!(
+-             "Matrix channel is configured but Matrix support was removed from this build; skipping Matrix health check."
+-         );
+-     }
+- 
++[... 14 context line(s) omitted ... ⟦tj:6aa5306438f08fbb701cefc01b32aae4⟧]
+      if let Some(ref sig) = config.channels_config.signal {
+          channels.push((
+              "Signal",
+@@ -3160,12 +205,7 @@
+              )),
+          ));
+      }
+- 
+-     if let Some(ref wa) = config.channels_config.whatsapp {
+-         // Runtime negotiation: detect backend type from config
+-         match wa.backend_type() {
+-             "cloud" => {
+-                 // Cloud API mode: requires phone_number_id, access_token, verify_token
++[... 6 context line(s) omitted ... ⟦tj:dc503cb2a37cfe7f2032a9e248542c43⟧]
+                  if wa.is_cloud_config() {
+                      channels.push((
+                          "WhatsApp",
+@@ -3181,80 +221,7 @@
+                          )),
+                      ));
+                  } else {
+-                     tracing::warn!("WhatsApp Cloud API configured but missing required fields (phone_number_id, access_token, verify_token)");
+-                 }
+-             }
+-             "web" => {
+-                 // Web mode: requires session_path
+-                 #[cfg(feature = "whatsapp-web")]
+-                 if wa.is_web_config() {
+-                     channels.push((
+-                         "WhatsApp",
+-                         Arc::new(WhatsAppWebChannel::new(
+-                             wa.session_path.clone().unwrap_or_default(),
+-                             wa.pair_phone.clone(),
+-                             wa.pair_code.clone(),
+-                             wa.allowed_numbers.clone(),
+-                         )),
+-                     ));
+-                 } else {
+-                     tracing::warn!("WhatsApp Web configured but session_path not set");
+-                 }
+-                 #[cfg(not(feature = "whatsapp-web"))]
+-                 {
+-                     tracing::warn!("WhatsApp Web backend requires 'whatsapp-web' feature. Enable with: cargo build --features whatsapp-web");
+-                 }
+-             }
+-             _ => {
+-                 tracing::warn!("WhatsApp config invalid: neither phone_number_id (Cloud API) nor session_path (Web) is set");
+-             }
+-         }
+-     }
+- 
+-     if let Some(ref lq) = config.channels_config.linq {
+-         channels.push((
+-             "Linq",
+-             Arc::new(LinqChannel::new(
+-                 lq.api_token.clone(),
+-                 lq.from_phone.clone(),
+-                 lq.allowed_senders.clone(),
+-             )),
+-         ));
+-     }
+- 
+-     if let Some(ref email_cfg) = config.channels_config.email {
+-         channels.push(("Email", Arc::new(EmailChannel::new(email_cfg.clone()))));
+-     }
+- 
+-     if let Some(ref irc) = config.channels_config.irc {
+-         channels.push((
+-             "IRC",
+-             Arc::new(IrcChannel::new(irc::IrcChannelConfig {
+-                 server: irc.server.clone(),
+-                 port: irc.port,
+-                 nickname: irc.nickname.clone(),
+-                 username: irc.username.clone(),
+-                 channels: irc.channels.clone(),
+-                 allowed_users: irc.allowed_users.clone(),
+-                 server_password: irc.server_password.clone(),
+-                 nickserv_password: irc.nickserv_password.clone(),
+-                 sasl_password: irc.sasl_password.clone(),
+-                 verify_tls: irc.verify_tls.unwrap_or(true),
+-             })),
+-         ));
+-     }
+- 
+-     if let Some(ref lk) = config.channels_config.lark {
+-         channels.push(("Lark", Arc::new(LarkChannel::from_config(lk))));
+-     }
+- 
+-     if let Some(ref dt) = config.channels_config.dingtalk {
+-         channels.push((
+-             "DingTalk",
+-             Arc::new(DingTalkChannel::new(
+-                 dt.client_id.clone(),
+-                 dt.client_secret.clone(),
+-                 dt.allowed_users.clone(),
++[... 74 context line(s) omitted ... ⟦tj:80cd90937d6e6ac6481ff249997e74de⟧]
+              )),
+          ));
+      }
+@@ -5589,82 +2556,9 @@
+      // name here. The capability block falls back to a platform-agnostic
+      // "messaging bot" phrasing. Per-channel renderers that want a
+      // named capabilities section can call `build_system_prompt` with
+-     // `Some(name)` directly.
+-     let mut system_prompt = build_system_prompt(
+-         &workspace,
+-         &model,
+-         &tool_descs,
+-         &skills,
+-         bootstrap_max_chars,
+-         None,
+-     );
+-     // Filter out Workflow-category tools (e.g. Composio, Apify) from the
+-     // main agent prompt — those are only available to the integrations_agent
+-     // subagent via category_filter = "skill".
+-     let non_skill_tools: Vec<&Box<dyn crate::openhuman::tools::Tool>> = tools_registry
+-         .iter()
+-         .filter(|t| t.category() != crate::openhuman::tools::traits::ToolCategory::Workflow)
+-         .collect();
+-     let non_skill_refs: Vec<&dyn crate::openhuman::tools::Tool> =
+-         non_skill_tools.iter().map(|t| t.as_ref()).collect();
+-     system_prompt.push_str(&build_tool_instructions_filtered(&non_skill_refs));
+-     // Tell the model its current filesystem access boundaries so it self-limits
+-     // (advisory only — the SecurityPolicy enforces these regardless).
+-     system_prompt.push_str(&format_access_context(&security));
+- 
+-     if !skills.is_empty() {
+-         println!(
+-             "  🧩 Skills:   {}",
+-             skills
+-                 .iter()
+-                 .map(|s| s.name.as_str())
+-                 .collect::<Vec<_>>()
+-                 .join(", ")
+-         );
++[... 74 context line(s) omitted ... ⟦tj:0989a89de00d8a786dc0c865c68d4924⟧]
+      }
+  
+-     // Collect active channels
+-     let mut channels: Vec<Arc<dyn Channel>> = Vec::new();
+- 
+-     if let Some(ref tg) = config.channels_config.telegram {
+-         tracing::info!(
+-             channel = "telegram",
+-             allowed_users_count = tg.allowed_users.len(),
+-             mention_only = tg.mention_only,
+-             stream_mode = ?tg.stream_mode,
+-             draft_update_interval_ms = tg.draft_update_interval_ms,
+-             "[channels] telegram enabled in core config (bot token not logged)"
+-         );
+-         channels.push(Arc::new(
+-             TelegramChannel::new(
+-                 tg.bot_token.clone(),
+-                 tg.allowed_users.clone(),
+-                 tg.mention_only,
+-             )
+-             .with_streaming(
+-                 tg.stream_mode,
+-                 tg.draft_update_interval_ms,
+-                 tg.silent_streaming,
+-             )
+-             .with_chat_id(tg.chat_id.clone()),
+-         ));
+-     } else {
+-         tracing::info!(
+-             "[channels] telegram not configured (no channels_config.telegram in saved config)"
+-         );
+-     }
+- 
+-     if let Some(ref dc) = config.channels_config.discord {
+-         channels.push(Arc::new(DiscordChannel::new(
+-             dc.bot_token.clone(),
+-             dc.guild_id.clone(),
+-             dc.channel_id.clone(),
+-             dc.allowed_users.clone(),
+-             dc.listen_to_bots,
+-             dc.mention_only,
+-         )));
+-     }
+- 
+      if let Some(ref sl) = config.channels_config.slack {
+ -        channels.push(Arc::new(SlackChannel::new(
+ +        channels.push(Arc::new(SlackChannel::with_http_client(
+@@ -5675,31 +2569,9 @@
+          )));
+          // Memory-tree ingestion is handled by the Composio-backed
+          // `SlackProvider`, which runs inside `composio::periodic` and
+-         // fires per-connection on its own 15-minute cadence. No spawn
+-         // required here.
++[... 23 context line(s) omitted ... ⟦tj:cc8424fd5a8971b2bc1b4222640eefe3⟧]
+      }
+  
+-     if let Some(ref mm) = config.channels_config.mattermost {
+-         channels.push(Arc::new(MattermostChannel::new(
+-             mm.url.clone(),
+-             mm.bot_token.clone(),
+-             mm.channel_id.clone(),
+-             mm.allowed_users.clone(),
+-             mm.thread_replies.unwrap_or(true),
+-             mm.mention_only.unwrap_or(false),
+-         )));
+-     }
+- 
+-     if let Some(ref im) = config.channels_config.imessage {
+-         channels.push(Arc::new(IMessageChannel::new(im.allowed_contacts.clone())));
+-     }
+- 
+-     if config.channels_config.matrix.is_some() {
+-         tracing::warn!(
+-             "Matrix channel is configured but Matrix support was removed from this build; skipping Matrix runtime startup."
+-         );
+-     }
+- 
+      if let Some(ref sig) = config.channels_config.signal {
+ -        channels.push(Arc::new(SignalChannel::new(
+ +        channels.push(Arc::new(SignalChannel::with_http_client(
+@@ -5718,9 +2590,7 @@
+          )));
+      }
+  
+-     if let Some(ref wa) = config.channels_config.whatsapp {
+-         // Runtime negotiation: detect backend type from config
+-         match wa.backend_type() {
++[... 3 context line(s) omitted ... ⟦tj:8c7f5f9f1b1a7769719028be34cd59cf⟧]
+              "cloud" => {
+                  // Cloud API mode: requires phone_number_id, access_token, verify_token
+                  if wa.is_cloud_config() {
+@@ -5734,80 +2604,7 @@
+                      )));
+                  } else {
+                      tracing::warn!("WhatsApp Cloud API configured but missing required fields (phone_number_id, access_token, verify_token)");
+-                 }
+-             }
+-             "web" => {
+-                 // Web mode: requires session_path
+-                 #[cfg(feature = "whatsapp-web")]
+-                 if wa.is_web_config() {
+-                     channels.push(Arc::new(WhatsAppWebChannel::new(
+-                         wa.session_path.clone().unwrap_or_default(),
+-                         wa.pair_phone.clone(),
+-                         wa.pair_code.clone(),
+-                         wa.allowed_numbers.clone(),
+-                     )));
+-                 } else {
+-                     tracing::warn!("WhatsApp Web configured but session_path not set");
+-                 }
+-                 #[cfg(not(feature = "whatsapp-web"))]
+-                 {
+-                     tracing::warn!("WhatsApp Web backend requires 'whatsapp-web' feature. Enable with: cargo build --features whatsapp-web");
+-                 }
+-             }
+-             _ => {
+-                 tracing::warn!("WhatsApp config invalid: neither phone_number_id (Cloud API) nor session_path (Web) is set");
+-             }
+-         }
+-     }
+- 
+-     if let Some(ref lq) = config.channels_config.linq {
+-         channels.push(Arc::new(LinqChannel::new(
+-             lq.api_token.clone(),
+-             lq.from_phone.clone(),
+-             lq.allowed_senders.clone(),
+-         )));
+-     }
+- 
+-     if let Some(ref email_cfg) = config.channels_config.email {
+-         let hydrated = resolve_email_password(email_cfg.clone(), &config);
+-         channels.push(Arc::new(EmailChannel::new(hydrated)));
+-     }
+- 
+-     if let Some(ref irc) = config.channels_config.irc {
+-         channels.push(Arc::new(IrcChannel::new(irc::IrcChannelConfig {
+-             server: irc.server.clone(),
+-             port: irc.port,
+-             nickname: irc.nickname.clone(),
+-             username: irc.username.clone(),
+-             channels: irc.channels.clone(),
+-             allowed_users: irc.allowed_users.clone(),
+-             server_password: irc.server_password.clone(),
+-             nickserv_password: irc.nickserv_password.clone(),
+-             sasl_password: irc.sasl_password.clone(),
+-             verify_tls: irc.verify_tls.unwrap_or(true),
+-         })));
+-     }
+- 
+-     if let Some(ref lk) = config.channels_config.lark {
+-         channels.push(Arc::new(LarkChannel::from_config(lk)));
+-     }
+- 
+-     if let Some(ref dt) = config.channels_config.dingtalk {
+-         channels.push(Arc::new(DingTalkChannel::new(
+-             dt.client_id.clone(),
+-             dt.client_secret.clone(),
+-             dt.allowed_users.clone(),
+-         )));
+-     }
+- 
+-     if let Some(ref qq) = config.channels_config.qq {
+-         channels.push(Arc::new(QQChannel::new(
+-             qq.app_id.clone(),
+-             qq.app_secret.clone(),
+-             qq.allowed_users.clone(),
+-         )));
+-     }
+- 
++[... 74 context line(s) omitted ... ⟦tj:73ca93979013035ac768f8c753f93ee1⟧]
+      if let Some(ref yb) = config.channels_config.yuanbao {
+          let yb_cfg = resolve_yuanbao_app_secret(yb.clone(), &config);
+          match YuanbaoChannel::new(yb_cfg) {
+@@ -5819,80 +2616,7 @@
+  //! Run with: `cargo test --test subconscious_e2e -- --nocapture --ignored`
+  
+  use std::sync::Arc;
+- 
+- use serde_json::json;
+- 
+- fn ci_safe_ingestion_config() -> openhuman_core::openhuman::memory::MemoryIngestionConfig {
+-     openhuman_core::openhuman::memory::MemoryIngestionConfig::default()
+- }
+- 
+- async fn ingest_doc(
+-     memory: &openhuman_core::openhuman::memory::UnifiedMemory,
+-     namespace: &str,
+-     key: &str,
+-     title: &str,
+-     content: &str,
+- ) -> String {
+-     use openhuman_core::openhuman::memory::{MemoryIngestionRequest, NamespaceDocumentInput};
+-     let result = memory
+-         .ingest_document(MemoryIngestionRequest {
+-             document: NamespaceDocumentInput {
+-                 namespace: namespace.to_string(),
+-                 key: key.to_string(),
+-                 title: title.to_string(),
+-                 content: content.to_string(),
+-                 source_type: "test".to_string(),
+-                 priority: "high".to_string(),
+-                 tags: Vec::new(),
+-                 metadata: json!({}),
+-                 category: "core".to_string(),
+-                 session_id: None,
+-                 document_id: None,
+-                 taint: openhuman_core::openhuman::memory::MemoryTaint::Internal,
+-             },
+-             config: ci_safe_ingestion_config(),
+-         })
+-         .await
+-         .expect("ingest should succeed");
+-     result.document_id
+- }
+- 
+- /// Two-tick E2E test — verifies the structured tick model persists tick
+- /// state across runs. The first tick has no world baseline, so it
+- /// establishes one; subsequent ticks diff against it. (Exercising the full
+- /// diff → decide path additionally requires configured + synced memory
+- /// sources; this smoke test focuses on the tick lifecycle + state.)
+- #[tokio::test]
+- #[ignore] // requires running Ollama
+- async fn two_tick_e2e_with_real_ollama() {
+-     use openhuman_core::openhuman::embeddings::NoopEmbedding;
+-     use openhuman_core::openhuman::memory::UnifiedMemory;
+-     use openhuman_core::openhuman::subconscious::store;
+- 
+-     let tmp = tempfile::tempdir().expect("tempdir");
+-     let workspace = tmp.path();
+- 
+-     let memory = UnifiedMemory::new(workspace, Arc::new(NoopEmbedding), None).expect("init memory");
+- 
+-     // Ingest test data
+-     ingest_doc(
+-         &memory,
+-         "skill-gmail",
+-         "urgent-emails-batch1",
+-         "3 urgent emails in inbox",
+-         "Email 1: From alice@partner.com — Subject: URGENT: API contract deadline\n\
+-          Body: The API integration deadline has been moved to tomorrow.\n\n\
+-          Email 2: From boss@company.com — Subject: Re: Q1 Budget Review\n\
+-          Body: Need your updated numbers by 3pm today.",
+-     )
+-     .await;
+- 
+-     let mut config = openhuman_core::openhuman::config::Config::default();
+-     config.workspace_dir = workspace.to_path_buf();
+-     config.heartbeat.enabled = true;
+-     config.heartbeat.inference_enabled = true;
+-     config.heartbeat.interval_minutes = 5;
+-     config.heartbeat.context_budget_tokens = 40_000;
++[... 74 context line(s) omitted ... ⟦tj:6138954ad194c4e430d34918098336d6⟧]
+      config.local_ai.runtime_enabled = true;
+      config.local_ai.usage.subconscious = true;
+  
+@@ -5912,27 +2636,8 @@
+      assert!(last_tick1 >= result1.tick_at);
+  
+      // Tick 2 with new data
+-     println!("\n=== TICK 2 ===");
+-     ingest_doc(
+-         &memory,
+-         "skill-gmail",
+-         "urgent-deadline-moved",
+-         "CRITICAL: API deadline moved to TOMORROW",
+-         "Email from alice@partner.com — Subject: RE: URGENT\n\
+-          Body: The deadline has been moved UP to tomorrow. This is now #1 priority.",
+-     )
+-     .await;
++[... 20 context line(s) omitted ... ⟦tj:fd3d25d4ec528d5eaeb4d0f255542b13⟧]
+  
+-     let result2 = engine.tick().await.expect("tick 2 should succeed");
+-     println!("  Duration: {}ms", result2.duration_ms);
+-     println!("  Response chars: {}", result2.response_chars);
+- 
+-     let status = engine.status().await;
+-     println!("\n--- Status ---");
+-     println!("  Enabled: {}", status.enabled);
+-     println!("  Total ticks: {}", status.total_ticks);
+-     assert_eq!(status.total_ticks, 2);
+- 
+      println!("\n=== E2E PASSED ===\n");
+  }
+ diff --git a/vendor/tinychannels b/vendor/tinychannels
+@@ -5942,3 +2647,7 @@
+ +++ b/vendor/tinychannels
+ @@ -0,0 +1 @@
+ +Subproject commit c69aa889696a418a38d23c548c309f73606c12d3
++
++[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]
++
++[PARTIAL view — full original (192075 bytes): call tinyjuice_retrieve with token "bf74b05a01657e3ae7fa0bb02f76f163"]
+\ No newline at end of file

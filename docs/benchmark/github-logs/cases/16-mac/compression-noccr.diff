@@ -1,0 +1,68 @@
+--- input/input.log
++++ output/output-noccr.log
+@@ -742,8 +742,8 @@
+ Jul  4 02:37:39 airbears2-10-142-110-255 kernel[0]: Previous sleep cause: 5
+ Jul  4 02:37:39 airbears2-10-142-110-255 com.apple.cts[258]: com.apple.suggestions.harvest: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 3199 seconds.  Ignoring.
+ Jul  4 02:38:25 airbears2-10-142-110-255 kernel[0]: ARPT: 698398.428268: wl0: setup_keepalive: Remote IP: 17.249.12.88
+-Jul  4 02:49:55 airbears2-10-142-110-255 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1728 seconds.  Ignoring.
+-Jul  4 02:49:55 airbears2-10-142-110-255 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1728 seconds.  Ignoring.
++Jul  4 02:49:55 airbears2-10-142-110-255 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1728 seconds.  Ignoring.
++ [×2]
+ Jul  4 02:50:09 airbears2-10-142-110-255 com.apple.AddressBook.InternetAccountsBridge[34235]: dnssd_clientstub ConnectToServer: connect()-> No of tries: 2
+ Jul  4 03:01:56 airbears2-10-142-110-255 kernel[0]: RTC: PowerByCalendarDate setting ignored
+ Jul  4 03:02:06 airbears2-10-142-110-255 com.apple.cts[258]: com.apple.suggestions.harvest: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1732 seconds.  Ignoring.
+@@ -828,8 +828,8 @@
+ Jul  4 08:20:49 calvisitor-10-105-162-105 kernel[0]: ARPT: 699878.306468: AirPort_Brcm43xx::syncPowerState: WWEN[enabled]
+ Jul  4 08:20:51 calvisitor-10-105-162-105 kernel[0]: en0: 802.11d country code set to 'US'.
+ Jul  4 08:20:51 calvisitor-10-105-162-105 kernel[0]: en0: Supported channels 1 2 3 4 5 6 7 8 9 10 11 12 13 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140 144 149 153 157 161
+-Jul  4 08:21:00 calvisitor-10-105-162-105 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 183327 seconds.  Ignoring.
+-Jul  4 08:21:00 calvisitor-10-105-162-105 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 183327 seconds.  Ignoring.
++Jul  4 08:21:00 calvisitor-10-105-162-105 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 183327 seconds.  Ignoring.
++ [×2]
+ Jul  4 08:21:25 calvisitor-10-105-162-105 corecaptured[34531]: Received Capture Event
+ Jul  4 08:21:34 calvisitor-10-105-162-105 kernel[0]: ARPT: 699925.384446: wl0: setup_keepalive: Seq: 4253304142, Ack: 3255241453, Win size: 4096
+ Jul  4 08:34:26 calvisitor-10-105-162-105 kernel[0]: AirPort: Link Down on awdl0. Reason 1 (Unspecified).
+@@ -1169,8 +1169,8 @@
+ Jul  5 02:28:22 calvisitor-10-105-163-10 kernel[0]: ARPT: 720406.265686: AirPort_Brcm43xx::powerChange: System Sleep
+ Jul  5 02:41:24 calvisitor-10-105-163-10 kernel[0]: ARPT: 720413.304306: wl0: setup_keepalive: Remote IP: 17.249.12.81
+ Jul  5 02:54:51 calvisitor-10-105-163-10 kernel[0]: AppleCamIn::wakeEventHandlerThread
+-Jul  5 03:08:26 calvisitor-10-105-163-10 kernel[0]: en0: BSSID changed to 5c:50:15:4c:18:13
+-Jul  5 03:08:26 calvisitor-10-105-163-10 kernel[0]: en0: BSSID changed to 5c:50:15:4c:18:13
++Jul  5 03:08:26 calvisitor-10-105-163-10 kernel[0]: en0: BSSID changed to 5c:50:15:4c:18:13
++ [×2]
+ Jul  5 03:08:49 calvisitor-10-105-163-10 sandboxd[129] ([35762]): com.apple.Addres(35762) deny network-outbound /private/var/run/mDNSResponder
+ Jul  5 03:35:40 calvisitor-10-105-163-10 kernel[0]: RTC: PowerByCalendarDate setting ignored
+ Jul  5 03:35:45 calvisitor-10-105-163-10 kernel[0]: ARPT: 720580.338311: AirPort_Brcm43xx::powerChange: System Sleep
+@@ -1546,8 +1546,8 @@
+ Jul  6 19:18:27 calvisitor-10-105-162-178 com.apple.cts[258]: com.apple.suggestions.harvest: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 15002 seconds.  Ignoring.
+ Jul  6 19:19:43 calvisitor-10-105-162-178 kernel[0]: ARPT: 744589.508896: wl0: setup_keepalive: Remote IP: 17.249.28.35
+ Jul  6 19:31:29 calvisitor-10-105-162-178 kernel[0]: ARPT: 744593.160590: wl0: wl_update_tcpkeep_seq: Updated seq/ack/win from UserClient Seq 1529267953, Ack 4054195714, Win size 380
+-Jul  6 19:31:29 calvisitor-10-105-162-178 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 12 unplug = 0
+-Jul  6 19:31:29 calvisitor-10-105-162-178 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 12 unplug = 0
++Jul  6 19:31:29 calvisitor-10-105-162-178 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 12 unplug = 0
++ [×2]
+ Jul  6 19:31:29 calvisitor-10-105-162-178 kernel[0]: ARPT: 744595.284508: AirPort_Brcm43xx::platformWoWEnable: WWEN[disable]
+ Jul  6 19:31:39 calvisitor-10-105-162-178 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 524667 seconds.  Ignoring.
+ Jul  6 19:31:41 calvisitor-10-105-162-178 com.apple.cts[43]: com.apple.CacheDelete.daily: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 63122 seconds.  Ignoring.
+@@ -1637,8 +1637,8 @@
+ Jul  7 04:17:52 calvisitor-10-105-162-178 sandboxd[129] ([37725]): com.apple.Addres(37725) deny network-outbound /private/var/run/mDNSResponder
+ Jul  7 04:31:01 calvisitor-10-105-162-178 kernel[0]: AirPort: Link Down on awdl0. Reason 1 (Unspecified).
+ Jul  7 04:44:38 calvisitor-10-105-162-178 com.apple.cts[258]: com.apple.icloud.fmfd.heartbeat: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 491488 seconds.  Ignoring.
+-Jul  7 04:44:48 calvisitor-10-105-162-178 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1002 seconds.  Ignoring.
+-Jul  7 04:44:48 calvisitor-10-105-162-178 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1002 seconds.  Ignoring.
++Jul  7 04:44:48 calvisitor-10-105-162-178 com.apple.cts[258]: com.apple.Safari.SafeBrowsing.Update: scheduler_evaluate_activity told me to run this job; however, but the start time isn't for 1002 seconds.  Ignoring.
++ [×2]
+ Jul  7 04:58:15 calvisitor-10-105-162-178 kernel[0]: AppleThunderboltGenericHAL::earlyWake - complete - took 0 milliseconds
+ Jul  7 04:58:15 calvisitor-10-105-162-178 kernel[0]: IOThunderboltSwitch<0>(0x0)::listenerCallback - Thunderbolt HPD packet for route = 0x0 port = 11 unplug = 0
+ Jul  7 04:58:16 calvisitor-10-105-162-178 kernel[0]: AirPort: Link Up on awdl0
+@@ -1714,8 +1714,8 @@
+ Jul  7 12:12:27 calvisitor-10-105-162-178 locationd[82]: Location icon should now be in state 'Active'
+ Jul  7 12:14:35 calvisitor-10-105-162-178 kernel[0]: ARPT: 770226.223664: IOPMPowerSource Information: onWake,  SleepType: Normal Sleep,  'ExternalConnected': Yes, 'TimeRemaining': 0,
+ Jul  7 12:14:38 calvisitor-10-105-162-178 com.apple.SecurityServer[80]: Session 101800 destroyed
+-Jul  7 12:15:44 calvisitor-10-105-162-178 quicklookd[38023]: Error returned from iconservicesagent: (null)
+-Jul  7 12:15:44 calvisitor-10-105-162-178 quicklookd[38023]: Error returned from iconservicesagent: (null)
++Jul  7 12:15:44 calvisitor-10-105-162-178 quicklookd[38023]: Error returned from iconservicesagent: (null)
++ [×2]
+ Jul  7 12:15:59 calvisitor-10-105-162-178 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+ Jul  7 12:16:28 calvisitor-10-105-162-178 iconservicesagent[328]: -[ISGenerateImageOp generateImageWithCompletion:] Failed to composit image for descriptor <ISBindingImageDescriptor: 0x7f995070be80>.
+ Jul  7 12:16:28 calvisitor-10-105-162-178 quicklookd[38023]: Error returned from iconservicesagent: (null)

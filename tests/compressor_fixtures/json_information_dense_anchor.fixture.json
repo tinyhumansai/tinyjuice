@@ -13,7 +13,7 @@
     "recovery": true,
     "contains": [
       "trace alpha beta gamma",
-      "tokenjuice_retrieve"
+      "tinyjuice_retrieve"
     ],
     "notContains": [
       "ordinary payload 70"
