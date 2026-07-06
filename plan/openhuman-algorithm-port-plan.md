@@ -248,6 +248,11 @@ OpenHuman files:
   `char_limit` (default 15000, clamp 2000..500000), `convert_base64_images`
   (default true).
 
+Status: OpenHuman now has the shared reducer wired through both `web_fetch`
+and `http_request`, and `[tokenjuice.web_extract]` is the canonical config
+shape. Legacy flat `web_extract_*` keys, env vars, and settings patches remain
+accepted and are normalized before live updates.
+
 Acceptance:
 
 - Base64 image bytes absent from output and metadata; real image URLs remain.
