@@ -123,13 +123,16 @@ Implementation guidance:
   asks for validation.
 
 Status: partially implemented. The crate now builds a dependency-free
-`tinyjuice` binary with `reduce`, `reduce-json`, and `verify` commands.
+`tinyjuice` binary with `reduce`, `reduce-json`, `verify`, and `discover`
+commands.
 `reduce` accepts stdin or one file plus command metadata flags and prints
 reduced inline text. `reduce-json` accepts the documented protocol payload from
 stdin or one file, prints response JSON, and exits non-zero with structured
 error JSON on invalid payloads. `verify --rules --fixtures` reports rule and
-fixture diagnostics and exits non-zero for hard verification failures. `wrap`,
-retrieval, stats, discovery, doctor, and installers remain future CLI slices.
+fixture diagnostics and exits non-zero for hard verification failures.
+`discover` accepts a JSON array or NDJSON `ToolExecutionInput` stream and emits
+metadata-only fallback family counts. `wrap`, retrieval, stats, doctor, and
+installers remain future CLI slices.
 
 ## P1: Rule Validation And Discovery
 

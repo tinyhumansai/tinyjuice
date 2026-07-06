@@ -181,6 +181,7 @@ Run the minimal reducer CLI:
 cargo run -- reduce --tool-name bash --command "git status" status.txt
 cargo run -- reduce-json payload.json
 cargo run -- verify --rules --fixtures
+cargo run -- discover executions.ndjson
 ```
 
 Run hot-path benchmarks:

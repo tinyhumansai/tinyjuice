@@ -4,8 +4,9 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use tinyjuice::{
-    LoadRuleOptions, ReduceOptions, ToolExecutionInput, load_builtin_rules,
-    reduce_execution_with_rules, reduce_json_str, verify_rule_fixtures, verify_rules,
+    LoadRuleOptions, ReduceOptions, ToolExecutionInput, discover_fallback_outputs,
+    load_builtin_rules, reduce_execution_with_rules, reduce_json_str, verify_rule_fixtures,
+    verify_rules,
 };
 
 fn main() -> ExitCode {
@@ -28,6 +29,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "reduce" => run_reduce(&args[1..]),
         "reduce-json" => run_reduce_json(&args[1..]),
         "verify" => run_verify(&args[1..]),
+        "discover" => run_discover(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -37,6 +39,74 @@ fn run(args: Vec<String>) -> Result<(), String> {
             Err(format!("unknown command: {other}"))
         }
     }
+}
+
+fn run_discover(args: &[String]) -> Result<(), String> {
+    let mut pretty = false;
+    let mut path = None;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--pretty" => pretty = true,
+            "-h" | "--help" => {
+                print_discover_usage();
+                return Ok(());
+            }
+            value if value.starts_with('-') && value != "-" => {
+                return Err(format!("unknown discover option: {value}"));
+            }
+            value => {
+                if path.replace(value.to_owned()).is_some() {
+                    return Err("discover accepts at most one path".to_owned());
+                }
+            }
+        }
+        i += 1;
+    }
+
+    let payload = read_input(path.as_deref())?;
+    let inputs = parse_discovery_inputs(&payload)?;
+    let rules = load_builtin_rules();
+    let report = discover_fallback_outputs(inputs, &rules);
+    if pretty {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report)
+                .map_err(|error| format!("failed to serialize discovery report: {error}"))?
+        );
+    } else {
+        println!(
+            "{}",
+            serde_json::to_string(&report)
+                .map_err(|error| format!("failed to serialize discovery report: {error}"))?
+        );
+    }
+    Ok(())
+}
+
+fn parse_discovery_inputs(payload: &str) -> Result<Vec<ToolExecutionInput>, String> {
+    let trimmed = payload.trim();
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    if trimmed.starts_with('[') {
+        return serde_json::from_str(trimmed)
+            .map_err(|error| format!("invalid discovery JSON array: {error}"));
+    }
+
+    let mut inputs = Vec::new();
+    for (line_index, line) in payload.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let input = serde_json::from_str::<ToolExecutionInput>(line)
+            .map_err(|error| format!("invalid discovery JSON line {}: {error}", line_index + 1))?;
+        inputs.push(input);
+    }
+    Ok(inputs)
 }
 
 fn run_verify(args: &[String]) -> Result<(), String> {
@@ -267,6 +337,7 @@ fn print_usage() {
     println!("  reduce       Reduce plain tool output from a file or stdin");
     println!("  reduce-json  Reduce a JSON protocol payload from a file or stdin");
     println!("  verify       Verify built-in rules and/or reducer fixtures");
+    println!("  discover     Report command families still using generic fallback");
 }
 
 fn print_reduce_usage() {
@@ -281,4 +352,9 @@ fn print_reduce_json_usage() {
 
 fn print_verify_usage() {
     println!("Usage: tinyjuice verify [--rules] [--fixtures [dir]]");
+}
+
+fn print_discover_usage() {
+    println!("Usage: tinyjuice discover [--pretty] [path|-]");
+    println!("Input is a JSON array or newline-delimited ToolExecutionInput objects.");
 }
