@@ -116,14 +116,15 @@ Current behavior:
 - Tree-sitter path for Rust, TypeScript/JavaScript, and Python behind feature.
 - Brace-depth heuristic fallback.
 - Collapses function/method bodies.
+- Explicit stub modes cover signatures-only, public API, matched symbols, and
+  expand-around-lines.
+- Stub output carries elision metadata with line ranges and parse status.
+- Host read intent distinguishes exact reads from explicit stub reads.
+- `CodeStubTransform` exposes explicit source-code stubbing as a typed offload
+  that emits output only with a retained CCR token.
 
 Add:
 
-- Explicit stub modes: signatures-only, public API, matched symbols, and
-  expand-around-lines.
-- Elision metadata with line ranges.
-- Parse status in reports.
-- Host intent that distinguishes exact read from stub read.
 - Additional language parsers only behind features.
 
 Do not add:

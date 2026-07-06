@@ -121,11 +121,12 @@ incrementally.
 - Search thinning is an offload.
 - Code stubbing is an offload unless the caller explicitly accepts a stub view.
 
-Status: partially implemented. JSON faithful table rendering is exposed as
-`SmartCrusherTableTransform`; JSON row dropping is exposed as
-`SmartCrusherRowsTransform` and requires a retained CCR token. DiffNoise, HTML
-extraction, log templates, signal-log compression, search thinning, and
-TextCrusher also have typed transforms. Code stubbing remains to convert.
+Status: implemented for current compressor families. JSON faithful table
+rendering is exposed as `SmartCrusherTableTransform`; JSON row dropping is
+exposed as `SmartCrusherRowsTransform` and requires a retained CCR token.
+DiffNoise, HTML extraction, log templates, signal-log compression, search
+thinning, and TextCrusher also have typed transforms. Code stubbing is exposed
+as `CodeStubTransform` and requires explicit construction with a `StubMode`.
 
 ### Step 4: Add Bloat Estimation
 
