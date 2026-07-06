@@ -322,7 +322,16 @@ fn is_sensitive_key(key: &str) -> bool {
             | "secret"
             | "token"
             | "apikey"
-            | "apiKey"
+            | "accesstoken"
+            | "refreshtoken"
+            | "clientsecret"
+            | "privatekey"
+            | "accesskey"
+            | "sessionid"
+            | "sessioncookie"
+            | "credential"
+            | "credentials"
+            | "jwt"
             | "authorization"
             | "cookie"
             | "setcookie"
@@ -353,6 +362,10 @@ fn redact_sensitive_text(text: &str, max_chars: usize) -> String {
         "password=",
         "secret=",
         "api_key=",
+        "access_key=",
+        "private_key=",
+        "client_secret=",
+        "session_id=",
     ] {
         out = redact_after_marker(&out, marker);
     }
@@ -482,7 +495,7 @@ mod tests {
             ConversationMessage::assistant_tool_calls(vec![ToolCall::new(
                 "cmd",
                 "shell",
-                r#"{"command":"curl -H 'Authorization: Bearer SECRET123'","token":"SECRET123"}"#,
+                r#"{"command":"curl -H 'Authorization: Bearer SECRET123' https://api.example/?client_secret=SECRET789","access_token":"SECRET123","nested":{"refreshSecret":"SECRET456","private_key":"SECRETKEY","session_id":"SID999"}}"#,
             )]),
             ConversationMessage::tool_results(vec![ToolResultMessage::new(
                 "cmd",
@@ -506,7 +519,12 @@ mod tests {
             panic!("expected results");
         };
         assert!(!tool_calls[0].arguments.contains("SECRET123"));
+        assert!(!tool_calls[0].arguments.contains("SECRET456"));
+        assert!(!tool_calls[0].arguments.contains("SECRETKEY"));
+        assert!(!tool_calls[0].arguments.contains("SID999"));
+        assert!(!tool_calls[0].arguments.contains("SECRET789"));
         assert!(!results[0].content.contains("SECRET123"));
+        assert!(!results[0].content.contains("SECRET789"));
         assert!(tool_calls[0].arguments.contains("[redacted]"));
     }
 }
