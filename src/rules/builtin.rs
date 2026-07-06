@@ -48,6 +48,10 @@ pub static BUILTIN_RULE_JSONS: &[(&str, &str)] = &[
         "build/webpack",
         include_str!("../vendor/rules/build__webpack.json"),
     ),
+    (
+        "ci/github-actions",
+        include_str!("../vendor/rules/ci__github-actions.json"),
+    ),
     ("cloud/aws", include_str!("../vendor/rules/cloud__aws.json")),
     ("cloud/az", include_str!("../vendor/rules/cloud__az.json")),
     (

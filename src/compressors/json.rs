@@ -1,73 +1,160 @@
-//! JSON crusher (SmartCrusher).
+//! JSON-array crusher (SmartCrusher).
 //!
 //! Clean-room port of Headroom's `SmartCrusher` (Apache-2.0), extended with
-//! variance-aware row preservation, nested-array discovery, column factoring and
-//! query anchoring. An array of objects that repeat the same keys is the single
-//! most common bloated tool output (API list responses, DB rows, search
-//! manifests). Re-rendering it as a table emits each key **once** instead of per
-//! row.
+//! variance-aware row preservation. An array of objects that repeat the same
+//! keys is the single most common bloated tool output (API list responses, DB
+//! rows, search manifests). Re-rendering it as a table emits each key **once**
+//! instead of per row.
 //!
-//! On top of the base table:
-//!   * a top-level **object** is scanned breadth-first (depth ≤ 2) for the
-//!     largest uniform-object array, which is tabled under its JSON path with the
-//!     sibling scalars rendered as a preamble;
-//!   * **constant columns** (identical across every row) are hoisted into a
-//!     one-line note and dropped from the table (lossless);
-//!   * columns whose values are uniformly objects are **flattened** — the
-//!     name/description-like sub-keys are promoted to their own columns instead
-//!     of dumping an escaped-JSON blob per cell;
-//!   * plain **number/string arrays** collapse to distributional stats /
-//!     deduped counts;
-//!   * rows carrying **error text (nested), categorical rarities (Pareto),
-//!     rare structural fields, numeric outliers, or a query anchor** are always
-//!     kept when the table is row-dropped.
-//!
-//! The router offloads the full original to CCR, so everything dropped stays
-//! recoverable.
+//! Up to [`ROW_DROP_THRESHOLD`] rows every value is preserved (faithful
+//! reformat). Above the threshold the table is row-dropped — but rather than a
+//! blind head/tail window, rows carrying **error indicators** or **numeric
+//! outliers** are always kept, so anomalies survive even when the bulk of a
+//! homogeneous array is dropped. The router offloads the full original to CCR,
+//! so the dropped rows stay recoverable.
 
 use async_trait::async_trait;
 use serde_json::{Map, Value};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 
-use super::adaptive::compute_optimal_k;
-use super::anchors::extract_anchors;
+use super::Compressor;
 use super::signals::has_error_indicators;
-use super::{BLOCK_NOTE, Compressor, block_token};
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::cache::CcrStore;
+use crate::pipeline::{
+    OffloadOutput, OffloadTransform, PipelineInput, ReformatTransform, TransformOutput,
+    estimate_bloat,
+};
+use crate::relevance::{Bm25Corpus, tokenize};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Minimum rows before tabular rendering is worth the header overhead.
 pub const MIN_ROWS: usize = 3;
 /// Above this many rows the table is additionally row-dropped.
 pub const ROW_DROP_THRESHOLD: usize = 40;
-/// At most this many rows are kept from the head when row-dropping (the
-/// adaptive selector may keep fewer for redundant tables).
+/// Rows kept from the head when row-dropping.
 pub const HEAD_ROWS: usize = 20;
-/// At most this many rows are kept from the tail when row-dropping (the
-/// adaptive selector may keep fewer for redundant tables).
+/// Rows kept from the tail when row-dropping.
 pub const TAIL_ROWS: usize = 10;
-/// Adaptive floor: never keep fewer head+tail rows than this when the table
-/// has more rows than it.
-pub const MIN_KEPT_ROWS: usize = 8;
 /// Z-score beyond which a numeric cell is treated as an outlier worth keeping.
 pub const OUTLIER_SIGMA: f64 = 2.0;
-/// At most this many outlier rows are kept per column (the most extreme
-/// first), so a heavy-tailed column can't defeat the point of row-dropping.
-pub const MAX_OUTLIERS_PER_COLUMN: usize = 8;
-/// Cells longer than this are truncated (marking the table lossy).
-pub const CELL_MAX: usize = 240;
-/// Minimum elements before a plain number/string array is worth crushing.
-pub const SCALAR_ARRAY_MIN: usize = 8;
-/// A categorical column with more distinct values than this isn't Pareto-scanned.
-pub const MAX_CARDINALITY: usize = 50;
-/// Pareto coverage target: the smallest value set covering this fraction of rows.
-pub const PARETO_COVER: f64 = 0.80;
-/// Only rare-status rows are kept when the covering set is at most this size.
-pub const PARETO_MAX_K: usize = 5;
-/// Rows carrying a field present in fewer than this fraction of rows are kept.
-pub const RARE_FIELD_RATIO: f64 = 0.20;
+/// Delta multiplier beyond which a numeric transition is treated as a change point.
+pub const CHANGE_POINT_DELTA_MULTIPLIER: f64 = 4.0;
+/// Maximum numeric change-point rows to anchor per field.
+pub const MAX_CHANGE_POINT_ANCHORS: usize = 20;
+/// Maximum distinct values for a full-present field to be treated as a
+/// discriminator bucket anchor.
+pub const MAX_DISCRIMINATOR_BUCKETS: usize = 12;
+/// Maximum exact duplicate row clusters to anchor while row-dropping.
+pub const MAX_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
+/// Maximum near-duplicate row clusters to anchor while row-dropping.
+pub const MAX_NEAR_DUPLICATE_CLUSTER_ANCHORS: usize = 20;
+/// Maximum SimHash bit distance for rows to share a near-duplicate cluster.
+pub const NEAR_DUPLICATE_SIMHASH_DISTANCE: u32 = 3;
+/// Maximum evenly-spaced middle anchors to add for large generic arrays.
+pub const MAX_SPREAD_ANCHORS: usize = 8;
+/// Maximum extra spread anchors when semantic bigrams do not saturate early.
+pub const MAX_ADAPTIVE_SPREAD_ANCHOR_BOOST: usize = 4;
+/// Minimum distinct semantic bigrams before saturation changes anchor counts.
+pub const MIN_SATURATION_BIGRAMS: usize = 16;
+/// Share of distinct semantic bigrams that defines the saturation knee.
+pub const SATURATION_KNEE_PERCENT: usize = 70;
+/// Position threshold for treating the saturation knee as early.
+pub const EARLY_SATURATION_POSITION_PERCENT: usize = 50;
+/// Maximum information-dense middle rows to anchor.
+pub const MAX_INFORMATION_DENSE_ANCHORS: usize = 8;
+/// Extra positional rows to keep when query wording asks for a side of the list.
+pub const QUERY_DIRECTION_EXTRA_ROWS: usize = 10;
+/// Do not spend unbounded parse effort on huge string cells.
+const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
 pub struct JsonCompressor;
+
+/// Typed reformat transform for faithful SmartCrusher table rendering.
+#[derive(Debug, Clone, Default)]
+pub struct SmartCrusherTableTransform;
+
+/// Typed offload transform for SmartCrusher row-dropping.
+#[derive(Debug, Clone, Default)]
+pub struct SmartCrusherRowsTransform {
+    query: Option<String>,
+}
+
+impl SmartCrusherRowsTransform {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+
+    pub fn query(&self) -> Option<&str> {
+        self.query.as_deref()
+    }
+}
+
+impl ReformatTransform for SmartCrusherTableTransform {
+    fn name(&self) -> &'static str {
+        "smartcrusher_table"
+    }
+
+    fn applies_to(&self, input: &PipelineInput<'_>) -> bool {
+        input.content_kind == ContentKind::Json
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>) -> Option<TransformOutput> {
+        if input.content_kind != ContentKind::Json {
+            return None;
+        }
+        let output = compress(input.content)?;
+        if output.lossy {
+            return None;
+        }
+        Some(TransformOutput::new(
+            output.text,
+            CompressorKind::SmartCrusher,
+        ))
+    }
+}
+
+impl OffloadTransform for SmartCrusherRowsTransform {
+    fn name(&self) -> &'static str {
+        "smartcrusher_rows"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Json {
+            return 0.0;
+        }
+        let score = f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0;
+        if self
+            .query
+            .as_deref()
+            .is_some_and(|query| !query.trim().is_empty())
+        {
+            score.max(0.1)
+        } else {
+            score
+        }
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Json {
+            return None;
+        }
+        let output = compress_with_query(input.content, self.query())?;
+        if !output.lossy {
+            return None;
+        }
+        OffloadOutput::from_retained_put(
+            output.text,
+            CompressorKind::SmartCrusher,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for JsonCompressor {
@@ -78,402 +165,142 @@ impl Compressor for JsonCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        opts: &CompressOptions,
+        _opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content, opts.ccr_enabled, input.hint.query.as_deref())
+        compress_with_query(input.content, input.hint.query.as_deref())
     }
 }
 
-/// Compress a JSON payload. `block_tokens` offloads each omitted block to CCR so
-/// its marker retrieves exactly that block. `query` (when present) yields exact-
-/// match anchors that force any row mentioning them to survive row-dropping.
-/// Returns `None` when there's nothing tabular/statistical to do or it wouldn't
-/// shrink.
-pub fn compress(content: &str, block_tokens: bool, query: Option<&str>) -> Option<CompressOutput> {
+#[derive(Debug, Clone, PartialEq)]
+pub struct JsonAnalysis {
+    pub row_count: usize,
+    pub columns: Vec<String>,
+    pub fields: Vec<JsonFieldAnalysis>,
+    pub estimated_table_bytes: usize,
+}
+
+impl JsonAnalysis {
+    /// Estimated bytes removed by rendering this payload as a SmartCrusher
+    /// table. This is a rough planning signal, not a benchmarked savings claim.
+    pub fn estimated_reduction_bytes(&self, original_bytes: usize) -> usize {
+        original_bytes.saturating_sub(self.estimated_table_bytes)
+    }
+
+    /// Estimated fractional reduction from 0.0 to 1.0. Returns 0.0 for empty
+    /// originals or payloads that are not estimated to shrink.
+    pub fn estimated_reduction_ratio(&self, original_bytes: usize) -> f64 {
+        if original_bytes == 0 {
+            return 0.0;
+        }
+        self.estimated_reduction_bytes(original_bytes) as f64 / original_bytes as f64
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct JsonFieldAnalysis {
+    pub key: String,
+    pub present: usize,
+    pub types: BTreeSet<&'static str>,
+    pub unique_count: usize,
+    pub constant: bool,
+    pub sparse: bool,
+    pub numeric: Option<JsonNumericStats>,
+}
+
+impl JsonFieldAnalysis {
+    /// Ratio of distinct rendered values among present cells for this field.
+    pub fn unique_ratio(&self) -> f64 {
+        if self.present == 0 {
+            return 0.0;
+        }
+        self.unique_count as f64 / self.present as f64
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct JsonNumericStats {
+    pub min: f64,
+    pub max: f64,
+    pub mean: f64,
+    pub stddev: f64,
+}
+
+#[derive(Debug, Clone)]
+struct JsonPlan {
+    lossy: bool,
+    keep_rows: Vec<usize>,
+}
+
+/// Compress a JSON array-of-objects into a compact table. Returns `None` when
+/// the content isn't a uniform-enough array of objects or wouldn't shrink.
+pub fn compress(content: &str) -> Option<CompressOutput> {
+    compress_with_query(content, None)
+}
+
+/// Compress a JSON array-of-objects with optional query context for row anchors.
+pub fn compress_with_query(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     let value: Value = serde_json::from_str(content.trim()).ok()?;
-    let anchors = extract_anchors(query.unwrap_or_default());
-
-    match &value {
-        Value::Array(array) => compress_top_array(&value, array, content, block_tokens, &anchors),
-        Value::Object(map) => compress_object(map, content, block_tokens, &anchors),
-        _ => None,
-    }
-}
-
-/// Dispatch a top-level array to the object-table, number-stats or string-dedupe
-/// crusher depending on its element kind.
-fn compress_top_array(
-    value: &Value,
-    array: &[Value],
-    content: &str,
-    block_tokens: bool,
-    anchors: &[String],
-) -> Option<CompressOutput> {
-    if array.len() >= MIN_ROWS && array.iter().all(Value::is_object) {
-        return object_table_output(value, array, content, block_tokens, anchors, None, "");
-    }
-    if array.len() >= SCALAR_ARRAY_MIN && array.iter().all(is_plain_number) {
-        return crush_number_array(array, content, block_tokens, "");
-    }
-    if array.len() >= SCALAR_ARRAY_MIN && array.iter().all(Value::is_string) {
-        return crush_string_array(array, content, block_tokens, "");
-    }
-    None
-}
-
-/// A top-level object: find the largest uniform-object array nested within
-/// (depth ≤ 2) and table it under its JSON path, else fall back to the largest
-/// plain scalar array. Sibling scalars of the container become a preamble.
-fn compress_object(
-    root: &Map<String, Value>,
-    content: &str,
-    block_tokens: bool,
-    anchors: &[String],
-) -> Option<CompressOutput> {
-    let found = find_best_nested(root)?;
-    let container = found.container;
-    let key = found.path.rsplit('.').next().unwrap_or(&found.path);
-    let preamble = sibling_preamble(container, key, block_tokens);
-
-    match found.kind {
-        CandidateKind::Objects => {
-            let arr = container.get(key)?.as_array()?;
-            object_table_output(
-                &Value::Null,
-                arr,
-                content,
-                block_tokens,
-                anchors,
-                Some(&found.path),
-                &preamble,
-            )
-        }
-        CandidateKind::Numbers => {
-            let arr = container.get(key)?.as_array()?;
-            crush_number_array(arr, content, block_tokens, &found.path)
-        }
-        CandidateKind::Strings => {
-            let arr = container.get(key)?.as_array()?;
-            crush_string_array(arr, content, block_tokens, &found.path)
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Nested-array discovery
-// ---------------------------------------------------------------------------
-
-#[derive(Clone, Copy, PartialEq)]
-enum CandidateKind {
-    Objects,
-    Numbers,
-    Strings,
-}
-
-struct Candidate<'a> {
-    path: String,
-    container: &'a Map<String, Value>,
-    kind: CandidateKind,
-    rows: usize,
-}
-
-/// Breadth-first (depth ≤ 2) scan of `root` for the best crushable array. Prefers
-/// the largest uniform-object array; failing that, the largest plain scalar
-/// array. Returns `None` when nothing qualifies.
-fn find_best_nested(root: &Map<String, Value>) -> Option<Candidate<'_>> {
-    let mut candidates: Vec<Candidate> = Vec::new();
-    collect_candidates(root, String::new(), 1, &mut candidates);
-
-    // Object arrays win outright (most rows); scalar arrays are the fallback.
-    candidates
-        .iter()
-        .filter(|c| c.kind == CandidateKind::Objects)
-        .max_by_key(|c| c.rows)
-        .or_else(|| {
-            candidates
-                .iter()
-                .filter(|c| c.kind != CandidateKind::Objects)
-                .max_by_key(|c| c.rows)
-        })
-        .map(|c| Candidate {
-            path: c.path.clone(),
-            container: c.container,
-            kind: c.kind,
-            rows: c.rows,
-        })
-}
-
-/// Visit the entries of `obj` at `depth`, recording any qualifying array and
-/// recursing one level into nested objects (until `depth` exceeds 2).
-fn collect_candidates<'a>(
-    obj: &'a Map<String, Value>,
-    prefix: String,
-    depth: usize,
-    out: &mut Vec<Candidate<'a>>,
-) {
-    for (key, val) in obj {
-        let path = if prefix.is_empty() {
-            key.clone()
-        } else {
-            format!("{prefix}.{key}")
-        };
-        match val {
-            Value::Array(arr) => {
-                if let Some(kind) = classify_array(arr) {
-                    out.push(Candidate {
-                        path,
-                        container: obj,
-                        kind,
-                        rows: arr.len(),
-                    });
-                }
-            }
-            Value::Object(inner) if depth < 2 => {
-                collect_candidates(inner, path, depth + 1, out);
-            }
-            _ => {}
-        }
-    }
-}
-
-/// Classify an array as a crushable object/number/string array, or `None`.
-fn classify_array(arr: &[Value]) -> Option<CandidateKind> {
-    if arr.len() >= MIN_ROWS && arr.iter().all(Value::is_object) && union_columns(arr).len() >= 2 {
-        Some(CandidateKind::Objects)
-    } else if arr.len() >= SCALAR_ARRAY_MIN && arr.iter().all(is_plain_number) {
-        Some(CandidateKind::Numbers)
-    } else if arr.len() >= SCALAR_ARRAY_MIN && arr.iter().all(Value::is_string) {
-        Some(CandidateKind::Strings)
-    } else {
-        None
-    }
-}
-
-/// Render the scalar siblings of the tabled array key as `key: value` preamble
-/// lines (truncated). Non-scalar siblings are skipped — the table/preamble is a
-/// summary, and the router keeps the original recoverable.
-fn sibling_preamble(container: &Map<String, Value>, array_key: &str, allow_truncate: bool) -> String {
-    let mut out = String::new();
-    for (key, val) in container {
-        if key == array_key {
-            continue;
-        }
-        let rendered = match val {
-            // Without CCR the preamble must stay faithful, so long sibling
-            // strings are kept whole rather than truncated.
-            Value::String(s) if allow_truncate => truncate_plain(s, CELL_MAX),
-            Value::String(s) => s.clone(),
-            Value::Bool(_) | Value::Number(_) | Value::Null => val.to_string(),
-            _ => continue,
-        };
-        let _ = writeln!(out, "{key}: {rendered}");
-    }
-    out
-}
-
-// ---------------------------------------------------------------------------
-// Object-array table
-// ---------------------------------------------------------------------------
-
-/// Build the table and wrap it in a [`CompressOutput`], applying the minified-
-/// JSON fallback only for a genuine top-level array (`minify_value` non-null).
-#[allow(clippy::too_many_arguments)]
-fn object_table_output(
-    minify_value: &Value,
-    array: &[Value],
-    content: &str,
-    block_tokens: bool,
-    anchors: &[String],
-    path: Option<&str>,
-    preamble: &str,
-) -> Option<CompressOutput> {
-    let (table, lossy) = build_object_table(array, block_tokens, anchors, path, preamble)?;
-
-    // Top-level arrays may still be better served by a straight minify; nested
-    // discovery always prefers the table (minifying the whole object defeats it).
-    if path.is_none()
-        && let Ok(minified) = serde_json::to_string(minify_value)
-        && minified.len() < content.len()
-        && minified.len() < table.len()
-    {
-        return Some(CompressOutput::reformatted(
-            minified,
-            CompressorKind::SmartCrusher,
-        ));
-    }
-
-    if table.len() >= content.len() {
+    let array = value.as_array()?;
+    if array.len() < MIN_ROWS {
         return None;
     }
-    log::debug!(
-        "[tinyjuice][json] table {} rows, lossy={} ({} -> {} bytes)",
-        array.len(),
-        lossy,
-        content.len(),
-        table.len(),
-    );
-    Some(if lossy {
-        CompressOutput::lossy(table, CompressorKind::SmartCrusher)
-    } else {
-        CompressOutput::reformatted(table, CompressorKind::SmartCrusher)
-    })
-}
+    if !array.iter().all(Value::is_object) {
+        return None;
+    }
 
-/// The output column plan for one source column.
-enum ColPlan {
-    /// Identical across every row — hoisted to a preamble note, dropped.
-    Constant(String),
-    /// Rendered verbatim.
-    Plain,
-    /// Uniform-object column: promote `promoted` sub-keys to their own columns,
-    /// dump the rest as one compact-JSON blob column (when `remainder` non-empty).
-    Flat {
-        promoted: Vec<String>,
-        remainder: Vec<String>,
-    },
-}
-
-/// An output column resolved from the plans (owns its labels).
-enum OutCol {
-    Plain(String),
-    FlatSub(String, String),
-    FlatBlob(String, Vec<String>),
-}
-
-/// Render an object-array as a markdown table (constant columns hoisted, uniform-
-/// object columns flattened, cells truncated). Returns `(text, lossy)` or `None`
-/// when there aren't ≥ 2 columns / any non-constant column left.
-fn build_object_table(
-    array: &[Value],
-    block_tokens: bool,
-    anchors: &[String],
-    path: Option<&str>,
-    preamble: &str,
-) -> Option<(String, bool)> {
-    let columns = union_columns(array);
+    let flat_rows = flatten_rows(array)?;
+    let analysis = analyze_flat_rows(&flat_rows);
+    let table_shape = table_shape(&flat_rows, &analysis);
+    let columns = table_shape.columns.clone();
     if columns.len() < 2 {
         return None;
     }
-    let n = array.len();
 
-    // Plan every source column, collecting constant-column notes and the ordered
-    // list of concrete output columns.
-    let mut notes: Vec<(String, String)> = Vec::new();
-    let mut out_cols: Vec<OutCol> = Vec::new();
-    for col in &columns {
-        match analyze_column(array, col, n) {
-            ColPlan::Constant(v) => notes.push((col.clone(), v)),
-            ColPlan::Plain => out_cols.push(OutCol::Plain(col.clone())),
-            ColPlan::Flat {
-                promoted,
-                remainder,
-            } => {
-                for sub in promoted {
-                    out_cols.push(OutCol::FlatSub(col.clone(), sub));
-                }
-                if !remainder.is_empty() {
-                    out_cols.push(OutCol::FlatBlob(col.clone(), remainder));
-                }
-            }
-        }
-    }
-    if out_cols.is_empty() {
-        return None;
-    }
-
-    // Header labels.
-    let headers: Vec<String> = out_cols
-        .iter()
-        .map(|oc| match oc {
-            OutCol::Plain(c) => escape_markdown_cell(c),
-            OutCol::FlatSub(c, s) => escape_markdown_cell(&format!("{c}.{s}")),
-            OutCol::FlatBlob(c, _) => escape_markdown_cell(&format!("{c}.\u{2026}")),
-        })
-        .collect();
-    let width = headers.len();
-
-    // Render each row's cells (tracking whether any cell was truncated).
-    let mut truncated = false;
-    let mut rows: Vec<String> = Vec::with_capacity(n);
-    for item in array {
-        let obj = item.as_object()?;
-        let cells: Vec<String> = out_cols
+    // Render every row's cells up front so we can choose full vs. row-dropped.
+    let mut rows: Vec<String> = Vec::with_capacity(flat_rows.len());
+    for obj in &flat_rows {
+        let cells: Vec<String> = columns
             .iter()
-            .map(|oc| render_out_cell(obj, oc, block_tokens, &mut truncated))
+            .map(|col| match obj.values.get(col) {
+                None => String::new(),
+                Some(v) => render_cell(v),
+            })
             .collect();
-        rows.push(render_markdown_row(&cells));
+        rows.push(cells.join(" | "));
     }
 
-    // Row-dropping (sampling the middle away) is information loss, so it only
-    // happens when CCR can recover the dropped rows. Without CCR the table
-    // keeps every row: a full markdown table is still far smaller than the
-    // pretty-printed JSON, and it is a faithful, lossless reshape.
-    let row_dropped = block_tokens && n > ROW_DROP_THRESHOLD;
-    let lossy = row_dropped || truncated;
+    let plan = plan_rows(&flat_rows, &analysis, query);
+    let mut out = String::with_capacity(content.len());
+    let _ = writeln!(
+        out,
+        "[json table: {} rows × {} cols · blank=absent key · exact original via retrieve footer]",
+        rows.len(),
+        columns.len()
+    );
+    write_constants_line(&mut out, &table_shape.constants);
+    let _ = writeln!(out, "{}", columns.join(" | "));
 
-    // Assemble output: sibling preamble, constant notes, header, body.
-    let mut out =
-        String::with_capacity(preamble.len() + rows.iter().map(String::len).sum::<usize>());
-    if !preamble.is_empty() {
-        out.push_str(preamble);
-    }
-    if !notes.is_empty() {
-        let joined = notes
-            .iter()
-            .map(|(k, v)| format!("{k}={v}"))
-            .collect::<Vec<_>>()
-            .join(", ");
-        let _ = writeln!(out, "[all rows: {joined}]");
-    }
-    // A lossy table samples rows/cells away and needs the retrieve footer for
-    // fidelity; a full table is a faithful reshape with nothing to recover.
-    let fidelity = if lossy {
-        "exact original via retrieve footer"
-    } else {
-        "faithful reshape — all rows and values preserved"
-    };
-    match path {
-        Some(p) => {
-            let _ = writeln!(
-                out,
-                "[json table: {p} — {n} rows × {width} cols · blank=absent key · {fidelity}]"
-            );
-        }
-        None => {
-            let _ = writeln!(
-                out,
-                "[json table: {n} rows × {width} cols · blank=absent key · {fidelity}]"
-            );
-        }
-    }
-    let _ = writeln!(out, "{}", render_markdown_row(&headers));
-    let _ = writeln!(out, "{}", render_markdown_separator(width));
-
-    let mut any_token = false;
-    if row_dropped {
-        let keep = rows_to_keep(array, &columns, n, anchors);
-        let mut gap_marker = |out: &mut String, start: usize, end: usize| {
-            let slice = serde_json::to_string(&array[start..end]).unwrap_or_default();
-            let token = block_token(&slice, block_tokens && !slice.is_empty());
-            any_token |= !token.is_empty();
-            let _ = writeln!(out, "[... {} row(s) omitted ...{token}]", end - start);
-        };
+    if plan.lossy {
+        // Keep head + tail PLUS any anomalous rows (errors / numeric outliers)
+        // so the signal in a large homogeneous array survives row-dropping.
         let mut prev: Option<usize> = None;
-        for &i in &keep {
+        for &i in &plan.keep_rows {
             if let Some(p) = prev {
-                if i > p + 1 {
-                    gap_marker(&mut out, p + 1, i);
+                let gap = i - p - 1;
+                if gap > 0 {
+                    let _ = writeln!(out, "[... {gap} row(s) omitted ...]");
                 }
             } else if i > 0 {
-                gap_marker(&mut out, 0, i);
+                let _ = writeln!(out, "[... {i} row(s) omitted ...]");
             }
             let _ = writeln!(out, "{}", rows[i]);
             prev = Some(i);
         }
-        if let Some(p) = prev
-            && p + 1 < n
-        {
-            gap_marker(&mut out, p + 1, n);
+        if let Some(p) = prev {
+            let tail = rows.len().saturating_sub(p + 1);
+            if tail > 0 {
+                let _ = writeln!(out, "[... {tail} row(s) omitted ...]");
+            }
         }
     } else {
         for row in &rows {
@@ -481,551 +308,1028 @@ fn build_object_table(
         }
     }
 
-    let mut table = out.trim_end().to_string();
-    if any_token {
-        table.push_str(BLOCK_NOTE);
+    let out = out.trim_end().to_string();
+    if let Some(bucketed) = compress_shape_buckets(content, &flat_rows, query)
+        && bucketed.text.len() < out.len()
+    {
+        return Some(bucketed);
     }
-    Some((table, lossy))
+    if out.len() >= content.len() {
+        return None;
+    }
+    log::debug!(
+        "[tokenjuice][json] {} rows × {} cols, lossy={} ({} -> {} bytes)",
+        rows.len(),
+        columns.len(),
+        plan.lossy,
+        content.len(),
+        out.len(),
+    );
+    if plan.lossy {
+        Some(CompressOutput::lossy(out, CompressorKind::SmartCrusher))
+    } else {
+        // All values preserved, but the array→table reformat changes layout.
+        Some(CompressOutput::reformatted(
+            out,
+            CompressorKind::SmartCrusher,
+        ))
+    }
 }
 
-/// Plan a single source column: constant → hoisted, uniform-object with an
-/// informative key → flattened, else plain.
-fn analyze_column(array: &[Value], col: &str, n: usize) -> ColPlan {
-    let present: Vec<&Value> = array
+fn compress_shape_buckets(
+    original: &str,
+    rows: &[FlatRow],
+    query: Option<&str>,
+) -> Option<CompressOutput> {
+    let buckets = shape_buckets(rows);
+    if buckets.len() < 2 {
+        return None;
+    }
+
+    let mut out = String::with_capacity(original.len());
+    let mut lossy = false;
+    let _ = write!(
+        out,
+        "[json bucketed tables: {} rows × {} buckets · __row=original row index · blank=absent key",
+        rows.len(),
+        buckets.len()
+    );
+
+    for bucket in &buckets {
+        if bucket.indices.len() < MIN_ROWS {
+            return None;
+        }
+        if bucket.columns.len() < 2 {
+            return None;
+        }
+    }
+
+    let bucket_rows = buckets
         .iter()
-        .filter_map(|item| item.as_object().and_then(|o| o.get(col)))
-        .collect();
-
-    // Constant: present in every row and all equal.
-    if present.len() == n && n > 0 {
-        let first = &present[0];
-        if present.iter().all(|v| *v == *first) {
-            return ColPlan::Constant(compact_json(first));
-        }
-    }
-
-    // Uniform object → maybe flatten.
-    if !present.is_empty() && present.iter().all(|v| v.is_object()) {
-        let subkeys = union_subkeys(&present);
-        let (promoted, remainder) = plan_flatten(&subkeys, &present);
-        if promoted.iter().any(|k| is_name_like(k) || is_desc_like(k)) {
-            return ColPlan::Flat {
-                promoted,
-                remainder,
-            };
-        }
-    }
-
-    ColPlan::Plain
-}
-
-/// Choose the promoted sub-keys (name/id/title-like first, description-like
-/// next, then up to three total filled with scalar-valued keys) and the
-/// remainder to keep as a blob.
-fn plan_flatten(subkeys: &[String], present: &[&Value]) -> (Vec<String>, Vec<String>) {
-    let mut promoted: Vec<String> = Vec::new();
-    if let Some(k) = subkeys.iter().find(|k| is_name_like(k)) {
-        promoted.push(k.clone());
-    }
-    if let Some(k) = subkeys.iter().find(|k| is_desc_like(k)) {
-        promoted.push(k.clone());
-    }
-    for k in subkeys {
-        if promoted.len() >= 3 {
-            break;
-        }
-        if !promoted.contains(k) && subkey_is_scalar(k, present) {
-            promoted.push(k.clone());
-        }
-    }
-    let remainder: Vec<String> = subkeys
+        .map(|bucket| {
+            bucket
+                .indices
+                .iter()
+                .map(|&index| rows[index].clone())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let analyses = bucket_rows
         .iter()
-        .filter(|k| !promoted.contains(k))
-        .cloned()
-        .collect();
-    (promoted, remainder)
-}
-
-/// True if the sub-key's value is scalar in the first object that carries it.
-fn subkey_is_scalar(sub: &str, present: &[&Value]) -> bool {
-    for v in present {
-        if let Some(obj) = v.as_object()
-            && let Some(inner) = obj.get(sub)
-        {
-            return !matches!(inner, Value::Object(_) | Value::Array(_));
-        }
+        .map(|rows| analyze_flat_rows(rows))
+        .collect::<Vec<_>>();
+    let table_shapes = bucket_rows
+        .iter()
+        .zip(&analyses)
+        .map(|(rows, analysis)| table_shape(rows, analysis))
+        .collect::<Vec<_>>();
+    if table_shapes.iter().any(|shape| shape.columns.len() < 2) {
+        return None;
     }
-    false
-}
+    let plans = bucket_rows
+        .iter()
+        .zip(&analyses)
+        .map(|(rows, analysis)| plan_rows(rows, analysis, query))
+        .collect::<Vec<_>>();
+    if plans.iter().any(|plan| plan.lossy) {
+        lossy = true;
+        out.push_str(" · exact original via retrieve footer");
+    }
+    out.push_str("]\n");
 
-/// Render one output cell for a row. Truncates over-long cells only when
-/// `allow_truncate` is set (CCR can recover the dropped tail); otherwise the
-/// full value is kept so the table stays a faithful, information-preserving
-/// reshape.
-fn render_out_cell(
-    obj: &Map<String, Value>,
-    oc: &OutCol,
-    allow_truncate: bool,
-    truncated: &mut bool,
-) -> String {
-    let raw = match oc {
-        OutCol::Plain(col) => obj.get(col).map(render_cell).unwrap_or_default(),
-        OutCol::FlatSub(col, sub) => obj
-            .get(col)
-            .and_then(Value::as_object)
-            .and_then(|o| o.get(sub))
-            .map(render_cell)
-            .unwrap_or_default(),
-        OutCol::FlatBlob(col, subs) => match obj.get(col).and_then(Value::as_object) {
-            Some(o) => {
-                let mut kept = Map::new();
-                for s in subs {
-                    if let Some(v) = o.get(s) {
-                        kept.insert(s.clone(), v.clone());
+    for (bucket_index, bucket) in buckets.iter().enumerate() {
+        let table_shape = &table_shapes[bucket_index];
+        let columns = &table_shape.columns;
+        let plan = &plans[bucket_index];
+        let _ = writeln!(
+            out,
+            "\n[bucket {}: {} row(s) × {} cols]",
+            bucket_index + 1,
+            bucket.indices.len(),
+            columns.len()
+        );
+        write_constants_line(&mut out, &table_shape.constants);
+        let _ = writeln!(out, "__row | {}", columns.join(" | "));
+
+        if plan.lossy {
+            let mut prev: Option<usize> = None;
+            for &local_index in &plan.keep_rows {
+                if let Some(previous) = prev {
+                    let gap = local_index - previous - 1;
+                    if gap > 0 {
+                        let _ = writeln!(out, "[... {gap} row(s) omitted in bucket ...]");
                     }
+                } else if local_index > 0 {
+                    let _ = writeln!(out, "[... {local_index} row(s) omitted in bucket ...]");
                 }
-                if kept.is_empty() {
-                    String::new()
-                } else {
-                    escape_markdown_cell(&compact_json(&Value::Object(kept)))
+                write_bucket_row(&mut out, rows, bucket.indices[local_index], columns);
+                prev = Some(local_index);
+            }
+            if let Some(previous) = prev {
+                let tail = bucket.indices.len().saturating_sub(previous + 1);
+                if tail > 0 {
+                    let _ = writeln!(out, "[... {tail} row(s) omitted in bucket ...]");
                 }
             }
-            None => obj.get(col).map(render_cell).unwrap_or_default(),
-        },
-    };
-    if !allow_truncate {
-        // No CCR to recover a cut cell — keep the full value (lossless).
-        return raw;
+        } else {
+            for &row_index in &bucket.indices {
+                write_bucket_row(&mut out, rows, row_index, columns);
+            }
+        }
     }
-    let (cell, cut) = truncate_cell(&raw);
-    *truncated |= cut;
-    cell
+
+    let out = out.trim_end().to_string();
+    if out.len() >= original.len() {
+        return None;
+    }
+    if lossy {
+        Some(CompressOutput::lossy(out, CompressorKind::SmartCrusher))
+    } else {
+        Some(CompressOutput::reformatted(
+            out,
+            CompressorKind::SmartCrusher,
+        ))
+    }
 }
 
-// ---------------------------------------------------------------------------
-// Row-keeping (row-drop must-keeps)
-// ---------------------------------------------------------------------------
+#[derive(Debug)]
+struct ShapeBucket {
+    columns: Vec<String>,
+    indices: Vec<usize>,
+}
 
-/// Pick the row indices to keep when row-dropping: adaptively sized head/tail
-/// windows plus every anomalous row — nested error text, numeric outliers,
-/// Pareto-rare categorical values, rare structural fields, and query-anchor
-/// hits. Ascending, de-duped.
-fn rows_to_keep(array: &[Value], columns: &[String], n: usize, anchors: &[String]) -> Vec<usize> {
-    let (head, tail) = adaptive_head_tail(array);
+fn shape_buckets(rows: &[FlatRow]) -> Vec<ShapeBucket> {
+    let mut buckets: Vec<ShapeBucket> = Vec::new();
+    for (index, row) in rows.iter().enumerate() {
+        let columns = row.values.keys().cloned().collect::<Vec<_>>();
+        if let Some(bucket) = buckets.iter_mut().find(|bucket| bucket.columns == columns) {
+            bucket.indices.push(index);
+        } else {
+            buckets.push(ShapeBucket {
+                columns,
+                indices: vec![index],
+            });
+        }
+    }
+    buckets
+}
+
+fn write_bucket_row(out: &mut String, rows: &[FlatRow], row_index: usize, columns: &[String]) {
+    let row = &rows[row_index];
+    let cells = columns
+        .iter()
+        .map(|col| row.values.get(col).map(render_cell).unwrap_or_default())
+        .collect::<Vec<_>>();
+    let _ = writeln!(out, "{row_index} | {}", cells.join(" | "));
+}
+
+#[derive(Debug, Clone)]
+struct TableShape {
+    columns: Vec<String>,
+    constants: Vec<(String, String)>,
+}
+
+fn table_shape(rows: &[FlatRow], analysis: &JsonAnalysis) -> TableShape {
+    let mut constants = Vec::new();
+    let mut columns = Vec::new();
+    for field in &analysis.fields {
+        if field.constant {
+            if let Some(value) = rows
+                .first()
+                .and_then(|row| row.values.get(&field.key))
+                .map(render_cell)
+            {
+                constants.push((field.key.clone(), value));
+            } else {
+                columns.push(field.key.clone());
+            }
+        } else {
+            columns.push(field.key.clone());
+        }
+    }
+
+    if columns.len() < 2 {
+        TableShape {
+            columns: analysis.columns.clone(),
+            constants: Vec::new(),
+        }
+    } else {
+        TableShape { columns, constants }
+    }
+}
+
+fn write_constants_line(out: &mut String, constants: &[(String, String)]) {
+    if constants.is_empty() {
+        return;
+    }
+    let rendered = constants
+        .iter()
+        .map(|(key, value)| format!("{key}={value}"))
+        .collect::<Vec<_>>()
+        .join(" | ");
+    let _ = writeln!(out, "constants: {rendered}");
+}
+
+/// Analyze a JSON array-of-objects without rendering it.
+pub fn analyze(content: &str) -> Option<JsonAnalysis> {
+    let value: Value = serde_json::from_str(content.trim()).ok()?;
+    let array = value.as_array()?;
+    if array.len() < MIN_ROWS || !array.iter().all(Value::is_object) {
+        return None;
+    }
+    let flat_rows = flatten_rows(array)?;
+    Some(analyze_flat_rows(&flat_rows))
+}
+
+/// Pick the row indices to keep when row-dropping: the head/tail windows plus
+/// rows flagged as anomalous, numeric change points, duplicate-cluster
+/// representatives, spread anchors, information-dense rows, query-direction
+/// anchors, representative discriminator buckets, or query-relevant. Returns
+/// ascending, de-duplicated indices.
+fn plan_rows(rows: &[FlatRow], analysis: &JsonAnalysis, query: Option<&str>) -> JsonPlan {
+    let n = rows.len();
+    let lossy = n > ROW_DROP_THRESHOLD;
+    if !lossy {
+        return JsonPlan {
+            lossy: false,
+            keep_rows: (0..n).collect(),
+        };
+    }
+
     let mut keep: BTreeSet<usize> = BTreeSet::new();
-    for i in 0..head.min(n) {
+    for i in 0..dynamic_head_rows(n) {
         keep.insert(i);
     }
-    for i in n.saturating_sub(tail)..n {
+    for i in n.saturating_sub(dynamic_tail_rows(n))..n {
+        keep.insert(i);
+    }
+    for i in spread_anchor_rows(rows, &keep) {
+        keep.insert(i);
+    }
+    for i in duplicate_cluster_representatives(rows) {
+        keep.insert(i);
+    }
+    for i in near_duplicate_cluster_representatives(rows, &keep) {
+        keep.insert(i);
+    }
+    for i in information_dense_rows(rows, &keep) {
+        keep.insert(i);
+    }
+    for i in query_direction_rows(n, query) {
         keep.insert(i);
     }
 
-    // (2) Error text, scanning nested object/array values to depth 2.
-    for (i, item) in array.iter().enumerate() {
-        if value_has_error(item, 2) {
+    // Error-text rows: any string/scalar cell carrying an error indicator.
+    for (i, row) in rows.iter().enumerate() {
+        let row_has_error = row.values.values().any(|v| match v {
+            Value::String(s) => has_error_indicators(s),
+            other => has_error_indicators(&other.to_string()),
+        });
+        if row_has_error {
             keep.insert(i);
         }
     }
 
-    // (8) Query anchors: keep any row whose serialized form contains an anchor.
-    if !anchors.is_empty() {
-        for (i, item) in array.iter().enumerate() {
-            let serialized = compact_json(item).to_ascii_lowercase();
-            if anchors.iter().any(|a| serialized.contains(a)) {
+    // Numeric outliers: for each column, compute mean/std over numeric cells and
+    // keep rows whose value is beyond OUTLIER_SIGMA. Bounded by a cap so a wide
+    // anomalous tail can't defeat the point of dropping.
+    for field in &analysis.fields {
+        if let Some(stats) = field.numeric
+            && stats.stddev > f64::EPSILON
+        {
+            for (i, row) in rows.iter().enumerate() {
+                if let Some(x) = row.values.get(&field.key).and_then(Value::as_f64)
+                    && ((x - stats.mean) / stats.stddev).abs() >= OUTLIER_SIGMA
+                {
+                    keep.insert(i);
+                }
+            }
+        }
+        if field.numeric.is_some() {
+            for i in numeric_change_point_rows(rows, &field.key) {
                 keep.insert(i);
             }
         }
-    }
-
-    for col in columns {
-        keep_numeric_outliers(array, col, &mut keep);
-        keep_pareto_rare(array, col, n, &mut keep);
-        keep_rare_field(array, col, n, &mut keep);
-    }
-
-    keep.into_iter().collect()
-}
-
-/// Size the head/tail keep windows from the rows themselves: highly redundant
-/// arrays collapse toward [`MIN_KEPT_ROWS`], diverse ones keep up to the full
-/// [`HEAD_ROWS`] + [`TAIL_ROWS`] budget. The total splits ~2/3 head (first
-/// rows) and ~1/3 tail (last rows).
-fn adaptive_head_tail(array: &[Value]) -> (usize, usize) {
-    let serialized: Vec<String> = array.iter().map(compact_json).collect();
-    let refs: Vec<&str> = serialized.iter().map(String::as_str).collect();
-    let k = compute_optimal_k(&refs, MIN_KEPT_ROWS, HEAD_ROWS + TAIL_ROWS);
-    let tail = (k / 3).max(1);
-    (k - tail, tail)
-}
-
-/// Recursively test for error indicators in string leaves down to `depth`.
-fn value_has_error(v: &Value, depth: usize) -> bool {
-    match v {
-        Value::String(s) => has_error_indicators(s),
-        Value::Array(a) if depth > 0 => a.iter().any(|x| value_has_error(x, depth - 1)),
-        Value::Object(m) if depth > 0 => m.values().any(|x| value_has_error(x, depth - 1)),
-        _ => false,
-    }
-}
-
-/// (existing) Keep the most extreme numeric outliers in `col`.
-fn keep_numeric_outliers(array: &[Value], col: &str, keep: &mut BTreeSet<usize>) {
-    let nums: Vec<(usize, f64)> = array
-        .iter()
-        .enumerate()
-        .filter_map(|(i, item)| {
-            item.as_object()
-                .and_then(|o| o.get(col))
-                .and_then(Value::as_f64)
-                .map(|x| (i, x))
-        })
-        .collect();
-    if nums.len() < 4 {
-        return;
-    }
-    let mean = nums.iter().map(|(_, x)| x).sum::<f64>() / nums.len() as f64;
-    let var = nums.iter().map(|(_, x)| (x - mean).powi(2)).sum::<f64>() / nums.len() as f64;
-    let std = var.sqrt();
-    if std <= f64::EPSILON {
-        return;
-    }
-    let mut outliers: Vec<(usize, f64)> = nums
-        .into_iter()
-        .map(|(i, x)| (i, ((x - mean) / std).abs()))
-        .filter(|(_, z)| *z >= OUTLIER_SIGMA)
-        .collect();
-    outliers.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-    for (i, _) in outliers.into_iter().take(MAX_OUTLIERS_PER_COLUMN) {
-        keep.insert(i);
-    }
-}
-
-/// (5) Pareto rare-status: for a low-cardinality string column, keep rows whose
-/// value falls outside the smallest ≥ 80%-covering set when that set is tiny.
-fn keep_pareto_rare(array: &[Value], col: &str, n: usize, keep: &mut BTreeSet<usize>) {
-    let mut freq: HashMap<&str, usize> = HashMap::new();
-    let mut total = 0usize;
-    for item in array {
-        if let Some(Value::String(s)) = item.as_object().and_then(|o| o.get(col)) {
-            *freq.entry(s.as_str()).or_default() += 1;
-            total += 1;
+        if field.sparse {
+            for (i, row) in rows.iter().enumerate() {
+                if row.values.contains_key(&field.key) {
+                    keep.insert(i);
+                }
+            }
+        }
+        if is_discriminator_field(field, rows.len()) {
+            let mut seen_values = BTreeSet::new();
+            for (i, row) in rows.iter().enumerate() {
+                if let Some(value) = row.values.get(&field.key)
+                    && seen_values.insert(render_cell(value))
+                {
+                    keep.insert(i);
+                }
+            }
         }
     }
-    // Require a genuinely categorical column that most rows participate in.
-    if total < n / 2 || freq.len() < 2 || freq.len() > MAX_CARDINALITY {
-        return;
+
+    if let Some(query) = query.filter(|q| !q.trim().is_empty()) {
+        let docs: Vec<String> = rows.iter().map(row_text).collect();
+        let corpus = Bm25Corpus::new(docs.iter().map(String::as_str));
+        let mut scored = corpus.score_all(query);
+        scored.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.index.cmp(&b.index))
+        });
+        for score in scored
+            .into_iter()
+            .take(20)
+            .filter(|score| score.score > 0.0)
+        {
+            keep.insert(score.index);
+        }
     }
-    let mut counts: Vec<(&str, usize)> = freq.into_iter().collect();
-    counts.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
-    let target = (PARETO_COVER * total as f64).ceil() as usize;
-    let mut covered = 0usize;
-    let mut k = 0usize;
-    let mut common: BTreeSet<&str> = BTreeSet::new();
-    for (val, c) in &counts {
-        if covered >= target {
+
+    JsonPlan {
+        lossy,
+        keep_rows: keep.into_iter().collect(),
+    }
+}
+
+fn is_discriminator_field(field: &JsonFieldAnalysis, row_count: usize) -> bool {
+    field.present == row_count
+        && field.numeric.is_none()
+        && (2..=MAX_DISCRIMINATOR_BUCKETS).contains(&field.unique_count)
+}
+
+fn duplicate_cluster_representatives(rows: &[FlatRow]) -> Vec<usize> {
+    let mut clusters: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    for (i, row) in rows.iter().enumerate() {
+        let entry = clusters.entry(row_text(row)).or_insert((i, 0));
+        entry.1 += 1;
+    }
+
+    let mut repeated = clusters
+        .into_values()
+        .filter(|(_, count)| *count > 1)
+        .collect::<Vec<_>>();
+    repeated.sort_by(|(a_first, a_count), (b_first, b_count)| {
+        b_count.cmp(a_count).then_with(|| a_first.cmp(b_first))
+    });
+    repeated
+        .into_iter()
+        .take(MAX_DUPLICATE_CLUSTER_ANCHORS)
+        .map(|(first, _)| first)
+        .collect()
+}
+
+#[derive(Debug, Clone)]
+struct NearDuplicateCluster {
+    first: usize,
+    count: usize,
+    fingerprint: u64,
+}
+
+fn near_duplicate_cluster_representatives(
+    rows: &[FlatRow],
+    existing_keep: &BTreeSet<usize>,
+) -> Vec<usize> {
+    let mut clusters: Vec<NearDuplicateCluster> = Vec::new();
+    for (i, row) in rows.iter().enumerate() {
+        let fingerprint = semantic_simhash(&row_text(row));
+        if fingerprint == 0 {
+            continue;
+        }
+        if let Some(cluster) = clusters.iter_mut().find(|cluster| {
+            (cluster.fingerprint ^ fingerprint).count_ones() <= NEAR_DUPLICATE_SIMHASH_DISTANCE
+        }) {
+            cluster.count += 1;
+        } else {
+            clusters.push(NearDuplicateCluster {
+                first: i,
+                count: 1,
+                fingerprint,
+            });
+        }
+    }
+
+    clusters.retain(|cluster| cluster.count > 1 && !existing_keep.contains(&cluster.first));
+    clusters.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.first.cmp(&b.first)));
+    clusters
+        .into_iter()
+        .take(MAX_NEAR_DUPLICATE_CLUSTER_ANCHORS)
+        .map(|cluster| cluster.first)
+        .collect()
+}
+
+fn spread_anchor_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<usize> {
+    let n = rows.len();
+    let start = dynamic_head_rows(n).min(n);
+    let end = n.saturating_sub(dynamic_tail_rows(n));
+    if start >= end {
+        return Vec::new();
+    }
+
+    let middle_len = end - start;
+    let anchor_count = adaptive_spread_anchor_count(rows, start, end);
+    if anchor_count == 0 {
+        return Vec::new();
+    }
+
+    let mut seen = existing_keep
+        .iter()
+        .filter_map(|&i| rows.get(i).map(row_text))
+        .collect::<BTreeSet<_>>();
+    let mut anchors = Vec::new();
+    for rank in 1..=anchor_count {
+        let target = start + (rank * (middle_len + 1)) / (anchor_count + 1);
+        if let Some(index) = nearest_unseen_row(rows, start, end, target, &mut seen) {
+            anchors.push(index);
+        }
+    }
+    anchors.sort_unstable();
+    anchors
+}
+
+fn adaptive_spread_anchor_count(rows: &[FlatRow], start: usize, end: usize) -> usize {
+    let middle_len = end - start;
+    let base = (middle_len / ROW_DROP_THRESHOLD).min(MAX_SPREAD_ANCHORS);
+    if base == 0 {
+        return 0;
+    }
+
+    let total = cumulative_semantic_bigrams(rows, start, end);
+    if total < MIN_SATURATION_BIGRAMS {
+        return base;
+    }
+    if semantic_bigrams_saturate_early(rows, start, end, total) {
+        return base;
+    }
+
+    let boost = base.clamp(1, MAX_ADAPTIVE_SPREAD_ANCHOR_BOOST);
+    (base + boost).min(MAX_SPREAD_ANCHORS)
+}
+
+fn semantic_bigrams_saturate_early(
+    rows: &[FlatRow],
+    start: usize,
+    end: usize,
+    total: usize,
+) -> bool {
+    semantic_bigram_knee_percent(rows, start, end, total)
+        .is_some_and(|position| position <= EARLY_SATURATION_POSITION_PERCENT)
+}
+
+fn semantic_bigram_knee_percent(
+    rows: &[FlatRow],
+    start: usize,
+    end: usize,
+    total: usize,
+) -> Option<usize> {
+    let threshold = total * SATURATION_KNEE_PERCENT;
+    let middle_len = end - start;
+    let mut seen = BTreeSet::new();
+    for (offset, row) in rows[start..end].iter().enumerate() {
+        let tokens = semantic_tokens(&row_text(row));
+        for pair in tokens.windows(2) {
+            seen.insert((pair[0].clone(), pair[1].clone()));
+        }
+        if seen.len() * 100 >= threshold {
+            let consumed = offset + 1;
+            return Some((consumed * 100).div_ceil(middle_len));
+        }
+    }
+    None
+}
+
+fn cumulative_semantic_bigrams(rows: &[FlatRow], start: usize, end: usize) -> usize {
+    let mut seen = BTreeSet::new();
+    for row in &rows[start..end] {
+        let tokens = semantic_tokens(&row_text(row));
+        for pair in tokens.windows(2) {
+            seen.insert((pair[0].clone(), pair[1].clone()));
+        }
+    }
+    seen.len()
+}
+
+fn semantic_tokens(text: &str) -> Vec<String> {
+    tokenize(text)
+        .into_iter()
+        .filter(|token| !token.chars().any(|ch| ch.is_ascii_digit()))
+        .collect()
+}
+
+fn semantic_simhash(text: &str) -> u64 {
+    let tokens = semantic_tokens(text);
+    if tokens.is_empty() {
+        return 0;
+    }
+
+    let mut buckets = [0i32; 64];
+    for token in tokens {
+        let hash = stable_token_hash(&token);
+        for (bit, bucket) in buckets.iter_mut().enumerate() {
+            if (hash >> bit) & 1 == 1 {
+                *bucket += 1;
+            } else {
+                *bucket -= 1;
+            }
+        }
+    }
+
+    buckets
+        .into_iter()
+        .enumerate()
+        .fold(0u64, |fingerprint, (bit, score)| {
+            if score > 0 {
+                fingerprint | (1u64 << bit)
+            } else {
+                fingerprint
+            }
+        })
+}
+
+fn stable_token_hash(token: &str) -> u64 {
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in token.as_bytes() {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    hash
+}
+
+fn nearest_unseen_row(
+    rows: &[FlatRow],
+    start: usize,
+    end: usize,
+    target: usize,
+    seen: &mut BTreeSet<String>,
+) -> Option<usize> {
+    for offset in 0.. {
+        let left = target.checked_sub(offset).filter(|&i| i >= start);
+        if let Some(i) = left
+            && seen.insert(row_text(&rows[i]))
+        {
+            return Some(i);
+        }
+
+        let right = target + offset;
+        if right < end && Some(right) != left && seen.insert(row_text(&rows[right])) {
+            return Some(right);
+        }
+
+        if left.is_none() && right >= end {
             break;
         }
-        common.insert(val);
-        covered += c;
-        k += 1;
     }
-    // Only fire when a tiny head covers the bulk AND rare values remain.
-    if k > PARETO_MAX_K || common.len() >= counts.len() {
-        return;
-    }
-    for (i, item) in array.iter().enumerate() {
-        if let Some(Value::String(s)) = item.as_object().and_then(|o| o.get(col))
-            && !common.contains(s.as_str())
-        {
-            keep.insert(i);
-        }
-    }
+    None
 }
 
-/// (6) Rare structural field: if `col` appears in < 20% of rows, keep the rows
-/// that carry it.
-fn keep_rare_field(array: &[Value], col: &str, n: usize, keep: &mut BTreeSet<usize>) {
-    let present: Vec<usize> = array
+fn numeric_change_point_rows(rows: &[FlatRow], key: &str) -> Vec<usize> {
+    let mut deltas: Vec<(usize, f64)> = Vec::new();
+    let mut prev: Option<f64> = None;
+    for (i, row) in rows.iter().enumerate() {
+        let Some(current) = row.values.get(key).and_then(Value::as_f64) else {
+            prev = None;
+            continue;
+        };
+        if let Some(previous) = prev {
+            let delta = (current - previous).abs();
+            if delta > f64::EPSILON {
+                deltas.push((i, delta));
+            }
+        }
+        prev = Some(current);
+    }
+    if deltas.is_empty() {
+        return Vec::new();
+    }
+
+    let baseline = if deltas.len() >= 3 {
+        median_delta(deltas.iter().map(|(_, delta)| *delta).collect())
+    } else {
+        f64::EPSILON
+    };
+    let threshold = if baseline > f64::EPSILON {
+        baseline * CHANGE_POINT_DELTA_MULTIPLIER
+    } else {
+        f64::EPSILON
+    };
+
+    deltas.sort_by(|(a_index, a_delta), (b_index, b_delta)| {
+        b_delta
+            .partial_cmp(a_delta)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a_index.cmp(b_index))
+    });
+    let mut anchors = deltas
+        .into_iter()
+        .filter(|(_, delta)| *delta >= threshold)
+        .take(MAX_CHANGE_POINT_ANCHORS)
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    anchors.sort_unstable();
+    anchors
+}
+
+fn median_delta(mut deltas: Vec<f64>) -> f64 {
+    deltas.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    deltas[deltas.len() / 2]
+}
+
+fn information_dense_rows(rows: &[FlatRow], existing_keep: &BTreeSet<usize>) -> Vec<usize> {
+    let n = rows.len();
+    let start = dynamic_head_rows(n).min(n);
+    let end = n.saturating_sub(dynamic_tail_rows(n));
+    if start >= end {
+        return Vec::new();
+    }
+
+    let seen = existing_keep
         .iter()
-        .enumerate()
-        .filter(|(_, item)| item.as_object().is_some_and(|o| o.contains_key(col)))
-        .map(|(i, _)| i)
+        .filter_map(|&i| rows.get(i).map(row_text))
+        .collect::<BTreeSet<_>>();
+    let mut scored = (start..end)
+        .filter(|index| !existing_keep.contains(index))
+        .filter_map(|index| {
+            let text = row_text(&rows[index]);
+            if seen.contains(&text) {
+                return None;
+            }
+            let unique_terms = tokenize(&text).into_iter().collect::<BTreeSet<_>>().len();
+            (unique_terms > 0).then_some((index, unique_terms, text.len()))
+        })
+        .collect::<Vec<_>>();
+    if scored.is_empty() {
+        return Vec::new();
+    }
+
+    let baseline = median_usize(scored.iter().map(|(_, terms, _)| *terms).collect());
+    let threshold = baseline + (baseline / 2).max(2);
+
+    scored.sort_by(|(a_index, a_terms, a_len), (b_index, b_terms, b_len)| {
+        b_terms
+            .cmp(a_terms)
+            .then_with(|| b_len.cmp(a_len))
+            .then_with(|| a_index.cmp(b_index))
+    });
+    let mut anchors = scored
+        .into_iter()
+        .filter(|(_, terms, _)| *terms > threshold)
+        .take(MAX_INFORMATION_DENSE_ANCHORS)
+        .map(|(index, _, _)| index)
+        .collect::<Vec<_>>();
+    anchors.sort_unstable();
+    anchors
+}
+
+fn median_usize(mut values: Vec<usize>) -> usize {
+    values.sort_unstable();
+    values[values.len() / 2]
+}
+
+fn query_direction_rows(row_count: usize, query: Option<&str>) -> Vec<usize> {
+    let Some(direction) = query.and_then(query_direction) else {
+        return Vec::new();
+    };
+    match direction {
+        QueryDirection::Front => {
+            let start = dynamic_head_rows(row_count).min(row_count);
+            let end = (start + QUERY_DIRECTION_EXTRA_ROWS).min(row_count);
+            (start..end).collect()
+        }
+        QueryDirection::Back => {
+            let tail_start = row_count.saturating_sub(dynamic_tail_rows(row_count));
+            let start = tail_start.saturating_sub(QUERY_DIRECTION_EXTRA_ROWS);
+            (start..tail_start).collect()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum QueryDirection {
+    Front,
+    Back,
+}
+
+fn query_direction(query: &str) -> Option<QueryDirection> {
+    let tokens = tokenize(query).into_iter().collect::<BTreeSet<_>>();
+    if tokens.iter().any(|token| {
+        matches!(
+            token.as_str(),
+            "latest" | "recent" | "current" | "newest" | "last"
+        )
+    }) {
+        return Some(QueryDirection::Back);
+    }
+    if tokens.iter().any(|token| {
+        matches!(
+            token.as_str(),
+            "first" | "oldest" | "earliest" | "initial" | "beginning"
+        )
+    }) {
+        return Some(QueryDirection::Front);
+    }
+    None
+}
+
+#[derive(Debug, Clone)]
+struct FlatRow {
+    values: BTreeMap<String, Value>,
+}
+
+fn flatten_rows(array: &[Value]) -> Option<Vec<FlatRow>> {
+    array
+        .iter()
+        .map(|item| {
+            let obj = item.as_object()?;
+            Some(FlatRow {
+                values: flatten_object(obj),
+            })
+        })
+        .collect()
+}
+
+fn flatten_object(obj: &Map<String, Value>) -> BTreeMap<String, Value> {
+    let mut out = BTreeMap::new();
+    for (key, value) in obj {
+        flatten_value(key, value, &mut out);
+    }
+    out
+}
+
+fn flatten_value(prefix: &str, value: &Value, out: &mut BTreeMap<String, Value>) {
+    match value {
+        Value::Object(obj) if !obj.is_empty() => {
+            for (key, child) in obj {
+                flatten_value(&format!("{prefix}.{key}"), child, out);
+            }
+        }
+        Value::String(text) => {
+            if let Some(parsed) = parse_stringified_json(text) {
+                match parsed {
+                    Value::Object(obj) if !obj.is_empty() => {
+                        for (key, child) in &obj {
+                            flatten_value(&format!("{prefix}.{key}"), child, out);
+                        }
+                    }
+                    Value::Array(_) => {
+                        out.insert(prefix.to_string(), parsed);
+                    }
+                    _ => {
+                        out.insert(prefix.to_string(), value.clone());
+                    }
+                }
+            } else {
+                out.insert(prefix.to_string(), value.clone());
+            }
+        }
+        _ => {
+            out.insert(prefix.to_string(), value.clone());
+        }
+    }
+}
+
+fn parse_stringified_json(text: &str) -> Option<Value> {
+    let trimmed = text.trim();
+    if trimmed.len() > MAX_STRINGIFIED_JSON_BYTES {
+        return None;
+    }
+    if !(trimmed.starts_with('{') || trimmed.starts_with('[')) {
+        return None;
+    }
+    serde_json::from_str(trimmed).ok()
+}
+
+fn analyze_flat_rows(rows: &[FlatRow]) -> JsonAnalysis {
+    let mut present: HashMap<String, usize> = HashMap::new();
+    let mut types: HashMap<String, BTreeSet<&'static str>> = HashMap::new();
+    let mut uniques: HashMap<String, BTreeSet<String>> = HashMap::new();
+    let mut numeric_values: HashMap<String, Vec<f64>> = HashMap::new();
+
+    for row in rows {
+        for (key, value) in &row.values {
+            *present.entry(key.clone()).or_insert(0) += 1;
+            types
+                .entry(key.clone())
+                .or_default()
+                .insert(value_type(value));
+            uniques
+                .entry(key.clone())
+                .or_default()
+                .insert(render_cell(value));
+            if let Some(x) = value.as_f64() {
+                numeric_values.entry(key.clone()).or_default().push(x);
+            }
+        }
+    }
+
+    let mut fields: Vec<JsonFieldAnalysis> = present
+        .into_iter()
+        .map(|(key, present)| {
+            let unique_count = uniques.get(&key).map_or(0, BTreeSet::len);
+            JsonFieldAnalysis {
+                key: key.clone(),
+                present,
+                types: types.remove(&key).unwrap_or_default(),
+                unique_count,
+                constant: unique_count == 1 && present == rows.len(),
+                sparse: present <= sparse_threshold(rows.len()),
+                numeric: numeric_values.get(&key).map(|values| numeric_stats(values)),
+            }
+        })
         .collect();
-    let threshold = (RARE_FIELD_RATIO * n as f64).floor() as usize;
-    if present.is_empty() || present.len() >= threshold.max(1) {
-        return;
-    }
-    for i in present {
-        keep.insert(i);
-    }
-}
 
-// ---------------------------------------------------------------------------
-// Scalar-array crushers
-// ---------------------------------------------------------------------------
+    fields.sort_by(|a, b| b.present.cmp(&a.present).then_with(|| a.key.cmp(&b.key)));
+    let columns = fields
+        .iter()
+        .map(|field| field.key.clone())
+        .collect::<Vec<_>>();
+    let estimated_table_bytes = rows
+        .iter()
+        .map(|row| {
+            row.values
+                .values()
+                .map(render_cell)
+                .map(|s| s.len() + 3)
+                .sum::<usize>()
+        })
+        .sum::<usize>()
+        + columns.iter().map(String::len).sum::<usize>();
 
-/// Collapse a plain-number array to distributional stats + head/tail samples.
-fn crush_number_array(
-    arr: &[Value],
-    content: &str,
-    block_tokens: bool,
-    path: &str,
-) -> Option<CompressOutput> {
-    let mut nums: Vec<f64> = arr.iter().filter_map(Value::as_f64).collect();
-    if nums.len() < SCALAR_ARRAY_MIN {
-        return None;
-    }
-    let n = nums.len();
-    nums.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-    let mean = nums.iter().sum::<f64>() / n as f64;
-    let pct = |q: f64| nums[((q * (n - 1) as f64).round() as usize).min(n - 1)];
-
-    let head = 5.min(n);
-    let tail = 3.min(n.saturating_sub(head));
-    let mut out = String::new();
-    let label = if path.is_empty() {
-        String::new()
-    } else {
-        format!(" {path}")
-    };
-    let _ = writeln!(
-        out,
-        "[json number array{label}: {n} values · min={} p25={} median={} p75={} max={} mean={}]",
-        fmt_num(pct(0.0)),
-        fmt_num(pct(0.25)),
-        fmt_num(pct(0.5)),
-        fmt_num(pct(0.75)),
-        fmt_num(pct(1.0)),
-        fmt_num(mean),
-    );
-    let head_vals: Vec<String> = arr[..head].iter().map(compact_json).collect();
-    let _ = writeln!(out, "head: {}", head_vals.join(", "));
-    if head + tail < arr.len() {
-        let slice = serde_json::to_string(&arr[head..arr.len() - tail]).unwrap_or_default();
-        let token = block_token(&slice, block_tokens && !slice.is_empty());
-        let _ = writeln!(
-            out,
-            "[... {} value(s) omitted ...{token}]",
-            arr.len() - head - tail
-        );
-        if !token.is_empty() {
-            out.push_str(BLOCK_NOTE);
-            out.push('\n');
-        }
-    }
-    if tail > 0 {
-        let tail_vals: Vec<String> = arr[arr.len() - tail..].iter().map(compact_json).collect();
-        let _ = writeln!(out, "tail: {}", tail_vals.join(", "));
-    }
-
-    let text = out.trim_end().to_string();
-    if text.len() >= content.len() {
-        return None;
-    }
-    Some(CompressOutput::lossy(text, CompressorKind::SmartCrusher))
-}
-
-/// Collapse a plain-string array to deduped value/count pairs + head/tail.
-fn crush_string_array(
-    arr: &[Value],
-    content: &str,
-    block_tokens: bool,
-    path: &str,
-) -> Option<CompressOutput> {
-    let strings: Vec<&str> = arr.iter().filter_map(Value::as_str).collect();
-    if strings.len() < SCALAR_ARRAY_MIN {
-        return None;
-    }
-    let n = strings.len();
-    let mut freq: HashMap<&str, usize> = HashMap::new();
-    let mut order: Vec<&str> = Vec::new();
-    for s in &strings {
-        if !freq.contains_key(s) {
-            order.push(s);
-        }
-        *freq.entry(s).or_default() += 1;
-    }
-    let unique = order.len();
-
-    let mut counts: Vec<(&str, usize)> = order.iter().map(|s| (*s, freq[s])).collect();
-    counts.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
-    const MAX_LISTED: usize = 12;
-
-    let label = if path.is_empty() {
-        String::new()
-    } else {
-        format!(" {path}")
-    };
-    let mut out = String::new();
-    let _ = writeln!(
-        out,
-        "[json string array{label}: {n} values · {unique} unique]"
-    );
-    for (val, c) in counts.iter().take(MAX_LISTED) {
-        let (cell, _) = truncate_cell(val);
-        let _ = writeln!(out, "{} ×{c}", compact_json(&Value::String(cell)));
-    }
-    if unique > MAX_LISTED {
-        let slice = serde_json::to_string(arr).unwrap_or_default();
-        let token = block_token(&slice, block_tokens && !slice.is_empty());
-        let _ = writeln!(
-            out,
-            "[... {} more unique value(s) ...{token}]",
-            unique - MAX_LISTED
-        );
-        if !token.is_empty() {
-            out.push_str(BLOCK_NOTE);
-            out.push('\n');
-        }
-    }
-
-    let text = out.trim_end().to_string();
-    if text.len() >= content.len() {
-        return None;
-    }
-    Some(CompressOutput::lossy(text, CompressorKind::SmartCrusher))
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/// First-seen union of object keys across an array of objects (stable order).
-fn union_columns(array: &[Value]) -> Vec<String> {
-    let mut columns: Vec<String> = Vec::new();
-    for item in array {
-        if let Some(obj) = item.as_object() {
-            for key in obj.keys() {
-                if !columns.iter().any(|c| c == key) {
-                    columns.push(key.clone());
-                }
-            }
-        }
-    }
-    columns
-}
-
-/// First-seen union of sub-keys across a set of object values (stable order).
-fn union_subkeys(values: &[&Value]) -> Vec<String> {
-    let mut keys: Vec<String> = Vec::new();
-    for v in values {
-        if let Some(obj) = v.as_object() {
-            for key in obj.keys() {
-                if !keys.iter().any(|c| c == key) {
-                    keys.push(key.clone());
-                }
-            }
-        }
-    }
-    keys
-}
-
-fn is_name_like(key: &str) -> bool {
-    let k = key.to_ascii_lowercase();
-    matches!(
-        k.as_str(),
-        "name" | "id" | "title" | "key" | "slug" | "label" | "identifier"
-    )
-}
-
-fn is_desc_like(key: &str) -> bool {
-    let k = key.to_ascii_lowercase();
-    matches!(
-        k.as_str(),
-        "description" | "desc" | "summary" | "comment" | "text" | "message" | "detail"
-    )
-}
-
-fn is_plain_number(v: &Value) -> bool {
-    v.is_number()
-}
-
-fn compact_json(v: &Value) -> String {
-    serde_json::to_string(v).unwrap_or_default()
-}
-
-/// Format a float without a trailing `.0` for whole numbers.
-fn fmt_num(x: f64) -> String {
-    if x.fract() == 0.0 && x.abs() < 1e15 {
-        format!("{}", x as i64)
-    } else {
-        let s = format!("{x:.3}");
-        s.trim_end_matches('0').trim_end_matches('.').to_string()
+    JsonAnalysis {
+        row_count: rows.len(),
+        columns,
+        fields,
+        estimated_table_bytes,
     }
 }
 
-/// Render a single table cell. Scalars print bare-ish; nested values stay as
-/// compact JSON so the table stays lossless (before any truncation).
+fn value_type(value: &Value) -> &'static str {
+    match value {
+        Value::Null => "null",
+        Value::Bool(_) => "bool",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
+    }
+}
+
+fn numeric_stats(values: &[f64]) -> JsonNumericStats {
+    let min = values.iter().copied().fold(f64::INFINITY, f64::min);
+    let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let mean = values.iter().sum::<f64>() / values.len() as f64;
+    let variance = values.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / values.len() as f64;
+    JsonNumericStats {
+        min,
+        max,
+        mean,
+        stddev: variance.sqrt(),
+    }
+}
+
+fn sparse_threshold(row_count: usize) -> usize {
+    3.max(row_count / 10)
+}
+
+fn dynamic_head_rows(row_count: usize) -> usize {
+    HEAD_ROWS.min((row_count / 4).max(5))
+}
+
+fn dynamic_tail_rows(row_count: usize) -> usize {
+    TAIL_ROWS.min((row_count / 8).max(3))
+}
+
+fn row_text(row: &FlatRow) -> String {
+    row.values
+        .iter()
+        .map(|(key, value)| format!("{key}={}", render_cell(value)))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Render a single cell. Scalars print bare-ish; nested values stay as compact
+/// JSON so the table remains lossless.
 fn render_cell(v: &Value) -> String {
     match v {
-        Value::String(s) if !s.contains('|') && !s.contains('\n') => escape_markdown_cell(s),
+        Value::String(s) if !s.contains('|') && !s.contains('\n') => s.clone(),
         Value::Bool(b) => b.to_string(),
         Value::Number(n) => n.to_string(),
-        other => escape_markdown_cell(&serde_json::to_string(other).unwrap_or_default()),
+        other => serde_json::to_string(other).unwrap_or_default(),
     }
-}
-
-/// Truncate an already-escaped cell to [`CELL_MAX`] chars, avoiding a dangling
-/// escape backslash. Returns `(cell, was_truncated)`.
-fn truncate_cell(s: &str) -> (String, bool) {
-    if s.chars().count() <= CELL_MAX {
-        return (s.to_string(), false);
-    }
-    let mut cut: String = s.chars().take(CELL_MAX).collect();
-    while cut.ends_with('\\') {
-        cut.pop();
-    }
-    cut.push('…');
-    (cut, true)
-}
-
-/// Truncate a plain (unescaped) string for preamble rendering.
-fn truncate_plain(s: &str, max: usize) -> String {
-    if s.chars().count() <= max {
-        s.to_string()
-    } else {
-        let mut cut: String = s.chars().take(max).collect();
-        cut.push('…');
-        cut
-    }
-}
-
-fn render_markdown_row(cells: &[String]) -> String {
-    format!("| {} |", cells.join(" | "))
-}
-
-fn render_markdown_separator(width: usize) -> String {
-    let cols = vec!["---"; width];
-    format!("| {} |", cols.join(" | "))
-}
-
-fn escape_markdown_cell(cell: &str) -> String {
-    cell.replace('\\', "\\\\").replace('|', "\\|")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
 
     #[test]
-    fn crushes_uniform_array_hoists_constants() {
-        // `status` and `owner` are identical across all rows → hoisted to a
-        // preamble note and dropped from the table (feature 3).
+    fn crushes_uniform_array() {
         let mut rows = Vec::new();
-        for i in 0..80 {
+        for i in 0..20 {
             rows.push(format!(
                 r#"{{"id":{i},"name":"item number {i}","status":"active","owner":"team-alpha"}}"#
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let out = compress(&input, false, None).expect("compresses").text;
-        assert!(out.contains("[all rows:"), "{out}");
-        assert!(out.contains(r#"status="active""#), "{out}");
-        assert!(out.contains(r#"owner="team-alpha""#), "{out}");
-        assert!(out.contains("| id | name |"), "{out}");
-        assert_eq!(out.matches("| --- | --- |").count(), 1, "{out}");
+        let out = compress(&input).expect("compresses").text;
+        assert_eq!(out.matches("status").count(), 1, "{out}");
         assert!(out.contains("item number 7"));
         assert!(out.len() < input.len(), "expected shrink");
+    }
+
+    #[test]
+    fn smartcrusher_table_transform_runs_without_ccr() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"item number {i}","status":"active","owner":"team-alpha"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Json,
+            original_bytes: input.len(),
+        };
+        let transform = SmartCrusherTableTransform;
+
+        assert!(transform.applies_to(&pipeline_input));
+        let out = transform.apply(&pipeline_input).expect("table reformat");
+
+        assert_eq!(out.kind, CompressorKind::SmartCrusher);
+        assert!(out.text.contains("item number 7"), "{}", out.text);
+        assert!(out.text.len() < input.len(), "{}", out.text);
+    }
+
+    #[test]
+    fn smartcrusher_rows_transform_requires_retained_ccr() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 71 {
+                "contains special needle token"
+            } else {
+                "ordinary row"
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Json,
+            original_bytes: input.len(),
+        };
+        let transform = SmartCrusherRowsTransform::new().with_query("special needle");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained SmartCrusher rows");
+
+        assert_eq!(out.kind(), CompressorKind::SmartCrusher);
+        assert!(
+            out.text().contains("special needle token"),
+            "{}",
+            out.text()
+        );
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn smartcrusher_rows_transform_skips_reformats_and_non_json_input() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"item number {i}","status":"active","owner":"team-alpha"}}"#
+            ));
+        }
+        let small_json = format!("[{}]", rows.join(","));
+        let small_input = PipelineInput {
+            content: &small_json,
+            original_content: &small_json,
+            content_kind: ContentKind::Json,
+            original_bytes: small_json.len(),
+        };
+        let plain_input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = SmartCrusherRowsTransform::new();
+        let store = MemoryCcrStore::default();
+
+        assert!(transform.apply(&small_input, &store).is_none());
+        assert_eq!(transform.estimate_bloat(&plain_input), 0.0);
+        assert!(transform.apply(&plain_input, &store).is_none());
     }
 
     #[test]
@@ -1033,12 +1337,11 @@ mod tests {
         let mut rows = Vec::new();
         for i in 0..200 {
             rows.push(format!(
-                r#"{{"id":{i},"name":"record number {i}","status":"s{i}","note":"some detail {i}"}}"#
+                r#"{{"id":{i},"name":"record number {i}","status":"active","note":"some detail {i}"}}"#
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        // Row-dropping is the CCR path: it only fires with block tokens on.
-        let c = compress(&input, true, None).expect("compresses");
+        let c = compress(&input).expect("compresses");
         assert!(c.lossy, "row-dropped output must be lossy");
         assert!(c.text.contains("record number 0"), "{}", c.text);
         assert!(c.text.contains("record number 199"), "{}", c.text);
@@ -1046,36 +1349,477 @@ mod tests {
         assert!(c.text.len() < input.len());
     }
 
-    /// Without CCR the same large array is reshaped into a full markdown table:
-    /// every row survives (lossless), nothing is dropped, and it still shrinks
-    /// well below the pretty-printed JSON — the "markdown trick".
     #[test]
-    fn large_array_without_ccr_is_a_full_lossless_table() {
+    fn analyzer_reports_constants_sparse_fields_and_numeric_stats() {
         let mut rows = Vec::new();
-        for i in 0..200 {
+        for i in 0..20 {
+            let extra = if i == 13 {
+                r#","debug":"only here""#
+            } else {
+                ""
+            };
             rows.push(format!(
-                r#"{{"id":{i},"name":"record number {i}","status":"s{i}","note":"some detail {i}"}}"#
+                r#"{{"id":{i},"status":"active","latency":{}{extra}}}"#,
+                10 + i
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
-        assert!(!c.lossy, "full table is a faithful reshape: {}", c.text);
-        assert!(!c.text.contains("omitted"), "no rows dropped: {}", c.text);
-        assert!(c.text.contains("faithful reshape"), "{}", c.text);
-        // Every row's identifying values survive, including the middle ones a
-        // row-drop would have sampled away.
-        for i in [0usize, 75, 137, 199] {
-            assert!(
-                c.text.contains(&format!("record number {i}")),
-                "row {i} kept: {}",
-                c.text
-            );
+
+        let analysis = analyze(&input).expect("analysis");
+        let status = analysis
+            .fields
+            .iter()
+            .find(|field| field.key == "status")
+            .expect("status field");
+        let debug = analysis
+            .fields
+            .iter()
+            .find(|field| field.key == "debug")
+            .expect("debug field");
+        let latency = analysis
+            .fields
+            .iter()
+            .find(|field| field.key == "latency")
+            .expect("latency field");
+
+        assert!(status.constant);
+        assert_eq!(status.unique_ratio(), 1.0 / 20.0);
+        assert!(debug.sparse);
+        assert_eq!(debug.present, 1);
+        assert_eq!(debug.unique_ratio(), 1.0);
+        assert_eq!(latency.numeric.expect("numeric").min, 10.0);
+        assert!(latency.unique_ratio() > 0.9);
+        assert!(analysis.estimated_table_bytes < input.len());
+        assert!(analysis.estimated_reduction_bytes(input.len()) > 0);
+        assert!(analysis.estimated_reduction_ratio(input.len()) > 0.0);
+    }
+
+    #[test]
+    fn constant_columns_are_hoisted_out_of_rows() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","region":"us-east","latency":{}}}"#,
+                10 + i
+            ));
         }
-        assert!(c.text.len() < input.len(), "still shrinks vs pretty JSON");
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(!c.lossy);
+        assert!(c.text.contains("constants: region=us-east | status=active"));
+        assert!(c.text.contains("id | latency"), "{}", c.text);
+        assert!(!c.text.contains("id | latency | region"), "{}", c.text);
+        assert_eq!(c.text.matches("active").count(), 1, "{}", c.text);
+        assert_eq!(c.text.matches("us-east").count(), 1, "{}", c.text);
+    }
+
+    #[test]
+    fn query_anchor_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 71 {
+                "contains special needle token"
+            } else {
+                "ordinary row"
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress_with_query(&input, Some("special needle")).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("special needle token"), "{}", c.text);
+    }
+
+    #[test]
+    fn latest_query_extends_tail_anchor_window() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 124 {
+                "latest positional context".to_string()
+            } else {
+                format!("ordinary row {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress_with_query(&input, Some("latest records")).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("latest positional context"), "{}", c.text);
+    }
+
+    #[test]
+    fn oldest_query_extends_head_anchor_window() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 24 {
+                "oldest positional context".to_string()
+            } else {
+                format!("ordinary row {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress_with_query(&input, Some("oldest records")).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("oldest positional context"), "{}", c.text);
+    }
+
+    #[test]
+    fn sparse_structural_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let extra = if i == 72 {
+                r#","diagnostic":"rare sparse field""#
+            } else {
+                ""
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active"{extra}}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("rare sparse field"), "{}", c.text);
+    }
+
+    #[test]
+    fn discriminator_bucket_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let kind = if i == 72 {
+                "audit"
+            } else if i % 2 == 0 {
+                "service"
+            } else {
+                "worker"
+            };
+            let message = if i == 72 {
+                "audit bucket unique payload"
+            } else {
+                "ordinary payload"
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"kind":"{kind}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("audit"), "{}", c.text);
+        assert!(c.text.contains("audit bucket unique payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn duplicate_cluster_representative_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            if (72..=76).contains(&i) {
+                rows.push(
+                    r#"{"id":"retry-batch-17","status":"retry","message":"duplicate cluster payload"}"#
+                        .to_string(),
+                );
+            } else {
+                rows.push(format!(
+                    r#"{{"id":"job-{i}","status":"ok","message":"ordinary payload {i}"}}"#
+                ));
+            }
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("retry-batch-17"), "{}", c.text);
+        assert!(c.text.contains("duplicate cluster payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn near_duplicate_cluster_representative_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if (72..=76).contains(&i) {
+                "retry backlog service failed"
+            } else {
+                "routine healthy service stable"
+            };
+            rows.push(format!(
+                r#"{{"id":"job-{i}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("job-72"), "{}", c.text);
+        assert!(
+            c.text.contains("retry backlog service failed"),
+            "{}",
+            c.text
+        );
+    }
+
+    #[test]
+    fn spread_anchor_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if i == 94 {
+                "deterministic spread anchor payload".to_string()
+            } else {
+                format!("ordinary payload {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(
+            c.text.contains("deterministic spread anchor payload"),
+            "{}",
+            c.text
+        );
+    }
+
+    #[test]
+    fn adaptive_saturation_extends_spread_anchors() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let word = alpha_word(i);
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","message":"topic {word} marker alpha beta"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let expected = alpha_word(108);
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains(&expected), "{}", c.text);
+    }
+
+    #[test]
+    fn early_saturation_keeps_base_spread_anchors() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if i < 70 {
+                format!("topic {} marker alpha beta", alpha_word(i))
+            } else {
+                "topic repeated marker alpha beta".to_string()
+            };
+            rows.push(format!(
+                r#"{{"id":"job-{i}","status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("job-94"), "{}", c.text);
+    }
+
+    fn alpha_word(mut n: usize) -> String {
+        let mut out = String::from("word");
+        loop {
+            out.push((b'a' + (n % 26) as u8) as char);
+            n /= 26;
+            if n == 0 {
+                break;
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn numeric_change_point_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let phase = if i < 72 { 10 } else { 30 };
+            let message = if i == 72 {
+                "phase transition payload".to_string()
+            } else {
+                format!("ordinary payload {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"phase_score":{phase},"status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("phase transition payload"), "{}", c.text);
+    }
+
+    #[test]
+    fn information_dense_row_survives_dropped_middle() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let message = if i == 72 {
+                "trace alpha beta gamma delta epsilon zeta eta theta iota kappa lambda".to_string()
+            } else {
+                format!("ordinary payload {i}")
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"status":"active","message":"{message}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("trace alpha beta gamma"), "{}", c.text);
+    }
+
+    #[test]
+    fn nested_objects_flatten_to_dotted_columns() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"user":{{"name":"user {i}","team":"core"}},"status":"active"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.text.contains("user.name"), "{}", c.text);
+        assert!(c.text.contains("user.team"), "{}", c.text);
+        assert!(c.text.contains("user 7"), "{}", c.text);
+    }
+
+    #[test]
+    fn stringified_json_objects_flatten_to_dotted_columns() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            let metadata = serde_json::json!({
+                "owner": format!("team-{i}"),
+                "flags": { "retry": i % 2 == 0 }
+            })
+            .to_string()
+            .replace('"', "\\\"");
+            rows.push(format!(
+                r#"{{"id":{i},"metadata":"{metadata}","status":"active"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(c.text.contains("metadata.owner"), "{}", c.text);
+        assert!(c.text.contains("metadata.flags.retry"), "{}", c.text);
+        assert!(c.text.contains("team-7"), "{}", c.text);
+    }
+
+    #[test]
+    fn stringified_json_parsing_leaves_scalar_and_invalid_strings_opaque() {
+        let input = r#"[
+            {"id":1,"payload":"001","note":"{not json}"},
+            {"id":2,"payload":"002","note":"[also not json]"},
+            {"id":3,"payload":"003","note":"plain"}
+        ]"#;
+
+        let c = compress(input).expect("compresses");
+
+        assert!(c.text.contains("payload"), "{}", c.text);
+        assert!(c.text.contains("001"), "{}", c.text);
+        assert!(c.text.contains("{not json}"), "{}", c.text);
+        assert!(!c.text.contains("note."), "{}", c.text);
+    }
+
+    #[test]
+    fn heterogeneous_shapes_render_smaller_bucket_tables() {
+        let mut rows = Vec::new();
+        for i in 0..12 {
+            rows.push(format!(
+                r#"{{"event":"login","user_id":"user-{i}","ip":"10.0.0.{i}","success":true}}"#
+            ));
+            rows.push(format!(
+                r#"{{"event":"deploy","service":"api-{i}","version":"2026.{i}.0","region":"us-east"}}"#
+            ));
+            rows.push(format!(
+                r#"{{"event":"metric","name":"cpu-{i}","value":{},"unit":"pct"}}"#,
+                40 + i
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let c = compress(&input).expect("compresses");
+
+        assert!(!c.lossy);
+        assert!(c.text.contains("[json bucketed tables:"), "{}", c.text);
+        assert!(c.text.contains("[bucket 1:"), "{}", c.text);
+        assert!(c.text.contains("[bucket 2:"), "{}", c.text);
+        assert!(c.text.contains("[bucket 3:"), "{}", c.text);
+        assert!(c.text.contains("constants: event=login | success=true"));
+        assert!(c.text.contains("constants: event=deploy | region=us-east"));
+        assert!(c.text.contains("constants: event=metric | unit=pct"));
+        assert!(c.text.contains("__row | ip | user_id"));
+        assert!(c.text.contains("__row | service | version"));
+        assert!(c.text.contains("__row | name | value"));
+        assert!(c.text.contains("31 | api-10 | 2026.10.0"));
+    }
+
+    #[test]
+    fn lossy_heterogeneous_bucket_marks_omissions_and_recovery() {
+        let mut rows = Vec::new();
+        for i in 0..90 {
+            rows.push(format!(
+                r#"{{"event":"login","user_id":"user-{i}","ip":"10.0.0.{i}","success":true}}"#
+            ));
+        }
+        for i in 0..90 {
+            rows.push(format!(
+                r#"{{"event":"metric","name":"cpu-{i}","value":{},"unit":"pct"}}"#,
+                40 + i
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+
+        let value: Value = serde_json::from_str(&input).unwrap();
+        let flat_rows = flatten_rows(value.as_array().unwrap()).unwrap();
+        let c = compress_shape_buckets(&input, &flat_rows, None).expect("bucketed");
+
+        assert!(c.lossy);
+        assert!(c.text.contains("[json bucketed tables:"), "{}", c.text);
+        assert!(c.text.contains("exact original via retrieve footer"));
+        assert!(c.text.contains("row(s) omitted in bucket"), "{}", c.text);
+        assert!(c.text.contains("constants: event=login | success=true"));
+        assert!(c.text.contains("0 | 10.0.0.0 | user-0"), "{}", c.text);
+        assert!(c.text.contains("constants: event=metric | unit=pct"));
+        assert!(c.text.contains("179 | cpu-89 | 129"), "{}", c.text);
     }
 
     #[test]
     fn keeps_error_row_in_dropped_middle() {
+        // A homogeneous array with a single error row buried in the middle: the
+        // SmartCrusher must keep that row even though it's in the drop window.
         let mut rows = Vec::new();
         for i in 0..120 {
             let status = if i == 75 { "error: timeout" } else { "ok" };
@@ -1084,7 +1828,7 @@ mod tests {
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, true, None).expect("compresses");
+        let c = compress(&input).expect("compresses");
         assert!(c.lossy);
         assert!(
             c.text.contains("job 75"),
@@ -1095,40 +1839,17 @@ mod tests {
     }
 
     #[test]
-    fn keeps_nested_error_row() {
-        // Feature 2: error text lives inside a nested object, not a top-level
-        // string. The row must still be kept.
-        let mut rows = Vec::new();
-        for i in 0..120 {
-            let detail = if i == 63 {
-                r#"{"code":"CONFLICT_PACKAGES","message":"resolution failed"}"#
-            } else {
-                r#"{"code":"OK","message":"done"}"#
-            };
-            rows.push(format!(
-                r#"{{"id":{i},"name":"pkg {i}","result":{detail}}}"#
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
-        assert!(
-            c.text.contains("pkg 63") || c.text.contains("CONFLICT_PACKAGES"),
-            "nested error row must survive:\n{}",
-            c.text
-        );
-    }
-
-    #[test]
     fn keeps_numeric_outlier_row() {
         let mut rows = Vec::new();
         for i in 0..120 {
+            // Most latencies ~10ms; row 88 is a 9999ms outlier.
             let latency = if i == 88 { 9999 } else { 10 + (i % 3) };
             rows.push(format!(
-                r#"{{"id":{i},"endpoint":"/api/{i}","latency_ms":{latency},"region":"r{i}"}}"#
+                r#"{{"id":{i},"endpoint":"/api/{i}","latency_ms":{latency},"region":"us"}}"#
             ));
         }
         let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
+        let c = compress(&input).expect("compresses");
         assert!(
             c.text.contains("9999"),
             "outlier row must survive:\n{}",
@@ -1137,327 +1858,9 @@ mod tests {
     }
 
     #[test]
-    fn keeps_pareto_rare_status_row() {
-        // Feature 5: `status` is 99% "ok"; the single "degraded" row is a
-        // categorical rarity that must be kept even in the drop window.
-        let mut rows = Vec::new();
-        for i in 0..120 {
-            let status = if i == 70 { "degraded" } else { "ok" };
-            rows.push(format!(
-                r#"{{"id":{i},"endpoint":"/api/{i}","status":"{status}"}}"#
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
-        assert!(
-            c.text.contains("degraded"),
-            "rare categorical value must survive:\n{}",
-            c.text
-        );
-    }
-
-    #[test]
-    fn keeps_rare_structural_field_row() {
-        // Feature 6: only one row carries `escalation` → kept.
-        let mut rows = Vec::new();
-        for i in 0..120 {
-            if i == 55 {
-                rows.push(format!(
-                    r#"{{"id":{i},"name":"t{i}","escalation":"paged oncall"}}"#
-                ));
-            } else {
-                rows.push(format!(r#"{{"id":{i},"name":"t{i}"}}"#));
-            }
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, false, None).expect("compresses");
-        assert!(
-            c.text.contains("paged oncall") || c.text.contains("t55"),
-            "rare-field row must survive:\n{}",
-            c.text
-        );
-    }
-
-    #[test]
-    fn keeps_query_anchor_row() {
-        // Feature 8: a distinctive id in the query pins the matching row.
-        let mut rows = Vec::new();
-        for i in 0..120 {
-            rows.push(format!(
-                r#"{{"id":{i},"name":"widget {i}","ticket":{}}}"#,
-                5000 + i
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c =
-            compress(&input, false, Some("investigate ticket 5087 failure")).expect("compresses");
-        assert!(
-            c.text.contains("widget 87"),
-            "anchored row must survive:\n{}",
-            c.text
-        );
-    }
-
-    #[test]
-    fn flattens_uniform_object_column() {
-        // Feature 4: the `function` column is a uniform object; name/description
-        // are promoted to columns instead of a per-row JSON blob.
-        let mut rows = Vec::new();
-        for i in 0..30 {
-            rows.push(format!(
-                r#"{{"type":"function","function":{{"name":"TOOL_{i}","description":"does thing {i}","parameters":{{"type":"object"}}}}}}"#
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let out = compress(&input, false, None).expect("compresses").text;
-        assert!(out.contains("function.name"), "{out}");
-        assert!(out.contains("function.description"), "{out}");
-        assert!(out.contains("TOOL_3"), "{out}");
-        // `type` is constant → hoisted, not a column.
-        assert!(out.contains(r#"type="function""#), "{out}");
-    }
-
-    #[test]
-    fn tables_nested_array_with_path_prefix() {
-        // Feature 1: top-level object whose largest uniform-object array is
-        // nested under `methods`.
-        let mut methods = Vec::new();
-        for i in 0..69 {
-            methods.push(format!(
-                r#"{{"method":"core.m{i}","namespace":"core","description":"method {i}"}}"#
-            ));
-        }
-        let input = format!(r#"{{"version":"1.0","methods":[{}]}}"#, methods.join(","));
-        let out = compress(&input, false, None).expect("compresses").text;
-        assert!(out.contains("[json table: methods —"), "{out}");
-        assert!(out.contains("69 rows"), "{out}");
-        // Sibling scalar rendered as preamble.
-        assert!(out.contains("version: 1.0"), "{out}");
-    }
-
-    #[test]
-    fn crushes_number_array() {
-        // Feature 7: plain-number array → distributional stats.
-        let nums: Vec<String> = (0..200).map(|i| (i * 3).to_string()).collect();
-        let input = format!("[{}]", nums.join(","));
-        let c = compress(&input, false, None).expect("compresses");
-        assert!(c.text.contains("json number array"), "{}", c.text);
-        assert!(c.text.contains("min=0"), "{}", c.text);
-        assert!(c.text.contains("max=597"), "{}", c.text);
-        assert!(c.text.contains("median="), "{}", c.text);
-        assert!(c.lossy);
-        assert!(c.text.len() < input.len());
-    }
-
-    #[test]
-    fn crushes_string_array_with_dedupe() {
-        // Feature 7: plain-string array → deduped counts.
-        let mut vals = Vec::new();
-        for _ in 0..50 {
-            vals.push("\"apple\"".to_string());
-        }
-        for _ in 0..30 {
-            vals.push("\"banana\"".to_string());
-        }
-        let input = format!("[{}]", vals.join(","));
-        let c = compress(&input, false, None).expect("compresses");
-        assert!(c.text.contains("json string array"), "{}", c.text);
-        assert!(c.text.contains("2 unique"), "{}", c.text);
-        assert!(c.text.contains("×50"), "{}", c.text);
-        assert!(c.text.len() < input.len());
-    }
-
-    #[test]
-    fn non_crushable_returns_none() {
-        assert!(compress(r#"{"a":1}"#, false, None).is_none());
-        assert!(compress("[1,2,3]", false, None).is_none());
-        assert!(compress(r#"[{"a":1}]"#, false, None).is_none());
-    }
-
-    #[test]
-    fn markdown_table_cells_escape_pipes() {
-        // `meta` has only a non-informative `note` sub-key → NOT flattened, so
-        // the nested-JSON escaping path stays exercised.
-        let mut rows = vec![r#"{"id":0,"text":"alpha | beta","meta":{"note":"x|y"}}"#.to_string()];
-        for i in 1..80 {
-            rows.push(format!(
-                r#"{{"id":{i},"text":"record {i} with repeated detail","meta":{{"note":"z"}}}}"#
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let out = compress(&input, false, None).expect("compresses").text;
-        assert!(out.contains("| id | meta | text |"), "{out}");
-        assert!(out.contains("alpha \\| beta"), "{out}");
-        assert!(out.contains(r#"{"note":"x\|y"}"#), "{out}");
-    }
-
-    #[test]
-    fn falls_back_to_minified_json_when_table_is_larger() {
-        let input = r#"[
-          {"a": 1, "b": 2},
-          {"a": 3, "b": 4},
-          {"a": 5, "b": 6}
-        ]"#;
-        let out = compress(input, false, None).expect("minifies").text;
-        assert_eq!(out, r#"[{"a":1,"b":2},{"a":3,"b":4},{"a":5,"b":6}]"#);
-    }
-
-    #[test]
-    fn minified_json_wins_when_table_is_smaller_than_original_but_larger_than_minified() {
-        let input = r#"[
-          {"enabled": true, "id": 1},
-          {"enabled": false, "id": 2},
-          {"enabled": true, "id": 3},
-          {"enabled": false, "id": 4},
-          {"enabled": true, "id": 5}
-        ]"#;
-        let out = compress(input, false, None).expect("minifies").text;
-        assert_eq!(
-            out,
-            r#"[{"enabled":true,"id":1},{"enabled":false,"id":2},{"enabled":true,"id":3},{"enabled":false,"id":4},{"enabled":true,"id":5}]"#
-        );
-    }
-
-    #[test]
-    fn omitted_rows_token_retrieves_json_slice() {
-        use crate::cache;
-        let mut items = Vec::new();
-        for i in 0..120 {
-            items.push(format!(r#"{{"id":{i},"name":"row_{i}","status":"st{i}"}}"#));
-        }
-        let input = format!("[{}]", items.join(","));
-        let out = compress(&input, true, None).expect("compresses").text;
-        let tokens = cache::parse_markers(&out);
-        assert!(!tokens.is_empty(), "row gaps should carry tokens: {out}");
-        let block = cache::retrieve(&tokens[0]).expect("stored");
-        let parsed: serde_json::Value = serde_json::from_str(&block).expect("valid JSON slice");
-        let arr = parsed.as_array().expect("array slice");
-        assert!(!arr.is_empty());
-        // The slice starts exactly where the adaptive head window ends, and
-        // none of its rows also appear in the rendered table.
-        let first_id = arr[0]["id"].as_u64().expect("id") as usize;
-        assert!(first_id > 0, "head must keep at least one row");
-        assert_eq!(arr[0]["name"], format!("row_{first_id}"));
-        assert!(
-            out.contains(&format!("row_{}", first_id - 1)),
-            "row before the gap must be shown:\n{out}"
-        );
-        for row in arr {
-            let name = row["name"].as_str().expect("name");
-            assert!(
-                !out.contains(&format!("| {name} |")),
-                "omitted row {name} must not also be rendered:\n{out}"
-            );
-        }
-    }
-
-    /// Count rendered table body rows (data rows, excluding header/separator).
-    fn body_row_count(text: &str) -> usize {
-        text.lines()
-            .filter(|l| l.starts_with("| ") && !l.starts_with("| ---"))
-            .count()
-            .saturating_sub(1) // header
-    }
-
-    #[test]
-    fn redundant_rows_collapse_toward_floor() {
-        // 100 near-identical rows: adaptive selection should keep close to
-        // MIN_KEPT_ROWS, far below the fixed HEAD_ROWS+TAIL_ROWS budget.
-        let mut rows = Vec::new();
-        for i in 0..100 {
-            rows.push(format!(
-                r#"{{"id":{i},"msg":"connection timeout retrying request to upstream host","status":"ok"}}"#
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, true, None).expect("compresses");
-        let kept = body_row_count(&c.text);
-        assert!(
-            kept >= MIN_KEPT_ROWS,
-            "never fewer than the floor, got {kept}:\n{}",
-            c.text
-        );
-        assert!(
-            kept <= MIN_KEPT_ROWS + 4,
-            "redundant rows must stay near the floor, got {kept}:\n{}",
-            c.text
-        );
-        assert!(c.text.contains("omitted"), "{}", c.text);
-    }
-
-    #[test]
-    fn diverse_rows_keep_full_budget() {
-        // 100 fully-diverse rows: adaptive selection should keep the full
-        // HEAD_ROWS + TAIL_ROWS budget.
-        let words = [
-            "database",
-            "login",
-            "cache",
-            "worker",
-            "handshake",
-            "latency",
-            "rollout",
-            "webhook",
-            "resolver",
-            "kernel",
-            "exporter",
-            "backlog",
-            "renewal",
-            "election",
-            "limiter",
-            "index",
-            "cookie",
-            "saturated",
-            "multipart",
-            "deadline",
-        ];
-        let mut rows = Vec::new();
-        for i in 0..100 {
-            rows.push(format!(
-                r#"{{"event":"{} {} {} incident {i}","code":"{}{}","weight":{}}}"#,
-                words[i % 20],
-                words[(i * 7 + 3) % 20],
-                words[(i * 13 + 11) % 20],
-                words[(i * 3 + 5) % 20],
-                i * 977,
-                i * i + 17,
-            ));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, true, None).expect("compresses");
-        let kept = body_row_count(&c.text);
-        assert!(
-            kept >= HEAD_ROWS + TAIL_ROWS,
-            "diverse rows should keep the full budget, got {kept}:\n{}",
-            c.text
-        );
-    }
-
-    #[test]
-    fn must_keep_rows_are_additive_over_adaptive_window() {
-        // Redundant array (small adaptive window) with an error row buried in
-        // the dropped middle: the error row is kept ON TOP of the window.
-        let mut rows = Vec::new();
-        for i in 0..100 {
-            let msg = if i == 60 {
-                "error: upstream exploded"
-            } else {
-                "connection timeout retrying request to upstream host"
-            };
-            rows.push(format!(r#"{{"id":{i},"msg":"{msg}","status":"ok"}}"#));
-        }
-        let input = format!("[{}]", rows.join(","));
-        let c = compress(&input, true, None).expect("compresses");
-        assert!(
-            c.text.contains("error: upstream exploded"),
-            "must-keep error row must survive the adaptive window:\n{}",
-            c.text
-        );
-        let kept = body_row_count(&c.text);
-        assert!(
-            kept <= MIN_KEPT_ROWS + 5,
-            "window should stay small even with the extra must-keep, got {kept}:\n{}",
-            c.text
-        );
+    fn non_array_returns_none() {
+        assert!(compress(r#"{"a":1}"#).is_none());
+        assert!(compress("[1,2,3]").is_none());
+        assert!(compress(r#"[{"a":1}]"#).is_none());
     }
 }

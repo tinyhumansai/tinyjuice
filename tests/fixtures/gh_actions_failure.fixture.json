@@ -1,0 +1,10 @@
+{
+  "description": "GitHub Actions failure log keeps failing step and annotations",
+  "input": {
+    "toolName": "exec",
+    "argv": ["gh", "run", "view", "123456789", "--log", "--exit-status"],
+    "exitCode": 1,
+    "stdout": "build\tSet up job\t2026-07-06T10:00:00Z\tCurrent runner version: '2.329.0'\nbuild\tCheckout\t2026-07-06T10:00:01Z\tSyncing repository: example/repo\nbuild\tInstall dependencies\t2026-07-06T10:00:02Z\tnpm ci\nbuild\tInstall dependencies\t2026-07-06T10:00:03Z\tadded 412 packages\nbuild\tRun tests\t2026-07-06T10:00:04Z\tRun cargo test --workspace\nbuild\tRun tests\t2026-07-06T10:00:05Z\trunning 42 tests\nbuild\tRun tests\t2026-07-06T10:00:06Z\ttest api::handles_missing_token ... FAILED\nbuild\tRun tests\t2026-07-06T10:00:07Z\terror: test failed, to rerun pass `-p api --lib`\nbuild\tRun tests\t2026-07-06T10:00:08Z\tError: Process completed with exit code 101.\nbuild\tUpload artifact\t2026-07-06T10:00:09Z\t##[error]No files were found with the provided path: target/debug/report.xml\nbuild\tPost Checkout\t2026-07-06T10:00:10Z\tPost job cleanup.\n"
+  },
+  "expectedOutput": "exit 1\n3 errors, 4 failed steps\nbuild\tRun tests\t2026-07-06T10:00:04Z\tRun cargo test --workspace\nbuild\tRun tests\t2026-07-06T10:00:05Z\trunning 42 tests\nbuild\tRun tests\t2026-07-06T10:00:06Z\ttest api::handles_missing_token ... FAILED\nbuild\tRun tests\t2026-07-06T10:00:07Z\terror: test failed, to rerun pass `-p api --lib`\nbuild\tRun tests\t2026-07-06T10:00:08Z\tError: Process completed with exit code 101.\nbuild\tUpload artifact\t2026-07-06T10:00:09Z\t##[error]No files were found with the provided path: target/debug/report.xml"
+}

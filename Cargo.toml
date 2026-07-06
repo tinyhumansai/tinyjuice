@@ -8,6 +8,7 @@ repository = "https://github.com/tinyhumansai/tinyjuice"
 readme = "README.md"
 keywords = ["llm", "tokens", "compression", "openhuman", "context"]
 categories = ["text-processing"]
+autobins = false
 
 [dependencies]
 async-trait = "0.1"
@@ -48,6 +49,14 @@ tokio = { version = "1", features = ["macros", "rt", "test-util"] }
 [[bench]]
 name = "compression"
 harness = false
+
+[[bin]]
+name = "tinyjuice"
+path = "src/main.rs"
+
+[[bin]]
+name = "tinyjuice-hooks"
+path = "src/bin/tinyjuice.rs"
 
 [features]
 default = ["tinyjuice-treesitter"]

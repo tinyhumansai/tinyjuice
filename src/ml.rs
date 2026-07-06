@@ -24,6 +24,12 @@ pub fn configure_callback(callback: Option<Arc<MlCompressCallback>>) {
     *callback_cell().write().unwrap_or_else(|p| p.into_inner()) = callback;
 }
 
+#[cfg(test)]
+pub(crate) async fn callback_test_guard() -> tokio::sync::MutexGuard<'static, ()> {
+    static TEST_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+    TEST_LOCK.lock().await
+}
+
 /// Compress text through the host callback, if one has been configured.
 pub async fn compress(text: &str, opts: &CompressOptions) -> Result<Option<String>, String> {
     let callback = callback_cell()
@@ -39,13 +45,10 @@ pub async fn compress(text: &str, opts: &CompressOptions) -> Result<Option<Strin
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::sync::Mutex;
-
-    static TEST_LOCK: Mutex<()> = Mutex::const_new(());
 
     #[tokio::test]
     async fn declines_when_no_callback_is_configured() {
-        let _guard = TEST_LOCK.lock().await;
+        let _guard = callback_test_guard().await;
         configure_callback(None);
 
         let result = compress("plain text", &CompressOptions::default())
@@ -57,7 +60,7 @@ mod tests {
 
     #[tokio::test]
     async fn delegates_to_configured_callback_with_owned_options() {
-        let _guard = TEST_LOCK.lock().await;
+        let _guard = callback_test_guard().await;
         configure_callback(Some(Arc::new(|text, opts| {
             Box::pin(async move {
                 assert_eq!(text, "alpha beta gamma");
@@ -80,7 +83,7 @@ mod tests {
 
     #[tokio::test]
     async fn propagates_callback_errors() {
-        let _guard = TEST_LOCK.lock().await;
+        let _guard = callback_test_guard().await;
         configure_callback(Some(Arc::new(|_, _| {
             Box::pin(async { Err("runtime offline".to_string()) })
         })));

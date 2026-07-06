@@ -5,13 +5,8 @@
 //! changed hunks in diffs, signatures in code, anomalous rows in JSON — and
 //! drops the rest. Whole-payload recovery belongs to the router
 //! ([`crate::compress`]), which offloads the original to the CCR cache and
-//! appends a retrieval footer. In addition, compressors may offload each
-//! *omitted block* individually (via [`block_token`]) so its omission marker
-//! carries a token that retrieves exactly that block — gated on
-//! `opts.ccr_enabled`.
+//! appends a retrieval footer.
 
-pub(crate) mod adaptive;
-pub(crate) mod anchors;
 pub mod code;
 pub mod diff;
 pub mod generic;
@@ -22,7 +17,8 @@ pub mod log_template;
 pub mod ml_text;
 pub mod search;
 pub mod signals;
-pub(crate) mod tag_protect;
+pub mod text;
+pub mod web_extract;
 
 use async_trait::async_trait;
 
@@ -52,16 +48,13 @@ static LOG_COMPRESSOR: log::LogCompressor = log::LogCompressor;
 static SEARCH_COMPRESSOR: search::SearchCompressor = search::SearchCompressor;
 static DIFF_COMPRESSOR: diff::DiffCompressor = diff::DiffCompressor;
 static HTML_COMPRESSOR: html::HtmlCompressor = html::HtmlCompressor;
-static ML_TEXT_COMPRESSOR: ml_text::MlTextCompressor = ml_text::MlTextCompressor;
+static TEXT_COMPRESSOR: text::TextCompressor = text::TextCompressor;
 static GENERIC_COMPRESSOR: generic::GenericCompressor = generic::GenericCompressor;
 
 /// Map a detected [`ContentKind`] to the compressor that handles it.
 ///
-/// `PlainText` routes to the ML compressor; whether it actually runs is gated
-/// by `opts.ml_text_enabled` (and runtime Python/runtime_python_server
-/// availability), and it falls back to [`generic::GenericCompressor`] otherwise
-/// — that gating lives in [`crate::compress`], so this
-/// function is a pure static mapping.
+/// `PlainText` routes to the text compressor, which tries the optional ML path
+/// first and then the deterministic extractive TextCrusher fallback.
 pub fn compressor_for(kind: ContentKind) -> &'static dyn Compressor {
     match kind {
         ContentKind::Json => &JSON_COMPRESSOR,
@@ -70,7 +63,7 @@ pub fn compressor_for(kind: ContentKind) -> &'static dyn Compressor {
         ContentKind::Search => &SEARCH_COMPRESSOR,
         ContentKind::Diff => &DIFF_COMPRESSOR,
         ContentKind::Html => &HTML_COMPRESSOR,
-        ContentKind::PlainText => &ML_TEXT_COMPRESSOR,
+        ContentKind::PlainText => &TEXT_COMPRESSOR,
     }
 }
 
@@ -78,26 +71,6 @@ pub fn compressor_for(kind: ContentKind) -> &'static dyn Compressor {
 /// by the router when a specialised compressor declines or is disabled.
 pub fn generic_compressor() -> &'static dyn Compressor {
     &GENERIC_COMPRESSOR
-}
-
-/// One-line note appended to compacted output when any omitted block carries
-/// its own retrieval token.
-pub(crate) const BLOCK_NOTE: &str = "\n[omitted blocks are individually retrievable: call tinyjuice_retrieve with the token inside an omission marker to expand just that block]";
-
-/// Offload an omitted block to CCR and return the marker text to embed in the
-/// omission placeholder (` ⟦tj:<hash>⟧`), or an empty string when per-block
-/// tokens are disabled or the block couldn't be retained. The store is
-/// content-addressed and idempotent, so identical blocks share one entry.
-pub(crate) fn block_token(block: &str, enabled: bool) -> String {
-    if !enabled {
-        return String::new();
-    }
-    let (token, retained) = crate::cache::offload_checked(block);
-    if retained {
-        format!(" {}", crate::cache::format_marker(&token))
-    } else {
-        String::new()
-    }
 }
 
 #[cfg(test)]
@@ -113,7 +86,7 @@ mod tests {
             (ContentKind::Search, CompressorKind::Search),
             (ContentKind::Diff, CompressorKind::Diff),
             (ContentKind::Html, CompressorKind::Html),
-            (ContentKind::PlainText, CompressorKind::MlText),
+            (ContentKind::PlainText, CompressorKind::TextCrusher),
         ];
 
         for (kind, expected) in cases {

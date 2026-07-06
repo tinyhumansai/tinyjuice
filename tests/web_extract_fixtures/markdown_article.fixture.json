@@ -1,0 +1,40 @@
+{
+  "description": "Markdown web extraction strips inline base64, keeps real image URLs, redacts URL secrets, and retains recovery",
+  "url": "https://example.com/article/path?token=secret&session=private",
+  "title": "Fixture Article",
+  "format": "markdown",
+  "charLimit": 120,
+  "generator": {
+    "type": "markdownArticle",
+    "paragraphs": 30,
+    "base64Payload": "AAAA1111SECRETIMAGE",
+    "remoteImageUrl": "https://cdn.example/images/chart.png"
+  },
+  "expected": {
+    "truncated": true,
+    "fullTextRetained": true,
+    "base64ImagesReplaced": 1,
+    "contains": [
+      "[IMAGE: inline]",
+      "https://cdn.example/images/chart.png",
+      "final web sentinel",
+      "tinyjuice_retrieve"
+    ],
+    "notContains": [
+      "AAAA1111SECRETIMAGE"
+    ],
+    "serializedNotContains": [
+      "token=secret",
+      "session=private",
+      "/article/path"
+    ],
+    "recoveredTextContains": [
+      "[IMAGE: inline]",
+      "https://cdn.example/images/chart.png",
+      "paragraph-029"
+    ],
+    "recoveredTextNotContains": [
+      "AAAA1111SECRETIMAGE"
+    ]
+  }
+}

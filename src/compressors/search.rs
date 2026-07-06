@@ -6,7 +6,8 @@
 //! full result set to CCR so the complete list is one `retrieve` away.
 //!
 //! Ranking: when the caller supplies a `query` in the [`ContentHint`], matches
-//! are scored by query-term density in the body; otherwise by body length /
+//! are scored by the shared BM25/tokenizer path so regex punctuation and exact
+//! identifiers carry through. Without a query, matches use body length /
 //! uniqueness (longer, more-distinctive lines first), with importance signals
 //! (error/TODO) always boosted. Group/file order is preserved (first-seen).
 //!
@@ -15,25 +16,81 @@
 //! lossless by the CCR offload — and is enabled by default per project decision.
 
 use async_trait::async_trait;
-use std::collections::HashMap;
+use std::borrow::Cow;
 use std::fmt::Write as _;
 
-use super::adaptive::compute_optimal_k;
+use super::Compressor;
 use super::signals::line_score;
-use super::{BLOCK_NOTE, Compressor, block_token};
+use crate::cache::CcrStore;
 use crate::detect::parse_search_line;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
+use crate::relevance::{Bm25Corpus, tokenize};
+use crate::types::LineRange;
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Only compress result sets with more than this many matching lines.
 pub const MIN_MATCHES: usize = 40;
-/// Floor on matches kept per file before the "+N more" tally. The actual
-/// keep count adapts to the diversity of each file's matches (see
-/// [`compute_optimal_k`]) between this and [`MAX_K_PER_FILE`].
+/// Matches kept per file before the "+N more" tally.
 pub const TOP_K_PER_FILE: usize = 5;
-/// Ceiling on matches kept per file when the matches are highly diverse.
-pub const MAX_K_PER_FILE: usize = 12;
+/// Default line context on each side for ranked search-read snippets.
+pub const DEFAULT_SNIPPET_CONTEXT: usize = 2;
 
 pub struct SearchCompressor;
+
+/// Typed offload transform for lossy search-result thinning.
+#[derive(Debug, Clone, Default)]
+pub struct SearchTransform {
+    query: Option<String>,
+}
+
+impl SearchTransform {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+
+    pub fn query(&self) -> Option<&str> {
+        self.query.as_deref()
+    }
+}
+
+impl OffloadTransform for SearchTransform {
+    fn name(&self) -> &'static str {
+        "search"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Search {
+            return 0.0;
+        }
+        let score = f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0;
+        if self
+            .query
+            .as_deref()
+            .is_some_and(|query| !query.trim().is_empty())
+        {
+            score.max(0.1)
+        } else {
+            score
+        }
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Search {
+            return None;
+        }
+        let compacted = compress(input.content, self.query())?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Search,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for SearchCompressor {
@@ -44,9 +101,9 @@ impl Compressor for SearchCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        opts: &CompressOptions,
+        _opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content, input.hint.query.as_deref(), opts.ccr_enabled)
+        compress(input.content, input.hint.query.as_deref())
     }
 }
 
@@ -57,94 +114,77 @@ struct Match<'a> {
     raw: &'a str,
 }
 
-/// Compress search output. `query` (when known) ranks matches by term density.
-/// With `block_tokens`, each per-file `+N more` tally carries a token that
-/// retrieves exactly the omitted matches for that file.
-pub fn compress(content: &str, query: Option<&str>, block_tokens: bool) -> Option<CompressOutput> {
+struct ParsedMatch<'a> {
+    path: &'a str,
+    line_no: u64,
+    body: &'a str,
+    raw: &'a str,
+}
+
+/// Compress search output. `query` (when known) ranks matches by shared BM25.
+pub fn compress(content: &str, query: Option<&str>) -> Option<CompressOutput> {
     // Preserve any non-match preamble/summary lines (e.g. "80 match(es)") and
     // group match lines by file in first-seen order.
     let mut preamble: Vec<&str> = Vec::new();
-    let mut files: Vec<(&str, Vec<Match<'_>>)> = Vec::new();
-    // Index alongside the Vec (which preserves first-seen file order):
-    // a linear scan per match is quadratic on repo-wide result sets.
-    let mut file_index: HashMap<&str, usize> = HashMap::new();
-    let mut match_count = 0usize;
-    let mut unparsed_dropped = 0usize;
-
-    let query_terms: Vec<String> = query
-        .map(|q| {
-            q.split_whitespace()
-                .map(|t| t.to_ascii_lowercase())
-                .filter(|t| t.len() >= 2)
-                .collect()
-        })
-        .unwrap_or_default();
+    let mut parsed_matches: Vec<ParsedMatch<'_>> = Vec::new();
 
     for line in content.lines() {
         match parse_search_line(line) {
             Some((path, line_no, body)) => {
-                match_count += 1;
-                let score = score_match(body, &query_terms);
-                let m = Match {
+                parsed_matches.push(ParsedMatch {
+                    path,
                     line_no,
                     body,
-                    score,
                     raw: line,
-                };
-                if let Some(&idx) = file_index.get(path) {
-                    files[idx].1.push(m);
-                } else {
-                    file_index.insert(path, files.len());
-                    files.push((path, vec![m]));
-                }
+                });
             }
             None => {
-                if !line.trim().is_empty() {
-                    if files.is_empty() {
-                        // Only keep preamble that appears before any match.
-                        preamble.push(line);
-                    } else {
-                        // Context lines (grep -C), separators, trailing
-                        // summaries — dropped, but tallied so the reader
-                        // knows they existed.
-                        unparsed_dropped += 1;
-                    }
+                if !line.trim().is_empty() && parsed_matches.is_empty() {
+                    // Only keep preamble that appears before any match.
+                    preamble.push(line);
                 }
             }
         }
     }
 
-    if match_count < MIN_MATCHES || files.is_empty() {
+    let match_count = parsed_matches.len();
+    if match_count < MIN_MATCHES || parsed_matches.is_empty() {
         return None;
+    }
+
+    let scores = score_matches(&parsed_matches, query);
+    let mut files: Vec<(&str, Vec<Match<'_>>)> = Vec::new();
+    for (parsed, score) in parsed_matches.iter().zip(scores) {
+        let m = Match {
+            line_no: parsed.line_no,
+            body: parsed.body,
+            score,
+            raw: parsed.raw,
+        };
+        if let Some((_, v)) = files.iter_mut().find(|(p, _)| *p == parsed.path) {
+            v.push(m);
+        } else {
+            files.push((parsed.path, vec![m]));
+        }
     }
 
     let mut out = String::with_capacity(content.len() / 2 + 64);
     for line in &preamble {
         let _ = writeln!(out, "{line}");
     }
-    let omitted_note = if unparsed_dropped > 0 {
-        format!(" · {unparsed_dropped} context/summary line(s) omitted")
-    } else {
-        String::new()
-    };
     let _ = writeln!(
         out,
-        "[search: {} match(es) across {} file(s) · top {}-{} per file (adaptive){} · full set via retrieve footer]",
+        "[search: {} match(es) across {} file(s) · top {} per file · full set via retrieve footer]",
         match_count,
         files.len(),
-        TOP_K_PER_FILE,
-        MAX_K_PER_FILE,
-        omitted_note
+        TOP_K_PER_FILE
     );
 
-    let mut any_token = false;
+    let mut omitted_total = 0usize;
+    let mut files_with_omissions = 0usize;
     for (path, mut matches) in files {
         let total = matches.len();
-        // Adapt the keep count to this file's match diversity: redundant
-        // matches collapse toward the floor, diverse ones keep more.
-        let bodies: Vec<&str> = matches.iter().map(|m| m.body).collect();
-        let top_k = compute_optimal_k(&bodies, TOP_K_PER_FILE, MAX_K_PER_FILE);
-        if total <= top_k {
+        if total <= TOP_K_PER_FILE {
             // Keep all in original (line-number) order.
             matches.sort_by_key(|m| m.line_no);
             for m in &matches {
@@ -159,29 +199,32 @@ pub fn compress(content: &str, query: Option<&str>, block_tokens: bool) -> Optio
                 .partial_cmp(&a.score)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-        let mut kept: Vec<&Match<'_>> = matches.iter().take(top_k).collect();
+        let mut kept: Vec<&Match<'_>> = matches.iter().take(TOP_K_PER_FILE).collect();
         kept.sort_by_key(|m| m.line_no);
         for m in &kept {
             let _ = writeln!(out, "{}:{}:{}", path, m.line_no, m.body);
         }
-        // Offload this file's omitted matches (line order) behind one token.
-        let mut omitted: Vec<&Match<'_>> = matches.iter().skip(top_k).collect();
-        omitted.sort_by_key(|m| m.line_no);
-        let omitted_raw = omitted.iter().map(|m| m.raw).collect::<Vec<_>>().join("\n");
-        let token = block_token(&omitted_raw, block_tokens);
-        any_token |= !token.is_empty();
-        let _ = writeln!(out, "[+{} more match(es) in {path}{token}]", total - top_k);
+        let _ = writeln!(
+            out,
+            "[+{} more match(es) in {path}]",
+            total - TOP_K_PER_FILE
+        );
+        omitted_total += total - TOP_K_PER_FILE;
+        files_with_omissions += 1;
+    }
+    if omitted_total > 0 {
+        let _ = writeln!(
+            out,
+            "[search omitted: {omitted_total} match(es) not shown across {files_with_omissions} file(s)]"
+        );
     }
 
-    let mut out = out.trim_end().to_string();
-    if any_token {
-        out.push_str(BLOCK_NOTE);
-    }
+    let out = out.trim_end().to_string();
     if out.len() >= content.len() {
         return None;
     }
     log::debug!(
-        "[tinyjuice][search] {} matches -> {} bytes (from {} bytes)",
+        "[tokenjuice][search] {} matches -> {} bytes (from {} bytes)",
         match_count,
         out.len(),
         content.len()
@@ -189,24 +232,289 @@ pub fn compress(content: &str, query: Option<&str>, block_tokens: bool) -> Optio
     Some(CompressOutput::lossy(out, CompressorKind::Search))
 }
 
-/// Score a match body. With query terms, density of those terms dominates;
-/// otherwise distinctiveness (length) with an importance bump for error/TODO.
-fn score_match(body: &str, query_terms: &[String]) -> f32 {
-    let importance = line_score(body);
-    if query_terms.is_empty() {
-        // No query: favour longer, more-distinctive lines, plus importance.
-        let len_score = (body.trim().len() as f32 / 80.0).min(1.0);
-        return importance.max(0.2 + 0.8 * len_score);
+/// Score search-result bodies. With query text, shared BM25 dominates so query
+/// syntax and exact identifiers are interpreted the same way as search-read
+/// candidate ranking. Otherwise, distinctiveness (length) plus importance
+/// signals decides ranking.
+fn score_matches(matches: &[ParsedMatch<'_>], query: Option<&str>) -> Vec<f32> {
+    if let Some(query) = query
+        && !tokenize(query).is_empty()
+    {
+        let corpus = Bm25Corpus::new(matches.iter().map(|m| m.body));
+        return corpus
+            .score_all(query)
+            .into_iter()
+            .map(|score| {
+                let importance = line_score(matches[score.index].body);
+                score.score.max(importance * 0.25)
+            })
+            .collect();
     }
-    let lower = body.to_ascii_lowercase();
-    let hits = query_terms.iter().filter(|t| lower.contains(*t)).count();
-    let density = hits as f32 / query_terms.len() as f32;
-    importance.max(density)
+
+    matches
+        .iter()
+        .map(|m| score_match_without_query(m.body))
+        .collect()
+}
+
+fn score_match_without_query(body: &str) -> f32 {
+    let importance = line_score(body);
+    let len_score = (body.trim().len() as f32 / 80.0).min(1.0);
+    importance.max(0.2 + 0.8 * len_score)
+}
+
+/// Host-provided search-read query metadata. TinyJuice only scores already
+/// discovered matches; filesystem traversal stays in the host.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchReadQuery {
+    pub literal: Option<String>,
+    pub regex: Option<String>,
+    pub symbols: Vec<String>,
+    pub file_kinds: Vec<String>,
+    pub penalize_vendor: bool,
+    pub penalize_generated: bool,
+}
+
+impl Default for SearchReadQuery {
+    fn default() -> Self {
+        Self {
+            literal: None,
+            regex: None,
+            symbols: Vec::new(),
+            file_kinds: Vec::new(),
+            penalize_vendor: true,
+            penalize_generated: true,
+        }
+    }
+}
+
+/// One candidate file already discovered by a host search adapter.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchReadCandidate<'a> {
+    pub path: Cow<'a, str>,
+    pub matched_lines: Vec<SearchReadLine<'a>>,
+    pub imports: Vec<Cow<'a, str>>,
+    pub exports: Vec<Cow<'a, str>>,
+    pub generated: bool,
+    pub vendor: bool,
+    pub max_line: usize,
+}
+
+impl<'a> SearchReadCandidate<'a> {
+    pub fn new(path: impl Into<Cow<'a, str>>) -> Self {
+        Self {
+            path: path.into(),
+            matched_lines: Vec::new(),
+            imports: Vec::new(),
+            exports: Vec::new(),
+            generated: false,
+            vendor: false,
+            max_line: 0,
+        }
+    }
+}
+
+/// One host-provided match line.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchReadLine<'a> {
+    pub line_number: usize,
+    pub text: Cow<'a, str>,
+}
+
+impl<'a> SearchReadLine<'a> {
+    pub fn new(line_number: usize, text: impl Into<Cow<'a, str>>) -> Self {
+        Self {
+            line_number,
+            text: text.into(),
+        }
+    }
+}
+
+/// Bounded snippet-window selection for a candidate file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SnippetWindowSelection {
+    pub windows: Vec<LineRange>,
+    pub omitted_matches: usize,
+}
+
+/// Score a candidate file for a ranked search-read adapter. Exact symbol
+/// matches dominate path matches, which dominate match density.
+pub fn rank_search_read_candidate(
+    candidate: &SearchReadCandidate<'_>,
+    query: &SearchReadQuery,
+) -> f32 {
+    let exact_symbol_match = query
+        .symbols
+        .iter()
+        .filter(|symbol| !symbol.trim().is_empty())
+        .any(|symbol| candidate_has_exact_symbol(candidate, symbol));
+    let path_match = query_terms(query)
+        .iter()
+        .any(|term| candidate.path.to_ascii_lowercase().contains(term));
+    let regex_density = regex_match_density(candidate, query);
+    let import_export_match = query
+        .symbols
+        .iter()
+        .any(|symbol| import_export_contains(candidate, symbol));
+
+    let generated_penalty = if query.penalize_generated
+        && (candidate.generated || looks_generated_path(&candidate.path))
+    {
+        4.0
+    } else {
+        0.0
+    };
+    let vendor_penalty =
+        if query.penalize_vendor && (candidate.vendor || looks_vendor_path(&candidate.path)) {
+            3.0
+        } else {
+            0.0
+        };
+
+    (if exact_symbol_match { 8.0 } else { 0.0 })
+        + (if path_match { 4.0 } else { 0.0 })
+        + regex_density * 3.0
+        + (if import_export_match { 2.0 } else { 0.0 })
+        - generated_penalty
+        - vendor_penalty
+}
+
+/// Select and merge snippet windows around match lines. The output is bounded
+/// by `max_snippets`, with omitted match count made explicit.
+pub fn select_snippet_windows(
+    match_lines: &[usize],
+    context: usize,
+    max_line: usize,
+    max_snippets: usize,
+) -> SnippetWindowSelection {
+    if max_snippets == 0 || match_lines.is_empty() || max_line == 0 {
+        return SnippetWindowSelection {
+            windows: Vec::new(),
+            omitted_matches: match_lines.len(),
+        };
+    }
+
+    let mut lines: Vec<usize> = match_lines
+        .iter()
+        .copied()
+        .filter(|line| *line > 0)
+        .collect();
+    lines.sort_unstable();
+    lines.dedup();
+
+    let mut merged: Vec<LineRange> = Vec::new();
+    for line in lines {
+        let range = LineRange::new(
+            line.saturating_sub(context).max(1),
+            (line + context).min(max_line),
+        );
+        if let Some(last) = merged.last_mut()
+            && range.start <= last.end.saturating_add(1)
+        {
+            last.end = last.end.max(range.end);
+            continue;
+        }
+        merged.push(range);
+    }
+
+    let omitted_matches = if merged.len() > max_snippets {
+        let kept_end = merged[max_snippets - 1].end;
+        match_lines.iter().filter(|line| **line > kept_end).count()
+    } else {
+        0
+    };
+    merged.truncate(max_snippets);
+
+    SnippetWindowSelection {
+        windows: merged,
+        omitted_matches,
+    }
+}
+
+fn candidate_has_exact_symbol(candidate: &SearchReadCandidate<'_>, symbol: &str) -> bool {
+    candidate
+        .matched_lines
+        .iter()
+        .any(|line| contains_exact_token(&line.text, symbol))
+        || candidate
+            .exports
+            .iter()
+            .any(|export| export.as_ref() == symbol)
+}
+
+fn import_export_contains(candidate: &SearchReadCandidate<'_>, symbol: &str) -> bool {
+    candidate
+        .imports
+        .iter()
+        .chain(candidate.exports.iter())
+        .any(|entry| entry.contains(symbol))
+}
+
+fn regex_match_density(candidate: &SearchReadCandidate<'_>, query: &SearchReadQuery) -> f32 {
+    if candidate.matched_lines.is_empty() {
+        return 0.0;
+    }
+    let terms = query_terms(query);
+    if terms.is_empty() && query.regex.is_none() {
+        return 0.0;
+    }
+    let hit_count = candidate
+        .matched_lines
+        .iter()
+        .filter(|line| {
+            let lower = line.text.to_ascii_lowercase();
+            terms.iter().any(|term| lower.contains(term))
+                || query
+                    .regex
+                    .as_ref()
+                    .is_some_and(|regex| lower.contains(&regex.to_ascii_lowercase()))
+        })
+        .count();
+    hit_count as f32 / candidate.matched_lines.len() as f32
+}
+
+fn query_terms(query: &SearchReadQuery) -> Vec<String> {
+    query
+        .literal
+        .iter()
+        .chain(query.symbols.iter())
+        .flat_map(|value| tokenize(value))
+        .collect()
+}
+
+fn contains_exact_token(text: &str, needle: &str) -> bool {
+    tokenize(text)
+        .iter()
+        .any(|token| token == &needle.to_ascii_lowercase())
+}
+
+fn looks_vendor_path(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    lower.contains("/node_modules/")
+        || lower.contains("/vendor/")
+        || lower.contains("/third_party/")
+        || lower.starts_with("vendor/")
+        || lower.starts_with("third_party/")
+}
+
+fn looks_generated_path(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    lower.contains("/target/")
+        || lower.contains("/dist/")
+        || lower.contains("/build/")
+        || lower.ends_with(".min.js")
+        || lower.ends_with(".min.css")
+        || lower.ends_with(".map")
+        || lower.ends_with("package-lock.json")
+        || lower.ends_with("cargo.lock")
+        || lower.ends_with("go.sum")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::pipeline::PipelineInput;
 
     fn big_results() -> String {
         let mut s = String::from("120 match(es); scanned 3 file(s)\n");
@@ -222,9 +530,13 @@ mod tests {
     #[test]
     fn keeps_top_k_per_file_and_tally() {
         let input = big_results();
-        let out = compress(&input, None, false).expect("compresses").text;
+        let out = compress(&input, None).expect("compresses").text;
         assert!(out.contains("more match(es) in src/a.rs"), "{out}");
         assert!(out.contains("more match(es) in src/b.rs"));
+        assert!(
+            out.contains("[search omitted: 110 match(es) not shown across 2 file(s)]"),
+            "{out}"
+        );
         // Preamble survives.
         assert!(out.contains("120 match(es)"));
         assert!(out.len() < input.len());
@@ -241,9 +553,7 @@ mod tests {
             };
             let _ = writeln!(s, "src/x.rs:{i}:{body}");
         }
-        let out = compress(&s, Some("needle token"), false)
-            .expect("compresses")
-            .text;
+        let out = compress(&s, Some("needle token")).expect("compresses").text;
         assert!(
             out.contains("special needle token"),
             "ranked-in match missing:\n{out}"
@@ -251,132 +561,173 @@ mod tests {
     }
 
     #[test]
-    fn adaptive_k_keeps_floor_for_redundant_matches() {
+    fn query_ranking_tokenizes_regex_identifier_context() {
         let mut s = String::new();
         for i in 0..50 {
-            let _ = writeln!(s, "src/r.rs:{i}:// TODO deduplicate this helper later");
+            let body = if i == 37 {
+                "fn sync_worker_v2() -> Result<()> { run_worker() }".to_string()
+            } else {
+                format!("ordinary worker helper number {i}")
+            };
+            let _ = writeln!(s, "src/x.rs:{i}:{body}");
         }
-        let out = compress(&s, None, false).expect("compresses").text;
-        let kept = out
-            .lines()
-            .filter(|line| line.starts_with("src/r.rs:"))
-            .count();
-        assert_eq!(kept, TOP_K_PER_FILE, "redundant matches collapse:\n{out}");
+
+        let out = compress(&s, Some(r"sync_worker_v2\("))
+            .expect("compresses")
+            .text;
+
         assert!(
-            out.contains(&format!("[+{} more match(es) in src/r.rs]", 50 - kept)),
-            "{out}"
+            out.contains("fn sync_worker_v2()"),
+            "regex-style query identifier was not ranked in:\n{out}"
         );
     }
 
     #[test]
-    fn adaptive_k_keeps_more_for_diverse_matches() {
-        const WORDS: [&str; 50] = [
-            "database",
-            "migration",
-            "login",
-            "credential",
-            "cache",
-            "eviction",
-            "worker",
-            "heartbeat",
-            "handshake",
-            "cipher",
-            "latency",
-            "checkpoint",
-            "rollout",
-            "cohort",
-            "webhook",
-            "signature",
-            "resolver",
-            "nameserver",
-            "kernel",
-            "container",
-            "exporter",
-            "histogram",
-            "backlog",
-            "consumer",
-            "certificate",
-            "renewal",
-            "replica",
-            "election",
-            "limiter",
-            "burst",
-            "tokenizer",
-            "analyzer",
-            "cookie",
-            "rotation",
-            "saturation",
-            "queueing",
-            "multipart",
-            "upload",
-            "deadline",
-            "budget",
-            "ledger",
-            "quorum",
-            "snapshot",
-            "compaction",
-            "gossip",
-            "failover",
-            "throttle",
-            "warmup",
-            "vacuum",
-            "sharding",
-        ];
-        let mut s = String::new();
-        for i in 0..50 {
-            let _ = writeln!(
-                s,
-                "src/d.rs:{i}:{} {} {} {}",
-                WORDS[i],
-                WORDS[(i + 13) % 50],
-                WORDS[(i * 7 + 3) % 50],
-                WORDS[(i * 11 + 5) % 50],
-            );
-        }
-        let out = compress(&s, None, false).expect("compresses").text;
-        let kept = out
-            .lines()
-            .filter(|line| line.starts_with("src/d.rs:"))
-            .count();
-        assert_eq!(kept, MAX_K_PER_FILE, "diverse matches keep more:\n{out}");
+    fn search_transform_requires_retained_ccr() {
+        let input = big_results();
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Search,
+            original_bytes: input.len(),
+        };
+        let transform = SearchTransform::new().with_query("compute_long_name_7");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained search output");
+
+        assert_eq!(out.kind(), CompressorKind::Search);
+        assert!(out.text().contains("compute_long_name_7"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn search_transform_skips_non_search_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = SearchTransform::new();
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 
     #[test]
     fn small_result_set_passes_through() {
         let s = "a.rs:1:hit\nb.rs:2:hit\n";
-        assert!(compress(s, None, false).is_none());
+        assert!(compress(s, None).is_none());
     }
 
     #[test]
-    fn context_lines_are_tallied_not_silently_dropped() {
-        // rg -C style output: context lines use `path-NN-body` and `--`
-        // separators, which don't parse as matches.
-        let mut s = String::new();
-        for i in 0..50 {
-            let _ = writeln!(s, "src/a.rs:{}:let matched_line_{i} = f();", i * 4 + 2);
-            let _ = writeln!(s, "src/a.rs-{}-context line above", i * 4 + 1);
-            let _ = writeln!(s, "src/a.rs-{}-context line below", i * 4 + 3);
-            let _ = writeln!(s, "--");
-        }
-        let out = compress(&s, None, false).expect("compresses").text;
+    fn ranked_search_exact_symbol_beats_path_and_density() {
+        let query = SearchReadQuery {
+            literal: Some("payment".to_string()),
+            symbols: vec!["settle_invoice".to_string()],
+            ..Default::default()
+        };
+        let symbol = SearchReadCandidate {
+            path: "src/billing/worker.rs".into(),
+            matched_lines: vec![SearchReadLine::new(42, "fn settle_invoice() -> Result<()>")],
+            max_line: 100,
+            ..SearchReadCandidate::new("src/billing/worker.rs")
+        };
+        let path_only = SearchReadCandidate {
+            path: "src/payment/readme.md".into(),
+            matched_lines: vec![SearchReadLine::new(1, "general overview")],
+            max_line: 10,
+            ..SearchReadCandidate::new("src/payment/readme.md")
+        };
+        let density = SearchReadCandidate {
+            path: "src/other.rs".into(),
+            matched_lines: vec![
+                SearchReadLine::new(10, "payment retry"),
+                SearchReadLine::new(11, "payment queue"),
+            ],
+            max_line: 20,
+            ..SearchReadCandidate::new("src/other.rs")
+        };
+
+        let symbol_score = rank_search_read_candidate(&symbol, &query);
+        let path_score = rank_search_read_candidate(&path_only, &query);
+        let density_score = rank_search_read_candidate(&density, &query);
+
+        assert!(symbol_score > path_score, "{symbol_score} <= {path_score}");
         assert!(
-            out.contains("context/summary line(s) omitted"),
-            "omission tally missing:\n{out}"
+            path_score > density_score,
+            "{path_score} <= {density_score}"
         );
     }
 
     #[test]
-    fn more_matches_token_retrieves_omitted_matches() {
-        use crate::cache;
-        let input = big_results();
-        let out = compress(&input, None, true).expect("compresses").text;
-        let tokens = cache::parse_markers(&out);
-        assert!(!tokens.is_empty(), "tallies should carry tokens: {out}");
-        let block = cache::retrieve(&tokens[0]).expect("stored");
+    fn ranked_search_deprioritizes_vendor_and_generated_paths() {
+        let query = SearchReadQuery {
+            symbols: vec!["hydrateRoot".to_string()],
+            ..Default::default()
+        };
+        let first_party = SearchReadCandidate {
+            path: "src/app/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            ..SearchReadCandidate::new("src/app/root.tsx")
+        };
+        let vendor = SearchReadCandidate {
+            path: "node_modules/pkg/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            vendor: true,
+            ..SearchReadCandidate::new("node_modules/pkg/root.tsx")
+        };
+
         assert!(
-            block.contains("src/a.rs:"),
-            "omitted matches for a.rs: {block}"
+            rank_search_read_candidate(&first_party, &query)
+                > rank_search_read_candidate(&vendor, &query)
         );
-        assert!(!block.contains("src/b.rs:"), "must not mix files: {block}");
+    }
+
+    #[test]
+    fn ranked_search_can_honor_explicit_vendor_scope() {
+        let query = SearchReadQuery {
+            symbols: vec!["hydrateRoot".to_string()],
+            penalize_vendor: false,
+            ..Default::default()
+        };
+        let first_party = SearchReadCandidate {
+            path: "src/app/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            ..SearchReadCandidate::new("src/app/root.tsx")
+        };
+        let vendor = SearchReadCandidate {
+            path: "vendor/pkg/root.tsx".into(),
+            matched_lines: vec![SearchReadLine::new(8, "export function hydrateRoot() {}")],
+            max_line: 20,
+            vendor: true,
+            ..SearchReadCandidate::new("vendor/pkg/root.tsx")
+        };
+
+        assert_eq!(
+            rank_search_read_candidate(&first_party, &query),
+            rank_search_read_candidate(&vendor, &query)
+        );
+    }
+
+    #[test]
+    fn snippet_windows_merge_and_report_omitted_matches() {
+        let selected = select_snippet_windows(&[10, 11, 20, 50], 2, 100, 2);
+
+        assert_eq!(
+            selected.windows,
+            vec![LineRange::new(8, 13), LineRange::new(18, 22)]
+        );
+        assert_eq!(selected.omitted_matches, 1);
     }
 }

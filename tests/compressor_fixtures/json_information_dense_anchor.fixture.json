@@ -1,0 +1,22 @@
+{
+  "description": "SmartCrusher row dropping preserves information-dense rows",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonInformationDenseRows",
+    "rows": 140,
+    "denseRow": 72
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "trace alpha beta gamma",
+      "tinyjuice_retrieve"
+    ],
+    "notContains": [
+      "ordinary payload 70"
+    ]
+  }
+}

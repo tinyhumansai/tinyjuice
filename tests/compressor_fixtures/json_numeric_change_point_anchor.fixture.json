@@ -1,0 +1,22 @@
+{
+  "description": "SmartCrusher row dropping preserves numeric change-point rows",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonChangePointRows",
+    "rows": 140,
+    "changeRow": 72
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "phase transition payload",
+      "tinyjuice_retrieve"
+    ],
+    "notContains": [
+      "ordinary payload 70"
+    ]
+  }
+}

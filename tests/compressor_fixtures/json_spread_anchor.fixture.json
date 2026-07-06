@@ -1,0 +1,22 @@
+{
+  "description": "SmartCrusher row dropping keeps deterministic spread anchors",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonSpreadRows",
+    "rows": 140,
+    "spreadRow": 94
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "deterministic spread anchor payload",
+      "tinyjuice_retrieve"
+    ],
+    "notContains": [
+      "ordinary payload 70"
+    ]
+  }
+}

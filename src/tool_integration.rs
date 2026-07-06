@@ -52,12 +52,11 @@ pub fn current_options() -> CompressOptions {
         .clone()
 }
 
-fn options_for_agent(profile: AgentTokenjuiceCompression) -> Option<CompressOptions> {
+fn options_for_agent(profile: AgentTokenjuiceCompression) -> Result<CompressOptions, &'static str> {
     match profile {
-        AgentTokenjuiceCompression::Off => None,
-        AgentTokenjuiceCompression::Auto | AgentTokenjuiceCompression::Full => {
-            Some(current_options())
-        }
+        AgentTokenjuiceCompression::Off => Err("none/agent-profile-off"),
+        AgentTokenjuiceCompression::Auto => Err("none/agent-profile-auto-unresolved"),
+        AgentTokenjuiceCompression::Full => Ok(current_options()),
         AgentTokenjuiceCompression::Light => {
             let mut opts = current_options();
             // Coding agents need raw, exact tool text more than aggressive
@@ -67,7 +66,7 @@ fn options_for_agent(profile: AgentTokenjuiceCompression) -> Option<CompressOpti
             opts.ccr_enabled = false;
             opts.lossy_without_ccr = false;
             opts.ml_text_enabled = false;
-            Some(opts)
+            Ok(opts)
         }
     }
 }
@@ -136,22 +135,26 @@ pub async fn compact_tool_output_with_policy(
 ) -> (String, CompactionStats) {
     let original_bytes = output.len();
 
-    let Some(opts) = options_for_agent(profile) else {
-        log::debug!(
-            "[tinyjuice] agent profile disabled compaction tool={} bytes={}",
-            tool_name,
-            original_bytes
-        );
-        return (
-            output.to_string(),
-            CompactionStats {
-                tool_name: tool_name.to_string(),
-                original_bytes,
-                compacted_bytes: original_bytes,
-                rule_id: "none/agent-profile-off".to_string(),
-                applied: false,
-            },
-        );
+    let opts = match options_for_agent(profile) {
+        Ok(opts) => opts,
+        Err(rule_id) => {
+            log::debug!(
+                "[tinyjuice] agent profile skipped compaction tool={} profile={} bytes={}",
+                tool_name,
+                profile.as_str(),
+                original_bytes
+            );
+            return (
+                output.to_string(),
+                CompactionStats {
+                    tool_name: tool_name.to_string(),
+                    original_bytes,
+                    compacted_bytes: original_bytes,
+                    rule_id: rule_id.to_string(),
+                    applied: false,
+                },
+            );
+        }
     };
 
     // A recovery tool's output is the original we previously offloaded — never
@@ -296,6 +299,23 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    fn stringified_json_rows() -> String {
+        let rows: Vec<_> = (0..80)
+            .map(|i| {
+                json!({
+                    "id": i,
+                    "status": "active",
+                    "metadata": json!({
+                        "owner": format!("team-{i}"),
+                        "flags": { "retry": i % 2 == 0 }
+                    })
+                    .to_string()
+                })
+            })
+            .collect();
+        serde_json::to_string_pretty(&rows).expect("rows serialize")
+    }
+
     #[tokio::test]
     async fn skips_short_output() {
         let (out, stats) = compact_tool_output_with_policy(
@@ -328,6 +348,37 @@ mod tests {
         )
         .await;
         assert!(stats.applied, "expected compaction, got {:?}", stats);
+        assert!(compacted.len() < output.len());
+        assert!(
+            compacted.contains("M: src/file_0.rs"),
+            "git/status rule should rewrite modified paths: {compacted}"
+        );
+        assert!(
+            !compacted.contains("On branch main"),
+            "git/status rule should remove branch boilerplate: {compacted}"
+        );
+    }
+
+    #[tokio::test]
+    async fn compacts_stringified_json_through_tool_adapter() {
+        let output = stringified_json_rows();
+        let args = json!({"path": "accounts.json"});
+
+        let (compacted, stats) = compact_tool_output_with_policy(
+            "web_fetch",
+            Some(&args),
+            &output,
+            Some(0),
+            AgentTokenjuiceCompression::Full,
+        )
+        .await;
+
+        assert!(stats.applied, "expected SmartCrusher, got {:?}", stats);
+        assert_eq!(stats.rule_id, "smartcrusher");
+        assert!(compacted.contains("metadata.owner"), "{compacted}");
+        assert!(compacted.contains("metadata.flags.retry"), "{compacted}");
+        assert!(compacted.contains("team-7"), "{compacted}");
+        assert!(compacted.contains("tinyjuice_retrieve"), "{compacted}");
         assert!(compacted.len() < output.len());
     }
 
@@ -383,6 +434,28 @@ mod tests {
             compact_output_with_policy(big.clone(), "grep", true, AgentTokenjuiceCompression::Off)
                 .await;
         assert_eq!(returned, big);
+    }
+
+    #[tokio::test]
+    async fn auto_agent_profile_requires_host_resolution() {
+        let mut lines = vec!["On branch main".to_owned()];
+        for i in 0..200 {
+            lines.push(format!("\tmodified:   src/file_{i}.rs"));
+        }
+        let output = lines.join("\n");
+        let args = json!({"command": "git status"});
+        let (returned, stats) = compact_tool_output_with_policy(
+            "shell",
+            Some(&args),
+            &output,
+            Some(0),
+            AgentTokenjuiceCompression::Auto,
+        )
+        .await;
+
+        assert_eq!(returned, output);
+        assert!(!stats.applied);
+        assert_eq!(stats.rule_id, "none/agent-profile-auto-unresolved");
     }
 
     #[test]

@@ -1,45 +1,98 @@
-//! Source-code compressor — keep the declaration skeleton, collapse bodies.
+//! Source-code compressor — keep signatures, collapse bodies.
 //!
 //! Inspired by Headroom's `CodeCompressor`. The goal is to keep the structural
 //! skeleton an agent needs to navigate a file — imports, type/function/class
-//! signatures, top-level constants, and (crucially) the member signatures of
-//! containers — while collapsing the deep executable bodies that dominate byte
-//! count.
+//! signatures, top-level constants — while collapsing the deep bodies that
+//! dominate byte count.
 //!
-//! This module ships the language-agnostic **declaration-skeleton heuristic**:
-//! it walks the file tracking a stack of open blocks, remembering for each
-//! whether it is a *container* (class/struct/impl/trait/interface/enum/
-//! namespace/module/extern) or a *function/other* block. A line is kept when it
-//! is at top level, when it is a block-opening signature at any depth, or when
-//! it is a member sitting directly inside a container (field, const, method
-//! signature, doc comment). Free-function bodies collapse to a
-//! `{ … N line(s) … }` placeholder; large bodies keep a head/tail skeleton so a
-//! few real lines survive around the elision. A higher-fidelity tree-sitter path
-//! (Rust/TS/JS/Python) is layered on and selected by language; until then every
-//! language uses the heuristic. The router offloads each omitted block to CCR
-//! for exact recovery.
+//! This module currently ships the language-agnostic **brace-depth heuristic**:
+//! lines at brace nesting depth 0–1 are kept; deeper bodies collapse to a
+//! `{ … N lines … }` placeholder. Lines carrying error/TODO markers are always
+//! kept. A higher-fidelity tree-sitter path (Rust/TS/Python) is layered on in a
+//! follow-up slice and selected by language; until then every language uses the
+//! heuristic. The router offloads the original to CCR for exact recovery.
 
 use async_trait::async_trait;
 use std::fmt::Write as _;
 
-use super::{BLOCK_NOTE, Compressor, block_token};
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use super::Compressor;
+use crate::cache::CcrStore;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
+use crate::types::{
+    CodeElision, CodeStubOutput, CompressInput, CompressOptions, CompressOutput, CompressorKind,
+    ContentKind, LineRange, ParseStatus, ReadIntent, StubMode, SymbolSummary,
+};
 
-/// A body must have at least this many *interior* lines (not counting the brace
-/// lines) before it is worth replacing with a placeholder. Small bodies stay
-/// verbatim — the marker (~45 bytes) can be longer than the code it replaces.
-pub const MIN_BODY_LINES_TO_COLLAPSE: usize = 8;
+/// Bodies with more than this many collapsed lines get a placeholder; shorter
+/// ones are kept verbatim (collapsing tiny bodies isn't worth the marker).
+pub const MIN_BODY_LINES_TO_COLLAPSE: usize = 4;
 
-/// Once a collapsed body has at least this many interior lines, keep a skeleton
-/// (first two + last one interior lines) around the elided middle instead of a
-/// single marker, so the reader still sees how the body opens and returns.
-const SKELETON_MIN_INTERIOR: usize = 12;
-
-/// A collapse must save at least this many bytes over the placeholder marker,
-/// otherwise it is a no-op inflation and the body is kept verbatim.
-const MIN_BYTE_SAVINGS: usize = 16;
+/// Markers that force a line to be kept even inside a deep body.
+const KEEP_MARKERS: &[&str] = &["TODO", "FIXME", "XXX", "error", "panic", "unsafe"];
 
 pub struct CodeCompressor;
+
+/// Typed offload transform for explicit source-code stub reads.
+#[derive(Debug, Clone)]
+pub struct CodeStubTransform {
+    mode: StubMode,
+    extension: Option<String>,
+}
+
+impl CodeStubTransform {
+    pub fn new(mode: StubMode) -> Self {
+        Self {
+            mode,
+            extension: None,
+        }
+    }
+
+    pub fn with_extension(mut self, extension: impl Into<String>) -> Self {
+        self.extension = Some(extension.into());
+        self
+    }
+
+    pub fn mode(&self) -> &StubMode {
+        &self.mode
+    }
+
+    pub fn extension(&self) -> Option<&str> {
+        self.extension.as_deref()
+    }
+}
+
+impl OffloadTransform for CodeStubTransform {
+    fn name(&self) -> &'static str {
+        "code_stub"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Code {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Code {
+            return None;
+        }
+        let stub = stub_code(
+            input.content,
+            self.extension(),
+            &self.mode,
+            input.original_bytes,
+        );
+        if stub.text.len() >= input.content.len() {
+            return None;
+        }
+        OffloadOutput::from_retained_put(
+            stub.text,
+            CompressorKind::Code,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for CodeCompressor {
@@ -50,241 +103,89 @@ impl Compressor for CodeCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        opts: &CompressOptions,
+        _opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        // Per-body retrieval tokens only make sense when the CCR store is on.
-        let per_body_tokens = opts.ccr_enabled;
-        // A query token in a function name or body pins that body open so the
-        // caller can still read the code they were looking for.
-        let query = input.hint.query.as_deref();
-        // When set, collapse only enough (largest bodies first) to reach this
-        // output/input byte ratio; `None` collapses every eligible body.
-        let target_ratio = opts.code_target_ratio;
+        if let ReadIntent::Stub(mode) = &input.hint.read_intent {
+            let stub = stub_code(
+                input.content,
+                input.hint.extension.as_deref(),
+                mode,
+                input.original_bytes,
+            );
+            if stub.text.len() < input.content.len() {
+                return Some(CompressOutput::lossy(stub.text, CompressorKind::Code));
+            }
+            return None;
+        }
+
         // Prefer the AST path when a grammar matches the file's language; fall
         // back to the language-agnostic heuristic otherwise (or when the AST
         // path doesn't shrink the content).
         #[cfg(feature = "tinyjuice-treesitter")]
         if let Some(ext) = input.hint.extension.as_deref()
-            && let Some(out) =
-                treesitter::compress(input.content, ext, per_body_tokens, query, target_ratio)
+            && let Some(out) = treesitter::compress(input.content, ext)
         {
             return Some(out);
         }
-        compress_heuristic(input.content, per_body_tokens, query, target_ratio)
+        compress_heuristic(input.content)
     }
 }
 
-/// An eligible collapse, fed to [`select_collapses`] for budget selection.
-struct Candidate {
-    /// Position in the caller's segment/body list.
-    idx: usize,
-    /// Byte size of the body's interior lines — the largest-first sort key.
-    interior_bytes: usize,
-    /// Bytes saved by collapsing this body (verbatim minus rendered size).
-    savings: usize,
-    /// Whether the rendered placeholder carries a retrieval token (the first
-    /// one also pays for the shared [`BLOCK_NOTE`] footer).
-    has_token: bool,
-}
-
-/// Pick which eligible bodies actually collapse. With no target ratio every
-/// candidate collapses (the historical behavior). With a target, candidates
-/// collapse largest-interior-first until the projected output size reaches
-/// `target_ratio × input_len`; the rest stay fully intact. `baseline` is the
-/// projected output size with nothing collapsed.
-fn select_collapses(
-    mut candidates: Vec<Candidate>,
-    baseline: usize,
-    input_len: usize,
-    target_ratio: Option<f32>,
-) -> Vec<usize> {
-    let Some(ratio) = target_ratio else {
-        return candidates.into_iter().map(|c| c.idx).collect();
-    };
-    let target = (f64::from(ratio) * input_len as f64) as usize;
-    candidates.sort_by_key(|c| std::cmp::Reverse(c.interior_bytes));
-    let mut projected = baseline;
-    let mut note_paid = false;
-    let mut chosen = Vec::new();
-    for c in candidates {
-        if projected <= target {
-            break;
-        }
-        if c.has_token && !note_paid {
-            note_paid = true;
-            projected += BLOCK_NOTE.len();
-        }
-        projected = projected.saturating_sub(c.savings);
-        chosen.push(c.idx);
-    }
-    chosen
-}
-
-/// Language-agnostic declaration-skeleton compressor. Keeps top-level lines,
-/// block-opening signatures at any depth, and members sitting directly inside a
-/// container; collapses executable bodies. With `per_body_tokens`, each
-/// collapsed body is offloaded to CCR and its placeholder carries a token that
-/// retrieves exactly that body. `query` (when set) pins any body whose name or
-/// text mentions a query token. Returns `None` if it wouldn't shrink the content.
-pub fn compress_heuristic(
-    content: &str,
-    per_body_tokens: bool,
-    query: Option<&str>,
-    target_ratio: Option<f32>,
-) -> Option<CompressOutput> {
+/// Language-agnostic brace-depth compressor. Keeps lines at depth ≤ 1, collapses
+/// deeper runs. Returns `None` if it wouldn't shrink the content.
+pub fn compress_heuristic(content: &str) -> Option<CompressOutput> {
     let lines: Vec<&str> = content.lines().collect();
     if lines.len() < 12 {
         return None;
     }
 
-    // Phase 1: walk the file into alternating kept-text and body segments.
-    // Each entry records whether the open block is a container (true) or a
-    // function/other block (false). Stack length is the brace-nesting depth.
-    let mut stack: Vec<bool> = Vec::new();
-    // Classification for the next `{` that opens on its own line (next-line
-    // brace style, e.g. PHP/C#): set from the preceding declaration line.
-    let mut pending_container: Option<bool> = None;
+    let mut out = String::with_capacity(content.len() / 2 + 64);
+    let mut depth: i32 = 0;
     let mut collapsed: Vec<&str> = Vec::new();
-    // The kept line that opened the body currently accumulating in `collapsed`.
-    let mut body_sig: Option<&str> = None;
-    let mut in_block_comment = false;
-    let mut segments: Vec<Segment> = Vec::new();
+
+    let flush = |out: &mut String, collapsed: &mut Vec<&str>| {
+        if collapsed.is_empty() {
+            return;
+        }
+        if collapsed.len() >= MIN_BODY_LINES_TO_COLLAPSE {
+            let _ = writeln!(out, "    {{ … {} line(s) … }}", collapsed.len());
+        } else {
+            for l in collapsed.iter() {
+                let _ = writeln!(out, "{l}");
+            }
+        }
+        collapsed.clear();
+    };
 
     for line in &lines {
-        let was_in_comment = in_block_comment;
-        let (opens, closes) = brace_delta(line, &mut in_block_comment);
-        let t = line.trim();
-        let start_depth = stack.len();
-        let enclosing_container = *stack.last().unwrap_or(&false);
+        let (opens, closes) = brace_delta(line);
+        let start_depth = depth;
+        // A line that carries signal is always kept, regardless of depth.
+        let force_keep = KEEP_MARKERS.iter().any(|m| line.contains(m));
 
-        // Blank lines: at container/top level they separate members and are
-        // kept; inside a body they stay glued to the body so it collapses as one.
-        if t.is_empty() && !was_in_comment {
-            if start_depth == 0 || enclosing_container {
-                flush_body(
-                    &mut segments,
-                    &mut collapsed,
-                    per_body_tokens,
-                    body_sig,
-                    query,
-                );
-                push_kept(&mut segments, line);
-            } else {
-                collapsed.push(line);
-            }
-            continue;
-        }
-
-        let decl_opener = !was_in_comment && opens > closes && is_decl_opener_line(t);
-        let keep = start_depth == 0 || decl_opener || (enclosing_container && is_member_line(t));
-
-        if keep {
-            flush_body(
-                &mut segments,
-                &mut collapsed,
-                per_body_tokens,
-                body_sig,
-                query,
-            );
-            push_kept(&mut segments, line);
-            // This kept line is the signature for whatever body follows.
-            body_sig = Some(line);
+        // Keep top-level lines (depth 0) — imports, signatures, the line that
+        // opens a block — and collapse the block body (depth ≥ 1). Short bodies
+        // (e.g. small struct field lists) stay verbatim via the flush threshold,
+        // so struct/enum fields survive while long function bodies collapse.
+        if start_depth == 0 || force_keep {
+            flush(&mut out, &mut collapsed);
+            let _ = writeln!(out, "{line}");
         } else {
             collapsed.push(line);
         }
-
-        // Update the block stack. Signature/declaration lines that carry no
-        // brace arm `pending_container` for the `{` that opens next line.
-        if was_in_comment {
-            // Depth is tracked by brace_delta's comment state; nothing to push.
-        } else if opens > closes {
-            let n = opens - closes;
-            let is_cont = if is_decl_opener_line(t) {
-                is_container_line(t)
-            } else {
-                pending_container.unwrap_or(false)
-            };
-            for k in 0..n {
-                stack.push(k == 0 && is_cont);
-            }
-            pending_container = None;
-        } else if closes > opens {
-            for _ in 0..(closes - opens) {
-                stack.pop();
-            }
-            pending_container = None;
-        } else if opens == 0 {
-            // No braces on this line: it may be a declaration whose body brace
-            // lands on the next line.
-            if is_container_line(t) {
-                pending_container = Some(true);
-            } else if is_signature_line(t) {
-                pending_container = Some(false);
-            }
-        } else {
-            // Balanced braces (one-liner block): depth unchanged.
-            pending_container = None;
+        depth += opens - closes;
+        if depth < 0 {
+            depth = 0;
         }
     }
-    flush_body(
-        &mut segments,
-        &mut collapsed,
-        per_body_tokens,
-        body_sig,
-        query,
-    );
+    flush(&mut out, &mut collapsed);
 
-    // Phase 2: pick which eligible bodies collapse. Baseline = the output size
-    // if every body stayed verbatim.
-    let baseline: usize = segments
-        .iter()
-        .map(|s| match s {
-            Segment::Kept(text) => text.len(),
-            Segment::Body(b) => b.verbatim.len(),
-        })
-        .sum();
-    let candidates: Vec<Candidate> = segments
-        .iter()
-        .enumerate()
-        .filter_map(|(idx, s)| match s {
-            Segment::Body(b) => b.collapsed.as_ref().map(|c| Candidate {
-                idx,
-                interior_bytes: b.interior_bytes,
-                savings: b.verbatim.len().saturating_sub(c.text.len()),
-                has_token: c.has_token,
-            }),
-            Segment::Kept(_) => None,
-        })
-        .collect();
-    let mut collapse_flags = vec![false; segments.len()];
-    for idx in select_collapses(candidates, baseline, content.len(), target_ratio) {
-        collapse_flags[idx] = true;
-    }
-
-    let mut out = String::with_capacity(content.len() / 2 + 64);
-    let mut any_token = false;
-    for (idx, seg) in segments.iter().enumerate() {
-        match seg {
-            Segment::Kept(text) => out.push_str(text),
-            Segment::Body(b) => match &b.collapsed {
-                Some(c) if collapse_flags[idx] => {
-                    any_token |= c.has_token;
-                    out.push_str(&c.text);
-                }
-                _ => out.push_str(&b.verbatim),
-            },
-        }
-    }
-
-    let mut out = out.trim_end().to_string();
-    if any_token {
-        out.push_str(BLOCK_NOTE);
-    }
+    let out = out.trim_end().to_string();
     if out.len() >= content.len() {
         return None;
     }
     log::debug!(
-        "[tinyjuice][code] heuristic {} -> {} bytes ({} lines)",
+        "[tokenjuice][code] heuristic {} -> {} bytes ({} lines)",
         content.len(),
         out.len(),
         lines.len()
@@ -292,428 +193,413 @@ pub fn compress_heuristic(
     Some(CompressOutput::lossy(out, CompressorKind::Code))
 }
 
-/// One stretch of output from the phase-1 walk: kept lines, or a body run that
-/// may collapse.
-enum Segment {
-    Kept(String),
-    Body(BodySeg),
-}
-
-/// A body run with both renderings: verbatim (always available) and the
-/// collapsed placeholder when the body is eligible.
-struct BodySeg {
-    verbatim: String,
-    collapsed: Option<CollapsedRender>,
-    /// Byte size of the interior lines — the largest-first selection key.
-    interior_bytes: usize,
-}
-
-/// The rendered collapse of an eligible body.
-struct CollapsedRender {
-    text: String,
-    has_token: bool,
-}
-
-/// Append a kept line to the trailing kept segment (starting one if needed).
-fn push_kept(segments: &mut Vec<Segment>, line: &str) {
-    if let Some(Segment::Kept(text)) = segments.last_mut() {
-        let _ = writeln!(text, "{line}");
-    } else {
-        segments.push(Segment::Kept(format!("{line}\n")));
-    }
-}
-
-/// Close the accumulated body run (if any) into a body segment and clear it.
-fn flush_body(
-    segments: &mut Vec<Segment>,
-    collapsed: &mut Vec<&str>,
-    per_body_tokens: bool,
-    sig: Option<&str>,
-    query: Option<&str>,
-) {
-    if collapsed.is_empty() {
-        return;
-    }
-    segments.push(Segment::Body(render_body(
-        collapsed,
-        per_body_tokens,
-        sig,
-        query,
-    )));
-    collapsed.clear();
-}
-
-/// Render an accumulated body run: verbatim when it is short, worth less than
-/// the marker, or pinned by `keep_body`; otherwise also a placeholder rendering
-/// the caller may substitute. Large bodies keep a head/tail skeleton around the
-/// elided middle. `sig` is the signature line that opened the body (used to
-/// read its name for the keep heuristics).
-fn render_body(
-    collapsed: &[&str],
-    per_body_tokens: bool,
-    sig: Option<&str>,
-    query: Option<&str>,
-) -> BodySeg {
-    // Interior = the run minus a leading bare `{` and a trailing `}` line.
-    let lo = usize::from(brace_open_only(collapsed[0].trim()));
-    let mut hi = collapsed.len();
-    if hi > lo && brace_close_only(collapsed[hi - 1].trim()) {
-        hi -= 1;
-    }
-    let interior = &collapsed[lo..hi];
-    let interior_count = interior.len();
-    let interior_bytes: usize = interior.iter().map(|l| l.len() + 1).sum();
-
-    let name = sig.and_then(fn_name);
-    let body_text = collapsed.join("\n");
-    let mut verbatim = String::with_capacity(body_text.len() + 1);
-    for l in collapsed {
-        let _ = writeln!(verbatim, "{l}");
-    }
-
-    let collapse = interior_count >= MIN_BODY_LINES_TO_COLLAPSE
-        && !keep_body(name.as_deref(), &body_text, interior_count, query);
-
-    let mut rendered = None;
-    if collapse {
-        let indent = leading_ws(interior.first().copied().unwrap_or(collapsed[0]));
-        // The token recovers the FULL original body regardless of skeleton.
-        let token = block_token(&body_text, per_body_tokens);
-
-        if interior_count >= SKELETON_MIN_INTERIOR {
-            let elided = interior_count - 3;
-            let marker = format!("{indent}{{ … {elided} line(s) …{token} }}");
-            let removed: usize = interior[2..interior_count - 1]
-                .iter()
-                .map(|l| l.len() + 1)
-                .sum();
-            if removed > marker.len() + MIN_BYTE_SAVINGS {
-                let mut text = String::new();
-                let _ = writeln!(text, "{}", interior[0]);
-                let _ = writeln!(text, "{}", interior[1]);
-                let _ = writeln!(text, "{marker}");
-                let _ = writeln!(text, "{}", interior[interior_count - 1]);
-                rendered = Some(CollapsedRender {
-                    text,
-                    has_token: !token.is_empty(),
-                });
-            }
-        } else {
-            let marker = format!("{indent}{{ … {} line(s) …{token} }}", collapsed.len());
-            if body_text.len() > marker.len() + MIN_BYTE_SAVINGS {
-                rendered = Some(CollapsedRender {
-                    text: format!("{marker}\n"),
-                    has_token: !token.is_empty(),
-                });
-            }
-        }
-    }
-
-    BodySeg {
-        verbatim,
-        collapsed: rendered,
-        interior_bytes,
-    }
-}
-
-/// Leading-whitespace prefix of a line (for aligning placeholder markers).
-fn leading_ws(s: &str) -> &str {
-    &s[..s.len() - s.trim_start().len()]
-}
-
-/// A line that is nothing but an opening brace (next-line brace style).
-fn brace_open_only(t: &str) -> bool {
-    t == "{"
-}
-
-/// A line that is only closing punctuation: `}`, `};`, `},`, `})`, `});` …
-fn brace_close_only(t: &str) -> bool {
-    t.starts_with('}')
-        && t.chars()
-            .all(|c| matches!(c, '}' | ';' | ',' | ')' | ' ' | '\t'))
-}
-
-/// Keywords that introduce a *container* whose members we keep visible.
-const CONTAINER_KW: &[&str] = &[
-    "class",
-    "struct",
-    "impl",
-    "trait",
-    "interface",
-    "enum",
-    "namespace",
-    "module",
-    "mod",
-    "record",
-    "union",
-    "protocol",
-    "object",
-    "extension",
-];
-
-/// Keywords that introduce a function/method body.
-const FN_KW: &[&str] = &["fn", "func", "def", "function", "fun", "sub", "method"];
-
-/// Leading modifiers/visibility keywords to skip before the "kind" token.
-const MODIFIER_KW: &[&str] = &[
-    "pub",
-    "public",
-    "private",
-    "protected",
-    "internal",
-    "static",
-    "final",
-    "abstract",
-    "override",
-    "async",
-    "export",
-    "default",
-    "virtual",
-    "inline",
-    "unsafe",
-    "const",
-    "extern",
-    "sealed",
-    "partial",
-    "open",
-    "suspend",
-    "explicit",
-    "readonly",
-    "friend",
-    "data",
-    "mut",
-];
-
-/// Control-flow keywords whose `{` opens a block that is NOT a declaration.
-const CONTROL_KW: &[&str] = &[
-    "if",
-    "else",
-    "for",
-    "while",
-    "switch",
-    "do",
-    "try",
-    "catch",
-    "finally",
-    "match",
-    "loop",
-    "foreach",
-    "using",
-    "lock",
-    "fixed",
-    "synchronized",
-    "with",
-    "when",
-    "return",
-    "elif",
-    "except",
-];
-
-/// The token identifying a declaration's kind — the first word after any
-/// leading visibility/modifier keywords. Trailing `{` and generics are ignored.
-fn kind_token(t: &str) -> Option<&str> {
-    let mut toks = t.split(|c: char| c.is_whitespace() || c == '(' || c == '<' || c == '{');
-    for tok in toks.by_ref() {
-        let w = tok.trim_end_matches(':');
-        if w.is_empty() {
-            continue;
-        }
-        if MODIFIER_KW.contains(&w) {
-            continue;
-        }
-        return Some(w);
-    }
-    None
-}
-
-/// True when the line introduces a container (its members should stay visible).
-fn is_container_line(t: &str) -> bool {
-    if t.starts_with("extern") {
-        return true;
-    }
-    kind_token(t).is_some_and(|w| CONTAINER_KW.contains(&w))
-}
-
-/// True when a line that ENDS with `{` is a declaration opener (a container or
-/// a function/method signature) rather than a control-flow block.
-fn is_decl_opener_line(t: &str) -> bool {
-    let tr = t.trim_end();
-    let head = match tr.strip_suffix('{') {
-        Some(h) => h.trim_end(),
-        None => return false,
-    };
-    if head.is_empty() {
-        return false; // bare `{`
-    }
-    if is_container_line(head) {
-        return true;
-    }
-    match kind_token(head) {
-        Some(w) if CONTROL_KW.contains(&w) => false,
-        Some(w) if FN_KW.contains(&w) => true,
-        // `type name(params)` — Java/C#/C++/PHP method signature.
-        _ => head.contains('(') && head.contains(')'),
-    }
-}
-
-/// True when a line (carrying no brace) looks like a function/method signature
-/// whose body brace lands on the next line.
-fn is_signature_line(t: &str) -> bool {
-    if !t.contains('(') {
-        return false;
-    }
-    let tr = t.trim_end();
-    // A trailing `;` is a statement or an abstract/interface method — no body.
-    if tr.ends_with(';') || tr.ends_with(',') {
-        return false;
-    }
-    !kind_token(t).is_some_and(|w| CONTROL_KW.contains(&w))
-}
-
-/// True when a line sitting directly inside a container is a member worth
-/// keeping (field, const, doc comment, method signature) — anything that is not
-/// a bare brace or empty.
-fn is_member_line(t: &str) -> bool {
-    !t.is_empty() && !brace_open_only(t) && !brace_close_only(t)
-}
-
-/// Extract the declared name from a signature line: the identifier immediately
-/// before the first parameter list. Handles Go receiver methods.
-fn fn_name(sig: &str) -> Option<String> {
-    let s = sig.trim();
-    // Strip a Go receiver: `func (r *T) Name(` -> `Name(`.
-    let s = if let Some(rest) = s.strip_prefix("func ") {
-        let rest = rest.trim_start();
-        if rest.starts_with('(') {
-            rest.find(')').map(|i| rest[i + 1..].trim()).unwrap_or(rest)
-        } else {
-            rest
-        }
-    } else {
-        s
-    };
-    let paren = s.find('(')?;
-    let before = &s[..paren];
-    let name = before
-        .rsplit(|c: char| !c.is_alphanumeric() && c != '_' && c != '$')
-        .next()
-        .unwrap_or("");
-    if name.is_empty() {
-        None
-    } else {
-        Some(name.to_string())
-    }
-}
-
-/// Count word-boundary occurrences of `needle` inside the already-lowercased
-/// `hay`. `needle` must itself be lowercase.
-fn count_word(hay: &str, needle: &str) -> usize {
-    let mut n = 0;
-    let mut from = 0;
-    while let Some(rel) = hay[from..].find(needle) {
-        let start = from + rel;
-        let end = start + needle.len();
-        let before_ok = start == 0
-            || !hay[..start]
-                .chars()
-                .next_back()
-                .is_some_and(|c| c.is_alphanumeric() || c == '_');
-        let after_ok = end >= hay.len()
-            || !hay[end..]
-                .chars()
-                .next()
-                .is_some_and(|c| c.is_alphanumeric() || c == '_');
-        if before_ok && after_ok {
-            n += 1;
-        }
-        from = end;
-    }
-    n
-}
-
-/// True when a body is error-handling dense: at least two of throw/raise/
-/// panic!/return Err/catch/except/rescue.
-fn is_error_dense(body: &str) -> bool {
-    let l = body.to_ascii_lowercase();
-    let mut hits = count_word(&l, "throw");
-    hits += count_word(&l, "raise");
-    hits += count_word(&l, "catch");
-    hits += count_word(&l, "except");
-    hits += count_word(&l, "rescue");
-    // Punctuation-carrying / multi-word forms: plain substring counts.
-    hits += l.matches("panic!").count();
-    hits += l.matches("return err").count();
-    hits >= 2
-}
-
-/// True when a function name or body mentions any (≥2-char) token from `query`.
-fn query_hits(name: Option<&str>, body: &str, query: &str) -> bool {
-    let body_l = body.to_ascii_lowercase();
-    let name_l = name.map(|n| n.to_ascii_lowercase());
-    query
-        .split(|c: char| !c.is_alphanumeric() && c != '_')
-        .filter(|tok| tok.len() >= 2)
-        .any(|tok| {
-            let tl = tok.to_ascii_lowercase();
-            body_l.contains(&tl) || name_l.as_deref().is_some_and(|n| n.contains(&tl))
-        })
-}
-
-/// Decide whether a body is important enough to keep verbatim rather than
-/// collapse: constructors/entrypoints, short accessors, error-dense bodies, or
-/// bodies matching the caller's query.
-fn keep_body(name: Option<&str>, body: &str, interior: usize, query: Option<&str>) -> bool {
-    if let Some(n) = name {
-        let nl = n.to_ascii_lowercase();
-        if matches!(
-            nl.as_str(),
-            "main" | "new" | "init" | "__init__" | "__construct" | "constructor"
-        ) {
-            return true;
-        }
-        let is_accessor = nl.starts_with("get")
-            || nl.starts_with("set")
-            || nl.starts_with("is")
-            || nl.starts_with("has");
-        if is_accessor && interior <= 6 {
-            return true;
-        }
-    }
-    if is_error_dense(body) {
-        return true;
-    }
-    if let Some(q) = query
-        && query_hits(name, body, q)
+/// Build a structural source-code stub with elision metadata.
+///
+/// Hosts call this directly for explicit stub reads. Exact reads should not use
+/// this path.
+pub fn stub_code(
+    content: &str,
+    extension: Option<&str>,
+    mode: &StubMode,
+    max_bytes: usize,
+) -> CodeStubOutput {
+    #[cfg(feature = "tinyjuice-treesitter")]
+    if let Some(ext) = extension
+        && let Some(out) = treesitter::stub(content, ext, mode)
     {
-        return true;
+        return enforce_stub_budget(out, max_bytes);
     }
-    false
+
+    enforce_stub_budget(stub_heuristic(content, mode), max_bytes)
 }
 
-/// Count `{`/`}` on a line, ignoring those inside string/char literals,
-/// line comments, and `/* … */` block comments (Javadoc is full of literal
-/// braces via `{@link …}` — counting them drifts the depth for the rest of
-/// the file). `in_block_comment` carries block-comment state across lines.
-fn brace_delta(line: &str, in_block_comment: &mut bool) -> (usize, usize) {
-    // A char literal ('x', '\n', '{') closes within a few characters; a Rust
-    // lifetime ('a in generics) or a stray apostrophe never does. Treating
-    // every ' as a string opener would flip the rest of a lifetime-carrying
-    // line into phantom string mode and stop counting its braces.
-    const CHAR_LITERAL_WINDOW: usize = 10;
+#[derive(Debug, Clone)]
+struct StubBody {
+    declaration_start: usize,
+    declaration_range: LineRange,
+    body_start: usize,
+    body_end: usize,
+    body_range: LineRange,
+    symbol: SymbolSummary,
+}
 
-    let mut opens = 0usize;
-    let mut closes = 0usize;
+fn should_expand_body(mode: &StubMode, body: &StubBody) -> bool {
+    match mode {
+        StubMode::SignaturesOnly | StubMode::PublicApi => false,
+        StubMode::MatchedSymbols(symbols) => symbols.iter().any(|s| {
+            let wanted = s.trim();
+            !wanted.is_empty() && wanted == body.symbol.name
+        }),
+        StubMode::ExpandAroundLines(ranges) => ranges
+            .iter()
+            .copied()
+            .any(|range| range.intersects(body.body_range)),
+    }
+}
+
+fn placeholder_for_body(content: &str, body: &StubBody) -> String {
+    let body_text = &content[body.body_start..body.body_end];
+    let lines = body.body_range.end.saturating_sub(body.body_range.start) + 1;
+    if body_text.trim_start().starts_with('{') {
+        format!(
+            "{{ /* ... lines {}-{} elided ({lines} line(s)) ... */ }}",
+            body.body_range.start, body.body_range.end
+        )
+    } else {
+        format!(
+            "...  # lines {}-{} elided ({lines} line(s))",
+            body.body_range.start, body.body_range.end
+        )
+    }
+}
+
+fn build_stub_from_bodies(
+    content: &str,
+    bodies: Vec<StubBody>,
+    mode: &StubMode,
+    parse_status: ParseStatus,
+) -> CodeStubOutput {
+    let mut out = String::with_capacity(content.len() / 2 + 128);
+    let mut cursor = 0usize;
+    let mut symbols = Vec::new();
+    let mut elisions = Vec::new();
+
+    for body in bodies {
+        if body.body_start < cursor {
+            continue;
+        }
+        if matches!(mode, StubMode::PublicApi) && !body.symbol.public {
+            out.push_str(&content[cursor..body.declaration_start]);
+            let lines = body
+                .body_range
+                .end
+                .saturating_sub(body.declaration_range.start)
+                + 1;
+            let _ = write!(
+                out,
+                "/* ... private declaration lines {}-{} elided ({lines} line(s)) ... */",
+                body.declaration_range.start, body.body_range.end
+            );
+            elisions.push(CodeElision {
+                start_line: body.declaration_range.start,
+                end_line: body.body_range.end,
+                reason: "public_api_private_declaration".to_string(),
+            });
+            cursor = body.body_end;
+            continue;
+        }
+        symbols.push(body.symbol.clone());
+        out.push_str(&content[cursor..body.body_start]);
+        let body_text = &content[body.body_start..body.body_end];
+        let body_lines = body_text.lines().count();
+        if body_lines < MIN_BODY_LINES_TO_COLLAPSE || should_expand_body(mode, &body) {
+            out.push_str(body_text);
+        } else {
+            out.push_str(&placeholder_for_body(content, &body));
+            elisions.push(CodeElision {
+                start_line: body.body_range.start,
+                end_line: body.body_range.end,
+                reason: format!("body_stub:{:?}", mode),
+            });
+        }
+        cursor = body.body_end;
+    }
+    out.push_str(&content[cursor..]);
+
+    CodeStubOutput {
+        text: out.trim_end().to_string(),
+        symbols,
+        elisions,
+        parse_status,
+    }
+}
+
+fn stub_heuristic(content: &str, mode: &StubMode) -> CodeStubOutput {
+    let mut out = String::with_capacity(content.len() / 2 + 128);
+    let mut depth: i32 = 0;
+    let mut collapsed: Vec<(usize, &str)> = Vec::new();
+    let mut elisions = Vec::new();
+    let mut symbols = Vec::new();
+    let mut skipped_private_start: Option<usize> = None;
+    let mut expanding_body = false;
+
+    let flush =
+        |out: &mut String, collapsed: &mut Vec<(usize, &str)>, elisions: &mut Vec<CodeElision>| {
+            if collapsed.is_empty() {
+                return;
+            }
+            if collapsed.len() >= MIN_BODY_LINES_TO_COLLAPSE {
+                let start = collapsed.first().map(|(n, _)| *n).unwrap_or(1);
+                let end = collapsed.last().map(|(n, _)| *n).unwrap_or(start);
+                let _ = writeln!(
+                    out,
+                    "    {{ /* ... lines {start}-{end} elided ({} line(s)) ... */ }}",
+                    collapsed.len()
+                );
+                elisions.push(CodeElision {
+                    start_line: start,
+                    end_line: end,
+                    reason: format!("heuristic_body_stub:{:?}", mode),
+                });
+            } else {
+                for (_, line) in collapsed.iter() {
+                    let _ = writeln!(out, "{line}");
+                }
+            }
+            collapsed.clear();
+        };
+    let flush_verbatim = |out: &mut String, collapsed: &mut Vec<(usize, &str)>| {
+        for (_, line) in collapsed.iter() {
+            let _ = writeln!(out, "{line}");
+        }
+        collapsed.clear();
+    };
+
+    for (idx, line) in content.lines().enumerate() {
+        let line_no = idx + 1;
+        let (opens, closes) = brace_delta(line);
+        let start_depth = depth;
+        let force_keep = KEEP_MARKERS.iter().any(|m| line.contains(m));
+        let mut next_depth = depth + opens - closes;
+        if next_depth < 0 {
+            next_depth = 0;
+        }
+
+        if let Some(start_line) = skipped_private_start {
+            depth = next_depth;
+            if depth == 0 {
+                elisions.push(CodeElision {
+                    start_line,
+                    end_line: line_no,
+                    reason: "public_api_private_declaration".to_string(),
+                });
+                let _ = writeln!(
+                    out,
+                    "/* ... private declaration lines {start_line}-{line_no} elided ({} line(s)) ... */",
+                    line_no.saturating_sub(start_line) + 1
+                );
+                skipped_private_start = None;
+            }
+            continue;
+        }
+
+        if expanding_body {
+            let _ = writeln!(out, "{line}");
+            depth = next_depth;
+            if depth == 0 {
+                expanding_body = false;
+            }
+            continue;
+        }
+
+        if start_depth == 0 || force_keep {
+            flush(&mut out, &mut collapsed, &mut elisions);
+            if let Some(symbol) = symbol_from_signature(line, line_no, line_no, "heuristic") {
+                if matches!(mode, StubMode::PublicApi) && !symbol.public {
+                    if next_depth == 0 {
+                        elisions.push(CodeElision {
+                            start_line: line_no,
+                            end_line: line_no,
+                            reason: "public_api_private_declaration".to_string(),
+                        });
+                        let _ = writeln!(
+                            out,
+                            "/* ... private declaration line {line_no} elided ... */"
+                        );
+                    } else {
+                        skipped_private_start = Some(line_no);
+                    }
+                    depth = next_depth;
+                    continue;
+                }
+                if should_expand_heuristic_symbol(mode, &symbol, line_no) && next_depth > 0 {
+                    expanding_body = true;
+                }
+                symbols.push(symbol);
+            }
+            let _ = writeln!(out, "{line}");
+        } else {
+            if should_expand_heuristic_line(mode, line_no) {
+                flush_verbatim(&mut out, &mut collapsed);
+                let _ = writeln!(out, "{line}");
+                expanding_body = next_depth > 0;
+                depth = next_depth;
+                continue;
+            }
+            collapsed.push((line_no, line));
+        }
+        depth = next_depth;
+    }
+    if let Some(start_line) = skipped_private_start {
+        let end_line = content.lines().count().max(start_line);
+        elisions.push(CodeElision {
+            start_line,
+            end_line,
+            reason: "public_api_private_declaration".to_string(),
+        });
+        let _ = writeln!(
+            out,
+            "/* ... private declaration lines {start_line}-{end_line} elided ({} line(s)) ... */",
+            end_line.saturating_sub(start_line) + 1
+        );
+    }
+    flush(&mut out, &mut collapsed, &mut elisions);
+
+    CodeStubOutput {
+        text: out.trim_end().to_string(),
+        symbols,
+        elisions,
+        parse_status: ParseStatus::HeuristicFallback,
+    }
+}
+
+fn should_expand_heuristic_symbol(mode: &StubMode, symbol: &SymbolSummary, line_no: usize) -> bool {
+    match mode {
+        StubMode::MatchedSymbols(symbols) => symbols.iter().any(|s| {
+            let wanted = s.trim();
+            !wanted.is_empty() && wanted == symbol.name
+        }),
+        StubMode::ExpandAroundLines(ranges) => ranges
+            .iter()
+            .copied()
+            .any(|range| range.intersects(LineRange::new(line_no, line_no))),
+        StubMode::SignaturesOnly | StubMode::PublicApi => false,
+    }
+}
+
+fn should_expand_heuristic_line(mode: &StubMode, line_no: usize) -> bool {
+    match mode {
+        StubMode::ExpandAroundLines(ranges) => ranges
+            .iter()
+            .copied()
+            .any(|range| range.intersects(LineRange::new(line_no, line_no))),
+        StubMode::SignaturesOnly | StubMode::PublicApi | StubMode::MatchedSymbols(_) => false,
+    }
+}
+
+fn enforce_stub_budget(mut stub: CodeStubOutput, max_bytes: usize) -> CodeStubOutput {
+    if max_bytes == 0 || stub.text.len() <= max_bytes {
+        return stub;
+    }
+
+    let marker = "\n[TOKENJUICE CODE STUB TRUNCATED]\n";
+    let budget = max_bytes.saturating_sub(marker.len()).max(marker.len());
+    let mut out = String::new();
+    let mut kept_lines = 0usize;
+    for line in stub.text.lines() {
+        let addition = line.len() + 1;
+        if out.len() + addition + marker.len() > budget {
+            break;
+        }
+        out.push_str(line);
+        out.push('\n');
+        kept_lines += 1;
+    }
+    out.push_str(marker);
+    let total_lines = stub.text.lines().count();
+    if kept_lines < total_lines {
+        stub.elisions.push(CodeElision {
+            start_line: kept_lines.saturating_add(1),
+            end_line: total_lines,
+            reason: "stub_budget".to_string(),
+        });
+    }
+    stub.text = out.trim_end().to_string();
+    stub
+}
+
+fn symbol_from_signature(
+    signature: &str,
+    start_line: usize,
+    end_line: usize,
+    fallback_kind: &str,
+) -> Option<SymbolSummary> {
+    let trimmed = signature.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let patterns = [
+        ("fn ", "function"),
+        ("function ", "function"),
+        ("def ", "function"),
+        ("class ", "class"),
+        ("struct ", "struct"),
+        ("enum ", "enum"),
+        ("trait ", "trait"),
+        ("interface ", "interface"),
+        ("impl ", "impl"),
+        ("const ", "const"),
+        ("let ", "binding"),
+        ("var ", "binding"),
+    ];
+    let lower = trimmed.to_ascii_lowercase();
+    for (needle, kind) in patterns {
+        if let Some(idx) = lower.find(needle) {
+            let rest = &trimmed[idx + needle.len()..];
+            let name = rest
+                .trim_start()
+                .trim_start_matches("r#")
+                .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '$'))
+                .next()
+                .unwrap_or_default();
+            if !name.is_empty() {
+                return Some(SymbolSummary {
+                    name: name.to_string(),
+                    kind: kind.to_string(),
+                    start_line,
+                    end_line,
+                    public: is_public_signature(trimmed),
+                });
+            }
+        }
+    }
+
+    if fallback_kind != "heuristic" {
+        Some(SymbolSummary {
+            name: fallback_kind.to_string(),
+            kind: fallback_kind.to_string(),
+            start_line,
+            end_line,
+            public: is_public_signature(trimmed),
+        })
+    } else {
+        None
+    }
+}
+
+fn is_public_signature(signature: &str) -> bool {
+    let trimmed = signature.trim_start();
+    trimmed.starts_with("pub ")
+        || trimmed.starts_with("pub(")
+        || trimmed.starts_with("export ")
+        || trimmed.starts_with("public ")
+}
+
+fn line_starts(content: &str) -> Vec<usize> {
+    let mut starts = vec![0usize];
+    for (idx, byte) in content.bytes().enumerate() {
+        if byte == b'\n' {
+            starts.push(idx + 1);
+        }
+    }
+    starts
+}
+
+fn byte_to_line(starts: &[usize], byte: usize) -> usize {
+    starts.partition_point(|start| *start <= byte).max(1)
+}
+
+/// Count `{`/`}` (and `(`/`)`) on a line, ignoring those inside string/char
+/// literals and line comments — a cheap approximation good enough for the
+/// depth heuristic.
+fn brace_delta(line: &str) -> (i32, i32) {
+    let mut opens = 0i32;
+    let mut closes = 0i32;
     let mut in_str: Option<char> = None;
     let mut prev = '\0';
-    let mut iter = line.char_indices().peekable();
-    while let Some((i, c)) = iter.next() {
-        if *in_block_comment {
-            if c == '/' && prev == '*' {
-                *in_block_comment = false;
-            }
-            prev = c;
-            continue;
-        }
+    let mut chars = line.chars().peekable();
+    while let Some(c) = chars.next() {
         match in_str {
             Some(q) => {
                 if c == q && prev != '\\' {
@@ -721,30 +607,9 @@ fn brace_delta(line: &str, in_block_comment: &mut bool) -> (usize, usize) {
                 }
             }
             None => match c {
-                '"' | '`' => in_str = Some(c),
-                '/' if iter.peek().map(|&(_, ch)| ch) == Some('*') => {
-                    iter.next();
-                    *in_block_comment = true;
-                    prev = '\0';
-                    continue;
-                }
-                '\'' => {
-                    let rest = &line[i + c.len_utf8()..];
-                    let close = rest
-                        .char_indices()
-                        .take_while(|(off, _)| *off <= CHAR_LITERAL_WINDOW)
-                        .find(|&(_, ch)| ch == '\'')
-                        .map(|(off, _)| off);
-                    if let Some(off) = close {
-                        // Real char literal: skip past it wholesale so a
-                        // brace inside (e.g. '{') isn't counted.
-                        let end = i + c.len_utf8() + off;
-                        while iter.next_if(|&(j, _)| j <= end).is_some() {}
-                    }
-                    // No close nearby: a lifetime/apostrophe — ignore it.
-                }
-                '/' if iter.peek().map(|&(_, ch)| ch) == Some('/') => break, // line comment
-                '#' => break,                                                // python/shell comment
+                '"' | '\'' | '`' => in_str = Some(c),
+                '/' if chars.peek() == Some(&'/') => break, // line comment
+                '#' => break,                               // python/shell comment
                 '{' => opens += 1,
                 '}' => closes += 1,
                 _ => {}
@@ -758,14 +623,13 @@ fn brace_delta(line: &str, in_block_comment: &mut bool) -> (usize, usize) {
 /// AST-aware code compression via tree-sitter (Rust/TS/JS/Python). Keeps full
 /// source but replaces function/method bodies longer than a threshold with a
 /// `{ … N lines … }` (or `...` for Python) placeholder, preserving signatures,
-/// imports, type declarations and struct/enum fields exactly. Constructors,
-/// entrypoints, short accessors, error-dense bodies and query-matching bodies
-/// are pinned open; large bodies keep a head/tail skeleton.
+/// imports, type declarations and struct/enum fields exactly.
 #[cfg(feature = "tinyjuice-treesitter")]
 mod treesitter {
     use super::{
-        BLOCK_NOTE, Candidate, CompressOutput, CompressorKind, MIN_BODY_LINES_TO_COLLAPSE,
-        SKELETON_MIN_INTERIOR, block_token, keep_body, leading_ws, select_collapses,
+        CompressOutput, CompressorKind, LineRange, MIN_BODY_LINES_TO_COLLAPSE, ParseStatus,
+        StubBody, StubMode, SymbolSummary, build_stub_from_bodies, byte_to_line, line_starts,
+        symbol_from_signature,
     };
     use tree_sitter::{Node, Parser};
 
@@ -799,115 +663,58 @@ mod treesitter {
         "generator_function_declaration",
     ];
 
-    /// A collapsible body plus the name of its enclosing function (when known).
-    struct Body {
-        start: usize,
-        end: usize,
-        name: Option<String>,
-    }
-
-    pub fn compress(
-        content: &str,
-        ext: &str,
-        per_body_tokens: bool,
-        query: Option<&str>,
-        target_ratio: Option<f32>,
-    ) -> Option<CompressOutput> {
+    pub fn compress(content: &str, ext: &str) -> Option<CompressOutput> {
         let (language, braced) = language_for(ext)?;
         let mut parser = Parser::new();
         parser.set_language(&language).ok()?;
         let tree = parser.parse(content, None)?;
         let src = content.as_bytes();
 
-        // Collect outermost collapsible bodies.
-        let mut bodies: Vec<Body> = Vec::new();
-        collect_bodies(tree.root_node(), src, &mut bodies);
-        bodies.sort_by_key(|b| b.start);
-        let mut merged: Vec<Body> = Vec::new();
-        for b in bodies {
+        // Collect outermost collapsible body byte-ranges.
+        let mut ranges: Vec<(usize, usize)> = Vec::new();
+        collect_bodies(tree.root_node(), src, &mut ranges);
+        // Sort and drop nested ranges (keep outermost only).
+        ranges.sort_by_key(|r| r.0);
+        let mut merged: Vec<(usize, usize)> = Vec::new();
+        for r in ranges {
             if let Some(last) = merged.last()
-                && b.start < last.end
+                && r.0 < last.1
             {
                 continue; // nested inside a body we're already collapsing
             }
-            merged.push(b);
+            merged.push(r);
         }
         if merged.is_empty() {
             return None;
         }
 
-        // Phase 1: render the collapse for every eligible body.
-        let renders: Vec<Option<(String, bool)>> = merged
-            .iter()
-            .map(|b| {
-                let body = &content[b.start..b.end];
-                let n_lines = body.lines().count();
-                // Interior excludes the brace lines for braced bodies.
-                let interior = if braced {
-                    n_lines.saturating_sub(2)
-                } else {
-                    n_lines
-                };
-                let collapse = interior >= MIN_BODY_LINES_TO_COLLAPSE
-                    && !keep_body(b.name.as_deref(), body, interior, query);
-                if !collapse {
-                    return None;
-                }
-                let token = block_token(body, per_body_tokens);
-                let rendered = render_collapse(body, braced, interior, n_lines, &token);
-                Some((rendered, !token.is_empty()))
-            })
-            .collect();
-
-        // Phase 2: pick which eligible bodies collapse (largest interior
-        // first when a target ratio is set). Baseline = the full content, i.e.
-        // the output size if nothing collapsed.
-        let candidates: Vec<Candidate> = merged
-            .iter()
-            .zip(&renders)
-            .enumerate()
-            .filter_map(|(idx, (b, render))| {
-                render.as_ref().map(|(text, has_token)| Candidate {
-                    idx,
-                    interior_bytes: interior_bytes(&content[b.start..b.end], braced),
-                    savings: (b.end - b.start).saturating_sub(text.len()),
-                    has_token: *has_token,
-                })
-            })
-            .collect();
-        let mut collapse_flags = vec![false; merged.len()];
-        for idx in select_collapses(candidates, content.len(), content.len(), target_ratio) {
-            collapse_flags[idx] = true;
-        }
-
         let mut out = String::with_capacity(content.len());
         let mut cursor = 0usize;
-        let mut any_token = false;
-        for (idx, b) in merged.iter().enumerate() {
-            if b.start < cursor {
+        for (start, end) in merged {
+            if start < cursor {
                 continue;
             }
-            out.push_str(&content[cursor..b.start]);
-            match &renders[idx] {
-                Some((rendered, has_token)) if collapse_flags[idx] => {
-                    any_token |= *has_token;
-                    out.push_str(rendered);
-                }
-                _ => out.push_str(&content[b.start..b.end]),
+            out.push_str(&content[cursor..start]);
+            let body = &content[start..end];
+            let n_lines = body.lines().count();
+            if n_lines < MIN_BODY_LINES_TO_COLLAPSE {
+                out.push_str(body);
+            } else if braced {
+                out.push_str(&format!("{{ … {n_lines} line(s) … }}"));
+            } else {
+                // Python suite — keep an indented ellipsis so it still reads.
+                out.push_str(&format!("...  # {n_lines} line(s) collapsed"));
             }
-            cursor = b.end;
+            cursor = end;
         }
         out.push_str(&content[cursor..]);
 
-        let mut out = out.trim_end().to_string();
-        if any_token {
-            out.push_str(BLOCK_NOTE);
-        }
+        let out = out.trim_end().to_string();
         if out.len() >= content.len() {
             return None;
         }
         log::debug!(
-            "[tinyjuice][code] tree-sitter ext={} {} -> {} bytes",
+            "[tokenjuice][code] tree-sitter ext={} {} -> {} bytes",
             ext,
             content.len(),
             out.len()
@@ -915,75 +722,41 @@ mod treesitter {
         Some(CompressOutput::lossy(out, CompressorKind::Code))
     }
 
-    /// Byte size of a body's interior lines (excluding the brace lines for
-    /// braced bodies) — the largest-first selection key.
-    fn interior_bytes(body: &str, braced: bool) -> usize {
-        if braced {
-            let lines: Vec<&str> = body.lines().collect();
-            if lines.len() < 3 {
-                return 0;
-            }
-            lines[1..lines.len() - 1].iter().map(|l| l.len() + 1).sum()
-        } else {
-            body.len()
+    pub fn stub(content: &str, ext: &str, mode: &StubMode) -> Option<super::CodeStubOutput> {
+        let (language, _braced) = language_for(ext)?;
+        let mut parser = Parser::new();
+        parser.set_language(&language).ok()?;
+        let tree = parser.parse(content, None)?;
+        if tree.root_node().has_error() {
+            return None;
         }
+
+        let src = content.as_bytes();
+        let starts = line_starts(content);
+        let mut bodies = Vec::new();
+        collect_stub_bodies(tree.root_node(), content, src, &starts, &mut bodies);
+        bodies.sort_by_key(|body| body.body_start);
+        bodies.dedup_by_key(|body| (body.body_start, body.body_end));
+        if bodies.is_empty() {
+            return None;
+        }
+
+        Some(build_stub_from_bodies(
+            content,
+            bodies,
+            mode,
+            ParseStatus::TreeSitter,
+        ))
     }
 
-    /// Render a collapsed body: a head/tail skeleton for large bodies, a single
-    /// placeholder otherwise. The `token` recovers the FULL original body.
-    fn render_collapse(
-        body: &str,
-        braced: bool,
-        interior: usize,
-        n_lines: usize,
-        token: &str,
-    ) -> String {
-        if braced {
-            let lines: Vec<&str> = body.lines().collect();
-            if interior >= SKELETON_MIN_INTERIOR && lines.len() >= 5 {
-                let inner = &lines[1..lines.len() - 1];
-                let indent = leading_ws(inner[0]);
-                let elided = inner.len() - 3;
-                return format!(
-                    "{{\n{}\n{}\n{indent}{{ … {elided} line(s) …{token} }}\n{}\n}}",
-                    inner[0],
-                    inner[1],
-                    inner[inner.len() - 1],
-                );
-            }
-            format!("{{ … {n_lines} line(s) …{token} }}")
-        } else {
-            // Python suite — indented ellipsis so it still reads.
-            let lines: Vec<&str> = body.lines().collect();
-            if interior >= SKELETON_MIN_INTERIOR && lines.len() >= 4 {
-                let indent = leading_ws(lines[0]);
-                let elided = lines.len() - 3;
-                return format!(
-                    "{}\n{}\n{indent}...  # {elided} line(s) collapsed{token}\n{}",
-                    lines[0],
-                    lines[1],
-                    lines[lines.len() - 1],
-                );
-            }
-            format!("...  # {n_lines} line(s) collapsed{token}")
-        }
-    }
-
-    /// Recursively collect the byte-ranges (and names) of function/method bodies.
-    fn collect_bodies(node: Node, src: &[u8], out: &mut Vec<Body>) {
+    /// Recursively collect the byte-ranges of function/method bodies.
+    fn collect_bodies(node: Node, src: &[u8], out: &mut Vec<(usize, usize)>) {
         if BODY_PARENTS.contains(&node.kind())
             && let Some(body) = node.child_by_field_name("body")
         {
-            let name = node
-                .child_by_field_name("name")
-                .and_then(|n| n.utf8_text(src).ok())
-                .map(|s| s.to_string());
-            out.push(Body {
-                start: body.start_byte(),
-                end: body.end_byte(),
-                name,
-            });
+            out.push((body.start_byte(), body.end_byte()));
             // Don't descend into a collapsed body.
+            let _ = src;
             return;
         }
         let mut cursor = node.walk();
@@ -991,12 +764,62 @@ mod treesitter {
             collect_bodies(child, src, out);
         }
     }
+
+    fn collect_stub_bodies(
+        node: Node,
+        content: &str,
+        src: &[u8],
+        starts: &[usize],
+        out: &mut Vec<StubBody>,
+    ) {
+        if BODY_PARENTS.contains(&node.kind())
+            && let Some(body) = node.child_by_field_name("body")
+        {
+            let body_start = body.start_byte();
+            let body_end = body.end_byte();
+            let declaration_start = node.start_byte();
+            let declaration_start_line = byte_to_line(starts, declaration_start);
+            let declaration_end_line = byte_to_line(starts, body_start);
+            let start_line = byte_to_line(starts, body_start);
+            let end_line = byte_to_line(starts, body_end.saturating_sub(1));
+            let symbol = symbol_for_node(content, node, body, starts);
+            out.push(StubBody {
+                declaration_start,
+                declaration_range: LineRange::new(declaration_start_line, declaration_end_line),
+                body_start,
+                body_end,
+                body_range: LineRange::new(start_line, end_line),
+                symbol,
+            });
+            let _ = src;
+            return;
+        }
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            collect_stub_bodies(child, content, src, starts, out);
+        }
+    }
+
+    fn symbol_for_node(content: &str, node: Node, body: Node, starts: &[usize]) -> SymbolSummary {
+        let signature = &content[node.start_byte()..body.start_byte()];
+        let start_line = byte_to_line(starts, node.start_byte());
+        let end_line = byte_to_line(starts, body.start_byte());
+        symbol_from_signature(signature, start_line, end_line, node.kind()).unwrap_or_else(|| {
+            SymbolSummary {
+                name: node.kind().to_string(),
+                kind: node.kind().to_string(),
+                start_line,
+                end_line,
+                public: false,
+            }
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cache;
+    use crate::cache::{CcrStore, MemoryCcrStore};
 
     #[test]
     fn keeps_signatures_collapses_bodies() {
@@ -1009,7 +832,7 @@ mod tests {
         }
         src.push_str("        tmp_0\n}\n\n");
         src.push_str("struct Config {\n    name: String,\n    size: usize,\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
+        let out = compress_heuristic(&src).expect("compresses");
         assert!(out.lossy);
         assert!(
             out.text.contains("pub fn process"),
@@ -1032,64 +855,7 @@ mod tests {
     #[test]
     fn short_file_passes_through() {
         let src = "fn a() {}\nfn b() {}\n";
-        assert!(compress_heuristic(src, false, None, None).is_none());
-    }
-
-    /// A large body keeps a head/tail skeleton: the first two and the last
-    /// interior lines survive, only the middle is elided.
-    #[test]
-    fn skeleton_keeps_head_and_tail_lines() {
-        let mut src = String::from("pub fn walk(items: &[i32]) -> i32 {\n");
-        src.push_str("    let head_a = items.len();\n");
-        src.push_str("    let head_b = items.first().copied().unwrap_or(0);\n");
-        for i in 0..20 {
-            src.push_str(&format!("    let mid_{i} = compute(items, {i});\n"));
-        }
-        src.push_str("    head_a + head_b\n}\n");
-        // Pad so the file clears the 12-line minimum with unrelated top-level lines.
-        for i in 0..4 {
-            src.push_str(&format!("pub const K_{i}: i32 = {i};\n"));
-        }
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(
-            out.text.contains("let head_a = items.len();"),
-            "{}",
-            out.text
-        );
-        assert!(
-            out.text.contains("let head_b = items.first"),
-            "second head line kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("head_a + head_b"),
-            "tail line kept: {}",
-            out.text
-        );
-        assert!(!out.text.contains("mid_10"), "middle elided: {}", out.text);
-        assert!(out.text.contains("line(s) …"));
-    }
-
-    /// The full body is recoverable from the per-block token even when only a
-    /// skeleton is shown.
-    #[test]
-    fn skeleton_token_recovers_full_body() {
-        let mut src = String::from("pub fn scan(items: &[i32]) -> i32 {\n");
-        src.push_str("    let a = items.len();\n");
-        src.push_str("    let b = 0;\n");
-        for i in 0..20 {
-            src.push_str(&format!("    let mid_{i} = compute(items, {i});\n"));
-        }
-        src.push_str("    a + b\n}\n");
-        for i in 0..4 {
-            src.push_str(&format!("pub const C_{i}: i32 = {i};\n"));
-        }
-        let out = compress_heuristic(&src, true, None, None).expect("compresses");
-        let tokens = cache::parse_markers(&out.text);
-        assert_eq!(tokens.len(), 1, "{}", out.text);
-        let body = cache::retrieve(&tokens[0]).expect("stored");
-        assert!(body.contains("let mid_10 = compute(items, 10);"), "{body}");
-        assert!(body.contains("a + b"), "full body recovered: {body}");
+        assert!(compress_heuristic(src).is_none());
     }
 
     #[cfg(feature = "tinyjuice-treesitter")]
@@ -1104,7 +870,7 @@ mod tests {
         }
         src.push_str("    tmp_0\n}\n\n");
         src.push_str("pub struct Config {\n    pub name: String,\n    pub size: usize,\n}\n");
-        let out = treesitter::compress(&src, "rs", false, None, None).expect("compresses");
+        let out = treesitter::compress(&src, "rs").expect("compresses");
         assert!(
             out.text.contains("pub fn process(items: &[i32]) -> i32"),
             "{}",
@@ -1127,604 +893,250 @@ mod tests {
             src.push_str(&format!("    x_{i} = compute(event, {i})\n"));
         }
         src.push_str("    return x_0\n");
-        let out = treesitter::compress(&src, "py", false, None, None).expect("compresses");
+        let out = treesitter::compress(&src, "py").expect("compresses");
         assert!(out.text.contains("def handler(event):"), "{}", out.text);
         assert!(out.text.contains("collapsed"), "{}", out.text);
         assert!(!out.text.contains("x_15"));
     }
 
-    #[cfg(feature = "tinyjuice-treesitter")]
     #[test]
-    fn treesitter_keeps_main() {
-        let mut src = String::from("fn helper(items: &[i32]) -> i32 {\n");
+    fn keeps_marker_lines_in_body() {
+        let mut src = String::from("fn f() {\n");
         for i in 0..20 {
-            src.push_str(&format!("    let h_{i} = items.len() + {i};\n"));
-        }
-        src.push_str("    h_0\n}\n\n");
-        src.push_str("fn main() {\n");
-        for i in 0..20 {
-            src.push_str(&format!("    println!(\"step {i}\");\n"));
-        }
-        src.push_str("    helper(&[]);\n}\n");
-        let out = treesitter::compress(&src, "rs", false, None, None).expect("compresses");
-        // main is an entrypoint — it must survive verbatim.
-        assert!(out.text.contains("println!(\"step 10\")"), "{}", out.text);
-        // helper's body still collapses.
-        assert!(!out.text.contains("h_10"), "{}", out.text);
-    }
-
-    #[test]
-    fn brace_delta_handles_lifetimes_and_char_literals() {
-        // Lifetimes must not open phantom string mode.
-        assert_eq!(
-            brace_delta("pub fn f<'a>(x: &'a str) {", &mut false),
-            (1, 0)
-        );
-        assert_eq!(
-            brace_delta("impl<'de> Deserialize<'de> for X {", &mut false),
-            (1, 0)
-        );
-        assert_eq!(
-            brace_delta(
-                "fn g<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {",
-                &mut false
-            ),
-            (1, 0)
-        );
-        // Real char literals still shield their contents.
-        assert_eq!(brace_delta("let c = '{';", &mut false), (0, 0));
-        assert_eq!(brace_delta("if c == '}' { close(); }", &mut false), (1, 1));
-        // Strings still shield braces.
-        assert_eq!(brace_delta(r#"let s = "{}"; f(|| {"#, &mut false), (1, 0));
-    }
-
-    #[test]
-    fn lifetime_heavy_rust_keeps_signatures() {
-        let mut src = String::from("use serde::Deserialize;\n\n");
-        src.push_str("pub fn parse<'de>(map: &Map) -> Config {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        let field_{i} = map.next_value();\n"));
-        }
-        src.push_str("        Config::default()\n}\n\n");
-        src.push_str("pub fn lookup<'a>(map: &'a Map, key: &str) -> Option<&'a str> {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        let probe_{i} = map.get(key);\n"));
-        }
-        src.push_str("        None\n}\n\n");
-        src.push_str("pub struct Cursor<'a> {\n    buf: &'a [u8],\n    pos: usize,\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        // Both signatures after the first lifetime-carrying line must survive
-        // at top level — depth drift used to collapse them.
-        assert!(out.text.contains("pub fn lookup<'a>"), "{}", out.text);
-        assert!(out.text.contains("pub struct Cursor<'a>"), "{}", out.text);
-        assert!(
-            !out.text.contains("probe_15"),
-            "body collapsed: {}",
-            out.text
-        );
-    }
-
-    #[test]
-    fn per_body_tokens_retrieve_exactly_the_collapsed_body() {
-        let mut src = String::from("use std::io;\n\n");
-        src.push_str("pub fn alpha() -> i32 {\n");
-        for i in 0..10 {
-            src.push_str(&format!("        let a_{i} = compute({i});\n"));
-        }
-        src.push_str("        a_0\n}\n\n");
-        src.push_str("pub fn beta() -> i32 {\n");
-        for i in 0..10 {
-            src.push_str(&format!("        let b_{i} = compute({i});\n"));
-        }
-        src.push_str("        b_0\n}\n");
-
-        let out = compress_heuristic(&src, true, None, None).expect("compresses");
-        let tokens = cache::parse_markers(&out.text);
-        assert_eq!(
-            tokens.len(),
-            2,
-            "one token per collapsed body: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("individually retrievable"),
-            "{}",
-            out.text
-        );
-
-        // Each token retrieves exactly its own body.
-        let first = cache::retrieve(&tokens[0]).expect("stored");
-        assert!(first.contains("let a_5 = compute(5);"), "{first}");
-        assert!(!first.contains("b_5"), "bodies must not mix: {first}");
-        let second = cache::retrieve(&tokens[1]).expect("stored");
-        assert!(second.contains("let b_5 = compute(5);"), "{second}");
-    }
-
-    #[test]
-    fn no_tokens_when_disabled() {
-        let mut src = String::from("use std::io;\n\n");
-        src.push_str("pub fn gamma() -> i32 {\n");
-        for i in 0..12 {
-            src.push_str(&format!("        let g_{i} = compute({i});\n"));
-        }
-        src.push_str("        g_0\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(cache::parse_markers(&out.text).is_empty(), "{}", out.text);
-        assert!(!out.text.contains("individually retrievable"));
-    }
-
-    #[cfg(feature = "tinyjuice-treesitter")]
-    #[test]
-    fn treesitter_per_body_tokens_round_trip() {
-        let mut src = String::from("pub fn delta(items: &[i32]) -> i32 {\n");
-        for i in 0..12 {
-            src.push_str(&format!(
-                "    let d_{i} = items.iter().sum::<i32>() + {i};\n"
-            ));
-        }
-        src.push_str("    d_0\n}\n");
-        let out = treesitter::compress(&src, "rs", true, None, None).expect("compresses");
-        let tokens = cache::parse_markers(&out.text);
-        assert_eq!(tokens.len(), 1, "{}", out.text);
-        let body = cache::retrieve(&tokens[0]).expect("stored");
-        assert!(body.contains("let d_7"), "{body}");
-    }
-
-    /// A body whose name or contents matches the caller's query stays open.
-    #[test]
-    fn query_keeps_matching_function() {
-        let mut src = String::from("pub fn unrelated() -> i32 {\n");
-        for i in 0..20 {
-            src.push_str(&format!("    let u_{i} = {i};\n"));
-        }
-        src.push_str("    u_0\n}\n\n");
-        src.push_str("pub fn compute_checksum(data: &[u8]) -> u32 {\n");
-        for i in 0..20 {
-            src.push_str(&format!("    let c_{i} = data.len() as u32 + {i};\n"));
-        }
-        src.push_str("    c_0\n}\n");
-        let out = compress_heuristic(&src, false, Some("checksum"), None).expect("compresses");
-        // The queried function stays open; the unrelated one collapses.
-        assert!(
-            out.text.contains("let c_10"),
-            "queried body kept: {}",
-            out.text
-        );
-        assert!(
-            !out.text.contains("u_10"),
-            "other body collapsed: {}",
-            out.text
-        );
-    }
-
-    /// An error-handling dense body is kept even though it is long.
-    #[test]
-    fn error_dense_body_is_kept() {
-        let mut src = String::from("pub fn validate(input: &str) -> Result<(), E> {\n");
-        src.push_str("    if input.is_empty() {\n");
-        src.push_str("        return Err(E::Empty);\n");
-        src.push_str("    }\n");
-        for i in 0..8 {
-            src.push_str(&format!("    let step_{i} = check(input, {i});\n"));
-        }
-        src.push_str("    if bad {\n");
-        src.push_str("        return Err(E::Bad);\n");
-        src.push_str("    }\n");
-        src.push_str("    Ok(())\n}\n\n");
-        // Add an unrelated collapsible function so the file still shrinks.
-        src.push_str("pub fn filler() -> i32 {\n");
-        for i in 0..20 {
-            src.push_str(&format!("    let f_{i} = {i};\n"));
-        }
-        src.push_str("    f_0\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(
-            out.text.contains("return Err(E::Bad)"),
-            "error-dense body kept: {}",
-            out.text
-        );
-    }
-
-    /// The byte guard prevents collapsing a body when the marker would be
-    /// longer than the code it replaces (no inflation).
-    #[test]
-    fn byte_guard_does_not_inflate() {
-        // A container of short one-line methods: each body is tiny, so even
-        // though there are many of them, none should be replaced by a marker
-        // that is longer than the body.
-        let mut src = String::from("class Tiny {\n");
-        for i in 0..14 {
-            src.push_str(&format!("    fn m{i}(&self) -> i32 {{ {i} }}\n"));
+            if i == 10 {
+                src.push_str("        // TODO: handle the edge case here\n");
+            } else {
+                src.push_str(&format!("        do_thing({i});\n"));
+            }
         }
         src.push_str("}\n");
-        // Nothing collapses, so it does not shrink -> None (no inflation, no
-        // bogus compression).
-        let out = compress_heuristic(&src, false, None, None);
-        if let Some(o) = out {
-            assert!(o.text.len() < src.len(), "must never inflate: {}", o.text);
-            // The one-line method bodies must not have been swapped for a
-            // longer marker.
-            assert!(
-                !o.text.contains("{ … "),
-                "tiny bodies untouched: {}",
-                o.text
-            );
-        }
+        let out = compress_heuristic(&src).expect("compresses");
+        assert!(out.text.contains("TODO"), "marker line kept:\n{}", out.text);
     }
 
-    /// PHP class: method signatures and PHPDoc survive, only long bodies
-    /// collapse. The class must never shrink to a single marker.
     #[test]
-    fn php_class_keeps_method_signatures() {
-        let mut src = String::from("<?php\n\nnamespace App;\n\nclass Repository\n{\n");
-        src.push_str("    private ?Connection $conn;\n\n");
-        src.push_str("    public function __construct(Connection $conn)\n    {\n");
-        src.push_str("        $this->conn = $conn;\n    }\n\n");
-        src.push_str("    /**\n     * Find a record by id.\n     */\n");
-        src.push_str("    public function findById(int $id): ?Record\n    {\n");
+    fn stub_code_reports_elisions_and_symbols() {
+        let mut src = String::from("use std::fmt;\n\npub fn visible() {\n");
         for i in 0..20 {
-            src.push_str(&format!("        $step_{i} = $this->query($id, {i});\n"));
+            src.push_str(&format!("    println!(\"{i}\");\n"));
         }
-        src.push_str("        return $step_0;\n    }\n\n");
-        src.push_str("    public function deleteAll(): void\n    {\n");
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("rs"), &StubMode::SignaturesOnly, usize::MAX);
+
+        assert_eq!(out.parse_status, ParseStatus::TreeSitter);
+        assert!(out.text.contains("pub fn visible()"));
+        assert!(out.text.contains("lines"));
+        assert!(!out.text.contains("println!(\"10\")"));
+        assert_eq!(out.symbols[0].name, "visible");
+        assert!(out.symbols[0].public);
+        assert_eq!(out.elisions.len(), 1);
+        assert!(out.elisions[0].start_line <= out.elisions[0].end_line);
+    }
+
+    #[test]
+    fn code_stub_transform_requires_retained_ccr() {
+        let mut src = String::from("use std::fmt;\n\npub fn visible() {\n");
         for i in 0..20 {
-            src.push_str(&format!("        $this->purge({i});\n"));
+            src.push_str(&format!("    println!(\"{i}\");\n"));
         }
-        src.push_str("    }\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(out.text.contains("class Repository"), "{}", out.text);
-        assert!(
-            out.text
-                .contains("public function findById(int $id): ?Record"),
-            "method signature kept: {}",
-            out.text
+        src.push_str("}\n");
+        let pipeline_input = PipelineInput {
+            content: &src,
+            original_content: &src,
+            content_kind: ContentKind::Code,
+            original_bytes: src.len(),
+        };
+        let transform = CodeStubTransform::new(StubMode::SignaturesOnly).with_extension("rs");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained code stub");
+
+        assert_eq!(out.kind(), CompressorKind::Code);
+        assert!(out.text().contains("pub fn visible()"), "{}", out.text());
+        assert!(!out.text().contains("println!(\"10\")"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(src.as_str()));
+    }
+
+    #[test]
+    fn code_stub_transform_skips_non_code_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = CodeStubTransform::new(StubMode::SignaturesOnly);
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
+    }
+
+    #[test]
+    fn stub_code_expands_matched_symbol() {
+        let mut src = String::from("pub fn visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"visible {i}\");\n"));
+        }
+        src.push_str("}\n\nfn hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"hidden {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(
+            &src,
+            Some("rs"),
+            &StubMode::MatchedSymbols(vec!["visible".to_string()]),
+            usize::MAX,
         );
+
+        assert!(out.text.contains("visible 9"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.elisions.len(), 1);
+    }
+
+    #[test]
+    fn stub_code_public_api_omits_private_declarations() {
+        let mut src = String::from("use std::fmt;\n\npub fn visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"visible {i}\");\n"));
+        }
+        src.push_str("}\n\nfn hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("    println!(\"hidden {i}\");\n"));
+        }
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("rs"), &StubMode::PublicApi, usize::MAX);
+
+        assert!(out.text.contains("use std::fmt;"), "{}", out.text);
+        assert!(out.text.contains("pub fn visible()"), "{}", out.text);
+        assert!(out.text.contains("private declaration"), "{}", out.text);
+        assert!(!out.text.contains("fn hidden"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 1);
+        assert_eq!(out.symbols[0].name, "visible");
+        assert!(out.symbols[0].public);
         assert!(
-            out.text.contains("public function deleteAll(): void"),
-            "method signature kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("private ?Connection $conn;"),
-            "field kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("Find a record by id"),
-            "phpdoc kept: {}",
-            out.text
-        );
-        // Long bodies collapsed.
-        assert!(!out.text.contains("step_10"), "{}", out.text);
-        // Class must not have been reduced to a lone marker.
-        assert!(
-            out.text.matches("public function").count() >= 2,
-            "container must keep its member signatures: {}",
-            out.text
+            out.elisions
+                .iter()
+                .any(|elision| elision.reason == "public_api_private_declaration"),
+            "{:?}",
+            out.elisions
         );
     }
 
-    /// The short constructor stays verbatim.
     #[test]
-    fn php_class_keeps_short_constructor() {
-        let mut src = String::from("<?php\n\nclass Point\n{\n");
-        src.push_str("    private float $x;\n    private float $y;\n\n");
-        src.push_str("    public function __construct(float $x, float $y)\n    {\n");
-        src.push_str("        $this->x = $x;\n        $this->y = $y;\n    }\n\n");
-        src.push_str("    public function distance(Point $o): float\n    {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        $d_{i} = hypot($this->x, {i});\n"));
+    fn stub_code_reports_heuristic_fallback_for_unknown_language() {
+        let mut src = String::from("function f() {\n");
+        for i in 0..12 {
+            src.push_str(&format!("  call({i});\n"));
         }
-        src.push_str("        return $d_0;\n    }\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(
-            out.text.contains("$this->x = $x;"),
-            "constructor body kept: {}",
-            out.text
-        );
-        assert!(
-            !out.text.contains("$d_10"),
-            "long body collapsed: {}",
-            out.text
-        );
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("unknown"), &StubMode::SignaturesOnly, usize::MAX);
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(!out.elisions.is_empty());
+        assert!(out.text.contains("lines"));
     }
 
-    /// Java class with Javadoc: class + method signatures + Javadoc survive.
     #[test]
-    fn java_class_with_javadoc_keeps_signatures() {
-        let mut src = String::from("package com.example;\n\n");
-        src.push_str("/**\n * A widget registry. Uses {@link Widget}.\n */\n");
-        src.push_str("public final class Registry {\n");
-        src.push_str("    private final Map<String, Widget> items = new HashMap<>();\n\n");
-        src.push_str("    /**\n     * Register a widget under a name.\n     */\n");
-        src.push_str("    public void register(String name, Widget w) {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        this.items.put(name + {i}, w);\n"));
+    fn stub_code_public_api_heuristic_omits_private_blocks() {
+        let mut src = String::from("export function visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"visible {i}\");\n"));
         }
-        src.push_str("    }\n\n");
-        src.push_str("    public Widget lookup(String name) {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        var candidate_{i} = items.get(name);\n"));
+        src.push_str("}\n\nfunction hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"hidden {i}\");\n"));
         }
-        src.push_str("        return null;\n    }\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
+        src.push_str("}\n");
+
+        let out = stub_code(&src, Some("unknown"), &StubMode::PublicApi, usize::MAX);
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
         assert!(
-            out.text.contains("public final class Registry"),
+            out.text.contains("export function visible()"),
             "{}",
             out.text
         );
-        assert!(
-            out.text
-                .contains("public void register(String name, Widget w)"),
-            "method signature kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("public Widget lookup(String name)"),
-            "method signature kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("Register a widget under a name"),
-            "javadoc kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("private final Map<String, Widget> items"),
-            "field kept: {}",
-            out.text
-        );
-        assert!(
-            !out.text.contains("candidate_10"),
-            "body collapsed: {}",
-            out.text
-        );
+        assert!(out.text.contains("private declaration"), "{}", out.text);
+        assert!(!out.text.contains("function hidden"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 1);
+        assert_eq!(out.symbols[0].name, "visible");
+        assert!(out.symbols[0].public);
     }
 
-    /// C# namespace + class: members inside the nested container stay visible
-    /// even though the namespace adds a level of nesting.
     #[test]
-    fn csharp_namespace_class_keeps_members() {
-        let mut src = String::from("using System;\n\nnamespace Acme.Core\n{\n");
-        src.push_str("    public class Service\n    {\n");
-        src.push_str("        private readonly ILogger _log;\n\n");
-        src.push_str("        public void Run(int count)\n        {\n");
-        for i in 0..20 {
-            src.push_str(&format!("            _log.Info($\"tick {i}\");\n"));
+    fn stub_code_matched_symbol_heuristic_expands_requested_body() {
+        let mut src = String::from("function visible() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"visible {i}\");\n"));
         }
-        src.push_str("        }\n\n");
-        src.push_str("        public int Compute(int seed)\n        {\n");
-        for i in 0..20 {
-            src.push_str(&format!("            var v_{i} = seed + {i};\n"));
+        src.push_str("}\n\nfunction hidden() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"hidden {i}\");\n"));
         }
-        src.push_str("            return seed;\n        }\n    }\n}\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(out.text.contains("public class Service"), "{}", out.text);
-        assert!(
-            out.text.contains("public void Run(int count)"),
-            "method signature kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("public int Compute(int seed)"),
-            "method signature kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("private readonly ILogger _log;"),
-            "field kept: {}",
-            out.text
-        );
-        assert!(!out.text.contains("v_10"), "body collapsed: {}", out.text);
-    }
+        src.push_str("}\n");
 
-    /// C++ class inside a namespace keeps its method signatures.
-    #[test]
-    fn cpp_namespace_class_keeps_signatures() {
-        let mut src = String::from("#include <vector>\n\nnamespace engine {\n\n");
-        src.push_str("class SceneNode {\npublic:\n");
-        src.push_str("    void attach(SceneNode* child) {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        this->children.push_back({i});\n"));
-        }
-        src.push_str("    }\n");
-        src.push_str("    void detach(SceneNode* child) {\n");
-        for i in 0..20 {
-            src.push_str(&format!("        this->children.erase({i});\n"));
-        }
-        src.push_str("    }\n");
-        src.push_str("};\n\n}  // namespace engine\n");
-        let out = compress_heuristic(&src, false, None, None).expect("compresses");
-        assert!(
-            out.text.contains("class SceneNode"),
-            "class inside namespace must stay visible: {}",
-            out.text
+        let out = stub_code(
+            &src,
+            Some("unknown"),
+            &StubMode::MatchedSymbols(vec!["visible".to_string()]),
+            usize::MAX,
         );
+
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(out.text.contains("visible 9"), "{}", out.text);
+        assert!(!out.text.contains("hidden 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 2);
         assert!(
-            out.text.contains("void attach(SceneNode* child)"),
-            "method signature kept: {}",
-            out.text
-        );
-        assert!(
-            out.text.contains("void detach(SceneNode* child)"),
-            "method signature kept: {}",
-            out.text
+            out.elisions
+                .iter()
+                .any(|elision| elision.reason.contains("MatchedSymbols")),
+            "{:?}",
+            out.elisions
         );
     }
 
     #[test]
-    fn block_comments_do_not_drift_depth() {
-        // Javadoc braces ({@link ...}) must not count.
-        let mut in_c = false;
-        assert_eq!(
-            brace_delta("/** see {@link Foo#bar} for details", &mut in_c),
-            (0, 0)
-        );
-        assert!(in_c);
-        assert_eq!(
-            brace_delta(" * more prose with { braces } inside", &mut in_c),
-            (0, 0)
-        );
-        assert_eq!(brace_delta(" */ fn real() {", &mut in_c), (1, 0));
-        assert!(!in_c);
-    }
-
-    #[test]
-    fn fn_name_extracts_across_languages() {
-        assert_eq!(
-            fn_name("pub fn process(items: &[i32]) -> i32 {").as_deref(),
-            Some("process")
-        );
-        assert_eq!(fn_name("def handler(event):").as_deref(), Some("handler"));
-        assert_eq!(
-            fn_name("public function getRoot(): ?AVLTreeNode").as_deref(),
-            Some("getRoot")
-        );
-        assert_eq!(
-            fn_name("public void doThing(int x) {").as_deref(),
-            Some("doThing")
-        );
-        assert_eq!(
-            fn_name("func (r *Repo) Save(x int) error {").as_deref(),
-            Some("Save")
-        );
-        assert_eq!(
-            fn_name("func Serve(addr string) {").as_deref(),
-            Some("Serve")
-        );
-    }
-
-    /// Build a file with one huge body plus several small (but still eligible)
-    /// bodies, so budget selection has a clear largest-first choice.
-    fn huge_plus_small_bodies() -> String {
-        let mut src = String::from("use std::io;\n\n");
-        src.push_str("pub fn giant(items: &[i32]) -> i32 {\n");
-        for i in 0..80 {
-            src.push_str(&format!(
-                "    let giant_{i} = items.iter().sum::<i32>() + {i};\n"
-            ));
+    fn stub_code_expand_around_lines_heuristic_expands_containing_body() {
+        let mut src = String::from("function first() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"first {i}\");\n"));
         }
-        src.push_str("    giant_0\n}\n");
-        for f in 0..3 {
-            src.push_str(&format!("\npub fn small_{f}(x: i32) -> i32 {{\n"));
-            for i in 0..9 {
-                src.push_str(&format!("    let small_{f}_{i} = x + {i};\n"));
-            }
-            src.push_str(&format!("    small_{f}_0\n}}\n"));
+        src.push_str("}\n\nfunction second() {\n");
+        for i in 0..10 {
+            src.push_str(&format!("  console.log(\"second {i}\");\n"));
         }
-        src
-    }
+        src.push_str("}\n");
 
-    /// With a lenient target ratio only the largest body collapses; the small
-    /// eligible bodies stay fully intact.
-    #[test]
-    fn target_ratio_collapses_only_largest_body() {
-        let src = huge_plus_small_bodies();
-        let out = compress_heuristic(&src, false, None, Some(0.9)).expect("compresses");
-        assert!(
-            !out.text.contains("giant_40"),
-            "largest body collapsed: {}",
-            out.text
+        let out = stub_code(
+            &src,
+            Some("unknown"),
+            &StubMode::ExpandAroundLines(vec![LineRange::new(7, 7)]),
+            usize::MAX,
         );
-        for f in 0..3 {
-            assert!(
-                out.text.contains(&format!("let small_{f}_5 = x + 5;")),
-                "small body {f} left intact: {}",
-                out.text
-            );
-        }
-        assert!(
-            (out.text.len() as f32) <= 0.9 * src.len() as f32,
-            "target met: {} vs {}",
-            out.text.len(),
-            src.len()
-        );
-    }
 
-    /// A very small target ratio collapses every eligible body — identical to
-    /// the default collapse-everything behavior.
-    #[test]
-    fn tiny_target_ratio_matches_collapse_all() {
-        let src = huge_plus_small_bodies();
-        let all = compress_heuristic(&src, false, None, None).expect("compresses");
-        let budgeted = compress_heuristic(&src, false, None, Some(0.01)).expect("compresses");
-        assert_eq!(all.text, budgeted.text);
-        assert!(!budgeted.text.contains("small_1_5"), "{}", budgeted.text);
-    }
-
-    /// Projected-size accounting: with several equal bodies and an achievable
-    /// mid-range target, the output lands at or under the target while some
-    /// bodies are left uncollapsed (early stop).
-    #[test]
-    fn target_ratio_projection_is_sane() {
-        let mut src = String::from("use std::io;\n\n");
-        for f in 0..6 {
-            src.push_str(&format!("pub fn worker_{f}(x: i32) -> i32 {{\n"));
-            for i in 0..20 {
-                src.push_str(&format!("    let step_{f}_{i} = compute(x, {i});\n"));
-            }
-            src.push_str(&format!("    step_{f}_0\n}}\n\n"));
-        }
-        let full = compress_heuristic(&src, false, None, None).expect("compresses");
-        let out = compress_heuristic(&src, false, None, Some(0.6)).expect("compresses");
+        assert_eq!(out.parse_status, ParseStatus::HeuristicFallback);
+        assert!(out.text.contains("first 9"), "{}", out.text);
+        assert!(!out.text.contains("second 9"), "{}", out.text);
+        assert_eq!(out.symbols.len(), 2);
         assert!(
-            (out.text.len() as f32) <= 0.6 * src.len() as f32,
-            "output within target: {} vs input {}",
-            out.text.len(),
-            src.len()
+            out.elisions
+                .iter()
+                .any(|elision| elision.reason.contains("ExpandAroundLines")),
+            "{:?}",
+            out.elisions
         );
-        assert!(
-            out.text.len() > full.text.len(),
-            "early stop leaves some bodies open: {} vs fully collapsed {}",
-            out.text.len(),
-            full.text.len()
-        );
-        let open = (0..6)
-            .filter(|f| out.text.contains(&format!("step_{f}_10")))
-            .count();
-        assert!(
-            (1..=5).contains(&open),
-            "some but not all bodies stay open (open={open}): {}",
-            out.text
-        );
-    }
-
-    /// Tree-sitter path honors the target ratio the same way: largest first,
-    /// stop once the budget is met.
-    #[cfg(feature = "tinyjuice-treesitter")]
-    #[test]
-    fn treesitter_target_ratio_collapses_only_largest() {
-        let src = huge_plus_small_bodies();
-        let out = treesitter::compress(&src, "rs", false, None, Some(0.9)).expect("compresses");
-        assert!(
-            !out.text.contains("giant_40"),
-            "largest body collapsed: {}",
-            out.text
-        );
-        for f in 0..3 {
-            assert!(
-                out.text.contains(&format!("let small_{f}_5 = x + 5;")),
-                "small body {f} left intact: {}",
-                out.text
-            );
-        }
-        // And a tiny ratio matches collapse-all.
-        let all = treesitter::compress(&src, "rs", false, None, None).expect("compresses");
-        let budgeted =
-            treesitter::compress(&src, "rs", false, None, Some(0.01)).expect("compresses");
-        assert_eq!(all.text, budgeted.text);
-    }
-
-    #[test]
-    fn decl_opener_and_signature_classification() {
-        assert!(is_decl_opener_line("public void doThing(int x) {"));
-        assert!(is_decl_opener_line("class Foo {"));
-        assert!(is_decl_opener_line("pub fn f<'a>(x: &'a str) {"));
-        assert!(!is_decl_opener_line("if (x > 0) {"));
-        assert!(!is_decl_opener_line("for (int i = 0; i < n; i++) {"));
-        assert!(!is_decl_opener_line("{"));
-        assert!(is_signature_line("public function getRoot(): ?AVLTreeNode"));
-        assert!(!is_signature_line("$this->root = null;"));
-        assert!(!is_signature_line("return doThing(x);"));
     }
 }

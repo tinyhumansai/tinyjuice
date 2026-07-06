@@ -1,0 +1,11 @@
+{
+  "description": "ML tag protection declines output when callback drops the protected placeholder",
+  "generator": {
+    "type": "workflowBlock",
+    "fillerWords": 200
+  },
+  "callback": "dropPlaceholder",
+  "expected": {
+    "producesOutput": false
+  }
+}

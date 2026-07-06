@@ -9,17 +9,102 @@
 use async_trait::async_trait;
 use std::fmt::Write as _;
 
-use super::anchors::extract_anchors;
-use super::{BLOCK_NOTE, Compressor, block_token};
+use super::Compressor;
+use crate::cache::CcrStore;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
 use crate::text::ansi::strip_ansi;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Context lines kept on each side of a changed run before collapsing.
 pub const CONTEXT_ANCHOR: usize = 3;
 /// A run of unchanged context longer than this collapses to a marker.
 pub const CONTEXT_COLLAPSE_THRESHOLD: usize = 8;
-/// Query words shorter than this are ignored as anchors (too noisy).
-pub const MIN_QUERY_WORD: usize = 3;
+
+const DEFAULT_LOCKFILE_PATH_PATTERNS: &[&str] = &[
+    "cargo.lock",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "composer.lock",
+    "poetry.lock",
+    "gemfile.lock",
+    "go.sum",
+];
+const DEFAULT_GENERATED_BUNDLE_PATH_PATTERNS: &[&str] = &[".min.js", ".min.css", ".map"];
+
+/// Controls the low-value diff hunk offload policy.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DiffNoiseOptions {
+    /// Case-insensitive path substrings that identify generated or lockfile
+    /// hunks whose body can be represented by a reason marker.
+    pub noisy_path_substrings: Vec<String>,
+    /// Drop hunks whose added/removed lines are identical after ASCII
+    /// whitespace stripping. Off by default until fixture coverage is broad.
+    pub drop_whitespace_only_hunks: bool,
+}
+
+impl Default for DiffNoiseOptions {
+    fn default() -> Self {
+        Self {
+            noisy_path_substrings: DEFAULT_LOCKFILE_PATH_PATTERNS
+                .iter()
+                .map(|value| value.to_string())
+                .chain(
+                    DEFAULT_GENERATED_BUNDLE_PATH_PATTERNS
+                        .iter()
+                        .map(|value| value.to_string()),
+                )
+                .collect(),
+            drop_whitespace_only_hunks: false,
+        }
+    }
+}
+
+/// Typed offload transform for low-value diff hunks.
+pub struct DiffNoiseTransform {
+    options: DiffNoiseOptions,
+}
+
+impl DiffNoiseTransform {
+    pub fn new(options: DiffNoiseOptions) -> Self {
+        Self { options }
+    }
+
+    pub fn options(&self) -> &DiffNoiseOptions {
+        &self.options
+    }
+}
+
+impl Default for DiffNoiseTransform {
+    fn default() -> Self {
+        Self::new(DiffNoiseOptions::default())
+    }
+}
+
+impl OffloadTransform for DiffNoiseTransform {
+    fn name(&self) -> &'static str {
+        "diff_noise"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Diff {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Diff {
+            return None;
+        }
+        let compacted = compress_with_options(input.content, &self.options)?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Diff,
+            store.put(input.original_content),
+        )
+    }
+}
 
 pub struct DiffCompressor;
 
@@ -32,37 +117,39 @@ impl Compressor for DiffCompressor {
     async fn compress(
         &self,
         input: &CompressInput<'_>,
-        opts: &CompressOptions,
+        _opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        compress(input.content, opts.ccr_enabled, input.hint.query.as_deref())
+        compress(input.content)
     }
 }
 
-/// Compress a unified diff. With `block_tokens`, each omitted block (collapsed
-/// context run, summarized lockfile hunk, whitespace-only hunk) is offloaded to
-/// CCR and its marker carries a token retrieving exactly that block. `query`
-/// yields anchors/words that, when they appear in a context run, prevent that
-/// run from being collapsed. Returns `None` when there's nothing structural to
+/// Compress a unified diff. Returns `None` when there's nothing structural to
 /// work with or compression wouldn't shrink it.
-pub fn compress(content: &str, block_tokens: bool, query: Option<&str>) -> Option<CompressOutput> {
+pub fn compress(content: &str) -> Option<CompressOutput> {
+    compress_with_options(content, &DiffNoiseOptions::default())
+}
+
+/// Compress a unified diff with explicit diff-noise policy.
+pub fn compress_with_options(
+    content: &str,
+    noise_options: &DiffNoiseOptions,
+) -> Option<CompressOutput> {
     let stripped = strip_ansi(content);
     let lines: Vec<&str> = stripped.lines().collect();
     if lines.is_empty() {
         return None;
     }
-    let keepers = query_keepers(query);
 
     let mut out = String::with_capacity(stripped.len() / 2 + 64);
     let mut i = 0usize;
-    let mut current_file_is_noisy = false;
+    let mut current_file_noise_reason = None;
     let mut saw_hunk = false;
-    let mut any_token = false;
 
     while i < lines.len() {
         let line = lines[i];
 
         if line.starts_with("diff --git ") {
-            current_file_is_noisy = is_noisy_path(line);
+            current_file_noise_reason = diff_noise_reason(line, noise_options);
             let _ = writeln!(out, "{line}");
             i += 1;
             continue;
@@ -71,38 +158,29 @@ pub fn compress(content: &str, block_tokens: bool, query: Option<&str>) -> Optio
             saw_hunk |= line.starts_with("@@");
             if line.starts_with("@@") {
                 let _ = writeln!(out, "{line}");
+                let hunk_start = i + 1;
+                let hunk_end = hunk_body_end(&lines, hunk_start);
+                let hunk_body = &lines[hunk_start..hunk_end];
+                let reason = if let Some(reason) = current_file_noise_reason {
+                    Some(reason)
+                } else if noise_options.drop_whitespace_only_hunks
+                    && hunk_is_whitespace_only(hunk_body)
+                {
+                    Some("whitespace_only")
+                } else {
+                    None
+                };
+                if let Some(reason) = reason {
+                    let summary = summarize_hunk_body(hunk_body);
+                    let _ = writeln!(
+                        out,
+                        "[... diff-noise hunk omitted reason={reason} +{}/-{} context={} line(s) ...]",
+                        summary.added, summary.removed, summary.context
+                    );
+                    i = hunk_end;
+                    continue;
+                }
                 i += 1;
-                let (added, removed, consumed) = summarize_hunk_body(&lines[i..]);
-                let body = &lines[i..i + consumed];
-                let has_keeper = lines_match_keeper(body, &keepers);
-
-                if current_file_is_noisy {
-                    let token = block_token(&body.join("\n"), block_tokens);
-                    any_token |= !token.is_empty();
-                    let _ = writeln!(
-                        out,
-                        "[... lockfile/bundle hunk: +{added}/-{removed} line(s) omitted ...{token}]"
-                    );
-                    i += consumed;
-                    continue;
-                }
-
-                // Whitespace-only hunk: every -/+ pair is identical once all
-                // whitespace is collapsed → semantically a no-op. Collapse it
-                // like a lockfile hunk, unless a query anchor mentions it.
-                if !has_keeper && is_whitespace_noop_hunk(body) {
-                    let token = block_token(&body.join("\n"), block_tokens);
-                    any_token |= !token.is_empty();
-                    let _ = writeln!(
-                        out,
-                        "[... whitespace-only hunk: {consumed} line(s) omitted (formatting-only) ...{token}]"
-                    );
-                    i += consumed;
-                    continue;
-                }
-
-                // Otherwise fall through: let the main loop process the body
-                // (changed lines kept, long context runs collapsed).
                 continue;
             }
             let _ = writeln!(out, "{line}");
@@ -116,18 +194,12 @@ pub fn compress(content: &str, block_tokens: bool, query: Option<&str>) -> Optio
                 i += 1;
             }
             let run = &lines[start..i];
-            // A query anchor/word inside the run pins it — never collapse.
-            if run.len() > CONTEXT_COLLAPSE_THRESHOLD && !lines_match_keeper(run, &keepers) {
+            if run.len() > CONTEXT_COLLAPSE_THRESHOLD {
                 for l in &run[..CONTEXT_ANCHOR] {
                     let _ = writeln!(out, "{l}");
                 }
                 let omitted = run.len() - 2 * CONTEXT_ANCHOR;
-                let token = block_token(
-                    &run[CONTEXT_ANCHOR..run.len() - CONTEXT_ANCHOR].join("\n"),
-                    block_tokens,
-                );
-                any_token |= !token.is_empty();
-                let _ = writeln!(out, "[... {omitted} context line(s) omitted ...{token}]");
+                let _ = writeln!(out, "[... {omitted} context line(s) omitted ...]");
                 for l in &run[run.len() - CONTEXT_ANCHOR..] {
                     let _ = writeln!(out, "{l}");
                 }
@@ -146,15 +218,11 @@ pub fn compress(content: &str, block_tokens: bool, query: Option<&str>) -> Optio
     if !saw_hunk {
         return None;
     }
-    if any_token {
-        out.push_str(BLOCK_NOTE);
-        out.push('\n');
-    }
     if out.len() >= content.len() {
         return None;
     }
     log::debug!(
-        "[tinyjuice][diff] {} -> {} bytes ({} input lines)",
+        "[tokenjuice][diff] {} -> {} bytes ({} input lines)",
         content.len(),
         out.len(),
         lines.len(),
@@ -181,113 +249,92 @@ fn is_context(line: &str) -> bool {
     line.starts_with(' ')
 }
 
-fn summarize_hunk_body(lines: &[&str]) -> (usize, usize, usize) {
-    let mut added = 0usize;
-    let mut removed = 0usize;
-    let mut n = 0usize;
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+struct HunkSummary {
+    added: usize,
+    removed: usize,
+    context: usize,
+}
+
+fn hunk_body_end(lines: &[&str], start: usize) -> usize {
+    let mut i = start;
+    while i < lines.len() && !lines[i].starts_with("@@") && !lines[i].starts_with("diff --git ") {
+        i += 1;
+    }
+    i
+}
+
+fn summarize_hunk_body(lines: &[&str]) -> HunkSummary {
+    let mut summary = HunkSummary::default();
     for &line in lines {
-        if line.starts_with("@@") || line.starts_with("diff --git ") {
-            break;
-        }
         if line.starts_with('+') && !line.starts_with("+++") {
-            added += 1;
+            summary.added += 1;
         } else if line.starts_with('-') && !line.starts_with("---") {
-            removed += 1;
-        }
-        n += 1;
-    }
-    (added, removed, n)
-}
-
-/// Build the set of query-derived keeper tokens: exact-match anchors plus query
-/// words longer than two chars. Lower-cased for case-insensitive matching.
-fn query_keepers(query: Option<&str>) -> Vec<String> {
-    let Some(q) = query else {
-        return Vec::new();
-    };
-    let mut set: std::collections::BTreeSet<String> = extract_anchors(q).into_iter().collect();
-    for w in q.split(|c: char| !c.is_alphanumeric() && c != '_') {
-        if w.chars().count() >= MIN_QUERY_WORD {
-            set.insert(w.to_ascii_lowercase());
+            summary.removed += 1;
+        } else if line.starts_with(' ') {
+            summary.context += 1;
         }
     }
-    set.into_iter().collect()
+    summary
 }
 
-/// True if any line (case-insensitively) contains any keeper token.
-fn lines_match_keeper(lines: &[&str], keepers: &[String]) -> bool {
-    if keepers.is_empty() {
-        return false;
-    }
-    lines.iter().any(|line| {
-        let lower = line.to_ascii_lowercase();
-        keepers.iter().any(|k| lower.contains(k))
-    })
+fn hunk_is_whitespace_only(lines: &[&str]) -> bool {
+    let removed: Vec<String> = lines
+        .iter()
+        .filter_map(|line| line.strip_prefix('-'))
+        .map(strip_ascii_whitespace)
+        .collect();
+    let added: Vec<String> = lines
+        .iter()
+        .filter_map(|line| line.strip_prefix('+'))
+        .map(strip_ascii_whitespace)
+        .collect();
+    !removed.is_empty() && removed.len() == added.len() && removed == added
 }
 
-/// True if `body` is a whitespace-only (formatting) hunk: it has at least one
-/// changed line, an equal number of removals and additions, and every removal
-/// pairs (in order) with an addition that is identical once all whitespace is
-/// collapsed. Such a hunk carries no semantic change.
-fn is_whitespace_noop_hunk(body: &[&str]) -> bool {
-    let mut removes: Vec<String> = Vec::new();
-    let mut adds: Vec<String> = Vec::new();
-    for &line in body {
-        if line.starts_with("+++") || line.starts_with("---") {
-            return false;
+fn strip_ascii_whitespace(s: &str) -> String {
+    s.chars().filter(|c| !c.is_ascii_whitespace()).collect()
+}
+
+fn diff_noise_reason(diff_git_line: &str, options: &DiffNoiseOptions) -> Option<&'static str> {
+    let l = diff_git_line.to_ascii_lowercase();
+    let paths = diff_git_paths(diff_git_line);
+    for pattern in &options.noisy_path_substrings {
+        let pattern = pattern.to_ascii_lowercase();
+        if pattern.is_empty()
+            || !(l.contains(&pattern) || paths.iter().any(|path| path.ends_with(&pattern)))
+        {
+            continue;
         }
-        if let Some(rest) = line.strip_prefix('+') {
-            adds.push(collapse_ws(rest));
-        } else if let Some(rest) = line.strip_prefix('-') {
-            removes.push(collapse_ws(rest));
+        if pattern_matches_any_default(&pattern, DEFAULT_LOCKFILE_PATH_PATTERNS) {
+            return Some("lockfile");
         }
-        // Context / other lines don't affect the whitespace-only decision.
+        if pattern_matches_any_default(&pattern, DEFAULT_GENERATED_BUNDLE_PATH_PATTERNS) {
+            return Some("generated_bundle");
+        }
+        return Some("configured_noisy_path");
     }
-    if removes.is_empty() || removes.len() != adds.len() {
-        return false;
-    }
-    removes.iter().zip(&adds).all(|(r, a)| r == a)
+    None
 }
 
-/// Remove every whitespace character from `s` (used to compare lines modulo
-/// indentation/spacing).
-fn collapse_ws(s: &str) -> String {
-    s.chars().filter(|c| !c.is_whitespace()).collect()
+fn pattern_matches_any_default(pattern: &str, defaults: &[&str]) -> bool {
+    defaults.contains(&pattern)
 }
 
-fn is_noisy_path(diff_git_line: &str) -> bool {
-    // Match on the parsed file basenames, not the raw line: a substring
-    // check would flag real source files like `user.mapper.ts` (".map") or
-    // `heat.map.config.js` as bundle noise and drop their hunks.
-    const NOISY_BASENAMES: &[&str] = &[
-        "cargo.lock",
-        "package-lock.json",
-        "pnpm-lock.yaml",
-        "yarn.lock",
-        "composer.lock",
-        "poetry.lock",
-        "gemfile.lock",
-        "go.sum",
-    ];
-    const NOISY_SUFFIXES: &[&str] = &[".min.js", ".min.css", ".map"];
-
-    let Some(rest) = diff_git_line.strip_prefix("diff --git ") else {
-        return false;
-    };
-    rest.split_whitespace().any(|tok| {
-        let path = tok
-            .strip_prefix("a/")
-            .or_else(|| tok.strip_prefix("b/"))
-            .unwrap_or(tok)
-            .to_ascii_lowercase();
-        let basename = path.rsplit('/').next().unwrap_or(path.as_str());
-        NOISY_BASENAMES.contains(&basename) || NOISY_SUFFIXES.iter().any(|s| basename.ends_with(s))
-    })
+fn diff_git_paths(diff_git_line: &str) -> Vec<String> {
+    diff_git_line
+        .split_whitespace()
+        .skip(2)
+        .filter_map(|path| path.strip_prefix("a/").or_else(|| path.strip_prefix("b/")))
+        .map(|path| path.to_ascii_lowercase())
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::types::ContentKind;
 
     #[test]
     fn keeps_changed_lines_collapses_context() {
@@ -300,7 +347,7 @@ mod tests {
         for i in 0..20 {
             let _ = writeln!(s, " more context {i} unchanged");
         }
-        let out = compress(&s, false, None).expect("compresses").text;
+        let out = compress(&s).expect("compresses").text;
         assert!(out.contains("-old changed line"), "{out}");
         assert!(out.contains("+new changed line"), "{out}");
         assert!(out.contains("context line(s) omitted"), "{out}");
@@ -317,166 +364,204 @@ mod tests {
         for i in 0..20 {
             let _ = writeln!(s, "- old dep entry {i}");
         }
-        let out = compress(&s, false, None).expect("compresses").text;
-        assert!(out.contains("lockfile/bundle hunk"), "{out}");
+        let out = compress(&s).expect("compresses").text;
+        assert!(
+            out.contains("diff-noise hunk omitted reason=lockfile"),
+            "{out}"
+        );
         assert!(!out.contains("new dep entry 7"), "{out}");
         assert!(out.len() < s.len());
     }
 
     #[test]
-    fn non_diff_returns_none() {
-        assert!(compress("just some text\nno hunks here", false, None).is_none());
-    }
-
-    #[test]
-    fn source_files_with_map_in_name_are_not_noisy() {
-        for line in [
-            "diff --git a/src/user.mapper.ts b/src/user.mapper.ts",
-            "diff --git a/heat.map.config.js b/heat.map.config.js",
-            "diff --git a/src/routes/url.mapping.rs b/src/routes/url.mapping.rs",
-            "diff --git a/minutes.md b/minutes.md",
-        ] {
-            assert!(!is_noisy_path(line), "misclassified as noisy: {line}");
-        }
-    }
-
-    #[test]
-    fn lockfiles_and_artifacts_are_noisy() {
-        for line in [
-            "diff --git a/Cargo.lock b/Cargo.lock",
-            "diff --git a/vendor/pkg/go.sum b/vendor/pkg/go.sum",
-            "diff --git a/dist/app.min.js b/dist/app.min.js",
-            "diff --git a/dist/bundle.js.map b/dist/bundle.js.map",
-            "diff --git a/web/package-lock.json b/web/package-lock.json",
-        ] {
-            assert!(is_noisy_path(line), "should be noisy: {line}");
-        }
-    }
-
-    #[test]
-    fn source_file_hunks_survive_even_with_mapper_name() {
-        let mut s = String::from(
-            "diff --git a/src/user.mapper.ts b/src/user.mapper.ts\n@@ -1,40 +1,42 @@\n",
-        );
+    fn empty_noisy_path_patterns_disable_lockfile_omission() {
+        let mut s = String::from("diff --git a/Cargo.lock b/Cargo.lock\n@@ -1,60 +1,80 @@\n");
         for i in 0..20 {
-            let _ = writeln!(s, " context line {i} unchanged here");
+            let _ = writeln!(s, " context before {i}");
         }
-        let _ = writeln!(s, "-export function oldMap() {{}}");
-        let _ = writeln!(s, "+export function newMap7() {{}}");
         for i in 0..20 {
-            let _ = writeln!(s, " more context {i} unchanged");
+            let _ = writeln!(s, "+ new dep entry {i}");
         }
-        let out = compress(&s, false, None).expect("compresses").text;
-        assert!(out.contains("+export function newMap7()"), "{out}");
-        assert!(!out.contains("lockfile/bundle hunk"), "{out}");
-    }
+        for i in 0..20 {
+            let _ = writeln!(s, "- old dep entry {i}");
+        }
+        for i in 0..20 {
+            let _ = writeln!(s, " context after {i}");
+        }
+        let options = DiffNoiseOptions {
+            noisy_path_substrings: Vec::new(),
+            ..Default::default()
+        };
 
-    #[test]
-    fn context_block_token_retrieves_omitted_lines() {
-        use crate::cache;
-        let mut s = String::from("diff --git a/x.rs b/x.rs\n@@ -1,40 +1,41 @@\n");
-        for i in 0..20 {
-            let _ = writeln!(s, " context line {i} unchanged here");
-        }
-        let _ = writeln!(s, "-old changed line");
-        let _ = writeln!(s, "+new changed line");
-        for i in 0..20 {
-            let _ = writeln!(s, " more context {i} unchanged");
-        }
-        let out = compress(&s, true, None).expect("compresses").text;
-        let tokens = cache::parse_markers(&out);
-        assert!(
-            !tokens.is_empty(),
-            "context marker should carry a token: {out}"
-        );
-        let block = cache::retrieve(&tokens[0]).expect("stored");
-        assert!(block.contains("context line 10 unchanged here"), "{block}");
-        assert!(out.contains("individually retrievable"), "{out}");
-    }
-
-    #[test]
-    fn whitespace_only_hunk_collapsed_and_recoverable() {
-        use crate::cache;
-        // Feature 9: every -/+ pair differs only in leading indentation → the
-        // hunk is a formatting no-op and collapses to a one-line note, with the
-        // full body recoverable via the per-block token.
-        let mut s = String::from("diff --git a/src/x.rs b/src/x.rs\n@@ -1,40 +1,40 @@\n");
-        for i in 0..20 {
-            let _ = writeln!(s, "-    let value_{i} = compute();");
-            let _ = writeln!(s, "+        let value_{i} = compute();");
-        }
-        let out = compress(&s, true, None).expect("compresses").text;
-        assert!(out.contains("whitespace-only hunk"), "{out}");
-        assert!(
-            !out.contains("let value_5"),
-            "body should be collapsed:\n{out}"
-        );
-        assert!(out.len() < s.len());
-
-        let tokens = cache::parse_markers(&out);
-        assert!(
-            !tokens.is_empty(),
-            "whitespace hunk should carry a token: {out}"
-        );
-        let block = cache::retrieve(&tokens[0]).expect("stored");
-        assert!(block.contains("let value_5 = compute();"), "{block}");
-    }
-
-    #[test]
-    fn real_change_hunk_not_treated_as_whitespace_noop() {
-        // A hunk that genuinely changes a token must NOT collapse as whitespace.
-        let mut s = String::from("diff --git a/src/x.rs b/src/x.rs\n@@ -1,3 +1,3 @@\n");
-        let _ = writeln!(s, "-let total = old_value + 1;");
-        let _ = writeln!(s, "+let total = new_value + 1;");
-        for i in 0..20 {
-            let _ = writeln!(s, " context tail {i}");
-        }
-        let out = compress(&s, false, None).expect("compresses").text;
-        assert!(!out.contains("whitespace-only hunk"), "{out}");
-        assert!(out.contains("+let total = new_value + 1;"), "{out}");
-    }
-
-    #[test]
-    fn query_word_prevents_context_collapse() {
-        // Feature 10: a long context run mentioning a query word is pinned; a
-        // second file's plain context run still collapses so the output shrinks.
-        let mut s = String::new();
-        let _ = writeln!(s, "diff --git a/auth.rs b/auth.rs");
-        let _ = writeln!(s, "@@ -1,25 +1,26 @@");
-        for i in 0..20 {
-            if i == 10 {
-                let _ = writeln!(s, " let token = AUTHENTICATION_TOKEN;");
-            } else {
-                let _ = writeln!(s, " auth context {i}");
-            }
-        }
-        let _ = writeln!(s, "-old auth line");
-        let _ = writeln!(s, "+new auth line");
-        let _ = writeln!(s, "diff --git a/other.rs b/other.rs");
-        let _ = writeln!(s, "@@ -1,22 +1,23 @@");
-        for i in 0..20 {
-            let _ = writeln!(s, " other context {i}");
-        }
-        let _ = writeln!(s, "-old other line");
-        let _ = writeln!(s, "+new other line");
-
-        // With the query: the auth run is preserved verbatim.
-        let with_q = compress(&s, false, Some("why is AUTHENTICATION_TOKEN failing"))
+        let out = compress_with_options(&s, &options)
             .expect("compresses")
             .text;
-        assert!(with_q.contains("AUTHENTICATION_TOKEN"), "{with_q}");
-        assert!(
-            with_q.contains("auth context 15"),
-            "pinned run must survive:\n{with_q}"
-        );
-        // The unrelated other-file run still collapses, so output shrank.
-        assert!(with_q.contains("context line(s) omitted"), "{with_q}");
 
-        // Without the query: the same auth run collapses.
-        let no_q = compress(&s, false, None).expect("compresses").text;
+        assert!(!out.contains("diff-noise hunk omitted"), "{out}");
+        assert!(out.contains("new dep entry 7"), "{out}");
+    }
+
+    #[test]
+    fn summarizes_generated_bundle_hunk_with_reason() {
+        let mut s =
+            String::from("diff --git a/dist/app.min.js b/dist/app.min.js\n@@ -1,80 +1,80 @@\n");
+        for i in 0..40 {
+            let _ = writeln!(s, "+ minified chunk payload {i}");
+        }
+        for i in 0..40 {
+            let _ = writeln!(s, "- previous minified payload {i}");
+        }
+
+        let out = compress(&s).expect("compresses").text;
+
         assert!(
-            !no_q.contains("auth context 15"),
-            "run should collapse:\n{no_q}"
+            out.contains("diff-noise hunk omitted reason=generated_bundle"),
+            "{out}"
         );
+        assert!(!out.contains("minified chunk payload 7"), "{out}");
+    }
+
+    #[test]
+    fn custom_noisy_path_patterns_get_configured_reason() {
+        let mut s = String::from(
+            "diff --git a/fixtures/snapshot.txt b/fixtures/snapshot.txt\n@@ -1,80 +1,80 @@\n",
+        );
+        for i in 0..40 {
+            let _ = writeln!(s, "+ snapshot chunk payload {i}");
+        }
+        for i in 0..40 {
+            let _ = writeln!(s, "- previous snapshot payload {i}");
+        }
+        let options = DiffNoiseOptions {
+            noisy_path_substrings: vec!["snapshot.txt".to_string()],
+            ..Default::default()
+        };
+
+        let out = compress_with_options(&s, &options)
+            .expect("compresses")
+            .text;
+
+        assert!(
+            out.contains("diff-noise hunk omitted reason=configured_noisy_path"),
+            "{out}"
+        );
+        assert!(!out.contains("snapshot chunk payload 7"), "{out}");
+    }
+
+    #[test]
+    fn whitespace_only_hunks_are_preserved_by_default() {
+        let mut s = String::from("diff --git a/src/lib.rs b/src/lib.rs\n@@ -1,40 +1,40 @@\n");
+        for i in 0..20 {
+            let _ = writeln!(s, " context before {i}");
+        }
+        let _ = writeln!(s, "-fn main(){{println!(\"hi\");}}");
+        let _ = writeln!(s, "+fn main() {{ println!(\"hi\"); }}");
+        for i in 0..20 {
+            let _ = writeln!(s, " context after {i}");
+        }
+        let out = compress(&s).expect("compresses").text;
+
+        assert!(out.contains("-fn main()"), "{out}");
+        assert!(out.contains("+fn main()"), "{out}");
+        assert!(!out.contains("reason=whitespace_only"), "{out}");
+    }
+
+    #[test]
+    fn whitespace_only_hunks_drop_when_enabled() {
+        let mut s = String::from("diff --git a/src/lib.rs b/src/lib.rs\n@@ -1,60 +1,60 @@\n");
+        for i in 0..50 {
+            let _ = writeln!(s, " context before {i}");
+        }
+        let _ = writeln!(s, "-fn main(){{println!(\"hi\");}}");
+        let _ = writeln!(s, "+fn main() {{ println!(\"hi\"); }}");
+        for i in 0..50 {
+            let _ = writeln!(s, " context after {i}");
+        }
+        let options = DiffNoiseOptions {
+            drop_whitespace_only_hunks: true,
+            ..Default::default()
+        };
+        let out = compress_with_options(&s, &options)
+            .expect("compresses")
+            .text;
+
+        assert!(
+            out.contains("diff-noise hunk omitted reason=whitespace_only"),
+            "{out}"
+        );
+        assert!(!out.contains("-fn main()"), "{out}");
+        assert!(!out.contains("+fn main()"), "{out}");
+    }
+
+    #[test]
+    fn semantic_hunks_survive_whitespace_noise_mode() {
+        let mut s = String::from("diff --git a/src/lib.rs b/src/lib.rs\n@@ -1,40 +1,40 @@\n");
+        for i in 0..20 {
+            let _ = writeln!(s, " context before {i}");
+        }
+        let _ = writeln!(s, "-fn answer() -> i32 {{ 41 }}");
+        let _ = writeln!(s, "+fn answer() -> i32 {{ 42 }}");
+        for i in 0..20 {
+            let _ = writeln!(s, " context after {i}");
+        }
+        let options = DiffNoiseOptions {
+            drop_whitespace_only_hunks: true,
+            ..Default::default()
+        };
+        let out = compress_with_options(&s, &options)
+            .expect("compresses")
+            .text;
+
+        assert!(out.contains("41"), "{out}");
+        assert!(out.contains("42"), "{out}");
+        assert!(!out.contains("diff-noise hunk omitted"), "{out}");
+    }
+
+    #[test]
+    fn diff_noise_transform_requires_retained_ccr() {
+        let mut s = String::from("diff --git a/Cargo.lock b/Cargo.lock\n@@ -1,80 +1,80 @@\n");
+        for i in 0..80 {
+            let _ = writeln!(s, "+ new dep entry {i}");
+        }
+        for i in 0..80 {
+            let _ = writeln!(s, "- old dep entry {i}");
+        }
+        let input = PipelineInput {
+            content: &s,
+            original_content: &s,
+            content_kind: ContentKind::Diff,
+            original_bytes: s.len(),
+        };
+        let transform = DiffNoiseTransform::default();
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform.apply(&input, &store).expect("retained offload");
+
+        assert_eq!(out.kind(), CompressorKind::Diff);
+        assert!(out.text().contains("reason=lockfile"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(s.as_str()));
+    }
+
+    #[test]
+    fn diff_noise_transform_skips_non_diff_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = DiffNoiseTransform::default();
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
+    }
+
+    #[test]
+    fn non_diff_returns_none() {
+        assert!(compress("just some text\nno hunks here").is_none());
     }
 }

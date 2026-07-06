@@ -14,17 +14,40 @@ Current behavior:
 - Keeps all rows for small arrays.
 - For large arrays, keeps fixed head/tail windows plus error rows and numeric
   outliers.
+- Heterogeneous object arrays can render as smaller per-shape bucket tables,
+  preserving original row indices and using CCR recovery when bucket rows are
+  dropped.
+- Full-present constant columns are hoisted into table metadata instead of
+  repeated in every rendered row.
+- Analyzer reports field frequencies, types, unique counts/ratios, constants,
+  sparse fields, numeric stats, estimated table bytes, and rough estimated
+  reduction.
+- Planner preserves dynamic head/tail anchors, query-relevant matches,
+  structural sparse rows, numeric outliers/change points, discriminator values,
+  duplicate and near-duplicate representatives, information-dense rows, and
+  deterministic spread anchors.
+- Adaptive spread anchor counts use deterministic semantic-bigram saturation.
+- Nested uniform objects flatten into dotted columns.
+- Stringified JSON objects are parsed and flattened when they are small and
+  valid.
+- `SmartCrusherTableTransform` exposes faithful table rendering as a typed
+  reformat that runs without CCR.
+- `SmartCrusherRowsTransform` exposes row-dropping SmartCrusher output as a
+  typed offload that emits output only with a retained CCR token.
 
 Add:
 
-- Analyzer for key frequencies, field types, constants, unique ratios, numeric
-  stats, sparse fields, and estimated reduction.
-- Planner for dynamic anchors, query matches, structural outliers, discriminator
-  buckets, and duplicate clusters.
-- Adaptive keep count using deterministic saturation/knee detection.
-- Heterogeneous-array handling through buckets.
-- Nested uniform object flattening into dotted columns.
-- Stringified JSON parsing where safe.
+- Broader fixture coverage for all SmartCrusher planner paths.
+
+Status: initial router-level fixture coverage now includes a query-anchored
+row-dropping case with CCR recovery. Sparse structural rows, error rows,
+numeric outliers, and duplicate-cluster representative anchors now also have
+router-level fixture coverage. Constant-column hoisting, nested object
+flattening, stringified JSON flattening, heterogeneous bucket rendering,
+discriminator anchors, numeric change-point anchors, and information-dense
+anchors now also have router-level fixture coverage. Latest/oldest query
+direction, exact and near-duplicate clusters, deterministic spread anchors, and
+adaptive spread saturation now cover the remaining current planner anchor paths.
 
 Do not add:
 
@@ -45,14 +68,20 @@ Current behavior:
 - Keeps structural lines and changed lines.
 - Collapses long unchanged context.
 - Summarizes noisy lockfile/bundle hunks inside `DiffCompressor`.
+- Exposes `DiffNoiseTransform` as a typed offload transform that emits lossy
+  diff views only with a retained CCR token.
+- Supports configurable noisy path substrings, optional whitespace-only hunk
+  dropping, per-hunk reason markers, and droppable-body bloat estimates.
 
 Add:
 
-- Separate `DiffNoise` offload transform.
-- Configurable suffix list for lockfiles and generated bundles.
-- Optional whitespace-only hunk dropping.
-- Per-hunk omission reasons.
-- Bloat estimate based on droppable body-byte share.
+- Broader fixture coverage for host-tuned noisy path policy.
+
+Status: router-level fixture coverage now includes lockfile and generated-bundle
+noise cases that assert reason markers and recovery tokens. Host-tuned policy
+fixtures now cover configured noisy path patterns, whitespace-only hunk
+dropping, semantic-hunk preservation, and CCR retention through the typed
+DiffNoise transform.
 
 Do not add:
 
@@ -73,13 +102,22 @@ Current behavior:
 - Command output uses the rule reducer.
 - Non-command logs use signal preservation for errors, warnings, summaries, and
   stack traces.
+- Repetitive non-command logs use a lossless, reconstructible template reformat
+  before signal offload.
+- `LogTemplateTransform` exposes the template path as a typed reformat that
+  runs without CCR.
+- `SignalLogTransform` exposes signal-preserving log compression as a typed
+  offload that emits output only with a retained CCR token.
 
 Add:
 
-- Lossless log-template reformat before signal offload.
-- Reconstructible template blocks and variants.
 - More command-rule parity for common build systems and CI outputs.
 - GitHub Actions failing-step summaries through rule metadata.
+
+Status: partially implemented. `ci/github-actions` now handles
+`gh run view --log` output, retaining failing step/error lines and counting
+failed-step annotations through the fixture suite. Log-template fixture
+coverage now reconstructs original lines from emitted template blocks.
 
 Do not add:
 
@@ -99,14 +137,15 @@ Current behavior:
 - Tree-sitter path for Rust, TypeScript/JavaScript, and Python behind feature.
 - Brace-depth heuristic fallback.
 - Collapses function/method bodies.
+- Explicit stub modes cover signatures-only, public API, matched symbols, and
+  expand-around-lines.
+- Stub output carries elision metadata with line ranges and parse status.
+- Host read intent distinguishes exact reads from explicit stub reads.
+- `CodeStubTransform` exposes explicit source-code stubbing as a typed offload
+  that emits output only with a retained CCR token.
 
 Add:
 
-- Explicit stub modes: signatures-only, public API, matched symbols, and
-  expand-around-lines.
-- Elision metadata with line ranges.
-- Parse status in reports.
-- Host intent that distinguishes exact read from stub read.
 - Additional language parsers only behind features.
 
 Do not add:
@@ -127,15 +166,24 @@ Current behavior:
 - Parses grep/ripgrep-style `path:line:body`.
 - Groups by file.
 - Keeps top K matches per file.
-- Scores query-term density or line salience.
+- Scores query relevance through the shared BM25 scorer, falling back to line
+  salience without a query.
+- `SearchTransform` exposes search-result thinning as a typed offload that
+  emits output only with a retained CCR token.
+- Ranked search-read helpers score exact symbols, paths, match density,
+  imports/exports, generated/vendor penalties, omitted counts, and merged
+  snippet windows over host-provided matches.
 
 Add:
 
-- Shared BM25 scorer.
 - Better query context propagation.
-- Path and generated/vendor penalties for search-read adapter.
-- Omitted match counts by file and global total.
-- Snippet window merging for host-side search-read.
+- Broader fixture coverage for search-read host adapters.
+
+Status: initial router-level fixture coverage now includes a query-ranked
+search thinning case with omitted counts and CCR recovery. Ranked search-read
+fixtures now cover exact-symbol/path/density ordering, vendor/generated
+penalties, bounded snippet-window merging, and explicit omitted-match counts for
+host-provided candidates.
 
 Do not add:
 
@@ -154,12 +202,20 @@ Current behavior:
 
 - Single-pass HTML-to-text extractor.
 - Drops scripts, styles, head, noscript, and SVG.
+- `HtmlExtractTransform` exposes lossy HTML-to-text extraction as a typed
+  offload that emits output only with a retained CCR token.
+- Web-extract reducer accepts already extracted text/markdown/HTML, strips
+  inline base64 image payloads, preserves metadata, and keeps recovery footers
+  attached to truncated pages.
 
 Add:
 
 - More complete entity support if fixtures show need.
-- Web-extract reducer as an adapter-facing module for already extracted text.
-- Base64 image stripping for web extraction outputs.
+- Broader fixture coverage for web-extract host formats.
+
+Status: initial web-extract fixture coverage now includes a markdown host
+format case for base64 image replacement, real image URL preservation, URL
+secret redaction, and retained recovery text.
 
 Do not add:
 
@@ -179,14 +235,23 @@ Current behavior:
 - Optional ML text compressor through host callback.
 - ML disabled by default.
 - Generic fallback only runs for command output.
+- Deterministic extractive TextCrusher keeps verbatim spans scored by recency,
+  BM25 query relevance, identifiers, numbers, and error/salience markers.
+- Near-duplicate suppression uses word-term overlap.
+- `TextCrusherTransform` exposes the deterministic path as a typed offload
+  that emits output only with a retained CCR token.
+- Custom tag protection wraps ML compression so protected workflow tags must
+  survive byte-for-byte.
 
 Add:
 
-- Deterministic extractive TextCrusher.
-- Segment scoring by recency, BM25 query relevance, identifiers, numbers, and
-  error/salience markers.
-- Near-duplicate suppression with word shingles.
-- Tag protection around ML compression before enabling broader use.
+- Broader fixture coverage for TextCrusher scoring and ML tag protection.
+
+Status: initial router-level fixture coverage now includes a query-relevant
+error-preservation case with verbatim signal text and CCR recovery. ML
+tag-protection fixtures now prove custom workflow tags are restored byte-for-byte
+when callbacks keep protected placeholders and that ML output is declined when a
+callback drops them.
 
 Do not add:
 
@@ -198,4 +263,3 @@ Acceptance:
 - Output consists only of verbatim spans.
 - Custom workflow tags survive ML compression byte-for-byte.
 - Plain data without useful signal declines rather than blindly truncating.
-

@@ -88,12 +88,28 @@ Skip reasons must not include raw content.
 - Move token validation into reusable store helpers.
 - Add isolated tests using an in-memory store.
 
+Status: implemented in the core crate. `CcrStore`, `GlobalCcrStore`,
+`MemoryCcrStore`, and compatibility wrappers exist; isolated memory-store tests
+cover global isolation, oversized rejection, range retrieval, and malformed
+token rejection.
+
 ### Step 2: Add Pipeline Compatibility Wrapper
 
 - Build a pipeline path that can run current compressors as compatibility
   transforms.
 - Keep `compress_content()` and `route()` signatures intact.
 - Assert current behavior is unchanged through existing fixtures.
+
+Status: partially implemented. `compress_content_with_store()` and
+`route_with_store()` are store-injected compatibility paths while the old APIs
+delegate to `GlobalCcrStore`. `_report` variants return `PipelineReport` with
+redacted skip reasons, cheap bloat estimates, and applied-step metadata.
+`run_typed_pipeline()` now gives new `ReformatTransform` and `OffloadTransform`
+implementations a typed execution path with no-op, reformat-only, offload-only,
+mixed, and CCR-retention-failure coverage. The production router now uses the
+typed path for covered non-command transforms and still falls back to the
+compatibility router for command reducers, ML text, non-stub code compression,
+and generic command fallback behavior.
 
 ### Step 3: Convert Existing Compressors Gradually
 
@@ -105,6 +121,14 @@ Skip reasons must not include raw content.
 - Signal-log compression is an offload.
 - Search thinning is an offload.
 - Code stubbing is an offload unless the caller explicitly accepts a stub view.
+
+Status: implemented for current compressor families. JSON faithful table
+rendering is exposed as `SmartCrusherTableTransform`; JSON row dropping is
+exposed as `SmartCrusherRowsTransform` and requires a retained CCR token.
+DiffNoise, HTML extraction, log templates, signal-log compression, search
+thinning, and TextCrusher also have typed transforms. Code stubbing is exposed
+as `CodeStubTransform` and requires explicit construction with a `StubMode`.
+The router reports typed transform step names for these production paths.
 
 ### Step 4: Add Bloat Estimation
 
@@ -119,6 +143,13 @@ Add cheap estimators for:
 
 The router can use estimators to decide whether to try transforms and to report
 why a transform was skipped.
+
+Status: first pass implemented. `pipeline::estimate_bloat` reports a redacted
+0-100 score plus categorical reason for JSON rows, diff context, log
+repetition, search fanout, HTML markup, code body bulk, and plain-text
+repetition. The router reports the estimate and uses a zero-score estimate to
+skip low-signal payloads when there is no command context, query hint, or
+explicit stub-read intent.
 
 ## Acceptance Criteria
 
@@ -138,4 +169,3 @@ why a transform was skipped.
   complete.
 - Do not log raw content in pipeline reports.
 - Do not make all compressors implement the new traits in one large PR.
-

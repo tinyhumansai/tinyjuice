@@ -278,6 +278,58 @@ fn file_inspection_command_with_path_prefix() {
     assert!(is_file_content_inspection_command(&input));
 }
 
+#[test]
+fn safe_inventory_pipeline_may_use_generic_fallback() {
+    let stdout = (0..80)
+        .map(|i| format!("src/generated/module_{i}.rs"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let input = ToolExecutionInput {
+        tool_name: "bash".to_owned(),
+        command: Some("find . -type f | sort | head -n 20".to_owned()),
+        stdout: Some(stdout.clone()),
+        ..Default::default()
+    };
+    let result = run(input);
+    assert!(
+        result.inline_text.len() < stdout.len(),
+        "got: {}",
+        result.inline_text
+    );
+}
+
+#[test]
+fn mixed_shell_sequence_stays_raw() {
+    let stdout = (0..80)
+        .map(|i| format!("line {i}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let input = ToolExecutionInput {
+        tool_name: "bash".to_owned(),
+        command: Some("git status; cat src/lib.rs".to_owned()),
+        stdout: Some(stdout.clone()),
+        ..Default::default()
+    };
+    let result = run(input);
+    assert_eq!(result.inline_text, stdout);
+}
+
+#[test]
+fn unsafe_find_exec_stays_raw() {
+    let stdout = (0..80)
+        .map(|i| format!("file {i} contents"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let input = ToolExecutionInput {
+        tool_name: "bash".to_owned(),
+        command: Some(r"find . -exec cat {} \;".to_owned()),
+        stdout: Some(stdout.clone()),
+        ..Default::default()
+    };
+    let result = run(input);
+    assert_eq!(result.inline_text, stdout);
+}
+
 // --- build_raw_text via reduction pipeline ---
 
 #[test]

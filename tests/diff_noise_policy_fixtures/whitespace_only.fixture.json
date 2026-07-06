@@ -1,0 +1,20 @@
+{
+  "description": "DiffNoise whitespace-only mode drops paired changes that normalize equal",
+  "generator": {
+    "type": "whitespaceOnly",
+    "context": 50
+  },
+  "options": {
+    "dropWhitespaceOnlyHunks": true
+  },
+  "expected": {
+    "recovery": true,
+    "contains": [
+      "reason=whitespace_only"
+    ],
+    "notContains": [
+      "-fn main()",
+      "+fn main()"
+    ]
+  }
+}

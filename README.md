@@ -26,6 +26,146 @@ behind a retrieval token so it can be pulled back on demand. Hosts that want
 the strict lossless-or-recoverable guarantee (e.g. coding agents on the
 `light` profile) can require a recovery token for any lossy output.
 
+## Highlights
+
+- **Content-aware by default** - JSON, code, logs, search results, diffs, HTML,
+  and plain text take different paths instead of one generic truncation rule.
+- **Recoverable lossy views** - the CCR cache stores exact originals and appends
+  a `tokenjuice_retrieve` footer whenever data is dropped.
+- **Agent-profile policy** - hosts can run `full`, `light`, `off`, or runtime
+  `auto` profiles per agent instead of using one global behavior.
+- **Command-aware reduction** - built-in rules compact common shell, git, cargo,
+  npm, docker, kubectl, database, cloud, lint, and test outputs.
+- **OpenHuman-ready boundary** - the core crate avoids OpenHuman runtime
+  dependencies; adapters install configuration, ML callbacks, and savings
+  recorders from the host side.
+- **No raw-content analytics requirement** - the dashboard consumes metadata,
+  token and byte counts, latency, status, and strategy labels, not prompt text.
+
+TinyJuice is designed for the work agents actually do: reading too much,
+searching broadly, running noisy commands, and needing a compact but reversible
+view that keeps failures, anomalies, changed hunks, signatures, and matching
+lines visible.
+
+## How It Works
+
+```text
+tool output / file / web payload
+        |
+        v
+ContentHint + structural detection
+        |
+        v
+JSON | Code | Log | Search | Diff | HTML | PlainText
+        |
+        v
+specialized compressor or command-rule reducer
+        |
+        v
+pass-through if unsafe, too small, disabled, or not smaller
+        |
+        v
+CCR offload + retrieval footer when the view is lossy
+```
+
+The router is intentionally fail-soft. If it cannot shrink safely, it returns
+the original bytes unchanged.
+
+## Compression Surfaces
+
+- **JSON SmartCrusher** - renders repeated object arrays as compact tables,
+  flattens safe nested cells, and keeps query-relevant, query-direction,
+  anomaly, numeric change-point, information-dense, duplicate/near-duplicate
+  cluster, and saturation/knee-based spread-anchor rows when large arrays are
+  row-dropped.
+- **Code compressor** - keeps imports, signatures, shallow structure, and
+  important markers while collapsing deep bodies.
+- **Log compressor** - preserves failures, warnings, summaries, stack traces,
+  command-rule outputs, and reconstructible high-context template runs while
+  dropping passing noise.
+- **Search compressor** - groups grep/ripgrep output by file, ranks matches
+  with shared BM25 query context, and keeps top hits with per-file and global
+  omitted-match tallies.
+- **Diff compressor** - keeps patch structure and changed lines, collapses long
+  context, and marks omitted lockfile, generated-bundle, or configured noisy
+  hunks with explicit reasons.
+- **HTML compressor** - extracts readable text from rendered markup.
+- **Plain-text ML slot** - optional host-provided callback for learned text
+  compression; disabled by default.
+- **Generic command fallback** - line-oriented head/tail reduction for command
+  output when no specialized rule wins.
+
+TinyJuice does not publish compression percentage claims yet. Throughput
+benchmarks exist for hot paths, but ratio and quality claims require benchmark
+fixtures that prove retained facts, latency, reversibility, and regression
+safety.
+
+## Quick Start
+
+Add TinyJuice to a Rust project once published:
+
+```toml
+[dependencies]
+tinyjuice = "0.1"
+```
+
+Use the small public trait scaffold when you want a simple strategy boundary:
+
+```rust
+use tinyjuice::{CompressionConfig, CompressionInput, Compressor, PassthroughCompressor};
+
+fn main() -> Result<(), tinyjuice::TinyJuiceError> {
+    let compressor = PassthroughCompressor;
+    let output = compressor.compress(
+        CompressionInput::new("Keep this text unchanged for now."),
+        &CompressionConfig::default(),
+    )?;
+
+    assert_eq!(output.report.strategy, "passthrough");
+    Ok(())
+}
+```
+
+Use the content router for real tool-output compaction:
+
+```rust
+use tinyjuice::{CompressOptions, ContentHint, compress_content};
+
+async fn compact_payload(big_payload: &str) {
+    let hint = ContentHint {
+        source_tool: Some("read_file".to_string()),
+        extension: Some("json".to_string()),
+        ..Default::default()
+    };
+
+    let result = compress_content(big_payload, Some(hint), &CompressOptions::default()).await;
+    if result.applied {
+        println!("{} -> {} bytes", result.original_bytes, result.compacted_bytes);
+    }
+}
+```
+
+OpenHuman-style tool output integration goes through:
+
+```rust
+use tinyjuice::{AgentTokenjuiceCompression, compact_tool_output_with_policy};
+
+async fn compact_command_output(command_output: &str) {
+    let (_text, _stats) = compact_tool_output_with_policy(
+        "shell",
+        Some(&serde_json::json!({ "command": "cargo test" })),
+        command_output,
+        Some(101),
+        AgentTokenjuiceCompression::Full,
+    ).await;
+}
+```
+
+Host agent layers should resolve `AgentTokenjuiceCompression::Auto` to `Full`,
+`Light`, or `Off` before calling TokenJuice. Passing unresolved `Auto` to the
+tool-output adapter leaves the output unchanged and reports
+`none/agent-profile-auto-unresolved`.
+
 ## Quick Setup
 
 Install the CLI:
@@ -34,12 +174,136 @@ Install the CLI:
 cargo install tinyjuice --locked
 ```
 
+Run the minimal reducer CLI:
+
+```sh
+cargo run -- reduce --tool-name bash --command "git status" status.txt
+cargo run -- reduce-json payload.json
+cargo run -- verify --rules --fixtures
+cargo run -- discover executions.ndjson
+cargo run -- wrap -- cargo test
+cargo run -- ls --store-dir .tokenjuice/ccr
+cargo run -- cat --store-dir .tokenjuice/ccr <token>
+cargo run -- stats --store-dir .tokenjuice/ccr
+cargo run -- doctor --store-dir .tokenjuice/ccr
+cargo run -- doctor codex
+cargo run -- doctor hooks
+cargo run -- install codex --local target/debug/tinyjuice
+cargo run -- uninstall codex
+```
+
+Run hot-path benchmarks:
+
 Run one hook installer:
 
 | Logo | Client | Install |
 | --- | --- | --- |
 | <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-openai.jpg" alt="Codex" /> | [Codex CLI](https://github.com/openai/codex) | `tinyjuice install codex` |
 | <img width="48px" src="https://raw.githubusercontent.com/vincentkoc/tokenjuice/main/docs/client-claude.jpg" alt="Claude Code" /> | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `tinyjuice install claude-code` |
+
+## API Notes
+
+`compress_content` and `route` return `CompressedOutput`. The `text` field is
+the compatibility output ready to inline into model context. When CCR retained
+an original, `body` contains the compacted body without the recovery footer and
+`recovery_footer` contains the footer separately. Hosts that apply their own
+post-compaction caps should truncate only `body` and then reattach
+`recovery_footer` so recovery markers remain reachable.
+
+`compress_content_with_store` and `route_with_store` accept an injectable
+`CcrStore`. Their `_report` variants also return a redacted `PipelineReport`
+with byte counts, a cheap bloat estimate, applied steps, skip reason, lossy
+flag, and CCR token IDs. Existing `compress_content`, `route`, and `cache::*`
+helpers still use the process-global `GlobalCcrStore` for compatibility. New
+tests and host adapters can use `MemoryCcrStore` to assert CCR behavior without
+touching the global cache.
+
+The CLI `ls`, `cat`, and `stats` commands operate only on an explicit CCR disk
+tier via `--store-dir`; they do not imply access to another process's in-memory
+cache. `cat` supports `--lines START:END` and `--bytes START:END` ranges.
+`stats` reports metadata-only counts and byte totals without reading token
+content.
+
+The CLI `doctor` command emits structured health JSON using `ok`, `warn`,
+`broken`, and `disabled` statuses. It verifies built-in rule health by default,
+can include fixture checks with `--fixtures [dir]`, and can inspect an explicit
+CCR disk tier with `--store-dir`.
+Host-aware doctor targets (`codex`, `openhuman`, and aggregate `hooks`) expose
+expected commands, detected commands when present, and one repair command
+without mutating user configuration.
+The first host mutation path is `install codex` / `uninstall codex`, which
+maintains only a TinyJuice-managed instruction block under the Codex config
+root and preserves unrelated text.
+
+`run_typed_pipeline` is the typed-transform entry point for new reducers. It
+runs lossless `ReformatTransform`s before CCR-backed `OffloadTransform`s and
+keeps the true original content available to offload transforms even after an
+intermediate reformat.
+
+Shell-producing hosts can use the `route*_shell_policy` variants or call
+`apply_shell_compaction_policy` with `ShellCompactionPolicy` before compacting
+command output. The default OpenHuman-facing path uses `AllowSafeInventory`:
+exact file-content reads, unsafe inventory actions, and mixed shell sequences
+stay raw, while repository inventory output can still be summarized.
+
+Conversation-level helpers under `conversation::*` expose deterministic Hermes
+primitives without host runtime dependencies: token-budget tail selection,
+tool-call/result boundary alignment, latest user/assistant anchors, JSON
+string-leaf shrinking, partial split/rejoin helpers for compacting a middle
+window, last-N user exchange retention helpers, and old tool-result digesting
+with sensitive metadata redaction.
+
+`savings::configure_record_recorder` installs a metadata-only savings recorder
+that receives class-labeled `SavingsRecord` values (`counted`, `measured`, or
+`estimated`) with a source label (`live` or `fixture_benchmark`), content kind,
+compressor, byte/token counts, lossy/CCR flags, and redacted rule or skip
+labels. Fixture benchmark records are meant to be reported separately from live
+runtime stats. The older four-argument
+`configure_recorder` callback remains as a compatibility wrapper.
+
+`ContextBreakdown` and `ContextBucket` provide host-facing context usage
+metadata for UI bars and compression diagnostics. Buckets separate static
+prefix costs such as system prompts and tool definitions from compressible
+conversation or memory history, and measured provider prompt usage can override
+rough local estimates without storing raw prompt text.
+
+`live_zone::*` exposes provider-neutral cache/live-zone contracts for hosts
+that need to preserve frozen prompt bytes exactly. Hosts provide byte ranges;
+TinyJuice validates mutable-block replacements, preserves the frozen prefix,
+and can detect volatile cache-hostile values such as UUIDs, timestamps, JWTs,
+and hex hashes with redacted findings only.
+
+`reduce_json_str` and `reduce_json_request` expose the library form of the
+`reduce-json` protocol. They accept direct `ToolExecutionInput` JSON or an
+`{ "input": ..., "options": ... }` envelope, reject malformed payloads with
+structured errors, and return stable serde-compatible response fields. See
+[docs/reduce-json-protocol.md](docs/reduce-json-protocol.md) for the current
+request and response contract.
+
+`verify_rules` checks the same builtin/user/project rule layers as the loader
+without changing the lenient load contract. It reports parse errors, invalid
+regex patterns, duplicate rule IDs, and shadowed lower-priority rules so CLI
+or host diagnostics can fail loudly while runtime loading remains compatible.
+`verify_rule_fixtures` runs recorded `*.fixture.json` examples through compiled
+rules and reports pass counts, parse errors, and hash-only output mismatches.
+`discover_fallback_outputs` groups command families that still fall through to
+`generic/fallback` without including raw tool output in the report.
+
+Already-extracted web pages can be passed through `reduce_web_extract` or
+`reduce_web_extract_with_store`. The reducer removes inline base64 image blobs,
+preserves ordinary markdown image URLs, and stores omitted middle content in CCR
+before emitting a head/tail truncation footer. If CCR cannot retain the full
+cleaned page, the reducer returns the cleaned page without lossy truncation.
+
+Source-code file reads are exact by default. Hosts that intentionally want a
+structural view can call `stub_code` with a `StubMode`; the returned
+`CodeStubOutput` includes symbols, elided line ranges, and whether tree-sitter
+or the heuristic fallback produced the stub. `PublicApi` stubs keep imports and
+public signatures while replacing private declarations with elision metadata;
+matched-symbol and line-range expansion also work through the heuristic
+fallback.
+
+Run the local analytics interface:
 
 Use `tinyjuice update <host>` to refresh an installed hook and
 `tinyjuice uninstall <host>` to remove it.
@@ -63,6 +327,28 @@ attribution for agent-created commits.
   is full, light, off, or profile-driven.
 - **Privacy-aware by design** - analytics can use metadata, byte counts,
   latency, status, and strategy labels without requiring raw prompt text.
+
+```text
+src/
+  cache/        CCR recovery stores and retrieval markers
+  compressor/   Compression trait and input/output types
+  compressors/  Content-aware compressor implementations
+  config/       Compression target and policy configuration
+  conversation/ Provider-neutral conversation compaction helpers
+  detect/       Content-kind hints and structural detection
+  observability.rs Non-sensitive context usage breakdowns
+  pipeline/     Typed transform/report primitives
+  policy/       Host compaction policy helpers
+  reduce/       Rule-engine reducers and command normalization
+  rules/        Built-in, user, and project command reduction rules
+  savings.rs    Host-installed savings attribution hook
+  tool_integration.rs OpenHuman-style tool-output adapter
+  openhuman/    Placeholder OpenHuman integration boundary
+  error.rs      Shared error type
+interface/      Self-hostable analytics UI for compression run metadata
+wiki/                Technical GitHub wiki source
+docs/references/     Design references and candidate strategy specs
+```
 
 ## What It Compresses
 
@@ -164,6 +450,15 @@ The technical docs live in the wiki:
 - [Development](wiki/Development.md)
 - [Security and Privacy](wiki/Security-and-Privacy.md)
 
-TinyJuice is pre-1.0. The CLI, router, command-rule engine, CCR recovery store,
-content detectors, native compressors, and OpenHuman-style adapter are in place;
-public API names may still move as host integration hardens.
+## Status
+
+TinyJuice is pre-1.0. The router, command-rule engine, CCR recovery store,
+content detectors, several native compressors, the OpenHuman-style tool adapter,
+typed-pipeline primitives, injectable CCR store, report-producing router path,
+savings metadata, deterministic conversation helpers, live-zone cache contracts,
+and the analytics interface are implemented. Public API names may still move as OpenHuman
+integration hardens.
+
+The project boundary is deliberate: keep the core crate small, do not add
+OpenHuman runtime dependencies without a feature or adapter boundary, and do not
+claim compression percentages until benchmark fixtures exist.
