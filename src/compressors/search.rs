@@ -21,10 +21,12 @@ use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::line_score;
+use crate::cache::CcrStore;
 use crate::detect::parse_search_line;
+use crate::pipeline::{OffloadOutput, OffloadTransform, PipelineInput, estimate_bloat};
 use crate::relevance::{Bm25Corpus, tokenize};
 use crate::types::LineRange;
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Only compress result sets with more than this many matching lines.
 pub const MIN_MATCHES: usize = 40;
@@ -34,6 +36,61 @@ pub const TOP_K_PER_FILE: usize = 5;
 pub const DEFAULT_SNIPPET_CONTEXT: usize = 2;
 
 pub struct SearchCompressor;
+
+/// Typed offload transform for lossy search-result thinning.
+#[derive(Debug, Clone, Default)]
+pub struct SearchTransform {
+    query: Option<String>,
+}
+
+impl SearchTransform {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+
+    pub fn query(&self) -> Option<&str> {
+        self.query.as_deref()
+    }
+}
+
+impl OffloadTransform for SearchTransform {
+    fn name(&self) -> &'static str {
+        "search"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Search {
+            return 0.0;
+        }
+        let score = f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0;
+        if self
+            .query
+            .as_deref()
+            .is_some_and(|query| !query.trim().is_empty())
+        {
+            score.max(0.1)
+        } else {
+            score
+        }
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Search {
+            return None;
+        }
+        let compacted = compress(input.content, self.query())?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Search,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for SearchCompressor {
@@ -456,6 +513,8 @@ fn looks_generated_path(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::pipeline::PipelineInput;
 
     fn big_results() -> String {
         let mut s = String::from("120 match(es); scanned 3 file(s)\n");
@@ -521,6 +580,45 @@ mod tests {
             out.contains("fn sync_worker_v2()"),
             "regex-style query identifier was not ranked in:\n{out}"
         );
+    }
+
+    #[test]
+    fn search_transform_requires_retained_ccr() {
+        let input = big_results();
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Search,
+            original_bytes: input.len(),
+        };
+        let transform = SearchTransform::new().with_query("compute_long_name_7");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained search output");
+
+        assert_eq!(out.kind(), CompressorKind::Search);
+        assert!(out.text().contains("compute_long_name_7"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn search_transform_skips_non_search_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = SearchTransform::new();
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
     }
 
     #[test]
