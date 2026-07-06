@@ -7,8 +7,10 @@
 use regex::Regex;
 
 use crate::cache::{self, CcrStore};
+use crate::pipeline::OffloadOutput;
 use crate::types::{
-    WebExtractBatchInput, WebExtractOptions, WebExtractReduceInput, WebExtractReduction,
+    CompressorKind, WebExtractBatchInput, WebExtractOptions, WebExtractReduceInput,
+    WebExtractReduction,
 };
 
 const FOOTER_RULE: &str = "-------- [TOKENJUICE WEB TRUNCATED] --------";
@@ -55,8 +57,25 @@ pub fn reduce_web_extract_with_store(
         };
     }
 
+    let head_budget = ((limit as f32) * options.head_ratio.clamp(0.1, 0.9)).floor() as usize;
+    let tail_budget = limit.saturating_sub(head_budget).max(1);
+    let head = snap_head_to_line(&char_prefix(&clean, head_budget), head_budget);
+    let tail = snap_tail_to_line(&char_suffix(&clean, tail_budget), tail_budget);
+    let head_chars = head.chars().count();
+    let tail_chars = tail.chars().count();
+    let omitted_chars = original_chars.saturating_sub(head_chars + tail_chars);
+    let omitted_start_line = head.lines().count().saturating_add(1);
+
+    let mut body = String::with_capacity(head.len() + tail.len() + 160);
+    body.push_str(&head);
+    if !body.ends_with('\n') {
+        body.push('\n');
+    }
+    body.push_str("\n-------- [OMITTED MIDDLE] --------\n");
+    body.push_str(&tail);
+
     let put = store.put(&clean);
-    if !put.retained() {
+    let Some(offload) = OffloadOutput::from_retained_put(body, CompressorKind::Html, put) else {
         // Hard repository invariant: do not emit unrecoverable lossy output.
         let inline_chars = clean.chars().count();
         return WebExtractReduction {
@@ -77,32 +96,16 @@ pub fn reduce_web_extract_with_store(
             full_text_retained: false,
             base64_images_replaced: replaced,
         };
-    }
-
-    let head_budget = ((limit as f32) * options.head_ratio.clamp(0.1, 0.9)).floor() as usize;
-    let tail_budget = limit.saturating_sub(head_budget).max(1);
-    let head = snap_head_to_line(&char_prefix(&clean, head_budget), head_budget);
-    let tail = snap_tail_to_line(&char_suffix(&clean, tail_budget), tail_budget);
-    let head_chars = head.chars().count();
-    let tail_chars = tail.chars().count();
-    let omitted_chars = original_chars.saturating_sub(head_chars + tail_chars);
-    let omitted_start_line = head.lines().count().saturating_add(1);
-
-    let mut body = String::with_capacity(head.len() + tail.len() + 160);
-    body.push_str(&head);
-    if !body.ends_with('\n') {
-        body.push('\n');
-    }
-    body.push_str("\n-------- [OMITTED MIDDLE] --------\n");
-    body.push_str(&tail);
+    };
 
     let footer = web_recovery_footer(
-        put.token(),
+        offload.token(),
         original_chars,
         head_chars,
         tail_chars,
         omitted_start_line,
     );
+    let body = offload.text().to_string();
     let mut text = body.clone();
     text.push_str(&footer);
 
@@ -111,7 +114,7 @@ pub fn reduce_web_extract_with_store(
         text,
         body,
         recovery_footer: Some(footer),
-        ccr_token: Some(put.token().to_string()),
+        ccr_token: Some(offload.token().to_string()),
         source_host,
         source_url_hash,
         title: input.title.clone(),

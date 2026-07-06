@@ -226,8 +226,9 @@ TinyJuice files:
   (`![alt](data:image...)` → `[IMAGE: alt]`, real URLs kept); small pages
   returned whole; large pages: offload full text via `CcrStore`, return
   line-snapped head/tail (head ratio 0.75 of the char limit), omission marker
-  and retrieval footer. Implemented as an `OffloadTransform` so it cannot emit
-  a footer without a retained original.
+  and retrieval footer. The reducer gates footer emission through
+  `OffloadOutput::from_retained_put`, so it cannot emit a footer without a
+  retained original.
 - `src/types.rs` — `WebExtractReduceInput { url, title, content, format,
   char_limit, metadata }` and batch shape with a combined inline budget.
 
