@@ -138,15 +138,18 @@ Current behavior:
 - Parses grep/ripgrep-style `path:line:body`.
 - Groups by file.
 - Keeps top K matches per file.
-- Scores query-term density or line salience.
+- Scores query relevance through the shared BM25 scorer, falling back to line
+  salience without a query.
+- `SearchTransform` exposes search-result thinning as a typed offload that
+  emits output only with a retained CCR token.
+- Ranked search-read helpers score exact symbols, paths, match density,
+  imports/exports, generated/vendor penalties, omitted counts, and merged
+  snippet windows over host-provided matches.
 
 Add:
 
-- Shared BM25 scorer.
 - Better query context propagation.
-- Path and generated/vendor penalties for search-read adapter.
-- Omitted match counts by file and global total.
-- Snippet window merging for host-side search-read.
+- Broader fixture coverage for search-read host adapters.
 
 Do not add:
 
