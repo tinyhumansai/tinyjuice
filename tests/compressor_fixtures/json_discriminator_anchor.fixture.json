@@ -1,0 +1,23 @@
+{
+  "description": "SmartCrusher row dropping preserves discriminator bucket representatives",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonDiscriminatorRows",
+    "rows": 140,
+    "specialRow": 72
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "audit",
+      "audit bucket unique payload",
+      "tokenjuice_retrieve"
+    ],
+    "notContains": [
+      "ordinary payload 70"
+    ]
+  }
+}

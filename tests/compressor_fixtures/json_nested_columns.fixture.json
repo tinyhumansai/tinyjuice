@@ -1,0 +1,19 @@
+{
+  "description": "SmartCrusher table rendering flattens nested object columns",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonNestedRows",
+    "rows": 20
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": false,
+    "recovery": false,
+    "contains": [
+      "user.name",
+      "user.team",
+      "user 7"
+    ]
+  }
+}

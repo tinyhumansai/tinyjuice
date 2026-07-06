@@ -64,6 +64,40 @@ enum FixtureGenerator {
         #[serde(rename = "clusterEnd")]
         cluster_end: usize,
     },
+    JsonConstantRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+    },
+    JsonNestedRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+    },
+    JsonStringifiedRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+    },
+    JsonHeterogeneousRows {
+        #[serde(rename = "groups")]
+        groups: usize,
+    },
+    JsonDiscriminatorRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "specialRow")]
+        special_row: usize,
+    },
+    JsonChangePointRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "changeRow")]
+        change_row: usize,
+    },
+    JsonInformationDenseRows {
+        #[serde(rename = "rows")]
+        rows: usize,
+        #[serde(rename = "denseRow")]
+        dense_row: usize,
+    },
     DiffLockfile {
         #[serde(rename = "lines")]
         lines: usize,
@@ -299,6 +333,109 @@ impl FixtureGenerator {
                                 r#"{{"id":"job-{i}","status":"ok","message":"ordinary payload {i}"}}"#
                             )
                         }
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonConstantRows { rows } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        format!(
+                            r#"{{"id":{i},"status":"active","region":"us-east","latency":{}}}"#,
+                            10 + i
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonNestedRows { rows } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        format!(
+                            r#"{{"id":{i},"user":{{"name":"user {i}","team":"core"}},"status":"active"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonStringifiedRows { rows } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let metadata = serde_json::json!({
+                            "owner": format!("team-{i}"),
+                            "flags": { "retry": i % 2 == 0 }
+                        })
+                        .to_string()
+                        .replace('"', "\\\"");
+                        format!(r#"{{"id":{i},"metadata":"{metadata}","status":"active"}}"#)
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonHeterogeneousRows { groups } => {
+                let mut rendered_rows = Vec::new();
+                for i in 0..*groups {
+                    rendered_rows.push(format!(
+                        r#"{{"event":"login","user_id":"user-{i}","ip":"10.0.0.{i}","success":true}}"#
+                    ));
+                    rendered_rows.push(format!(
+                        r#"{{"event":"deploy","service":"api-{i}","version":"2026.{i}.0","region":"us-east"}}"#
+                    ));
+                    rendered_rows.push(format!(
+                        r#"{{"event":"metric","name":"cpu-{i}","value":{},"unit":"pct"}}"#,
+                        40 + i
+                    ));
+                }
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonDiscriminatorRows { rows, special_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let kind = if i == *special_row {
+                            "audit"
+                        } else if i % 2 == 0 {
+                            "service"
+                        } else {
+                            "worker"
+                        };
+                        let message = if i == *special_row {
+                            "audit bucket unique payload"
+                        } else {
+                            "ordinary payload"
+                        };
+                        format!(
+                            r#"{{"id":{i},"kind":"{kind}","status":"active","message":"{message}"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonChangePointRows { rows, change_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let phase = if i < *change_row { 10 } else { 30 };
+                        let message = if i == *change_row {
+                            "phase transition payload".to_string()
+                        } else {
+                            format!("ordinary payload {i}")
+                        };
+                        format!(
+                            r#"{{"id":{i},"phase_score":{phase},"status":"active","message":"{message}"}}"#
+                        )
+                    })
+                    .collect();
+                format!("[{}]", rendered_rows.join(","))
+            }
+            FixtureGenerator::JsonInformationDenseRows { rows, dense_row } => {
+                let rendered_rows: Vec<_> = (0..*rows)
+                    .map(|i| {
+                        let message = if i == *dense_row {
+                            "trace alpha beta gamma delta epsilon zeta eta theta iota kappa lambda"
+                                .to_string()
+                        } else {
+                            format!("ordinary payload {i}")
+                        };
+                        format!(r#"{{"id":{i},"status":"active","message":"{message}"}}"#)
                     })
                     .collect();
                 format!("[{}]", rendered_rows.join(","))

@@ -42,7 +42,11 @@ Add:
 Status: initial router-level fixture coverage now includes a query-anchored
 row-dropping case with CCR recovery. Sparse structural rows, error rows,
 numeric outliers, and duplicate-cluster representative anchors now also have
-router-level fixture coverage. More planner-path fixtures remain.
+router-level fixture coverage. Constant-column hoisting, nested object
+flattening, stringified JSON flattening, heterogeneous bucket rendering,
+discriminator anchors, numeric change-point anchors, and information-dense
+anchors now also have router-level fixture coverage. More planner-path fixtures
+remain.
 
 Do not add:
 
