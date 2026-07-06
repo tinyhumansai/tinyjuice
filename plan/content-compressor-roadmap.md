@@ -98,6 +98,10 @@ Add:
 - More command-rule parity for common build systems and CI outputs.
 - GitHub Actions failing-step summaries through rule metadata.
 
+Status: partially implemented. `ci/github-actions` now handles
+`gh run view --log` output, retaining failing step/error lines and counting
+failed-step annotations through the fixture suite.
+
 Do not add:
 
 - Signal compression for data that has no log signal.

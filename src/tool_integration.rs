@@ -347,6 +347,14 @@ mod tests {
         .await;
         assert!(stats.applied, "expected compaction, got {:?}", stats);
         assert!(compacted.len() < output.len());
+        assert!(
+            compacted.contains("M: src/file_0.rs"),
+            "git/status rule should rewrite modified paths: {compacted}"
+        );
+        assert!(
+            !compacted.contains("On branch main"),
+            "git/status rule should remove branch boilerplate: {compacted}"
+        );
     }
 
     #[tokio::test]

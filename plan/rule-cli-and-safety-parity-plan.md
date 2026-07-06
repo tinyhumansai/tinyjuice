@@ -10,7 +10,7 @@ points, and safe shell policy.
 
 Current state:
 
-- TinyJuice vendors 100 built-in rules.
+- TinyJuice vendors 101 built-in rules.
 - The reference spec says upstream TokenJuice has 130 non-fixture rules.
 - TinyJuice also has Rust/OpenHuman-specific rules.
 
@@ -133,7 +133,7 @@ Acceptance:
 Status: implemented for the library surface. `verify_rules()` now reports parse
 errors, invalid regex patterns, duplicate rule ids, and shadowed lower-priority
 rules across the same builtin/user/project roots as `load_rules()`, without
-changing the lenient runtime loader. Current diagnostics show the 100 built-ins
+changing the lenient runtime loader. Current diagnostics show the 101 built-ins
 parse without duplicate ids and include 11 counter regexes that Rust `regex`
 drops because they use lookahead. `verify_rule_fixtures()` walks
 `*.fixture.json` examples, runs them through compiled rules, and reports pass
