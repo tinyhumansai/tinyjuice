@@ -260,8 +260,9 @@ Acceptance:
 Source specs: `ast-stub-read-spec.md`, roadmap detail in
 `plan/content-compressor-roadmap.md`. The crate already has tree-sitter code
 compression behind `tokenjuice-treesitter` (OpenHuman enables it by default in
-`Cargo.toml`). What is missing is explicit modes and — critically — host
-intent, so exact reads are never stubbed by accident.
+`Cargo.toml`). Current TinyJuice/OpenHuman state has explicit stub modes and
+host intent wired: exact reads remain byte-exact by default, while stub modes
+must be requested explicitly.
 
 TinyJuice files:
 
