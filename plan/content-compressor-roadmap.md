@@ -165,12 +165,16 @@ Current behavior:
 
 - Single-pass HTML-to-text extractor.
 - Drops scripts, styles, head, noscript, and SVG.
+- `HtmlExtractTransform` exposes lossy HTML-to-text extraction as a typed
+  offload that emits output only with a retained CCR token.
+- Web-extract reducer accepts already extracted text/markdown/HTML, strips
+  inline base64 image payloads, preserves metadata, and keeps recovery footers
+  attached to truncated pages.
 
 Add:
 
 - More complete entity support if fixtures show need.
-- Web-extract reducer as an adapter-facing module for already extracted text.
-- Base64 image stripping for web extraction outputs.
+- Broader fixture coverage for web-extract host formats.
 
 Do not add:
 
