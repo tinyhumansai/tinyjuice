@@ -20,8 +20,13 @@ use std::fmt::Write as _;
 
 use super::Compressor;
 use super::signals::has_error_indicators;
+use crate::cache::CcrStore;
+use crate::pipeline::{
+    OffloadOutput, OffloadTransform, PipelineInput, ReformatTransform, TransformOutput,
+    estimate_bloat,
+};
 use crate::relevance::{Bm25Corpus, tokenize};
-use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind};
 
 /// Minimum rows before tabular rendering is worth the header overhead.
 pub const MIN_ROWS: usize = 3;
@@ -64,6 +69,92 @@ pub const QUERY_DIRECTION_EXTRA_ROWS: usize = 10;
 const MAX_STRINGIFIED_JSON_BYTES: usize = 16 * 1024;
 
 pub struct JsonCompressor;
+
+/// Typed reformat transform for faithful SmartCrusher table rendering.
+#[derive(Debug, Clone, Default)]
+pub struct SmartCrusherTableTransform;
+
+/// Typed offload transform for SmartCrusher row-dropping.
+#[derive(Debug, Clone, Default)]
+pub struct SmartCrusherRowsTransform {
+    query: Option<String>,
+}
+
+impl SmartCrusherRowsTransform {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+
+    pub fn query(&self) -> Option<&str> {
+        self.query.as_deref()
+    }
+}
+
+impl ReformatTransform for SmartCrusherTableTransform {
+    fn name(&self) -> &'static str {
+        "smartcrusher_table"
+    }
+
+    fn applies_to(&self, input: &PipelineInput<'_>) -> bool {
+        input.content_kind == ContentKind::Json
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>) -> Option<TransformOutput> {
+        if input.content_kind != ContentKind::Json {
+            return None;
+        }
+        let output = compress(input.content)?;
+        if output.lossy {
+            return None;
+        }
+        Some(TransformOutput::new(
+            output.text,
+            CompressorKind::SmartCrusher,
+        ))
+    }
+}
+
+impl OffloadTransform for SmartCrusherRowsTransform {
+    fn name(&self) -> &'static str {
+        "smartcrusher_rows"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Json {
+            return 0.0;
+        }
+        let score = f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0;
+        if self
+            .query
+            .as_deref()
+            .is_some_and(|query| !query.trim().is_empty())
+        {
+            score.max(0.1)
+        } else {
+            score
+        }
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Json {
+            return None;
+        }
+        let output = compress_with_query(input.content, self.query())?;
+        if !output.lossy {
+            return None;
+        }
+        OffloadOutput::from_retained_put(
+            output.text,
+            CompressorKind::SmartCrusher,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for JsonCompressor {
@@ -1131,6 +1222,7 @@ fn render_cell(v: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
 
     #[test]
     fn crushes_uniform_array() {
@@ -1145,6 +1237,99 @@ mod tests {
         assert_eq!(out.matches("status").count(), 1, "{out}");
         assert!(out.contains("item number 7"));
         assert!(out.len() < input.len(), "expected shrink");
+    }
+
+    #[test]
+    fn smartcrusher_table_transform_runs_without_ccr() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"item number {i}","status":"active","owner":"team-alpha"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Json,
+            original_bytes: input.len(),
+        };
+        let transform = SmartCrusherTableTransform;
+
+        assert!(transform.applies_to(&pipeline_input));
+        let out = transform.apply(&pipeline_input).expect("table reformat");
+
+        assert_eq!(out.kind, CompressorKind::SmartCrusher);
+        assert!(out.text.contains("item number 7"), "{}", out.text);
+        assert!(out.text.len() < input.len(), "{}", out.text);
+    }
+
+    #[test]
+    fn smartcrusher_rows_transform_requires_retained_ccr() {
+        let mut rows = Vec::new();
+        for i in 0..140 {
+            let note = if i == 71 {
+                "contains special needle token"
+            } else {
+                "ordinary row"
+            };
+            rows.push(format!(
+                r#"{{"id":{i},"name":"record {i}","status":"active","note":"{note}"}}"#
+            ));
+        }
+        let input = format!("[{}]", rows.join(","));
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Json,
+            original_bytes: input.len(),
+        };
+        let transform = SmartCrusherRowsTransform::new().with_query("special needle");
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained SmartCrusher rows");
+
+        assert_eq!(out.kind(), CompressorKind::SmartCrusher);
+        assert!(
+            out.text().contains("special needle token"),
+            "{}",
+            out.text()
+        );
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn smartcrusher_rows_transform_skips_reformats_and_non_json_input() {
+        let mut rows = Vec::new();
+        for i in 0..20 {
+            rows.push(format!(
+                r#"{{"id":{i},"name":"item number {i}","status":"active","owner":"team-alpha"}}"#
+            ));
+        }
+        let small_json = format!("[{}]", rows.join(","));
+        let small_input = PipelineInput {
+            content: &small_json,
+            original_content: &small_json,
+            content_kind: ContentKind::Json,
+            original_bytes: small_json.len(),
+        };
+        let plain_input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = SmartCrusherRowsTransform::new();
+        let store = MemoryCcrStore::default();
+
+        assert!(transform.apply(&small_input, &store).is_none());
+        assert_eq!(transform.estimate_bloat(&plain_input), 0.0);
+        assert!(transform.apply(&plain_input, &store).is_none());
     }
 
     #[test]
