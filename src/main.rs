@@ -11,6 +11,9 @@ use tinyjuice::{
     verify_rules,
 };
 
+const TINYJUICE_MANAGED_BEGIN: &str = "<!-- tinyjuice-managed:start -->";
+const TINYJUICE_MANAGED_END: &str = "<!-- tinyjuice-managed:end -->";
+
 fn main() -> ExitCode {
     match run(std::env::args().skip(1).collect()) {
         Ok(()) => ExitCode::SUCCESS,
@@ -37,6 +40,8 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "cat" => run_cat(&args[1..]),
         "stats" => run_stats(&args[1..]),
         "doctor" => run_doctor(&args[1..]),
+        "install" => run_install(&args[1..]),
+        "uninstall" => run_uninstall(&args[1..]),
         "-h" | "--help" | "help" => {
             print_usage();
             Ok(())
@@ -115,8 +120,11 @@ fn run_stats(args: &[String]) -> Result<(), String> {
 }
 
 fn run_doctor(args: &[String]) -> Result<(), String> {
+    let mut target = None;
     let mut store_dir = None;
     let mut fixtures_dir = PathBuf::from("tests/fixtures");
+    let mut codex_home = None;
+    let mut openhuman_root = None;
     let mut check_fixtures = false;
     let mut pretty = false;
     let mut i = 0;
@@ -129,6 +137,20 @@ fn run_doctor(args: &[String]) -> Result<(), String> {
                     args.get(i)
                         .ok_or_else(|| "--store-dir requires a value".to_owned())?,
                 ));
+            }
+            "--codex-home" => {
+                i += 1;
+                codex_home = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| "--codex-home requires a value".to_owned())?,
+                ));
+            }
+            "--openhuman-root" => {
+                i += 1;
+                openhuman_root =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        "--openhuman-root requires a value".to_owned()
+                    })?));
             }
             "--fixtures" => {
                 check_fixtures = true;
@@ -145,9 +167,20 @@ fn run_doctor(args: &[String]) -> Result<(), String> {
                 print_doctor_usage();
                 return Ok(());
             }
-            value => return Err(format!("unknown doctor option: {value}")),
+            value if value.starts_with('-') => {
+                return Err(format!("unknown doctor option: {value}"));
+            }
+            value => {
+                if target.replace(value.to_owned()).is_some() {
+                    return Err("doctor accepts at most one host target".to_owned());
+                }
+            }
         }
         i += 1;
+    }
+
+    if let Some(target) = target {
+        return run_host_doctor(&target, pretty, codex_home, openhuman_root);
     }
 
     let mut status = "disabled";
@@ -261,6 +294,393 @@ fn run_doctor(args: &[String]) -> Result<(), String> {
         Err("doctor found broken checks".to_owned())
     } else {
         Ok(())
+    }
+}
+
+fn run_host_doctor(
+    target: &str,
+    pretty: bool,
+    codex_home: Option<PathBuf>,
+    openhuman_root: Option<PathBuf>,
+) -> Result<(), String> {
+    let checks = match target {
+        "codex" => vec![doctor_codex(codex_home)],
+        "openhuman" => vec![doctor_openhuman(openhuman_root)],
+        "hooks" => vec![doctor_codex(codex_home), doctor_openhuman(openhuman_root)],
+        other => return Err(format!("unknown doctor host target: {other}")),
+    };
+    let status = checks
+        .iter()
+        .filter_map(|check| check.get("status").and_then(serde_json::Value::as_str))
+        .fold("disabled", merge_doctor_status);
+    let report = serde_json::json!({
+        "status": status,
+        "checks": checks,
+    });
+    if pretty {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report)
+                .map_err(|error| format!("failed to serialize doctor report: {error}"))?
+        );
+    } else {
+        println!(
+            "{}",
+            serde_json::to_string(&report)
+                .map_err(|error| format!("failed to serialize doctor report: {error}"))?
+        );
+    }
+
+    if status == "broken" {
+        Err("doctor found broken host checks".to_owned())
+    } else {
+        Ok(())
+    }
+}
+
+fn run_install(args: &[String]) -> Result<(), String> {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_install_usage();
+        return Ok(());
+    }
+    let install = parse_host_mutation_args("install", args, true)?;
+    match install.host.as_str() {
+        "codex" => {
+            let report = install_codex(install.codex_home, install.local_binary)?;
+            println!(
+                "{}",
+                serde_json::to_string(&report)
+                    .map_err(|error| format!("failed to serialize install report: {error}"))?
+            );
+            Ok(())
+        }
+        other => Err(format!("unknown install host: {other}")),
+    }
+}
+
+fn run_uninstall(args: &[String]) -> Result<(), String> {
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_uninstall_usage();
+        return Ok(());
+    }
+    let uninstall = parse_host_mutation_args("uninstall", args, false)?;
+    match uninstall.host.as_str() {
+        "codex" => {
+            let report = uninstall_codex(uninstall.codex_home)?;
+            println!(
+                "{}",
+                serde_json::to_string(&report)
+                    .map_err(|error| format!("failed to serialize uninstall report: {error}"))?
+            );
+            Ok(())
+        }
+        other => Err(format!("unknown uninstall host: {other}")),
+    }
+}
+
+struct HostMutationArgs {
+    host: String,
+    codex_home: Option<PathBuf>,
+    local_binary: Option<PathBuf>,
+}
+
+fn parse_host_mutation_args(
+    command: &str,
+    args: &[String],
+    allow_local: bool,
+) -> Result<HostMutationArgs, String> {
+    let mut host = None;
+    let mut codex_home = None;
+    let mut local_binary = None;
+    let mut i = 0;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--codex-home" => {
+                i += 1;
+                codex_home = Some(PathBuf::from(
+                    args.get(i)
+                        .ok_or_else(|| "--codex-home requires a value".to_owned())?,
+                ));
+            }
+            "--local" if allow_local => {
+                i += 1;
+                local_binary =
+                    Some(PathBuf::from(args.get(i).ok_or_else(|| {
+                        "--local requires a binary path".to_owned()
+                    })?));
+            }
+            value if value.starts_with('-') => {
+                return Err(format!("unknown {command} option: {value}"));
+            }
+            value => {
+                if host.replace(value.to_owned()).is_some() {
+                    return Err(format!("{command} accepts exactly one host"));
+                }
+            }
+        }
+        i += 1;
+    }
+
+    Ok(HostMutationArgs {
+        host: host.ok_or_else(|| format!("{command} requires a host"))?,
+        codex_home,
+        local_binary,
+    })
+}
+
+fn install_codex(
+    codex_home: Option<PathBuf>,
+    local_binary: Option<PathBuf>,
+) -> Result<serde_json::Value, String> {
+    let root = codex_home.unwrap_or_else(default_codex_home);
+    let instruction_path = codex_instruction_path(&root);
+    let binary = local_binary
+        .map(|path| path.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "tinyjuice".to_owned());
+    let block = managed_codex_block(&binary);
+    let original = match fs::read_to_string(&instruction_path) {
+        Ok(content) => content,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
+        Err(error) => {
+            return Err(format!(
+                "failed to read {}: {error}",
+                instruction_path.display()
+            ));
+        }
+    };
+    let updated = replace_or_insert_managed_block(&original, &block);
+    let changed = updated != original;
+    if changed {
+        write_managed_file(&instruction_path, &original, &updated)?;
+    }
+    Ok(serde_json::json!({
+        "host": "codex",
+        "status": "ok",
+        "changed": changed,
+        "configPath": instruction_path.to_string_lossy(),
+        "command": format!("{binary} reduce-json"),
+    }))
+}
+
+fn uninstall_codex(codex_home: Option<PathBuf>) -> Result<serde_json::Value, String> {
+    let root = codex_home.unwrap_or_else(default_codex_home);
+    let instruction_path = codex_instruction_path(&root);
+    let original = match fs::read_to_string(&instruction_path) {
+        Ok(content) => content,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return Ok(serde_json::json!({
+                "host": "codex",
+                "status": "ok",
+                "changed": false,
+                "configPath": instruction_path.to_string_lossy(),
+            }));
+        }
+        Err(error) => {
+            return Err(format!(
+                "failed to read {}: {error}",
+                instruction_path.display()
+            ));
+        }
+    };
+    let updated = remove_managed_block(&original);
+    let changed = updated != original;
+    if changed {
+        write_managed_file(&instruction_path, &original, &updated)?;
+    }
+    Ok(serde_json::json!({
+        "host": "codex",
+        "status": "ok",
+        "changed": changed,
+        "configPath": instruction_path.to_string_lossy(),
+    }))
+}
+
+fn doctor_codex(codex_home: Option<PathBuf>) -> serde_json::Value {
+    let root = codex_home.unwrap_or_else(default_codex_home);
+    let instruction_path = codex_instruction_path(&root);
+    let repair_command = "tinyjuice install codex".to_owned();
+    let expected_command = "tinyjuice reduce-json".to_owned();
+
+    let content = match fs::read_to_string(&instruction_path) {
+        Ok(content) => content,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return serde_json::json!({
+                "name": "codex",
+                "status": "disabled",
+                "configPath": instruction_path.to_string_lossy(),
+                "expectedCommand": expected_command,
+                "repairCommand": repair_command,
+            });
+        }
+        Err(error) => {
+            return serde_json::json!({
+                "name": "codex",
+                "status": "broken",
+                "configPath": instruction_path.to_string_lossy(),
+                "expectedCommand": expected_command,
+                "repairCommand": repair_command,
+                "error": format!("failed to read Codex TinyJuice instructions: {error}"),
+            });
+        }
+    };
+
+    let Some(block) = managed_block(&content) else {
+        return serde_json::json!({
+            "name": "codex",
+            "status": "disabled",
+            "configPath": instruction_path.to_string_lossy(),
+            "expectedCommand": expected_command,
+            "repairCommand": repair_command,
+        });
+    };
+    let detected_command = managed_command(block);
+    let status = match detected_command.as_deref().and_then(command_binary_status) {
+        Some(false) => "broken",
+        _ => "ok",
+    };
+    let mut check = serde_json::json!({
+        "name": "codex",
+        "status": status,
+        "configPath": instruction_path.to_string_lossy(),
+        "expectedCommand": expected_command,
+        "detectedCommand": detected_command,
+        "repairCommand": repair_command,
+    });
+    if status == "broken" {
+        check["error"] =
+            serde_json::Value::String("managed command points at a missing executable".to_owned());
+    }
+    check
+}
+
+fn doctor_openhuman(openhuman_root: Option<PathBuf>) -> serde_json::Value {
+    let root = openhuman_root.unwrap_or_else(default_openhuman_root);
+    let adapter_path = root
+        .join("src")
+        .join("openhuman")
+        .join("tokenjuice")
+        .join("mod.rs");
+    if adapter_path.is_file() {
+        serde_json::json!({
+            "name": "openhuman",
+            "status": "ok",
+            "configPath": adapter_path.to_string_lossy(),
+            "expectedCommand": "direct Rust crate integration",
+            "detectedCommand": "src/openhuman/tokenjuice",
+            "repairCommand": "tinyjuice doctor openhuman --openhuman-root PATH",
+        })
+    } else {
+        serde_json::json!({
+            "name": "openhuman",
+            "status": "disabled",
+            "configPath": adapter_path.to_string_lossy(),
+            "expectedCommand": "direct Rust crate integration",
+            "repairCommand": "tinyjuice doctor openhuman --openhuman-root PATH",
+        })
+    }
+}
+
+fn default_codex_home() -> PathBuf {
+    std::env::var_os("CODEX_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".codex")))
+        .unwrap_or_else(|| PathBuf::from(".codex"))
+}
+
+fn default_openhuman_root() -> PathBuf {
+    PathBuf::from("../openhuman-4")
+}
+
+fn codex_instruction_path(root: &Path) -> PathBuf {
+    root.join("instructions").join("tinyjuice.md")
+}
+
+fn managed_codex_block(binary: &str) -> String {
+    format!(
+        "{TINYJUICE_MANAGED_BEGIN}\n\
+         # TinyJuice\n\
+         Command: {binary} reduce-json\n\
+         When tool output is too large for context, prefer passing a structured payload to the command above or using `tinyjuice wrap -- <command>` when no post-tool hook is available.\n\
+         {TINYJUICE_MANAGED_END}"
+    )
+}
+
+fn managed_block(content: &str) -> Option<&str> {
+    let start = content.find(TINYJUICE_MANAGED_BEGIN)? + TINYJUICE_MANAGED_BEGIN.len();
+    let end = content[start..].find(TINYJUICE_MANAGED_END)? + start;
+    Some(content[start..end].trim())
+}
+
+fn replace_or_insert_managed_block(content: &str, block: &str) -> String {
+    if let Some((start, end)) = managed_block_bounds(content) {
+        let mut out = String::with_capacity(content.len() + block.len());
+        out.push_str(&content[..start]);
+        out.push_str(block);
+        out.push_str(&content[end..]);
+        out
+    } else if content.trim().is_empty() {
+        format!("{block}\n")
+    } else {
+        format!("{}\n\n{block}\n", content.trim_end())
+    }
+}
+
+fn remove_managed_block(content: &str) -> String {
+    if let Some((start, end)) = managed_block_bounds(content) {
+        let mut out = String::with_capacity(content.len());
+        out.push_str(content[..start].trim_end());
+        out.push_str(content[end..].trim_start_matches('\n'));
+        if !out.is_empty() && !out.ends_with('\n') {
+            out.push('\n');
+        }
+        out
+    } else {
+        content.to_owned()
+    }
+}
+
+fn managed_block_bounds(content: &str) -> Option<(usize, usize)> {
+    let start = content.find(TINYJUICE_MANAGED_BEGIN)?;
+    let end = content[start..].find(TINYJUICE_MANAGED_END)? + start + TINYJUICE_MANAGED_END.len();
+    Some((start, end))
+}
+
+fn write_managed_file(path: &Path, original: &str, updated: &str) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| format!("{} has no parent directory", path.display()))?;
+    fs::create_dir_all(parent)
+        .map_err(|error| format!("failed to create {}: {error}", parent.display()))?;
+    if path.exists() && !original.is_empty() {
+        let backup = path.with_extension("md.bak");
+        if !backup.exists() {
+            fs::write(&backup, original)
+                .map_err(|error| format!("failed to write backup {}: {error}", backup.display()))?;
+        }
+    }
+    let tmp = path.with_extension("md.tmp");
+    fs::write(&tmp, updated)
+        .map_err(|error| format!("failed to write temp file {}: {error}", tmp.display()))?;
+    fs::rename(&tmp, path).map_err(|error| format!("failed to replace {}: {error}", path.display()))
+}
+
+fn managed_command(block: &str) -> Option<String> {
+    block.lines().find_map(|line| {
+        line.trim()
+            .strip_prefix("Command:")
+            .map(str::trim)
+            .filter(|command| !command.is_empty())
+            .map(str::to_owned)
+    })
+}
+
+fn command_binary_status(command: &str) -> Option<bool> {
+    let binary = command.split_whitespace().next()?;
+    if binary.contains(std::path::MAIN_SEPARATOR) || Path::new(binary).is_absolute() {
+        Some(Path::new(binary).is_file())
+    } else {
+        None
     }
 }
 
@@ -423,11 +843,12 @@ fn read_ccr_store_inventory(store_dir: &Path) -> Result<CcrStoreInventory, Strin
     })
 }
 
-fn merge_doctor_status(current: &'static str, next: &'static str) -> &'static str {
-    if doctor_status_rank(next) > doctor_status_rank(current) {
-        next
-    } else {
-        current
+fn merge_doctor_status(current: &str, next: &str) -> &'static str {
+    match doctor_status_rank(current).max(doctor_status_rank(next)) {
+        3 => "broken",
+        2 => "warn",
+        1 => "ok",
+        _ => "disabled",
     }
 }
 
@@ -820,6 +1241,8 @@ fn print_usage() {
     println!("  cat          Print a token from an explicit CCR disk store");
     println!("  stats        Report metadata-only CCR disk store stats");
     println!("  doctor       Report TinyJuice health checks");
+    println!("  install      Install TinyJuice integration for a host");
+    println!("  uninstall    Remove TinyJuice integration from a host");
 }
 
 fn print_reduce_usage() {
@@ -860,5 +1283,15 @@ fn print_stats_usage() {
 }
 
 fn print_doctor_usage() {
-    println!("Usage: tinyjuice doctor [--pretty] [--fixtures [dir]] [--store-dir DIR]");
+    println!(
+        "Usage: tinyjuice doctor [host|hooks] [--pretty] [--fixtures [dir]] [--store-dir DIR] [--codex-home DIR] [--openhuman-root DIR]"
+    );
+}
+
+fn print_install_usage() {
+    println!("Usage: tinyjuice install codex [--codex-home DIR] [--local PATH]");
+}
+
+fn print_uninstall_usage() {
+    println!("Usage: tinyjuice uninstall codex [--codex-home DIR]");
 }

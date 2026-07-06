@@ -187,6 +187,10 @@ cargo run -- ls --store-dir .tokenjuice/ccr
 cargo run -- cat --store-dir .tokenjuice/ccr <token>
 cargo run -- stats --store-dir .tokenjuice/ccr
 cargo run -- doctor --store-dir .tokenjuice/ccr
+cargo run -- doctor codex
+cargo run -- doctor hooks
+cargo run -- install codex --local target/debug/tinyjuice
+cargo run -- uninstall codex
 ```
 
 Run hot-path benchmarks:
@@ -222,6 +226,12 @@ The CLI `doctor` command emits structured health JSON using `ok`, `warn`,
 `broken`, and `disabled` statuses. It verifies built-in rule health by default,
 can include fixture checks with `--fixtures [dir]`, and can inspect an explicit
 CCR disk tier with `--store-dir`.
+Host-aware doctor targets (`codex`, `openhuman`, and aggregate `hooks`) expose
+expected commands, detected commands when present, and one repair command
+without mutating user configuration.
+The first host mutation path is `install codex` / `uninstall codex`, which
+maintains only a TinyJuice-managed instruction block under the Codex config
+root and preserves unrelated text.
 
 `run_typed_pipeline` is the typed-transform entry point for new reducers. It
 runs lossless `ReformatTransform`s before CCR-backed `OffloadTransform`s and

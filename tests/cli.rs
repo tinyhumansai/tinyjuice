@@ -372,3 +372,203 @@ fn doctor_reports_broken_store_dir() {
     assert_eq!(store["status"], "broken");
     assert_eq!(store["storeDir"], missing_dir);
 }
+
+#[test]
+fn doctor_codex_reports_disabled_without_managed_instructions() {
+    let codex_home = tempfile::tempdir().expect("temp codex home");
+
+    let output = tinyjuice()
+        .args([
+            "doctor",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+        ])
+        .output()
+        .expect("run tinyjuice doctor codex");
+
+    assert!(output.status.success(), "{output:#?}");
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).expect("doctor json");
+    assert_eq!(response["status"], "disabled");
+    assert_eq!(response["checks"][0]["name"], "codex");
+    assert_eq!(response["checks"][0]["status"], "disabled");
+    assert_eq!(
+        response["checks"][0]["repairCommand"],
+        "tinyjuice install codex"
+    );
+}
+
+#[test]
+fn doctor_codex_reports_ok_for_existing_managed_command() {
+    let codex_home = tempfile::tempdir().expect("temp codex home");
+    let instructions_dir = codex_home.path().join("instructions");
+    fs::create_dir(&instructions_dir).expect("create instructions dir");
+    let command = format!("{} reduce-json", env!("CARGO_BIN_EXE_tinyjuice"));
+    fs::write(
+        instructions_dir.join("tinyjuice.md"),
+        format!(
+            "user notes\n<!-- tinyjuice-managed:start -->\nCommand: {command}\n<!-- tinyjuice-managed:end -->\n"
+        ),
+    )
+    .expect("write managed instructions");
+
+    let output = tinyjuice()
+        .args([
+            "doctor",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+        ])
+        .output()
+        .expect("run tinyjuice doctor codex");
+
+    assert!(output.status.success(), "{output:#?}");
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).expect("doctor json");
+    assert_eq!(response["status"], "ok");
+    assert_eq!(response["checks"][0]["status"], "ok");
+    assert_eq!(response["checks"][0]["detectedCommand"], command);
+}
+
+#[test]
+fn doctor_codex_reports_broken_for_missing_managed_command() {
+    let codex_home = tempfile::tempdir().expect("temp codex home");
+    let instructions_dir = codex_home.path().join("instructions");
+    fs::create_dir(&instructions_dir).expect("create instructions dir");
+    let command = codex_home
+        .path()
+        .join("missing-tinyjuice")
+        .to_string_lossy()
+        .into_owned();
+    fs::write(
+        instructions_dir.join("tinyjuice.md"),
+        format!(
+            "<!-- tinyjuice-managed:start -->\nCommand: {command} reduce-json\n<!-- tinyjuice-managed:end -->\n"
+        ),
+    )
+    .expect("write managed instructions");
+
+    let output = tinyjuice()
+        .args([
+            "doctor",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+        ])
+        .output()
+        .expect("run tinyjuice doctor codex");
+
+    assert!(!output.status.success(), "{output:#?}");
+    let response: serde_json::Value = serde_json::from_slice(&output.stdout).expect("doctor json");
+    assert_eq!(response["status"], "broken");
+    assert_eq!(response["checks"][0]["status"], "broken");
+    assert_eq!(
+        response["checks"][0]["error"],
+        "managed command points at a missing executable"
+    );
+}
+
+#[test]
+fn install_codex_writes_managed_block_and_is_idempotent() {
+    let codex_home = tempfile::tempdir().expect("temp codex home");
+    let local = env!("CARGO_BIN_EXE_tinyjuice");
+
+    let first = tinyjuice()
+        .args([
+            "install",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+            "--local",
+            local,
+        ])
+        .output()
+        .expect("run tinyjuice install codex");
+    assert!(first.status.success(), "{first:#?}");
+    let first_json: serde_json::Value =
+        serde_json::from_slice(&first.stdout).expect("install json");
+    assert_eq!(first_json["status"], "ok");
+    assert_eq!(first_json["changed"], true);
+
+    let second = tinyjuice()
+        .args([
+            "install",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+            "--local",
+            local,
+        ])
+        .output()
+        .expect("rerun tinyjuice install codex");
+    assert!(second.status.success(), "{second:#?}");
+    let second_json: serde_json::Value =
+        serde_json::from_slice(&second.stdout).expect("install json");
+    assert_eq!(second_json["changed"], false);
+
+    let instructions =
+        fs::read_to_string(codex_home.path().join("instructions/tinyjuice.md")).expect("read file");
+    assert!(instructions.contains("<!-- tinyjuice-managed:start -->"));
+    assert!(instructions.contains(&format!("Command: {local} reduce-json")));
+}
+
+#[test]
+fn install_codex_preserves_unrelated_text_and_creates_backup() {
+    let codex_home = tempfile::tempdir().expect("temp codex home");
+    let instructions_dir = codex_home.path().join("instructions");
+    fs::create_dir(&instructions_dir).expect("create instructions dir");
+    let path = instructions_dir.join("tinyjuice.md");
+    fs::write(&path, "keep this note\n").expect("write existing instructions");
+
+    let output = tinyjuice()
+        .args([
+            "install",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+            "--local",
+            env!("CARGO_BIN_EXE_tinyjuice"),
+        ])
+        .output()
+        .expect("run tinyjuice install codex");
+
+    assert!(output.status.success(), "{output:#?}");
+    let updated = fs::read_to_string(&path).expect("read updated instructions");
+    assert!(updated.contains("keep this note"), "{updated}");
+    assert!(updated.contains("tinyjuice-managed:start"), "{updated}");
+    assert_eq!(
+        fs::read_to_string(path.with_extension("md.bak")).expect("read backup"),
+        "keep this note\n"
+    );
+}
+
+#[test]
+fn uninstall_codex_removes_only_managed_block() {
+    let codex_home = tempfile::tempdir().expect("temp codex home");
+    let instructions_dir = codex_home.path().join("instructions");
+    fs::create_dir(&instructions_dir).expect("create instructions dir");
+    let path = instructions_dir.join("tinyjuice.md");
+    fs::write(
+        &path,
+        "before\n\n<!-- tinyjuice-managed:start -->\nCommand: /missing reduce-json\n<!-- tinyjuice-managed:end -->\n\nafter\n",
+    )
+    .expect("write managed instructions");
+
+    let output = tinyjuice()
+        .args([
+            "uninstall",
+            "codex",
+            "--codex-home",
+            &codex_home.path().to_string_lossy(),
+        ])
+        .output()
+        .expect("run tinyjuice uninstall codex");
+
+    assert!(output.status.success(), "{output:#?}");
+    let response: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("uninstall json");
+    assert_eq!(response["changed"], true);
+    let updated = fs::read_to_string(&path).expect("read updated instructions");
+    assert!(updated.contains("before"), "{updated}");
+    assert!(updated.contains("after"), "{updated}");
+    assert!(!updated.contains("tinyjuice-managed"), "{updated}");
+}

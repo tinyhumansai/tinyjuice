@@ -137,8 +137,11 @@ command's status. `ls`, `cat`, and `stats` operate on an explicit CCR disk
 tier via `--store-dir`; `cat` supports line and byte ranges, while `stats`
 reports metadata-only token counts and byte totals. `doctor` emits structured
 health JSON with `ok`, `warn`, `broken`, and `disabled` checks for built-in
-rules, optional fixture verification, and optional explicit CCR disk store
-inspection. Host installers remain future CLI slices.
+rules, optional fixture verification, optional explicit CCR disk store
+inspection, and host-aware `codex`, `openhuman`, and aggregate `hooks` targets.
+`install codex` and `uninstall codex` maintain a TinyJuice-managed Codex
+instruction block idempotently while preserving unrelated text. OpenHuman and
+other host install/uninstall mutation remains a future CLI slice.
 
 ## P1: Rule Validation And Discovery
 
