@@ -252,7 +252,11 @@ fn classify_array(arr: &[Value]) -> Option<CandidateKind> {
 /// Render the scalar siblings of the tabled array key as `key: value` preamble
 /// lines (truncated). Non-scalar siblings are skipped — the table/preamble is a
 /// summary, and the router keeps the original recoverable.
-fn sibling_preamble(container: &Map<String, Value>, array_key: &str, allow_truncate: bool) -> String {
+fn sibling_preamble(
+    container: &Map<String, Value>,
+    array_key: &str,
+    allow_truncate: bool,
+) -> String {
     let mut out = String::new();
     for (key, val) in container {
         if key == array_key {

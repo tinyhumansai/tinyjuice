@@ -316,7 +316,11 @@ mod tests {
         assert!(!o.lossy_without_ccr, "default is strict");
         let original = big_log();
         let res = compress_content(&original, Some(log_hint()), &o).await;
-        assert!(!res.applied, "default must decline unrecoverable lossy: {}", res.text);
+        assert!(
+            !res.applied,
+            "default must decline unrecoverable lossy: {}",
+            res.text
+        );
         assert_eq!(res.text, original);
     }
 
@@ -332,7 +336,11 @@ mod tests {
         let original = big_json_array();
         let res = compress_content(&original, None, &o).await;
         assert_eq!(res.content_kind, ContentKind::Json);
-        assert!(res.applied, "faithful table ships without CCR: {}", res.text);
+        assert!(
+            res.applied,
+            "faithful table ships without CCR: {}",
+            res.text
+        );
         assert!(!res.lossy, "full table is a faithful reshape");
         assert!(res.text.len() < original.len());
         assert!(res.ccr_token.is_none(), "reshape needs no recovery");
@@ -368,7 +376,11 @@ mod tests {
         };
         let res = compress_content(&html, Some(hint), &o).await;
         assert_eq!(res.content_kind, ContentKind::Html);
-        assert!(res.applied, "faithful reshape ships without CCR: {}", res.text);
+        assert!(
+            res.applied,
+            "faithful reshape ships without CCR: {}",
+            res.text
+        );
         assert!(!res.lossy, "extraction is information-preserving");
         assert!(res.ccr_token.is_none(), "no recovery needed for a reshape");
         // Every service line's text survives the reshape.
@@ -447,7 +459,11 @@ mod tests {
         assert!(res.text.contains("pub fn worker_0"), "signatures kept");
         // Every collapsed body carries a per-block retrieval token.
         let tokens = cache::parse_markers(&res.text);
-        assert!(!tokens.is_empty(), "recoverable tokens present: {}", res.text);
+        assert!(
+            !tokens.is_empty(),
+            "recoverable tokens present: {}",
+            res.text
+        );
         let body = cache::retrieve(&tokens[0]).expect("stored");
         assert!(body.contains("tmp_0_15"), "full body recoverable: {body}");
     }
