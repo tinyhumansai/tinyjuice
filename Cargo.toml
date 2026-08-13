@@ -8,6 +8,19 @@ repository = "https://github.com/tinyhumansai/tinyjuice"
 readme = "README.md"
 keywords = ["llm", "tokens", "compression", "openhuman", "context"]
 categories = ["text-processing"]
+exclude = [
+    ".github/",
+    ".gitmodules",
+    "docs/",
+    "vendor/tinybus/",
+    "wiki/",
+]
+
+[workspace]
+members = ["crates/tinyjuice-module"]
+default-members = [".", "crates/tinyjuice-module"]
+exclude = ["vendor/tinybus"]
+resolver = "3"
 
 [dependencies]
 async-trait = "0.1"
@@ -57,3 +70,8 @@ tinyjuice-treesitter = [
     "dep:tree-sitter-rust",
     "dep:tree-sitter-typescript",
 ]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
