@@ -380,7 +380,8 @@ impl ContentKind {
 /// to work from scratch. Any field may be `None`; the detector resolves what it
 /// can and falls back to structural heuristics. An `explicit` kind is a hard
 /// override and skips detection entirely.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContentHint {
     /// MIME type if known (`text/html`, `application/json`, …).
     pub mime: Option<String>,
@@ -510,7 +511,8 @@ impl CompressOutput {
 /// Knobs for the router and compressors, built by the caller from the
 /// `[tinyjuice]` config block. TokenJuice stays decoupled from the config
 /// schema crate by taking this plain struct rather than `Config`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CompressOptions {
     /// Master switch — when false, [`crate::compress_content`]
     /// is a pass-through.
@@ -605,7 +607,8 @@ impl Default for CompressOptions {
 /// The result of the universal [`crate::compress_content`]
 /// entry point: the compacted text (with any CCR footer already appended), plus
 /// metadata for callers/stats.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompressedOutput {
     /// Final text to inline into context (includes the retrieval footer when lossy).
     pub text: String,
