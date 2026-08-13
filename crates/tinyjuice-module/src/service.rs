@@ -31,6 +31,10 @@ struct CompactResponse {
     compacted_bytes: usize,
     rule_id: String,
     applied: bool,
+    content_kind: String,
+    compressor: String,
+    original_tokens: u64,
+    compacted_tokens: u64,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -91,24 +95,39 @@ impl Compression {
     ) -> BusResult<CompactResponse> {
         if !enabled {
             let bytes = content.len();
+            let tokens = tinyjuice::tokens::estimate_tokens(&content);
             return Ok(CompactResponse {
                 text: content,
                 original_bytes: bytes,
                 compacted_bytes: bytes,
                 rule_id: "none/disabled".to_string(),
                 applied: false,
+                content_kind: "plain_text".to_string(),
+                compressor: "none".to_string(),
+                original_tokens: tokens,
+                compacted_tokens: tokens,
             });
         }
+        let original_tokens = tinyjuice::tokens::estimate_tokens(&content);
         let (text, stats) = tinyjuice::tool_integration::compact_tool_output_with_policy(
             &tool_name, None, &content, None, profile,
         )
         .await;
+        let compacted_tokens = tinyjuice::tokens::estimate_tokens(&text);
+        let (compressor, content_kind) = stats.rule_id.strip_prefix("none/").map_or_else(
+            || (stats.rule_id.clone(), "plain_text".to_string()),
+            |kind| ("none".to_string(), kind.to_string()),
+        );
         Ok(CompactResponse {
             text,
             original_bytes: stats.original_bytes,
             compacted_bytes: stats.compacted_bytes,
             rule_id: stats.rule_id,
             applied: stats.applied,
+            content_kind,
+            compressor,
+            original_tokens,
+            compacted_tokens,
         })
     }
 
