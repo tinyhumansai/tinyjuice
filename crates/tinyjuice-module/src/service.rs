@@ -38,7 +38,7 @@ struct CompactResponse {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 enum WireRangeUnit {
     Bytes,
     Lines,

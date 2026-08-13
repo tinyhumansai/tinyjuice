@@ -29,7 +29,6 @@ jobs:
       crate_name: ${{ steps.version.outputs.crate_name }}
       next_version: ${{ steps.version.outputs.next_version }}
       tag: ${{ steps.version.outputs.tag }}
-      tinybus_version: ${{ steps.version.outputs.tinybus_version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -60,19 +59,8 @@ jobs:
           metadata="$(cargo metadata --format-version 1 --no-deps)"
           crate_name="tinyjuice"
           current_version="$(jq -r '.packages[] | select(.name == "tinyjuice") | .version' <<< "$metadata")"
-          tinybus_version="$(
-            cargo metadata \
-              --manifest-path vendor/tinybus/Cargo.toml \
-              --format-version 1 \
-              --no-deps \
-              | jq -r '.packages[] | select(.name == "tinybus") | .version'
-          )"
           if [[ -z "$current_version" || "$current_version" == "null" ]]; then
             echo "Could not resolve the current crate version" >&2
-            exit 1
-          fi
-          if [[ -z "$tinybus_version" || "$tinybus_version" == "null" ]]; then
-            echo "Could not resolve the TinyBus version" >&2
             exit 1
           fi
 
@@ -110,7 +98,6 @@ jobs:
             echo "current_version=${current_version}"
             echo "next_version=${next_version}"
             echo "tag=${tag}"
-            echo "tinybus_version=${tinybus_version}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Update crate version
@@ -163,11 +150,6 @@ jobs:
           set -euo pipefail
           git push origin "HEAD:${GITHUB_REF_NAME}"
           git push origin "${RELEASE_TAG}"
-
-      - name: Publish crate
-        run: cargo publish --locked --package tinyjuice
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   native-bundles:
     name: Module bundle (${{ matrix.id }})
@@ -275,7 +257,7 @@ jobs:
           $packageName = "tinyjuice-module-$env:VERSION-$env:BUNDLE_ID"
           $packageRoot = "dist/$packageName"
           New-Item -ItemType Directory -Force $packageRoot | Out-Null
-          Copy-Item -LiteralPath $module, 'LICENSE', 'README.md' -Destination $packageRoot
+          Copy-Item -LiteralPath $module, 'LICENSE', 'README.md', 'docs/specs/tinybus-module.md' -Destination $packageRoot
           $hash = (Get-FileHash -LiteralPath $module -Algorithm SHA256).Hash.ToLowerInvariant()
           $moduleName = Split-Path -Leaf $module
           "`"$moduleName`" = `"$hash`"`n" |
@@ -319,6 +301,12 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Download source packages
+        uses: actions/download-artifact@v8
+        with:
+          name: source-packages
+          path: source-packages
+
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Create release checksum manifest with TinyBus
@@ -348,7 +336,9 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          mapfile -t release_files < <(find release-assets -type f | sort)
+          mapfile -t release_files < <(
+            find release-assets source-packages -type f | sort
+          )
           gh release create "$RELEASE_TAG" "${release_files[@]}" \
             --repo "$REPOSITORY" \
             --verify-tag \
@@ -370,3 +360,24 @@ jobs:
           cargo run --manifest-path vendor/tinybus/Cargo.toml --locked \
             --package tinybus --all-features --example github_module_host -- \
             "$release_url" "$archive" "$sha256"
+
+  publish-crate:
+    name: Publish crate
+    needs:
+      - publish
+      - github-release
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.tag }}
+          persist-credentials: false
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish crate after module release succeeds
+        run: cargo publish --locked --package tinyjuice
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

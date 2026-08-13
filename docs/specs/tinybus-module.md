@@ -18,3 +18,19 @@ The optional `ai.tinyhumans.tinyjuice.MlHost` callback remains host-owned. It
 keeps Python/runtime provisioning and application configuration out of the
 module while allowing the engine's ML compressor to call back over the same
 in-process bus.
+
+## Wire shapes
+
+All object fields use camelCase. `Install` accepts one object with `options`,
+`maxCacheEntries`, `maxCacheBytes`, and the optional `ccrTtlSecs` and
+`diskTierRoot`. `options` is a `CompressOptions` object; omitted option fields
+take their defaults, so a future knob does not break an older host.
+
+`Compress` accepts `(content, hint)`. The hint fields `mime`, `extension`,
+`sourceTool`, `query`, and `explicit` are all optional. It returns
+`CompressedOutput`: `text`, `contentKind`, `compressor`, `lossy`, `applied`,
+`originalBytes`, `compactedBytes`, and optional `ccrToken`.
+
+`Retrieve` accepts `(token, range)`, where `range` is optional. A range contains
+`start`, `end`, and `unit` (`bytes` or `lines`). The response is either the
+retrieved string or `null` when the token is not retained.

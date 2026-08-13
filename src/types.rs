@@ -512,7 +512,7 @@ impl CompressOutput {
 /// `[tinyjuice]` config block. TokenJuice stays decoupled from the config
 /// schema crate by taking this plain struct rather than `Config`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct CompressOptions {
     /// Master switch — when false, [`crate::compress_content`]
     /// is a pass-through.
