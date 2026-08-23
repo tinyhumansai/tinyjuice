@@ -108,6 +108,7 @@ jobs:
           set -euo pipefail
           perl -0pi -e 's/(\[package\][\s\S]*?\nversion = ")[^"]+(")/$1$ENV{NEXT_VERSION}$2/' Cargo.toml
           perl -0pi -e 's/(\[package\][\s\S]*?\nversion = ")[^"]+(")/$1$ENV{NEXT_VERSION}$2/' crates/tinyjuice-module/Cargo.toml
+          perl -0pi -e 's/(\[package\][\s\S]*?\nversion = ")[^"]+(")/$1$ENV{NEXT_VERSION}$2/' crates/tinyjuice-bus/Cargo.toml
           cargo update -p "$CRATE_NAME" --precise "$NEXT_VERSION"
 
       - name: Commit version bump and tag
@@ -117,12 +118,19 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.toml Cargo.lock crates/tinyjuice-module/Cargo.toml
+          git add Cargo.toml Cargo.lock crates/tinyjuice-module/Cargo.toml \
+            crates/tinyjuice-bus/Cargo.toml
           git commit -m "Release ${RELEASE_TAG}"
           git tag -a "${RELEASE_TAG}" -m "Release ${RELEASE_TAG}"
 
-      - name: Package crate
-        run: cargo package --locked --package tinyjuice
+      # Scoped to the bus contract, and it cannot be scoped to `tinyjuice`:
+      # since the contract split, the library depends on `tinyjuice-bus` by
+      # path, and `cargo package` rewrites a path dependency to a registry
+      # version and then looks it up. `tinyjuice-bus` is `publish = false` and
+      # will never be in the index. The check is worth keeping on the crate it
+      # can still run on — the contract is the one hosts link.
+      - name: Package the bus contract
+        run: cargo package --locked --package tinyjuice-bus
 
       - name: Package TinyBus source and module SDK
         run: |
@@ -377,12 +385,13 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Publish crate after module release succeeds
-        run: |
-          if [[ -z "$CARGO_REGISTRY_TOKEN" ]]; then
-            echo "::notice::CARGO_REGISTRY_TOKEN is not configured; skipping crates.io compatibility publish"
-            exit 0
-          fi
-          cargo publish --locked --package tinyjuice
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      # The crates.io compatibility publish stopped here at 0.2.2. `tinyjuice`
+      # now depends on `tinyjuice-bus` by path, and that crate is `publish =
+      # false` — a contract shared by a host and a separately built module has
+      # no reason to be in a registry, and putting it there would mean a
+      # version of it that nobody's build resolves. `cargo publish` refuses a
+      # path dependency it cannot look up, so the upload is not merely skipped
+      # here, it is no longer possible. What a host consumes is the git
+      # submodule and the module artifacts this workflow builds.
+      - name: Note that crates.io publishing has stopped
+        run: echo "::notice::tinyjuice is no longer published to crates.io; see the release workflow for why"
