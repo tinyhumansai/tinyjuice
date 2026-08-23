@@ -1032,6 +1032,7 @@ dependencies = [
  "tinybus",
  "tinybus-module",
  "tinyjuice",
+ "tinyjuice-bus",
  "tokio",
 ]
 
