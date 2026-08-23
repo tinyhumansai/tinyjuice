@@ -78,3 +78,49 @@ fn compress_options_round_trip_through_their_defaults() {
         serde_json::to_value(&defaults).unwrap()
     );
 }
+
+/// Every variant survives `as_str` and back.
+///
+/// The two directions are what `Compact` needs: it flattens both enums to their
+/// `as_str` spelling on the way out, and a caller parses that back. A variant
+/// added to one table and not the other is a value that arrives and cannot be
+/// read, so the round trip is checked over the whole set rather than a sample.
+#[test]
+fn the_flattened_spellings_round_trip_for_every_variant() {
+    use std::str::FromStr as _;
+
+    for kind in [
+        ContentKind::Json,
+        ContentKind::Code,
+        ContentKind::Log,
+        ContentKind::Search,
+        ContentKind::Diff,
+        ContentKind::Html,
+        ContentKind::PlainText,
+    ] {
+        assert_eq!(ContentKind::from_str(kind.as_str()).unwrap(), kind);
+    }
+
+    for compressor in [
+        CompressorKind::SmartCrusher,
+        CompressorKind::Code,
+        CompressorKind::Log,
+        CompressorKind::Search,
+        CompressorKind::Diff,
+        CompressorKind::Html,
+        CompressorKind::MlText,
+        CompressorKind::Generic,
+        CompressorKind::None,
+    ] {
+        assert_eq!(
+            CompressorKind::from_str(compressor.as_str()).unwrap(),
+            compressor
+        );
+    }
+
+    // The flattened spelling is deliberately not the serde one. `plain_text`
+    // parses; `plainText` does not, and a host that mixed the two would get a
+    // silent `PlainText` fallback on every response.
+    assert!(ContentKind::from_str("plainText").is_err());
+    assert!(CompressorKind::from_str("smartCrusher").is_err());
+}
