@@ -156,6 +156,7 @@ mod exports {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tinyjuice::types::CompressOptions;
 
     #[tokio::test]
     async fn service_compresses_and_retrieves_a_large_log() {
