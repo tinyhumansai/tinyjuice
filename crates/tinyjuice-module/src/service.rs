@@ -3,9 +3,7 @@ use std::sync::Arc;
 
 use tinybus::{Connection, Result as BusResult};
 use tinyjuice::cache::store::RangeUnit;
-use tinyjuice::types::{
-    AgentTokenjuiceCompression, CompressOptions, CompressedOutput, ContentHint,
-};
+use tinyjuice::types::{AgentTokenjuiceCompression, CompressedOutput, ContentHint};
 
 // The interface's vocabulary is the contract crate's, not this adapter's.
 // These five used to be private structs in this file, which meant a host had
