@@ -1004,6 +1004,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "thiserror",
+ "tinyjuice-bus",
  "tokio",
  "tree-sitter",
  "tree-sitter-python",
