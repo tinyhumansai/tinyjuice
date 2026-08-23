@@ -83,6 +83,32 @@ impl ContentKind {
     }
 }
 
+impl std::str::FromStr for ContentKind {
+    type Err = ();
+
+    /// The exact inverse of [`as_str`](Self::as_str).
+    ///
+    /// This is contract surface rather than a convenience: `Compact` answers
+    /// with [`CompactResponse`](crate::wire::CompactResponse), which flattens
+    /// the kind to its `as_str` spelling, so a caller that wants the enum back
+    /// has to parse that string. Without the inverse living beside the forward
+    /// direction, every host writes the table itself and one of them gets a
+    /// spelling wrong — `plain_text` here is not the `plainText` that serde
+    /// produces, and nothing but this pairing says so.
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Ok(match value {
+            "json" => Self::Json,
+            "code" => Self::Code,
+            "log" => Self::Log,
+            "search" => Self::Search,
+            "diff" => Self::Diff,
+            "html" => Self::Html,
+            "plain_text" => Self::PlainText,
+            _ => return Err(()),
+        })
+    }
+}
+
 /// A caller-supplied prior about a blob's content, so the detector doesn't have
 /// to work from scratch. Any field may be `None`; the detector resolves what it
 /// can and falls back to structural heuristics. An `explicit` kind is a hard
@@ -152,6 +178,28 @@ impl CompressorKind {
             CompressorKind::Generic => "generic",
             CompressorKind::None => "none",
         }
+    }
+}
+
+impl std::str::FromStr for CompressorKind {
+    type Err = ();
+
+    /// The exact inverse of [`as_str`](Self::as_str), for the same reason
+    /// [`ContentKind`]'s exists: `Compact` reports the compressor as that
+    /// spelling, not as the `smartCrusher` serde emits.
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Ok(match value {
+            "smartcrusher" => Self::SmartCrusher,
+            "code" => Self::Code,
+            "log" => Self::Log,
+            "search" => Self::Search,
+            "diff" => Self::Diff,
+            "html" => Self::Html,
+            "ml_text" => Self::MlText,
+            "generic" => Self::Generic,
+            "none" => Self::None,
+            _ => return Err(()),
+        })
     }
 }
 
