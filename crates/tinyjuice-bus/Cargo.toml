@@ -1,6 +1,6 @@
 [package]
 name = "tinyjuice-bus"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "The TinyBus wire contract for TinyJuice: member names, payload types, and the contract version."
