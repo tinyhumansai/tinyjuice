@@ -1,8 +1,8 @@
 //! Tests that pin the shared `TinyJuice` vocabulary and compatibility rule.
 
 use super::{
-    AgentTokenjuiceCompression, CacheStats, CompressOptions, CompressorKind, ContentKind,
-    RangeUnit, RetrieveRange, CONTRACT_VERSION, is_compatible,
+    AgentTokenjuiceCompression, CONTRACT_VERSION, CacheStats, CompressOptions, CompressorKind,
+    ContentKind, RangeUnit, RetrieveRange, is_compatible,
 };
 
 #[test]

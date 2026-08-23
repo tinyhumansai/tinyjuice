@@ -21,7 +21,7 @@ pub use types::{
     AgentTokenjuiceCompression, CompressOptions, CompressedOutput, CompressorKind, ContentHint,
     ContentKind,
 };
-pub use version::{is_compatible, CONTRACT_VERSION};
+pub use version::{CONTRACT_VERSION, is_compatible};
 pub use wire::{CacheStats, CompactResponse, InstallRequest, RangeUnit, RetrieveRange};
 
 #[cfg(test)]
