@@ -1,63 +1,20 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use serde::{Deserialize, Serialize};
 use tinybus::{Connection, Result as BusResult};
 use tinyjuice::cache::store::RangeUnit;
 use tinyjuice::types::{
-    AgentTokenjuiceCompression, CompressOptions, CompressedOutput, ContentHint,
+    AgentTokenjuiceCompression, CompressedOutput, ContentHint,
 };
 
-pub const BUS_NAME: &str = "ai.tinyhumans.tinyjuice.Compression";
-pub const OBJECT_PATH: &str = "/ai/tinyhumans/tinyjuice/Compression";
-const ML_HOST_NAME: &str = "ai.tinyhumans.tinyjuice.MlHost";
-const ML_HOST_PATH: &str = "/ai/tinyhumans/tinyjuice/MlHost";
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct InstallRequest {
-    options: CompressOptions,
-    max_cache_entries: usize,
-    max_cache_bytes: usize,
-    ccr_ttl_secs: Option<u64>,
-    disk_tier_root: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CompactResponse {
-    text: String,
-    original_bytes: usize,
-    compacted_bytes: usize,
-    rule_id: String,
-    applied: bool,
-    content_kind: String,
-    compressor: String,
-    original_tokens: u64,
-    compacted_tokens: u64,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-enum WireRangeUnit {
-    Bytes,
-    Lines,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RetrieveRange {
-    start: usize,
-    end: usize,
-    unit: WireRangeUnit,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CacheStats {
-    entries: usize,
-    bytes: usize,
-}
+// The interface's vocabulary is the contract crate's, not this adapter's.
+// These five used to be private structs in this file, which meant a host had
+// no way to reach them and re-declared its own — the drift a shared contract
+// exists to remove.
+pub use tinyjuice_bus::names::{BUS_NAME, ML_HOST_NAME, ML_HOST_PATH, OBJECT_PATH};
+use tinyjuice_bus::wire::{
+    CacheStats, CompactResponse, InstallRequest, RangeUnit as WireRangeUnit, RetrieveRange,
+};
 
 #[derive(Clone)]
 struct Compression;
