@@ -17,8 +17,8 @@ exclude = [
 ]
 
 [workspace]
-members = ["crates/tinyjuice-module"]
-default-members = [".", "crates/tinyjuice-module"]
+members = ["crates/tinyjuice-bus", "crates/tinyjuice-module"]
+default-members = [".", "crates/tinyjuice-bus", "crates/tinyjuice-module"]
 exclude = ["vendor/tinybus"]
 resolver = "3"
 

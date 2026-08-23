@@ -1014,6 +1014,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyjuice-bus"
+version = "0.2.2"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "tinyjuice-module"
 version = "0.2.2"
 dependencies = [
