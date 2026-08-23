@@ -1004,6 +1004,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "thiserror",
+ "tinyjuice-bus",
  "tokio",
  "tree-sitter",
  "tree-sitter-python",
@@ -1011,6 +1012,14 @@ dependencies = [
  "tree-sitter-typescript",
  "unicode-segmentation",
  "unicode-width",
+]
+
+[[package]]
+name = "tinyjuice-bus"
+version = "0.2.2"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1023,6 +1032,7 @@ dependencies = [
  "tinybus",
  "tinybus-module",
  "tinyjuice",
+ "tinyjuice-bus",
  "tokio",
 ]
 

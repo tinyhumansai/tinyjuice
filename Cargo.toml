@@ -17,12 +17,16 @@ exclude = [
 ]
 
 [workspace]
-members = ["crates/tinyjuice-module"]
-default-members = [".", "crates/tinyjuice-module"]
+members = ["crates/tinyjuice-bus", "crates/tinyjuice-module"]
+default-members = [".", "crates/tinyjuice-bus", "crates/tinyjuice-module"]
 exclude = ["vendor/tinybus"]
 resolver = "3"
 
 [dependencies]
+# The wire contract, defined once and shared with the module and with hosts.
+# This crate re-exports its types from `src/types.rs` rather than declaring a
+# second copy — see the note there.
+tinyjuice-bus = { path = "crates/tinyjuice-bus" }
 async-trait = "0.1"
 dirs = "6"
 hex = "0.4"

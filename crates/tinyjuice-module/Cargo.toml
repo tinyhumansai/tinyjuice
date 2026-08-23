@@ -12,6 +12,9 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 tinyjuice = { path = "../..", default-features = false }
+# The interface vocabulary. Shared with hosts, so this adapter cannot drift
+# from what a caller was compiled against.
+tinyjuice-bus = { path = "../tinyjuice-bus" }
 tinybus = { version = "0.1.0", path = "../../vendor/tinybus/crates/tinybus", default-features = false, features = ["macros", "modules"] }
 tinybus-module = { version = "0.1.0", path = "../../vendor/tinybus/crates/tinybus-module" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
