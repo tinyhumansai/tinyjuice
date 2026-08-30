@@ -1056,7 +1056,9 @@ fn run_verify(args: &[String]) -> Result<(), String> {
             report.duplicate_ids.len(),
             report.shadowed_rules.len()
         );
-        failed |= !report.parse_errors.is_empty() || !report.duplicate_ids.is_empty();
+        failed |= !report.parse_errors.is_empty()
+            || !report.invalid_regexes.is_empty()
+            || !report.duplicate_ids.is_empty();
     }
 
     if check_fixtures {

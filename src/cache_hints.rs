@@ -97,7 +97,10 @@ pub fn static_prefix_cache_hint(
 /// then the last three non-system messages.
 pub fn anthropic_cache_hints(message_roles: &[impl AsRef<str>]) -> Vec<PromptCacheHint> {
     let mut hints = Vec::new();
-    if !message_roles.is_empty() {
+    if message_roles
+        .first()
+        .is_some_and(|role| role.as_ref() == "system")
+    {
         hints.push(PromptCacheHint {
             provider: "anthropic".to_owned(),
             message_index: Some(0),

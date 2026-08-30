@@ -63,6 +63,14 @@ criterion = "0.5"
 tempfile = "3"
 tokio = { version = "1", features = ["macros", "rt", "test-util"] }
 
+[[bin]]
+name = "tinyjuice"
+path = "src/bin/tinyjuice.rs"
+
+[[bin]]
+name = "tinyjuice-reduce"
+path = "src/main.rs"
+
 [[bench]]
 name = "compression"
 harness = false

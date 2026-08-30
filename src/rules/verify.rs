@@ -1,6 +1,7 @@
 use super::builtin::BUILTIN_RULE_JSONS;
 use super::loader::{LoadRuleOptions, list_rule_files, project_rules_root, user_rules_root};
 use crate::classify::classify_execution;
+use crate::reduce::normalize_execution_input;
 use crate::reduce::reduce_execution_with_rules;
 use crate::types::{CompiledRule, JsonRule, RuleFixture, RuleOrigin, ToolExecutionInput};
 use serde::{Deserialize, Serialize};
@@ -212,6 +213,7 @@ where
 
     for input in inputs {
         inputs_seen += 1;
+        let input = normalize_execution_input(input);
         let classification = classify_execution(&input, rules, None);
         if !is_generic_fallback(&classification) {
             continue;
