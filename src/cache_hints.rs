@@ -234,9 +234,11 @@ mod tests {
     fn anthropic_hints_do_not_label_a_user_message_as_system() {
         let hints = anthropic_cache_hints(&["user", "assistant", "tool", "assistant"]);
 
-        assert!(hints
-            .iter()
-            .all(|hint| hint.placement != CacheMarkerPlacement::SystemPrompt));
+        assert!(
+            hints
+                .iter()
+                .all(|hint| hint.placement != CacheMarkerPlacement::SystemPrompt)
+        );
         assert_eq!(hints.len(), 3);
         assert_eq!(hints[0].message_index, Some(1));
     }
