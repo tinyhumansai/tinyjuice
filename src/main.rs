@@ -1056,6 +1056,12 @@ fn run_verify(args: &[String]) -> Result<(), String> {
             report.duplicate_ids.len(),
             report.shadowed_rules.len()
         );
+        for error in &report.invalid_regexes {
+            eprintln!(
+                "invalid regex: {} {} {}[{}]: {}",
+                error.path, error.rule_id, error.field, error.index, error.error
+            );
+        }
         failed |= !report.parse_errors.is_empty()
             || !report.invalid_regexes.is_empty()
             || !report.duplicate_ids.is_empty();
