@@ -578,13 +578,7 @@ mod tests {
         assert_eq!(report.final_rules, 101);
         assert!(report.parse_errors.is_empty(), "{report:#?}");
         assert!(report.duplicate_ids.is_empty(), "{report:#?}");
-        assert_eq!(report.invalid_regexes.len(), 11, "{report:#?}");
-        assert!(
-            report
-                .invalid_regexes
-                .iter()
-                .any(|error| error.rule_id == "filesystem/find")
-        );
+        assert!(report.invalid_regexes.is_empty(), "{report:#?}");
         assert!(report.shadowed_rules.is_empty());
     }
 

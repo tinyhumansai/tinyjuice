@@ -29,7 +29,7 @@
   "counters": [
     {
       "name": "resource",
-      "pattern": "^(?!NAME\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

@@ -33,7 +33,7 @@
   "counters": [
     {
       "name": "service",
-      "pattern": "^(?!NAME\\s|SERVICE\\s|CONTAINER ID\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     },
     {
       "name": "error",

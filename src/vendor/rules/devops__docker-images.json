@@ -24,7 +24,7 @@
   "counters": [
     {
       "name": "image",
-      "pattern": "^(?!REPOSITORY\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

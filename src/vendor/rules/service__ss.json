@@ -23,7 +23,7 @@
   "counters": [
     {
       "name": "socket",
-      "pattern": "^(?!Netid\\s|State\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

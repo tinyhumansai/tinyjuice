@@ -23,7 +23,7 @@
   "counters": [
     {
       "name": "item",
-      "pattern": "^(?!total\\s+\\d+).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }
