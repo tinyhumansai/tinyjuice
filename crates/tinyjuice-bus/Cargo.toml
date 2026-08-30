@@ -1,0 +1,21 @@
+[package]
+name = "tinyjuice-bus"
+version = "0.2.4"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "The TinyBus wire contract for TinyJuice: member names, payload types, and the contract version."
+repository = "https://github.com/tinyhumansai/tinyjuice"
+readme = "README.md"
+keywords = ["tinybus", "compression", "tokens", "contract"]
+categories = ["data-structures"]
+publish = false
+
+# Deliberately transport-free: a host only needs this vocabulary to call the
+# dynamic module, not TinyBus itself, a runtime, or the implementation crate.
+[dependencies]
+# The wire payloads are encoded into TinyBus JSON frames.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+# Contract tests pin the JSON representation hosts exchange with the module.

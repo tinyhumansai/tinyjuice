@@ -20,34 +20,35 @@ permissions:
   contents: write
 
 jobs:
-  publish-rust:
-    name: Release Rust Crate
+  publish:
+    name: Publish crate
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment: Production
-    env:
-      CRATE_NAME: tinyjuice
+    outputs:
+      crate_name: ${{ steps.version.outputs.crate_name }}
+      next_version: ${{ steps.version.outputs.next_version }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: .
 
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        run: cargo clippy --all-targets -- -D warnings
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Run tests
-        run: cargo test
+      - name: Test
+        run: cargo test --all-features
 
       - name: Compute next version
         id: version
@@ -55,9 +56,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          current_version="$(cargo metadata --format-version 1 --no-deps | jq -r --arg crate "$CRATE_NAME" '.packages[] | select(.name == $crate) | .version')"
-          if [[ -z "$current_version" ]]; then
-            echo "Could not resolve current version for crate $CRATE_NAME" >&2
+          metadata="$(cargo metadata --format-version 1 --no-deps)"
+          crate_name="tinyjuice"
+          current_version="$(jq -r '.packages[] | select(.name == "tinyjuice") | .version' <<< "$metadata")"
+          if [[ -z "$current_version" || "$current_version" == "null" ]]; then
+            echo "Could not resolve the current crate version" >&2
             exit 1
           fi
 
@@ -91,6 +94,7 @@ jobs:
           fi
 
           {
+            echo "crate_name=${crate_name}"
             echo "current_version=${current_version}"
             echo "next_version=${next_version}"
             echo "tag=${tag}"
@@ -98,33 +102,296 @@ jobs:
 
       - name: Update crate version
         env:
+          CRATE_NAME: ${{ steps.version.outputs.crate_name }}
           NEXT_VERSION: ${{ steps.version.outputs.next_version }}
         run: |
+          set -euo pipefail
           perl -0pi -e 's/(\[package\][\s\S]*?\nversion = ")[^"]+(")/$1$ENV{NEXT_VERSION}$2/' Cargo.toml
+          perl -0pi -e 's/(\[package\][\s\S]*?\nversion = ")[^"]+(")/$1$ENV{NEXT_VERSION}$2/' crates/tinyjuice-module/Cargo.toml
+          perl -0pi -e 's/(\[package\][\s\S]*?\nversion = ")[^"]+(")/$1$ENV{NEXT_VERSION}$2/' crates/tinyjuice-bus/Cargo.toml
           cargo update -p "$CRATE_NAME" --precise "$NEXT_VERSION"
 
       - name: Commit version bump and tag
         env:
-          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.toml Cargo.lock
+          git add Cargo.toml Cargo.lock crates/tinyjuice-module/Cargo.toml \
+            crates/tinyjuice-bus/Cargo.toml
           git commit -m "Release ${RELEASE_TAG}"
           git tag -a "${RELEASE_TAG}" -m "Release ${RELEASE_TAG}"
 
-      - name: Package crate
-        run: cargo package --locked
+      # Scoped to the bus contract, and it cannot be scoped to `tinyjuice`:
+      # since the contract split, the library depends on `tinyjuice-bus` by
+      # path, and `cargo package` rewrites a path dependency to a registry
+      # version and then looks it up. `tinyjuice-bus` is `publish = false` and
+      # will never be in the index. The check is worth keeping on the crate it
+      # can still run on — the contract is the one hosts link.
+      - name: Package the bus contract
+        run: cargo package --locked --package tinyjuice-bus
+
+      - name: Package TinyBus source and module SDK
+        run: |
+          set -euo pipefail
+          tinybus_revision="$(git -C vendor/tinybus rev-parse --short=12 HEAD)"
+          git -C vendor/tinybus archive \
+            --format=tar.gz \
+            --prefix="tinybus-${tinybus_revision}/" \
+            --output="$PWD/target/package/tinybus-source-${tinybus_revision}.tar.gz" \
+            HEAD
+
+      - name: Upload source packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-packages
+          path: |
+            target/package/${{ steps.version.outputs.crate_name }}-${{ steps.version.outputs.next_version }}.crate
+            target/package/tinybus-source-*.tar.gz
+          if-no-files-found: error
 
       - name: Push release commit and tag
         env:
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
+          set -euo pipefail
           git push origin "HEAD:${GITHUB_REF_NAME}"
           git push origin "${RELEASE_TAG}"
 
-      - name: Publish to crates.io
-        run: cargo publish --locked
+  native-bundles:
+    name: Module bundle (${{ matrix.id }})
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-22.04-x86_64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - id: ubuntu-22.04-arm64
+            os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+          - id: ubuntu-24.04-x86_64
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - id: ubuntu-24.04-arm64
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - id: macos-15-x86_64
+            os: macos-15-intel
+            target: x86_64-apple-darwin
+          - id: macos-15-arm64
+            os: macos-15
+            target: aarch64-apple-darwin
+          - id: macos-26-x86_64
+            os: macos-26-intel
+            target: x86_64-apple-darwin
+          - id: macos-26-arm64
+            os: macos-26
+            target: aarch64-apple-darwin
+          - id: windows-2022-x86_64
+            os: windows-2022
+            target: x86_64-pc-windows-msvc
+          - id: windows-2025-x86_64
+            os: windows-2025
+            target: x86_64-pc-windows-msvc
+          - id: windows-11-arm64
+            os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.tag }}
+          persist-credentials: false
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Verify native Rust target
+        shell: bash
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          EXPECTED_TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          actual_target="$(rustc -vV | sed -n 's/^host: //p')"
+          [[ "$actual_target" == "$EXPECTED_TARGET" ]]
+
+      - name: Build installable module
+        run: cargo build --locked --release --package tinyjuice-module
+
+      - name: Assemble Unix module package
+        if: ${{ runner.os != 'Windows' }}
+        id: unix_package
+        shell: bash
+        env:
+          BUNDLE_ID: ${{ matrix.id }}
+          VERSION: ${{ needs.publish.outputs.next_version }}
+        run: |
+          set -euo pipefail
+
+          library_name="tinyjuice_module"
+          case "$RUNNER_OS" in
+            Linux) module="target/release/lib${library_name}.so" ;;
+            macOS) module="target/release/lib${library_name}.dylib" ;;
+            *) echo "unsupported Unix runner: ${RUNNER_OS}" >&2; exit 1 ;;
+          esac
+          package_name="tinyjuice-module-${VERSION}-${BUNDLE_ID}"
+          package_root="dist/${package_name}"
+          mkdir -p "$package_root"
+          install -m 755 "$module" "$package_root/"
+          install -m 644 LICENSE README.md docs/specs/tinybus-module.md "$package_root/"
+          module_name="$(basename "$module")"
+          module_hash="$(sha256sum "$package_root/$module_name" | awk '{print $1}')"
+          printf '"%s" = "%s"\n' "$module_name" "$module_hash" \
+            > "$package_root/modules.toml"
+          tar -C "$package_root" -czf "dist/${package_name}.tar.gz" .
+          echo "archive=dist/${package_name}.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble Windows module package
+        if: ${{ runner.os == 'Windows' }}
+        id: windows_package
+        shell: pwsh
+        env:
+          BUNDLE_ID: ${{ matrix.id }}
+          VERSION: ${{ needs.publish.outputs.next_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $libraryName = 'tinyjuice_module'
+          $module = "target/release/$libraryName.dll"
+          $packageName = "tinyjuice-module-$env:VERSION-$env:BUNDLE_ID"
+          $packageRoot = "dist/$packageName"
+          New-Item -ItemType Directory -Force $packageRoot | Out-Null
+          Copy-Item -LiteralPath $module, 'LICENSE', 'README.md', 'docs/specs/tinybus-module.md' -Destination $packageRoot
+          $hash = (Get-FileHash -LiteralPath $module -Algorithm SHA256).Hash.ToLowerInvariant()
+          $moduleName = Split-Path -Leaf $module
+          "`"$moduleName`" = `"$hash`"`n" |
+            Set-Content -Path "$packageRoot/modules.toml" -Encoding utf8NoBOM
+          Compress-Archive -Path "$packageRoot/*" -DestinationPath "dist/$packageName.zip"
+          "archive=dist/$packageName.zip" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Unix module package
+        if: ${{ runner.os != 'Windows' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: tinyjuice-module-${{ matrix.id }}
+          path: ${{ steps.unix_package.outputs.archive }}
+          if-no-files-found: error
+
+      - name: Upload Windows module package
+        if: ${{ runner.os == 'Windows' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: tinyjuice-module-${{ matrix.id }}
+          path: ${{ steps.windows_package.outputs.archive }}
+          if-no-files-found: error
+
+  github-release:
+    name: Create GitHub release
+    needs:
+      - publish
+      - native-bundles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.tag }}
+          persist-credentials: false
+          submodules: true
+
+      - name: Download workflow artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: tinyjuice-module-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Download source packages
+        uses: actions/download-artifact@v8
+        with:
+          name: source-packages
+          path: source-packages
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Create release checksum manifest with TinyBus
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t assets < <(
+            find release-assets -type f \
+              \( -name '*.tar.gz' -o -name '*.zip' \) \
+              | sort
+          )
+          if [[ ${#assets[@]} -ne 11 ]]; then
+            printf 'expected 11 module archives, found %s:\n' "${#assets[@]}" >&2
+            find release-assets -type f -print >&2 || true
+            exit 1
+          fi
+          checksum_args=()
+          for asset in "${assets[@]}"; do checksum_args+=(--path "$asset"); done
+          cargo run --manifest-path vendor/tinybus/Cargo.toml --locked \
+            --package tinybus --all-features --bin tinybus -- \
+            modules checksum "${checksum_args[@]}" --output release-assets/checksum.toml
+
+      - name: Create release and upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.publish.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mapfile -t release_files < <(
+            find release-assets source-packages -type f | sort
+          )
+          gh release create "$RELEASE_TAG" "${release_files[@]}" \
+            --repo "$REPOSITORY" \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --generate-notes
+
+      - name: Verify the published module through TinyBus
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.publish.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ needs.publish.outputs.next_version }}
+        run: |
+          set -euo pipefail
+          archive="tinyjuice-module-${VERSION}-ubuntu-24.04-x86_64.tar.gz"
+          release_url="https://github.com/${REPOSITORY}/releases/tag/${RELEASE_TAG}"
+          sha256="$(sed -n "s/^\"${archive}\" = \"\([0-9a-f]\{64\}\)\"$/\1/p" release-assets/checksum.toml)"
+          test -n "$sha256"
+          cargo run --manifest-path vendor/tinybus/Cargo.toml --locked \
+            --package tinybus --all-features --example github_module_host -- \
+            "$release_url" "$archive" "$sha256"
+
+  publish-crate:
+    name: Publish crate
+    needs:
+      - publish
+      - github-release
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.publish.outputs.tag }}
+          persist-credentials: false
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # The crates.io compatibility publish stopped here at 0.2.2. `tinyjuice`
+      # now depends on `tinyjuice-bus` by path, and that crate is `publish =
+      # false` — a contract shared by a host and a separately built module has
+      # no reason to be in a registry, and putting it there would mean a
+      # version of it that nobody's build resolves. `cargo publish` refuses a
+      # path dependency it cannot look up, so the upload is not merely skipped
+      # here, it is no longer possible. What a host consumes is the git
+      # submodule and the module artifacts this workflow builds.
+      - name: Note that crates.io publishing has stopped
+        run: echo "::notice::tinyjuice is no longer published to crates.io; see the release workflow for why"

@@ -1,6 +1,6 @@
 [package]
 name = "tinyjuice"
-version = "0.2.1"
+version = "0.2.4"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Pluggable token compression for OpenHuman."
@@ -9,8 +9,25 @@ readme = "README.md"
 keywords = ["llm", "tokens", "compression", "openhuman", "context"]
 categories = ["text-processing"]
 autobins = false
+exclude = [
+    ".github/",
+    ".gitmodules",
+    "docs/",
+    "vendor/tinybus/",
+    "wiki/",
+]
+
+[workspace]
+members = ["crates/tinyjuice-bus", "crates/tinyjuice-module"]
+default-members = [".", "crates/tinyjuice-bus", "crates/tinyjuice-module"]
+exclude = ["vendor/tinybus"]
+resolver = "3"
 
 [dependencies]
+# The wire contract, defined once and shared with the module and with hosts.
+# This crate re-exports its types from `src/types.rs` rather than declaring a
+# second copy — see the note there.
+tinyjuice-bus = { path = "crates/tinyjuice-bus" }
 async-trait = "0.1"
 dirs = "6"
 hex = "0.4"
@@ -50,14 +67,6 @@ tokio = { version = "1", features = ["macros", "rt", "test-util"] }
 name = "compression"
 harness = false
 
-[[bin]]
-name = "tinyjuice"
-path = "src/main.rs"
-
-[[bin]]
-name = "tinyjuice-hooks"
-path = "src/bin/tinyjuice.rs"
-
 [features]
 default = ["tinyjuice-treesitter"]
 tinyjuice-treesitter = [
@@ -66,3 +75,8 @@ tinyjuice-treesitter = [
     "dep:tree-sitter-rust",
     "dep:tree-sitter-typescript",
 ]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
