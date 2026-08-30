@@ -816,4 +816,19 @@ mod tests {
             vec![("beta", 2), ("alpha", 1)]
         );
     }
+
+    #[test]
+    fn discovery_normalizes_command_only_inputs_before_classification() {
+        let rules = load_builtin_rules();
+        let report = discover_fallback_outputs(
+            [ToolExecutionInput {
+                tool_name: "bash".to_owned(),
+                command: Some("git status".to_owned()),
+                ..Default::default()
+            }],
+            &rules,
+        );
+
+        assert!(report.is_empty(), "{report:#?}");
+    }
 }
