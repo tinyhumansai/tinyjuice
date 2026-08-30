@@ -177,19 +177,19 @@ cargo install tinyjuice --locked
 Run the minimal reducer CLI:
 
 ```sh
-cargo run -- reduce --tool-name bash --command "git status" status.txt
-cargo run -- reduce-json payload.json
-cargo run -- verify --rules --fixtures
-cargo run -- discover executions.ndjson
-cargo run -- wrap -- cargo test
-cargo run -- ls --store-dir .tokenjuice/ccr
-cargo run -- cat --store-dir .tokenjuice/ccr <token>
-cargo run -- stats --store-dir .tokenjuice/ccr
-cargo run -- doctor --store-dir .tokenjuice/ccr
-cargo run -- doctor codex
-cargo run -- doctor hooks
-cargo run -- install codex --local target/debug/tinyjuice
-cargo run -- uninstall codex
+cargo run --bin tinyjuice-reduce -- reduce --tool-name bash --command "git status" status.txt
+cargo run --bin tinyjuice-reduce -- reduce-json payload.json
+cargo run --bin tinyjuice-reduce -- verify --rules --fixtures
+cargo run --bin tinyjuice-reduce -- discover executions.ndjson
+cargo run --bin tinyjuice-reduce -- wrap -- cargo test
+cargo run --bin tinyjuice-reduce -- ls --store-dir .tokenjuice/ccr
+cargo run --bin tinyjuice-reduce -- cat --store-dir .tokenjuice/ccr <token>
+cargo run --bin tinyjuice-reduce -- stats --store-dir .tokenjuice/ccr
+cargo run --bin tinyjuice-reduce -- doctor --store-dir .tokenjuice/ccr
+cargo run --bin tinyjuice-reduce -- doctor codex
+cargo run --bin tinyjuice-reduce -- doctor hooks
+cargo run --bin tinyjuice-reduce -- install codex --local target/debug/tinyjuice
+cargo run --bin tinyjuice-reduce -- uninstall codex
 ```
 
 Run hot-path benchmarks:

@@ -3,7 +3,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 fn tinyjuice() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_tinyjuice"))
+    Command::new(env!("CARGO_BIN_EXE_tinyjuice-reduce"))
 }
 
 #[test]
