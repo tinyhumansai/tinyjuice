@@ -10,7 +10,7 @@ points, and safe shell policy.
 
 Current state:
 
-- TinyJuice vendors 100 built-in rules.
+- TinyJuice vendors 101 built-in rules.
 - The reference spec says upstream TokenJuice has 130 non-fixture rules.
 - TinyJuice also has Rust/OpenHuman-specific rules.
 
@@ -67,6 +67,12 @@ Acceptance:
 - `find . -exec cat {} \;` stays raw.
 - Mixed shell sequences stay raw unless explicitly allowed.
 
+Status: implemented in the reducer and router policy paths. The default
+`allow-safe-inventory` policy keeps exact file-content reads raw, rejects mixed
+shell sequences and unsafe inventory actions, and allows safe inventory
+pipelines such as `find . -type f | sort | head`. The rule fixture suite now
+covers that safe-inventory path through the reducer.
+
 ## P0: Reduce-Json Protocol
 
 Plan:
@@ -84,6 +90,18 @@ Acceptance:
 - Golden tests cover direct payload, envelope payload, malformed input, raw
   mode, max-inline clamping, and invalid classifier.
 - Protocol docs exist before OpenHuman or non-Rust hosts depend on it.
+
+Status: partially implemented. The library now exposes `ReduceJsonRequest`,
+`ReduceJsonEnvelope`, `ReduceJsonResponse`, `ReduceJsonError`,
+`reduce_json_str()`, and `reduce_json_request()`. The protocol accepts direct
+and envelope payloads, supports the compatibility option fields, rejects
+malformed JSON and NUL bytes with structured errors, and returns stable
+serde-compatible response fields with optional metadata-only trace. When
+`options.store` is set and CCR retains omitted raw output, the response includes
+a metadata-only CCR token reference. When `options.recordStats` is set, the
+protocol emits a metadata-only `SavingsRecord` through the configured recorder.
+The current library contract is documented in `docs/reduce-json-protocol.md`.
+Durable artifact refs remain to be implemented.
 
 ## P1: CLI Surface
 
@@ -107,6 +125,27 @@ Implementation guidance:
 - Pass through raw content on reducer failure unless the CLI command explicitly
   asks for validation.
 
+Status: partially implemented. The crate now builds a dependency-free
+`tinyjuice` binary with `reduce`, `reduce-json`, `verify`, `discover`, `wrap`,
+`ls`, `cat`, `stats`, and `doctor` commands.
+`reduce` accepts stdin or one file plus command metadata flags and prints
+reduced inline text. `reduce-json` accepts the documented protocol payload from
+stdin or one file, prints response JSON, and exits non-zero with structured
+error JSON on invalid payloads. `verify --rules --fixtures` reports rule and
+fixture diagnostics and exits non-zero for hard verification failures.
+`discover` accepts a JSON array or NDJSON `ToolExecutionInput` stream and emits
+metadata-only fallback family counts. `wrap` runs a command after `--`, reduces
+captured stdout/stderr with exit-code metadata, and exits with the wrapped
+command's status. `ls`, `cat`, and `stats` operate on an explicit CCR disk
+tier via `--store-dir`; `cat` supports line and byte ranges, while `stats`
+reports metadata-only token counts and byte totals. `doctor` emits structured
+health JSON with `ok`, `warn`, `broken`, and `disabled` checks for built-in
+rules, optional fixture verification, optional explicit CCR disk store
+inspection, and host-aware `codex`, `openhuman`, and aggregate `hooks` targets.
+`install codex` and `uninstall codex` maintain a TinyJuice-managed Codex
+instruction block idempotently while preserving unrelated text. OpenHuman and
+other host install/uninstall mutation remains a future CLI slice.
+
 ## P1: Rule Validation And Discovery
 
 Plan:
@@ -122,10 +161,20 @@ Acceptance:
 - Validation is deterministic and does not panic on bad user files.
 - Discovery reports command families and counts without raw tool output.
 
+Status: implemented for the library surface. `verify_rules()` now reports parse
+errors, invalid regex patterns, duplicate rule ids, and shadowed lower-priority
+rules across the same builtin/user/project roots as `load_rules()`, without
+changing the lenient runtime loader. Current diagnostics show the 101 built-ins
+parse without duplicate ids and include 11 counter regexes that Rust `regex`
+drops because they use lookahead. `verify_rule_fixtures()` walks
+`*.fixture.json` examples, runs them through compiled rules, and reports pass
+counts, parse errors, and hash-only output mismatches.
+`discover_fallback_outputs()` groups command families that still classify to
+`generic/fallback` while omitting raw tool output.
+
 ## What Not To Do
 
 - Do not implement host installers before `doctor` can verify them.
 - Do not silently compact CI logs by default.
 - Do not turn every shell output into generic head/tail truncation.
 - Do not store raw artifacts unless explicitly requested.
-

@@ -1,0 +1,15 @@
+{
+  "description": "Repeated worker progress lines round-trip through the log template reformat",
+  "generator": {
+    "type": "workerProgress",
+    "lines": 80
+  },
+  "expected": {
+    "contains": [
+      "[TOKENJUICE LOG TEMPLATE",
+      "processed item id="
+    ],
+    "lossless": true,
+    "smaller": true
+  }
+}

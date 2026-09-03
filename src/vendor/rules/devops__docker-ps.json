@@ -24,7 +24,7 @@
   "counters": [
     {
       "name": "container",
-      "pattern": "^(?!CONTAINER ID\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

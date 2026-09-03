@@ -1,0 +1,19 @@
+{
+  "description": "SmartCrusher table rendering flattens small stringified JSON object columns",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonStringifiedRows",
+    "rows": 20
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": false,
+    "recovery": false,
+    "contains": [
+      "metadata.owner",
+      "metadata.flags.retry",
+      "team-7"
+    ]
+  }
+}

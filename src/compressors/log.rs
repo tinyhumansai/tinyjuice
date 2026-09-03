@@ -15,39 +15,81 @@
 //! listing, CSV, generated data) and must not be head/tail truncated.
 
 use async_trait::async_trait;
-use std::collections::{BTreeSet, HashMap};
+use once_cell::sync::Lazy;
+use std::collections::HashSet;
 use std::fmt::Write as _;
 
-use super::log_template;
+use super::Compressor;
 use super::signals::{Severity, severity};
-use super::{BLOCK_NOTE, Compressor, block_token};
+use crate::cache::CcrStore;
+use crate::pipeline::{
+    OffloadOutput, OffloadTransform, PipelineInput, ReformatTransform, TransformOutput,
+    estimate_bloat,
+};
 use crate::reduce::reduce_execution_with_rules;
-use crate::rules::cached_overlay_rules;
+use crate::rules::load_builtin_rules;
 use crate::types::{
-    CompressInput, CompressOptions, CompressOutput, CompressorKind, ReduceOptions,
-    ToolExecutionInput,
+    CompiledRule, CompressInput, CompressOptions, CompressOutput, CompressorKind, ContentKind,
+    ReduceOptions, ToolExecutionInput,
 };
 
-/// Safety ceiling on distinct error templates kept (all distinct templates are
-/// kept below this; the cap only guards a pathological blob).
-pub const MAX_ERROR_TEMPLATES: usize = 40;
-/// Distinct warning templates kept.
-pub const MAX_WARNING_TEMPLATES: usize = 10;
+pub const MAX_ERRORS: usize = 10;
+pub const MAX_WARNINGS: usize = 5;
 pub const MAX_STACK_TRACES: usize = 3;
 pub const STACK_TRACE_MAX_LINES: usize = 20;
 pub const MAX_TOTAL_LINES: usize = 100;
+pub const TEMPLATE_MIN_RUN: usize = 8;
+pub const TEMPLATE_MIN_CONSTANT_TOKENS: usize = 3;
 
-/// Lines of causal context kept before/after each distinct error exemplar.
-const CONTEXT_BEFORE: usize = 2;
-const CONTEXT_AFTER: usize = 2;
-/// Gaps of at most this many lines are emitted verbatim rather than replaced by
-/// a marker + CCR token (the marker would outweigh the omitted text).
-const MIN_GAP: usize = 2;
-/// Only mine a dropped region for template summaries when it is at least this
-/// many lines — small gaps aren't worth a summary line.
-const MIN_REGION_FOR_TEMPLATES: usize = 6;
+static BUILTIN_RULES: Lazy<Vec<CompiledRule>> = Lazy::new(load_builtin_rules);
 
 pub struct LogCompressor;
+
+/// Typed reformat transform for repetitive non-command logs.
+pub struct LogTemplateTransform;
+
+/// Typed offload transform for signal-preserving non-command logs.
+pub struct SignalLogTransform;
+
+impl ReformatTransform for LogTemplateTransform {
+    fn name(&self) -> &'static str {
+        "log_templates"
+    }
+
+    fn applies_to(&self, input: &PipelineInput<'_>) -> bool {
+        input.content_kind == ContentKind::Log
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>) -> Option<TransformOutput> {
+        let output = compress_templates(input.content)?;
+        Some(TransformOutput::new(output.text, CompressorKind::Log))
+    }
+}
+
+impl OffloadTransform for SignalLogTransform {
+    fn name(&self) -> &'static str {
+        "signal_log"
+    }
+
+    fn estimate_bloat(&self, input: &PipelineInput<'_>) -> f32 {
+        if input.content_kind != ContentKind::Log {
+            return 0.0;
+        }
+        f32::from(estimate_bloat(input.content, input.content_kind).score) / 100.0
+    }
+
+    fn apply(&self, input: &PipelineInput<'_>, store: &dyn CcrStore) -> Option<OffloadOutput> {
+        if input.content_kind != ContentKind::Log {
+            return None;
+        }
+        let compacted = compress_signal(input.content)?;
+        OffloadOutput::from_retained_put(
+            compacted.text,
+            CompressorKind::Log,
+            store.put(input.original_content),
+        )
+    }
+}
 
 #[async_trait]
 impl Compressor for LogCompressor {
@@ -62,73 +104,12 @@ impl Compressor for LogCompressor {
     ) -> Option<CompressOutput> {
         let has_command =
             input.command.is_some() || input.argv.as_ref().is_some_and(|a| !a.is_empty());
-        // The drop-based view wins whenever it will actually be emitted — with
-        // CCR every dropped line is recoverable, and a host that opts into
-        // `lossy_without_ccr` accepts marked-but-unrecoverable output. When
-        // neither holds (the strict no-CCR default) that view would be declined
-        // by the router as unrecoverable, so fall back to the one lossless log
-        // transform: collapse runs of byte-identical lines.
-        let lossy_ok = opts.ccr_enabled || opts.lossy_without_ccr;
-        if lossy_ok {
-            let lossy = if has_command {
-                compress_command(input, opts)
-            } else {
-                compress_signal(input.content, opts.ccr_enabled)
-            };
-            lossy.or_else(|| lossless_run_length(input.content))
+        if has_command {
+            compress_command(input, opts)
         } else {
-            lossless_run_length(input.content)
+            compress_templates(input.content).or_else(|| compress_signal(input.content))
         }
     }
-}
-
-/// Collapse runs of *byte-identical consecutive* lines into a single line plus
-/// a `[×N]` repeat count. Lossless: the exact line text and its repeat count
-/// both survive and order is preserved (only adjacent duplicates merge), so the
-/// reader can reconstruct the run — no line is dropped. Each run only collapses
-/// when doing so actually saves bytes; returns `None` when nothing collapses or
-/// the result wouldn't shrink. This is the compressor's no-CCR fallback: unlike
-/// the signal/rule paths it drops no information, so it ships without a cache.
-fn lossless_run_length(content: &str) -> Option<CompressOutput> {
-    // split('\n') + join('\n') round-trips the exact line/newline structure,
-    // including a trailing newline (which yields a final empty element).
-    let lines: Vec<&str> = content.split('\n').collect();
-    let mut out: Vec<String> = Vec::with_capacity(lines.len());
-    let mut collapsed = false;
-    let mut i = 0;
-    while i < lines.len() {
-        let line = lines[i];
-        let mut j = i + 1;
-        while j < lines.len() && lines[j] == line {
-            j += 1;
-        }
-        let run = j - i;
-        let merged = format!("{line} [×{run}]");
-        // Only merge when it beats re-emitting the run verbatim (run copies of
-        // the line, one newline each).
-        if run >= 2 && merged.len() + 1 < (line.len() + 1) * run {
-            out.push(merged);
-            collapsed = true;
-        } else {
-            for _ in 0..run {
-                out.push(line.to_string());
-            }
-        }
-        i = j;
-    }
-    if !collapsed {
-        return None;
-    }
-    let text = out.join("\n");
-    if text.len() >= content.len() {
-        return None;
-    }
-    log::debug!(
-        "[tinyjuice][log] lossless run-length {} -> {} bytes",
-        content.len(),
-        text.len()
-    );
-    Some(CompressOutput::reformatted(text, CompressorKind::Log))
 }
 
 /// Command output → run the rule engine, tagged as [`CompressorKind::Log`].
@@ -169,10 +150,7 @@ fn run_rule_engine(
         max_inline_chars: opts.max_inline_chars,
         ..Default::default()
     };
-    // Full three-layer overlay (builtin → user → project) so project rules in
-    // `<cwd>/.tinyjuice/rules/` apply to the compression path, as documented.
-    let rules = cached_overlay_rules(None);
-    let result = reduce_execution_with_rules(exec, &rules, &reduce_opts);
+    let result = reduce_execution_with_rules(exec, &BUILTIN_RULES, &reduce_opts);
     if result.inline_text.len() >= input.content.len() {
         return None;
     }
@@ -181,7 +159,7 @@ fn run_rule_engine(
         .matched_reducer
         .unwrap_or(result.classification.family);
     log::debug!(
-        "[tinyjuice][log] command rule={} kind={} {} -> {} bytes",
+        "[tokenjuice][log] command rule={} kind={} {} -> {} bytes",
         rule_label,
         kind.as_str(),
         input.content.len(),
@@ -190,18 +168,14 @@ fn run_rule_engine(
     Some(CompressOutput::lossy(result.inline_text, kind))
 }
 
-/// Signal-based log compression for non-command blobs detected as logs. With
-/// `block_tokens`, each omitted gap is offloaded to CCR and its marker carries
-/// a token that retrieves exactly those lines.
-pub fn compress_signal(content: &str, block_tokens: bool) -> Option<CompressOutput> {
+/// Signal-based log compression for non-command blobs detected as logs.
+pub fn compress_signal(content: &str) -> Option<CompressOutput> {
     let lines: Vec<&str> = content.lines().collect();
     if lines.len() <= MAX_TOTAL_LINES {
         return None;
     }
 
-    let mut keep: BTreeSet<usize> = BTreeSet::new();
-    // Per-kept-line suffixes (e.g. `×N` template counts) appended on emit.
-    let mut annotations: HashMap<usize, String> = HashMap::new();
+    let mut keep: std::collections::BTreeSet<usize> = std::collections::BTreeSet::new();
 
     for (i, line) in lines.iter().enumerate() {
         if is_summary_line(line) {
@@ -209,40 +183,38 @@ pub fn compress_signal(content: &str, block_tokens: bool) -> Option<CompressOutp
         }
     }
 
-    // Precompute stack-frame membership so error classification can exclude
-    // frames (a `panicking` frame must not become a keyword-derived error) and
-    // the trace walk can reuse it.
-    let stack_frame: Vec<bool> = lines.iter().map(|l| is_stack_frame(l)).collect();
+    let error_idx: Vec<usize> = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, l)| severity(l) == Severity::Error)
+        .map(|(i, _)| i)
+        .collect();
+    for &i in select_first_last(&error_idx, MAX_ERRORS).iter() {
+        keep.insert(i);
+    }
 
-    // Errors: keep one exemplar per distinct template with an `×N` count and a
-    // small window of causal context; keep every distinct template up to a
-    // safety ceiling (no flat first-few/last-few cap).
-    collapse_by_template(
-        &lines,
-        |i| severity(lines[i]) == Severity::Error && !stack_frame[i],
-        MAX_ERROR_TEMPLATES,
-        true,
-        &mut keep,
-        &mut annotations,
-    );
-
-    // Warnings: exemplar + count per distinct template, fewer distinct kept.
-    collapse_by_template(
-        &lines,
-        |i| severity(lines[i]) == Severity::Warning && !stack_frame[i],
-        MAX_WARNING_TEMPLATES,
-        false,
-        &mut keep,
-        &mut annotations,
-    );
+    let mut seen_warn: HashSet<String> = HashSet::new();
+    let mut warn_kept = 0usize;
+    for (i, line) in lines.iter().enumerate() {
+        if warn_kept >= MAX_WARNINGS {
+            break;
+        }
+        if severity(line) == Severity::Warning {
+            let norm = normalize_for_dedupe(line);
+            if seen_warn.insert(norm) {
+                keep.insert(i);
+                warn_kept += 1;
+            }
+        }
+    }
 
     let mut traces_kept = 0usize;
     let mut i = 0usize;
     while i < lines.len() && traces_kept < MAX_STACK_TRACES {
-        if stack_frame[i] {
+        if is_stack_frame(lines[i]) {
             let start = i;
             let mut taken = 0usize;
-            while i < lines.len() && stack_frame[i] {
+            while i < lines.len() && is_stack_frame(lines[i]) {
                 if taken < STACK_TRACE_MAX_LINES {
                     keep.insert(i);
                     taken += 1;
@@ -268,42 +240,34 @@ pub fn compress_signal(content: &str, block_tokens: bool) -> Option<CompressOutp
     } else {
         kept_vec
     };
-    let kept_set: BTreeSet<usize> = kept_vec.into_iter().collect();
+    let kept_set: std::collections::BTreeSet<usize> = kept_vec.into_iter().collect();
 
     let mut out = String::with_capacity(content.len() / 2 + 64);
-    let mut any_token = false;
     let mut prev: Option<usize> = None;
     for &i in &kept_set {
-        let gap = match prev {
-            Some(p) => Some((p + 1, i)),
-            None if i > 0 => Some((0, i)),
-            None => None,
-        };
-        if let Some((s, e)) = gap {
-            any_token |= emit_gap(&mut out, &lines, s, e, block_tokens);
+        if let Some(p) = prev {
+            let gap = i - p - 1;
+            if gap > 0 {
+                let _ = writeln!(out, "[... {gap} line(s) omitted ...]");
+            }
+        } else if i > 0 {
+            let _ = writeln!(out, "[... {i} line(s) omitted ...]");
         }
-        out.push_str(lines[i]);
-        if let Some(a) = annotations.get(&i) {
-            out.push_str(a);
-        }
-        out.push('\n');
+        let _ = writeln!(out, "{}", lines[i]);
         prev = Some(i);
     }
-    if let Some(p) = prev
-        && p + 1 < lines.len()
-    {
-        any_token |= emit_gap(&mut out, &lines, p + 1, lines.len(), block_tokens);
+    if let Some(p) = prev {
+        let tail = lines.len().saturating_sub(p + 1);
+        if tail > 0 {
+            let _ = writeln!(out, "[... {tail} line(s) omitted ...]");
+        }
     }
 
-    if any_token {
-        out.push_str(BLOCK_NOTE);
-        out.push('\n');
-    }
     if out.len() >= content.len() {
         return None;
     }
     log::debug!(
-        "[tinyjuice][log] signal kept {} of {} line(s)",
+        "[tokenjuice][log] signal kept {} of {} line(s)",
         kept_set.len(),
         lines.len(),
     );
@@ -313,90 +277,153 @@ pub fn compress_signal(content: &str, block_tokens: bool) -> Option<CompressOutp
     ))
 }
 
-/// Cluster the member lines (selected by `is_member`) by their dedupe template
-/// key, keep one exemplar (the first occurrence) per distinct template, and
-/// annotate it with `×N (first T1, last T2)` when the cluster has more than one
-/// line. With `keep_context`, also retain up to [`CONTEXT_BEFORE`]/
-/// [`CONTEXT_AFTER`] lines around the exemplar so causal context survives.
-fn collapse_by_template(
-    lines: &[&str],
-    mut is_member: impl FnMut(usize) -> bool,
-    max_templates: usize,
-    keep_context: bool,
-    keep: &mut BTreeSet<usize>,
-    annotations: &mut HashMap<usize, String>,
-) {
-    let mut order: Vec<String> = Vec::new();
-    let mut groups: HashMap<String, Vec<usize>> = HashMap::new();
-    for (i, line) in lines.iter().enumerate() {
-        if is_member(i) {
-            let key = log_template::template_key(line);
-            if !groups.contains_key(&key) {
-                order.push(key.clone());
+/// Lossless reformat for repetitive non-command logs. Consecutive runs of the
+/// same line template are represented as one template plus captured variants.
+pub fn compress_templates(content: &str) -> Option<CompressOutput> {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.len() < TEMPLATE_MIN_RUN {
+        return None;
+    }
+
+    let mut out = String::with_capacity(content.len() / 2 + 128);
+    let mut i = 0usize;
+    let mut emitted_block = false;
+
+    while i < lines.len() {
+        let Some(first) = line_template(lines[i]) else {
+            let _ = writeln!(out, "{}", lines[i]);
+            i += 1;
+            continue;
+        };
+
+        let start = i;
+        let mut captures = vec![first.captures];
+        i += 1;
+        while i < lines.len() {
+            let Some(next) = line_template(lines[i]) else {
+                break;
+            };
+            if next.template != first.template || next.captures.len() != captures[0].len() {
+                break;
             }
-            groups.entry(key).or_default().push(i);
+            captures.push(next.captures);
+            i += 1;
+        }
+
+        if captures.len() >= TEMPLATE_MIN_RUN {
+            write_template_block(&mut out, &first.template, &captures);
+            emitted_block = true;
+        } else {
+            for line in &lines[start..i] {
+                let _ = writeln!(out, "{line}");
+            }
         }
     }
 
-    for key in order.into_iter().take(max_templates) {
-        let idx = &groups[&key];
-        let first = idx[0];
-        let last = *idx.last().expect("non-empty group");
-        keep.insert(first);
-        if idx.len() > 1 {
-            let ts = (
-                log_template::parse_timestamp(lines[first]),
-                log_template::parse_timestamp(lines[last]),
-            );
-            let ann = match ts {
-                (Some(a), Some(b)) => format!("  [×{} first {a}, last {b}]", idx.len()),
-                _ => format!("  [×{}]", idx.len()),
-            };
-            annotations.insert(first, ann);
-        }
-        if keep_context {
-            for j in first.saturating_sub(CONTEXT_BEFORE)..first {
-                keep.insert(j);
-            }
-            let ctx_end = (first + CONTEXT_AFTER).min(lines.len().saturating_sub(1));
-            for j in (first + 1)..=ctx_end {
-                keep.insert(j);
-            }
-        }
+    let out = out.trim_end().to_string();
+    if !emitted_block || out.len() >= content.len() {
+        return None;
     }
+    log::debug!(
+        "[tokenjuice][log] template reformat {} -> {} bytes",
+        content.len(),
+        out.len(),
+    );
+    Some(CompressOutput::reformatted(out, CompressorKind::Log))
 }
 
-/// Emit a dropped `[start, end)` gap. Gaps of at most [`MIN_GAP`] lines are
-/// written verbatim (a marker + token would be larger than the omitted text).
-/// Larger gaps get the standard omission marker — carrying a CCR token that
-/// makes the region recoverable — optionally preceded by template summaries
-/// when the region is dominated by a few repeating templates. Returns whether a
-/// retrieval token was emitted.
-fn emit_gap(
-    out: &mut String,
-    lines: &[&str],
-    start: usize,
-    end: usize,
-    block_tokens: bool,
-) -> bool {
-    let len = end - start;
-    if len <= MIN_GAP {
-        for line in &lines[start..end] {
-            let _ = writeln!(out, "{line}");
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct LineTemplate {
+    template: String,
+    captures: Vec<String>,
+}
+
+fn line_template(line: &str) -> Option<LineTemplate> {
+    let mut template = String::with_capacity(line.len());
+    let mut captures = Vec::new();
+    let mut chars = line.char_indices().peekable();
+
+    while let Some((idx, ch)) = chars.next() {
+        if ch == '0' && chars.peek().is_some_and(|(_, next)| *next == 'x') {
+            let start = idx;
+            let mut end = idx + ch.len_utf8();
+            if let Some((x_idx, x_ch)) = chars.next() {
+                end = x_idx + x_ch.len_utf8();
+            }
+            while let Some((next_idx, next_ch)) = chars.peek().copied() {
+                if next_ch.is_ascii_hexdigit() {
+                    chars.next();
+                    end = next_idx + next_ch.len_utf8();
+                } else {
+                    break;
+                }
+            }
+            template.push_str("{}");
+            captures.push(line[start..end].to_string());
+        } else if ch.is_ascii_digit() {
+            let start = idx;
+            let mut end = idx + ch.len_utf8();
+            while let Some((next_idx, next_ch)) = chars.peek().copied() {
+                if next_ch.is_ascii_digit() {
+                    chars.next();
+                    end = next_idx + next_ch.len_utf8();
+                } else {
+                    break;
+                }
+            }
+            template.push_str("{}");
+            captures.push(line[start..end].to_string());
+        } else {
+            template.push(ch);
         }
-        return false;
     }
-    let region = &lines[start..end];
-    if len >= MIN_REGION_FOR_TEMPLATES
-        && let Some(summary) = log_template::summarize_region(region)
+
+    if captures.len() < 2
+        || template.trim().len() < 12
+        || template_constant_tokens(&template) < TEMPLATE_MIN_CONSTANT_TOKENS
     {
-        for s in summary {
-            let _ = writeln!(out, "{s}");
+        return None;
+    }
+    Some(LineTemplate { template, captures })
+}
+
+fn template_constant_tokens(template: &str) -> usize {
+    template
+        .split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .count()
+}
+
+fn write_template_block(out: &mut String, template: &str, captures: &[Vec<String>]) {
+    let fields = captures.first().map_or(0, Vec::len);
+    let _ = writeln!(
+        out,
+        "[TOKENJUICE LOG TEMPLATE run={} fields={fields}]",
+        captures.len()
+    );
+    let _ = writeln!(out, "{template}");
+    for row in captures {
+        let rendered = row
+            .iter()
+            .map(|capture| escape_capture(capture))
+            .collect::<Vec<_>>()
+            .join("\t");
+        let _ = writeln!(out, "{rendered}");
+    }
+    let _ = writeln!(out, "[/TOKENJUICE LOG TEMPLATE]");
+}
+
+fn escape_capture(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for ch in value.chars() {
+        match ch {
+            '\\' => out.push_str("\\\\"),
+            '\t' => out.push_str("\\t"),
+            '\r' => out.push_str("\\r"),
+            _ => out.push(ch),
         }
     }
-    let token = block_token(&region.join("\n"), block_tokens);
-    let _ = writeln!(out, "[... {len} line(s) omitted ...{token}]");
-    !token.is_empty()
+    out
 }
 
 fn select_first_last(idx: &[usize], cap: usize) -> Vec<usize> {
@@ -441,24 +468,27 @@ fn is_stack_frame(line: &str) -> bool {
         return false;
     }
     let indented = line.starts_with(' ') || line.starts_with('\t');
-    // Rust backtrace frames: "  12: core::panicking::panic"
-    let rust_frame = || {
-        let digits = trimmed.chars().take_while(char::is_ascii_digit).count();
-        digits > 0 && trimmed[digits..].starts_with(": ")
-    };
-    // Go goroutine frames: "\t/path/file.go:42 +0x1b"
-    let go_frame = || trimmed.contains(".go:");
     indented
         && (trimmed.starts_with("at ")
             || trimmed.starts_with("File \"")
-            || (trimmed.starts_with('#') && trimmed[1..].starts_with(|c: char| c.is_ascii_digit()))
-            || rust_frame()
-            || go_frame())
+            || (trimmed.starts_with('#') && trimmed[1..].starts_with(|c: char| c.is_ascii_digit())))
+}
+
+fn normalize_for_dedupe(line: &str) -> String {
+    line.chars()
+        .filter(|c| !c.is_ascii_digit())
+        .collect::<String>()
+        .to_ascii_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cache::{CcrStore, MemoryCcrStore};
+    use crate::types::{CompressOptions, ContentHint, ContentKind};
 
     fn noisy_log() -> String {
         let mut s = String::new();
@@ -472,67 +502,219 @@ mod tests {
         s
     }
 
-    /// The lossless run-length fallback collapses byte-identical consecutive
-    /// lines into `line [×N]`, dropping nothing and preserving order.
-    #[test]
-    fn lossless_run_length_collapses_exact_duplicates() {
-        let mut s = String::from("start of stream\n");
-        for _ in 0..50 {
-            s.push_str("2026-07-05T09:00:00Z INFO heartbeat ok\n");
+    fn repetitive_template_log() -> String {
+        let mut s = String::new();
+        for i in 0..80 {
+            let _ = writeln!(
+                s,
+                "2026-07-05T12:{:02}:00Z worker-{i} processed item id={} shard={}",
+                i % 60,
+                10_000 + i,
+                i % 8
+            );
         }
-        s.push_str("2026-07-05T09:00:01Z INFO heartbeat ok differs\n");
-        s.push_str("end of stream\n");
-        let result = lossless_run_length(&s).expect("collapses");
-        assert!(!result.lossy, "run-length collapse drops nothing");
-        assert_eq!(result.kind, CompressorKind::Log);
-        let out = result.text;
-        // Non-duplicated lines survive verbatim.
-        assert!(out.contains("start of stream"), "{out}");
-        assert!(out.contains("end of stream"), "{out}");
-        assert!(out.contains("heartbeat ok differs"), "{out}");
-        // The 50 identical lines collapse to one with an exact count.
+        s
+    }
+
+    fn reconstruct_template_reformat(output: &str) -> String {
+        let mut out = String::new();
+        let lines: Vec<&str> = output.lines().collect();
+        let mut i = 0usize;
+        while i < lines.len() {
+            if lines[i].starts_with("[TOKENJUICE LOG TEMPLATE ") {
+                let template = lines[i + 1];
+                i += 2;
+                while i < lines.len() && lines[i] != "[/TOKENJUICE LOG TEMPLATE]" {
+                    let captures = lines[i]
+                        .split('\t')
+                        .map(unescape_capture_for_test)
+                        .collect::<Vec<_>>();
+                    let _ = writeln!(out, "{}", apply_template_for_test(template, &captures));
+                    i += 1;
+                }
+                i += 1;
+            } else {
+                let _ = writeln!(out, "{}", lines[i]);
+                i += 1;
+            }
+        }
+        out
+    }
+
+    fn unescape_capture_for_test(value: &str) -> String {
+        let mut out = String::new();
+        let mut chars = value.chars();
+        while let Some(ch) = chars.next() {
+            if ch == '\\' {
+                match chars.next() {
+                    Some('\\') => out.push('\\'),
+                    Some('t') => out.push('\t'),
+                    Some('r') => out.push('\r'),
+                    Some(other) => {
+                        out.push('\\');
+                        out.push(other);
+                    }
+                    None => out.push('\\'),
+                }
+            } else {
+                out.push(ch);
+            }
+        }
+        out
+    }
+
+    fn apply_template_for_test(template: &str, captures: &[String]) -> String {
+        let mut out = String::new();
+        let mut rest = template;
+        for capture in captures {
+            let Some((head, tail)) = rest.split_once("{}") else {
+                break;
+            };
+            out.push_str(head);
+            out.push_str(capture);
+            rest = tail;
+        }
+        out.push_str(rest);
+        out
+    }
+
+    #[test]
+    fn template_reformat_is_lossless_and_smaller() {
+        let input = repetitive_template_log();
+        let out = compress_templates(&input).expect("template reformat");
+
+        assert!(!out.lossy);
+        assert!(out.text.contains("[TOKENJUICE LOG TEMPLATE run=80"));
+        assert!(out.text.len() < input.len(), "{}", out.text);
+        assert_eq!(
+            reconstruct_template_reformat(&out.text).trim_end(),
+            input.trim_end()
+        );
+    }
+
+    #[tokio::test]
+    async fn template_reformat_routes_without_ccr() {
+        let input = repetitive_template_log();
+        let hint = ContentHint {
+            explicit: Some(ContentKind::Log),
+            ..Default::default()
+        };
+        let opts = CompressOptions {
+            min_bytes_to_compress: 64,
+            ccr_min_tokens: usize::MAX,
+            ..Default::default()
+        };
+
+        let out = crate::compress_content(&input, Some(hint), &opts).await;
+
+        assert!(out.applied);
+        assert!(!out.lossy);
+        assert!(out.ccr_token.is_none());
+        assert!(out.text.contains("[TOKENJUICE LOG TEMPLATE"));
+    }
+
+    #[test]
+    fn template_reformat_transform_runs_without_ccr() {
+        let input = repetitive_template_log();
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Log,
+            original_bytes: input.len(),
+        };
+        let transform = LogTemplateTransform;
+
+        assert!(transform.applies_to(&pipeline_input));
+        let out = transform.apply(&pipeline_input).expect("template reformat");
+
+        assert_eq!(out.kind, CompressorKind::Log);
         assert!(
-            out.contains("2026-07-05T09:00:00Z INFO heartbeat ok [×50]"),
-            "run collapsed with count: {out}"
+            out.text.contains("[TOKENJUICE LOG TEMPLATE"),
+            "{}",
+            out.text
         );
         assert_eq!(
-            out.matches("INFO heartbeat ok [×50]").count(),
-            1,
-            "only one collapsed line: {out}"
+            reconstruct_template_reformat(&out.text).trim_end(),
+            input.trim_end()
         );
-        assert!(out.len() < s.len());
-    }
-
-    /// A run shorter than the break-even point is left verbatim (the marker
-    /// would not save bytes), and content with no runs declines.
-    #[test]
-    fn lossless_run_length_declines_without_savings() {
-        // Distinct lines: nothing to collapse.
-        let distinct = (0..80)
-            .map(|i| format!("line number {i} is unique"))
-            .collect::<Vec<_>>()
-            .join("\n");
-        assert!(lossless_run_length(&distinct).is_none());
-        // A 2-line run of a very short line does not save with the marker.
-        let short = "ok\nok\ntail line here to keep it distinct\n";
-        assert!(lossless_run_length(short).is_none());
     }
 
     #[test]
-    fn lossless_run_length_preserves_trailing_newline() {
-        let with_nl = "header line one\nx\nx\nx\nx\nx\ntail\n";
-        let out = lossless_run_length(with_nl).expect("collapses").text;
-        assert!(
-            out.ends_with("tail\n"),
-            "trailing newline preserved: {out:?}"
-        );
-        assert!(out.contains("x [×5]"), "{out}");
+    fn template_reformat_transform_skips_non_log_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = LogTemplateTransform;
+
+        assert!(!transform.applies_to(&input));
+    }
+
+    #[test]
+    fn signal_log_transform_requires_retained_ccr() {
+        let input = noisy_log();
+        let pipeline_input = PipelineInput {
+            content: &input,
+            original_content: &input,
+            content_kind: ContentKind::Log,
+            original_bytes: input.len(),
+        };
+        let transform = SignalLogTransform;
+
+        let rejecting_store = MemoryCcrStore::new(1, 1);
+        assert!(transform.apply(&pipeline_input, &rejecting_store).is_none());
+
+        let store = MemoryCcrStore::default();
+        let out = transform
+            .apply(&pipeline_input, &store)
+            .expect("retained signal log");
+
+        assert_eq!(out.kind(), CompressorKind::Log);
+        assert!(out.text().contains("error[E0382]"), "{}", out.text());
+        assert_eq!(store.get(out.token()).as_deref(), Some(input.as_str()));
+    }
+
+    #[test]
+    fn signal_log_transform_skips_non_log_input() {
+        let input = PipelineInput {
+            content: "plain text",
+            original_content: "plain text",
+            content_kind: ContentKind::PlainText,
+            original_bytes: "plain text".len(),
+        };
+        let transform = SignalLogTransform;
+        let store = MemoryCcrStore::default();
+
+        assert_eq!(transform.estimate_bloat(&input), 0.0);
+        assert!(transform.apply(&input, &store).is_none());
+    }
+
+    #[test]
+    fn template_reformat_declines_without_dynamic_fields() {
+        let mut input = String::new();
+        for _ in 0..40 {
+            let _ = writeln!(input, "plain repeated line without dynamic fields");
+        }
+
+        assert!(compress_templates(&input).is_none());
+    }
+
+    #[test]
+    fn template_reformat_declines_low_context_dynamic_lines() {
+        let mut input = String::new();
+        for i in 0..40 {
+            let _ = writeln!(input, "id={} value={}", 10_000 + i, 20_000 + i);
+        }
+
+        assert!(compress_templates(&input).is_none());
     }
 
     #[test]
     fn signal_keeps_errors_and_summary_drops_noise() {
         let input = noisy_log();
-        let out = compress_signal(&input, false).expect("compresses").text;
+        let out = compress_signal(&input).expect("compresses").text;
         assert!(out.contains("error[E0382]"), "{out}");
         assert!(out.contains("error: aborting"), "{out}");
         assert!(out.contains("test result: FAILED"), "{out}");
@@ -541,264 +723,11 @@ mod tests {
     }
 
     #[test]
-    fn recognizes_rust_and_go_stack_frames() {
-        // Rust backtrace
-        assert!(is_stack_frame("  12: core::panicking::panic"));
-        assert!(is_stack_frame("   3: tinyjuice::compress::route"));
-        // Go goroutine trace
-        assert!(is_stack_frame("\t/srv/app/main.go:42 +0x1b"));
-        // JS / Python / gdb still recognized
-        assert!(is_stack_frame(
-            "    at Object.<anonymous> (/app/index.js:1:1)"
-        ));
-        assert!(is_stack_frame(
-            "  File \"/app/main.py\", line 3, in <module>"
-        ));
-        assert!(is_stack_frame("  #4 0x0000 in main ()"));
-        // Non-frames
-        assert!(!is_stack_frame("12: not indented so not a frame"));
-        assert!(!is_stack_frame("    ordinary indented prose"));
-    }
-
-    #[test]
-    fn rust_backtrace_frames_survive_signal_compression() {
-        let mut s = String::new();
-        for i in 0..200 {
-            let _ = writeln!(s, "request handled id={i} status=200");
-        }
-        let _ = writeln!(s, "thread 'main' panicked at 'boom', src/main.rs:10:5");
-        let _ = writeln!(s, "stack backtrace:");
-        for i in 0..6 {
-            let _ = writeln!(s, "  {i}: some_crate::module::function_{i}");
-        }
-        let out = compress_signal(&s, false).expect("compresses").text;
-        assert!(out.contains("panicked"), "{out}");
-        assert!(
-            out.contains("some_crate::module::function_2"),
-            "backtrace frames dropped:\n{out}"
-        );
-    }
-
-    #[test]
     fn non_log_data_passes_through() {
         let mut s = String::new();
         for i in 0..400 {
             let _ = writeln!(s, "/var/data/file_{i:04}.bin\t{i}\trwxr-xr-x");
         }
-        assert!(compress_signal(&s, false).is_none());
-    }
-
-    #[test]
-    fn gap_token_retrieves_omitted_lines() {
-        use crate::cache;
-        let input = noisy_log();
-        let out = compress_signal(&input, true).expect("compresses").text;
-        let tokens = cache::parse_markers(&out);
-        assert!(!tokens.is_empty(), "gap markers should carry tokens: {out}");
-        let block = cache::retrieve(&tokens[0]).expect("stored");
-        assert!(
-            block.contains("Compiling crate_"),
-            "gap block should hold the omitted noise: {block}"
-        );
-    }
-
-    #[test]
-    fn distinct_error_templates_all_kept_with_counts() {
-        // 150 lines of noise, then three distinct error templates, each repeated.
-        let mut s = String::new();
-        for i in 0..150 {
-            let _ = writeln!(s, "081109 20{i:04} 12 INFO worker: handled request {i} ok");
-        }
-        for i in 0..5 {
-            let _ = writeln!(
-                s,
-                "081110 00{i:04} 12 ERROR disk: write to /dev/sda{i} failed"
-            );
-        }
-        for i in 0..5 {
-            let _ = writeln!(
-                s,
-                "081110 01{i:04} 12 ERROR net: connection to host_{i} refused"
-            );
-        }
-        for i in 0..5 {
-            let _ = writeln!(
-                s,
-                "081110 02{i:04} 12 ERROR auth: token for user_{i} expired"
-            );
-        }
-        let out = compress_signal(&s, false).expect("compresses").text;
-        assert!(out.contains("write to /dev/sda"), "disk error kept: {out}");
-        assert!(out.contains("connection to host_"), "net error kept: {out}");
-        assert!(out.contains("token for user_"), "auth error kept: {out}");
-        // Each distinct template collapses to one exemplar with an ×5 count.
-        assert_eq!(out.matches("[×5").count(), 3, "one ×5 per template: {out}");
-    }
-
-    #[test]
-    fn burst_of_templated_errors_collapses_to_one_exemplar() {
-        let mut s = String::new();
-        for i in 0..120 {
-            let _ = writeln!(s, "12:00:{:02} INFO idle tick {i}", i % 60);
-        }
-        for i in 0..20 {
-            let _ = writeln!(
-                s,
-                "13:37:{:02} ERROR handler: request blk_{i} timed out after 30s",
-                i % 60
-            );
-        }
-        let out = compress_signal(&s, false).expect("compresses").text;
-        // The 20-line burst collapses to a single exemplar annotated ×20 with
-        // first/last timestamps. A couple of context lines around the exemplar
-        // and a gap template summary may echo the phrase, but the 20 verbatim
-        // copies are gone.
-        assert!(out.contains("[×20 first 13:37:00, last 13:37:19]"), "{out}");
-        assert!(
-            out.matches("13:37:").count() < 20,
-            "burst should not keep 20 verbatim copies: {out}"
-        );
-    }
-
-    #[test]
-    fn context_lines_kept_around_error() {
-        let mut s = String::new();
-        for i in 0..150 {
-            let _ = writeln!(s, "12:00:{:02} INFO steady state {i}", i % 60);
-        }
-        let _ = writeln!(s, "13:00:00 INFO before-2 opening connection");
-        let _ = writeln!(s, "13:00:01 INFO before-1 sending handshake");
-        let _ = writeln!(s, "13:00:02 ERROR handshake rejected by peer");
-        let _ = writeln!(s, "13:00:03 INFO after-1 closing socket");
-        let _ = writeln!(s, "13:00:04 INFO after-2 cleaning up");
-        for i in 0..50 {
-            let _ = writeln!(s, "13:10:{:02} INFO steady state {i}", i % 60);
-        }
-        let out = compress_signal(&s, false).expect("compresses").text;
-        assert!(out.contains("handshake rejected"), "error kept: {out}");
-        assert!(
-            out.contains("before-1 sending handshake"),
-            "ctx-1 before: {out}"
-        );
-        assert!(
-            out.contains("before-2 opening connection"),
-            "ctx-2 before: {out}"
-        );
-        assert!(out.contains("after-1 closing socket"), "ctx-1 after: {out}");
-        assert!(out.contains("after-2 cleaning up"), "ctx-2 after: {out}");
-    }
-
-    #[test]
-    fn short_gap_emitted_verbatim() {
-        // A 1-line gap between two kept errors must stay verbatim, not become a
-        // marker + token that is larger than the omitted line.
-        let mut s = String::new();
-        for i in 0..150 {
-            let _ = writeln!(s, "081109 20{i:04} 12 INFO noise line {i}");
-        }
-        let _ = writeln!(s, "081110 000001 12 ERROR alpha subsystem failed hard");
-        let _ = writeln!(s, "081110 000002 12 INFO a single quiet interstitial line");
-        let _ = writeln!(s, "081110 000003 12 ERROR beta subsystem failed hard");
-        for i in 0..30 {
-            let _ = writeln!(s, "081110 01{i:04} 12 INFO tail noise {i}");
-        }
-        let out = compress_signal(&s, true).expect("compresses").text;
-        // The single interstitial line survives verbatim between the two errors,
-        // with no omission marker separating them.
-        assert!(
-            out.contains("a single quiet interstitial line"),
-            "1-line gap should be verbatim: {out}"
-        );
-        let alpha = out.find("alpha subsystem").expect("alpha kept");
-        let beta = out.find("beta subsystem").expect("beta kept");
-        let between = &out[alpha..beta];
-        assert!(
-            !between.contains("omitted"),
-            "no marker for a 1-line gap: {between}"
-        );
-    }
-
-    #[test]
-    fn warn_exception_deduped_not_kept_verbatim() {
-        // The HDFS pathology: many `WARN … Got exception …` lines. They must be
-        // treated as warnings and collapsed to a single deduped exemplar, not
-        // kept verbatim as distinct errors.
-        let mut s = String::new();
-        for i in 0..150 {
-            let _ = writeln!(s, "081109 20{i:04} 12 INFO worker: processed block {i}");
-        }
-        for i in 0..30 {
-            let _ = writeln!(
-                s,
-                "081109 21{i:04} {i} WARN dfs.DataNode$DataXceiver: 10.0.0.{i}:50010:Got exception while serving blk_-{i}00 to /10.1.0.{i}:"
-            );
-        }
-        let out = compress_signal(&s, false).expect("compresses").text;
-        assert_eq!(
-            out.matches("Got exception while serving").count(),
-            1,
-            "WARN+exception lines must dedupe to one exemplar: {out}"
-        );
-    }
-
-    #[test]
-    fn rare_lowercase_fail_line_survives_pipe_delimited_noise() {
-        // HealthApp/logcat shape: `ts|component|pid|message`, no level tokens,
-        // and a rare failure line using bare lowercase `fail`. It must survive
-        // as a warning exemplar instead of being swallowed into an omitted gap.
-        let mut s = String::new();
-        for i in 0..300 {
-            let _ = writeln!(
-                s,
-                "20171223-22:19:{:02}:{:03}|HiH_HiHealthDataInsertStore|30002312|saveStatData() type ={},time = 1513958400000,statClient = 2,who is 1",
-                i % 60,
-                i % 1000,
-                40000 + i
-            );
-        }
-        let _ = writeln!(
-            s,
-            "20171223-22:19:58:380|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40003"
-        );
-        for i in 0..100 {
-            let _ = writeln!(
-                s,
-                "20171223-22:20:{:02}:{:03}|HiH_DataStatManager|30002312|new date =20171223, type={},7163.0,old=6983.0",
-                i % 60,
-                i % 1000,
-                40000 + i
-            );
-        }
-        let _ = writeln!(
-            s,
-            "20171223-22:21:00:381|HiH_HiHealthDataInsertStore|30002312|saveHealthDetailData() saveOneDetailData fail hiHealthData = 1513958400000,type = 40005"
-        );
-        let out = compress_signal(&s, false).expect("compresses").text;
-        assert!(
-            out.contains("saveOneDetailData fail"),
-            "rare lowercase fail line must survive: {out}"
-        );
-        assert!(out.len() < s.len(), "must shrink");
-    }
-
-    #[test]
-    fn round_trips_losslessly_with_ccr() {
-        // Every omitted region is recoverable through its marker token.
-        let mut s = String::new();
-        for i in 0..300 {
-            let _ = writeln!(
-                s,
-                "081109 20{i:04} 12 INFO dfs.DataNode: block blk_{i} stored ok"
-            );
-        }
-        let _ = writeln!(s, "081110 000000 12 ERROR fatal corruption detected");
-        let out = compress_signal(&s, true).expect("compresses");
-        assert!(out.lossy, "signal compression is lossy");
-        assert!(out.text.len() < s.len(), "must shrink");
-        let tokens = crate::cache::parse_markers(&out.text);
-        assert!(!tokens.is_empty(), "recovery tokens present: {}", out.text);
-        for t in &tokens {
-            assert!(crate::cache::retrieve(t).is_some(), "token {t} recoverable");
-        }
+        assert!(compress_signal(&s).is_none());
     }
 }

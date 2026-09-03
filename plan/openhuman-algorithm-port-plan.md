@@ -8,7 +8,7 @@ algorithm this plan names the TinyJuice core modules, the OpenHuman files to
 add or change, the wiring, and the acceptance criteria — in enough detail that
 an implementing agent can execute it without re-deriving the analysis.
 
-Verified against the OpenHuman repo (`../openhuman-2`) on 2026-07-04. All
+Verified against the OpenHuman repo (`../openhuman-4`) on 2026-07-06. All
 OpenHuman paths below exist today unless marked NEW.
 
 ## Ground Rules
@@ -59,12 +59,16 @@ the process-global cache.
 
 TinyJuice files (per pipeline-and-ccr-plan):
 
-- `src/pipeline/mod.rs`, `src/pipeline/transform.rs`, `src/pipeline/report.rs` (NEW)
-- `src/cache/store.rs` — extract `CcrStore` trait, keep global wrappers
+- `src/pipeline/mod.rs`, `src/pipeline/transform.rs`, `src/pipeline/report.rs`
+  — present with the first transform/report primitives.
+- `src/cache/store.rs` — `CcrStore`, `GlobalCcrStore`, and `MemoryCcrStore`
+  are present; global wrappers are preserved.
 
 OpenHuman files:
 
-- `vendor/tinyjuice` — submodule bump (currently `4b1a34f`, behind HEAD).
+- Current `../openhuman-4` has a local `src/openhuman/tokenjuice/` copy rather
+  than `vendor/tinyjuice`; mirror store/pipeline exports there until the crate
+  dependency boundary is restored.
 - `src/openhuman/tokenjuice/mod.rs` — re-export `CcrStore`, `PipelineReport`;
   `install_from_config` constructs the store explicitly instead of relying on
   global state, keeping the global as compatibility path.
@@ -77,6 +81,15 @@ Acceptance:
   behavior without touching the global cache.
 - Lossy output is unconstructable without a verified token (compile-time).
 - No behavior change for existing compaction paths (fixture parity).
+
+Status: implemented. TinyJuice has the typed pipeline/report layer and
+`CcrStore` trait with global and in-memory stores; OpenHuman mirrors those
+exports under `src/openhuman/tokenjuice/`, including store-injected
+`compress_content_with_store*` and `route_with_store*` paths. `install_from_config`
+maps runtime config into the explicit TokenJuice install path while preserving
+the global store compatibility path. OpenHuman tests cover isolated in-memory
+offload behavior, CCR rejection, pipeline reporting, and runtime config/cache
+limit installation.
 
 ## P0-2: Fix The Hook, Then Safe Shell Policy
 
@@ -122,6 +135,17 @@ Acceptance:
 - Exit code and stderr presence preserved in compacted output.
 - A shell result carrying argv reaches the rule reducer (end-to-end test in
   OpenHuman, not just crate-level).
+
+Status: implemented. TinyJuice exposes `ShellCompactionPolicy` and command
+classification in `src/policy/shell.rs`; OpenHuman config surfaces
+`TokenjuiceShellPolicy` with the `allow_safe_inventory` default and partial
+updates/env overlays. `ToolOutputMiddleware` now captures tool arguments in
+`before_tool`, parses rendered shell exit status in `after_tool`, calls
+`compact_tool_output_with_policy_detail`, bypasses recovery tools, applies body
+caps, and reattaches the TokenJuice recovery footer after truncation. OpenHuman
+middleware tests cover argument threading, nonzero exit/stderr preservation,
+safe inventory compaction, exact shell/file reads, unsafe `find -exec`
+passthrough, and footer survival across both per-tool and shared byte caps.
 
 ## P0-3: Hermes Deterministic Conversation Primitives
 
@@ -177,12 +201,24 @@ Acceptance:
   assistant reply.
 - Digest output contains no raw secrets (redaction before persistence).
 
+Status: implemented for the deterministic subset. TinyJuice exposes budget,
+boundary, provider-neutral conversion, tool-result digest, JSON string-leaf
+shrinking, and redaction helpers. OpenHuman uses those helpers in
+`TokenjuiceMicrocompactMiddleware` to digest older tool results in one pass,
+and `ContextCompressionMiddleware` uses TokenJuice tail-budget selection,
+latest-user/latest-assistant anchors, and tool-boundary alignment before
+summarization. Tests cover retained anchors, tool result digesting,
+duplicate-result handling, parseable/redacted JSON arguments, and secret
+redaction before model-facing/persisted output.
+
 ## P1-1: Savings Accounting Upgrade
 
 Source spec: `savings-accounting-spec.md`. OpenHuman already persists savings
-(`src/openhuman/tokenjuice/savings.rs`, dashboard-facing) and the README
-already claims "up to 80% fewer tokens" — this port is what makes that claim
-either verifiable or correctable, so it lands early in P1.
+(`src/openhuman/tokenjuice/savings.rs`, dashboard-facing). The old reviewed
+plan assumed OpenHuman's README still made a broad percentage-savings claim;
+as of 2026-07-06 that claim is no longer present. This slice still lands early
+because live estimates, measured usage, and future fixture benchmark results
+must be labeled separately before any savings surface can be trusted.
 
 TinyJuice files:
 
@@ -205,6 +241,13 @@ Acceptance:
 - Measured vs estimated is visible end-to-end (crate → adapter → RPC schema).
 - Fixture benchmark results are reported separately from live stats.
 
+Status: implemented. TinyJuice exposes class-labeled `SavingsRecord` values
+with live vs fixture-benchmark source labels, byte metadata, lossy/CCR flags,
+rule/skip metadata, and optional measured model usage. OpenHuman mirrors the
+records, persists rollups by model, compressor, accounting class, record
+source, and content kind, exposes those labels through `tokenjuice.savings_*`
+controllers, and records provider `UsageInfo` as measured metadata-only usage.
+
 ## P1-2: Web Extract Truncate-Store
 
 Source spec: `web-extract-truncate-store-spec.md`. OpenHuman has the host
@@ -220,8 +263,9 @@ TinyJuice files:
   (`![alt](data:image...)` → `[IMAGE: alt]`, real URLs kept); small pages
   returned whole; large pages: offload full text via `CcrStore`, return
   line-snapped head/tail (head ratio 0.75 of the char limit), omission marker
-  and retrieval footer. Implemented as an `OffloadTransform` so it cannot emit
-  a footer without a retained original.
+  and retrieval footer. The reducer gates footer emission through
+  `OffloadOutput::from_retained_put`, so it cannot emit a footer without a
+  retained original.
 - `src/types.rs` — `WebExtractReduceInput { url, title, content, format,
   char_limit, metadata }` and batch shape with a combined inline budget.
 
@@ -241,6 +285,11 @@ OpenHuman files:
   `char_limit` (default 15000, clamp 2000..500000), `convert_base64_images`
   (default true).
 
+Status: implemented. OpenHuman has the shared reducer wired through both
+`web_fetch` and `http_request`, and `[tokenjuice.web_extract]` is the canonical
+config shape. Legacy flat `web_extract_*` keys, env vars, and settings patches
+remain accepted and are normalized before live updates.
+
 Acceptance:
 
 - Base64 image bytes absent from output and metadata; real image URLs remain.
@@ -254,8 +303,9 @@ Acceptance:
 Source specs: `ast-stub-read-spec.md`, roadmap detail in
 `plan/content-compressor-roadmap.md`. The crate already has tree-sitter code
 compression behind `tokenjuice-treesitter` (OpenHuman enables it by default in
-`Cargo.toml`). What is missing is explicit modes and — critically — host
-intent, so exact reads are never stubbed by accident.
+`Cargo.toml`). Current TinyJuice/OpenHuman state has explicit stub modes and
+host intent wired: exact reads remain byte-exact by default, while stub modes
+must be requested explicitly.
 
 TinyJuice files:
 
@@ -287,6 +337,15 @@ Acceptance:
   ranges are listed with line numbers.
 - Parse failure reports fallback and never silently omits without markers.
 
+Status: implemented. TinyJuice has explicit `ReadIntent::Exact` as the default,
+`ReadIntent::Stub(StubMode)`, line-range metadata, and parse-status reporting
+for tree-sitter and heuristic fallback paths. OpenHuman `file_read` exposes a
+`mode` argument (`full`, `stub`, `signatures`, `public_api`, `symbols`, `lines`)
+and calls `stub_code` directly for requested stub modes while `full` remains
+byte-exact. Tool and router tests cover schema guidance, stub output, symbol
+expansion, heuristic fallback reporting, partial-read tracking, exact default
+router passthrough, and full middleware-chain exactness for `file_read`.
+
 ## P1-4: Core Compressor Upgrades (SmartCrusher, DiffNoise, Log Templates, TextCrusher, BM25)
 
 Source specs: both headroom specs. Design detail already exists in
@@ -306,6 +365,15 @@ Acceptance: as specified per compressor in the roadmap plan; plus one
 OpenHuman end-to-end fixture per compressor family driven through
 `compact_tool_output_with_policy`.
 
+Status: implemented. TinyJuice has host-hook e2e coverage through
+`compact_tool_output_with_policy` for SmartCrusher, DiffNoise, search
+thinning/BM25 query ranking, TextCrusher, HTML extraction, and generic command
+fallback, each asserting recoverability where the path is lossy. OpenHuman
+`../openhuman-4` mirrors that host-adapter coverage in
+`src/openhuman/tokenjuice/tool_integration.rs`; commit `88a17f9f8` adds the
+remaining HTML extraction and generic command fallback fixtures so each current
+compressor family is exercised through the adapter path.
+
 ## P2-1: Ranked Search-Read Tool
 
 Source spec: `ranked-search-read-spec.md`. This is a NEW host tool, not a
@@ -323,12 +391,18 @@ TinyJuice files:
 
 OpenHuman files:
 
-- `src/openhuman/tools/impl/filesystem/search_read.rs` (NEW) — one tool:
+- `src/openhuman/tools/impl/filesystem/search_read.rs` — one tool:
   glob → grep → rank via TinyJuice scoring → bounded snippets with path/line
   metadata → omission report. Registered alongside the existing tools; the
   schema description positions it as the preferred first move over separate
   glob/grep/read calls.
 - `src/openhuman/tools/impl/filesystem/mod.rs` — registration.
+- `src/openhuman/tools/user_filter.rs` and
+  `app/src/utils/toolDefinitions.ts` — include `search_read` in the file-read
+  tool family so user tool preferences and frontend toggles do not hide the
+  ranked read surface when "Read Files" is enabled.
+- `app/src/utils/toolTimelineFormatting.ts` — render `search_read` as a
+  known search/read timeline tool.
 
 Acceptance:
 
@@ -336,6 +410,13 @@ Acceptance:
 - Output is bounded (max files, snippets, bytes) with explicit omitted
   counts; vendor/generated paths deprioritized unless requested.
 - The tool never returns whole files; follow-up reads use `file_read`.
+
+Status: implemented. TinyJuice has pure ranking and snippet-window fixtures for
+exact symbol/path/density ordering, vendor/generated penalties, bounded window
+merging, and omitted counts. OpenHuman `../openhuman-4` already carried the host
+`search_read` implementation and registration; commit `76399a6ce` wires it into
+the Rust user-preference family, frontend tool catalog, and timeline formatting
+so the registered tool is exposed consistently with `file_read`.
 
 ## P2-2: Subagent Summary Evidence Extraction
 
@@ -365,6 +446,18 @@ Acceptance:
 - Summarizer failure path returns the deterministic summary, never the full
   transcript, and never loses the subagent's final answer.
 
+Status: implemented. TinyJuice exposes provider-neutral subagent transcript
+events, deterministic evidence extraction, bounded markdown rendering, omission
+reports, and fixtures for long transcripts, failure evidence, contradictory
+findings, and byte-budget truncation. OpenHuman `../openhuman-4` constructs
+`SubagentRunOutcome::deterministic_summary` from the child run history, uses the
+shared handoff renderer for completed and incomplete `spawn_subagent` /
+`continue_subagent` results, preserves the final answer when it is not already
+inside the deterministic summary, and falls back to the deterministic
+checkpoint when the LLM checkpoint summary is empty or fails. The
+`PayloadSummarizer` also supplies this deterministic scaffold for subagent-like
+payloads before invoking its semantic summarizer.
+
 ## P2-3: Summary Contract And Prompt Cache Hints
 
 Source spec: `hermes-compression-algorithms-spec.md` (P2 portions). Builds on
@@ -372,7 +465,9 @@ P0-3. TinyJuice adds `src/conversation/summary.rs` (SummaryProvider trait,
 strict structured schema, deterministic fallback, failure policy:
 auth/network failures abort and preserve messages) and `src/cache_hints.rs`
 (static-prefix cache key = SHA-256 of instructions + NUL + sorted tool
-schemas; Anthropic carrier hints only, no payload mutation). OpenHuman's
+schemas; Anthropic carrier hints only, no payload mutation) plus
+`src/live_zone.rs` for frozen-prefix byte ranges, mutable replacement splicing,
+and redacted volatile-value detection. OpenHuman's
 `ContextCompressionMiddleware` implements `SummaryProvider` over its existing
 summarization path and adopts the failure policy; cache hints feed the
 provider layer (`src/openhuman/inference/provider/`) as routing hints only.
@@ -381,6 +476,17 @@ Acceptance: summary text cannot be mistaken for a fresh user turn (metadata
 tag + end marker); repeated compactions update the previous summary instead
 of nesting; tool order does not change the cache key; frozen prefix bytes are
 never rewritten.
+
+Status: implemented in core and mirrored in OpenHuman. TinyJuice exposes the
+`SummaryProvider` contract, strict `StructuredSummary` shape, summary metadata
+tag/end marker, deterministic fallback, summary upsert helpers, stable prompt
+cache hints, and live-zone frozen-prefix splicing. OpenHuman
+`../openhuman-4/src/openhuman/tokenjuice/` mirrors those modules, while
+`src/openhuman/tinyagents/summarize.rs` uses TokenJuice boundary/tail planning,
+the summary failure policy, deterministic trim fallback, the canonical summary
+end marker, and duplicate-summary removal before rewriting model requests.
+Cache hints and live-zone helpers are available through the mirrored
+`tokenjuice` exports for provider/adaptor use.
 
 ---
 

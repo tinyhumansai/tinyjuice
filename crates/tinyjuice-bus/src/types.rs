@@ -127,6 +127,180 @@ pub struct ContentHint {
     pub query: Option<String>,
     /// Hard override — when set, detection returns this kind verbatim.
     pub explicit: Option<ContentKind>,
+    /// Whether file-read content must remain exact or may be reduced to a code stub.
+    #[serde(default)]
+    pub read_intent: ReadIntent,
+}
+
+/// Caller intent for read-like sources.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum ReadIntent {
+    #[default]
+    Exact,
+    Stub(StubMode),
+}
+
+/// Source-code stub mode.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "kind", content = "value")]
+pub enum StubMode {
+    #[default]
+    SignaturesOnly,
+    PublicApi,
+    MatchedSymbols(Vec<String>),
+    ExpandAroundLines(Vec<LineRange>),
+}
+
+/// One-based inclusive line range.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LineRange {
+    pub start: usize,
+    pub end: usize,
+}
+impl LineRange {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self {
+            start: start.max(1),
+            end: end.max(start.max(1)),
+        }
+    }
+    pub fn intersects(self, other: Self) -> bool {
+        self.start <= other.end && other.start <= self.end
+    }
+}
+
+/// Parser path used for a source-code stub.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ParseStatus {
+    TreeSitter,
+    HeuristicFallback,
+}
+
+/// Symbol surfaced in a source-code stub.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SymbolSummary {
+    pub name: String,
+    pub kind: String,
+    pub start_line: usize,
+    pub end_line: usize,
+    pub public: bool,
+}
+
+/// Source range omitted from a stub.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CodeElision {
+    pub start_line: usize,
+    pub end_line: usize,
+    pub reason: String,
+}
+
+/// Structured source-code stub result.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CodeStubOutput {
+    pub text: String,
+    pub symbols: Vec<SymbolSummary>,
+    pub elisions: Vec<CodeElision>,
+    pub parse_status: ParseStatus,
+}
+
+/// Format of already-extracted web content handed to the web reducer.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WebExtractFormat {
+    #[default]
+    Markdown,
+    Text,
+    Html,
+}
+impl WebExtractFormat {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Markdown => "markdown",
+            Self::Text => "text",
+            Self::Html => "html",
+        }
+    }
+}
+
+/// One already-extracted web page to reduce.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebExtractReduceInput {
+    pub url: String,
+    #[serde(default)]
+    pub title: Option<String>,
+    pub content: String,
+    #[serde(default)]
+    pub format: WebExtractFormat,
+    #[serde(default)]
+    pub provider: Option<String>,
+    #[serde(default)]
+    pub char_limit: Option<usize>,
+    #[serde(default)]
+    pub metadata: serde_json::Map<String, serde_json::Value>,
+}
+
+/// Batch shape for multi-URL extractors.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebExtractBatchInput {
+    pub pages: Vec<WebExtractReduceInput>,
+    #[serde(default)]
+    pub default_char_limit: Option<usize>,
+    #[serde(default)]
+    pub max_combined_inline_chars: Option<usize>,
+}
+
+/// Web extraction truncation knobs.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WebExtractOptions {
+    pub char_limit: usize,
+    pub min_char_limit: usize,
+    pub max_char_limit: usize,
+    pub head_ratio: f32,
+    pub convert_base64_images: bool,
+    pub max_combined_inline_chars: usize,
+}
+impl Default for WebExtractOptions {
+    fn default() -> Self {
+        Self {
+            char_limit: 15_000,
+            min_char_limit: 2_000,
+            max_char_limit: 500_000,
+            head_ratio: 0.75,
+            convert_base64_images: true,
+            max_combined_inline_chars: 100_000,
+        }
+    }
+}
+
+/// Metadata-only reduction report for a web page.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebExtractReduction {
+    pub text: String,
+    pub body: String,
+    #[serde(default)]
+    pub recovery_footer: Option<String>,
+    #[serde(default)]
+    pub ccr_token: Option<String>,
+    pub source_host: Option<String>,
+    pub source_url_hash: String,
+    #[serde(default)]
+    pub title: Option<String>,
+    pub format: WebExtractFormat,
+    pub original_chars: usize,
+    pub inline_chars: usize,
+    pub head_chars: usize,
+    pub tail_chars: usize,
+    pub omitted_chars: usize,
+    pub truncated: bool,
+    pub full_text_retained: bool,
+    pub base64_images_replaced: usize,
 }
 
 impl ContentHint {
@@ -158,6 +332,8 @@ pub enum CompressorKind {
     Html,
     /// ML (Python/ModernBERT) plain-text compressor.
     MlText,
+    /// Deterministic extractive plain-text compressor.
+    TextCrusher,
     /// Line-oriented head/tail fallback.
     Generic,
     /// No compressor fired — pass-through.
@@ -175,6 +351,7 @@ impl CompressorKind {
             CompressorKind::Diff => "diff",
             CompressorKind::Html => "html",
             CompressorKind::MlText => "ml_text",
+            CompressorKind::TextCrusher => "textcrusher",
             CompressorKind::Generic => "generic",
             CompressorKind::None => "none",
         }
@@ -307,6 +484,12 @@ impl Default for CompressOptions {
 pub struct CompressedOutput {
     /// Final text to inline into context (includes the retrieval footer when lossy).
     pub text: String,
+    /// Compacted body without the recovery footer.
+    #[serde(default)]
+    pub body: String,
+    /// Recovery footer to append after host-side truncation, if any.
+    #[serde(default)]
+    pub recovery_footer: Option<String>,
     /// The detected content kind.
     pub content_kind: ContentKind,
     /// Which compressor fired (`None` ⇒ pass-through).
@@ -328,7 +511,9 @@ impl CompressedOutput {
     pub fn passthrough(content: String, kind: ContentKind) -> Self {
         let len = content.len();
         Self {
+            body: content.clone(),
             text: content,
+            recovery_footer: None,
             content_kind: kind,
             compressor: CompressorKind::None,
             lossy: false,

@@ -23,7 +23,7 @@
   "counters": [
     {
       "name": "socket",
-      "pattern": "^(?!Proto\\s|Active\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

@@ -23,7 +23,7 @@
   "counters": [
     {
       "name": "entry",
-      "pattern": "^(?!COMMAND\\s+PID\\s+USER\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

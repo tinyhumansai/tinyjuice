@@ -1,0 +1,22 @@
+{
+  "description": "SmartCrusher table rendering hoists full-present constant columns",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonConstantRows",
+    "rows": 20
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": false,
+    "recovery": false,
+    "contains": [
+      "constants: region=us-east | status=active",
+      "id | latency",
+      "7 | 17"
+    ],
+    "notContains": [
+      "id | latency | region"
+    ]
+  }
+}

@@ -7,10 +7,12 @@ keeping the core crate independent of OpenHuman runtime types.
 
 ## Verified OpenHuman State (2026-07-04)
 
-The integration is not greenfield. OpenHuman already vendors TinyJuice
-(`vendor/tinyjuice` submodule pinned at `4b1a34f`, wired through
-`[patch.crates-io]`) and ships it as the "TokenJuice" product feature. The
-existing surface:
+The integration is not greenfield. The current `../openhuman-4` checkout carries
+a local TokenJuice mirror under `src/openhuman/tokenjuice/` and ships it as the
+"TokenJuice" product feature. Earlier OpenHuman checkouts used a
+`vendor/tinyjuice` submodule; in this checkout, crate contract changes are
+mirrored into the local TokenJuice copy until the dependency boundary is
+restored. The existing surface:
 
 - Adapter module: `src/openhuman/tokenjuice/` re-exports the crate API and owns
   `install_from_config(&Config)`, called at startup and on live settings
@@ -20,47 +22,47 @@ existing surface:
   plus per-agent `AgentTokenjuiceCompression` overrides and
   `tokenjuice/config_patch.rs` partial updates.
 - Hook site: `ToolOutputMiddleware::after_tool` in
-  `src/openhuman/tinyagents/middleware.rs` (~line 787). Per tool result the
-  chain is: (1) `PayloadSummarizer` semantic summarization (orchestrator only),
-  (2) TokenJuice compaction, (3) per-tool char cap, (4) shared 16 KiB byte-cap
-  backstop with artifact persistence (`ToolResultArtifactStore`).
+  `src/openhuman/tinyagents/middleware.rs` (~line 787). Per normal tool result
+  the chain is: (1) `PayloadSummarizer` semantic summarization (orchestrator
+  only), (2) TokenJuice compaction, (3) per-tool char cap, (4) shared 16 KiB
+  byte-cap backstop with artifact persistence (`ToolResultArtifactStore`).
   `HandoffMiddleware` is registered after but runs first (the harness runs
   `after_tool` in reverse registration order) and can stash raw >50k-token
-  payloads before any of this.
+  payloads before any of this. Recovery tool results bypass this chain and are
+  returned exactly.
 - Recovery tools: both `retrieve_tool_output`
-  (`src/openhuman/tools/impl/system/retrieve_tool_output.rs`, legacy) and
-  `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered.
+  (`src/openhuman/tools/impl/system/retrieve_tool_output.rs`, legacy alias) and
+  `tokenjuice_retrieve` (`src/openhuman/tokenjuice/tools.rs`) are registered;
+  the legacy tool delegates to the canonical implementation.
 - `Auto` profile resolution is host-side in
   `agent/harness/definition.rs:487`: coding models resolve to `Light`,
-  everything else to `Full`. The crate's own `Auto == Full` mapping in
-  `options_for_agent()` is a silent fallback if a host forgets to resolve.
+  everything else to `Full`. TinyJuice now treats unresolved `Auto` as
+  passthrough with `none/agent-profile-auto-unresolved`, so hosts must resolve
+  it before calling the adapter.
 
-### Known Integration Bugs (found in review)
+### Resolved Integration Findings
 
-1. **The call site uses the minimal hook.** `middleware.rs:787` calls
-   `compact_output_with_policy(content, tool_name, enabled, profile)`, which
-   forwards `arguments: None, exit_code: None`. Consequences: command/argv
-   never reach the rule reducer, so the 100-rule command catalog is largely
-   inert in OpenHuman; extension and query hints never fire, so code/JSON/HTML
-   routing from file-bearing tools is disabled; exit-code-aware
-   failure-preserving log behavior is off. Migrating this one call site to
-   `compact_tool_output_with_policy(tool_name, arguments, output, exit_code,
-   profile)` is the single highest-value integration change.
-2. **Downstream truncation can destroy recovery footers.** TinyJuice appends
-   its CCR footer at the *end* of compacted output. Steps 3 and 4 of the
-   middleware chain (per-tool char cap, byte-cap backstop) run *after*
-   TokenJuice and keep the head, so an output that is compacted but still over
-   the cap loses its footer: the model gets a lossy view with no recovery
-   marker while the CCR entry sits unreachable. Fix options: make the host
-   caps footer-aware (truncate the body, reattach the trailing marker), or
-   expose the footer as a separate field on `CompressedOutput` so hosts can
-   compose it after their own truncation. The second is the cleaner contract
-   and belongs in core.
-3. **Vendored crate drift.** The submodule at `4b1a34f` is behind this repo's
-   HEAD. Any plan phase that changes footer text, marker constants, or the
-   hook signature must include a submodule bump plus a compatibility pass over
-   OpenHuman's marker parsing and tool docs (`retrieve_tool_output.rs` still
-   documents the legacy `retrieve_tool_output("<hash>")` sentinel).
+1. **Hook migration status.** OpenHuman's tinyagents middleware now captures
+   `TaToolCall` arguments in `before_tool`, parses rendered shell exit-code
+   prefixes, and calls the full TokenJuice policy adapter after each tool
+   result. Command rules, extension/query hints, and exit-code-aware log
+   behavior are active on that production path. Keep the minimal wrapper only
+   for call sites that truly lack metadata.
+2. **Footer-truncation status.** `CompressedOutput` now exposes separate
+   `body` and `recovery_footer` fields while keeping `text` as the
+   compatibility body+footer output. OpenHuman's tinyagents middleware caps the
+   body and reattaches the footer afterward; regression tests cover both the
+   per-tool char cap and the shared byte-budget path. Any future host cap that
+   runs after TokenJuice must preserve the same body/footer contract.
+3. **Recovery-tool passthrough status.** OpenHuman's tinyagents middleware now
+   bypasses summarization, TokenJuice compaction, per-tool caps, and the shared
+   byte cap for both `tokenjuice_retrieve` and legacy `retrieve_tool_output`.
+   A host-path regression test covers both names with intentionally tiny caps.
+4. **OpenHuman checkout shape.** The reviewed plan assumed a
+   `vendor/tinyjuice` submodule, but this `../openhuman-4` checkout carries a
+   local TokenJuice copy under `src/openhuman/tokenjuice/`. Footer and hook
+   contract changes therefore need to be mirrored there until the dependency
+   boundary is restored.
 
 ## Current Fit
 
@@ -82,7 +84,7 @@ OpenHuman should own:
 - calling `install_config()` at startup and config reload
 - passing tool arguments and exit codes into TinyJuice
 - exposing `tokenjuice_retrieve(token, range?)`
-- ensuring recovery tool output is never compacted
+- ensuring recovery tool output is never compacted or host-capped
 - recording stats without raw content
 - deciding exact-read/stub-read policy
 - wiring optional ML compression through the existing callback
@@ -105,27 +107,24 @@ TinyJuice core should own:
 
 Tasks:
 
-- Migrate `ToolOutputMiddleware::after_tool` from `compact_output_with_policy`
-  to `compact_tool_output_with_policy`, passing the tool's JSON arguments and
-  exit code. This activates the rule catalog, extension/query hints, and
-  failure-preserving log behavior that are currently dead in OpenHuman.
-- Bump the `vendor/tinyjuice` submodule and reconcile marker/tool-name
-  constants with OpenHuman's tool docs.
-- Fix the footer-truncation ordering bug: either make the per-tool char cap
-  and byte-cap backstop footer-aware, or (preferred) split the recovery footer
-  into its own `CompressedOutput` field so the host truncates the body and
-  reattaches the footer.
+- Keep `ToolOutputMiddleware::after_tool` on the full policy adapter, passing
+  captured tool JSON arguments and parsed exit code.
+- Reconcile marker/tool-name constants with OpenHuman's tool docs. In the
+  current `openhuman-4` checkout, mirror crate contract changes in the local
+  `src/openhuman/tokenjuice/` copy rather than a `vendor/tinyjuice` submodule.
+- Preserve the footer-aware cap contract: the host truncates
+  `CompressedOutput::body` and reattaches `CompressedOutput::recovery_footer`.
 - Verify credential scrubbing runs before `after_tool` compaction; if not,
   compaction can retain secrets in CCR (see Risks).
 - Document the middleware ordering invariant: handoff observes raw output
   first, then summarizer, then TokenJuice, then caps. TokenJuice must tolerate
   receiving summarizer output rather than raw tool output.
 - Add OpenHuman-side tests for `full`, `light`, `off`, and `auto` resolution
-  (`auto` resolves in `definition.rs`, not in the crate — test the host
-  mapping, and consider removing the crate's silent `Auto == Full` fallback in
-  favor of an explicit resolution requirement).
-- Add tests proving recovery-tool output bypasses compaction for both
-  registered tool names.
+  (`auto` resolves in `definition.rs`, not in the crate). TinyJuice and the
+  mirrored OpenHuman copy now enforce unresolved `Auto` as an explicit
+  passthrough, covered by `auto_agent_profile_requires_host_resolution`.
+- Add tests proving recovery-tool output bypasses compaction and host caps for
+  both registered tool names.
 - Add tests proving config reload updates cache and compressor settings.
 
 Acceptance:
@@ -163,11 +162,11 @@ Acceptance:
 Tasks:
 
 - Expose `tokenjuice_retrieve` in every agent profile that may see a footer.
-- Consolidate the duplicate recovery tools: OpenHuman registers both the
-  legacy `retrieve_tool_output` and `tokenjuice_retrieve` with separate
-  implementations. Keep one implementation, alias the legacy name during
-  migration, and make sure footer text, tool schema docs, and
-  `RECOVERY_TOOL_NAMES` agree on the canonical name.
+- Continue recovery-tool migration cleanup: OpenHuman registers both the
+  legacy `retrieve_tool_output` and canonical `tokenjuice_retrieve`, with the
+  legacy name delegated to the canonical implementation. Keep footer text, tool
+  schema docs, visibility tests, and `RECOVERY_TOOL_NAMES` aligned on
+  `tokenjuice_retrieve` as canonical.
 - Support full and ranged retrieval by lines or bytes.
 - Return clear not-found output for expired or evicted CCR entries.
 - Consider UI affordances for "retrieve full original" without requiring the
@@ -178,6 +177,15 @@ Acceptance:
 - Every emitted footer references a retrievable token at emission time.
 - Ranged retrieval handles UTF-8 safely.
 - Not-found cases do not panic or leak local paths.
+
+Status: behavior implemented; compatibility cleanup remains intentionally
+non-breaking. New recovery footers point at canonical `tokenjuice_retrieve`,
+while the legacy `retrieve_tool_output` tool stays registered as an alias for
+older prompts and allowlists. Both names route through the same cache retrieval
+implementation, both are included in `RECOVERY_TOOL_NAMES`, and middleware tests
+cover bypassing TokenJuice compaction plus host caps for both names. Tool tests
+cover full retrieval, ranged retrieval, and not-found errors without local path
+leaks.
 
 ### Phase 4: Stats And Cost Integration
 
@@ -234,11 +242,11 @@ Acceptance:
   off by default until tag protection and fixtures exist. Note the Kompress
   bridge is already wired in OpenHuman's `install_from_config`; verify its
   config default is off.
-- OpenHuman's README already claims "up to 80% fewer tokens" for TokenJuice,
-  which conflicts with this plan set's no-percentage-claims-until-fixtures
-  constraint. Either land the fixture benchmark suite early enough to back the
-  claim or soften the README wording.
-- The host truncation caps (per-tool char cap, 16 KiB byte-cap backstop) and
-  TinyJuice compaction currently compose blindly. Until the footer contract is
-  fixed, any cap below the compacted size silently severs recoverability.
-
+- Older plan notes assumed OpenHuman's README claimed a broad TokenJuice
+  percentage saving. Rechecked on 2026-07-06: that claim is no longer present.
+  Keep it that way until fixture benchmark reports exist, and keep those
+  reports separate from live savings stats.
+- Host truncation caps must preserve the TinyJuice body/footer contract. The
+  current tinyagents per-tool char cap and 16 KiB byte-cap backstop truncate
+  only the compacted body and reattach the recovery footer; future host cap
+  paths need the same invariant.

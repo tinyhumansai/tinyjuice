@@ -1,0 +1,27 @@
+{
+  "description": "SmartCrusher renders heterogeneous object arrays as per-shape bucket tables",
+  "kind": "json",
+  "extension": "json",
+  "generator": {
+    "type": "jsonHeterogeneousRows",
+    "groups": 12
+  },
+  "expected": {
+    "compressor": "smartcrusher",
+    "lossy": false,
+    "recovery": false,
+    "contains": [
+      "[json bucketed tables:",
+      "[bucket 1:",
+      "[bucket 2:",
+      "[bucket 3:",
+      "constants: event=login | success=true",
+      "constants: event=deploy | region=us-east",
+      "constants: event=metric | unit=pct",
+      "__row | ip | user_id",
+      "__row | service | version",
+      "__row | name | value",
+      "31 | api-10 | 2026.10.0"
+    ]
+  }
+}

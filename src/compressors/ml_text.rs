@@ -11,10 +11,10 @@
 //! runtime is unavailable, `compress` declines so the router falls back to the
 //! generic compressor — never an error in the agent loop.
 
-use async_trait::async_trait;
-
-use super::{Compressor, tag_protect};
+use super::Compressor;
+use crate::compressors::text::compress_ml_with_tag_protection;
 use crate::types::{CompressInput, CompressOptions, CompressOutput, CompressorKind};
+use async_trait::async_trait;
 
 pub struct MlTextCompressor;
 
@@ -29,35 +29,7 @@ impl Compressor for MlTextCompressor {
         input: &CompressInput<'_>,
         opts: &CompressOptions,
     ) -> Option<CompressOutput> {
-        if !opts.ml_text_enabled {
-            return None;
-        }
-        // Structural XML-ish tags (e.g. `<system-reminder>`, `<tool_call>`)
-        // are markers downstream code parses; swap them for opaque
-        // placeholders so the lossy model can't destroy them, and splice them
-        // back afterwards.
-        let (protected, saved) = tag_protect::protect(input.content);
-        match crate::ml::compress(&protected, opts).await {
-            Ok(Some(text)) => {
-                if !tag_protect::all_placeholders_present(&text, &saved) {
-                    log::debug!(
-                        "[tinyjuice][ml] output lost a protected structural tag; declining"
-                    );
-                    return None;
-                }
-                let restored = tag_protect::restore(&text, &saved);
-                if restored.len() < input.content.len() {
-                    Some(CompressOutput::lossy(restored, CompressorKind::MlText))
-                } else {
-                    None
-                }
-            }
-            Ok(None) => None,
-            Err(e) => {
-                log::debug!("[tinyjuice][ml] unavailable, falling back: {e:#}");
-                None
-            }
-        }
+        compress_ml_with_tag_protection(input.content, opts).await
     }
 }
 

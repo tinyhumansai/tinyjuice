@@ -1,0 +1,22 @@
+{
+  "description": "Search thinning preserves query-ranked match, omitted counts, and recovery",
+  "kind": "search",
+  "query": "needle_value",
+  "generator": {
+    "type": "searchResults",
+    "matchesPerFile": 60
+  },
+  "expected": {
+    "compressor": "search",
+    "lossy": true,
+    "recovery": true,
+    "contains": [
+      "needle_value",
+      "search omitted",
+      "tinyjuice_retrieve"
+    ],
+    "notContains": [
+      "helper_function_number_59"
+    ]
+  }
+}

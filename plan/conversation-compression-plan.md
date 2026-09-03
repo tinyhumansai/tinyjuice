@@ -65,6 +65,14 @@ Add pure helpers first:
 - latest visible assistant anchor
 - manual partial split and rejoin helpers
 
+Status: implemented in core. The helpers cover provider-safe JSON argument
+shrinking, deterministic tail selection, protected head decay,
+tool-call/tool-result boundary alignment, orphan sanitizer, latest real
+user/visible assistant anchors, and partial split/rejoin with orphan
+sanitization after middle replacement. Last-N real user exchange helpers now
+select a deterministic retained tail while skipping hidden/internal summary
+messages.
+
 Acceptance:
 
 - JSON argument shrinking preserves parseability.
@@ -106,6 +114,12 @@ Acceptance:
 - Tool order does not change static-prefix cache key.
 - Cache hints are reported separately from compression steps.
 - Frozen byte ranges are left for adapters to splice byte-identically.
+
+Status: implemented in core. `cache_hints.rs` exposes stable prefix keys and
+provider marker hints without mutating payloads. `live_zone.rs` adds
+provider-neutral frozen-prefix/mutable-block byte ranges, validates replacement
+splicing without rewriting frozen bytes, and reports UUID/timestamp/JWT/hash
+volatility using redacted findings only.
 
 ## P2: Summary Contract
 
@@ -159,4 +173,3 @@ Acceptance:
 - Session database writes.
 - Compression leases implemented against OpenHuman storage inside core.
 - Prompt cache mutation mixed into lossy compression APIs.
-

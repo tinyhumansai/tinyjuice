@@ -43,10 +43,9 @@ be added as rules or rule-engine features before adding one-off compressor code.
 
 ### README Drift
 
-`README.md` still says the repository is intentionally blank scaffolding and
-that real strategies have not landed. That is no longer true. The docs should
-be updated after implementation plans turn into code, but this plan does not
-edit README because the user requested plan files only.
+`README.md` now reflects that deterministic reducers, content-aware compressors,
+and CCR recovery plumbing exist. Keep future public API contract changes
+documented there or under `docs/` as implementation plans turn into code.
 
 ### Duplicate Compressor Concepts
 
@@ -65,20 +64,33 @@ compress content when an adapter passes an extension hint such as `rs`, `py`, or
 normal exact reads. OpenHuman should provide a host policy that marks exact file
 reads as raw unless the user or tool intentionally requests a stub/summary.
 
-### Lossy Safety Is Runtime-Checked, Not Type-Checked
+### Lossy Safety Is Partly Type-Checked
 
-`CompressOutput::lossy` is currently a flag, and `route()` is responsible for
-checking CCR availability. This works, but it is too easy for future code to
-accidentally bypass `route()` or return lossy text without recoverability. The
-Headroom-style typed pipeline should make offload-backed transforms structurally
-different from lossless reformats.
+`CompressOutput::lossy` is still the compatibility flag for existing
+compressors, and `route()` remains responsible for checking CCR availability.
+The new `pipeline` module adds the first typed split:
+`ReformatTransform` emits ordinary `TransformOutput`, while `OffloadOutput`
+can only be built from a retained `CcrPutResult`. The production router now
+uses those typed transforms for covered non-command JSON, diff, log, search,
+HTML, explicit code-stub, and TextCrusher paths. Command reducers, ML text,
+non-stub code compression, and generic fallback behavior still use the
+compatibility compressor interface.
 
-### Global CCR Store Makes Tests And Policy Harder
+### CCR Store Is Now Injectable
 
-The global store is convenient for integration, but it makes isolated tests,
-adapter-specific policies, and future backends harder. An injectable `CcrStore`
-trait should be introduced while preserving the current global functions as
-compatibility wrappers.
+The process-global store remains for compatibility, but `CcrStore`,
+`GlobalCcrStore`, and `MemoryCcrStore` now exist. `compress_content_with_store`
+and `route_with_store` let tests and host adapters exercise CCR behavior
+against an isolated store instead of the global cache. Remaining work is to
+thread explicit stores through more OpenHuman call sites instead of relying on
+the global compatibility path.
+
+### Pipeline Reports Cover Typed And Compatibility Paths
+
+`compress_content_with_store_report` and `route_with_store_report` now return a
+redacted `PipelineReport` with byte counts, cheap bloat estimate, applied step,
+CCR token ids, lossy flag, and skip reason. Typed production paths report their
+transform names, while remaining compatibility paths report `compat_router`.
 
 ### Missing Machine Protocol
 
@@ -86,51 +98,45 @@ The Rust crate has compatible types, but no stable `reduce-json` protocol or
 CLI. That blocks non-Rust hosts and makes OpenHuman integration harder to test
 from fixtures.
 
-### Missing Safe-Inventory Policy
+### Safe-Inventory Policy Implemented
 
-The code has a narrow `is_file_content_inspection_command()` guard. It does not
-yet implement the richer policy from the references: safe inventory pipelines
-may compact, exact content reads stay raw, mixed shell sequences stay raw, and
-unsafe actions such as `find -exec` stay raw.
+The code now has a host-selectable `ShellCompactionPolicy` with the richer
+reference behavior: safe inventory pipelines may compact, exact content reads
+stay raw, mixed shell sequences stay raw, and unsafe actions such as
+`find -exec` stay raw. The legacy `is_file_content_inspection_command()` helper
+remains as a compatibility wrapper for older call sites.
 
-### Footer Placement Is A Fragile Host Contract
+### Footer Placement Requires A Host Contract
 
-`route()` appends the recovery footer to the end of the compacted text and
-returns a single string. Hosts that apply their own truncation caps after
-compaction (OpenHuman applies a per-tool char cap and a 16 KiB byte-cap
-backstop after the TokenJuice stage) keep the head and cut the tail, which
-severs the footer and leaves an unrecoverable lossy view. `CompressedOutput`
-should expose the footer (or the body/footer split) as separate fields so
-hosts can truncate the body and reattach the marker. Until then, every host
-integration must be audited for post-compaction truncation.
+`CompressedOutput` now exposes both the compatibility `text` field and separate
+`body`/`recovery_footer` fields. OpenHuman's tinyagents middleware composes
+those fields by truncating only the body and reattaching the footer after its
+per-tool char cap and byte-cap backstop. Other host integrations still need to
+follow the same contract whenever they apply post-compaction caps.
 
-### The Rule Catalog Is Inert Without Arguments
+### The Rule Catalog Depends On Arguments
 
-`compact_output_with_policy` forwards `arguments: None, exit_code: None`, and
-the rule reducer only fires for command output. OpenHuman currently calls this
-minimal wrapper, so the 100-rule catalog, extension hints, query hints, and
-exit-code handling are all dead at the only production call site. The plan's
-Phase 1 must treat migrating that call site as the primary deliverable, not a
-confirmation task.
+`compact_output_with_policy` still forwards `arguments: None, exit_code: None`
+for minimal call sites, but OpenHuman's tinyagents middleware now captures tool
+arguments in `before_tool` and calls the full policy adapter after the tool
+returns. That activates command rules, extension/query hints, and exit-code
+handling on the production tinyagents path. Future host adapters should avoid
+the minimal wrapper unless they genuinely lack tool metadata.
 
 ### Limited Observability
 
-Current stats expose bytes and compressor labels, and savings callbacks estimate
-tokens. Missing pieces include skip reasons, applied-step traces, CCR retention
-status, omission counts, and fixture-backed benchmark reports.
+Current stats expose bytes, compressor labels, pipeline skip reasons,
+body/footer status, CCR token ids, and class-labeled savings records. Remaining
+observability work is mostly product-facing: fixture-backed benchmark reports,
+stable CLI/RPC output, and richer per-compressor omission metadata in every
+host surface.
 
 ## What Should Be Added
 
-- Type-level separation of reformat and offload transforms.
-- Injectable CCR store trait with current memory/disk behavior preserved.
 - Stable `reduce-json` request/response protocol and minimal CLI.
-- Safe-inventory command policy before wider shell compaction.
-- OpenHuman adapter tests for `full`, `light`, `off`, recovery tool bypass,
-  exact file reads, and config reload.
 - Deterministic benchmark and fixture suite before claims.
-- Query context and BM25 scoring as a lightweight shared primitive.
-- Better compressor metadata: omitted rows, omitted lines, skip reasons, and
-  applied transforms.
+- Stable product-facing reports for omitted rows, omitted lines, skip reasons,
+  applied transforms, and fixture-vs-live savings classes.
 
 ## What Should Not Be Added Yet
 
@@ -143,4 +149,3 @@ status, omission counts, and fixture-backed benchmark reports.
 - Host installers before `reduce-json`, validation, and doctorable policy are
   stable.
 - Compression percentage marketing claims.
-

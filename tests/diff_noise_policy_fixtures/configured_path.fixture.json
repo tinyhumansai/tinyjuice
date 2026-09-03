@@ -1,0 +1,21 @@
+{
+  "description": "DiffNoise configured noisy path patterns drop matching hunks with a configured reason",
+  "generator": {
+    "type": "configuredPath",
+    "lines": 40
+  },
+  "options": {
+    "noisyPathSubstrings": [
+      "snapshot.txt"
+    ]
+  },
+  "expected": {
+    "recovery": true,
+    "contains": [
+      "reason=configured_noisy_path"
+    ],
+    "notContains": [
+      "snapshot chunk payload 39"
+    ]
+  }
+}

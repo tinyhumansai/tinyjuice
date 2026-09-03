@@ -14,8 +14,8 @@ TokenJuice contributes the deterministic command-output reducer model:
 
 TinyJuice already ports the reducer core and much of the rule model. The most
 important remaining TokenJuice work is parity hardening: missing rules, fixture
-verification, `reduce-json`, safe shell inventory policy, artifact metadata, and
-CLI product surface.
+verification, `reduce-json`, artifact metadata, and CLI product surface. Safe
+shell inventory policy is now implemented in the Rust path.
 
 ## Headroom
 
@@ -31,8 +31,10 @@ Headroom contributes the strongest architectural contracts:
 - protect custom workflow tags before ML compression
 
 TinyJuice already has Headroom-inspired compressors for JSON, code, logs, diffs,
-search, and HTML. The next useful ingestion is the pipeline contract and policy
-model, not a wholesale port.
+search, HTML, TextCrusher/BM25, pipeline reports, injectable CCR stores, and
+the reformat/offload transform split. Remaining Headroom work is hardening with
+fixtures and exposing the report model through stable product surfaces, not a
+wholesale port.
 
 ## Hermes
 
@@ -48,6 +50,7 @@ TinyJuice's content router. Its useful algorithms are:
 - structured handoff summaries
 - summary failure policy
 - prompt-cache hints and stable static-prefix cache keys
+- live-zone byte-range contracts for frozen prefixes and mutable blocks
 - context usage breakdowns
 
 This should enter TinyJuice as an optional conversation adapter layer. It should
@@ -89,9 +92,9 @@ This spec reduces full-file reads by returning source structure:
 - optional expansion around requested symbols or line ranges
 - parser fallback reporting
 
-TinyJuice already has tree-sitter-backed code compression behind a feature. The
-missing pieces are explicit modes, elision metadata, line numbers, and host
-policy to avoid stubbing exact reads unintentionally.
+TinyJuice has tree-sitter-backed code compression behind a feature plus explicit
+stub modes, elision metadata, line numbers, parse-status reporting, and
+OpenHuman host policy that keeps exact reads byte-exact by default.
 
 ## Batched Edit And Validation
 
@@ -137,8 +140,9 @@ Savings accounting is infrastructure, not compression:
 - track bytes, rough tokens, measured usage, costs, elapsed time, and calls
 - avoid raw content in records
 
-TinyJuice has a savings callback, but it should grow into an auditable report
-model before UI claims are made.
+TinyJuice has class-labeled savings records for live and fixture-benchmark
+sources. UI claims should still wait for fixture benchmark reports and measured
+provider usage.
 
 ## TurboQuant Vector Compression
 
@@ -150,4 +154,3 @@ TurboQuant-style vector compression applies to embedding/index storage:
 
 This is not prompt compression. It should be deferred or isolated behind a
 feature/module for memory and recall indexes.
-

@@ -23,7 +23,7 @@
   "counters": [
     {
       "name": "process",
-      "pattern": "^(?!USER\\s|PID\\s).+\\S.*$"
+      "pattern": "^.*\\S.*$"
     }
   ]
 }

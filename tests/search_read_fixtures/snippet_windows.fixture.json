@@ -1,0 +1,53 @@
+{
+  "description": "Ranked search-read merges bounded snippet windows and reports omitted matches",
+  "query": {
+    "literal": "worker"
+  },
+  "candidates": [
+    {
+      "path": "src/worker.rs",
+      "matchedLines": [
+        {
+          "lineNumber": 10,
+          "text": "worker starts"
+        },
+        {
+          "lineNumber": 11,
+          "text": "worker receives request"
+        },
+        {
+          "lineNumber": 20,
+          "text": "worker handles retry"
+        },
+        {
+          "lineNumber": 50,
+          "text": "worker exits"
+        }
+      ],
+      "maxLine": 100
+    }
+  ],
+  "expected": {
+    "orderedPaths": [
+      "src/worker.rs"
+    ],
+    "snippets": [
+      {
+        "path": "src/worker.rs",
+        "context": 2,
+        "maxSnippets": 2,
+        "windows": [
+          {
+            "start": 8,
+            "end": 13
+          },
+          {
+            "start": 18,
+            "end": 22
+          }
+        ],
+        "omittedMatches": 1
+      }
+    ]
+  }
+}

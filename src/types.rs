@@ -260,6 +260,21 @@ pub struct ReduceOptions {
     /// Working directory for project-layer rule discovery.
     #[serde(default)]
     pub cwd: Option<String>,
+    /// Protocol compatibility flag for callers that want no lossy omission.
+    #[serde(default)]
+    pub no_omit: Option<bool>,
+    /// Request artifact/CCR storage when a protocol surface supports it.
+    #[serde(default)]
+    pub store: Option<bool>,
+    /// Storage directory for protocol surfaces that support artifacts.
+    #[serde(default)]
+    pub store_dir: Option<String>,
+    /// Request metadata-only reducer trace fields in protocol responses.
+    #[serde(default)]
+    pub trace: Option<bool>,
+    /// Request metadata-only stats recording in protocol adapters.
+    #[serde(default)]
+    pub record_stats: Option<bool>,
 }
 
 // ---------------------------------------------------------------------------
@@ -299,6 +314,9 @@ pub struct CompactResult {
     pub facts: Option<HashMap<String, usize>>,
     pub stats: ReductionStats,
     pub classification: ClassificationResult,
+    /// CCR token for the original raw output when the store retained it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ccr_token: Option<String>,
 }
 
 /// The values the compression interface carries, defined once in
@@ -311,8 +329,10 @@ pub struct CompactResult {
 /// them into the contract crate leaves one definition; this re-export is what
 /// keeps every existing `tinyjuice::types::…` path resolving.
 pub use tinyjuice_bus::types::{
-    AgentTokenjuiceCompression, CompressOptions, CompressedOutput, CompressorKind, ContentHint,
-    ContentKind,
+    AgentTokenjuiceCompression, CodeElision, CodeStubOutput, CompressOptions, CompressedOutput,
+    CompressorKind, ContentHint, ContentKind, LineRange, ParseStatus, ReadIntent, StubMode,
+    SymbolSummary, WebExtractBatchInput, WebExtractFormat, WebExtractOptions,
+    WebExtractReduceInput, WebExtractReduction,
 };
 
 /// Input handed to a [`crate::compressors::Compressor`].

@@ -1,0 +1,49 @@
+{
+  "description": "Ranked search-read penalizes generated and vendor paths unless host query opts out",
+  "query": {
+    "symbols": [
+      "hydrateRoot"
+    ]
+  },
+  "candidates": [
+    {
+      "path": "src/app/root.tsx",
+      "matchedLines": [
+        {
+          "lineNumber": 8,
+          "text": "export function hydrateRoot() {}"
+        }
+      ],
+      "maxLine": 20
+    },
+    {
+      "path": "vendor/pkg/root.tsx",
+      "matchedLines": [
+        {
+          "lineNumber": 8,
+          "text": "export function hydrateRoot() {}"
+        }
+      ],
+      "vendor": true,
+      "maxLine": 20
+    },
+    {
+      "path": "dist/app.min.js",
+      "matchedLines": [
+        {
+          "lineNumber": 8,
+          "text": "function hydrateRoot(){}"
+        }
+      ],
+      "generated": true,
+      "maxLine": 20
+    }
+  ],
+  "expected": {
+    "orderedPaths": [
+      "src/app/root.tsx",
+      "vendor/pkg/root.tsx",
+      "dist/app.min.js"
+    ]
+  }
+}

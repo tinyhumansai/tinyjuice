@@ -1,0 +1,41 @@
+{
+  "id": "ci/github-actions",
+  "family": "test-results",
+  "description": "Compact GitHub Actions run logs from `gh run view --log` while preserving failing steps and annotations.",
+  "priority": 50,
+  "match": {
+    "toolNames": ["exec"],
+    "argv0": ["gh"],
+    "argvIncludes": [["run", "view"], ["--log"]]
+  },
+  "transforms": {
+    "stripAnsi": true,
+    "dedupeAdjacent": true,
+    "trimEmptyEdges": true
+  },
+  "filters": {
+    "keepPatterns": [
+      "(?i)\\b(error|failed|failure|cancelled|timed out|process completed with exit code)\\b",
+      "(?i)^\\S+\\s+[^\\t]*\\b(run|build|test|lint)\\b"
+    ]
+  },
+  "summarize": {
+    "head": 12,
+    "tail": 10
+  },
+  "failure": {
+    "preserveOnFailure": true,
+    "head": 18,
+    "tail": 18
+  },
+  "counters": [
+    {
+      "name": "failed step",
+      "pattern": "(?i)\\bfailed\\b|process completed with exit code|##\\[error\\]|::error"
+    },
+    {
+      "name": "error",
+      "pattern": "(?i)\\berror\\b|##\\[error\\]|::error"
+    }
+  ]
+}
