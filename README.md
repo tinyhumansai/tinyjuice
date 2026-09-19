@@ -163,6 +163,12 @@ The technical docs live in the wiki:
 - [OpenHuman Integration](wiki/OpenHuman-Integration.md)
 - [Development](wiki/Development.md)
 - [Security and Privacy](wiki/Security-and-Privacy.md)
+- ## Quick Example
+
+Search the web:
+
+```sh
+portal web "latest Rust release"
 
 TinyJuice is pre-1.0. The CLI, router, command-rule engine, CCR recovery store,
 content detectors, native compressors, and OpenHuman-style adapter are in place;
