@@ -192,7 +192,7 @@ async fn setup(connection: Connection) -> BusResult<()> {
 
 #[allow(missing_docs, unreachable_pub)]
 mod exports {
-    tinybus_module::module_export! {
+    tinybus_module::module_export_optional_static! {
         setup = super::setup,
         worker_threads = 2,
         provides = ["ai.tinyhumans.tinyjuice.Compression"],
@@ -211,6 +211,9 @@ mod exports {
         lazy = false,
     }
 }
+
+#[cfg(feature = "static-link")]
+pub use exports::linked_module;
 
 #[cfg(test)]
 mod tests {
