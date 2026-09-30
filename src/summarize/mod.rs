@@ -67,6 +67,8 @@ pub enum UnavailableReason {
     Disabled,
     /// The model call failed or its reply was empty or not smaller.
     Failed,
+    /// The model call outlasted `llm_summary_timeout_ms`.
+    TimedOut,
 }
 
 impl UnavailableReason {
@@ -91,6 +93,11 @@ impl UnavailableReason {
                 "[summarization unavailable — it is switched off for this session ",
                 "after repeated failures, so the tool output follows. ",
                 "Do not re-run the tool for a summary.]"
+            ),
+            Self::TimedOut => concat!(
+                "[summarization timed out — the tool output follows. If a recovery handle ",
+                "appears in its footer, inspect the stored output with the juice_* tools ",
+                "using that handle. Do not re-run the tool for a summary.]"
             ),
             Self::Failed => concat!(
                 "[summarization unavailable — the summarizer did not return a usable ",
@@ -178,14 +185,31 @@ pub async fn maybe_summarize(input: SummaryInput<'_>, opts: &CompressOptions) ->
         focus.map_or(0, |f| f.chars().count())
     );
     let started = std::time::Instant::now();
-    let reply = crate::llm::generate(GenerateRequest {
+    let call = crate::llm::generate(GenerateRequest {
         context_token: context_token.to_string(),
         purpose: PURPOSE.to_string(),
         system: SYSTEM_PROMPT.to_string(),
         prompt: build_prompt(tool, focus, raw),
-        max_output_tokens: MAX_OUTPUT_TOKENS,
-    })
-    .await;
+        max_output_tokens: opts
+            .llm_summary_max_output_tokens
+            .clamp(1, MAX_OUTPUT_TOKENS),
+    });
+    let reply = if opts.llm_summary_timeout_ms == 0 {
+        call.await
+    } else {
+        let limit = std::time::Duration::from_millis(opts.llm_summary_timeout_ms);
+        match tokio::time::timeout(limit, call).await {
+            Ok(reply) => reply,
+            Err(_) => {
+                log::warn!(
+                    "[tinyjuice::summarize] host call timed out tool={tool} limit_ms={}",
+                    opts.llm_summary_timeout_ms
+                );
+                record_failure(scope);
+                return SummaryOutcome::Unavailable(UnavailableReason::TimedOut);
+            }
+        }
+    };
 
     let summary = match reply {
         // The host has no model for this turn. That is not a failure of the

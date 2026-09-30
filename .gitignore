@@ -6,3 +6,6 @@ interface/node_modules/
 # Local secrets — never commit; copy .env.example to .env
 .env
 .DS_Store
+
+# The examples crate is its own workspace, so it has its own target dir.
+/crates/tinyjuice-examples/target/

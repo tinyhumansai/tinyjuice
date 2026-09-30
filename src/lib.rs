@@ -24,6 +24,7 @@ pub mod policy;
 pub mod protocol;
 pub mod reduce;
 pub mod relevance;
+pub mod repl;
 pub mod rules;
 pub mod savings;
 pub mod sdk;

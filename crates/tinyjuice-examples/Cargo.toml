@@ -1,0 +1,27 @@
+[package]
+name = "tinyjuice-examples"
+version = "0.0.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "Live agent evaluations of TinyJuice's REPL tools. Not part of the release."
+publish = false
+
+# Its own workspace: the root workspace excludes this crate, so `cargo build`,
+# `cargo test` and the root `Cargo.lock` never see tinyagents or its graph.
+[workspace]
+
+[dependencies]
+tinyjuice = { path = "../..", features = ["tinytools"] }
+tinyagents-harness = { path = "../../vendor/tinyagents/crates/tinyagents-harness" }
+tinyinference-llm = { path = "../../vendor/tinyagents/vendor/tinyinference/crates/tinyinference-llm" }
+tinytools = { path = "../../vendor/tinyagents/vendor/tinytools/crates/tinytools" }
+anyhow = "1"
+async-trait = "0.1"
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+
+# Same redirect tinyagents uses: one copy of the tool vocabulary in the graph, so
+# `tinyjuice`'s `tinytools::Tool` impls and the harness's `Tool` are the same type.
+[patch."https://github.com/tinyhumansai/tinytools"]
+tinytools-agent = { path = "../../vendor/tinyagents/vendor/tinytools/crates/tinytools-agent" }
+tinytools = { path = "../../vendor/tinyagents/vendor/tinytools/crates/tinytools" }

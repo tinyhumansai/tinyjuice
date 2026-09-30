@@ -112,6 +112,7 @@ fn the_flattened_spellings_round_trip_for_every_variant() {
         CompressorKind::TextCrusher,
         CompressorKind::Generic,
         CompressorKind::LlmSummary,
+        CompressorKind::Repl,
         CompressorKind::None,
     ] {
         assert_eq!(
