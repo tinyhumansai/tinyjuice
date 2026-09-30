@@ -453,3 +453,36 @@ fn summarize_hint_spends_the_budget_on_relevant_lines() {
     assert!(!with(None).contains("ROLLBACK_SAFE_MODE"));
     assert!(with(Some("zzzz-no-match")).contains("nothing matched"));
 }
+
+#[test]
+fn grep_context_max_does_not_overflow() {
+    let (hits, _) = ops::grep(DOC, "boom", true, true, usize::MAX, &lim()).unwrap();
+    assert!(hits.iter().any(|h| h.line == 5));
+}
+
+#[test]
+fn awk_rejects_negation_before_non_regex_tests() {
+    let text = "a 1\nb 2\n";
+    for q in ["!$1 ~ /a/ { print }", "!NR == 2 { print }"] {
+        assert!(
+            run_on_text(text, &find(q, FindMode::Awk), &lim()).is_err(),
+            "{q}"
+        );
+    }
+}
+
+#[test]
+fn sed_rejects_exploding_substitution() {
+    let text = "x".repeat(1024);
+    let script = "s/./&&&&&&&&/g; s/./&&&&&&&&/g; s/./&&&&&&&&/g; s/./&&&&&&&&/g";
+    assert!(run_on_text(&text, &find(script, FindMode::Sed), &lim()).is_err());
+}
+
+#[cfg(feature = "jq")]
+#[test]
+fn jq_clips_a_single_large_value() {
+    let big = format!("\"{}\"", "y".repeat(100_000));
+    let r = run_on_text(&big, &find(".", FindMode::Jq), &lim()).unwrap();
+    let s = serde_json::to_string(&r).unwrap();
+    assert!(s.len() < 50_000, "{}", s.len());
+}
