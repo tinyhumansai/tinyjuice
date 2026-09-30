@@ -382,6 +382,7 @@ impl std::str::FromStr for CompressorKind {
             "textcrusher" => Self::TextCrusher,
             "generic" => Self::Generic,
             "llm_summary" => Self::LlmSummary,
+            "repl" => Self::Repl,
             "none" => Self::None,
             _ => return Err(()),
         })

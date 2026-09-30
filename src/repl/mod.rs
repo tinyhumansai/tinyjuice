@@ -165,6 +165,13 @@ fn run_jq(_: &str, _: &str, _: &ReplLimits) -> Result<ReplOutput, ReplError> {
     Err(ReplError::Unsupported("jq"))
 }
 
+fn clip_chars(s: &str, max: usize) -> String {
+    match s.char_indices().nth(max) {
+        Some((cut, _)) => format!("{}…", &s[..cut]),
+        None => s.to_string(),
+    }
+}
+
 /// Drop trailing hits until the serialized result fits `max_output_chars`.
 fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
     fn fit<T: serde::Serialize>(items: &mut Vec<T>, truncated: &mut usize, max: usize) {
@@ -179,8 +186,20 @@ fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
         ReplOutput::Lines { hits, truncated } => fit(hits, truncated, max),
         ReplOutput::Matches { matches, truncated } => fit(matches, truncated, max),
         ReplOutput::Search { hits, truncated } => fit(hits, truncated, max),
-        ReplOutput::Values { values, truncated } => fit(values, truncated, max),
-        ReplOutput::Links { links, truncated } => fit(links, truncated, max),
+        ReplOutput::Values { values, truncated } => {
+            fit(values, truncated, max);
+            // One value can exceed the cap alone; clip it rather than keep it whole.
+            for v in values.iter_mut() {
+                *v = clip_chars(v, max);
+            }
+        }
+        ReplOutput::Links { links, truncated } => {
+            fit(links, truncated, max);
+            for l in links.iter_mut() {
+                l.text = clip_chars(&l.text, max / 4);
+                l.href = clip_chars(&l.href, max / 2);
+            }
+        }
         ReplOutput::Headings {
             headings,
             truncated,
@@ -201,7 +220,12 @@ pub const TOOL_NAMES: &[&str] = &["juice_find", "juice_extract", "juice_summariz
 /// Preview body plus footer for a stored original. The footer keeps the
 /// `tinyjuice_retrieve ... token "<hash>"` form so marker parsing still finds the handle.
 pub fn handle_view(content: &str, token: &str, preview_chars: usize) -> (String, String) {
-    let body = ops::summarize(content, preview_chars, &ReplLimits::default());
+    let mut body = ops::summarize(content, preview_chars, &ReplLimits::default());
+    // The summary writes its size line and outline before budgeting, so bound
+    // the whole body here.
+    if let Some((cut, _)) = body.char_indices().nth(preview_chars) {
+        body.truncate(cut);
+    }
     let footer = format!(
         "\n\n[full output ({} bytes, {} lines) is stored, not shown. Inspect it with {} using handle \"{token}\"; \
          or call {} with token \"{token}\" for the whole original]",
