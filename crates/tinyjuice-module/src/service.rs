@@ -91,6 +91,25 @@ impl Compression {
         })
     }
 
+    /// Inspect a stored output with a REPL op. `op` is a JSON `ReplOp`
+    /// (`{"op":"grep","pattern":"ERROR"}`); the reply is a JSON `ReplOutput`, or
+    /// `{"error": "..."}` for a bad op, pattern or expired handle.
+    async fn repl(&self, handle: String, op: String) -> BusResult<String> {
+        let reply = match serde_json::from_str::<tinyjuice::repl::ReplOp>(&op) {
+            Err(e) => serde_json::json!({ "error": format!("invalid op: {e}") }),
+            Ok(op) => match tinyjuice::repl::run_op(
+                &tinyjuice::cache::GlobalCcrStore,
+                &handle,
+                &op,
+                &tinyjuice::repl::ReplLimits::default(),
+            ) {
+                Ok(out) => serde_json::to_value(out).unwrap_or_default(),
+                Err(e) => serde_json::json!({ "error": e.to_string() }),
+            },
+        };
+        Ok(reply.to_string())
+    }
+
     async fn cache_stats(&self) -> BusResult<CacheStats> {
         let (entries, bytes) = tinyjuice::cache::stats();
         Ok(CacheStats { entries, bytes })
@@ -203,6 +222,7 @@ mod exports {
             "Compact",
             "CompactWith",
             "Retrieve",
+            "Repl",
             "CacheStats"
         ],
         signals = [],
@@ -265,5 +285,31 @@ mod tests {
                 .expect("retrieve should succeed"),
             Some(content)
         );
+    }
+
+    #[tokio::test]
+    async fn service_repl_greps_a_stored_output_and_reports_bad_input() {
+        let service = Compression;
+        use tinyjuice::cache::CcrStore;
+        let token = tinyjuice::cache::GlobalCcrStore
+            .put("alpha\nbeta needle\ngamma\n")
+            .token()
+            .to_string();
+        let reply = service
+            .repl(token.clone(), r#"{"op":"find","query":"needle"}"#.into())
+            .await
+            .expect("repl should reply");
+        let value: serde_json::Value = serde_json::from_str(&reply).unwrap();
+        assert_eq!(value["hits"][0]["line"], 2);
+        let bad = service.repl(token, "{".into()).await.unwrap();
+        assert!(bad.contains("error"));
+        let gone = service
+            .repl(
+                "missing".into(),
+                r#"{"op":"extract","what":"links"}"#.into(),
+            )
+            .await
+            .unwrap();
+        assert!(gone.contains("expired"));
     }
 }

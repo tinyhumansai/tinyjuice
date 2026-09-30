@@ -250,6 +250,9 @@ Run one hook installer:
 
 ## API Notes
 
+For REPL-style inspection of large outputs (grep, search, links, headings) see
+[docs/repl-tools.md](docs/repl-tools.md).
+
 `compress_content` and `route` return `CompressedOutput`. The `text` field is
 the compatibility output ready to inline into model context. When CCR retained
 an original, `body` contains the compacted body without the recovery footer and

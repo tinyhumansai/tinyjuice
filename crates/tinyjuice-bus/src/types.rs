@@ -338,6 +338,8 @@ pub enum CompressorKind {
     Generic,
     /// The host's LLM wrote a summary of the whole payload.
     LlmSummary,
+    /// A short preview plus a handle; the host inspects the original with the REPL ops.
+    Repl,
     /// No compressor fired — pass-through.
     None,
 }
@@ -356,6 +358,7 @@ impl CompressorKind {
             CompressorKind::TextCrusher => "textcrusher",
             CompressorKind::Generic => "generic",
             CompressorKind::LlmSummary => "llm_summary",
+            CompressorKind::Repl => "repl",
             CompressorKind::None => "none",
         }
     }
@@ -464,6 +467,21 @@ pub struct CompressOptions {
     /// Results estimated above this many tokens are not summarized either: the
     /// model call would cost more than paging the original does.
     pub llm_summary_max_input_tokens: usize,
+    /// Hard ceiling on the summary's length in model tokens. Summary latency is
+    /// decode-bound (it tracks output tokens, not input), so this is the main
+    /// lever on how long a turn stalls.
+    pub llm_summary_max_output_tokens: u32,
+    /// Longest a host model call may take before the summary stage gives up and
+    /// the result is bounded by a preview plus a handle instead. `0` disables the
+    /// bound. A slow summary stalls the agent turn, so this is short by default.
+    pub llm_summary_timeout_ms: u64,
+    /// Return a short preview plus a handle instead of a compressed blob, so the
+    /// host inspects the stored original with the REPL ops (grep, search, links…).
+    /// Needs `ccr_enabled` and an input of at least `ccr_min_tokens`; otherwise the
+    /// normal pipeline runs. Off by default.
+    pub repl_handle: bool,
+    /// Character budget for the preview returned in `repl_handle` mode.
+    pub repl_preview_chars: usize,
 }
 
 impl Default for CompressOptions {
@@ -491,6 +509,10 @@ impl Default for CompressOptions {
             llm_summary_enabled: false,
             llm_summary_threshold_tokens: 4_000,
             llm_summary_max_input_tokens: 2_000_000,
+            llm_summary_max_output_tokens: 1_000,
+            llm_summary_timeout_ms: 8_000,
+            repl_handle: false,
+            repl_preview_chars: 1_200,
         }
     }
 }

@@ -14,16 +14,24 @@ exclude = [
     ".gitmodules",
     "docs/",
     "vendor/tinybus/",
+    "vendor/tinyagents/",
+    "crates/tinyjuice-examples/",
     "wiki/",
 ]
 
 [workspace]
 members = ["crates/tinyjuice-bus", "crates/tinyjuice-module"]
 default-members = [".", "crates/tinyjuice-bus", "crates/tinyjuice-module"]
-exclude = ["vendor/tinybus"]
+exclude = ["vendor/tinybus", "vendor/tinyagents", "crates/tinyjuice-examples"]
 resolver = "3"
 
 [dependencies]
+# Optional adapter boundary: REPL ops as `tinytools::Tool` impls.
+tinytools = { git = "https://github.com/tinyhumansai/tinytools", optional = true }
+anyhow = { version = "1", optional = true }
+jaq-core = { version = "3", optional = true }
+jaq-std = { version = "3", optional = true }
+jaq-json = { version = "2", optional = true }
 # The wire contract, defined once and shared with the module and with hosts.
 # This crate re-exports its types from `src/types.rs` rather than declaring a
 # second copy — see the note there.
@@ -38,7 +46,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.11"
 thiserror = "2"
-tokio = { version = "1", features = ["sync", "rt"] }
+tokio = { version = "1", features = ["sync", "rt", "time"] }
 unicode-segmentation = "1"
 unicode-width = "0.2"
 
@@ -77,6 +85,10 @@ harness = false
 
 [features]
 default = ["tinyjuice-treesitter"]
+# Exposes the REPL ops as `tinytools::Tool` impls (see src/repl/tools.rs).
+tinytools = ["dep:tinytools", "dep:anyhow", "jq"]
+# jq-style queries over JSON outputs (the `jq` REPL op and `juice_jq` tool).
+jq = ["dep:jaq-core", "dep:jaq-std", "dep:jaq-json"]
 tinyjuice-treesitter = [
     "dep:tree-sitter",
     "dep:tree-sitter-python",
@@ -88,3 +100,7 @@ tinyjuice-treesitter = [
 lto = "thin"
 codegen-units = 1
 strip = "debuginfo"
+
+[[example]]
+name = "repl_tool_schema"
+required-features = ["tinytools"]

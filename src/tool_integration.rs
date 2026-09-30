@@ -247,6 +247,7 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
     // too, with CCR on: the summary is lossy, and the exact original must stay
     // retrievable. Without a token, `Light` never reaches the model.
     let mut notice = None;
+    let mut repl_fallback = false;
     let summary_opts = match profile {
         AgentTokenjuiceCompression::Full => Some(opts.clone()),
         AgentTokenjuiceCompression::Light if context_token.is_some() => {
@@ -288,6 +289,9 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
             super::summarize::SummaryOutcome::NotNeeded => {}
             super::summarize::SummaryOutcome::Unavailable(reason) => {
                 notice = Some(reason.notice());
+                // A slow model must not turn into an unbounded dump: keep the
+                // original in CCR and hand back a preview plus a handle.
+                repl_fallback = reason == super::summarize::UnavailableReason::TimedOut;
             }
         }
     }
@@ -331,6 +335,11 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
         original_bytes,
     };
 
+    let mut opts = opts;
+    if repl_fallback {
+        opts.repl_handle = true;
+        opts.ccr_enabled = current_options().ccr_enabled;
+    }
     let res = route(input, &opts).await;
     let stats = CompactionStats {
         tool_name: tool_name.to_string(),

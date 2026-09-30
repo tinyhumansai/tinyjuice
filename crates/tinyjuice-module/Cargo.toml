@@ -11,7 +11,7 @@ publish = false
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-tinyjuice = { path = "../..", default-features = false }
+tinyjuice = { path = "../..", default-features = false, features = ["jq"] }
 # The interface vocabulary. Shared with hosts, so this adapter cannot drift
 # from what a caller was compiled against.
 tinyjuice-bus = { path = "../tinyjuice-bus" }

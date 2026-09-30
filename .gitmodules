@@ -4,3 +4,6 @@
 [submodule "vendor/tinybus"]
 	path = vendor/tinybus
 	url = https://github.com/tinyhumansai/tinybus.git
+[submodule "vendor/tinyagents"]
+	path = vendor/tinyagents
+	url = https://github.com/tinyhumansai/tinyagents

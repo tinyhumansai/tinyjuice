@@ -210,6 +210,44 @@ pub async fn route_with_store_report_shell_policy(
         .with_bloat_estimate(bloat_estimate);
         return (res, report);
     }
+    if opts.repl_handle
+        && opts.ccr_enabled
+        && estimate_tokens_with(content, opts.chars_per_token) as usize >= opts.ccr_min_tokens
+    {
+        // Size-driven, so it runs ahead of the low-bloat skip.
+        let put = store.put(content);
+        if put.retained() {
+            let token = put.token().to_string();
+            let (body, footer) = crate::repl::handle_view(content, &token, opts.repl_preview_chars);
+            let text = format!("{body}{footer}");
+            if text.len() < original_bytes {
+                let compacted_bytes = text.len();
+                let res = CompressedOutput {
+                    text,
+                    body,
+                    recovery_footer: Some(footer),
+                    content_kind: kind,
+                    compressor: crate::types::CompressorKind::Repl,
+                    lossy: true,
+                    applied: true,
+                    ccr_token: Some(token),
+                    original_bytes,
+                    compacted_bytes,
+                };
+                let report = PipelineReport::applied(
+                    kind,
+                    original_bytes,
+                    compacted_bytes,
+                    crate::types::CompressorKind::Repl,
+                    true,
+                    res.ccr_token.clone(),
+                )
+                .with_bloat_estimate(bloat_estimate);
+                return (res, report);
+            }
+        }
+    }
+
     if should_skip_low_bloat(&input, bloat_estimate.score) {
         let res = CompressedOutput::passthrough(content.to_string(), kind);
         let report =
