@@ -129,9 +129,9 @@ fn arg_values(args: &[String], flag: &str) -> Vec<String> {
         .collect()
 }
 
-#[tokio::main(flavor = "current_thread")]
 static CFG_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
     let dir = PathBuf::from(
