@@ -136,14 +136,18 @@ fn run_scoped(text: &str, op: &ReplOp, limits: &ReplLimits) -> Result<ReplOutput
         }
         ReplOp::Summarize {
             max_chars, hint, ..
-        } => ReplOutput::Text {
-            text: ops::summarize_with_hint(
-                text,
-                hint.as_deref(),
-                max_chars.unwrap_or(DEFAULT_SUMMARY_CHARS),
-                limits,
-            ),
-        },
+        } => {
+            // Bound the working budget by the output cap, and clip the finished
+            // summary to it: the size line and outline are written before budgeting.
+            let budget = max_chars
+                .unwrap_or(DEFAULT_SUMMARY_CHARS)
+                .min(limits.max_output_chars);
+            let mut summary = ops::summarize_with_hint(text, hint.as_deref(), budget, limits);
+            if let Some((cut, _)) = summary.char_indices().nth(budget) {
+                summary.truncate(cut);
+            }
+            ReplOutput::Text { text: summary }
+        }
     };
     Ok(out)
 }
@@ -168,6 +172,13 @@ fn run_jq(_: &str, _: &str, _: &ReplLimits) -> Result<ReplOutput, ReplError> {
     Err(ReplError::Unsupported("jq"))
 }
 
+fn clip_chars(s: &str, max: usize) -> String {
+    match s.char_indices().nth(max) {
+        Some((cut, _)) => format!("{}…", &s[..cut]),
+        None => s.to_string(),
+    }
+}
+
 /// Drop trailing hits until the serialized result fits `max_output_chars`.
 fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
     fn fit<T: serde::Serialize>(items: &mut Vec<T>, truncated: &mut usize, max: usize) {
@@ -179,15 +190,54 @@ fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
     }
     let max = limits.max_output_chars;
     match &mut out {
-        ReplOutput::Lines { hits, truncated } => fit(hits, truncated, max),
-        ReplOutput::Matches { matches, truncated } => fit(matches, truncated, max),
-        ReplOutput::Search { hits, truncated } => fit(hits, truncated, max),
-        ReplOutput::Values { values, truncated } => fit(values, truncated, max),
-        ReplOutput::Links { links, truncated } => fit(links, truncated, max),
+        ReplOutput::Lines { hits, truncated } => {
+            fit(hits, truncated, max);
+            for h in hits.iter_mut() {
+                h.text = clip_chars(&h.text, max / 2);
+            }
+        }
+        ReplOutput::Matches { matches, truncated } => {
+            fit(matches, truncated, max);
+            // Every capture is clipped already, but many captures can still
+            // exceed the cap in one match.
+            for m in matches.iter_mut() {
+                m.text = clip_chars(&m.text, max / 4);
+                let mut spent = 0usize;
+                m.captures.retain(|c| {
+                    spent = spent.saturating_add(c.as_ref().map_or(0, |s| s.chars().count()) + 4);
+                    spent <= max / 2
+                });
+            }
+        }
+        ReplOutput::Search { hits, truncated } => {
+            fit(hits, truncated, max);
+            for h in hits.iter_mut() {
+                h.text = clip_chars(&h.text, max / 2);
+            }
+        }
+        ReplOutput::Values { values, truncated } => {
+            fit(values, truncated, max);
+            // One value can exceed the cap alone; clip it rather than keep it whole.
+            for v in values.iter_mut() {
+                *v = clip_chars(v, max);
+            }
+        }
+        ReplOutput::Links { links, truncated } => {
+            fit(links, truncated, max);
+            for l in links.iter_mut() {
+                l.text = clip_chars(&l.text, max / 4);
+                l.href = clip_chars(&l.href, max / 2);
+            }
+        }
         ReplOutput::Headings {
             headings,
             truncated,
-        } => fit(headings, truncated, max),
+        } => {
+            fit(headings, truncated, max);
+            for h in headings.iter_mut() {
+                h.text = clip_chars(&h.text, max / 2);
+            }
+        }
         ReplOutput::Text { text } => {
             if text.chars().count() > max {
                 *text =
@@ -248,7 +298,12 @@ pub fn handle_view(
     file: Option<&std::path::Path>,
 ) -> (String, String, String) {
     let stats = stats::describe(content, kind, chars_per_token);
-    let preview = ops::summarize(content, preview_chars, &ReplLimits::default());
+    let mut preview = ops::summarize(content, preview_chars, &ReplLimits::default());
+    // The summary writes its size line and outline before budgeting, so bound
+    // the whole preview here.
+    if let Some((cut, _)) = preview.char_indices().nth(preview_chars) {
+        preview.truncate(cut);
+    }
     let body = format!(
         "[{stats}]\nhead (first {} chars):\n{}\n---\n{preview}",
         stats::HEAD_CHARS,

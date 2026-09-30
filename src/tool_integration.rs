@@ -188,6 +188,15 @@ pub struct ToolOutputReport {
 /// the original, and routing a model-written note through compressors built
 /// for machine output would only damage it.
 pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
+    compact_tool_output_inner(call, None).await
+}
+
+/// [`compact_tool_output`] with an optional explicit option set, so a caller
+/// (or test) need not mutate the process-wide options.
+async fn compact_tool_output_inner(
+    call: ToolOutputCall<'_>,
+    opts_override: Option<CompressOptions>,
+) -> ToolOutputReport {
     let ToolOutputCall {
         tool_name,
         arguments,
@@ -201,7 +210,7 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
     } = call;
     let original_bytes = output.len();
 
-    let opts = match options_for_agent(profile) {
+    let opts = match opts_override.map_or_else(|| options_for_agent(profile), Ok) {
         Ok(opts) => opts,
         Err(rule_id) => {
             log::debug!(
@@ -257,6 +266,14 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
         }
         _ => None,
     };
+    // An explicit handle mode is honored before any model call: an eligible
+    // output gets its preview and handle rather than waiting on a summary.
+    let handle_mode_applies = opts.repl_handle
+        && opts.ccr_enabled
+        && compaction_enabled
+        && crate::tokens::estimate_tokens_with(output, opts.chars_per_token) as usize
+            >= opts.ccr_min_tokens;
+    let summary_opts = summary_opts.filter(|_| !handle_mode_applies);
     if let Some(summary_opts) = summary_opts {
         let outcome = super::summarize::maybe_summarize(
             super::summarize::SummaryInput {
@@ -338,6 +355,9 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
     let mut opts = opts;
     if repl_fallback {
         opts.repl_handle = true;
+        // The summary stage may have run below the CCR floor; the fallback must
+        // still produce a handle.
+        opts.ccr_min_tokens = 0;
         opts.ccr_enabled = current_options().ccr_enabled;
     }
     let res = route(input, &opts).await;
@@ -785,5 +805,32 @@ mod tests {
         .await;
         assert_eq!(report.stats.rule_id, "none/disabled");
         assert_eq!(report.text, output);
+    }
+
+    /// An explicit handle mode wins over the summary stage: an eligible output
+    /// gets a preview and handle without a model call.
+    #[tokio::test]
+    async fn handle_mode_is_honored_before_a_summary() {
+        let _guard = crate::llm::callback_test_guard().await;
+        enable_llm_summary();
+        let mut opts = current_options();
+        opts.repl_handle = true;
+        opts.ccr_enabled = true;
+        opts.ccr_min_tokens = 1;
+        crate::llm::configure_callback(Some(std::sync::Arc::new(|_| {
+            Box::pin(async { panic!("handle mode must not call the model") })
+        })));
+        let output = "integration handle mode wins ".repeat(400);
+        let report = compact_tool_output_inner(
+            ToolOutputCall {
+                scope: Some("tool-integration-handle-first"),
+                ..call(&output, AgentTokenjuiceCompression::Full, None)
+            },
+            Some(opts),
+        )
+        .await;
+        crate::llm::configure_callback(None);
+        assert_eq!(report.stats.rule_id, "repl", "{}", report.text);
+        assert!(report.notice.is_none());
     }
 }
