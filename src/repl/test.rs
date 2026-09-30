@@ -493,9 +493,18 @@ fn handle_view_body_never_exceeds_the_preview_budget() {
         .map(|i| format!("## {} {}\nbody\n", i, "h".repeat(200)))
         .collect();
     for budget in [0usize, 100, 1200] {
-        let (body, _) = handle_view(&doc, "tok", budget);
+        let (body, _, stats) = handle_view(
+            &doc,
+            "tok",
+            crate::types::ContentKind::PlainText,
+            4.0,
+            budget,
+            None,
+        );
+        // The budget bounds the preview; the stats line and head snippet are extra.
+        let fixed = stats.chars().count() + stats::HEAD_CHARS + 64;
         assert!(
-            body.chars().count() <= budget,
+            body.chars().count() <= budget + fixed,
             "{budget}: {}",
             body.chars().count()
         );

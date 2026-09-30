@@ -14,6 +14,18 @@ a preview of at most `repl_preview_chars`, plus a footer naming the handle.
 Smaller inputs take the normal pipeline. Default is off. `CompressorKind::Repl`
 marks these results; `ccr_token` is the handle.
 
+The preview starts with a one-line stats description (about 100 tokens at most):
+estimated tokens, bytes, lines, and a shape by kind, e.g.
+`JSON object · 3 keys (total, items[60], meta{1}) · depth 3 · largest: items ~1.2k tok`.
+It reports structure only (key names, counts), never values. A head snippet of the
+first 500 characters of the input follows, then the extractive preview. The stats
+line is also on `CompressedOutput.stats`.
+
+Set `repl_save_dir` to also write the full original to `<dir>/<handle>.txt`
+(mode 0600, written once per handle). The path is in the footer and in
+`CompressedOutput.saved_path`, so an agent can grep or script over the file.
+The host owns cleanup of that directory.
+
 ## Ops
 
 Three tools, so the schema stays small.
