@@ -19,6 +19,8 @@ pub mod tools;
 
 #[cfg(test)]
 mod test;
+#[cfg(test)]
+mod test_stats;
 
 use crate::cache::store::CcrStore;
 pub use types::{
