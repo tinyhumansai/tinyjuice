@@ -118,19 +118,19 @@ async fn rejected_handle_view_leaves_no_saved_file() {
     use crate::compress::route_with_store_report;
     use crate::types::{CompressInput, CompressOptions, ContentHint};
     let store = MemoryCcrStore::default();
-    let content = json_doc();
+    let content = "tiny payload".to_string();
     let dir = std::env::temp_dir().join(format!("tj-reject-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     let opts = CompressOptions {
         repl_handle: true,
         repl_save_dir: Some(dir.clone()),
-        repl_preview_chars: content.len() * 4,
+        ccr_min_tokens: 0,
         ..CompressOptions::default()
     };
     let hint = ContentHint::default();
     let input = CompressInput {
         content: &content,
-        kind: ContentKind::Json,
+        kind: ContentKind::PlainText,
         hint: &hint,
         exit_code: None,
         command: None,
