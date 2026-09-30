@@ -516,3 +516,45 @@ fn a_single_oversized_link_is_clipped() {
     );
     assert!(serde_json::to_string(&out).unwrap().len() < 20_000);
 }
+
+#[cfg(feature = "jq")]
+#[test]
+fn jq_allows_blocked_names_used_as_data() {
+    let json = r#"{"input":1,"env":2,"items":[{"type":"debug","n":3}]}"#;
+    for q in [".input", ".env", r#".items[] | select(.type == "debug") | .n"#, "{env: .env}"] {
+        assert!(run_on_text(json, &find(q, FindMode::Jq), &lim()).is_ok(), "{q}");
+    }
+    for q in ["env", "$ENV.HOME", r#""\(env)""#, ".items | input"] {
+        assert!(run_on_text(json, &find(q, FindMode::Jq), &lim()).is_err(), "{q}");
+    }
+}
+
+#[test]
+fn summarize_honors_the_requested_character_limit() {
+    let op = |max: usize| ReplOp::Summarize {
+        max_chars: Some(max),
+        hint: None,
+        scope: None,
+        unit: ScopeUnit::Lines,
+    };
+    let out = run_on_text(DOC, &op(0), &lim()).unwrap();
+    assert!(matches!(out, ReplOutput::Text { ref text } if text.is_empty()));
+    let out = run_on_text(DOC, &op(40), &lim()).unwrap();
+    assert!(matches!(out, ReplOutput::Text { ref text } if text.chars().count() <= 40));
+}
+
+#[test]
+fn a_match_with_many_captures_is_bounded() {
+    let out = cap(
+        ReplOutput::Matches {
+            matches: vec![RegexMatch {
+                line: 1,
+                text: "x".into(),
+                captures: (0..2000).map(|_| Some("c".repeat(100))).collect(),
+            }],
+            truncated: 0,
+        },
+        &lim(),
+    );
+    assert!(serde_json::to_string(&out).unwrap().chars().count() <= lim().max_output_chars);
+}
