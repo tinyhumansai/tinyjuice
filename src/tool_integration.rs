@@ -794,4 +794,31 @@ mod tests {
         assert_eq!(report.stats.rule_id, "none/disabled");
         assert_eq!(report.text, output);
     }
+
+    /// An explicit handle mode wins over the summary stage: an eligible output
+    /// gets a preview and handle without a model call.
+    #[tokio::test]
+    async fn handle_mode_is_honored_before_a_summary() {
+        let _guard = crate::llm::callback_test_guard().await;
+        enable_llm_summary();
+        let saved = current_options();
+        let mut opts = saved.clone();
+        opts.repl_handle = true;
+        opts.ccr_enabled = true;
+        opts.ccr_min_tokens = 1;
+        configure(opts);
+        crate::llm::configure_callback(Some(std::sync::Arc::new(|_| {
+            Box::pin(async { panic!("handle mode must not call the model") })
+        })));
+        let output = "integration handle mode wins ".repeat(400);
+        let report = compact_tool_output(ToolOutputCall {
+            scope: Some("tool-integration-handle-first"),
+            ..call(&output, AgentTokenjuiceCompression::Full, None)
+        })
+        .await;
+        configure(saved);
+        crate::llm::configure_callback(None);
+        assert_eq!(report.stats.rule_id, "repl", "{}", report.text);
+        assert!(report.notice.is_none());
+    }
 }
