@@ -31,6 +31,9 @@ struct Cmd {
     active: bool,
 }
 
+/// Bytes a line may grow by through `s///` before the script is rejected.
+const MAX_SUBST_GROWTH: usize = 64 * 1024;
+
 fn bad(msg: &str) -> ReplError {
     ReplError::InvalidPattern(format!("sed: {msg}"))
 }
@@ -301,6 +304,9 @@ pub fn run(
                         re.replace(&space, repl.as_str())
                     };
                     if let std::borrow::Cow::Owned(new) = replaced {
+                        if new.len() > raw.len().saturating_add(MAX_SUBST_GROWTH) {
+                            return Err(bad("substitution output too large"));
+                        }
                         space = new;
                         if *print {
                             emit(n, &space, &mut out);

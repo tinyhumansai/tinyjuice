@@ -95,9 +95,9 @@ impl UnavailableReason {
                 "Do not re-run the tool for a summary.]"
             ),
             Self::TimedOut => concat!(
-                "[summarization timed out — a short preview follows and the full output ",
-                "is stored. Inspect it with the juice_* tools using the handle in the ",
-                "footer, or retrieve it whole. Do not re-run the tool for a summary.]"
+                "[summarization timed out — the tool output follows. If a recovery handle ",
+                "appears in its footer, inspect the stored output with the juice_* tools ",
+                "using that handle. Do not re-run the tool for a summary.]"
             ),
             Self::Failed => concat!(
                 "[summarization unavailable — the summarizer did not return a usable ",

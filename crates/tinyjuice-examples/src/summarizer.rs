@@ -20,11 +20,14 @@ pub fn callback(model: String, key: String) -> Arc<GenerateCallback> {
                 ],
             });
             tokio::task::spawn_blocking(move || {
-                let cfg = std::env::temp_dir().join(format!("tj-agent-{}.cfg", std::process::id()));
+                let cfg = std::env::temp_dir().join(format!(
+                    "tj-agent-{}-{}.cfg",
+                    std::process::id(),
+                    CFG_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+                ));
                 std::fs::OpenOptions::new()
                     .write(true)
-                    .create(true)
-                    .truncate(true)
+                    .create_new(true)
                     .mode(0o600)
                     .open(&cfg)
                     .and_then(|mut f| f.write_all(format!("header = \"Authorization: Bearer {key}\"\n").as_bytes()))

@@ -56,7 +56,7 @@ pub fn grep(
             }
             matched += 1;
             let lo = i.saturating_sub(context);
-            let hi = (i + context).min(lines.len() - 1);
+            let hi = i.saturating_add(context).min(lines.len() - 1);
             for slot in &mut keep[lo..=hi] {
                 *slot = true;
             }

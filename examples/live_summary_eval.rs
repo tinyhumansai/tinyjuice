@@ -67,14 +67,17 @@ fn openrouter(model: String) -> Arc<GenerateCallback> {
             tokio::task::spawn_blocking(move || {
                 let header = format!("header = \"Authorization: Bearer {key}\"\n");
                 // The key goes through a 0600 curl config so it never shows in argv.
-                let cfg = std::env::temp_dir().join(format!("tj-eval-{}.cfg", std::process::id()));
+                let cfg = std::env::temp_dir().join(format!(
+                    "tj-eval-{}-{}.cfg",
+                    std::process::id(),
+                    CFG_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+                ));
                 {
                     use std::io::Write as _;
                     use std::os::unix::fs::OpenOptionsExt;
                     let mut f = std::fs::OpenOptions::new()
                         .write(true)
-                        .create(true)
-                        .truncate(true)
+                        .create_new(true)
                         .mode(0o600)
                         .open(&cfg)
                         .map_err(|e| e.to_string())?;

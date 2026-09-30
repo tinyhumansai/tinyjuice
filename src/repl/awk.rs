@@ -64,6 +64,9 @@ fn parse_test(pat: &str, limits: &ReplLimits) -> Result<Option<Test>, ReplError>
     if let Some(src) = regex_literal(rest) {
         return Ok(Some(Test::Re(build(src, limits)?, negate)));
     }
+    if negate {
+        return Err(bad("`!` is only supported before a /regex/"));
+    }
     if let Some((lhs, rhs)) = rest.split_once('~') {
         let re = regex_literal(rhs.trim()).ok_or_else(|| bad("~ needs a /regex/"))?;
         let op = operand(lhs.trim()).ok_or_else(|| bad("bad operand before ~"))?;

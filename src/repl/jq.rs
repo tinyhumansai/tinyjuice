@@ -5,7 +5,7 @@
 //! A filter that loops without producing output cannot be interrupted, so the
 //! deadline abandons its worker thread rather than killing it.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 
@@ -17,6 +17,31 @@ use regex::Regex;
 use super::types::{ReplError, ReplLimits};
 
 const DEADLINE: Duration = Duration::from_secs(2);
+
+/// Most jq workers that may be alive at once. A timed-out worker cannot be
+/// killed, so new queries are refused while abandoned ones still occupy slots.
+const MAX_LIVE_WORKERS: usize = 4;
+static LIVE_WORKERS: AtomicUsize = AtomicUsize::new(0);
+
+/// Holds one worker slot; released when the worker thread exits.
+struct WorkerSlot;
+
+impl WorkerSlot {
+    fn acquire() -> Option<Self> {
+        LIVE_WORKERS
+            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |n| {
+                (n < MAX_LIVE_WORKERS).then_some(n + 1)
+            })
+            .ok()
+            .map(|_| Self)
+    }
+}
+
+impl Drop for WorkerSlot {
+    fn drop(&mut self) {
+        LIVE_WORKERS.fetch_sub(1, Ordering::AcqRel);
+    }
+}
 
 /// Builtins that reach outside the value: environment, stdin, stderr, exit.
 static FORBIDDEN: LazyLock<Regex> = LazyLock::new(|| {
@@ -39,15 +64,24 @@ pub fn run(text: &str, expr: &str, limits: &ReplLimits) -> Result<(Vec<String>, 
     if FORBIDDEN.is_match(expr) {
         return Err(bad("environment, input and debug builtins are not allowed"));
     }
-    let (text, expr, max_hits) = (text.to_string(), expr.to_string(), limits.max_hits);
+    let Some(slot) = WorkerSlot::acquire() else {
+        return Err(bad("too many earlier queries are still running; try later"));
+    };
+    let (text, expr, max_hits, max_chars) = (
+        text.to_string(),
+        expr.to_string(),
+        limits.max_hits,
+        limits.max_output_chars,
+    );
     let cancel = Arc::new(AtomicBool::new(false));
     let worker_cancel = Arc::clone(&cancel);
     let (tx, rx) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
+        let _slot = slot;
         // jaq values are `Rc`-based, so they are built on the worker thread.
         let result = read::parse_single(text.as_bytes())
             .map_err(|_| bad("the output is not valid JSON"))
-            .and_then(|input| evaluate(&expr, input, max_hits, &worker_cancel));
+            .and_then(|input| evaluate(&expr, input, max_hits, max_chars, &worker_cancel));
         let _ = tx.send(result);
     });
     match rx.recv_timeout(DEADLINE) {
@@ -63,6 +97,7 @@ fn evaluate(
     expr: &str,
     input: Val,
     max_hits: usize,
+    max_chars: usize,
     cancel: &AtomicBool,
 ) -> Result<(Vec<String>, usize), ReplError> {
     let defs = jaq_core::defs()
@@ -93,7 +128,14 @@ fn evaluate(
             break;
         }
         match out {
-            Ok(v) if values.len() < max_hits => values.push(v.to_string()),
+            Ok(v) if values.len() < max_hits => {
+                let s = v.to_string();
+                values.push(if s.chars().count() > max_chars {
+                    s.chars().take(max_chars).collect::<String>() + "…"
+                } else {
+                    s
+                });
+            }
             Ok(_) => {
                 dropped += 1;
                 // Stop counting once it is clear the query is too broad.
