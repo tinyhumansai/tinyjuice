@@ -218,6 +218,10 @@ pub async fn route_with_store_report_shell_policy(
         let put = store.put(content);
         if put.retained() {
             let token = put.token().to_string();
+            let pre_existing = opts
+                .repl_save_dir
+                .as_deref()
+                .is_some_and(|dir| dir.join(format!("{token}.txt")).is_file());
             let saved = opts
                 .repl_save_dir
                 .as_deref()
@@ -257,6 +261,10 @@ pub async fn route_with_store_report_shell_policy(
                 )
                 .with_bloat_estimate(bloat_estimate);
                 return (res, report);
+            }
+            // View rejected: do not leave an unreferenced sensitive copy behind.
+            if let (Some(path), false) = (saved.as_deref(), pre_existing) {
+                let _ = std::fs::remove_file(path);
             }
         }
     }

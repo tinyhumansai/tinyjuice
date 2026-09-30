@@ -149,20 +149,19 @@ fn diff_shape(text: &str) -> String {
 }
 
 fn doc_shape(text: &str, label: &str) -> String {
+    // Bounded: counts only, never document text (headings can carry secrets).
+    const CAP: usize = 1000;
     let lim = ReplLimits {
-        max_hits: usize::MAX,
+        max_hits: CAP,
         ..ReplLimits::default()
     };
     let (heads, more_h) = ops::extract_headings(text, &lim);
     let (links, more_l) = ops::extract_links(text, &lim);
-    let title = heads
-        .first()
-        .map(|h| format!(" · title: {}", clip(&h.text, 40)))
-        .unwrap_or_default();
+    let plus = |n: usize, more: usize| if more > 0 { format!("{n}+") } else { n.to_string() };
     format!(
-        "{label} · {} headings, {} links{title}",
-        heads.len() + more_h,
-        links.len() + more_l
+        "{label} · {} headings, {} links",
+        plus(heads.len(), more_h),
+        plus(links.len(), more_l)
     )
 }
 
