@@ -53,3 +53,15 @@ fn only_the_shared_property_counts_as_declaring_the_focus() {
     ));
     assert!(!declares_summary_focus(&json!({})));
 }
+
+#[test]
+fn the_property_schema_is_pinned_literally() {
+    assert_eq!(
+        summary_focus_property(),
+        json!({
+            "type": "string",
+            "description": "What you need from this result. A large result is summarized around this; the full output stays retrievable."
+        })
+    );
+    assert_eq!(SUMMARY_FOCUS_ARG, "summary_focus");
+}
