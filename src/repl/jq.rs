@@ -51,6 +51,18 @@ static FORBIDDEN: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+/// String literals without interpolation, `.field` accesses and `key:` object
+/// keys: names inside these are data, not builtin calls.
+static DATA_NAMES: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#""(?:[^"\\]|\\[^(])*"|\.\s*[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*\s*:"#)
+        .unwrap()
+});
+
+/// Whether `expr` calls a forbidden builtin, ignoring names used as data.
+fn references_forbidden(expr: &str) -> bool {
+    FORBIDDEN.is_match(&DATA_NAMES.replace_all(expr, " "))
+}
+
 fn bad(msg: impl std::fmt::Display) -> ReplError {
     ReplError::InvalidPattern(format!("jq: {msg}"))
 }
@@ -61,7 +73,7 @@ pub fn run(text: &str, expr: &str, limits: &ReplLimits) -> Result<(Vec<String>, 
     if expr.trim().is_empty() {
         return Err(ReplError::EmptyQuery);
     }
-    if FORBIDDEN.is_match(expr) {
+    if references_forbidden(expr) {
         return Err(bad("environment, input and debug builtins are not allowed"));
     }
     let Some(slot) = WorkerSlot::acquire() else {

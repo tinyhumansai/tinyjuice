@@ -133,14 +133,18 @@ fn run_scoped(text: &str, op: &ReplOp, limits: &ReplLimits) -> Result<ReplOutput
         }
         ReplOp::Summarize {
             max_chars, hint, ..
-        } => ReplOutput::Text {
-            text: ops::summarize_with_hint(
-                text,
-                hint.as_deref(),
-                max_chars.unwrap_or(DEFAULT_SUMMARY_CHARS),
-                limits,
-            ),
-        },
+        } => {
+            // Bound the working budget by the output cap, and clip the finished
+            // summary to it: the size line and outline are written before budgeting.
+            let budget = max_chars
+                .unwrap_or(DEFAULT_SUMMARY_CHARS)
+                .min(limits.max_output_chars);
+            let mut summary = ops::summarize_with_hint(text, hint.as_deref(), budget, limits);
+            if let Some((cut, _)) = summary.char_indices().nth(budget) {
+                summary.truncate(cut);
+            }
+            ReplOutput::Text { text: summary }
+        }
     };
     Ok(out)
 }
@@ -184,7 +188,19 @@ fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
     let max = limits.max_output_chars;
     match &mut out {
         ReplOutput::Lines { hits, truncated } => fit(hits, truncated, max),
-        ReplOutput::Matches { matches, truncated } => fit(matches, truncated, max),
+        ReplOutput::Matches { matches, truncated } => {
+            fit(matches, truncated, max);
+            // Every capture is clipped already, but many captures can still
+            // exceed the cap in one match.
+            for m in matches.iter_mut() {
+                m.text = clip_chars(&m.text, max / 4);
+                let mut spent = 0usize;
+                m.captures.retain(|c| {
+                    spent = spent.saturating_add(c.as_ref().map_or(0, |s| s.chars().count()) + 4);
+                    spent <= max / 2
+                });
+            }
+        }
         ReplOutput::Search { hits, truncated } => fit(hits, truncated, max),
         ReplOutput::Values { values, truncated } => {
             fit(values, truncated, max);
