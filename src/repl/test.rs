@@ -486,3 +486,33 @@ fn jq_clips_a_single_large_value() {
     let s = serde_json::to_string(&r).unwrap();
     assert!(s.len() < 50_000, "{}", s.len());
 }
+
+#[test]
+fn handle_view_body_never_exceeds_the_preview_budget() {
+    let doc: String = (0..40)
+        .map(|i| format!("## {} {}\nbody\n", i, "h".repeat(200)))
+        .collect();
+    for budget in [0usize, 100, 1200] {
+        let (body, _) = handle_view(&doc, "tok", budget);
+        assert!(
+            body.chars().count() <= budget,
+            "{budget}: {}",
+            body.chars().count()
+        );
+    }
+}
+
+#[test]
+fn a_single_oversized_link_is_clipped() {
+    let out = cap(
+        ReplOutput::Links {
+            links: vec![Link {
+                text: "t".into(),
+                href: "h".repeat(50_000),
+            }],
+            truncated: 0,
+        },
+        &lim(),
+    );
+    assert!(serde_json::to_string(&out).unwrap().len() < 20_000);
+}
