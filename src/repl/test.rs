@@ -586,5 +586,7 @@ fn a_single_line_hit_is_clipped_to_a_small_output_cap() {
         },
         &small,
     );
-    assert!(serde_json::to_string(&out).unwrap().chars().count() <= 100);
+    assert!(
+        matches!(out, ReplOutput::Lines { ref hits, .. } if hits[0].text.chars().count() <= 100)
+    );
 }
