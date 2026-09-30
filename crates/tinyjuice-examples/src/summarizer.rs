@@ -7,6 +7,9 @@ use std::sync::Arc;
 
 use tinyjuice::llm::{GenerateCallback, GenerateRequest};
 
+/// Makes each curl config file name unique within this process.
+static CFG_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 pub fn callback(model: String, key: String) -> Arc<GenerateCallback> {
     Arc::new(move |req: GenerateRequest| {
         let (model, key) = (model.clone(), key.clone());
