@@ -192,7 +192,7 @@ pub async fn maybe_summarize(input: SummaryInput<'_>, opts: &CompressOptions) ->
         prompt: build_prompt(tool, focus, raw),
         max_output_tokens: opts
             .llm_summary_max_output_tokens
-            .clamp(64, MAX_OUTPUT_TOKENS),
+            .clamp(1, MAX_OUTPUT_TOKENS),
     });
     let reply = if opts.llm_summary_timeout_ms == 0 {
         call.await

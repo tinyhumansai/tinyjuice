@@ -187,7 +187,12 @@ fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
     }
     let max = limits.max_output_chars;
     match &mut out {
-        ReplOutput::Lines { hits, truncated } => fit(hits, truncated, max),
+        ReplOutput::Lines { hits, truncated } => {
+            fit(hits, truncated, max);
+            for h in hits.iter_mut() {
+                h.text = clip_chars(&h.text, max / 2);
+            }
+        }
         ReplOutput::Matches { matches, truncated } => {
             fit(matches, truncated, max);
             // Every capture is clipped already, but many captures can still
@@ -201,7 +206,12 @@ fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
                 });
             }
         }
-        ReplOutput::Search { hits, truncated } => fit(hits, truncated, max),
+        ReplOutput::Search { hits, truncated } => {
+            fit(hits, truncated, max);
+            for h in hits.iter_mut() {
+                h.text = clip_chars(&h.text, max / 2);
+            }
+        }
         ReplOutput::Values { values, truncated } => {
             fit(values, truncated, max);
             // One value can exceed the cap alone; clip it rather than keep it whole.
@@ -219,7 +229,12 @@ fn cap(mut out: ReplOutput, limits: &ReplLimits) -> ReplOutput {
         ReplOutput::Headings {
             headings,
             truncated,
-        } => fit(headings, truncated, max),
+        } => {
+            fit(headings, truncated, max);
+            for h in headings.iter_mut() {
+                h.text = clip_chars(&h.text, max / 2);
+            }
+        }
         ReplOutput::Text { text } => {
             if text.chars().count() > max {
                 *text =

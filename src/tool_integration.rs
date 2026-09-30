@@ -355,6 +355,9 @@ async fn compact_tool_output_inner(
     let mut opts = opts;
     if repl_fallback {
         opts.repl_handle = true;
+        // The summary stage may have run below the CCR floor; the fallback must
+        // still produce a handle.
+        opts.ccr_min_tokens = 0;
         opts.ccr_enabled = current_options().ccr_enabled;
     }
     let res = route(input, &opts).await;

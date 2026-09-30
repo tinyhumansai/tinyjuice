@@ -569,3 +569,22 @@ fn a_match_with_many_captures_is_bounded() {
     );
     assert!(serde_json::to_string(&out).unwrap().chars().count() <= lim().max_output_chars);
 }
+
+#[test]
+fn a_single_line_hit_is_clipped_to_a_small_output_cap() {
+    let small = ReplLimits {
+        max_output_chars: 100,
+        ..lim()
+    };
+    let out = cap(
+        ReplOutput::Lines {
+            hits: vec![Hit {
+                line: 1,
+                text: "z".repeat(240),
+            }],
+            truncated: 0,
+        },
+        &small,
+    );
+    assert!(serde_json::to_string(&out).unwrap().chars().count() <= 100);
+}
