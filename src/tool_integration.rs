@@ -257,6 +257,14 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
         }
         _ => None,
     };
+    // An explicit handle mode is honored before any model call: an eligible
+    // output gets its preview and handle rather than waiting on a summary.
+    let handle_mode_applies = opts.repl_handle
+        && opts.ccr_enabled
+        && compaction_enabled
+        && crate::tokens::estimate_tokens_with(output, opts.chars_per_token) as usize
+            >= opts.ccr_min_tokens;
+    let summary_opts = summary_opts.filter(|_| !handle_mode_applies);
     if let Some(summary_opts) = summary_opts {
         let outcome = super::summarize::maybe_summarize(
             super::summarize::SummaryInput {
