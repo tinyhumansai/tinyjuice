@@ -218,7 +218,18 @@ pub async fn route_with_store_report_shell_policy(
         let put = store.put(content);
         if put.retained() {
             let token = put.token().to_string();
-            let (body, footer) = crate::repl::handle_view(content, &token, opts.repl_preview_chars);
+            let saved = opts
+                .repl_save_dir
+                .as_deref()
+                .and_then(|dir| crate::repl::write_handle_file(dir, &token, content));
+            let (body, footer, stats) = crate::repl::handle_view(
+                content,
+                &token,
+                kind,
+                opts.chars_per_token,
+                opts.repl_preview_chars,
+                saved.as_deref(),
+            );
             let text = format!("{body}{footer}");
             if text.len() < original_bytes {
                 let compacted_bytes = text.len();
@@ -233,6 +244,8 @@ pub async fn route_with_store_report_shell_policy(
                     ccr_token: Some(token),
                     original_bytes,
                     compacted_bytes,
+                    stats: Some(stats),
+                    saved_path: saved,
                 };
                 let report = PipelineReport::applied(
                     kind,
