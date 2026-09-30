@@ -440,6 +440,8 @@ pub async fn route_with_store_report_shell_policy(
         ccr_token,
         original_bytes,
         compacted_bytes,
+        stats: None,
+        saved_path: None,
     };
     let report = PipelineReport::applied(
         kind,
@@ -645,6 +647,8 @@ fn finalize_typed_output(
         ccr_token,
         original_bytes,
         compacted_bytes,
+        stats: None,
+        saved_path: None,
     };
     Some((res, report))
 }
