@@ -521,11 +521,22 @@ fn a_single_oversized_link_is_clipped() {
 #[test]
 fn jq_allows_blocked_names_used_as_data() {
     let json = r#"{"input":1,"env":2,"items":[{"type":"debug","n":3}]}"#;
-    for q in [".input", ".env", r#".items[] | select(.type == "debug") | .n"#, "{env: .env}"] {
-        assert!(run_on_text(json, &find(q, FindMode::Jq), &lim()).is_ok(), "{q}");
+    for q in [
+        ".input",
+        ".env",
+        r#".items[] | select(.type == "debug") | .n"#,
+        "{env: .env}",
+    ] {
+        assert!(
+            run_on_text(json, &find(q, FindMode::Jq), &lim()).is_ok(),
+            "{q}"
+        );
     }
     for q in ["env", "$ENV.HOME", r#""\(env)""#, ".items | input"] {
-        assert!(run_on_text(json, &find(q, FindMode::Jq), &lim()).is_err(), "{q}");
+        assert!(
+            run_on_text(json, &find(q, FindMode::Jq), &lim()).is_err(),
+            "{q}"
+        );
     }
 }
 
