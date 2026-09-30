@@ -188,6 +188,15 @@ pub struct ToolOutputReport {
 /// the original, and routing a model-written note through compressors built
 /// for machine output would only damage it.
 pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
+    compact_tool_output_inner(call, None).await
+}
+
+/// [`compact_tool_output`] with an optional explicit option set, so a caller
+/// (or test) need not mutate the process-wide options.
+async fn compact_tool_output_inner(
+    call: ToolOutputCall<'_>,
+    opts_override: Option<CompressOptions>,
+) -> ToolOutputReport {
     let ToolOutputCall {
         tool_name,
         arguments,
@@ -201,7 +210,7 @@ pub async fn compact_tool_output(call: ToolOutputCall<'_>) -> ToolOutputReport {
     } = call;
     let original_bytes = output.len();
 
-    let opts = match options_for_agent(profile) {
+    let opts = match opts_override.map_or_else(|| options_for_agent(profile), Ok) {
         Ok(opts) => opts,
         Err(rule_id) => {
             log::debug!(
@@ -801,22 +810,22 @@ mod tests {
     async fn handle_mode_is_honored_before_a_summary() {
         let _guard = crate::llm::callback_test_guard().await;
         enable_llm_summary();
-        let saved = current_options();
-        let mut opts = saved.clone();
+        let mut opts = current_options();
         opts.repl_handle = true;
         opts.ccr_enabled = true;
         opts.ccr_min_tokens = 1;
-        configure(opts);
         crate::llm::configure_callback(Some(std::sync::Arc::new(|_| {
             Box::pin(async { panic!("handle mode must not call the model") })
         })));
         let output = "integration handle mode wins ".repeat(400);
-        let report = compact_tool_output(ToolOutputCall {
-            scope: Some("tool-integration-handle-first"),
-            ..call(&output, AgentTokenjuiceCompression::Full, None)
-        })
+        let report = compact_tool_output_inner(
+            ToolOutputCall {
+                scope: Some("tool-integration-handle-first"),
+                ..call(&output, AgentTokenjuiceCompression::Full, None)
+            },
+            Some(opts),
+        )
         .await;
-        configure(saved);
         crate::llm::configure_callback(None);
         assert_eq!(report.stats.rule_id, "repl", "{}", report.text);
         assert!(report.notice.is_none());
