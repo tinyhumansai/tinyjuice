@@ -157,7 +157,13 @@ fn doc_shape(text: &str, label: &str) -> String {
     };
     let (heads, more_h) = ops::extract_headings(text, &lim);
     let (links, more_l) = ops::extract_links(text, &lim);
-    let plus = |n: usize, more: usize| if more > 0 { format!("{n}+") } else { n.to_string() };
+    let plus = |n: usize, more: usize| {
+        if more > 0 {
+            format!("{n}+")
+        } else {
+            n.to_string()
+        }
+    };
     format!(
         "{label} · {} headings, {} links",
         plus(heads.len(), more_h),

@@ -41,10 +41,9 @@ fn stats_describe_array_other_kinds_and_bad_json() {
     );
     assert!(diff.contains("1 files, 1 hunks"), "{diff}");
     let md = stats::describe("# Title\nbody\n## Two\n", ContentKind::PlainText, 4.0);
-    assert!(
-        md.contains("2 headings") && md.contains("title: Title"),
-        "{md}"
-    );
+    assert!(md.contains("2 headings") && !md.contains("Title"), "{md}");
+    let secret = stats::describe("# sk-secret-token\nbody\n", ContentKind::PlainText, 4.0);
+    assert!(!secret.contains("sk-secret"), "{secret}");
     let long_key = format!(r#"{{"{}":1}}"#, "é".repeat(80));
     assert!(stats::describe(&long_key, ContentKind::Json, 4.0).contains('…'));
 }
@@ -111,5 +110,36 @@ async fn router_repl_handle_reports_stats_head_and_saved_file() {
     let path = out.saved_path.expect("saved path");
     assert!(out.text.contains(path.to_str().unwrap()));
     assert_eq!(std::fs::read_to_string(&path).unwrap(), content);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn rejected_handle_view_leaves_no_saved_file() {
+    use crate::compress::route_with_store_report;
+    use crate::types::{CompressInput, CompressOptions, ContentHint};
+    let store = MemoryCcrStore::default();
+    let content = json_doc();
+    let dir = std::env::temp_dir().join(format!("tj-reject-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    let opts = CompressOptions {
+        repl_handle: true,
+        repl_save_dir: Some(dir.clone()),
+        repl_preview_chars: content.len() * 4,
+        ..CompressOptions::default()
+    };
+    let hint = ContentHint::default();
+    let input = CompressInput {
+        content: &content,
+        kind: ContentKind::Json,
+        hint: &hint,
+        exit_code: None,
+        command: None,
+        argv: None,
+        original_bytes: content.len(),
+    };
+    let (out, _) = route_with_store_report(input, &opts, &store).await;
+    assert!(out.saved_path.is_none());
+    let leftover = std::fs::read_dir(&dir).map(|d| d.count()).unwrap_or(0);
+    assert_eq!(leftover, 0, "unreferenced copy left behind");
     let _ = std::fs::remove_dir_all(&dir);
 }
