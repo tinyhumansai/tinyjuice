@@ -14,6 +14,7 @@ pub mod config;
 pub mod conversation;
 pub mod detect;
 mod error;
+pub mod host;
 pub mod live_zone;
 pub mod llm;
 pub mod ml;

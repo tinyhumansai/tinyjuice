@@ -29,6 +29,7 @@ resolver = "3"
 # Optional adapter boundary: REPL ops as `tinytools::Tool` impls.
 tinytools = { git = "https://github.com/tinyhumansai/tinytools", optional = true }
 anyhow = { version = "1", optional = true }
+uuid = { version = "1", features = ["v4"], optional = true }
 jaq-core = { version = "3", optional = true }
 jaq-std = { version = "3", optional = true }
 jaq-json = { version = "2", optional = true }
@@ -87,6 +88,8 @@ harness = false
 default = ["tinyjuice-treesitter"]
 # Exposes the REPL ops as `tinytools::Tool` impls (see src/repl/tools.rs).
 tinytools = ["dep:tinytools", "dep:anyhow", "jq"]
+# Turn-bound `MlHost.Generate` registry (src/host/generate.rs).
+host = ["dep:anyhow", "dep:uuid"]
 # jq-style queries over JSON outputs (the `jq` REPL op and `juice_jq` tool).
 jq = ["dep:jaq-core", "dep:jaq-std", "dep:jaq-json"]
 tinyjuice-treesitter = [
