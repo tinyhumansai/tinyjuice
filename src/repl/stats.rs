@@ -106,11 +106,8 @@ fn json_shape(text: &str, cpt: f32) -> Option<String> {
             };
             let keys = match a.first() {
                 Some(Value::Object(o)) => {
-                    let ks: Vec<String> = o
-                        .keys()
-                        .take(MAX_KEYS)
-                        .map(|k| clip(k, KEY_CLIP))
-                        .collect();
+                    let ks: Vec<String> =
+                        o.keys().take(MAX_KEYS).map(|k| clip(k, KEY_CLIP)).collect();
                     let more = if o.len() > MAX_KEYS { ", …" } else { "" };
                     format!(" · item keys: {}{more}", ks.join(", "))
                 }
