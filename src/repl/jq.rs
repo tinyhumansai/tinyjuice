@@ -28,12 +28,21 @@ struct WorkerSlot;
 
 impl WorkerSlot {
     fn acquire() -> Option<Self> {
-        LIVE_WORKERS
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |n| {
-                (n < MAX_LIVE_WORKERS).then_some(n + 1)
-            })
-            .ok()
-            .map(|_| Self)
+        let mut current = LIVE_WORKERS.load(Ordering::Acquire);
+        loop {
+            if current >= MAX_LIVE_WORKERS {
+                return None;
+            }
+            match LIVE_WORKERS.compare_exchange_weak(
+                current,
+                current + 1,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(_) => return Some(Self),
+                Err(observed) => current = observed,
+            }
+        }
     }
 }
 
