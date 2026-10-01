@@ -413,4 +413,5 @@ fn record_success(scope: &str) {
 }
 
 #[cfg(test)]
+#[path = "mod_tests.rs"]
 mod test;

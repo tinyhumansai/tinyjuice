@@ -95,5 +95,5 @@ pub async fn serve(request: GenerateRequest) -> Result<Option<String>, String> {
 }
 
 #[cfg(test)]
-#[path = "generate_test.rs"]
+#[path = "generate_tests.rs"]
 mod tests;

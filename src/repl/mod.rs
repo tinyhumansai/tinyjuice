@@ -18,6 +18,7 @@ pub mod types;
 pub mod tools;
 
 #[cfg(test)]
+#[path = "mod_tests.rs"]
 mod test;
 #[cfg(test)]
 mod test_stats;
