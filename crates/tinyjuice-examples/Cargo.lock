@@ -1494,8 +1494,8 @@ dependencies = [
  "tinyinference-core",
  "tinyinference-embeddings",
  "tinyinference-llm",
- "tinytools 0.4.1",
- "tinytools-agent 0.4.1",
+ "tinytools",
+ "tinytools-agent",
  "tokio",
  "tracing",
  "uuid",
@@ -1542,14 +1542,14 @@ dependencies = [
  "sha2",
  "thiserror",
  "tinyinference-core",
- "tinytools-agent 0.3.0",
+ "tinytools-agent",
  "tokio",
  "tracing",
 ]
 
 [[package]]
 name = "tinyjuice"
-version = "0.3.5"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1566,7 +1566,7 @@ dependencies = [
  "sha2",
  "thiserror",
  "tinyjuice-bus",
- "tinytools 0.4.1",
+ "tinytools",
  "tokio",
  "tree-sitter",
  "tree-sitter-python",
@@ -1578,7 +1578,7 @@ dependencies = [
 
 [[package]]
 name = "tinyjuice-bus"
-version = "0.3.5"
+version = "0.5.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -1594,7 +1594,7 @@ dependencies = [
  "tinyagents-harness",
  "tinyinference-llm",
  "tinyjuice",
- "tinytools 0.4.1",
+ "tinytools",
  "tokio",
 ]
 
@@ -1610,18 +1610,7 @@ dependencies = [
 
 [[package]]
 name = "tinytools"
-version = "0.3.0"
-source = "git+https://github.com/tinyhumansai/tinytools?rev=a5d04a7f3af0abc1dd748f87f94871b36ae9fe71#a5d04a7f3af0abc1dd748f87f94871b36ae9fe71"
-dependencies = [
- "anyhow",
- "async-trait",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "tinytools"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1631,23 +1620,12 @@ dependencies = [
 
 [[package]]
 name = "tinytools-agent"
-version = "0.3.0"
-source = "git+https://github.com/tinyhumansai/tinytools?rev=a5d04a7f3af0abc1dd748f87f94871b36ae9fe71#a5d04a7f3af0abc1dd748f87f94871b36ae9fe71"
+version = "0.5.0"
 dependencies = [
  "regex",
  "serde",
  "serde_json",
- "tinytools 0.3.0",
-]
-
-[[package]]
-name = "tinytools-agent"
-version = "0.4.1"
-dependencies = [
- "regex",
- "serde",
- "serde_json",
- "tinytools 0.4.1",
+ "tinytools",
 ]
 
 [[package]]
