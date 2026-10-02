@@ -41,5 +41,5 @@ pub fn take_summary_focus(arguments: &mut Value) -> Option<String> {
 }
 
 #[cfg(test)]
-#[path = "focus_test.rs"]
+#[path = "focus_tests.rs"]
 mod tests;

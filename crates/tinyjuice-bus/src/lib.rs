@@ -28,4 +28,5 @@ pub use wire::{
 };
 
 #[cfg(test)]
+#[path = "lib_tests.rs"]
 mod test;

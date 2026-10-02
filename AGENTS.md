@@ -41,6 +41,3 @@ scaffold small until real compression strategies are ready.
 - Integration tests stay in the crate's `tests/` directory.
 - OpenHuman's `scripts/externalize-inline-tests.mjs <repo-root> --write` moves
   inline test modules out mechanically; without `--write` it only reports.
-- Existing `test.rs` and `<module>_test.rs` files predate this rule. Rename each
-  to `<module>_tests.rs` (keep its `mod` name, add the `#[path]` attribute) the
-  next time you touch it.
