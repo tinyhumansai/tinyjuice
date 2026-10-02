@@ -26,7 +26,7 @@ async fn routes_json_and_offloads() {
     let token = res.ccr_token.expect("offloaded");
     assert_eq!(cache::retrieve(&token).as_deref(), Some(original.as_str()));
     assert!(
-        res.text.contains("tinyjuice_retrieve"),
+        res.text.contains("juice_retrieve"),
         "footer marker present: {}",
         res.text
     );
@@ -115,11 +115,11 @@ async fn exposes_body_and_recovery_footer_separately() {
         .as_deref()
         .expect("offloaded output exposes footer");
     assert!(
-        !res.body.contains("tinyjuice_retrieve"),
+        !res.body.contains("juice_retrieve"),
         "body must not contain footer"
     );
     assert!(
-        footer.contains("tinyjuice_retrieve"),
+        footer.contains("juice_retrieve"),
         "footer carries marker: {footer}"
     );
     assert_eq!(res.text, format!("{}{}", res.body, footer));

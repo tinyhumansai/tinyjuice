@@ -132,7 +132,7 @@ Tokens are estimated at four characters a token. Each call then goes through
   A summary can run with the router off.
 - Only the `full` profile summarizes.
 - **Recovery contract:** a summary is accepted only if the original is stored
-  in CCR, and the returned text then ends with the `tinyjuice_retrieve`
+  in CCR, and the returned text then ends with the `juice_retrieve`
   footer. The exception is `lossy_without_ccr = true`. With CCR off, or when
   the original cannot be retained, the summary is discarded and the original
   goes on to the router.

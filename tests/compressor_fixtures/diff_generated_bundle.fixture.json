@@ -12,7 +12,7 @@
     "recovery": true,
     "contains": [
       "reason=generated_bundle",
-      "tinyjuice_retrieve"
+      "juice_retrieve"
     ],
     "notContains": [
       "minified chunk payload 79"

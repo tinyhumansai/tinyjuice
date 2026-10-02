@@ -3,7 +3,7 @@
 //! When a compressor drops data (lossy paths), the router stows the original
 //! here keyed by a short content hash and embeds a retrieval marker in the
 //! compacted text (see [`super::marker`]). The agent calls the
-//! `tinyjuice_retrieve` tool to get the original back on demand — so even
+//! `juice_retrieve` tool to get the original back on demand — so even
 //! aggressive compaction stays reversible and is safe under the always-on
 //! default.
 //!
