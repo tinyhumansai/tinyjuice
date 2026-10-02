@@ -15,7 +15,7 @@
     "contains": [
       "retry-batch-17",
       "duplicate cluster payload",
-      "tinyjuice_retrieve"
+      "juice_retrieve"
     ],
     "notContains": [
       "ordinary payload 70"

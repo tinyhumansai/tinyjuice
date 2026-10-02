@@ -288,7 +288,7 @@ pub fn write_handle_file(
 }
 
 /// Stats line, head snippet, preview and footer for a stored original. The footer
-/// keeps the `tinyjuice_retrieve ... token "<hash>"` form so marker parsing still
+/// keeps the `juice_retrieve ... token "<hash>"` form so marker parsing still
 /// finds the handle. Returns `(body, footer, stats)`; the body starts with the stats line.
 pub fn handle_view(
     content: &str,

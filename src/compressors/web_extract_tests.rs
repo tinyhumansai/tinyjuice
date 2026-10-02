@@ -52,7 +52,7 @@ fn large_page_returns_head_tail_footer_and_retains_full_text() {
     assert!(out.truncated);
     assert!(out.full_text_retained);
     assert!(out.text.contains(FOOTER_RULE));
-    assert!(out.text.contains("tinyjuice_retrieve"));
+    assert!(out.text.contains("juice_retrieve"));
     assert_eq!(
         parse_markers(&out.text),
         vec![out.ccr_token.clone().unwrap()]
@@ -92,7 +92,7 @@ fn one_mb_page_returns_recoverable_head_tail_footer() {
     assert!(out.text.contains("megapage-line-000000"));
     assert!(out.text.contains("megapage-final-sentinel"));
     assert!(out.text.contains(FOOTER_RULE));
-    assert!(out.text.contains("tinyjuice_retrieve"));
+    assert!(out.text.contains("juice_retrieve"));
     assert_eq!(
         parse_markers(&out.text),
         vec![out.ccr_token.clone().unwrap()]

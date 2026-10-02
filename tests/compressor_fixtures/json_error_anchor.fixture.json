@@ -14,7 +14,7 @@
     "contains": [
       "job 75",
       "error: timeout",
-      "tinyjuice_retrieve"
+      "juice_retrieve"
     ],
     "notContains": [
       "job 70"

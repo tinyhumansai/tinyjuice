@@ -14,7 +14,7 @@
     "contains": [
       "audit",
       "audit bucket unique payload",
-      "tinyjuice_retrieve"
+      "juice_retrieve"
     ],
     "notContains": [
       "ordinary payload 70"

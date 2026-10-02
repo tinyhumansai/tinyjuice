@@ -8,18 +8,21 @@
 
 /// The retrieve tool's name, surfaced in footers and used by the harness to
 /// keep the tool's own output from being re-compacted and to always advertise it.
-pub const RETRIEVE_TOOL_NAME: &str = "tinyjuice_retrieve";
+pub const RETRIEVE_TOOL_NAME: &str = "juice_retrieve";
 
 /// Legacy retrieve tool names (kept as aliases during migration): the
 /// pre-rename `tokenjuice_retrieve` and the original `retrieve_tool_output`.
 pub const LEGACY_RETRIEVE_TOOL_NAME: &str = "retrieve_tool_output";
 pub const LEGACY_TOKENJUICE_RETRIEVE_TOOL_NAME: &str = "tokenjuice_retrieve";
+/// The name before `juice_retrieve`, kept so replayed histories still parse.
+pub const LEGACY_TINYJUICE_RETRIEVE_TOOL_NAME: &str = "tinyjuice_retrieve";
 
 /// All CCR recovery tool names. Each must be (a) always advertised to every
 /// agent — any agent that sees a retrieval footer must be able to call the tool
 /// — and (b) never re-compacted (their job is to return an original in full).
 pub const RECOVERY_TOOL_NAMES: &[&str] = &[
     RETRIEVE_TOOL_NAME,
+    LEGACY_TINYJUICE_RETRIEVE_TOOL_NAME,
     LEGACY_TOKENJUICE_RETRIEVE_TOOL_NAME,
     LEGACY_RETRIEVE_TOOL_NAME,
 ];
@@ -89,6 +92,7 @@ pub fn parse_markers(text: &str) -> Vec<String> {
     // `... calling <tool> with token "<hash>"`. Unguarded it would extract
     // from ordinary prose like `the auth token "sk-abc"`.
     for (needle, guarded) in [
+        ("juice_retrieve(\"", false),
         ("tinyjuice_retrieve(\"", false),
         ("retrieve_tool_output(\"", false),
         ("tokenjuice_retrieve(\"", false),

@@ -12,7 +12,7 @@
     "recovery": true,
     "contains": [
       "reason=lockfile",
-      "tinyjuice_retrieve"
+      "juice_retrieve"
     ],
     "notContains": [
       "new dep entry 79"

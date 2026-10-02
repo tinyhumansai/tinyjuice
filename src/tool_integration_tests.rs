@@ -80,7 +80,7 @@ async fn compacts_stringified_json_through_tool_adapter() {
     assert!(compacted.contains("metadata.owner"), "{compacted}");
     assert!(compacted.contains("metadata.flags.retry"), "{compacted}");
     assert!(compacted.contains("team-7"), "{compacted}");
-    assert!(compacted.contains("tinyjuice_retrieve"), "{compacted}");
+    assert!(compacted.contains("juice_retrieve"), "{compacted}");
     assert!(compacted.len() < output.len());
 }
 
