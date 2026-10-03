@@ -482,8 +482,7 @@ async fn an_on_demand_input_over_the_cap_is_sampled_to_fit() {
         llm_summary_max_input_tokens: 200,
         ..on_demand()
     };
-    let outcome =
-        summarize_on_demand(input(&raw, Some("needle"), "on-demand-cap"), &capped).await;
+    let outcome = summarize_on_demand(input(&raw, Some("needle"), "on-demand-cap"), &capped).await;
     assert_eq!(
         outcome,
         OnDemandSummary::Written {
@@ -499,7 +498,10 @@ async fn an_on_demand_input_over_the_cap_is_sampled_to_fit() {
         body.chars().count()
     );
     assert!(body.starts_with("line 0: "), "keeps the head: {body}");
-    assert!(body.trim_end().ends_with("line 999: routine filler text"), "keeps the tail");
+    assert!(
+        body.trim_end().ends_with("line 999: routine filler text"),
+        "keeps the tail"
+    );
     assert!(body.contains("NEEDLE"), "keeps the focus hit: {body}");
     assert!(body.contains("omitted"), "marks what it dropped");
     assert!(!body.contains("line 300: "));

@@ -21,9 +21,9 @@ use std::sync::{LazyLock, Mutex};
 use tokio::sync::watch;
 
 use super::{
-    CacheKey, PURPOSE, SYSTEM_PROMPT, SummaryInput, UnavailableReason, breaker_tripped,
-    cache_key, cached_summary, effective_max_input_tokens, estimate_tokens, framed_prompt,
-    record_failure, record_success, remember_summary,
+    CacheKey, PURPOSE, SYSTEM_PROMPT, SummaryInput, UnavailableReason, breaker_tripped, cache_key,
+    cached_summary, effective_max_input_tokens, estimate_tokens, framed_prompt, record_failure,
+    record_success, remember_summary,
 };
 use crate::llm::GenerateRequest;
 use crate::types::CompressOptions;
@@ -216,7 +216,9 @@ async fn run_call(call: GenerateCall) -> CallResult {
         }
         Ok(Some(text)) => text.trim().to_string(),
         Err(error) => {
-            log::warn!("[tinyjuice::summarize] on-demand: host call failed tool={tool} error={error}");
+            log::warn!(
+                "[tinyjuice::summarize] on-demand: host call failed tool={tool} error={error}"
+            );
             record_failure(&scope);
             return Err(Some(UnavailableReason::Failed));
         }
@@ -300,13 +302,8 @@ pub fn sample_for_budget(raw: &str, focus: Option<&str>, max_chars: usize) -> St
         out.push_str("[... end of focus matches ...]\n");
     }
     out.push_str(tail);
-    // Line snapping can overshoot by part of a line; never exceed the cap.
+    // Only a budget smaller than the markers themselves gets here.
     if out.chars().count() > max_chars {
-        let keep = out.chars().count() - max_chars;
-        let cut = byte_at(&out, keep);
-        out = out[cut..].to_string();
-        // Keep the head's first line intact over the tail's.
-        out = format!("{}{}", &raw[..byte_at(raw, keep.min(head_chars))], out);
         out = out.chars().take(max_chars).collect();
     }
     out
@@ -327,18 +324,28 @@ fn focus_terms(focus: Option<&str>) -> Vec<String> {
 
 /// Byte offset of the `chars`-th character (or the end).
 fn byte_at(text: &str, chars: usize) -> usize {
-    text.char_indices().nth(chars).map_or(text.len(), |(i, _)| i)
+    text.char_indices()
+        .nth(chars)
+        .map_or(text.len(), |(i, _)| i)
 }
 
-/// Pull `at` back to just after the last newline before it, when there is one.
+/// Pull the head's end `at` back to a line boundary, when one is in the
+/// latter half of the head; a single huge line is cut where it is.
 fn line_floor(text: &str, at: usize) -> usize {
-    text[..at].rfind('\n').map_or(at, |i| i + 1)
+    match text[..at].rfind('\n') {
+        Some(i) if i + 1 >= at / 2 => i + 1,
+        _ => at,
+    }
 }
 
-/// Push `at` forward to just after the next newline, when there is one.
+/// Push the tail's start `at` forward to a line boundary, when one is in the
+/// first half of the tail.
 fn line_ceil(text: &str, at: usize) -> usize {
     if at == 0 || text[..at].ends_with('\n') {
         return at;
     }
-    text[at..].find('\n').map_or(at, |i| at + i + 1)
+    match text[at..].find('\n') {
+        Some(i) if i < (text.len() - at) / 2 => at + i + 1,
+        _ => at,
+    }
 }
