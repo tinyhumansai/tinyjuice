@@ -62,10 +62,14 @@ impl Arm {
             Self::Raw => {}
             Self::Summary => {
                 opts.llm_summary_enabled = true;
+                opts.llm_summary_mode = tinyjuice::types::LlmSummaryMode::Auto;
                 opts.llm_summary_max_output_tokens = 3_000;
                 opts.llm_summary_timeout_ms = 0;
             }
-            Self::SummaryFast => opts.llm_summary_enabled = true,
+            Self::SummaryFast => {
+                opts.llm_summary_enabled = true;
+                opts.llm_summary_mode = tinyjuice::types::LlmSummaryMode::Auto;
+            }
             Self::Repl => opts.repl_handle = true,
         }
         opts

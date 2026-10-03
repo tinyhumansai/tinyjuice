@@ -154,6 +154,7 @@ async fn compact_with_calls_back_to_the_host_for_a_focused_summary(
                 "options": {
                     "ccrEnabled": true,
                     "llmSummaryEnabled": true,
+                    "llmSummaryMode": "auto",
                     "llmSummaryThresholdTokens": 10
                 },
                 "maxCacheEntries": 8,
