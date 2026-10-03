@@ -5,7 +5,7 @@ pub mod store;
 
 pub use marker::{
     LEGACY_RETRIEVE_TOOL_NAME, NEVER_COMPACT_TOOLS, RECOVERY_TOOL_NAMES, RETRIEVE_TOOL_NAME,
-    format_marker, is_recovery_tool, parse_markers, recovery_footer,
+    format_marker, is_recovery_tool, parse_markers, recovery_footer, recovery_footer_with,
 };
 pub use store::{
     CcrPutResult, CcrStore, DEFAULT_DISK_MAX_BYTES, DEFAULT_MAX_BYTES, DEFAULT_MAX_ENTRIES,

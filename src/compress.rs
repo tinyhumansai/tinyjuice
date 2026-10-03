@@ -381,7 +381,8 @@ pub async fn route_with_store_report_shell_policy(
             (out.text, None, None)
         } else {
             let token = put.token().to_string();
-            let footer = cache::recovery_footer(&token, original_bytes, out.lossy);
+            let footer =
+                cache::recovery_footer_with(&token, original_bytes, out.lossy, opts.repl_handle);
             let mut text = out.text.clone();
             text.push_str(&footer);
             // The footer adds bytes — if it tipped us over the original size, bail.
@@ -570,7 +571,7 @@ fn try_typed_route(
         }
     };
 
-    finalize_typed_output(input, typed, bloat_estimate, original_tokens)
+    finalize_typed_output(input, typed, bloat_estimate, original_tokens, opts.repl_handle)
 }
 
 fn finalize_typed_output(
@@ -578,6 +579,7 @@ fn finalize_typed_output(
     typed: TypedPipelineOutput,
     bloat_estimate: BloatEstimate,
     original_tokens: u64,
+    repl: bool,
 ) -> Option<(CompressedOutput, PipelineReport)> {
     let original_bytes = input.content.len();
     if typed.report.applied_steps.is_empty() || typed.text.len() >= original_bytes {
@@ -586,7 +588,7 @@ fn finalize_typed_output(
 
     let (body, recovery_footer, ccr_token) = if typed.lossy {
         let token = typed.ccr_token.clone()?;
-        let footer = cache::recovery_footer(&token, original_bytes, true);
+        let footer = cache::recovery_footer_with(&token, original_bytes, true, repl);
         let mut text = typed.text.clone();
         text.push_str(&footer);
         if text.len() >= original_bytes {
