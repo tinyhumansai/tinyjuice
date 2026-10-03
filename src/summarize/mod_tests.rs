@@ -596,3 +596,17 @@ async fn a_repeat_request_joins_the_call_already_running() {
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     llm::configure_callback(None);
 }
+
+#[test]
+fn a_single_huge_line_is_sampled_by_characters() {
+    let raw: String = (0..5_000).map(|i| char::from(b'a' + (i % 26) as u8)).collect();
+    let sample = sample_for_budget(&raw, None, 800);
+    assert!(sample.chars().count() <= 800);
+    assert!(sample.starts_with(&raw[..100]));
+    assert!(sample.ends_with(&raw[raw.len() - 100..]));
+    assert!(sample.contains("characters omitted"));
+    // Within budget, nothing is cut.
+    assert_eq!(sample_for_budget("short", Some("x"), 800), "short");
+    // A budget smaller than the markers is still honored.
+    assert!(sample_for_budget(&raw, Some("abc"), 40).chars().count() <= 40);
+}
