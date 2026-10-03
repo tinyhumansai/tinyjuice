@@ -19,7 +19,7 @@ pub mod wire;
 pub use names::{BUS_NAME, METHODS, ML_HOST_NAME, ML_HOST_PATH, OBJECT_PATH};
 pub use types::{
     AgentTokenjuiceCompression, CompressOptions, CompressedOutput, CompressorKind, ContentHint,
-    ContentKind,
+    ContentKind, LlmSummaryMode,
 };
 pub use version::{CONTRACT_VERSION, is_compatible};
 pub use wire::{

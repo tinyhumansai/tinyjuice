@@ -330,8 +330,8 @@ pub struct CompactResult {
 /// keeps every existing `tinyjuice::types::…` path resolving.
 pub use tinyjuice_bus::types::{
     AgentTokenjuiceCompression, CodeElision, CodeStubOutput, CompressOptions, CompressedOutput,
-    CompressorKind, ContentHint, ContentKind, LineRange, ParseStatus, ReadIntent, StubMode,
-    SymbolSummary, WebExtractBatchInput, WebExtractFormat, WebExtractOptions,
+    CompressorKind, ContentHint, ContentKind, LineRange, LlmSummaryMode, ParseStatus, ReadIntent,
+    StubMode, SymbolSummary, WebExtractBatchInput, WebExtractFormat, WebExtractOptions,
     WebExtractReduceInput, WebExtractReduction,
 };
 

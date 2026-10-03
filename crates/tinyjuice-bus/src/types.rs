@@ -389,6 +389,21 @@ impl std::str::FromStr for CompressorKind {
     }
 }
 
+/// When the LLM summary stage may call the host's model.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum LlmSummaryMode {
+    /// Every tool result at or above `llm_summary_threshold_tokens` is
+    /// summarized as it arrives. Each one costs a model call and stalls the
+    /// turn for up to `llm_summary_timeout_ms`.
+    Auto,
+    /// Ingest never calls the model: a large result gets the deterministic
+    /// compressors and a recovery handle. The model writes a summary only when
+    /// the agent asks for one through `juice_summarize`.
+    #[default]
+    OnDemand,
+}
+
 /// Knobs for the router and compressors, built by the caller from the
 /// `[tinyjuice]` config block. TokenJuice stays decoupled from the config
 /// schema crate by taking this plain struct rather than `Config`.
@@ -462,6 +477,11 @@ pub struct CompressOptions {
     /// Off by default: it costs a model call, so a host turns it on only for
     /// the agents whose context it is protecting.
     pub llm_summary_enabled: bool,
+    /// Whether ingest summarizes on its own ([`LlmSummaryMode::Auto`]) or
+    /// leaves the model call to an explicit `juice_summarize` request
+    /// ([`LlmSummaryMode::OnDemand`], the default).
+    #[serde(default)]
+    pub llm_summary_mode: LlmSummaryMode,
     /// Results estimated below this many tokens are never summarized — an
     /// extra model round-trip is not worth it on a small payload.
     pub llm_summary_threshold_tokens: usize,
@@ -512,6 +532,7 @@ impl Default for CompressOptions {
             code_target_ratio: None,
             chars_per_token: 4.0,
             llm_summary_enabled: false,
+            llm_summary_mode: LlmSummaryMode::OnDemand,
             llm_summary_threshold_tokens: 4_000,
             llm_summary_max_input_tokens: 2_000_000,
             llm_summary_max_output_tokens: 1_000,
