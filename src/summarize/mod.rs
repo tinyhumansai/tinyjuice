@@ -30,7 +30,7 @@ use std::sync::{LazyLock, Mutex};
 use sha2::{Digest, Sha256};
 
 use crate::llm::GenerateRequest;
-use crate::types::CompressOptions;
+use crate::types::{CompressOptions, LlmSummaryMode};
 
 /// The extraction contract the summary is written against.
 pub const SYSTEM_PROMPT: &str = include_str!("prompt.md");
@@ -130,6 +130,12 @@ pub async fn maybe_summarize(input: SummaryInput<'_>, opts: &CompressOptions) ->
     let tool = input.tool_name;
     let raw = input.content;
     if !opts.llm_summary_enabled {
+        return SummaryOutcome::NotNeeded;
+    }
+    // On demand, ingest leaves a large result to the deterministic compressors
+    // and its recovery handle; the model runs only for `juice_summarize`.
+    if opts.llm_summary_mode == LlmSummaryMode::OnDemand {
+        log::debug!("[tinyjuice::summarize] on-demand mode, ingest skips the model tool={tool}");
         return SummaryOutcome::NotNeeded;
     }
     let Some(context_token) = input.context_token.filter(|t| !t.is_empty()) else {

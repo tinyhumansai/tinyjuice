@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 use super::*;
-use crate::types::LlmSummaryMode;
+
 use crate::llm::{self, GenerateRequest};
 
 /// Ingest-time summarizing, which these tests exercise, is opt-in.
