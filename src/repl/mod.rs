@@ -21,6 +21,9 @@ pub mod tools;
 #[path = "mod_tests.rs"]
 mod test;
 #[cfg(test)]
+#[path = "mod_model_tests.rs"]
+mod model_tests;
+#[cfg(test)]
 mod test_stats;
 
 use crate::cache::store::CcrStore;
