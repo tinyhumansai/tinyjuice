@@ -14,6 +14,10 @@
 //!
 //! * [`CompressOptions::llm_summary_enabled`] is set and the caller passed a
 //!   context token (the host has a turn to run the call under);
+//! * [`CompressOptions::llm_summary_mode`] is [`LlmSummaryMode::Auto`]. In
+//!   the default [`LlmSummaryMode::OnDemand`] ingest never calls the model,
+//!   and the only summary is the one an agent asks for, written by
+//!   [`summarize_on_demand`];
 //! * the payload is between [`CompressOptions::llm_summary_threshold_tokens`]
 //!   and [`CompressOptions::llm_summary_max_input_tokens`], estimated at four
 //!   characters a token;

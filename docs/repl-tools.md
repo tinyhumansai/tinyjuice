@@ -43,7 +43,7 @@ Three tools, so the schema stays small.
 | --- | --- |
 | `juice_find` | Query the output. `query` is read per `mode`. |
 | `juice_extract` | `what: links \| headings` from HTML or Markdown. |
-| `juice_summarize` | Model-free summary: size, outline or JSON shape, then head and tail, or with a `hint` the parts most relevant to it. |
+| `juice_summarize` | Model-free summary: size, outline or JSON shape, then head and tail, or with a `hint` the parts most relevant to it. Written by the host's model instead when the host lends it one (see below). |
 
 `juice_find` modes:
 
@@ -78,14 +78,35 @@ input, line numbers refer to its Markdown rendering.
 
 ## Summary stage settings
 
-`llm_summary_timeout_ms` (default 8000) bounds the host model call. On timeout the result
-falls back to a preview plus a handle. `llm_summary_max_output_tokens` (default 1000) caps
+`llm_summary_mode` (default `OnDemand`) decides when the model runs. `OnDemand`: never at
+ingest, only when the agent calls `juice_summarize`. `Auto`: every result over
+`llm_summary_threshold_tokens` as it arrives.
+
+`llm_summary_timeout_ms` (default 8000) bounds the host model call. At ingest, on timeout the
+result falls back to a preview plus a handle.
+
+### Model-written `juice_summarize`
+
+`tinyjuice::repl::run_op_with_model(store, handle, op, limits, Some(&ModelSummary))`, or
+`repl_tools_with_model(store, limits, Some(model))` for the tools, has the host's model
+(`llm::configure_callback`) write the summary for the `hint`:
+
+- The input is capped at `summarize::effective_max_input_tokens(opts)`: the smaller of
+  `llm_summary_max_input_tokens` and what the timeout can prefill
+  (`PREFILL_TOKENS_PER_SEC`, 6000 a second; 48k tokens at 8 s). Above it, the model reads
+  the head, the tail and the lines matching the hint, with every omitted span marked.
+- A model that is missing, fails or times out yields the model-free overview, with a note
+  ahead of it when the model was asked and did not deliver.
+- A timeout does not count toward the scope's failure breaker. The call keeps running; its
+  result is kept for the next request on the same output, hint and scope, and a repeat
+  while it runs waits on it instead of starting another. `llm_summary_max_output_tokens` (default 1000) caps
 the summary. It does not help a host model that spends its cap on reasoning tokens: the
 reply comes back empty and the summary fails. Turn reasoning off for the summarizer route.
 
 ## Surfaces
 
 - Rust: `tinyjuice::repl::{run_op, run_on_text, ReplOp, ReplOutput, ReplLimits}`.
+- Rust, model-written summary: `tinyjuice::repl::{run_op_with_model, ModelSummary}`.
 - `tinytools` feature: `tinyjuice::repl::tools::repl_tools(store, limits)` returns
   `Vec<Box<dyn tinytools::Tool>>` (enables the `jq` feature). Each tool takes `handle` plus
   its own args and is declared read-only and concurrency-safe. Hosts register them; TinyJuice does no dispatch.
