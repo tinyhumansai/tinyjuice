@@ -282,6 +282,26 @@ fn finish(raw: &str, summary: String, opts: &CompressOptions) -> SummaryOutcome 
     }
 }
 
+/// Prompt tokens a hosted model reads per second, conservatively. Prefill,
+/// not decode, is what a large input costs, so this sizes the input a
+/// `llm_summary_timeout_ms` budget can actually take.
+pub const PREFILL_TOKENS_PER_SEC: usize = 6_000;
+
+/// The largest input, in tokens, an on-demand summary sends whole: the
+/// configured `llm_summary_max_input_tokens`, lowered to what the timeout can
+/// prefill. A larger stored output is sampled down to this size first.
+#[must_use]
+pub fn effective_max_input_tokens(opts: &CompressOptions) -> usize {
+    if opts.llm_summary_timeout_ms == 0 {
+        return opts.llm_summary_max_input_tokens;
+    }
+    let prefill = usize::try_from(opts.llm_summary_timeout_ms)
+        .unwrap_or(usize::MAX)
+        .saturating_mul(PREFILL_TOKENS_PER_SEC)
+        / 1_000;
+    opts.llm_summary_max_input_tokens.min(prefill)
+}
+
 /// Four characters a token — characters, not bytes, so a CJK payload is not
 /// estimated at three times its size.
 fn estimate_tokens(text: &str) -> usize {
