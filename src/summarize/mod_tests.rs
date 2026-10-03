@@ -392,3 +392,205 @@ fn the_input_cap_is_what_the_timeout_can_prefill() {
     };
     assert_eq!(effective_max_input_tokens(&unbounded), 2_000_000);
 }
+
+/// The payload block a prompt carries, between its BEGIN and END markers.
+fn prompt_body(prompt: &str) -> &str {
+    let start = prompt.find("--- BEGIN-").expect("begin marker");
+    let start = start + prompt[start..].find('\n').expect("marker line") + 1;
+    let end = prompt.rfind("\n--- END-").expect("end marker");
+    &prompt[start..end]
+}
+
+#[tokio::test]
+async fn an_on_demand_request_makes_exactly_one_model_call() {
+    let _guard = llm::callback_test_guard().await;
+    let seen = recording(Ok(Some("  the gist  ".into())));
+    let raw = payload("on-demand-request");
+    let outcome = summarize_on_demand(
+        input(&raw, Some("the install steps"), "on-demand-request"),
+        &on_demand(),
+    )
+    .await;
+    assert_eq!(
+        outcome,
+        OnDemandSummary::Written {
+            text: "the gist".into(),
+            sampled: false
+        }
+    );
+    let requests = seen.lock().unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].purpose, PURPOSE);
+    assert!(
+        requests[0]
+            .prompt
+            .contains("Caller focus: the install steps")
+    );
+    assert_eq!(prompt_body(&requests[0].prompt), raw);
+    drop(requests);
+    llm::configure_callback(None);
+}
+
+#[tokio::test]
+async fn an_on_demand_request_without_a_model_falls_back_quietly() {
+    let _guard = llm::callback_test_guard().await;
+    llm::configure_callback(None);
+    let raw = payload("on-demand-no-model");
+    assert_eq!(
+        summarize_on_demand(input(&raw, None, "on-demand-no-model"), &on_demand()).await,
+        OnDemandSummary::Fallback(None)
+    );
+    let calls = counting("the gist");
+    let off = CompressOptions {
+        llm_summary_enabled: false,
+        ..on_demand()
+    };
+    assert_eq!(
+        summarize_on_demand(input(&raw, None, "on-demand-no-model"), &off).await,
+        OnDemandSummary::Fallback(None)
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    llm::configure_callback(None);
+}
+
+#[tokio::test]
+async fn a_failed_on_demand_request_falls_back_with_its_reason() {
+    let _guard = llm::callback_test_guard().await;
+    recording(Err("model offline".into()));
+    let raw = payload("on-demand-failed");
+    assert_eq!(
+        summarize_on_demand(input(&raw, None, "on-demand-failed"), &on_demand()).await,
+        OnDemandSummary::Fallback(Some(UnavailableReason::Failed))
+    );
+    llm::configure_callback(None);
+}
+
+#[tokio::test]
+async fn an_on_demand_input_over_the_cap_is_sampled_to_fit() {
+    let _guard = llm::callback_test_guard().await;
+    let seen = recording(Ok(Some("sampled gist".into())));
+    let raw: String = (0..1_000)
+        .map(|i| {
+            if i == 500 {
+                "line 500: NEEDLE the deploy key rotates hourly\n".to_string()
+            } else {
+                format!("line {i}: routine filler text\n")
+            }
+        })
+        .collect();
+    let capped = CompressOptions {
+        llm_summary_max_input_tokens: 200,
+        ..on_demand()
+    };
+    let outcome =
+        summarize_on_demand(input(&raw, Some("needle"), "on-demand-cap"), &capped).await;
+    assert_eq!(
+        outcome,
+        OnDemandSummary::Written {
+            text: "sampled gist".into(),
+            sampled: true
+        }
+    );
+    let requests = seen.lock().unwrap();
+    let body = prompt_body(&requests[0].prompt);
+    assert!(
+        body.chars().count() <= 200 * 4,
+        "sample of {} chars exceeds the cap",
+        body.chars().count()
+    );
+    assert!(body.starts_with("line 0: "), "keeps the head: {body}");
+    assert!(body.trim_end().ends_with("line 999: routine filler text"), "keeps the tail");
+    assert!(body.contains("NEEDLE"), "keeps the focus hit: {body}");
+    assert!(body.contains("omitted"), "marks what it dropped");
+    assert!(!body.contains("line 300: "));
+    assert!(
+        requests[0].prompt.contains(&format!("{} bytes", raw.len())),
+        "states the full size"
+    );
+    assert!(requests[0].prompt.contains("excerpt"));
+    drop(requests);
+    llm::configure_callback(None);
+}
+
+/// A callback that answers `reply` after `delay`, counting calls.
+fn slow(delay_ms: u64, reply: &'static str) -> Arc<AtomicUsize> {
+    let calls = Arc::new(AtomicUsize::new(0));
+    let counter = calls.clone();
+    llm::configure_callback(Some(Arc::new(move |_| {
+        counter.fetch_add(1, Ordering::SeqCst);
+        Box::pin(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
+            Ok(Some(reply.to_string()))
+        })
+    })));
+    calls
+}
+
+#[tokio::test(start_paused = true)]
+async fn an_on_demand_timeout_does_not_open_the_breaker() {
+    let _guard = llm::callback_test_guard().await;
+    slow(60_000, "too late");
+    let quick = CompressOptions {
+        llm_summary_timeout_ms: 50,
+        ..on_demand()
+    };
+    for round in 0..=MAX_CONSECUTIVE_FAILURES {
+        let raw = payload(&format!("on-demand-timeout-{round}"));
+        assert_eq!(
+            summarize_on_demand(input(&raw, None, "on-demand-timeout"), &quick).await,
+            OnDemandSummary::Fallback(Some(UnavailableReason::TimedOut))
+        );
+    }
+    assert!(!breaker_tripped("on-demand-timeout"));
+    llm::configure_callback(None);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_late_on_demand_summary_answers_the_next_request() {
+    let _guard = llm::callback_test_guard().await;
+    let calls = slow(200, "late gist");
+    let quick = CompressOptions {
+        llm_summary_timeout_ms: 50,
+        ..on_demand()
+    };
+    let raw = payload("on-demand-late");
+    assert_eq!(
+        summarize_on_demand(input(&raw, Some("x"), "on-demand-late"), &quick).await,
+        OnDemandSummary::Fallback(Some(UnavailableReason::TimedOut))
+    );
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    assert_eq!(
+        summarize_on_demand(input(&raw, Some("x"), "on-demand-late"), &quick).await,
+        OnDemandSummary::Written {
+            text: "late gist".into(),
+            sampled: false
+        }
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 1, "the late result was kept");
+    llm::configure_callback(None);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_repeat_request_joins_the_call_already_running() {
+    let _guard = llm::callback_test_guard().await;
+    let calls = slow(80, "joined gist");
+    let quick = CompressOptions {
+        llm_summary_timeout_ms: 50,
+        ..on_demand()
+    };
+    let raw = payload("on-demand-join");
+    assert_eq!(
+        summarize_on_demand(input(&raw, None, "on-demand-join"), &quick).await,
+        OnDemandSummary::Fallback(Some(UnavailableReason::TimedOut))
+    );
+    // Still running: the repeat waits on it rather than paying for another.
+    assert_eq!(
+        summarize_on_demand(input(&raw, None, "on-demand-join"), &quick).await,
+        OnDemandSummary::Written {
+            text: "joined gist".into(),
+            sampled: false
+        }
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    llm::configure_callback(None);
+}
