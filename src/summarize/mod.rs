@@ -257,7 +257,7 @@ fn finish(raw: &str, summary: String, opts: &CompressOptions) -> SummaryOutcome 
         (String::new(), false)
     };
     let (text, ccr_token) = if retained {
-        let footer = crate::cache::recovery_footer(&token, raw.len(), true);
+        let footer = crate::cache::recovery_footer_with(&token, raw.len(), true, opts.repl_handle);
         (format!("{summary}{footer}"), Some(token))
     } else if opts.lossy_without_ccr {
         (summary, None)

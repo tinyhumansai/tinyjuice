@@ -599,3 +599,23 @@ fn a_single_line_hit_is_clipped_to_a_small_output_cap() {
         matches!(out, ReplOutput::Lines { ref hits, .. } if hits[0].text.chars().count() <= 100)
     );
 }
+
+#[test]
+fn handle_footer_names_a_slice_read_first_and_still_round_trips() {
+    let (_, footer, _) = handle_view(
+        "line\n".repeat(400).as_str(),
+        "abc123",
+        crate::types::ContentKind::PlainText,
+        4.0,
+        200,
+        None,
+    );
+    assert!(footer.contains("handle \"abc123\""), "{footer}");
+    let find = footer.find("juice_find").expect("names juice_find");
+    let retrieve = footer
+        .find(crate::cache::marker::RETRIEVE_TOOL_NAME)
+        .expect("names the retrieve tool");
+    assert!(find < retrieve, "{footer}");
+    assert!(footer.contains("-n 120,200p"));
+    assert_eq!(crate::cache::parse_markers(&footer), vec!["abc123"]);
+}

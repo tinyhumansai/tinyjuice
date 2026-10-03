@@ -33,8 +33,7 @@ impl Tool for ReplTool {
     }
 
     fn parameters_schema(&self) -> Value {
-        let mut props =
-            json!({ "handle": { "type": "string", "description": "handle from footer" } });
+        let mut props = json!({ "handle": { "type": "string", "description": "the handle named in the output's footer" } });
         if let (Some(p), Some(e)) = (props.as_object_mut(), self.extra.as_object()) {
             p.extend(e.clone());
         }
@@ -99,7 +98,7 @@ pub fn repl_tools(store: Arc<dyn CcrStore>, limits: ReplLimits) -> Vec<Box<dyn T
         t(
             "juice_find",
             "find",
-            "Query a stored output by mode: text (substring), grep/regex (regex; regex returns capture groups), rank (BM25), sed (`-n 10,20p`, `s/a/b/`), awk (`-F, '$2>5{print $1}'`), jq (JSON filter).",
+            "Read or search part of a stored tool output by its handle, without loading all of it. mode `sed` reads exact lines (query `-n 120,200p`); `grep`/`regex` search (with `context` lines; regex returns capture groups); `text` substring; `rank` BM25; `awk` (`-F, '$2>5{print $1}'`); `jq` for JSON. Prefer this to juice_retrieve when you need only part of an output.",
             json!({
                 "query": { "type": "string" },
                 "mode": { "type": "string", "enum": ["text", "grep", "regex", "rank", "sed", "awk", "jq"] },
@@ -114,7 +113,7 @@ pub fn repl_tools(store: Arc<dyn CcrStore>, limits: ReplLimits) -> Vec<Box<dyn T
         t(
             "juice_extract",
             "extract",
-            "List links or headings from an HTML or Markdown output.",
+            "HTML or Markdown outputs only: list their links or headings.",
             json!({
                 "what": { "type": "string", "enum": ["links", "headings"] },
                 "scope": { "type": "string" },
@@ -125,7 +124,7 @@ pub fn repl_tools(store: Arc<dyn CcrStore>, limits: ReplLimits) -> Vec<Box<dyn T
         t(
             "juice_summarize",
             "summarize",
-            "Model-free summary: size, outline or JSON shape, then head/tail or, with a hint, the parts most relevant to it.",
+            "Model-free overview of a stored output: size, outline or JSON shape, then head and tail; with `hint`, the parts most relevant to it. Use it to find where to read with juice_find.",
             json!({
                 "hint": { "type": "string", "description": "what you need from it" },
                 "max_chars": { "type": "integer" },

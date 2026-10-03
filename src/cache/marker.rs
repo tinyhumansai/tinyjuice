@@ -43,8 +43,39 @@ pub fn format_marker(hash: &str) -> String {
 /// Build the human-facing recovery footer appended to compacted output.
 ///
 /// `lossy` distinguishes a partial view (data dropped) from a faithful reformat
-/// (no data lost, layout changed); both offer exact recovery.
+/// (no data lost, layout changed); both offer exact recovery. Names only
+/// [`RETRIEVE_TOOL_NAME`]; a host that registers the REPL tools uses
+/// [`recovery_footer_with`] so the footer points at them too.
 pub fn recovery_footer(hash: &str, original_bytes: usize, lossy: bool) -> String {
+    recovery_footer_with(hash, original_bytes, lossy, false)
+}
+
+/// [`recovery_footer`], naming the REPL tools (`juice_find`,
+/// `juice_summarize`) when `repl` is set: the host registers them and they
+/// read the same stored original by the same hash.
+///
+/// A footer that offers only the whole-original retrieve gets exactly that:
+/// on live coding runs an agent shown a partial view of a 16 KB source file
+/// called `juice_retrieve` for all of it, or for every 200-line slice in
+/// turn, every time, and never queried the stored copy. Naming a slice read
+/// (`juice_find` with `mode "sed"`) and a search first, with the whole
+/// original last, offers the cheaper reads where the agent decides.
+pub fn recovery_footer_with(hash: &str, original_bytes: usize, lossy: bool, repl: bool) -> String {
+    if repl {
+        // The hash appears as `handle` (what the REPL tools take) and once more
+        // in the `<retrieve> with token "<hash>"` form parse_markers reads.
+        let what = if lossy {
+            format!("PARTIAL view — full original ({original_bytes} bytes)")
+        } else {
+            format!("reformatted, no data lost — exact original ({original_bytes} bytes)")
+        };
+        return format!(
+            "\n\n[{what}, handle \"{hash}\". Read lines with juice_find \
+             (mode \"sed\", query \"-n 120,200p\") or search with mode \"grep\"; \
+             outline with juice_summarize. {RETRIEVE_TOOL_NAME} with token \"{hash}\" \
+             returns the whole original.]"
+        );
+    }
     // Fixed-cost overhead on every compacted output, so keep it tight: the
     // hash appears exactly once, in the `token "<hash>"` form parse_markers
     // recognizes (the tool name in front satisfies its proximity guard).

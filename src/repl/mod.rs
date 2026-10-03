@@ -313,10 +313,13 @@ pub fn handle_view(
     let file_note = file
         .map(|p| format!(" Plain-text copy for scripts: {}.", p.display()))
         .unwrap_or_default();
+    // Same wording as `recovery_footer_with`'s REPL form: a slice read and a
+    // search first, the whole original last.
     let footer = format!(
-        "\n\n[full output is stored, not shown. Inspect it with {} using handle \"{token}\"; \
-         or call {} with token \"{token}\" for the whole original.{file_note}]",
-        TOOL_NAMES.join(" / "),
+        "\n\n[full output is stored, not shown — handle \"{token}\". Read lines with \
+         juice_find (mode \"sed\", query \"-n 120,200p\") or search with mode \"grep\"; \
+         outline with juice_summarize. {} with token \"{token}\" returns the whole \
+         original.{file_note}]",
         crate::cache::marker::RETRIEVE_TOOL_NAME,
     );
     (body, footer, stats)

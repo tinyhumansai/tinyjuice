@@ -21,6 +21,15 @@ It reports structure only (key names, counts), never values. A head snippet of t
 first 500 characters of the input follows, then the extractive preview. The stats
 line is also on `CompressedOutput.stats`.
 
+With `repl_handle` on, every footer that offers recovery names the REPL tools,
+not only the handle stub's: the partial-view and reformat footers of the
+compressors and the LLM summary (`cache::recovery_footer_with`) say
+`handle "<hash>"`, a `juice_find` slice read (`mode "sed"`, `-n 120,200p`) and a
+`grep` search first, then `juice_summarize`, and the whole-original
+`juice_retrieve` last. The hash is the same value either way. An agent shown a
+footer offering only `juice_retrieve` fetched whole originals every time; with
+the slice read named first it can take the part it needs.
+
 Set `repl_save_dir` to also write the full original to `<dir>/<handle>.txt`
 (mode 0600, written once per handle). The path is in the footer and in
 `CompressedOutput.saved_path`, so an agent can grep or script over the file.
