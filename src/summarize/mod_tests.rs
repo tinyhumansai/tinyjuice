@@ -369,3 +369,26 @@ async fn unscoped_callers_do_not_share_a_breaker() {
     );
     llm::configure_callback(None);
 }
+
+#[test]
+fn the_input_cap_is_what_the_timeout_can_prefill() {
+    let base = CompressOptions {
+        llm_summary_max_input_tokens: 2_000_000,
+        llm_summary_timeout_ms: 8_000,
+        ..CompressOptions::default()
+    };
+    assert_eq!(
+        effective_max_input_tokens(&base),
+        8 * PREFILL_TOKENS_PER_SEC
+    );
+    let tight = CompressOptions {
+        llm_summary_max_input_tokens: 10_000,
+        ..base.clone()
+    };
+    assert_eq!(effective_max_input_tokens(&tight), 10_000);
+    let unbounded = CompressOptions {
+        llm_summary_timeout_ms: 0,
+        ..base
+    };
+    assert_eq!(effective_max_input_tokens(&unbounded), 2_000_000);
+}
