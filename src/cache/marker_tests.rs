@@ -67,9 +67,16 @@ fn repl_footer_names_the_slice_read_first_and_still_round_trips() {
         assert!(f.contains("handle \"c0ffee\""), "{f}");
         let find = f.find("juice_find").expect("names juice_find");
         let retrieve = f.find(RETRIEVE_TOOL_NAME).expect("names the retrieve tool");
-        assert!(find < retrieve, "the slice read comes before the whole original: {f}");
+        assert!(
+            find < retrieve,
+            "the slice read comes before the whole original: {f}"
+        );
         assert!(f.contains("mode \"sed\"") && f.contains("-n 120,200p"));
-        assert!(f.contains(if lossy { "PARTIAL view" } else { "no data lost" }));
+        assert!(f.contains(if lossy {
+            "PARTIAL view"
+        } else {
+            "no data lost"
+        }));
         assert_eq!(parse_markers(&f), vec!["c0ffee"]);
     }
 }

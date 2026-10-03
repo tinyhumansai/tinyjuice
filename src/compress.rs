@@ -571,7 +571,13 @@ fn try_typed_route(
         }
     };
 
-    finalize_typed_output(input, typed, bloat_estimate, original_tokens, opts.repl_handle)
+    finalize_typed_output(
+        input,
+        typed,
+        bloat_estimate,
+        original_tokens,
+        opts.repl_handle,
+    )
 }
 
 fn finalize_typed_output(

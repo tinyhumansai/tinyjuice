@@ -33,8 +33,7 @@ impl Tool for ReplTool {
     }
 
     fn parameters_schema(&self) -> Value {
-        let mut props =
-            json!({ "handle": { "type": "string", "description": "the handle named in the output's footer" } });
+        let mut props = json!({ "handle": { "type": "string", "description": "the handle named in the output's footer" } });
         if let (Some(p), Some(e)) = (props.as_object_mut(), self.extra.as_object()) {
             p.extend(e.clone());
         }
