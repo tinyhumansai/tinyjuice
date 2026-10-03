@@ -59,3 +59,26 @@ fn token_needle_scoped_to_recovery_tools() {
     );
     assert!(parse_markers(&far).is_empty());
 }
+
+#[test]
+fn repl_footer_names_the_slice_read_first_and_still_round_trips() {
+    for lossy in [true, false] {
+        let f = recovery_footer_with("c0ffee", 16_454, lossy, true);
+        assert!(f.contains("handle \"c0ffee\""), "{f}");
+        let find = f.find("juice_find").expect("names juice_find");
+        let retrieve = f.find(RETRIEVE_TOOL_NAME).expect("names the retrieve tool");
+        assert!(find < retrieve, "the slice read comes before the whole original: {f}");
+        assert!(f.contains("mode \"sed\"") && f.contains("-n 120,200p"));
+        assert!(f.contains(if lossy { "PARTIAL view" } else { "no data lost" }));
+        assert_eq!(parse_markers(&f), vec!["c0ffee"]);
+    }
+}
+
+#[test]
+fn footer_without_repl_is_unchanged() {
+    assert_eq!(
+        recovery_footer_with("c0ffee", 1234, true, false),
+        recovery_footer("c0ffee", 1234, true)
+    );
+    assert!(!recovery_footer("c0ffee", 1234, true).contains("juice_find"));
+}
