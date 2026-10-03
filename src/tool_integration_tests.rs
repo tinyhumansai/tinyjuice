@@ -182,12 +182,17 @@ fn extract_extension_and_query() {
     );
 }
 
-/// Turn the summary stage on in the global options. Safe alongside the
+/// Turn ingest-time summarizing on in the global options. Safe alongside the
 /// other tests here: none of them passes a context token, so the stage
 /// still declines for them.
 fn enable_llm_summary() {
+    enable_llm_summary_in(crate::types::LlmSummaryMode::Auto);
+}
+
+fn enable_llm_summary_in(mode: crate::types::LlmSummaryMode) {
     let mut opts = current_options();
     opts.llm_summary_enabled = true;
+    opts.llm_summary_mode = mode;
     opts.llm_summary_threshold_tokens = 10;
     configure(opts);
 }
@@ -333,6 +338,46 @@ async fn a_summary_runs_even_with_compaction_disabled() {
     .await;
     assert_eq!(report.stats.rule_id, "none/disabled");
     assert_eq!(report.text, output);
+}
+
+/// On demand, a large result with a summary call bound to it still never
+/// reaches the model: it is compressed deterministically, the original stays
+/// recoverable, and nothing is disclosed as a failed summary.
+#[tokio::test]
+async fn on_demand_ingest_compresses_without_a_model_call() {
+    let _guard = crate::llm::callback_test_guard().await;
+    enable_llm_summary_in(crate::types::LlmSummaryMode::OnDemand);
+    let calls = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let counter = calls.clone();
+    crate::llm::configure_callback(Some(std::sync::Arc::new(move |_| {
+        counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        Box::pin(async { Ok(Some("note".to_string())) })
+    })));
+    let output: String = (0..400)
+        .map(|i| {
+            format!(
+                "2024-01-01T00:00:{:02} INFO worker {i} processed batch ok\n",
+                i % 60
+            )
+        })
+        .collect();
+    let report = compact_tool_output(ToolOutputCall {
+        scope: Some("tool-integration-on-demand"),
+        ..call(&output, AgentTokenjuiceCompression::Full, Some("errors"))
+    })
+    .await;
+    assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 0);
+    assert_ne!(report.stats.rule_id, "llm_summary");
+    assert!(report.notice.is_none(), "{:?}", report.notice);
+    assert!(
+        report
+            .text
+            .contains(crate::cache::marker::RETRIEVE_TOOL_NAME),
+        "the original stays recoverable: {}",
+        report.text
+    );
+    crate::llm::configure_callback(None);
+    enable_llm_summary();
 }
 
 /// An explicit handle mode wins over the summary stage: an eligible output
