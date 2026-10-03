@@ -186,7 +186,6 @@ async fn without_a_model_or_for_other_ops_nothing_calls_it() {
 #[cfg(feature = "tinytools")]
 #[tokio::test]
 async fn the_summarize_tool_uses_the_model_it_was_given() {
-    use tinytools::Tool;
     let _guard = llm::callback_test_guard().await;
     let seen = recording(Ok(Some("tool gist".into())));
     let (store, token, _) = stored("model-tool");
