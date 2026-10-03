@@ -68,7 +68,11 @@ async fn on_demand_ingest_never_calls_the_model() {
     let calls = counting("the gist");
     let raw = payload("on-demand-ingest");
     assert_eq!(
-        maybe_summarize(input(&raw, Some("pricing"), "on-demand-ingest"), &on_demand()).await,
+        maybe_summarize(
+            input(&raw, Some("pricing"), "on-demand-ingest"),
+            &on_demand()
+        )
+        .await,
         SummaryOutcome::NotNeeded
     );
     assert_eq!(calls.load(Ordering::SeqCst), 0);
