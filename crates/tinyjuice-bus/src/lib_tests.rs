@@ -2,7 +2,8 @@
 
 use super::{
     AgentTokenjuiceCompression, CONTRACT_VERSION, CacheStats, CompactRequest, CompressOptions,
-    CompressorKind, ContentKind, GenerateRequest, RangeUnit, RetrieveRange, is_compatible,
+    CompressorKind, ContentKind, GenerateRequest, LlmSummaryMode, RangeUnit, RetrieveRange,
+    is_compatible,
 };
 
 #[test]
@@ -77,6 +78,25 @@ fn compress_options_round_trip_through_their_defaults() {
         serde_json::to_value(&decoded).unwrap(),
         serde_json::to_value(&defaults).unwrap()
     );
+}
+
+#[test]
+fn the_llm_summary_defaults_to_on_demand() {
+    // Ingest must never pay for a model call unless a host opts back in.
+    assert_eq!(
+        CompressOptions::default().llm_summary_mode,
+        LlmSummaryMode::OnDemand
+    );
+    // A host built before the field existed sends no mode at all.
+    let decoded: CompressOptions = serde_json::from_str(r#"{"llmSummaryEnabled":true}"#).unwrap();
+    assert_eq!(decoded.llm_summary_mode, LlmSummaryMode::OnDemand);
+    for (mode, json) in [
+        (LlmSummaryMode::Auto, r#""auto""#),
+        (LlmSummaryMode::OnDemand, r#""onDemand""#),
+    ] {
+        assert_eq!(serde_json::to_string(&mode).unwrap(), json);
+        assert_eq!(serde_json::from_str::<LlmSummaryMode>(json).unwrap(), mode);
+    }
 }
 
 /// Every variant survives `as_str` and back.

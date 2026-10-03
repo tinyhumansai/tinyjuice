@@ -105,17 +105,21 @@ the original bytes unchanged.
   needs from the result; the focus steers the summary, keys its cache, and
   ranks text for the deterministic compressors when no summary is written.
   Off unless `llm_summary_enabled`, and skipped without a host context token.
+  By default (`llm_summary_mode = OnDemand`) ingest never calls the model:
+  a large result gets the deterministic compressors and a recovery handle,
+  and the model writes a summary only when the agent calls `juice_summarize`.
 
 ### LLM summary stage
 
-A host enables summaries with three `CompressOptions` fields, installed through
+A host enables summaries with these `CompressOptions` fields, installed through
 `Install` like the other options:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `llm_summary_enabled` | `false` | Allow the stage at all. |
-| `llm_summary_threshold_tokens` | `4000` | Smaller results are never summarized. |
-| `llm_summary_max_input_tokens` | `2000000` | Larger results are not summarized, and `notice` says so. |
+| `llm_summary_mode` | `OnDemand` | `Auto` summarizes every large result at ingest. `OnDemand` summarizes only when the agent calls `juice_summarize`. |
+| `llm_summary_threshold_tokens` | `4000` | Smaller results are never summarized at ingest. |
+| `llm_summary_max_input_tokens` | `2000000` | At ingest, larger results are not summarized, and `notice` says so. On demand, larger outputs are sampled down to fit. |
 
 Tokens are estimated at four characters a token. Each call then goes through
 `tool_integration::compact_tool_output(ToolOutputCall)` in the library, or

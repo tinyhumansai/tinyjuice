@@ -37,8 +37,8 @@ pub struct CompactRequest {
     /// The agent-level tool name.
     pub tool_name: String,
     /// Whether the content router runs. `false` returns `content` untouched
-    /// unless the summary stage (gated by `llm_summary_enabled` and a
-    /// `context_token`) writes a summary.
+    /// unless the summary stage (gated by `llm_summary_enabled`,
+    /// `llm_summary_mode = Auto` and a `context_token`) writes a summary.
     #[serde(default = "enabled_by_default")]
     pub enabled: bool,
     /// The agent's compaction profile.

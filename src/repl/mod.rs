@@ -2,8 +2,11 @@
 //!
 //! Instead of handing the host one compressed blob, the full original sits in a
 //! [`CcrStore`] under a handle and the host drills in with small deterministic
-//! ops (grep, find, regex, search, links, headings, summarize, slice). Nothing
-//! here calls a model, and content and patterns are never logged.
+//! ops (grep, find, regex, search, links, headings, summarize, slice). The ops
+//! are deterministic. The one exception is `summarize` run through
+//! [`run_op_with_model`] with a [`ModelSummary`]: the host's model writes it,
+//! and the deterministic overview is the fallback. Content and patterns are
+//! never logged.
 
 pub mod awk;
 #[cfg(feature = "jq")]
@@ -17,6 +20,9 @@ pub mod types;
 #[cfg(feature = "tinytools")]
 pub mod tools;
 
+#[cfg(test)]
+#[path = "mod_model_tests.rs"]
+mod model_tests;
 #[cfg(test)]
 #[path = "mod_tests.rs"]
 mod test;
@@ -41,6 +47,99 @@ pub fn run_op(
 ) -> Result<ReplOutput, ReplError> {
     let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
     run_on_text(&text, op, limits)
+}
+
+/// What `summarize` needs to have the host's model write the summary.
+#[derive(Debug, Clone)]
+pub struct ModelSummary {
+    /// The `llm_summary_*` knobs: enabled, timeout, input cap, output cap.
+    /// `llm_summary_mode` and the ingest threshold do not apply to a request.
+    pub options: crate::types::CompressOptions,
+    /// Sent as `GenerateRequest::context_token`; names the call the host runs.
+    pub context_token: String,
+    /// Scopes summary reuse and the failure breaker, usually the thread id.
+    pub scope: Option<String>,
+}
+
+/// The tool name a model summary of a stored output is filed under.
+const STORED_OUTPUT_LABEL: &str = "stored tool output";
+
+/// [`run_op`], except that `summarize` with a `model` asks the host's model for
+/// the summary — the only model call the REPL makes, and only because the
+/// agent asked. Any other op, or no model, is exactly [`run_op`]. A model
+/// that is missing, fails or runs out of time yields the deterministic
+/// overview, prefixed with a note whenever the model was asked and did not
+/// deliver.
+pub async fn run_op_with_model(
+    store: &dyn CcrStore,
+    handle: &str,
+    op: &ReplOp,
+    limits: &ReplLimits,
+    model: Option<&ModelSummary>,
+) -> Result<ReplOutput, ReplError> {
+    let (
+        Some(model),
+        ReplOp::Summarize {
+            hint, scope, unit, ..
+        },
+    ) = (model, op)
+    else {
+        return run_op(store, handle, op, limits);
+    };
+    let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
+    let scoped = match scope {
+        Some(spec) => scope::apply(&text, spec, *unit)?.0,
+        None => text.as_str(),
+    };
+    let outcome = crate::summarize::summarize_on_demand(
+        crate::summarize::SummaryInput {
+            tool_name: STORED_OUTPUT_LABEL,
+            content: scoped,
+            focus: hint.as_deref(),
+            context_token: Some(&model.context_token),
+            scope: model.scope.as_deref(),
+        },
+        &model.options,
+    )
+    .await;
+    match outcome {
+        crate::summarize::OnDemandSummary::Written { text, sampled } => {
+            log::debug!("[tinyjuice::repl] summarize answered by the model sampled={sampled}");
+            let text = if sampled {
+                format!(
+                    "[model summary of the head, the tail and the lines matching the hint; \
+                     the output was too large to read whole]\n{text}"
+                )
+            } else {
+                text
+            };
+            Ok(cap(ReplOutput::Text { text }, limits))
+        }
+        crate::summarize::OnDemandSummary::Fallback(reason) => {
+            log::debug!("[tinyjuice::repl] summarize fell back to the overview reason={reason:?}");
+            let overview = run_on_text(&text, op, limits)?;
+            Ok(match (reason, overview) {
+                (Some(reason), ReplOutput::Text { text }) => cap(
+                    ReplOutput::Text {
+                        text: format!("{}\n{text}", fallback_note(reason)),
+                    },
+                    limits,
+                ),
+                (_, overview) => overview,
+            })
+        }
+    }
+}
+
+/// The line ahead of an overview that stands in for a model summary.
+fn fallback_note(reason: crate::summarize::UnavailableReason) -> &'static str {
+    match reason {
+        crate::summarize::UnavailableReason::TimedOut => {
+            "[model summary still running past its time limit; call juice_summarize again \
+             with the same handle and hint shortly to get it. Model-free overview follows.]"
+        }
+        _ => "[model summary unavailable; model-free overview follows.]",
+    }
 }
 
 /// Run `op` directly on text (used when the caller already holds the original).
