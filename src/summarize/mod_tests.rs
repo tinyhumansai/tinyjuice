@@ -2,11 +2,14 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 use super::*;
+use crate::types::LlmSummaryMode;
 use crate::llm::{self, GenerateRequest};
 
+/// Ingest-time summarizing, which these tests exercise, is opt-in.
 fn opts() -> CompressOptions {
     CompressOptions {
         llm_summary_enabled: true,
+        llm_summary_mode: LlmSummaryMode::Auto,
         llm_summary_threshold_tokens: 10,
         llm_summary_max_input_tokens: 10_000,
         ..CompressOptions::default()
@@ -39,6 +42,37 @@ fn recording(reply: Result<Option<String>, String>) -> Arc<Mutex<Vec<GenerateReq
         Box::pin(async move { reply })
     })));
     seen
+}
+
+fn on_demand() -> CompressOptions {
+    CompressOptions {
+        llm_summary_mode: LlmSummaryMode::OnDemand,
+        ..opts()
+    }
+}
+
+/// Install a callback that counts calls and answers `reply`.
+fn counting(reply: &'static str) -> Arc<AtomicUsize> {
+    let calls = Arc::new(AtomicUsize::new(0));
+    let counter = calls.clone();
+    llm::configure_callback(Some(Arc::new(move |_| {
+        counter.fetch_add(1, Ordering::SeqCst);
+        Box::pin(async move { Ok(Some(reply.to_string())) })
+    })));
+    calls
+}
+
+#[tokio::test]
+async fn on_demand_ingest_never_calls_the_model() {
+    let _guard = llm::callback_test_guard().await;
+    let calls = counting("the gist");
+    let raw = payload("on-demand-ingest");
+    assert_eq!(
+        maybe_summarize(input(&raw, Some("pricing"), "on-demand-ingest"), &on_demand()).await,
+        SummaryOutcome::NotNeeded
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    llm::configure_callback(None);
 }
 
 #[tokio::test]
