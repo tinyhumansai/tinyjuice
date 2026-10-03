@@ -190,11 +190,8 @@ async fn the_summarize_tool_uses_the_model_it_was_given() {
     let _guard = llm::callback_test_guard().await;
     let seen = recording(Ok(Some("tool gist".into())));
     let (store, token, _) = stored("model-tool");
-    let tools = super::tools::repl_tools_with_model(
-        Arc::new(store),
-        lim(),
-        Some(model("model-tool")),
-    );
+    let tools =
+        super::tools::repl_tools_with_model(Arc::new(store), lim(), Some(model("model-tool")));
     let tool = tools
         .iter()
         .find(|t| t.name() == "juice_summarize")

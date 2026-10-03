@@ -599,7 +599,9 @@ async fn a_repeat_request_joins_the_call_already_running() {
 
 #[test]
 fn a_single_huge_line_is_sampled_by_characters() {
-    let raw: String = (0..5_000).map(|i| char::from(b'a' + (i % 26) as u8)).collect();
+    let raw: String = (0..5_000)
+        .map(|i| char::from(b'a' + (i % 26) as u8))
+        .collect();
     let sample = sample_for_budget(&raw, None, 800);
     assert!(sample.chars().count() <= 800);
     assert!(sample.starts_with(&raw[..100]));

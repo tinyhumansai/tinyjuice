@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use serde_json::{Value, json};
 use tinytools::{PermissionLevel, Tool, ToolResult};
 
-use super::{ReplError, ReplLimits, ReplOp, run_op};
+use super::{ModelSummary, ReplError, ReplLimits, ReplOp, run_op_with_model};
 use crate::cache::store::CcrStore;
 
 struct ReplTool {
@@ -20,6 +20,8 @@ struct ReplTool {
     required: &'static [&'static str],
     store: Arc<dyn CcrStore>,
     limits: ReplLimits,
+    /// Set for `juice_summarize` when the host lends it a model.
+    model: Option<ModelSummary>,
 }
 
 #[async_trait]
@@ -55,7 +57,15 @@ impl Tool for ReplTool {
             Ok(op) => op,
             Err(e) => return Ok(ToolResult::error(format!("invalid arguments: {e}"))),
         };
-        match run_op(self.store.as_ref(), handle, &op, &self.limits) {
+        match run_op_with_model(
+            self.store.as_ref(),
+            handle,
+            &op,
+            &self.limits,
+            self.model.as_ref(),
+        )
+        .await
+        {
             Ok(out) => Ok(ToolResult::json(serde_json::to_value(out)?)),
             Err(ReplError::HandleNotFound) => {
                 Ok(ToolResult::failed(ReplError::HandleNotFound.to_string()))
@@ -81,9 +91,28 @@ impl Tool for ReplTool {
     }
 }
 
+/// `juice_summarize`'s description when a model writes the summary.
+const MODEL_SUMMARIZE_DESCRIPTION: &str = "Summary of a stored output written by a model for what you need: pass `hint` to say what that is. Large outputs are summarized from their head, tail and the lines matching the hint. Falls back to a model-free overview (size, outline, head and tail) when the model is unavailable or slow.";
+
 /// The REPL toolset over `store`. Hosts register these; TinyJuice does no dispatch.
 pub fn repl_tools(store: Arc<dyn CcrStore>, limits: ReplLimits) -> Vec<Box<dyn Tool>> {
+    repl_tools_with_model(store, limits, None)
+}
+
+/// [`repl_tools`], with `juice_summarize` written by the host's model when
+/// `model` is set (see [`super::run_op_with_model`]).
+pub fn repl_tools_with_model(
+    store: Arc<dyn CcrStore>,
+    limits: ReplLimits,
+    model: Option<ModelSummary>,
+) -> Vec<Box<dyn Tool>> {
     let t = |name, op, description, extra: Value, required| -> Box<dyn Tool> {
+        let model = (op == "summarize").then(|| model.clone()).flatten();
+        let description = if model.is_some() {
+            MODEL_SUMMARIZE_DESCRIPTION
+        } else {
+            description
+        };
         Box::new(ReplTool {
             name,
             op,
@@ -92,6 +121,7 @@ pub fn repl_tools(store: Arc<dyn CcrStore>, limits: ReplLimits) -> Vec<Box<dyn T
             required,
             store: store.clone(),
             limits,
+            model,
         })
     };
     vec![
