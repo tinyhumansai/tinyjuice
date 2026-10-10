@@ -317,6 +317,31 @@ async fn typed_queries_execute_in_the_loaded_artifact(proxy: &tinybus::Proxy, to
             .unwrap();
     let reply: QueryResponse = proxy.call("Query", (invalid,)).await.unwrap();
     assert!(matches!(reply, Err(QueryError::InvalidPattern(_))));
+    let mut unlimited = request(QueryTarget::Content {
+        content: "ERROR bounded\n".repeat(100),
+    });
+    unlimited.limits.max_hits = usize::MAX;
+    unlimited.limits.max_lines = usize::MAX;
+    unlimited.limits.max_line_chars = usize::MAX;
+    unlimited.limits.max_output_chars = usize::MAX;
+    unlimited.limits.regex_size_limit = usize::MAX;
+    let reply: QueryResponse = proxy.call("Query", (unlimited,)).await.unwrap();
+    let Ok(ReplOutput::Lines { hits, truncated }) = reply else {
+        panic!("expected bounded hits")
+    };
+    assert_eq!(hits.len(), 50);
+    assert_eq!(truncated, 50);
+    let oversized: tinyjuice_bus::wire::HtmlResponse = proxy
+        .call(
+            "ExtractHtml",
+            ("x".repeat(tinyjuice_bus::wire::MAX_HTML_INPUT_BYTES + 1),),
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        oversized,
+        Err(tinyjuice_bus::wire::HtmlError::InputTooLarge)
+    );
     let legacy: String = proxy
         .call("Repl", (token, r#"{"op":"find","query":"ERROR"}"#))
         .await
@@ -331,7 +356,8 @@ async fn typed_queries_execute_in_the_loaded_artifact(proxy: &tinybus::Proxy, to
             truncated: 0
         }
     );
-    let markdown: String = proxy.call("ExtractHtml", ("<html><body><h1>Heading</h1><p>Read <a href=\"/details\">details</a></p><script>secret()</script></body></html>",)).await.unwrap();
+    let markdown: tinyjuice_bus::wire::HtmlResponse = proxy.call("ExtractHtml", ("<html><body><h1>Heading</h1><p>Read <a href=\"/details\">details</a></p><script>secret()</script></body></html>",)).await.unwrap();
+    let markdown = markdown.expect("bounded HTML extraction");
     assert!(markdown.contains("# Heading"));
     assert!(markdown.contains("[details](/details)"));
     assert!(!markdown.contains("secret()"));

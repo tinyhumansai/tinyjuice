@@ -204,3 +204,35 @@ async fn the_summarize_tool_uses_the_model_it_was_given() {
     assert_eq!(seen.lock().unwrap().len(), 1);
     llm::configure_callback(None);
 }
+
+#[tokio::test]
+async fn a_model_summary_honors_max_chars_for_supplied_content() {
+    let _guard = llm::callback_test_guard().await;
+    recording(Ok(Some("résumé ".repeat(100))));
+    let (_, _, text) = stored("model-artifact-cap");
+    let mut op = summarize(None, None);
+    if let ReplOp::Summarize { max_chars, .. } = &mut op {
+        *max_chars = Some(17);
+    }
+    let out = run_on_text_with_model(&text, &op, &lim(), Some(&model("model-artifact-cap")))
+        .await
+        .unwrap();
+    assert_eq!(text_of(out).chars().count(), 17);
+    llm::configure_callback(None);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_supplied_content_timeout_does_not_invent_a_recovery_handle() {
+    let _guard = llm::callback_test_guard().await;
+    llm::configure_callback(Some(Arc::new(|_| Box::pin(std::future::pending()))));
+    let (_, _, text) = stored("model-artifact-timeout");
+    let mut slow = model("model-artifact-timeout");
+    slow.options.llm_summary_timeout_ms = 50;
+    let out = run_on_text_with_model(&text, &summarize(None, None), &lim(), Some(&slow))
+        .await
+        .unwrap();
+    let out = text_of(out);
+    assert!(out.contains("retry this query"), "{out}");
+    assert!(!out.contains("same handle"), "{out}");
+    llm::configure_callback(None);
+}

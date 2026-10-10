@@ -187,6 +187,8 @@ pub struct QueryRequest {
 pub enum QueryError {
     /// The module no longer has this original.
     HandleNotFound,
+    /// Supplied content exceeds the module's fixed input ceiling.
+    InputTooLarge,
     /// The operation contains an invalid pattern or slice.
     InvalidPattern(String),
     /// A search query was empty.
@@ -197,3 +199,20 @@ pub enum QueryError {
 
 /// A REPL result or an operation error, encoded as a single bus reply.
 pub type QueryResponse = Result<crate::repl::ReplOutput, QueryError>;
+
+/// Largest supplied artifact content accepted by `Query` (the host file-read cap).
+pub const MAX_QUERY_CONTENT_BYTES: usize = 10 * 1024 * 1024;
+
+/// Largest HTML input accepted by `ExtractHtml` (the web extractor input cap).
+pub const MAX_HTML_INPUT_BYTES: usize = 8 * 1024 * 1024;
+
+/// Structured HTML extraction failures, separate from transport errors.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum HtmlError {
+    /// The supplied input exceeds the fixed parser ceiling.
+    InputTooLarge,
+}
+
+/// Markdown or a structured extraction error.
+pub type HtmlResponse = Result<String, HtmlError>;

@@ -52,6 +52,45 @@ validation, approvals, credentials, and callback lifetime.
 
 `Query` returns a serialized `Result<ReplOutput, QueryError>`; an expired handle
 is `{"Err":{"kind":"handle_not_found"}}`. A transport failure remains a bus
-error. `ExtractHtml` takes one content string and returns Markdown. Publish a
+error. `ExtractHtml` takes one content string and returns `Result<String, HtmlError>`: Markdown on success or a structured input-size error. Publish a
 new module release before hosts require these members, then pin that release's
 artifact digest. Do not link a library fallback into the host.
+
+
+### REPL wire vocabulary
+
+`Query` takes a single request; the following request queries module storage
+without returning the original to the host:
+
+```json
+{
+  "target": {"kind": "handle", "token": "abc123"},
+  "op": {"op": "find", "query": "ERROR", "mode": "grep", "context": 2}
+}
+```
+
+Replace `target` with `{"kind":"content","content":"authorized artifact text"}`
+to query supplied content. `find` supports `text` (default), `grep`, `regex`,
+`rank`, `sed`, `awk`, and `jq`. `extract` takes `what` = `links` or `headings`;
+`summarize` takes optional `hint` and `max_chars`. Every operation accepts
+optional `scope` (a Python-style slice) and `unit` (`lines`, the default, or
+`chars`). Optional find fields default to `ignore_case=false`, `context=0`,
+and no `top_k`. Missing `scope`, `hint`, or `max_chars` means no supplied value.
+
+Replies retain the legacy output tags `kind=lines|matches|search|links|headings|
+values|text` inside `Ok`. Operation errors are in `Err`, tagged by `kind`:
+`handle_not_found`, `input_too_large`, `invalid_pattern` (with `detail`),
+`empty_query`, or `unsupported` (with `detail`). Hosts present cache misses
+without re-running the original tool. Transport failures are separate bus errors.
+
+Incoming `limits` may narrow the stock budgets, never expand them: 50 hits,
+400 lines, 8,000 output characters, 240 characters per line, and 1 MiB of regex
+compilation state. Supplied query content is limited to 10 MiB, matching the
+host artifact file-read ceiling. HTML extraction accepts at most 8 MiB, matching
+the web extractor input ceiling; excess input returns
+`{"Err":{"kind":"input_too_large"}}` without parsing. A model summary obeys
+both an explicit `max_chars` and the module's output cap. Without `max_chars`,
+model summaries retain the output cap and deterministic overviews retain their
+existing 2,000-character default.
+Contract 1.1 modules do not provide the new members; contract 1.2 hosts must
+require a compatible released artifact instead of calling a linked fallback.

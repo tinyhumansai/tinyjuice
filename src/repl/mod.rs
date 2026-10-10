@@ -78,7 +78,7 @@ pub async fn run_op_with_model(
     model: Option<&ModelSummary>,
 ) -> Result<ReplOutput, ReplError> {
     let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
-    run_on_text_with_model(&text, op, limits, model).await
+    run_on_text_with_model_inner(&text, op, limits, model, true).await
 }
 
 /// Inspect supplied text with the same bounded model-summary behavior as a CCR query.
@@ -89,10 +89,23 @@ pub async fn run_on_text_with_model(
     limits: &ReplLimits,
     model: Option<&ModelSummary>,
 ) -> Result<ReplOutput, ReplError> {
+    run_on_text_with_model_inner(text, op, limits, model, false).await
+}
+
+async fn run_on_text_with_model_inner(
+    text: &str,
+    op: &ReplOp,
+    limits: &ReplLimits,
+    model: Option<&ModelSummary>,
+    stored: bool,
+) -> Result<ReplOutput, ReplError> {
     let (
         Some(model),
         ReplOp::Summarize {
-            hint, scope, unit, ..
+            hint,
+            scope,
+            unit,
+            max_chars,
         },
     ) = (model, op)
     else {
@@ -124,7 +137,14 @@ pub async fn run_on_text_with_model(
             } else {
                 text
             };
-            Ok(cap(ReplOutput::Text { text }, limits))
+            let budget = max_chars
+                .unwrap_or(limits.max_output_chars)
+                .min(limits.max_output_chars);
+            let mut text = text;
+            if let Some((cut, _)) = text.char_indices().nth(budget) {
+                text.truncate(cut);
+            }
+            Ok(ReplOutput::Text { text })
         }
         crate::summarize::OnDemandSummary::Fallback(reason) => {
             log::debug!("[tinyjuice::repl] summarize fell back to the overview reason={reason:?}");
@@ -132,7 +152,7 @@ pub async fn run_on_text_with_model(
             Ok(match (reason, overview) {
                 (Some(reason), ReplOutput::Text { text }) => cap(
                     ReplOutput::Text {
-                        text: format!("{}\n{text}", fallback_note(reason)),
+                        text: format!("{}\n{text}", fallback_note(reason, stored)),
                     },
                     limits,
                 ),
@@ -143,11 +163,15 @@ pub async fn run_on_text_with_model(
 }
 
 /// The line ahead of an overview that stands in for a model summary.
-fn fallback_note(reason: crate::summarize::UnavailableReason) -> &'static str {
+fn fallback_note(reason: crate::summarize::UnavailableReason, stored: bool) -> &'static str {
     match reason {
-        crate::summarize::UnavailableReason::TimedOut => {
+        crate::summarize::UnavailableReason::TimedOut if stored => {
             "[model summary still running past its time limit; call juice_summarize again \
              with the same handle and hint shortly to get it. Model-free overview follows.]"
+        }
+        crate::summarize::UnavailableReason::TimedOut => {
+            "[model summary still running past its time limit; retry this query shortly \
+             with the same content and hint. Model-free overview follows.]"
         }
         _ => "[model summary unavailable; model-free overview follows.]",
     }

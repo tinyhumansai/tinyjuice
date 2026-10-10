@@ -23,3 +23,9 @@ failures. `Repl(handle, op_json)` retains its existing two-argument form.
 REPL and retrieval declarations and summary-focus schema. The implementation
 crate re-exports these definitions for library compatibility. The summary
 callback prompt and unavailable notices are shared in `summary`.
+
+
+See [the module specification](../../docs/specs/tinybus-module.md) for request
+examples, operation tags/defaults, reply shapes, and the fixed input/output
+ceilings. HTML extraction returns `Result<String, HtmlError>` so input-size
+rejections remain distinct from transport failures.
