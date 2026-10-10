@@ -619,3 +619,23 @@ fn handle_footer_names_a_slice_read_first_and_still_round_trips() {
     assert!(footer.contains("-n 120,200p"));
     assert_eq!(crate::cache::parse_markers(&footer), vec!["abc123"]);
 }
+
+#[test]
+fn grep_context_limits_intermediate_line_results_for_dense_content() {
+    let text = "before\n".repeat(5_000) + "needle\n" + &"after\n".repeat(5_000);
+    let limits = ReplLimits {
+        max_lines: 32,
+        ..lim()
+    };
+    let (hits, truncated) = ops::grep(&text, "needle", true, false, usize::MAX, &limits).unwrap();
+    assert!(
+        hits.len() <= 32,
+        "context expansion produced {} allocated hits",
+        hits.len()
+    );
+    assert!(truncated > 0);
+    assert!(
+        hits.iter()
+            .all(|hit| hit.line >= 4_969 && hit.line <= 5_033)
+    );
+}

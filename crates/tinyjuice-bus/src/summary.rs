@@ -8,7 +8,7 @@ pub const SYSTEM_PROMPT: &str = include_str!("summary_prompt.md");
 pub enum UnavailableReason {
     /// Larger than `llm_summary_max_input_tokens`.
     PayloadTooLarge,
-    /// The breaker is open for this scope.
+    /// Model summaries are disabled or the breaker is open for this scope.
     Disabled,
     /// The model call failed or its reply was empty or not smaller.
     Failed,

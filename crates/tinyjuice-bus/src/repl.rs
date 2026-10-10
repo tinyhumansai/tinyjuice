@@ -18,7 +18,7 @@ pub enum ScopeUnit {
 #[serde(default)]
 pub struct ReplLimits {
     pub max_hits: usize,
-    /// Cap for line-producing modes that select ranges (`sed`, `awk`).
+    /// Cap for range-producing modes (`sed`, `awk`) and expanded grep context.
     pub max_lines: usize,
     pub max_output_chars: usize,
     pub max_line_chars: usize,

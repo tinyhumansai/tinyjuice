@@ -331,6 +331,11 @@ async fn typed_queries_execute_in_the_loaded_artifact(proxy: &tinybus::Proxy, to
     };
     assert_eq!(hits.len(), 50);
     assert_eq!(truncated, 50);
+    let oversized_query = request(QueryTarget::Content {
+        content: "x".repeat(tinyjuice_bus::wire::MAX_QUERY_CONTENT_BYTES + 1),
+    });
+    let oversized_reply: QueryResponse = proxy.call("Query", (oversized_query,)).await.unwrap();
+    assert_eq!(oversized_reply, Err(QueryError::InputTooLarge));
     let oversized: tinyjuice_bus::wire::HtmlResponse = proxy
         .call(
             "ExtractHtml",
