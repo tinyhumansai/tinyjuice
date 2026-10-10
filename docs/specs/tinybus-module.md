@@ -94,3 +94,18 @@ model summaries retain the output cap and deterministic overviews retain their
 existing 2,000-character default.
 Contract 1.1 modules do not provide the new members; contract 1.2 hosts must
 require a compatible released artifact instead of calling a linked fallback.
+
+`tinyjuice_bus::summary::SYSTEM_PROMPT` is the shared instruction text used by
+the host's turn-bound summary callback. Import it through the contract when
+building that callback; importing it does not execute a model. Its wording may
+change between releases while the serialized callback request stays compatible.
+`UnavailableReason` supplies content-free notices. Its disabled notice refers
+to the configured summary scope, which may be a thread rather than a session.
+
+Each `ReplLimits` field is a ceiling: `max_hits=50` selected matches,
+`max_lines=400` range output and expanded grep lines, `max_output_chars=8000`
+response characters, `max_line_chars=240` characters per returned line, and
+`regex_size_limit=1048576` bytes of regex compilation state. Module requests may
+narrow these values but cannot enlarge the module's stock ceilings. Grep keeps
+matching lines before allocating remaining context slots. An explicit summary
+`max_chars` also bounds a model-failure notice combined with its overview.

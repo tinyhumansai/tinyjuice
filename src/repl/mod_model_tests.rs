@@ -63,6 +63,41 @@ fn text_of(out: ReplOutput) -> String {
 }
 
 #[tokio::test]
+async fn supplied_and_stored_model_fallback_obey_explicit_character_budget() {
+    let _guard = llm::callback_test_guard().await;
+    let (store, token, text) = stored("bounded-fallback");
+    let _requests = recording(Err("fixture model failure".into()));
+    let model = model("bounded-fallback");
+    for budget in [0, 16, 32] {
+        let op = ReplOp::Summarize {
+            hint: None,
+            scope: None,
+            unit: ScopeUnit::Lines,
+            max_chars: Some(budget),
+        };
+        let supplied = text_of(
+            run_on_text_with_model(&text, &op, &lim(), Some(&model))
+                .await
+                .unwrap(),
+        );
+        let stored = text_of(
+            run_op_with_model(&store, &token, &op, &lim(), Some(&model))
+                .await
+                .unwrap(),
+        );
+        assert!(
+            supplied.chars().count() <= budget,
+            "supplied fallback exceeded {budget}: {supplied}"
+        );
+        assert!(
+            stored.chars().count() <= budget,
+            "stored fallback exceeded {budget}: {stored}"
+        );
+    }
+    llm::configure_callback(None);
+}
+
+#[tokio::test]
 async fn summarize_with_a_model_makes_exactly_one_call() {
     let _guard = llm::callback_test_guard().await;
     let seen = recording(Ok(Some("model gist".into())));

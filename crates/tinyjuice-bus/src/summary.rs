@@ -35,8 +35,8 @@ impl UnavailableReason {
                 "Do not re-run the tool for a summary.]"
             ),
             Self::Disabled => concat!(
-                "[summarization unavailable — it is switched off for this session ",
-                "after repeated failures, so the tool output follows. ",
+                "[summarization unavailable — model summaries are disabled for this scope, ",
+                "so the tool output follows. ",
                 "Do not re-run the tool for a summary.]"
             ),
             Self::TimedOut => concat!(

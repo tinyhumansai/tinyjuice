@@ -48,6 +48,7 @@ pub fn grep(
     // lines. A caller-supplied context must not materialize the entire input.
     let context = context.min(limits.max_lines);
     let mut ranges: Vec<(usize, usize)> = Vec::new();
+    let mut matching_lines = Vec::new();
     let mut matched = 0usize;
     let mut truncated = 0usize;
     for (i, line) in text.lines().enumerate() {
@@ -57,6 +58,7 @@ pub fn grep(
                 continue;
             }
             matched += 1;
+            matching_lines.push(i);
             let lo = i.saturating_sub(context);
             let hi = i.saturating_add(context);
             if let Some(last) = ranges.last_mut()
@@ -70,6 +72,8 @@ pub fn grep(
     }
     let mut hits = Vec::new();
     let mut range = 0;
+    let matching_lines = &matching_lines[..matching_lines.len().min(limits.max_lines)];
+    let mut remaining_matches = matching_lines.len();
     for (i, line) in text.lines().enumerate() {
         while range < ranges.len() && i > ranges[range].1 {
             range += 1;
@@ -78,6 +82,15 @@ pub fn grep(
             break;
         }
         if i < ranges[range].0 {
+            continue;
+        }
+        let matching = matching_lines.binary_search(&i).is_ok();
+        if matching {
+            remaining_matches -= 1;
+        }
+        // Reserve slots for matching lines before filling them with context.
+        if hits.len() + remaining_matches >= limits.max_lines && !matching {
+            truncated += 1;
             continue;
         }
         if hits.len() >= limits.max_lines {

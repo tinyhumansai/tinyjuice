@@ -536,10 +536,8 @@ fn jq_allows_blocked_names_used_as_data() {
         r#".items[] | select(.type == "debug") | .n"#,
         "{env: .env}",
     ] {
-        assert!(
-            run_on_text(json, &find(q, FindMode::Jq), &lim()).is_ok(),
-            "{q}"
-        );
+        let result = run_on_text(json, &find(q, FindMode::Jq), &lim());
+        assert!(result.is_ok(), "{q}: {result:?}");
     }
     for q in ["env", "$ENV.HOME", r#""\(env)""#, ".items | input"] {
         assert!(
@@ -634,6 +632,10 @@ fn grep_context_limits_intermediate_line_results_for_dense_content() {
         hits.len()
     );
     assert!(truncated > 0);
+    assert!(
+        hits.iter()
+            .any(|hit| hit.line == 5_001 && hit.text == "needle")
+    );
     assert!(
         hits.iter()
             .all(|hit| hit.line >= 4_969 && hit.line <= 5_033)

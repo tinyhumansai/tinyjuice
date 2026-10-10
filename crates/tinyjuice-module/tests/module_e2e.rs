@@ -331,6 +331,24 @@ async fn typed_queries_execute_in_the_loaded_artifact(proxy: &tinybus::Proxy, to
     };
     assert_eq!(hits.len(), 50);
     assert_eq!(truncated, 50);
+    let mut context_query = request(QueryTarget::Content {
+        content: "before\n".repeat(10) + "ERROR needle\n" + &"after\n".repeat(10),
+    });
+    context_query.op = serde_json::from_value(serde_json::json!({
+        "op":"find", "mode":"grep", "query":"ERROR", "context":usize::MAX
+    }))
+    .unwrap();
+    context_query.limits.max_lines = 3;
+    let context_reply: QueryResponse = proxy.call("Query", (context_query,)).await.unwrap();
+    let Ok(ReplOutput::Lines { hits, truncated }) = context_reply else {
+        panic!("expected bounded contextual hits")
+    };
+    assert_eq!(hits.len(), 3);
+    assert!(
+        hits.iter()
+            .any(|hit| hit.line == 11 && hit.text == "ERROR needle")
+    );
+    assert!(truncated > 0);
     let oversized_query = request(QueryTarget::Content {
         content: "x".repeat(tinyjuice_bus::wire::MAX_QUERY_CONTENT_BYTES + 1),
     });

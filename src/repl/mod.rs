@@ -150,12 +150,16 @@ async fn run_on_text_with_model_inner(
             log::debug!("[tinyjuice::repl] summarize fell back to the overview reason={reason:?}");
             let overview = run_on_text(text, op, limits)?;
             Ok(match (reason, overview) {
-                (Some(reason), ReplOutput::Text { text }) => cap(
-                    ReplOutput::Text {
-                        text: format!("{}\n{text}", fallback_note(reason, stored)),
-                    },
-                    limits,
-                ),
+                (Some(reason), ReplOutput::Text { text }) => {
+                    let mut text = format!("{}\n{text}", fallback_note(reason, stored));
+                    let budget = max_chars
+                        .unwrap_or(limits.max_output_chars)
+                        .min(limits.max_output_chars);
+                    if let Some((cut, _)) = text.char_indices().nth(budget) {
+                        text.truncate(cut);
+                    }
+                    ReplOutput::Text { text }
+                }
                 (_, overview) => overview,
             })
         }
