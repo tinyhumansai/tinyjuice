@@ -33,6 +33,12 @@ pub mod methods {
     pub const COMPACT_WITH: &str = "CompactWith";
     /// Reads back an original the module offloaded.
     pub const RETRIEVE: &str = "Retrieve";
+    /// Legacy JSON REPL query; retains its two positional arguments.
+    pub const REPL: &str = "Repl";
+    /// Typed REPL query over module storage or supplied content.
+    pub const QUERY: &str = "Query";
+    /// Convert HTML to Markdown inside the module.
+    pub const EXTRACT_HTML: &str = "ExtractHtml";
     /// Reports what the cache is holding.
     pub const CACHE_STATS: &str = "CacheStats";
 }
@@ -55,5 +61,8 @@ pub const METHODS: &[&str] = &[
     methods::COMPACT,
     methods::COMPACT_WITH,
     methods::RETRIEVE,
+    methods::REPL,
+    methods::QUERY,
+    methods::EXTRACT_HTML,
     methods::CACHE_STATS,
 ];

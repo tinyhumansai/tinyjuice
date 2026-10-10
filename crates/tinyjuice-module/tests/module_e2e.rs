@@ -10,15 +10,7 @@ use tinybus::transport::memory::MemoryBus;
 use tinyjuice::types::CompressedOutput;
 use tinyjuice_module::{BUS_NAME, OBJECT_PATH};
 
-const EXPECTED_METHODS: &[&str] = &[
-    "Install",
-    "Detect",
-    "Compress",
-    "Compact",
-    "CompactWith",
-    "Retrieve",
-    "CacheStats",
-];
+const EXPECTED_METHODS: &[&str] = tinyjuice_bus::METHODS;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[ignore = "requires TINYJUICE_TEST_MODULE to point at the built cdylib"]
@@ -98,10 +90,15 @@ async fn the_built_module_compresses_and_recovers_over_a_real_broker() {
     assert!(output.applied);
     let token = output.ccr_token.expect("compression should be recoverable");
     let recovered: Option<String> = proxy
-        .call("Retrieve", (token, Option::<serde_json::Value>::None))
+        .call(
+            "Retrieve",
+            (token.clone(), Option::<serde_json::Value>::None),
+        )
         .await
         .expect("retrieve should succeed");
     assert_eq!(recovered, Some(content));
+    typed_queries_execute_in_the_loaded_artifact(&proxy, &token).await;
+
     assert!(matches!(modules.list()[0].state, ModuleState::Ready));
 
     compact_with_calls_back_to_the_host_for_a_focused_summary(&client, &proxy).await;
@@ -193,6 +190,25 @@ async fn compact_with_calls_back_to_the_host_for_a_focused_summary(
     let prompts = host.prompts.lock().unwrap().clone();
     assert_eq!(prompts.len(), 1);
     assert!(prompts[0].contains("Caller focus: the rate limits"));
+    let query = tinyjuice_bus::wire::QueryRequest {
+        target: tinyjuice_bus::wire::QueryTarget::Content {
+            content: "Requests are rate limited per key. ".repeat(40),
+        },
+        op: serde_json::from_value(
+            serde_json::json!({"op":"summarize","hint":"rate limits for this artifact"}),
+        )
+        .unwrap(),
+        limits: Default::default(),
+        context_token: Some("query-turn".into()),
+        scope: Some("query-e2e".into()),
+    };
+    let reply: tinyjuice_bus::wire::QueryResponse = proxy.call("Query", (query,)).await.unwrap();
+    assert!(
+        matches!(reply, Ok(tinyjuice_bus::repl::ReplOutput::Text { text }) if text == "the limit is 60 requests a minute")
+    );
+    let prompts = host.prompts.lock().unwrap().clone();
+    assert_eq!(prompts.len(), 2);
+    assert!(prompts[1].contains("rate limits for this artifact"));
 }
 
 async fn wait_until_serving(client: &Connection) {
@@ -212,4 +228,111 @@ async fn wait_until_serving(client: &Connection) {
     })
     .await
     .expect("module should become ready");
+}
+
+/// Every new member is called through the separately loaded artifact.
+async fn typed_queries_execute_in_the_loaded_artifact(proxy: &tinybus::Proxy, token: &str) {
+    use tinyjuice_bus::repl::{ReplLimits, ReplOp, ReplOutput};
+    use tinyjuice_bus::wire::{QueryError, QueryRequest, QueryResponse, QueryTarget};
+    let op: ReplOp =
+        serde_json::from_value(serde_json::json!({"op": "find", "query": "ERROR"})).unwrap();
+    let request = |target| QueryRequest {
+        target,
+        op: op.clone(),
+        limits: ReplLimits::default(),
+        context_token: None,
+        scope: None,
+    };
+    let reply: QueryResponse = proxy
+        .call(
+            "Query",
+            (request(QueryTarget::Handle {
+                token: token.into(),
+            }),),
+        )
+        .await
+        .unwrap();
+    let Ok(ReplOutput::Lines { hits, .. }) = reply else {
+        panic!("expected stored log hits")
+    };
+    assert_eq!(hits.len(), 1);
+    assert_eq!(hits[0].line, 138);
+    let reply: QueryResponse = proxy
+        .call(
+            "Query",
+            (request(QueryTarget::Content {
+                content: "first\nERROR artifact\nlast".into(),
+            }),),
+        )
+        .await
+        .unwrap();
+    let Ok(ReplOutput::Lines { hits, .. }) = reply else {
+        panic!("expected artifact hits")
+    };
+    assert_eq!(hits[0].line, 2);
+    assert_eq!(hits[0].text, "ERROR artifact");
+    let gone: QueryResponse = proxy
+        .call(
+            "Query",
+            (request(QueryTarget::Handle {
+                token: "not-cached".into(),
+            }),),
+        )
+        .await
+        .unwrap();
+    assert_eq!(gone, Err(QueryError::HandleNotFound));
+    let before: tinyjuice_bus::wire::CacheStats = proxy.call("CacheStats", ()).await.unwrap();
+    let mut capped = request(QueryTarget::Content {
+        content: "ERROR one\nERROR two\nERROR three".into(),
+    });
+    capped.limits.max_hits = 1;
+    let reply: QueryResponse = proxy.call("Query", (capped,)).await.unwrap();
+    let Ok(ReplOutput::Lines { hits, truncated }) = reply else {
+        panic!("expected capped lines")
+    };
+    assert_eq!(hits.len(), 1);
+    assert_eq!(truncated, 2);
+    let after: tinyjuice_bus::wire::CacheStats = proxy.call("CacheStats", ()).await.unwrap();
+    assert_eq!(
+        before.entries, after.entries,
+        "supplied content must not create CCR entries"
+    );
+    assert_eq!(before.bytes, after.bytes);
+    for (op, expected) in [(
+        serde_json::json!({"op":"find","query":""}),
+        QueryError::EmptyQuery,
+    )] {
+        let mut invalid = request(QueryTarget::Content {
+            content: "artifact".into(),
+        });
+        invalid.op = serde_json::from_value(op).unwrap();
+        let reply: QueryResponse = proxy.call("Query", (invalid,)).await.unwrap();
+        assert_eq!(reply, Err(expected));
+    }
+    let mut invalid = request(QueryTarget::Content {
+        content: "artifact".into(),
+    });
+    invalid.op =
+        serde_json::from_value(serde_json::json!({"op":"find","mode":"regex","query":"["}))
+            .unwrap();
+    let reply: QueryResponse = proxy.call("Query", (invalid,)).await.unwrap();
+    assert!(matches!(reply, Err(QueryError::InvalidPattern(_))));
+    let legacy: String = proxy
+        .call("Repl", (token, r#"{"op":"find","query":"ERROR"}"#))
+        .await
+        .unwrap();
+    assert_eq!(
+        serde_json::from_str::<ReplOutput>(&legacy).unwrap(),
+        ReplOutput::Lines {
+            hits: vec![tinyjuice_bus::repl::Hit {
+                line: 138,
+                text: "ERROR request failed id=137".into()
+            }],
+            truncated: 0
+        }
+    );
+    let markdown: String = proxy.call("ExtractHtml", ("<html><body><h1>Heading</h1><p>Read <a href=\"/details\">details</a></p><script>secret()</script></body></html>",)).await.unwrap();
+    assert!(markdown.contains("# Heading"));
+    assert!(markdown.contains("[details](/details)"));
+    assert!(!markdown.contains("secret()"));
 }

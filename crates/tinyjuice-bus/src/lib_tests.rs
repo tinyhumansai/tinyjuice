@@ -1,10 +1,6 @@
 //! Tests that pin the shared `TinyJuice` vocabulary and compatibility rule.
 
-use super::{
-    AgentTokenjuiceCompression, CONTRACT_VERSION, CacheStats, CompactRequest, CompressOptions,
-    CompressorKind, ContentKind, GenerateRequest, LlmSummaryMode, RangeUnit, RetrieveRange,
-    is_compatible,
-};
+use super::*;
 
 #[test]
 fn the_contract_accepts_its_own_version_and_newer_minors() {
@@ -175,4 +171,79 @@ fn a_generate_request_keeps_its_camel_case_fields() {
         serde_json::to_string(&request).unwrap(),
         r#"{"contextToken":"t","purpose":"tool_output_summary","system":"s","prompt":"p","maxOutputTokens":7}"#
     );
+}
+
+#[test]
+fn typed_queries_preserve_the_legacy_operation_wire_shape() {
+    use crate::repl::{FindMode, ReplOp, ScopeUnit};
+    use crate::wire::{QueryRequest, QueryTarget};
+    let value = serde_json::json!({
+        "target": {"kind": "handle", "token": "abc"},
+        "op": {"op": "find", "query": "needle"}
+    });
+    let request: QueryRequest = serde_json::from_value(value).unwrap();
+    assert_eq!(
+        request.target,
+        QueryTarget::Handle {
+            token: "abc".into()
+        }
+    );
+    assert_eq!(request.limits, crate::repl::ReplLimits::default());
+    assert_eq!(
+        request.op,
+        ReplOp::Find {
+            query: "needle".into(),
+            mode: FindMode::Text,
+            ignore_case: false,
+            context: 0,
+            top_k: None,
+            scope: None,
+            unit: ScopeUnit::Lines,
+        }
+    );
+    let round_trip: QueryRequest =
+        serde_json::from_value(serde_json::to_value(&request).unwrap()).unwrap();
+    assert_eq!(round_trip, request);
+    assert!(
+        !is_compatible((1, 1)),
+        "typed query hosts need contract 1.2"
+    );
+}
+
+#[test]
+fn query_replies_distinguish_operation_errors_from_success() {
+    use crate::wire::{QueryError, QueryResponse};
+    let reply: QueryResponse = Err(QueryError::HandleNotFound);
+    assert_eq!(
+        serde_json::to_value(&reply).unwrap(),
+        serde_json::json!({"Err": {"kind": "handle_not_found"}})
+    );
+    let parsed: QueryResponse =
+        serde_json::from_value(serde_json::to_value(&reply).unwrap()).unwrap();
+    assert_eq!(reply, parsed);
+    let reply: QueryResponse = Ok(crate::repl::ReplOutput::Text {
+        text: "overview".into(),
+    });
+    assert_eq!(
+        serde_json::to_value(reply).unwrap(),
+        serde_json::json!({"Ok": {"kind": "text", "text": "overview"}})
+    );
+}
+
+#[test]
+fn declarations_round_trip_and_keep_the_existing_tool_names() {
+    let declarations = crate::tools::repl_tool_declarations();
+    assert_eq!(
+        declarations
+            .iter()
+            .map(|tool| tool.name.as_str())
+            .collect::<Vec<_>>(),
+        ["juice_find", "juice_extract", "juice_summarize"]
+    );
+    for declaration in declarations {
+        let decoded: crate::tools::ReplToolDeclaration =
+            serde_json::from_value(serde_json::to_value(&declaration).unwrap()).unwrap();
+        assert_eq!(decoded, declaration);
+        assert_eq!(declaration.parameters["required"][0], "handle");
+    }
 }

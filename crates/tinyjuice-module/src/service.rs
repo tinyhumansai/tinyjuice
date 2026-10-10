@@ -110,6 +110,56 @@ impl Compression {
         Ok(reply.to_string())
     }
 
+    /// A typed query always executes against module-owned storage or supplied text.
+    async fn query(
+        &self,
+        request: tinyjuice_bus::wire::QueryRequest,
+    ) -> BusResult<tinyjuice_bus::wire::QueryResponse> {
+        use tinyjuice_bus::wire::{QueryError, QueryTarget};
+        let model = request
+            .context_token
+            .map(|context_token| tinyjuice::repl::ModelSummary {
+                options: tinyjuice::tool_integration::current_options(),
+                context_token,
+                scope: request.scope,
+            });
+        let result = match request.target {
+            QueryTarget::Handle { token } => {
+                tinyjuice::repl::run_op_with_model(
+                    &tinyjuice::cache::GlobalCcrStore,
+                    &token,
+                    &request.op,
+                    &request.limits,
+                    model.as_ref(),
+                )
+                .await
+            }
+            QueryTarget::Content { content } => {
+                tinyjuice::repl::run_on_text_with_model(
+                    &content,
+                    &request.op,
+                    &request.limits,
+                    model.as_ref(),
+                )
+                .await
+            }
+        };
+        Ok(result.map_err(|error| match error {
+            tinyjuice::repl::ReplError::HandleNotFound => QueryError::HandleNotFound,
+            tinyjuice::repl::ReplError::InvalidPattern(detail) => {
+                QueryError::InvalidPattern(detail)
+            }
+            tinyjuice::repl::ReplError::EmptyQuery => QueryError::EmptyQuery,
+            tinyjuice::repl::ReplError::Unsupported(detail) => {
+                QueryError::Unsupported(detail.into())
+            }
+        }))
+    }
+
+    async fn extract_html(&self, content: String) -> BusResult<String> {
+        Ok(tinyjuice::compressors::html::html_to_markdown(&content))
+    }
+
     async fn cache_stats(&self) -> BusResult<CacheStats> {
         let (entries, bytes) = tinyjuice::cache::stats();
         Ok(CacheStats { entries, bytes })
@@ -223,6 +273,8 @@ mod exports {
             "CompactWith",
             "Retrieve",
             "Repl",
+            "Query",
+            "ExtractHtml",
             "CacheStats"
         ],
         signals = [],

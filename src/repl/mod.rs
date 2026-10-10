@@ -77,6 +77,18 @@ pub async fn run_op_with_model(
     limits: &ReplLimits,
     model: Option<&ModelSummary>,
 ) -> Result<ReplOutput, ReplError> {
+    let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
+    run_on_text_with_model(&text, op, limits, model).await
+}
+
+/// Inspect supplied text with the same bounded model-summary behavior as a CCR query.
+/// The caller owns authorization to read the supplied content; this does not store it.
+pub async fn run_on_text_with_model(
+    text: &str,
+    op: &ReplOp,
+    limits: &ReplLimits,
+    model: Option<&ModelSummary>,
+) -> Result<ReplOutput, ReplError> {
     let (
         Some(model),
         ReplOp::Summarize {
@@ -84,12 +96,11 @@ pub async fn run_op_with_model(
         },
     ) = (model, op)
     else {
-        return run_op(store, handle, op, limits);
+        return run_on_text(text, op, limits);
     };
-    let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
     let scoped = match scope {
-        Some(spec) => scope::apply(&text, spec, *unit)?.0,
-        None => text.as_str(),
+        Some(spec) => scope::apply(text, spec, *unit)?.0,
+        None => text,
     };
     let outcome = crate::summarize::summarize_on_demand(
         crate::summarize::SummaryInput {
@@ -117,7 +128,7 @@ pub async fn run_op_with_model(
         }
         crate::summarize::OnDemandSummary::Fallback(reason) => {
             log::debug!("[tinyjuice::repl] summarize fell back to the overview reason={reason:?}");
-            let overview = run_on_text(&text, op, limits)?;
+            let overview = run_on_text(text, op, limits)?;
             Ok(match (reason, overview) {
                 (Some(reason), ReplOutput::Text { text }) => cap(
                     ReplOutput::Text {
