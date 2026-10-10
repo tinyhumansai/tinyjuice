@@ -2,17 +2,9 @@
 //!
 //! A host uses it to narrow what an op looks at, by lines (default) or characters.
 
-use serde::{Deserialize, Serialize};
+pub use tinyjuice_bus::repl::ScopeUnit;
 
 use super::types::ReplError;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ScopeUnit {
-    #[default]
-    Lines,
-    Chars,
-}
 
 fn bad(msg: &str) -> ReplError {
     ReplError::InvalidPattern(format!("scope: {msg}"))

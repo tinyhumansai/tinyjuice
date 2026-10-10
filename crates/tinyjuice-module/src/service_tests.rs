@@ -76,3 +76,49 @@ async fn service_repl_greps_a_stored_output_and_reports_bad_input() {
         .unwrap();
     assert!(gone.contains("expired"));
 }
+
+#[test]
+fn caller_limits_cannot_expand_any_module_ceiling() {
+    use tinyjuice_bus::repl::ReplLimits;
+    let unlimited = ReplLimits {
+        max_hits: usize::MAX,
+        max_lines: usize::MAX,
+        max_output_chars: usize::MAX,
+        max_line_chars: usize::MAX,
+        regex_size_limit: usize::MAX,
+    };
+    assert_eq!(query_limits(unlimited), ReplLimits::default());
+    let narrowed = ReplLimits {
+        max_hits: 1,
+        max_lines: 2,
+        max_output_chars: 3,
+        max_line_chars: 4,
+        regex_size_limit: 5,
+    };
+    assert_eq!(query_limits(narrowed), narrowed);
+}
+
+#[tokio::test]
+async fn oversized_supplied_inputs_are_rejected_before_execution() {
+    use tinyjuice_bus::wire::*;
+    let query = QueryRequest {
+        target: QueryTarget::Content {
+            content: "x".repeat(MAX_QUERY_CONTENT_BYTES + 1),
+        },
+        op: serde_json::from_value(serde_json::json!({"op":"find","query":""})).unwrap(),
+        limits: Default::default(),
+        context_token: None,
+        scope: None,
+    };
+    assert_eq!(
+        Compression.query(query).await.unwrap(),
+        Err(QueryError::InputTooLarge)
+    );
+    assert_eq!(
+        Compression
+            .extract_html("x".repeat(MAX_HTML_INPUT_BYTES + 1))
+            .await
+            .unwrap(),
+        Err(HtmlError::InputTooLarge)
+    );
+}

@@ -6,19 +6,9 @@
 //! `before_tool` — before schema validation and before the tool runs, so the
 //! tool body never sees it — and hands it to TinyJuice with the result.
 
-use serde_json::{Value, json};
+use serde_json::Value;
 
-/// The argument's name on the wire.
-pub const SUMMARY_FOCUS_ARG: &str = "summary_focus";
-
-/// The schema for the optional `summary_focus` argument.
-pub fn summary_focus_property() -> Value {
-    json!({
-        "type": "string",
-        "description": "What you need from this result. A large result is summarized around \
-                        this; the full output stays retrievable."
-    })
-}
+pub use tinyjuice_bus::tools::{SUMMARY_FOCUS_ARG, summary_focus_property};
 
 /// Whether a tool's parameter schema declares TinyJuice's `summary_focus`,
 /// as opposed to a parameter of its own that happens to share the name.

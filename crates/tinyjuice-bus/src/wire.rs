@@ -151,3 +151,68 @@ pub struct CacheStats {
     /// Bytes those originals occupy.
     pub bytes: usize,
 }
+
+/// Content to inspect without transferring a cached original back to the host.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum QueryTarget {
+    /// Resolve the original from the module's CCR store.
+    Handle { token: String },
+    /// Inspect artifact content the host has already authorized and read.
+    Content { content: String },
+}
+
+/// A bounded REPL query executed inside the module.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryRequest {
+    /// Stored handle or supplied artifact content; never a filesystem path.
+    pub target: QueryTarget,
+    /// Typed operation, including its optional scope.
+    pub op: crate::repl::ReplOp,
+    /// Output and pattern compilation caps.
+    #[serde(default)]
+    pub limits: crate::repl::ReplLimits,
+    /// Turn-bound model callback ticket for an on-demand summary.
+    #[serde(default)]
+    pub context_token: Option<String>,
+    /// Scope for summary reuse and failure suppression.
+    #[serde(default)]
+    pub scope: Option<String>,
+}
+
+/// Structured failures of a REPL operation, distinct from transport failures.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", content = "detail", rename_all = "snake_case")]
+pub enum QueryError {
+    /// The module no longer has this original.
+    HandleNotFound,
+    /// Supplied content exceeds the module's fixed input ceiling.
+    InputTooLarge,
+    /// The operation contains an invalid pattern or slice.
+    InvalidPattern(String),
+    /// A search query was empty.
+    EmptyQuery,
+    /// The compiled module lacks this optional operation.
+    Unsupported(String),
+}
+
+/// A REPL result or an operation error, encoded as a single bus reply.
+pub type QueryResponse = Result<crate::repl::ReplOutput, QueryError>;
+
+/// Largest supplied artifact content accepted by `Query` (the host file-read cap).
+pub const MAX_QUERY_CONTENT_BYTES: usize = 10 * 1024 * 1024;
+
+/// Largest HTML input accepted by `ExtractHtml` (the web extractor input cap).
+pub const MAX_HTML_INPUT_BYTES: usize = 8 * 1024 * 1024;
+
+/// Structured HTML extraction failures, separate from transport errors.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum HtmlError {
+    /// The supplied input exceeds the fixed parser ceiling.
+    InputTooLarge,
+}
+
+/// Markdown or a structured extraction error.
+pub type HtmlResponse = Result<String, HtmlError>;

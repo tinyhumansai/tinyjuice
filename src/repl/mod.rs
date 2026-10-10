@@ -77,19 +77,43 @@ pub async fn run_op_with_model(
     limits: &ReplLimits,
     model: Option<&ModelSummary>,
 ) -> Result<ReplOutput, ReplError> {
+    let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
+    run_on_text_with_model_inner(&text, op, limits, model, true).await
+}
+
+/// Inspect supplied text with the same bounded model-summary behavior as a CCR query.
+/// The caller owns authorization to read the supplied content; this does not store it.
+pub async fn run_on_text_with_model(
+    text: &str,
+    op: &ReplOp,
+    limits: &ReplLimits,
+    model: Option<&ModelSummary>,
+) -> Result<ReplOutput, ReplError> {
+    run_on_text_with_model_inner(text, op, limits, model, false).await
+}
+
+async fn run_on_text_with_model_inner(
+    text: &str,
+    op: &ReplOp,
+    limits: &ReplLimits,
+    model: Option<&ModelSummary>,
+    stored: bool,
+) -> Result<ReplOutput, ReplError> {
     let (
         Some(model),
         ReplOp::Summarize {
-            hint, scope, unit, ..
+            hint,
+            scope,
+            unit,
+            max_chars,
         },
     ) = (model, op)
     else {
-        return run_op(store, handle, op, limits);
+        return run_on_text(text, op, limits);
     };
-    let text = store.get(handle).ok_or(ReplError::HandleNotFound)?;
     let scoped = match scope {
-        Some(spec) => scope::apply(&text, spec, *unit)?.0,
-        None => text.as_str(),
+        Some(spec) => scope::apply(text, spec, *unit)?.0,
+        None => text,
     };
     let outcome = crate::summarize::summarize_on_demand(
         crate::summarize::SummaryInput {
@@ -113,18 +137,29 @@ pub async fn run_op_with_model(
             } else {
                 text
             };
-            Ok(cap(ReplOutput::Text { text }, limits))
+            let budget = max_chars
+                .unwrap_or(limits.max_output_chars)
+                .min(limits.max_output_chars);
+            let mut text = text;
+            if let Some((cut, _)) = text.char_indices().nth(budget) {
+                text.truncate(cut);
+            }
+            Ok(ReplOutput::Text { text })
         }
         crate::summarize::OnDemandSummary::Fallback(reason) => {
             log::debug!("[tinyjuice::repl] summarize fell back to the overview reason={reason:?}");
-            let overview = run_on_text(&text, op, limits)?;
+            let overview = run_on_text(text, op, limits)?;
             Ok(match (reason, overview) {
-                (Some(reason), ReplOutput::Text { text }) => cap(
-                    ReplOutput::Text {
-                        text: format!("{}\n{text}", fallback_note(reason)),
-                    },
-                    limits,
-                ),
+                (Some(reason), ReplOutput::Text { text }) => {
+                    let mut text = format!("{}\n{text}", fallback_note(reason, stored));
+                    let budget = max_chars
+                        .unwrap_or(limits.max_output_chars)
+                        .min(limits.max_output_chars);
+                    if let Some((cut, _)) = text.char_indices().nth(budget) {
+                        text.truncate(cut);
+                    }
+                    ReplOutput::Text { text }
+                }
                 (_, overview) => overview,
             })
         }
@@ -132,11 +167,15 @@ pub async fn run_op_with_model(
 }
 
 /// The line ahead of an overview that stands in for a model summary.
-fn fallback_note(reason: crate::summarize::UnavailableReason) -> &'static str {
+fn fallback_note(reason: crate::summarize::UnavailableReason, stored: bool) -> &'static str {
     match reason {
-        crate::summarize::UnavailableReason::TimedOut => {
+        crate::summarize::UnavailableReason::TimedOut if stored => {
             "[model summary still running past its time limit; call juice_summarize again \
              with the same handle and hint shortly to get it. Model-free overview follows.]"
+        }
+        crate::summarize::UnavailableReason::TimedOut => {
+            "[model summary still running past its time limit; retry this query shortly \
+             with the same content and hint. Model-free overview follows.]"
         }
         _ => "[model summary unavailable; model-free overview follows.]",
     }

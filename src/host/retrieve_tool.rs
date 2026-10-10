@@ -12,7 +12,6 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use serde_json::json;
 use tinytools::{PermissionLevel, Tool, ToolResult};
 
 /// Looks a stored original up by hash: `Ok(None)` is a cache miss.
@@ -41,24 +40,11 @@ impl Tool for RetrieveToolOutputTool {
     }
 
     fn description(&self) -> &str {
-        "Retrieve the full, original text of a tool result that was compacted to \
-         save context. When a tool output shows a marker like \
-         `retrieve_tool_output(\"a1b2c3d4e5f6\")`, call this with that hash to get \
-         the complete original back. Use it only when you actually need the dropped \
-         detail — the compacted view is usually enough."
+        tinyjuice_bus::tools::RETRIEVE_TOOL_DESCRIPTION
     }
 
     fn parameters_schema(&self) -> serde_json::Value {
-        json!({
-            "type": "object",
-            "properties": {
-                "hash": {
-                    "type": "string",
-                    "description": "The hash from a retrieve_tool_output(\"…\") marker."
-                }
-            },
-            "required": ["hash"]
-        })
+        tinyjuice_bus::tools::retrieve_tool_parameters()
     }
 
     fn permission_level(&self) -> PermissionLevel {

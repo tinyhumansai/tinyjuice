@@ -12,6 +12,9 @@
 //! re-exports the shared values from here rather than defining a second copy.
 
 pub mod names;
+pub mod repl;
+pub mod summary;
+pub mod tools;
 pub mod types;
 pub mod version;
 pub mod wire;
@@ -29,4 +32,4 @@ pub use wire::{
 
 #[cfg(test)]
 #[path = "lib_tests.rs"]
-mod test;
+mod tests;

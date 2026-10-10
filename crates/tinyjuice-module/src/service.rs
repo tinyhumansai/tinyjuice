@@ -110,9 +110,79 @@ impl Compression {
         Ok(reply.to_string())
     }
 
+    /// A typed query always executes against module-owned storage or supplied text.
+    async fn query(
+        &self,
+        request: tinyjuice_bus::wire::QueryRequest,
+    ) -> BusResult<tinyjuice_bus::wire::QueryResponse> {
+        use tinyjuice_bus::wire::{QueryError, QueryTarget};
+        let limits = query_limits(request.limits);
+        let model = request
+            .context_token
+            .map(|context_token| tinyjuice::repl::ModelSummary {
+                options: tinyjuice::tool_integration::current_options(),
+                context_token,
+                scope: request.scope,
+            });
+        let result = match request.target {
+            QueryTarget::Handle { token } => {
+                tinyjuice::repl::run_op_with_model(
+                    &tinyjuice::cache::GlobalCcrStore,
+                    &token,
+                    &request.op,
+                    &limits,
+                    model.as_ref(),
+                )
+                .await
+            }
+            QueryTarget::Content { content } => {
+                if content.len() > tinyjuice_bus::wire::MAX_QUERY_CONTENT_BYTES {
+                    return Ok(Err(QueryError::InputTooLarge));
+                }
+                tinyjuice::repl::run_on_text_with_model(
+                    &content,
+                    &request.op,
+                    &limits,
+                    model.as_ref(),
+                )
+                .await
+            }
+        };
+        Ok(result.map_err(|error| match error {
+            tinyjuice::repl::ReplError::HandleNotFound => QueryError::HandleNotFound,
+            tinyjuice::repl::ReplError::InvalidPattern(detail) => {
+                QueryError::InvalidPattern(detail)
+            }
+            tinyjuice::repl::ReplError::EmptyQuery => QueryError::EmptyQuery,
+            tinyjuice::repl::ReplError::Unsupported(detail) => {
+                QueryError::Unsupported(detail.into())
+            }
+        }))
+    }
+
+    async fn extract_html(&self, content: String) -> BusResult<tinyjuice_bus::wire::HtmlResponse> {
+        if content.len() > tinyjuice_bus::wire::MAX_HTML_INPUT_BYTES {
+            return Ok(Err(tinyjuice_bus::wire::HtmlError::InputTooLarge));
+        }
+        Ok(Ok(tinyjuice::compressors::html::html_to_markdown(&content)))
+    }
+
     async fn cache_stats(&self) -> BusResult<CacheStats> {
         let (entries, bytes) = tinyjuice::cache::stats();
         Ok(CacheStats { entries, bytes })
+    }
+}
+
+/// Requests may narrow a budget but never expand the module's stock ceilings.
+fn query_limits(requested: tinyjuice_bus::repl::ReplLimits) -> tinyjuice_bus::repl::ReplLimits {
+    use tinyjuice_bus::repl::ReplLimits;
+    let ceiling = ReplLimits::default();
+    ReplLimits {
+        max_hits: requested.max_hits.min(ceiling.max_hits),
+        max_lines: requested.max_lines.min(ceiling.max_lines),
+        max_output_chars: requested.max_output_chars.min(ceiling.max_output_chars),
+        max_line_chars: requested.max_line_chars.min(ceiling.max_line_chars),
+        regex_size_limit: requested.regex_size_limit.min(ceiling.regex_size_limit),
     }
 }
 
@@ -223,6 +293,8 @@ mod exports {
             "CompactWith",
             "Retrieve",
             "Repl",
+            "Query",
+            "ExtractHtml",
             "CacheStats"
         ],
         signals = [],

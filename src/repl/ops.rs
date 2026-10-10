@@ -44,33 +44,64 @@ pub fn grep(
         pattern.to_string()
     };
     let re = build_regex(&source, ignore_case, limits)?;
-    let lines: Vec<&str> = text.lines().collect();
-    let mut keep = vec![false; lines.len()];
+    // Bound context before selecting ranges, and allocate only the returned
+    // lines. A caller-supplied context must not materialize the entire input.
+    let context = context.min(limits.max_lines);
+    let mut ranges: Vec<(usize, usize)> = Vec::new();
+    let mut matching_lines = Vec::new();
     let mut matched = 0usize;
     let mut truncated = 0usize;
-    for (i, line) in lines.iter().enumerate() {
+    for (i, line) in text.lines().enumerate() {
         if re.is_match(line) {
             if matched >= limits.max_hits {
                 truncated += 1;
                 continue;
             }
             matched += 1;
+            matching_lines.push(i);
             let lo = i.saturating_sub(context);
-            let hi = i.saturating_add(context).min(lines.len() - 1);
-            for slot in &mut keep[lo..=hi] {
-                *slot = true;
+            let hi = i.saturating_add(context);
+            if let Some(last) = ranges.last_mut()
+                && lo <= last.1.saturating_add(1)
+            {
+                last.1 = last.1.max(hi);
+            } else {
+                ranges.push((lo, hi));
             }
         }
     }
-    let hits = lines
-        .iter()
-        .enumerate()
-        .filter(|(i, _)| keep[*i])
-        .map(|(i, l)| Hit {
+    let mut hits = Vec::new();
+    let mut range = 0;
+    let matching_lines = &matching_lines[..matching_lines.len().min(limits.max_lines)];
+    let mut remaining_matches = matching_lines.len();
+    for (i, line) in text.lines().enumerate() {
+        while range < ranges.len() && i > ranges[range].1 {
+            range += 1;
+        }
+        if range == ranges.len() {
+            break;
+        }
+        if i < ranges[range].0 {
+            continue;
+        }
+        let matching = matching_lines.binary_search(&i).is_ok();
+        if matching {
+            remaining_matches -= 1;
+        }
+        // Reserve slots for matching lines before filling them with context.
+        if hits.len() + remaining_matches >= limits.max_lines && !matching {
+            truncated += 1;
+            continue;
+        }
+        if hits.len() >= limits.max_lines {
+            truncated += 1;
+            continue;
+        }
+        hits.push(Hit {
             line: i + 1,
-            text: clip(l, limits.max_line_chars),
-        })
-        .collect();
+            text: clip(line, limits.max_line_chars),
+        });
+    }
     Ok((hits, truncated))
 }
 

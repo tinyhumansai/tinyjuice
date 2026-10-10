@@ -71,7 +71,7 @@ are relative to the scope, as if the slice were piped in.
 
 ### Limits
 
-Every op is capped (`ReplLimits`): hits, `sed`/`awk` lines, output characters, line length
+Every op is capped (`ReplLimits`): hits, `sed`/`awk` lines and expanded grep context, output characters, line length
 and regex size. A capped result reports how many hits were dropped. Sensitive query
 parameters in HTML hrefs are redacted. An unknown or expired handle is an error. For HTML
 input, line numbers refer to its Markdown rendering.
@@ -104,6 +104,17 @@ the summary. It does not help a host model that spends its cap on reasoning toke
 reply comes back empty and the summary fails. Turn reasoning off for the summarizer route.
 
 ## Surfaces
+
+`run_on_text_with_model(text, op, limits, model)` queries content supplied by an
+authorized caller without storing it in CCR. Only `Summarize` with `Some(model)`
+uses the configured host callback; other operations remain deterministic. It
+uses the same input/output limits, timeout, delayed-result reuse and scope-wide
+failure breaker as `run_op_with_model`. A timeout, disabled model or model failure
+returns the deterministic summary with an availability note. Callers retain
+responsibility for authorizing the supplied content and choosing the summary
+scope. An omitted `max_chars` preserves the existing model-summary output cap
+(`ReplLimits::max_output_chars`, normally 8000); the deterministic overview keeps
+its separate 2000-character default. Explicit `max_chars` bounds either result.
 
 - Rust: `tinyjuice::repl::{run_op, run_on_text, ReplOp, ReplOutput, ReplLimits}`.
 - Rust, model-written summary: `tinyjuice::repl::{run_op_with_model, ModelSummary}`.
