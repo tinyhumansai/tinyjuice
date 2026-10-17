@@ -19,6 +19,15 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Shared REPL error vocabulary; no execution dependencies.
 thiserror = "2"
+# Optional (`storage` feature, off by default). Storage ports only (no I/O or runtime of its own): the schema the host composes
+# lives in the contract so the host never links the implementation crate.
+tinystoragedrivers-core = { version = "1.0.0", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v1.0.0", default-features = false, optional = true }
+
+[features]
+default = []
+# `storage_schema()` for the host's schema composition. Hosts enable this.
+storage = ["dep:tinystoragedrivers-core"]
 
 [dev-dependencies]
-# Contract tests pin the JSON representation hosts exchange with the module.
+# The migration tests run the schema over the in-memory backend.
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

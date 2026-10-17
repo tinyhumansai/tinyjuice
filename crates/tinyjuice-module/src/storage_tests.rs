@@ -224,3 +224,18 @@ async fn store_calls_run_in_place_on_a_current_thread_runtime() {
         Some("range")
     );
 }
+
+#[test]
+fn the_module_grant_is_its_schema_at_module_scope() {
+    use tinystoragedrivers_core::schema::{Item, ScopeClass};
+    let schema = crate::storage_schema();
+    let grant: Vec<(&str, ScopeClass)> = schema
+        .items
+        .iter()
+        .map(|item| match item {
+            Item::Blobs { prefix, scope } => (prefix.as_str(), *scope),
+            other => panic!("the module stores only blobs, got {other:?}"),
+        })
+        .collect();
+    assert_eq!(grant, [("juice/ccr/", ScopeClass::Module)]);
+}

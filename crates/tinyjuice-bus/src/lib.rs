@@ -15,6 +15,8 @@ pub mod handle;
 pub mod names;
 pub mod repl;
 pub mod savings;
+#[cfg(feature = "storage")]
+pub mod storage;
 pub mod summary;
 pub mod tools;
 pub mod types;

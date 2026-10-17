@@ -28,13 +28,13 @@ serde_json = "1"
 # The CCR store's durable tier is blobs on the host's storage ports, reached
 # over the storage bus. The module has no storage backend or file of its own.
 tinyjuice-drivers = { path = "../tinyjuice-drivers" }
-tinystoragedrivers-core = { version = ">=0.8.0, <1", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v0.11.0" }
-tinystoragedrivers-busproxy = { version = ">=0.8.0, <1", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v0.11.0" }
+tinystoragedrivers-core = { version = "1.0.0", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v1.0.0" }
+tinystoragedrivers-busproxy = { version = "1.0.0", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v1.0.0" }
 log = "0.4"
 
 [dev-dependencies]
 # Tests serve the storage objects on the in-memory broker the module connects to.
-tinystoragedrivers-client = { version = ">=0.8.0, <1", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v0.11.0" }
+tinystoragedrivers-client = { version = "1.0.0", git = "https://github.com/tinyhumansai/tinystoragedrivers", tag = "v1.0.0" }
 tinybus = { version = ">=0.1.3, <0.2", default-features = false, features = ["test-support"] }
 tempfile = "3"
 async-trait = "0.1"

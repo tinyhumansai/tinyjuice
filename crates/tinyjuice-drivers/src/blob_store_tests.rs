@@ -113,6 +113,7 @@ fn malformed_tokens_never_reach_the_backend() {
         "",
         "../../state/config.toml",
         "tinyjuice_ccr/abc",
+        "juice/ccr/abc",
         "zz",
         &"g".repeat(32),
     ] {
@@ -206,4 +207,36 @@ fn debug_hides_the_handle() {
     let storage = MemoryStorage::new();
     let store = BlobCcrStore::new(handle(&storage), None).unwrap();
     assert!(format!("{store:?}").starts_with("BlobCcrStore"));
+}
+
+#[tokio::test]
+async fn a_migrated_original_is_readable_through_the_store() {
+    use tinyjuice::cache::store::{CcrStore, short_hash};
+    let backend = MemoryStorage::new();
+    let storage = backend.for_scope(&Scope::local()).unwrap();
+    let token = short_hash("legacy original");
+    storage
+        .blobs()
+        .put(
+            &format!("tinyjuice_ccr/{token}"),
+            b"legacy original".to_vec(),
+            Some("text/plain; charset=utf-8"),
+        )
+        .await
+        .unwrap();
+    tinystoragedrivers_core::schema::Registry::compose([crate::storage_schema()])
+        .unwrap()
+        .migrate(
+            &storage,
+            &tinystoragedrivers_core::schema::MigrateOptions::new(),
+        )
+        .await
+        .unwrap();
+
+    let blobs = std::sync::Arc::clone(storage.blobs());
+    let got =
+        tokio::task::spawn_blocking(move || BlobCcrStore::new(blobs, None).unwrap().get(&token))
+            .await
+            .unwrap();
+    assert_eq!(got.as_deref(), Some("legacy original"));
 }

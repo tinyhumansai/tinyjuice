@@ -17,6 +17,7 @@
 mod blob_store;
 
 pub use blob_store::{BlobCcrStore, CCR_PREFIX};
+pub use tinyjuice_bus::storage::storage_schema;
 
 #[cfg(test)]
 #[path = "faulty_tests.rs"]

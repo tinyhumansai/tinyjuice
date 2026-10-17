@@ -6,8 +6,7 @@ use std::time::Duration;
 use tinyjuice::cache::store::{CcrPutResult, CcrStore, RangeUnit, range_from_original, short_hash};
 use tinystoragedrivers_core::{BlobStore, Blocking, Capability, StorageError};
 
-/// The key prefix that holds one blob per original, `tinyjuice_ccr/<token>`.
-pub const CCR_PREFIX: &str = "tinyjuice_ccr";
+pub use tinyjuice_bus::storage::CCR_PREFIX;
 
 const CONTENT_TYPE: &str = "text/plain; charset=utf-8";
 
