@@ -1,5 +1,5 @@
 [package]
-rust-version = "1.90"
+rust-version = "1.88"
 name = "tinyjuice"
 version = "0.11.0"
 edition = "2024"
@@ -51,7 +51,7 @@ unicode-segmentation = "1"
 unicode-width = "0.2"
 
 [dependencies.tree-sitter]
-version = "0.27"
+version = "0.26"
 optional = true
 
 [dependencies.tree-sitter-python]
@@ -96,3 +96,17 @@ strip = "debuginfo"
 [[example]]
 name = "repl_tool_schema"
 required-features = ["tinytools"]
+
+# Keep TinyBus identity consistent with the vendored module and storage proxy.
+[patch."https://github.com/tinyhumansai/tinybus"]
+tinybus = { path = "vendor/tinybus/crates/tinybus" }
+
+# Use the TinyTools revision pinned by the nested TinyAgents checkout.
+[patch."https://github.com/tinyhumansai/tinytools"]
+tinytools = { path = "vendor/tinyagents/vendor/tinytools/crates/tinytools" }
+
+# Resolve standalone module dependencies to the same vendored TinyBus checkout.
+[patch.crates-io]
+tinybus = { path = "vendor/tinybus/crates/tinybus" }
+tinybus-module = { path = "vendor/tinybus/crates/tinybus-module" }
+tinybus-macros = { path = "vendor/tinybus/crates/tinybus-macros" }

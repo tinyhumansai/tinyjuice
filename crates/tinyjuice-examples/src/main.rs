@@ -18,6 +18,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
+use tinyagents_harness::host::FixedModelResolver;
 use tinyagents_harness::runtime::AgentHarness;
 use tinyinference_llm::message::Message;
 use tinyinference_llm::providers::openai::OpenAiModel;
@@ -111,25 +112,23 @@ async fn main() -> anyhow::Result<()> {
                 tinyjuice::configure(arm.options());
                 let compaction_ms = Arc::new(AtomicU64::new(0));
                 let mut harness: AgentHarness<()> = AgentHarness::new();
-                harness
-                    .register_model(
-                        "agent",
-                        Arc::new(
-                            OpenAiModel::new(key.clone())
-                                .with_base_url("https://openrouter.ai/api/v1")
-                                .with_model(model.clone()),
-                        ),
-                    )
-                    .set_default_model("agent")
-                    .register_tool(Arc::new(tools::PayloadTool {
-                        name: scenario.tool,
-                        description: scenario.tool_description,
-                        payload: payload.clone(),
-                        arm,
-                        question: scenario.question,
-                        run_id: format!("{}-{}-{rep}", scenario.name, arm.name()),
-                        compaction_ms: compaction_ms.clone(),
-                    }));
+                harness.with_model_resolver(Arc::new(FixedModelResolver::named(
+                    "agent",
+                    Arc::new(
+                        OpenAiModel::new(key.clone())
+                            .with_base_url("https://openrouter.ai/api/v1")
+                            .with_model(model.clone()),
+                    ),
+                )));
+                harness.register_tool(Arc::new(tools::PayloadTool {
+                    name: scenario.tool,
+                    description: scenario.tool_description,
+                    payload: payload.clone(),
+                    arm,
+                    question: scenario.question,
+                    run_id: format!("{}-{}-{rep}", scenario.name, arm.name()),
+                    compaction_ms: compaction_ms.clone(),
+                }));
                 if arm != Arm::Raw {
                     let store = Arc::new(tinyjuice::cache::GlobalCcrStore);
                     for tool in repl_tools(store, ReplLimits::default()) {
