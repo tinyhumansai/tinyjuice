@@ -1,7 +1,7 @@
 [package]
 rust-version = "1.90"
 name = "tinyjuice-module"
-version = "0.11.3"
+version = "0.11.4"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Trusted TinyBus module adapter for TinyJuice."
