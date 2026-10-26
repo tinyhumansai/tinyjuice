@@ -27,7 +27,7 @@ resolver = "3"
 
 [dependencies]
 # Optional adapter boundary: REPL ops as `tinytools::Tool` impls.
-tinytools = { version = "0.6", git = "https://github.com/tinyhumansai/tinytools", rev = "3a01641f8ebd8a55656cd212f9a90638d958a447", optional = true }
+tinytools = { version = "0.6", git = "https://github.com/tinyhumansai/tinytools", rev = "41cc80ac9acf37a14f20be94f60ee552749f1540", optional = true }
 anyhow = { version = "1", optional = true }
 jaq-core = { version = "3", optional = true }
 jaq-std = { version = "3", optional = true }
