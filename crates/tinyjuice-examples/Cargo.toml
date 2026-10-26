@@ -13,7 +13,7 @@ publish = false
 
 [dependencies]
 tinyjuice = { path = "../..", features = ["tinytools"] }
-tinyagents-harness = { version = "3.0.0", path = "../../vendor/tinyagents/crates/tinyagents-harness" }
+tinyagents-harness = { version = "3.1.0", path = "../../vendor/tinyagents/crates/tinyagents-harness" }
 tinyinference-llm = { path = "../../vendor/tinyagents/vendor/tinyinference/crates/tinyinference-llm" }
 tinytools = { path = "../../vendor/tinyagents/vendor/tinytools/crates/tinytools" }
 anyhow = "1"

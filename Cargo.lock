@@ -1392,7 +1392,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
@@ -1420,7 +1420,7 @@ dependencies = [
 
 [[package]]
 name = "tinybus"
-version = "0.1.6"
+version = "0.3.6"
 dependencies = [
  "async-trait",
  "flate2",
@@ -1441,7 +1441,7 @@ dependencies = [
 
 [[package]]
 name = "tinybus-macros"
-version = "0.1.6"
+version = "0.3.6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1450,8 +1450,8 @@ dependencies = [
 
 [[package]]
 name = "tinybus-module"
-version = "0.1.6"
-source = "git+https://github.com/tinyhumansai/tinybus?rev=0de2d283f35cbbff08efad6fbe05537ffb74611b#0de2d283f35cbbff08efad6fbe05537ffb74611b"
+version = "0.3.6"
+source = "git+https://github.com/tinyhumansai/tinybus?rev=6ce06bc674e4f4d718aa51e643ef62c1f372e270#6ce06bc674e4f4d718aa51e643ef62c1f372e270"
 dependencies = [
  "async-trait",
  "serde",
@@ -2347,4 +2347,4 @@ dependencies = [
 
 [[patch.unused]]
 name = "tinybus-module"
-version = "0.1.6"
+version = "0.3.6"

@@ -14,7 +14,7 @@ async-trait = "0.1"
 log = "0.4"
 serde_json = "1"
 tinyjuice-bus = { version = "0.11.0", path = "../tinyjuice-bus" }
-tinytools = { version = "0.6", git = "https://github.com/tinyhumansai/tinytools", rev = "3a01641f8ebd8a55656cd212f9a90638d958a447" }
+tinytools = { version = "0.6", git = "https://github.com/tinyhumansai/tinytools", rev = "41cc80ac9acf37a14f20be94f60ee552749f1540" }
 tokio = { version = "1", features = ["rt"] }
 uuid = { version = "1", features = ["v4"] }
 
