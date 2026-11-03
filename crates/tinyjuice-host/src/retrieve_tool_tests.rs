@@ -98,3 +98,54 @@ fn tool_identity_and_schema_match_the_current_bus_declaration() {
     assert!(tool.is_concurrency_safe(&json!({})));
     assert!(!tool.external_effect());
 }
+
+#[derive(Default)]
+struct CaptureLogger {
+    records: Mutex<Vec<String>>,
+}
+
+impl log::Log for CaptureLogger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        metadata.level() <= log::Level::Debug
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            self.records.lock().unwrap().push(record.args().to_string());
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+static CAPTURE_LOGGER: std::sync::OnceLock<CaptureLogger> = std::sync::OnceLock::new();
+
+/// Install the capturing debug logger once per test process.
+fn capture_logger() -> &'static CaptureLogger {
+    let logger = CAPTURE_LOGGER.get_or_init(CaptureLogger::default);
+    let _ = log::set_logger(logger);
+    log::set_max_level(log::LevelFilter::Debug);
+    logger
+}
+
+fn captured_logs() -> Vec<String> {
+    capture_logger().records.lock().unwrap().clone()
+}
+
+#[tokio::test]
+async fn successful_retrieve_never_logs_the_lookup_token() {
+    capture_logger().records.lock().unwrap().clear();
+    let token = "redact-me-9f2c4a1b";
+    let calls = Arc::new(Mutex::new(Vec::new()));
+    let tool = tool_with(Ok(Some("slice".into())), Arc::clone(&calls));
+    let result = tool.execute(json!({"token": token})).await.unwrap();
+    assert!(!result.is_error);
+    let leaked: Vec<String> = captured_logs()
+        .into_iter()
+        .filter(|line| line.contains(token))
+        .collect();
+    assert!(
+        leaked.is_empty(),
+        "lookup token leaked into logs: {leaked:?}"
+    );
+}

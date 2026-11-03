@@ -88,10 +88,7 @@ impl Tool for RetrieveToolOutputTool {
 
         match (self.retrieve)(token.to_owned(), range).await {
             Ok(Some(text)) => {
-                log::debug!(
-                    "[tinyjuice-host::retrieve] retrieved token={token} bytes={}",
-                    text.len()
-                );
+                log::debug!("[tinyjuice-host::retrieve] retrieved bytes={}", text.len());
                 Ok(ToolResult::success(text))
             }
             Ok(None) => Ok(ToolResult::error(miss_message(token))),
